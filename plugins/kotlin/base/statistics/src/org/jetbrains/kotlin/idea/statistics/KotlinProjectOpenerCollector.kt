@@ -8,6 +8,8 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.project.Project
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.nio.file.Path
 import kotlin.io.path.deleteIfExists
@@ -23,69 +25,94 @@ private const val RECEIPT_FILE_NAME: String = "receipt.json"
  * The receipt.json file will be deleted once it has been read.
  */
 internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("ktor.project.opener", 5)
+    private val GROUP = EventLogGroup("ktor.project.opener", 5)
 
-  private val utmSourceList = listOf("google",
-                                     "twitter",
-                                     "facebook",
-                                     "linkedin",
-                                     "instagram",
-                                     "youtube.com",
-                                     "newsletter",
-                                     "reddit",
-                                     "kotlinlang.org",
-                                     "jetbrains.com",
-                                     "other")
+    private val utmSourceList = listOf(
+        "google",
+        "twitter",
+        "facebook",
+        "linkedin",
+        "instagram",
+        "youtube.com",
+        "newsletter",
+        "reddit",
+        "kotlinlang.org",
+        "jetbrains.com",
+        "other"
+    )
 
-  private val utmMediumList = listOf("social", "referral", "cpc", "email", "banner", "conference", "organic", "integration", "sticky_banner", "other")
+    private val utmMediumList =
+        listOf("social", "referral", "cpc", "email", "banner", "conference", "organic", "integration", "sticky_banner", "other")
 
-  private val utmCampaignList = listOf("ktor3-wave2", "organic", "other")
+    private val utmCampaignList = listOf("ktor3-wave2", "organic", "other")
 
-  private val UTM_SOURCE = EventFields.String("utm_source", utmSourceList)
-  private val UTM_MEDIUM = EventFields.String("utm_medium", utmMediumList)
-  private val UTM_CAMPAIGN = EventFields.String("utm_campaign", utmCampaignList)
+    private val UTM_SOURCE = EventFields.String("utm_source", utmSourceList)
+    private val UTM_MEDIUM = EventFields.String("utm_medium", utmMediumList)
+    private val UTM_CAMPAIGN = EventFields.String("utm_campaign", utmCampaignList)
 
-  private val KTOR_PROJECT_OPENED_FROM_WEBSITE = GROUP.registerEvent("project.opened.from.website",
-                                                                                        UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN)
+    private val KTOR_PROJECT_OPENED_FROM_WEBSITE = GROUP.registerEvent(
+        "project.opened.from.website",
+        UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN
+    )
 
-  override fun requiresReadAccess(): Boolean = true
+    override fun requiresReadAccess(): Boolean = true
 
-  override fun getGroup(): EventLogGroup = GROUP
+    override fun getGroup(): EventLogGroup = GROUP
 
-  override fun getMetrics(project: Project): Set<MetricEvent> {
-    val receiptFile = getReceiptFile(project) ?: return emptySet()
-    val wizardReceipt = readReceiptFile(receiptFile) ?: return emptySet()
+    override fun getMetrics(project: Project): Set<MetricEvent> {
+        val receiptFile = getReceiptFile(project) ?: return emptySet()
+        val wizardReceipt = readReceiptFile(receiptFile) ?: return emptySet()
 
-    return setOf(wizardReceipt.toMetricEvent())
-  }
+        return setOf(wizardReceipt.toMetricEvent())
+    }
 
-  private fun getReceiptFile(project: Project): Path? {
-    val projectStore = project.stateStore as? IProjectStore
-    val projectFileDir = projectStore?.directoryStorePath ?: return null
+    private fun getReceiptFile(project: Project): Path? {
+        val projectStore = project.stateStore as? IProjectStore
+        val projectFileDir = projectStore?.directoryStorePath ?: return null
 
-    return projectFileDir.resolve(RECEIPT_FILE_NAME)
-  }
+        return projectFileDir.resolve(RECEIPT_FILE_NAME)
+    }
 
-  private fun readReceiptFile(receiptPath: Path): KotlinProjectOpenEvent? {
-    return runCatching {
-      readAndDeserializeJson(receiptPath)
-    }.getOrNull()
-  }
+    private fun readReceiptFile(receiptPath: Path): KotlinProjectOpenEvent? {
+        return runCatching {
+            readAndDeserializeJson(receiptPath)
+        }.getOrNull()
+    }
 
-  private fun readAndDeserializeJson(receiptPath: Path): KotlinProjectOpenEvent {
-    val text = receiptPath.readText()
+    private fun readAndDeserializeJson(receiptPath: Path): KotlinProjectOpenEvent {
+        val text = receiptPath.readText()
 
-    val json = Json { ignoreUnknownKeys = true }
-    val event = json.decodeFromString<KotlinProjectOpenEvent>(text)
+        val json = Json { ignoreUnknownKeys = true }
+        val event = json.decodeFromString<KotlinProjectOpenEvent>(text)
 
-    receiptPath.deleteIfExists()
+        receiptPath.deleteIfExists()
 
-    return event
-  }
+        return event
+    }
 
-  private fun KotlinProjectOpenEvent.toMetricEvent(): MetricEvent {
-    val (utmSource, utmMedium, utmCampaign) = spec.parameters
+    private fun KotlinProjectOpenEvent.toMetricEvent(): MetricEvent {
+        val (utmSource, utmMedium, utmCampaign) = spec.parameters
 
-    return KTOR_PROJECT_OPENED_FROM_WEBSITE.metric(utmSource, utmMedium, utmCampaign)
-  }
+        return KTOR_PROJECT_OPENED_FROM_WEBSITE.metric(utmSource, utmMedium, utmCampaign)
+    }
+}
+
+@Serializable
+internal data class KotlinProjectOpenEvent(
+    @SerialName("spec") val spec: Spec,
+    @SerialName("timestamp") val timestamp: String,
+    @SerialName("uid") val uid: String? = null
+) {
+    @Serializable
+    data class Spec(
+        @SerialName("template_id") val template: String,
+        @SerialName("parameters") val parameters: Parameters
+    )
+
+    @Serializable
+    data class Parameters(
+        @SerialName("utm_source") val utmSource: String,
+        @SerialName("utm_medium") val utmMedium: String,
+        @SerialName("utm_campaign") val utmCampaign: String
+    )
 }
