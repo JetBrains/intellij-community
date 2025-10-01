@@ -2,6 +2,7 @@ package com.intellij.cce.kotlin.callGraphs
 
 import com.intellij.cce.callGraphs.*
 import com.intellij.cce.core.Language
+import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -20,19 +21,23 @@ class KotlinCallGraphBuilder : CallGraphBuilder {
     return CallGraph(nodes, edges)
   }
 
+  private fun qualifiedNameOf(function: KtNamedFunction): String {
+    return QualifiedNameProviderUtil.getQualifiedName(function) ?: (function.name ?: "")
+  }
 
   private fun collectNodes(psiFiles: List<PsiFile>): List<CallGraphNode> {
     val nodes = mutableListOf<CallGraphNode>()
     val visitor = object : KtTreeVisitorVoid() {
       override fun visitNamedFunction(function: KtNamedFunction) {
         super.visitNamedFunction(function)
-        val name = function.name ?: return
+        val loc = function.getNodeLocation() ?: return
+        val qName = qualifiedNameOf(function)
         nodes.add(
           CallGraphNode(
-            address = function.getNodeLocation()!!,
+            address = loc,
             projectName = function.project.name,
             id = nodes.size.toString(),
-            qualifiedName = name
+            qualifiedName = qName
           )
         )
       }

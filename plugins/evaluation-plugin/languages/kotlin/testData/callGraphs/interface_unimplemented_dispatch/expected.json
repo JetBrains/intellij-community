@@ -4,30 +4,42 @@
       "address": {
         "project_root_file_path": "Sample.kt",
         "text_range": [
-          12,
-          55
+          16,
+          62
         ]
       },
       "project_name": "kotlinGraph",
       "id": "0",
+      "qualified_name": "I.m"
+    },
+    {
+      "address": {
+        "project_root_file_path": "Sample.kt",
+        "text_range": [
+          82,
+          132
+        ]
+      },
+      "project_name": "kotlinGraph",
+      "id": "1",
       "qualified_name": "C.m"
     },
     {
       "address": {
         "project_root_file_path": "Sample.kt",
         "text_range": [
-          59,
-          82
+          136,
+          185
         ]
       },
       "project_name": "kotlinGraph",
-      "id": "1",
+      "id": "2",
       "qualified_name": "SampleKt.use"
     }
   ],
   "edges": [
     {
-      "caller_id": "1",
+      "caller_id": "2",
       "callee_id": "0"
     }
   ]

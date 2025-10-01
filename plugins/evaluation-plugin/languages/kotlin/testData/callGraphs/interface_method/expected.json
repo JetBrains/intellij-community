@@ -10,7 +10,7 @@
       },
       "project_name": "kotlinGraph",
       "id": "0",
-      "qualified_name": "d"
+      "qualified_name": "I.d"
     },
     {
       "address": {
@@ -22,7 +22,7 @@
       },
       "project_name": "kotlinGraph",
       "id": "1",
-      "qualified_name": "call"
+      "qualified_name": "SampleKt.call"
     }
   ],
   "edges": [
