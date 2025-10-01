@@ -55,5 +55,6 @@ abstract class JUnitMalformedDeclarationInspectionTestBase(protected val junit5V
   protected companion object {
     const val JUNIT5_7_0: String = "5.7.0"
     const val JUNIT5_LATEST: String = "5.13.4"
+    const val JUNIT6_LATEST: String = "6.0.0"
   }
 }
