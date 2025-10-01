@@ -3,7 +3,6 @@ package com.intellij.maven.testFramework
 
 import com.intellij.UtilBundle
 import com.intellij.diagnostic.ThreadDumper
-import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.ide.DataManager
 import com.intellij.maven.testFramework.wsl2.JdkWslTestInstaller
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -33,7 +32,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.*
-import com.intellij.testFramework.TemporaryDirectory.Companion.generateTemporaryPath
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.utils.io.createFile
@@ -41,11 +39,13 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.createDirectories
+import com.intellij.util.text.nullize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerConnectorImpl
@@ -60,7 +60,6 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
@@ -104,6 +103,10 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   private var myProjectPom: VirtualFile? = null
   private val myAllPoms: MutableSet<VirtualFile> = mutableSetOf()
+
+  val modelVersion: String
+    get() = System.getProperty("maven.model.version")?.nullize() ?: MavenConstants.MODEL_VERSION_4_0_0
+
 
   val pathTransformer: RemotePathTransformerFactory.Transformer
     get() = myPathTransformer!!
@@ -191,7 +194,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     if (myJdk == null && jdkPath != null) {
       if (isProjectInWslEelEnvironment()) {
         val definition = getTeamcityJavaItemDefinition()
-        if(definition!= null) {
+        if (definition != null) {
           val jdkToInstall = JdkWslTestInstaller.readJdkItem(Path.of(definition))
           JdkWslTestInstaller(Path.of(jdkPath), jdkToInstall).checkOrInstallJDK()
         }
@@ -224,7 +227,8 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun getEelFixtureEngineJavaHome(): String {
-    return System.getenv("EEL_FIXTURE_ENGINE_JAVA_HOME") ?: throw IllegalArgumentException("The system environment variable EEL_FIXTURE_ENGINE_JAVA_HOME should be explicitly specified")
+    return System.getenv("EEL_FIXTURE_ENGINE_JAVA_HOME")
+           ?: throw IllegalArgumentException("The system environment variable EEL_FIXTURE_ENGINE_JAVA_HOME should be explicitly specified")
   }
 
   private fun getTeamcityJavaItemDefinition(): String? {
@@ -252,7 +256,6 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
 
-
   override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
     LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
       override fun processError(
@@ -266,7 +269,7 @@ abstract class MavenTestCase : UsefulTestCase() {
       }
     }) { super.runBare(testRunnable) }
   }
-  
+
 
   private fun findExisingJdkByPath(jdkPath: String): Sdk? {
     val sdk = ProjectJdkTable.getInstance().allJdks.find { jdkPath == it.homePath }!!
@@ -843,21 +846,25 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  protected fun getRelativePath(base: Path, path: String) : String {
+  protected fun getRelativePath(base: Path, path: String): String {
     return base.relativize(Path.of(path)).toCanonicalPath().toString()
   }
 
-  companion object {
-    val preimportTestMode: Boolean = java.lang.Boolean.getBoolean("MAVEN_TEST_PREIMPORT")
+  @Language("XML")
+  fun createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {
+    return createPomXml(modelVersion, xml)
+  }
 
+
+  companion object {
     @Language("XML")
-    fun createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {
+    fun createPomXml(modelVersion: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?): @NonNls String {
       return """
              <?xml version="1.0"?>
-             <project xmlns="http://maven.apache.org/POM/4.0.0"
+             <project xmlns="http://maven.apache.org/POM/$modelVersion"
                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-               <modelVersion>4.0.0</modelVersion>
+                      xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
+               <modelVersion>$modelVersion</modelVersion>
              
              """.trimIndent() + xml + "</project>"
     }

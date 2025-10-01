@@ -16,6 +16,7 @@ import com.intellij.util.Function
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.VersionComparatorUtil
 import junit.framework.TestCase
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -29,7 +30,7 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.math.min
 
-private const val MAVEN_4_VERSION = "4.0.0-rc-3"
+private const val MAVEN_4_VERSION = "4.0.0-rc-4"
 private val MAVEN_VERSIONS: Array<String> = arrayOf<String>(
   "bundled",
   "4"
@@ -67,6 +68,12 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   var myMavenVersion: String? = null
   protected var myWrapperTestFixture: MavenWrapperTestFixture? = null
 
+  protected val modulesTag: String
+    get() = if(isModel410()) "subprojects" else "modules"
+
+  protected val moduleTag: String
+    get() = if(isModel410()) "subproject" else "module"
+
   protected fun assumeVersionMoreThan(version: String) {
     Assume.assumeTrue("Version should be more than $version",
                       VersionComparatorUtil.compare(getActualVersion(myMavenVersion!!), getActualVersion(version)) > 0)
@@ -81,6 +88,30 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   protected fun forMaven4(r: Runnable) {
     val version: String = getActualVersion(myMavenVersion!!)
     if (version.startsWith("4.")) r.run()
+  }
+
+  protected fun withModel410Only(value: String?): String? {
+    return if (this.isMaven4 && this.modelVersion == MavenConstants.MODEL_VERSION_4_1_0) value else null
+  }
+
+  protected fun isModel410(): Boolean {
+    return this.isMaven4 && this.modelVersion == MavenConstants.MODEL_VERSION_4_1_0
+  }
+
+  protected fun forModel40(r: Runnable) {
+    if (modelVersion == MavenConstants.MODEL_VERSION_4_0_0) r.run()
+  }
+
+  protected fun forModel41(r: Runnable) {
+    if (modelVersion == MavenConstants.MODEL_VERSION_4_1_0) r.run()
+  }
+
+  protected fun assumeModel_4_0_0(message: String) {
+    Assume.assumeTrue(message, modelVersion == MavenConstants.MODEL_VERSION_4_0_0)
+  }
+
+  protected fun assumeModel_4_1_0(message: String) {
+    Assume.assumeTrue(message, modelVersion == MavenConstants.MODEL_VERSION_4_1_0)
   }
 
   protected fun assumeMaven3() {
@@ -116,11 +147,15 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   override fun setUp() {
     super.setUp()
     if ("bundled" == myMavenVersion) {
+      Assume.assumeFalse("Does not make sence to run tests with new model on old maven", true)
       MavenDistributionsCache.resolveEmbeddedMavenHome()
       return
     }
     val actualMavenVersion = getActualVersion(myMavenVersion!!)
-    MavenLog.LOG.warn("Running test with Maven $actualMavenVersion")
+    if(actualMavenVersion.startsWith("3") && modelVersion != MavenConstants.MODEL_VERSION_4_0_0) {
+      Assume.assumeFalse("Does not make sence to run tests with new model on old maven", true)
+    }
+    MavenLog.LOG.warn("Running test with Maven $actualMavenVersion on model $modelVersion")
     myWrapperTestFixture = MavenWrapperTestFixture(project, actualMavenVersion)
     myWrapperTestFixture!!.setUp()
   }
@@ -177,11 +212,11 @@ abstract class MavenMultiVersionImportingTestCase : MavenImportingTestCase() {
   }
 
   protected fun defaultResources(): Array<String> {
-    return arrayOfNotNull("src/main/resources", maven4orNull("src/main/resources-filtered"))
+    return arrayOfNotNull("src/main/resources", withModel410Only("src/main/resources-filtered"))
   }
 
   protected fun defaultTestResources(): Array<String> {
-    return arrayOfNotNull("src/test/resources", maven4orNull("src/test/resources-filtered"))
+    return arrayOfNotNull("src/test/resources", withModel410Only("src/test/resources-filtered"))
   }
 
   protected fun allDefaultResources(): Array<String> {

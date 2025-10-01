@@ -128,6 +128,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testRereadingChildIfParentWasReadAfterIt() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     val m2 = createModulePom("m2",
                              """
                              <groupId>test</groupId>
@@ -422,6 +423,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testUpdatingModelWithNewProfiles() = runBlocking {
+    assumeModel_4_0_0("IDEA-379195")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -456,17 +458,17 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                        """.trimIndent())
     importProjectWithProfiles("one")
     var roots = tree.rootProjects
-    assertEquals(1, roots.size)
-    assertEquals(projectPom, roots[0].file)
-    assertEquals(1, tree.getModules(roots[0]).size)
-    assertEquals(m1, tree.getModules(roots[0])[0].file)
+    assertEquals("should be one root project", 1, roots.size)
+    assertEquals("should be one root project and it should be $projectPom", projectPom, roots[0].file)
+    assertEquals("this project should have one subproject", 1, tree.getModules(roots[0]).size)
+    assertEquals("this project should have one subproject, and this subproject should be m1", m1, tree.getModules(roots[0])[0].file)
     projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("two"))
     updateAllProjects()
     roots = tree.rootProjects
-    assertEquals(1, roots.size)
-    assertEquals(projectPom, roots[0].file)
-    assertEquals(1, tree.getModules(roots[0]).size)
-    assertEquals(m2, tree.getModules(roots[0])[0].file)
+    assertEquals("after reimport should be one root project", 1, roots.size)
+    assertEquals("after reimport should be one root project and it should be $projectPom", projectPom, roots[0].file)
+    assertEquals("after reimport this project should have one subproject", 1, tree.getModules(roots[0]).size)
+    assertEquals("after reimport this project should have one subproject, and this subproject should be m2", m2, tree.getModules(roots[0])[0].file)
   }
 
   @Test
@@ -499,6 +501,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testUpdatingInheritance() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -534,6 +537,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testUpdatingInheritanceHierarhically() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -610,6 +614,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testAddingInheritanceParent() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     val child = createModulePom("child",
                                 """
                                           <groupId>test</groupId>
@@ -640,6 +645,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testAddingInheritanceChild() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     val parent = createModulePom("parent",
                                  """
                                            <groupId>test</groupId>
@@ -669,6 +675,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testParentPropertyInterpolation() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -698,6 +705,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testAddingInheritanceChildOnParentUpdate() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -768,6 +776,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testChangingInheritance() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     val parent1 = createModulePom("parent1",
                                   """
                                             <groupId>test</groupId>
@@ -815,6 +824,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testChangingInheritanceParentId() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -904,6 +914,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testDeletingInheritanceParent() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     val parent = createModulePom("parent",
                                  """
                                            <groupId>test</groupId>
@@ -933,6 +944,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testDeletingInheritanceChild() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
@@ -997,6 +1009,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testUpdatingAddsModules() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1196,6 +1209,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testUpdatingAddsModulesFromRootProjects() = runBlocking {
+    assumeModel_4_0_0("IDEA-379195")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1234,6 +1248,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
 
   @Test
   fun testMovingModuleToRootsWhenAggregationChanged() = runBlocking {
+    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

@@ -19,7 +19,7 @@ class MavenPomXmlDocumentationTest : MavenDomTestCase() {
         </scm>
         """.trimIndent())
 
-    val expectedText =
+    val expectedText_4_0 =
 
       """
         Tag name:&nbsp;<b>connection</b><br>Description  :&nbsp;The source control management system URL
@@ -30,6 +30,18 @@ class MavenPomXmlDocumentationTest : MavenDomTestCase() {
                     This connection is read-only.
                     <br><b>Default value is</b>: parent value [+ path adjustment] + (artifactId or project.directory property), or just parent value if
                     scm&apos;s <code>child.scm.connection.inherit.append.path="false"</code><br>Version  :&nbsp;4.0.0+
+                    """.trimIndent()
+
+    val expectedText_4_1 =
+
+      """Tag name:&nbsp;<b>connection</b><br>Description :&nbsp;The source control management system URL
+ that describes the repository and how to connect to the
+ repository.
+ This connection is read-only.
+ &lt;br&gt;&lt;b&gt;Default value is&lt;/b&gt;: parent value [+ path adjustment] + (artifactId or project.directory property), or just parent value if
+ scm&apos;s {@code child.scm.connection.inherit.append.path=&quot;false&quot;}
+ @see &lt;a href=&quot;https://maven.apache.org/scm/scm-url-format.html&quot;&gt;URL format&lt;/a&gt;
+ @see &lt;a href=&quot;https://maven.apache.org/scm/scms-overview.html&quot;&gt;list of supported SCMs&lt;/a&gt;<br>Version :&nbsp;4.0.0+
                     """.trimIndent()
 
     configTest(projectPom)
@@ -43,6 +55,13 @@ class MavenPomXmlDocumentationTest : MavenDomTestCase() {
     }
 
 
-    assertEquals(expectedText.replace(" +".toRegex(), " "), generatedText!!.replace(" +".toRegex(), " "))
+    forModel40{
+      assertEquals(expectedText_4_0.replace(" +".toRegex(), " "), generatedText!!.replace(" +".toRegex(), " "))
+    }
+    forModel41 {
+      assertEquals(expectedText_4_1.replace(" +".toRegex(), " "), generatedText!!.replace(" +".toRegex(), " "))
+
+    }
+
   }
 }
