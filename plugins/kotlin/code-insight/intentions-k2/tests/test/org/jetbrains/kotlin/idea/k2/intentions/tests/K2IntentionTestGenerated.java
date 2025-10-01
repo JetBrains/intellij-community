@@ -8954,6 +8954,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/introduceImportAlias/addImportHasOtherAlias.kt");
         }
 
+        @TestMetadata("addImportOnJavaClass.kt")
+        public void testAddImportOnJavaClass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceImportAlias/addImportOnJavaClass.kt");
+        }
+
         @TestMetadata("addImportWithDefaultClass.kt")
         public void testAddImportWithDefaultClass() throws Exception {
             runTest("../../../idea/tests/testData/intentions/introduceImportAlias/addImportWithDefaultClass.kt");
