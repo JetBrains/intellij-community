@@ -82,7 +82,10 @@
                              bundle="messages.PyCharmCommunityCustomizationBundle"
                              key="promo.configurable.jupyter"/>
 
-
+    <startPagePromoter
+      implementation="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.PyCommunityToUnifiedWelcomeScreenBanner"/>
+    <postStartupActivity
+      implementation="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.PyCommunityToUnifiedShowPromoActivity"/>
     <!--TODO delete later-->
     <registryKey key="py.promo.use.test.update"
                  defaultValue="false"
