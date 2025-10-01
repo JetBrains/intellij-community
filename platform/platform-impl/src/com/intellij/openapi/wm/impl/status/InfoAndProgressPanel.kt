@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.fileEditor.impl.MergingUpdateChannel
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
@@ -44,6 +43,7 @@ import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -73,8 +73,10 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Internal
-class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatusBarImpl,
-                                                private val coroutineScope: CoroutineScope) : UISettingsListener {
+class InfoAndProgressPanel internal constructor(
+  private val statusBar: IdeStatusBarImpl,
+  private val coroutineScope: CoroutineScope,
+) : UISettingsListener {
   companion object {
     @JvmField
     @ApiStatus.Internal
@@ -103,6 +105,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   private val balloon = ProcessBalloon(3)
 
   private val mainPanel = InfoAndProgressPanelImpl(this)
+
   @get:JvmName("getComponent")
   internal val component: JPanel
     get() = mainPanel
@@ -403,10 +406,12 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     mainPanel.setRefreshHidden()
   }
 
-  fun notifyByBalloon(type: MessageType,
-                      htmlBody: @NlsContexts.PopupContent String,
-                      icon: Icon?,
-                      listener: HyperlinkListener?): BalloonHandler {
+  fun notifyByBalloon(
+    type: MessageType,
+    htmlBody: @NlsContexts.PopupContent String,
+    icon: Icon?,
+    listener: HyperlinkListener?,
+  ): BalloonHandler {
     @Suppress("HardCodedStringLiteral")
     val htmlContent = htmlBody.replace("\n", "<br>")
     val balloon = JBPopupFactory.getInstance()
@@ -646,7 +651,9 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
     override var processNameValue: @NlsContexts.ProgressTitle String?
       get() = progressPanel.labelText
-      set(value) {progressPanel.setLabelText(value)}
+      set(value) {
+        progressPanel.setLabelText(value)
+      }
 
     override var textValue: @NlsContexts.DetailedDescription String?
       get() = progressPanel.getCommentText()
@@ -956,7 +963,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         }
       }
     }
-    private val counterComponent: ScalableCounterIconComponent
+    private val counterComponent: CounterLabel
 
     init {
       progressIcon.setOpaque(false)
@@ -973,7 +980,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       progressIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border())
       progressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"))
 
-      counterComponent = ScalableCounterIconComponent()
+      counterComponent = CounterLabel()
       counterComponent.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           host.triggerPopupShowing()
@@ -1193,10 +1200,11 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         return
       }
       val size = host.originals.size
-      indicator!!.component.isVisible = !showPopup && (!supportSecondaryProgresses || indicator!!.visibleInStatusBar)
+      val isIndicatorVisible = !showPopup && (!supportSecondaryProgresses || indicator!!.visibleInStatusBar)
+      indicator!!.component.isVisible = isIndicatorVisible
       if (showCounterInsteadOfMultiProcessLink) {
-        counterComponent.setNumber(size)
-        counterComponent.isVisible = size > 1 || (size == 1 && supportSecondaryProgresses && !host.originals[0].visibleInStatusBar)
+        counterComponent.setNumber(size, isIndicatorVisible)
+        counterComponent.isVisible = true
         multiProcessLink.isVisible = false
       }
       else {
@@ -1216,97 +1224,87 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   }
 }
 
-private class ScalableCounterIconComponent : JComponent(), UISettingsListener {
-  private val icon: CounterIcon = CounterIcon(1,
-                                              JBUI.CurrentTheme.StatusBar.Progresses.COUNTER_FOREGROUND,
-                                              JBUI.CurrentTheme.StatusBar.Progresses.COUNTER_BACKGROUND)
+private class CounterLabel : JPanel() {
+  private val label: JBLabel
+  private var numberOfProgresses: Int = 0
+  private var isProgressVisible: Boolean = false
+
+  private var lastDigitNumber: Int = 0
+  private var textsForMinimumSize: IntRange? = null
+
+  private var minimumSize: Dimension? = null
+
+  init {
+    label = createLabel()
+    layout = BorderLayout()
+    add(label, BorderLayout.CENTER)
+    setNumber(0, false)
+  }
+
+  private fun createLabel(): JBLabel {
+    val label = JBLabel()
+    label.font = TextPanel.getFont()
+    label.foreground = JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND
+    return label
+  }
 
 
-  fun setNumber(value: Int) {
-    icon.number = value
+  fun setNumber(numberOfProgresses: Int, isProgressVisible: Boolean) {
+    this.numberOfProgresses = numberOfProgresses
+    this.isProgressVisible = isProgressVisible
+
+    val numberToShow = if (isProgressVisible) {
+      numberOfProgresses - 1
+    }
+    else {
+      numberOfProgresses
+    }
+
+    refreshTextForMinimumSizeIfNeeded(numberToShow)
+
+    val labelText = when {
+      numberToShow <= 0 -> ""
+      isProgressVisible -> "+${numberToShow}"
+      else -> "${numberToShow}"
+    }
+    label.text = labelText
+  }
+
+  private fun refreshTextForMinimumSizeIfNeeded(numberToShow: Int) {
+    val numberToShowString = numberToShow.toString()
+    if (numberToShowString.length != lastDigitNumber) {
+      lastDigitNumber = numberToShowString.length
+      textsForMinimumSize = when (lastDigitNumber) {
+        1 -> 0..9
+        2 -> 10..99
+        3 -> 100..999
+        else -> null
+      }
+      minimumSize = null
+    }
   }
 
   override fun getPreferredSize(): Dimension {
-    val iconSize = JBUI.scale(16) //icon size
-    if (icon.number < 10) {
-      icon.setInsets(0)
-      //added to have equal right and left insets for the resulting [icon]
-      val symmetryWidthBit = (iconSize + icon.iconWidth) % 2
-      val symmetryHeightBit = (iconSize + icon.iconHeight) % 2
-      val dimension = Dimension(iconSize + symmetryWidthBit, iconSize + symmetryHeightBit)
-      return dimension
+    val precalculated = minimumSize
+    if (precalculated != null) return precalculated
+
+    val texts = textsForMinimumSize
+    if (texts == null || texts.isEmpty()) return super.getPreferredSize()
+
+    val probe = createLabel()
+
+    var minSize = Dimension(0, 0)
+    for (text in texts) {
+      probe.text = "+$text"
+      val size = probe.preferredSize
+      minSize = Dimension(max(minSize.width, size.width), max(minSize.height, size.height))
     }
-    val sensibleDefaultInset = JBUI.scale(3)
-    icon.setInsets(0, sensibleDefaultInset)
-    return Dimension(max(iconSize + (iconSize + icon.iconWidth) % 2, icon.iconWidth),
-                     max(iconSize + (iconSize + icon.iconHeight) % 2, icon.iconHeight))
+    minimumSize = minSize
+
+    return minSize
   }
 
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-    setIconSize(width, height)
-    icon.paintIcon(this, InternalUICustomization.getInstance()?.preserveGraphics(g) ?: g, 0, 0)
-  }
-
-  private fun setIconSize(width: Int, height: Int) {
-    icon.round = height
-    icon.setInsets(0)
-    val widthToAdd = max(width - icon.iconWidth, 0)
-    val heightToAdd = max(height - icon.iconHeight, 0)
-    val leftInset = widthToAdd / 2
-    val topInset = heightToAdd / 2
-    icon.setInsets(topInset, leftInset, heightToAdd - topInset, widthToAdd - leftInset)
-  }
-
-  override fun uiSettingsChanged(uiSettings: UISettings) {
-    icon.uiSettingsChanged()
-  }
-}
-
-private class CounterIcon(private val icon: TextIcon, initialNumber: Int) : Icon by icon {
-  private var lastDigitNumber: Int = 0
-  private var _number: Int = initialNumber
-  var number: Int
-    set(value) {
-      val text = value.toString()
-      if (text.length != lastDigitNumber) {
-        lastDigitNumber = text.length
-        val predefined = when (lastDigitNumber) {
-          1 -> 0..9
-          2 -> 10..99
-          3 -> 100..999
-          else -> null
-        }
-        if (predefined != null) {
-          icon.setTextsForMinimumBounds(predefined.map { it.toString() })
-        }
-      }
-      icon.text = text
-      _number = value
-    }
-    get() = _number
-
-  init {
-    icon.font = JBFont.regular()
-  }
-
-  constructor(number: Int, foreground: Color, background: Color) : this(TextIcon("", foreground, background, 0), number)
-
-  var round: Int? by icon::round
-
-  fun setInsets(top: Int, left: Int, bottom: Int, right: Int) {
-    icon.setInsets(top, left, bottom, right)
-  }
-
-  fun setInsets(topBottom: Int, leftRight: Int) {
-    icon.setInsets(topBottom, leftRight, topBottom, leftRight)
-  }
-
-  fun setInsets(all: Int) {
-    setInsets(all, all, all, all)
-  }
-
-  fun uiSettingsChanged() {
-    icon.uiSettingsChanged()
+  override fun getMinimumSize(): Dimension {
+    return preferredSize
   }
 }

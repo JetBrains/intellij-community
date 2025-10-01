@@ -1053,11 +1053,6 @@ public final class JBUI {
           return "StatusBar.Breadcrumbs.navBarInsets";
         }
       }
-
-      public interface Progresses {
-        Color COUNTER_BACKGROUND = JBColor.namedColor("ProgressBar.progressCounterBackground", ProgressBar.PROGRESS);
-        Color COUNTER_FOREGROUND = JBColor.namedColor("ProgressBar.progressCounterForeground", JBColor.WHITE);
-      }
     }
 
     public static final class TextField {

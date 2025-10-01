@@ -4633,9 +4633,6 @@ com.intellij.util.ui.JBUI$CurrentTheme$StatusBar$Breadcrumbs
 - s:itemInsets():com.intellij.util.ui.JBInsets
 - s:navBarInsets():java.awt.Insets
 - s:navBarInsetsKey():java.lang.String
-com.intellij.util.ui.JBUI$CurrentTheme$StatusBar$Progresses
-- sf:COUNTER_BACKGROUND:java.awt.Color
-- sf:COUNTER_FOREGROUND:java.awt.Color
 com.intellij.util.ui.JBUI$CurrentTheme$StatusBar$Widget
 - sf:FOREGROUND:java.awt.Color
 - sf:HOVER_BACKGROUND:java.awt.Color
