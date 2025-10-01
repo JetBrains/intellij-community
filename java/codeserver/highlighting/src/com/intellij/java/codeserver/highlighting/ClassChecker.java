@@ -399,8 +399,8 @@ final class ClassChecker {
       myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_INVALID_FILE_NAME.create(file, implicitClass));
       return;
     }
-    PsiMethod[] methods = implicitClass.getMethods();
-    boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method));
+    PsiMethod[] methods = implicitClass.findMethodsByName("main", false);
+    boolean hasMainMethod = ContainerUtil.exists(methods, method -> PsiMethodUtil.isMainMethod(method));
     if (!hasMainMethod) {
       //don't show errors if there is a package, this package will be highlighted
       if (file.getPackageStatement() != null) return;
