@@ -220,7 +220,7 @@ object KotlinTestsDependenciesUtil {
     internal fun sha256SumForUrl(url: String): String = sha256Cache.getOrPut(url) { calculateSha256SumForUrl(url) }
 
     private fun calculateSha256SumForUrl(url: String): String {
-        println("Calculating SHA256 checksum for '$url'")
+        println("Calculating SHA256 checksum for '$url'...")
         val digest = MessageDigest.getInstance("SHA-256")
         val requestBuilder = HttpRequest.newBuilder()
             .uri(URI.create(url))

@@ -23,7 +23,7 @@ internal fun copyBootstrapArtifactsToMavenRepositoryIfExists() {
         return
     }
     
-    println("Custom Kotlin bootstrap location: $bootstrapLocation; trying to copy artifacts to Maven repository")
+    println("Custom Kotlin bootstrap location: $bootstrapLocation; trying to copy artifacts to Maven repository...")
     
     val bootstrapDir = Path(bootstrapLocation).toAbsolutePath().normalize()
 
@@ -38,7 +38,7 @@ internal fun copyBootstrapArtifactsToMavenRepositoryIfExists() {
         .toAbsolutePath()
         .normalize()
 
-    println("Copying bootstrap artifacts from $bootstrapLocation to $mavenRepository")
+    println("Copying bootstrap artifacts from $bootstrapLocation to $mavenRepository...")
 
     @OptIn(ExperimentalPathApi::class)
     bootstrapDir.copyToRecursively(mavenRepository, followLinks = false, overwrite = true)

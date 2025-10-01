@@ -28,7 +28,7 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
     KotlinTestsDependenciesUtil.updateChecksum(isUpToDateCheck = false)
 
     fun processRoot(root: Path, isCommunity: Boolean) {
-        println("Processing kotlinc libraries in root: $root")
+        println("Processing kotlinc libraries in '$root'...")
         val libraries = generateKotlincLibraries(preferences, isCommunity)
         regenerateProjectLibraries(root.resolve(".idea"), libraries, resolverSettings)
     }
@@ -51,9 +51,9 @@ private fun regenerateProjectLibraries(dotIdea: Path, newLibraries: List<JpsLibr
         val xmlFile = librariesDir.resolve(libraryFileName)
         val isRegeneration = oldLibraries.remove(xmlFile)
         if (isRegeneration) {
-            println("Rewriting $xmlFile")
+            println("Rewriting '$xmlFile'...")
         } else {
-            println("Writing $xmlFile")
+            println("Writing '$xmlFile'...")
         }
 
         xmlFile.writeText(library.render(resolverSettings))
@@ -61,7 +61,7 @@ private fun regenerateProjectLibraries(dotIdea: Path, newLibraries: List<JpsLibr
 
     // Drop redundant libraries
     for (redundantLibrary in oldLibraries) {
-        println("Removing $redundantLibrary")
+        println("Removing '$redundantLibrary'...")
         redundantLibrary.deleteExisting()
     }
 }

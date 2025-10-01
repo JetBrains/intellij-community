@@ -23,6 +23,7 @@ internal fun publishCompiler(preferences: GeneratorPreferences) {
         .resolve("kotlin-snapshot")
 
     println("Artifacts path: $kotlinSnapshotPath")
+    println("Publishing Kotlin compiler...")
 
     val exitCode = ProcessBuilder(
         gradleWrapperExecutable,
