@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -275,7 +275,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
 
   @Override
   public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
-    if (isAfter(newChildIndex, new IElementType[]{JavaDocElementType.DOC_COMMENT, JavaElementType.MODIFIER_LIST})) {
+    if (isAfter(newChildIndex, new IElementType[]{JavaDocElementType.DOC_COMMENT, JavaDocElementType.DOC_MARKDOWN_COMMENT, JavaElementType.MODIFIER_LIST})) {
       return new ChildAttributes(Indent.getNoneIndent(), null);
     }
     else {

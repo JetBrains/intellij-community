@@ -62,7 +62,7 @@ private class PrecedingWhitespacesAndCommentsBinder(
     if (mySupportMarkdown) {
       //collect everything
       for (idx in tokens.indices.reversed()) {
-        if (tokens[idx] === JavaDocSyntaxElementType.DOC_COMMENT) return idx
+        if (tokens[idx] === JavaDocSyntaxElementType.DOC_COMMENT || tokens[idx] === JavaDocSyntaxElementType.DOC_MARKDOWN_COMMENT) return idx
       }
     }
     else {

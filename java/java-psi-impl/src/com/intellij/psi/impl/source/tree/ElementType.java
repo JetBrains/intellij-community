@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.JavaDocTokenType;
@@ -13,7 +13,7 @@ import com.intellij.psi.tree.TokenSet;
 @SuppressWarnings("unused") //because of backward compatibility, some of these sets are used in plugins
 public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElementType, JavaDocElementType {
   TokenSet JAVA_PLAIN_COMMENT_BIT_SET = BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET;
-  TokenSet JAVA_COMMENT_BIT_SET = TokenSet.orSet(JAVA_PLAIN_COMMENT_BIT_SET, TokenSet.create(DOC_COMMENT));
+  TokenSet JAVA_COMMENT_BIT_SET = TokenSet.orSet(JAVA_PLAIN_COMMENT_BIT_SET, DOC_COMMENT_TOKENS);
 
   TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(TokenSet.WHITE_SPACE, JAVA_COMMENT_BIT_SET);
 

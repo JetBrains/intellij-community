@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -425,7 +425,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       // So, our point is to preserve fold descriptor referencing javadoc PSI element.
       if (candidate != null && candidate.getTextRange().equals(range)) {
         ASTNode node = candidate.getNode();
-        if (node != null && node.getElementType() == JavaDocElementType.DOC_COMMENT) {
+        if (node != null && JavaDocElementType.DOC_COMMENT_TOKENS.contains(node.getElementType())) {
           anchorElementToUse = candidate;
         }
       }

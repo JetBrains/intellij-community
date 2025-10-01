@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.editor.Document;
@@ -101,7 +101,7 @@ public final class JavaLineWrapPositionStrategy extends PsiAwareDefaultLineWrapP
 
   private static boolean isInsidePreTag(@NotNull PsiElement element, @NotNull CharSequence chars, int offset) {
     PsiElement parent = PsiTreeUtil.findFirstParent(
-      element, e -> e.getNode().getElementType() == JavaDocElementType.DOC_COMMENT);
+      element, e ->  JavaDocElementType.DOC_COMMENT_TOKENS.contains(e.getNode().getElementType()));
     if (parent != null) {
       int preStart = CharArrayUtil.lastIndexOf(chars, PRE_TAG_START, offset);
       if (preStart >= 0) {

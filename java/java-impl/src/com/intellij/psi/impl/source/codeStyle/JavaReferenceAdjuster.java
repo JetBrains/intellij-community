@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -73,7 +73,7 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
             process(annotation.getNode(), addImports, incompleteCode, useFqInJavadoc, useFqInCode);
           }
 
-          boolean isInsideDocComment = TreeUtil.findParent(element, JavaDocElementType.DOC_COMMENT) != null;
+          boolean isInsideDocComment = TreeUtil.findParent(element, JavaDocElementType.DOC_COMMENT_TOKENS) != null;
           boolean isShort = !ref.isQualified();
           if (isInsideDocComment ? !useFqInJavadoc : !useFqInCode) {
             if (isShort) return element; // short name already, no need to change

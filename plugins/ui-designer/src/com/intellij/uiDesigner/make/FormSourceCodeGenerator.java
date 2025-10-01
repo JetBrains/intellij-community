@@ -450,7 +450,7 @@ public final class FormSourceCodeGenerator {
       if (oldLexem != newLexem) {
         return false;
       }
-      if (oldLexem != TokenType.WHITE_SPACE && oldLexem != JavaDocElementType.DOC_COMMENT) {
+      if (oldLexem != TokenType.WHITE_SPACE && !JavaDocElementType.DOC_COMMENT_TOKENS.contains(oldLexem)) {
         int oldStart = oldTextLexer.getTokenStart();
         int newStart = newTextLexer.getTokenStart();
         int oldLength = oldTextLexer.getTokenEnd() - oldTextLexer.getTokenStart();

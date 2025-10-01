@@ -1181,7 +1181,7 @@ public class JavaDocInfoGenerator {
   private static @Nullable ASTNode findRelevantCommentNode(@NotNull ASTNode fileNode) {
     ASTNode node = fileNode.findChildByType(JavaElementType.PACKAGE_STATEMENT);
     if (node == null) node = fileNode.getLastChildNode();
-    while (node != null && node.getElementType() != JavaDocElementType.DOC_COMMENT) {
+    while (node != null && !JavaDocElementType.DOC_COMMENT_TOKENS.contains(node.getElementType())) {
       node = node.getTreePrev();
     }
     return node;
