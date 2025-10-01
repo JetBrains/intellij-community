@@ -14,10 +14,18 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
+import org.jsoup.parser.Parser
+import org.jsoup.parser.Tag
+import org.jsoup.parser.TagSet
 import org.jsoup.select.NodeVisitor
 import javax.swing.KeyStroke
 
 internal object JBHtmlPaneInputTranspiler {
+
+  internal val customTagSet = TagSet.Html().also { set ->
+    set.add(Tag("shortcut").set(Tag.SelfClose))
+    set.add(Tag("icon").set(Tag.SelfClose))
+  }
 
   private val dropPrecedingEmptyParagraphTags = CollectionFactory.createCharSequenceSet(false).also {
     it.addAll(listOf("ul", "ol", "dl", "h1", "h2", "h3", "h4", "h5", "h6", "p", "tr", "td",
@@ -28,7 +36,7 @@ internal object JBHtmlPaneInputTranspiler {
    * Transpiler pane input to fit to limited AWT HTML toolkit support.
    */
   fun transpileHtmlPaneInput(text: @Nls String): @Nls String {
-    val document = Jsoup.parse(text)
+    val document = Jsoup.parse(text, Parser.htmlParser().tagSet(customTagSet))
     document.traverse(NodeVisitor { node, _ ->
       when (node) {
         is TextNode -> {

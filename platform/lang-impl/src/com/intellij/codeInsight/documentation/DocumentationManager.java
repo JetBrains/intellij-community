@@ -82,7 +82,6 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 
@@ -1867,7 +1866,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
 
-    var document = Jsoup.parse(text);
+    var document = DocumentationHtmlUtil.parseHtml(text);
     if (document.select("." + CLASS_DEFINITION + ", ." + CLASS_CONTENT + ", ." + CLASS_SECTIONS).isEmpty()) {
       int bodyStart = findContentStart(text);
       if (bodyStart > 0) {
@@ -1880,7 +1879,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         text = CONTENT_START + text + CONTENT_END;
       }
       // reparse the document
-      document = Jsoup.parse(text);
+      document = DocumentationHtmlUtil.parseHtml(text);
     }
 
     DocumentationHtmlUtil.removeEmptySections$intellij_platform_lang_impl(document);
