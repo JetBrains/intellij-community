@@ -2,7 +2,8 @@
 package com.intellij.ui.svg
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.getOrHandleException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.DataUrl
@@ -20,7 +21,6 @@ import javax.swing.event.DocumentEvent
 import javax.swing.text.*
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
-import kotlin.math.max
 
 /**
  * Custom view for Swing HTML facility, displays [UnloadableAdaptiveImage]s
@@ -118,8 +118,8 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
 
   private fun handleRendererEvent(evt: AdaptiveImageRendererEvent) {
     myState = when (evt) {
-      is AdaptiveImageRendererEvent.Loaded -> ViewState.Loaded(evt.dimensions, evt.vector)
-      is AdaptiveImageRendererEvent.Rasterized -> ViewState.Loaded(evt.dimensions, evt.vector)
+      is AdaptiveImageRendererEvent.Loaded -> ViewState.Loaded(evt.dimensions)
+      is AdaptiveImageRendererEvent.Rasterized -> ViewState.Loaded(evt.dimensions)
       is AdaptiveImageRendererEvent.Error -> ViewState.LoadError()
       is AdaptiveImageRendererEvent.Unloaded -> ViewState.Idle()
     }
@@ -137,22 +137,18 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
     val src = element.attributes.getAttribute(HTML.Attribute.SRC) as? String? ?: return null
     val filteredSrc = src.filter { !it.isWhitespace() }
     if (DataUrl.isDataUrl(filteredSrc)) {
-      try {
-        return AdaptiveImageOrigin.DataUrl(DataUrl.parse(filteredSrc))
-      }
-      catch (e: Exception) {
-        thisLogger().warn("Failed to parse data url", e)
-        return null
+      return runCatching {
+        AdaptiveImageOrigin.DataUrl(DataUrl.parse(filteredSrc))
+      }.getOrHandleException { e->
+        LOG.warn("Failed to parse data url", e)
       }
     }
 
     val docBase = (document as HTMLDocument).base
-    try {
-      return AdaptiveImageOrigin.Url(URL(docBase, filteredSrc).toString())
-    }
-    catch (e: Exception) {
-      thisLogger().warn("Error generating image src URL", e)
-      return null
+    return runCatching {
+      AdaptiveImageOrigin.Url(URL(docBase, filteredSrc).toString())
+    }.getOrHandleException { e ->
+      LOG.warn("Error generating image src URL", e)
     }
   }
 
@@ -263,6 +259,8 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
      * Property name in [Document] where instance of [AdaptiveImagesManager] should be stored
      */
     const val ADAPTIVE_IMAGES_MANAGER_PROPERTY: String = "adaptiveImagesManager"
+
+    private val LOG = logger<AdaptiveImageView>()
   }
 }
 
@@ -278,7 +276,7 @@ private const val DEFAULT_PX_PER_EX = 5.0f
 
 private sealed interface ViewState {
   class Idle : ViewState
-  class Loaded(val dims: ImageDimensions, val isVector: Boolean) : ViewState
+  class Loaded(val dims: ImageDimensions) : ViewState
   class LoadError : ViewState
   class SrcParseError : ViewState
 }
