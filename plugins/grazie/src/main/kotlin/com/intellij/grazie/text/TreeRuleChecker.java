@@ -197,9 +197,6 @@ public final class TreeRuleChecker {
   private static List<MatchingResult> doCheck(TextContent text, List<ParsedSentence> sentences) {
     if (sentences.isEmpty()) return List.of();
 
-    ParameterValues parameters = calcParameters(sentences);
-    List<Tree> trees = ContainerUtil.map(sentences, s -> s.tree.withParameters(parameters));
-
     record Cached(List<ParsedSentence> sentences, List<MatchingResult> matches) {}
 
     AtomicReference<Cached> ref = CachedValuesManager.getManager(text.getContainingFile().getProject())
@@ -208,7 +205,9 @@ public final class TreeRuleChecker {
     try {
       Cached cached = ref.get();
       if (cached == null || !cached.sentences.equals(sentences)) {
-        List<ai.grazie.rules.Rule> rules = enabledRules(sentences.getFirst().tree, text);
+        ParameterValues parameters = calcParameters(sentences);
+        List<Tree> trees = ContainerUtil.map(sentences, s -> s.tree.withParameters(parameters));
+        List<ai.grazie.rules.Rule> rules = enabledRules(trees.getFirst(), text);
         List<MatchingResult> matches = matchTrees(trees, rules);
         ref.set(cached = new Cached(sentences, matches));
       }
@@ -225,11 +224,11 @@ public final class TreeRuleChecker {
   private static List<ai.grazie.rules.Rule> enabledRules(Tree sampleTree, TextContent content) {
     Language language = sampleTree.treeSupport().getGrazieLanguage();
     LanguageToolkit toolkit = LanguageToolkit.forLanguage(language);
-    List<ai.grazie.rules.Rule> rules = ContainerUtil.filter(toolkit.publishedRules(), r -> toGrazieRule(r).isCurrentlyEnabled(content));
-    if (sampleTree.isFlat()) {
-      return ContainerUtil.filter(rules, r -> r.supportsFlatTrees());
-    }
-    return rules;
+    boolean flat = sampleTree.isFlat();
+    return ContainerUtil.filter(toolkit.publishedRules(), r ->
+      (!flat || r.supportsFlatTrees()) &&
+      toGrazieRule(r).isCurrentlyEnabled(content)
+    );
   }
 
   private static List<MatchingResult> matchTrees(List<Tree> trees, List<ai.grazie.rules.Rule> rules) {
