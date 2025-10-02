@@ -41,6 +41,8 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.time.Duration.Companion.milliseconds
 
+internal const val MISC_PROJECT_NAME: String = "Welcome"
+
 internal val miscProjectDefaultPath: Path
   get() {
     val default = GeneralLocalSettings.getInstance().defaultProjectDirectory
@@ -161,6 +163,7 @@ private suspend fun openProject(projectPath: Path): Project {
   val project = projectManager.openProjectAsync(projectPath, OpenProjectTask {
     runConfigurators = false
     isProjectCreatedWithWizard = true
+    projectName = MISC_PROJECT_NAME
 
   }) ?: error("Failed to open project in $projectPath, check logs")
   // There are countless numbers of reasons `openProjectAsync` might return null
