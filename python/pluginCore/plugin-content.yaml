@@ -142,6 +142,9 @@
   files:
   - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
   reason: <- intellij.python.sdk.ui
+- name: lib/modules/intellij.python.sdkConfigurator.jar
+  contentModules:
+  - name: intellij.python.sdkConfigurator
 - name: lib/modules/intellij.python.syntax.core.jar
   contentModules:
   - name: intellij.python.syntax.core

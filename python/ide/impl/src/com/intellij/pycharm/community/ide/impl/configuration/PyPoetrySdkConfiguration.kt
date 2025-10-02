@@ -15,9 +15,11 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.projectModelEnabled
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
+import com.jetbrains.python.projectModel.poetry.POETRY_TOOL_ID
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
@@ -33,12 +35,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.pathString
-
 @ApiStatus.Internal
 class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
-  init {
-    if (projectModelEnabled) throw ExtensionNotApplicableException.create()
-  }
+  override val toolId: ToolId = POETRY_TOOL_ID
 
   companion object {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)

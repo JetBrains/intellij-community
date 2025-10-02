@@ -8,8 +8,8 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.shared.LanguageLevelWithUiComparator
 import com.intellij.python.community.services.shared.PythonWithUi
-import com.jetbrains.python.PyToolUIInfo
 import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult

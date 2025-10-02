@@ -4,6 +4,10 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.removeUserData
@@ -16,11 +20,20 @@ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.python.pyproject.PyProjectToml
-import com.intellij.python.pyproject.model.spi.*
+import com.intellij.python.pyproject.model.api.ModelRebuiltListener
+import com.intellij.python.pyproject.model.spi.ProjectName
+import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.Tool
+import com.intellij.python.pyproject.model.spi.WorkspaceName
+import com.intellij.util.messages.Topic
+import com.jetbrains.python.ToolId
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 
@@ -31,6 +44,12 @@ internal fun isProjectLinked(project: Project): Boolean =
   project.workspaceModel.currentSnapshot.entitiesBySource(sourceFilter = { it is PyProjectTomlEntitySource }).any()
 
 internal suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+  changeWorkspaceMutex.withLock {
+    unlinkProjectImpl(project, externalProjectPath)
+  }
+}
+
+private suspend fun unlinkProjectImpl(project: Project, externalProjectPath: String) {
   val tracker = ExternalSystemProjectTracker.getInstance(project)
   project.getUserData(PY_PROJECT_TOML_KEY)?.let { oldProjectId ->
     tracker.remove(oldProjectId)
@@ -45,31 +64,53 @@ internal suspend fun unlinkProject(project: Project, externalProjectPath: String
 }
 
 internal suspend fun linkProject(project: Project, projectModelRoot: Path) {
-  val externalProjectPath = projectModelRoot.pathString
-  val (files, excludeDirs) = walkFileSystem(projectModelRoot)
-  val entries = generatePyProjectTomlEntries(files, excludeDirs)
-  unlinkProject(project, externalProjectPath)
+  changeWorkspaceMutex.withLock {
+    val externalProjectPath = projectModelRoot.pathString
+    val (files, excludeDirs) = walkFileSystem(projectModelRoot)
+    val entries = generatePyProjectTomlEntries(files, excludeDirs)
+    if (entries.isEmpty()) {
+      return
+    }
+    val sdks = project.modules.associate { Pair(it.name, ModuleRootManager.getInstance(it).sdk?.name) }
+    project.workspaceModel.currentSnapshot.entities(ModuleEntity::class.java)
+    unlinkProjectImpl(project, externalProjectPath)
 
-  val tracker = ExternalSystemProjectTracker.getInstance(project)
-  val projectAware = PyExternalSystemProjectAware(ExternalSystemProjectId(SYSTEM_ID, externalProjectPath), files.map { it.key.pathString }.toSet(), project, projectModelRoot)
-  tracker.register(projectAware)
-  tracker.activate(projectAware.projectId)
-  project.putUserData(PY_PROJECT_TOML_KEY, projectAware.projectId)
-  val storage = createEntityStorage(project, entries, project.workspaceModel.getVirtualFileUrlManager())
-  val listener = project.messageBus.syncPublisher(PROJECT_AWARE_TOPIC)
-  listener.onProjectReloadStart()
-  try {
-    project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { mutableStorage -> // Fake module entity is added by default if nothing was discovered
-      removeFakeModuleEntity(mutableStorage)
-      mutableStorage.replaceBySource({ it is PyProjectTomlEntitySource }, storage)
+
+    val tracker = ExternalSystemProjectTracker.getInstance(project)
+    val projectAware = PyExternalSystemProjectAware(ExternalSystemProjectId(SYSTEM_ID, externalProjectPath), files.map { it.key.pathString }.toSet(), project, projectModelRoot)
+    tracker.register(projectAware)
+    tracker.activate(projectAware.projectId)
+    project.putUserData(PY_PROJECT_TOML_KEY, projectAware.projectId)
+    val storage = createEntityStorage(project, entries, project.workspaceModel.getVirtualFileUrlManager())
+    val listener = project.messageBus.syncPublisher(PROJECT_AWARE_TOPIC)
+    listener.onProjectReloadStart()
+    try {
+      project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { mutableStorage -> // Fake module entity is added by default if nothing was discovered
+        removeFakeModuleEntity(mutableStorage)
+        mutableStorage.replaceBySource({ it is PyProjectTomlEntitySource }, storage)
+      }
+
+      // Restore SDK assoc
+      for (module in project.modules) {
+        if (ModuleRootManager.getInstance(module).sdk == null) {
+          val sdkName = sdks[module.name] ?: continue
+          ProjectJdkTable.getInstance().findJdk(sdkName)?.let { sdk ->
+            ModuleRootModificationUtil.setModuleSdk(module, sdk)
+          }
+        }
+      }
+    }
+    catch (e: Exception) {
+      listener.onProjectReloadFinish(ExternalSystemRefreshStatus.FAILURE)
+      throw e
+    }
+    listener.onProjectReloadFinish(ExternalSystemRefreshStatus.SUCCESS)
+    project.messageBus.syncPublisher(PROJECT_LINKER_AWARE_TOPIC).onProjectLinked(externalProjectPath)
+
+    withContext(Dispatchers.Default) {
+      project.messageBus.syncPublisher(MODEL_REBUILD).modelRebuilt(project)
     }
   }
-  catch (e: Exception) {
-    listener.onProjectReloadFinish(ExternalSystemRefreshStatus.FAILURE)
-    throw e
-  }
-  listener.onProjectReloadFinish(ExternalSystemRefreshStatus.SUCCESS)
-  project.messageBus.syncPublisher(PROJECT_LINKER_AWARE_TOPIC).onProjectLinked(externalProjectPath)
 }
 
 private suspend fun generatePyProjectTomlEntries(files: Map<Path, PyProjectToml>, allExcludeDirs: Set<Directory>): Set<PyProjectTomlBasedEntryImpl> = withContext(Dispatchers.Default) {
@@ -88,7 +129,7 @@ private suspend fun generatePyProjectTomlEntries(files: Map<Path, PyProjectToml>
     }
     val projectName = ProjectName(projectNameAsString ?: "${root.name}@${tomlFile.hashCode()}")
     val sourceRootsAndTools = Tool.EP.extensionList.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
-    val sourceRoots = sourceRootsAndTools.map { it.second }.toSet()
+    val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + findSrc(root)
     participatedTools.addAll(sourceRootsAndTools.map { it.first.id })
     val excludedDirs = allExcludeDirs.filter { it.startsWith(root) }
     val relationsWithTools: List<PyProjectTomlToolRelation> = participatedTools.map { PyProjectTomlToolRelation.SimpleRelation(it) }
@@ -108,9 +149,9 @@ private suspend fun generatePyProjectTomlEntries(files: Map<Path, PyProjectToml>
       if (deps.isNotEmpty()) {
         entity.relationsWithTools.add(PyProjectTomlToolRelation.SimpleRelation(tool.id))
       }
-      workspaceMembers[entity.name]?.let { workspace ->
-        entity.relationsWithTools.add(PyProjectTomlToolRelation.WorkspaceMember(tool.id, workspace))
-      }
+    }
+    for ((member, workspace) in workspaceMembers) {
+      entriesByName[member]!!.relationsWithTools.add(PyProjectTomlToolRelation.WorkspaceMember(tool.id, workspace))
     }
   }
   return@withContext entries.toSet()
@@ -224,3 +265,14 @@ private sealed interface PyProjectTomlToolRelation {
    */
   data class WorkspaceMember(override val toolId: ToolId, val workspace: WorkspaceName) : PyProjectTomlToolRelation
 }
+
+@Topic.ProjectLevel
+private val MODEL_REBUILD: Topic<ModelRebuiltListener> = Topic(ModelRebuiltListener::class.java, Topic.BroadcastDirection.NONE)
+
+private val changeWorkspaceMutex = Mutex()
+
+private suspend fun findSrc(root: Directory): Set<Directory> =
+  withContext(Dispatchers.IO) {
+    val src = root.resolve("src")
+    if (src.exists()) setOf(src) else emptySet()
+  }

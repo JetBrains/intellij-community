@@ -7,30 +7,31 @@ import com.intellij.openapi.util.getPathMatcher
 import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
 import com.intellij.python.pyproject.model.spi.*
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.ToolId
+import com.jetbrains.python.sdk.uv.UV_UI_INFO
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.TomlArray
 import org.apache.tuweni.toml.TomlTable
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import kotlin.io.path.relativeTo
 
+@ApiStatus.Internal
+val UV_TOOL_ID: ToolId = ToolId("uv")
 internal class UvTool : Tool {
 
-  override val id: ToolId = ToolId("uv")
+  override val id: ToolId = UV_TOOL_ID
+
+  override val ui: PyToolUIInfo = UV_UI_INFO
 
   override suspend fun getProjectName(projectToml: TomlTable): @NlsSafe String? = null
 
-  override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = withContext(Dispatchers.Default) {
-    if (toml.getString("${PY_PROJECT_TOML_BUILD_SYSTEM}.build-backend") == "uv_build") {
-      setOf(projectRoot.resolve("src"))
-    }
-    else {
-      emptySet()
-    }
-  }
+  override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 
   override suspend fun getProjectStructure(entries: Map<ProjectName, PyProjectTomlProject>, rootIndex: Map<Directory, ProjectName>): ProjectStructureInfo = withContext(Dispatchers.Default) {
     val workspaces = entries.mapNotNull { (name, entry) ->

@@ -33,6 +33,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.sdk" loading="required"/>
     <module name="intellij.python.sdk.ui" loading="required"/>
     <module name="intellij.python.pyproject" loading="required"/>
+    <module name="intellij.python.sdkConfigurator" loading="required"/>
     <module name="intellij.python.community.impl.poetry" loading="required"/>
     <module name="intellij.python.community.core.impl" loading="required"/>
     <module name="intellij.python.community.helpersLocator" loading="required"/>

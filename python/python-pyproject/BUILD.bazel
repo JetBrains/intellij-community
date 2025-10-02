@@ -36,6 +36,8 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/workspace/jps",
+    "//platform/projectModel-impl",
+    "//platform/projectModel-api:projectModel",
   ],
   exports = ["@lib//:tuweni-toml"]
 )
@@ -67,6 +69,8 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/workspace/jps",
+    "//platform/projectModel-impl",
+    "//platform/projectModel-api:projectModel",
   ],
   exports = ["@lib//:tuweni-toml"]
 )

@@ -5,20 +5,27 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.spi.*
+import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.ToolId
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.tuweni.toml.TomlTable
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.net.URISyntaxException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.toPath
 
+@ApiStatus.Internal
+val POETRY_TOOL_ID: ToolId = ToolId("poetry")
 internal class PoetryTool : Tool {
 
-  override val id: ToolId = ToolId("poetry")
+  override val id: ToolId = POETRY_TOOL_ID
+  override val ui: PyToolUIInfo = PyToolUIInfo("Poetry", PythonSdkUIIcons.Tools.Poetry)
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 
