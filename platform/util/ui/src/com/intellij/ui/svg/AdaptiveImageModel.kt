@@ -225,7 +225,7 @@ class UnloadableCache<S, V : MemorySizeAware, T : Unloadable<S, V>> : Unloadable
   }
 
   override fun notifyUsed(u: Unloadable<S, V>) {
-    val ref = myMap[u.src] ?: return
+    val ref = myMap.remove(u.src) ?: return
     myMap[u.src] = ref
   }
 
