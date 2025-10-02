@@ -31,7 +31,8 @@ class PyMiscService(private val scope: CoroutineScope) {
             ).ask(project)
           }
         },
-        scopeProvider = { scope }
+        scopeProvider = { scope },
+        currentProject = project,
       )
 
       when (projectCreationResult) {

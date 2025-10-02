@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -64,10 +65,12 @@ suspend fun createMiscProject(
   confirmInstallation: suspend () -> Boolean,
   projectPath: Path = miscProjectDefaultPath,
   systemPythonService: SystemPythonService = SystemPythonService(),
+  currentProject: Project? = null,
 ): PyResult<Job> {
   return createProjectAndSdk(projectPath,
                              confirmInstallation = confirmInstallation,
-                             systemPythonService = systemPythonService
+                             systemPythonService = systemPythonService,
+                             currentProject = currentProject,
   ).mapResult { (project, sdk) ->
     Result.Success(scopeProvider(project).launch {
       withBackgroundProgress(project, PyCharmCommunityCustomizationBundle.message("misc.project.filling.file")) {
@@ -140,9 +143,17 @@ private suspend fun createProjectAndSdk(
   projectPath: Path,
   confirmInstallation: suspend () -> Boolean,
   systemPythonService: SystemPythonService,
+  currentProject: Project?,
 ): PyResult<Pair<Project, Sdk>> {
+  val isCurrentProjectIsAlreadyMiscProject = currentProject?.name == MISC_PROJECT_NAME
+  val project = if (isCurrentProjectIsAlreadyMiscProject) {
+    currentProject
+  } else {
+    openProject(projectPath)
+  }
+
   val vfsProjectPath = createProjectDir(projectPath).getOr { return it }
-  val project = openProject(projectPath)
+  // Even if the misc project might be already opened, it might not have sdk (if it was opened as a welcome project)
   val sdkResult = withContext(Dispatchers.EDT) {
     runWithModalProgressBlocking(
       owner = ModalTaskOwner.guess(),
