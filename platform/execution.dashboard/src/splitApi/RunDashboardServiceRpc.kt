@@ -2,6 +2,7 @@
 package com.intellij.platform.execution.dashboard.splitApi
 
 import com.intellij.execution.dashboard.RunDashboardServiceId
+import com.intellij.ide.rpc.ComponentDirectTransferId
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -25,4 +26,7 @@ interface RunDashboardServiceRpc : RemoteApi<Unit> {
   suspend fun getStatuses(projectId: ProjectId): Flow<ServiceStatusDto>
   suspend fun getCustomizations(projectId: ProjectId): Flow<ServiceCustomizationDto>
   suspend fun updateConfigurationFolderName(serviceIds: List<RunDashboardServiceId>, newGroupName: String?, projectId: ProjectId)
+  suspend fun getLuxedContentEvents(projectId: ProjectId): Flow<RunDashboardLuxedContentEvent>
+  suspend fun startLuxingContentForService(projectId: ProjectId, id: RunDashboardServiceId): ComponentDirectTransferId?
+  suspend fun pauseLuxingContentForService(projectId: ProjectId, id: RunDashboardServiceId)
 }
