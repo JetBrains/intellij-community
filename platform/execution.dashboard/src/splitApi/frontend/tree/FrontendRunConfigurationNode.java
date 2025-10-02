@@ -3,6 +3,7 @@ package com.intellij.platform.execution.dashboard.splitApi.frontend.tree;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
@@ -10,9 +11,12 @@ import com.intellij.ide.ui.icons.IconId;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto;
 import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto;
 import com.intellij.platform.execution.dashboard.splitApi.TextSegmentWithAttributesDto;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendDashboardLuxComponent;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardLuxHolder;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManager;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardService;
 import com.intellij.ui.SimpleTextAttributes;
@@ -63,7 +67,10 @@ public class FrontendRunConfigurationNode extends AbstractTreeNode<FrontendRunDa
 
     SimpleTextAttributes nameAttributes;
     if (frontendService.isStored()) {
-      nameAttributes = getContent() != null ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      var hasRegularOrLuxedContent = getContent() != null ||
+                                     FrontendRunDashboardLuxHolder.getInstance(getProject())
+                                       .getComponentOrNull(frontendService.getUuid()) != null;
+      nameAttributes = hasRegularOrLuxedContent ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
     else {
       nameAttributes = SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES;
@@ -110,6 +117,12 @@ public class FrontendRunConfigurationNode extends AbstractTreeNode<FrontendRunDa
   }
 
   private @Nullable Icon getExecutorIcon() {
+    FrontendDashboardLuxComponent luxedComponent =
+      FrontendRunDashboardLuxHolder.getInstance(myProject).getComponentOrNull(getValue().getRunDashboardServiceDto().getUuid());
+    if (luxedComponent != null && ToolWindowId.RUN.equals(luxedComponent.getExecutorId())) {
+      return DefaultRunExecutor.getRunExecutorInstance().getIcon();
+    }
+
     Content content = getContent();
     if (content != null) {
       if (!RunContentManagerImpl.isTerminated(content)) {

@@ -47,6 +47,7 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.execution.RunContentDescriptorIdImplKt.RUN_CONTENT_DESCRIPTOR_ID;
 import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.SELECTED_DASHBOARD_SERVICE_ID;
 import static com.intellij.ide.ui.icons.IconIdKt.icon;
 import static com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper.*;
@@ -187,6 +188,13 @@ public final class RunDashboardServiceViewContributor
     @Override
     public JComponent getContentComponent() {
       Project project = myNode.getProject();
+
+      var luxedComponent = getLuxedComponentIfRegistered();
+      if (luxedComponent != null) {
+        luxedComponent.bind();
+        return luxedComponent;
+      }
+
       var uiManager = RunDashboardUiManagerImpl.getInstance(project);
       RunDashboardComponentWrapper wrapper = uiManager.getContentWrapper();
       Content content = myNode.getContent();
@@ -200,6 +208,11 @@ public final class RunDashboardServiceViewContributor
         wrapper.setContent(contentManager.getComponent());
       }
       return wrapper;
+    }
+
+    private @Nullable FrontendDashboardLuxComponent getLuxedComponentIfRegistered() {
+      var id = myNode.getValue().getRunDashboardServiceDto().getUuid();
+      return FrontendRunDashboardLuxHolder.getInstance(myNode.getProject()).getComponentOrNull(id);
     }
 
     @Override
@@ -250,6 +263,14 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public void onNodeSelected(List<Object> selectedServices) {
+      if (selectedServices.size() != 1) return;
+
+      FrontendDashboardLuxComponent luxedComponent = getLuxedComponentIfRegistered();
+      if (luxedComponent != null) {
+        luxedComponent.bind();
+        return;
+      }
+
       Content content = myNode.getContent();
       if (content == null) return;
 
@@ -258,6 +279,12 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public void onNodeUnselected() {
+      FrontendDashboardLuxComponent luxedComponent = getLuxedComponentIfRegistered();
+      if (luxedComponent != null) {
+        luxedComponent.unbind();
+        return;
+      }
+
       Content content = myNode.getContent();
       if (content == null) return;
 
@@ -358,7 +385,9 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.PROJECT,  myNode.getProject());
       sink.set(SELECTED_DASHBOARD_SERVICE_ID, myNode.getValue().getRunDashboardServiceDto().getUuid());
+      sink.set(RUN_CONTENT_DESCRIPTOR_ID, myNode.getValue().getRunDashboardServiceDto().getContentId());
     }
   }
 
