@@ -219,6 +219,7 @@ private class TerminalEventDispatcher(
       "TerminalIncreaseFontSize",
       "TerminalDecreaseFontSize",
       "TerminalResetFontSize",
+      "Terminal.MoveToEditor",
       // essential terminal actions
       "Terminal.Escape",
       "Terminal.CopySelectedText",
