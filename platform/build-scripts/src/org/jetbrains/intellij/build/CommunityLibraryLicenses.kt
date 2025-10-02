@@ -574,9 +574,6 @@ object CommunityLibraryLicenses {
     LibraryLicense("Java Server Pages (JSP) for Visual Studio Code", version = "0.0.3", attachedTo = "intellij.textmate", url = "https://github.com/pthorsson/vscode-jsp")
       .mit("https://github.com/pthorsson/vscode-jsp/blob/master/LICENSE"),
 
-    LibraryLicense("Java Simple Serial Connector", libraryName = "io.github.java.native.jssc", url = "https://github.com/java-native/jssc")
-      .lgpl3("https://github.com/java-native/jssc/blob/master/LICENSE.txt"),
-
     LibraryLicense("Java String Similarity", libraryName = "java-string-similarity", url = "https://github.com/tdebatty/java-string-similarity")
       .mit("https://github.com/tdebatty/java-string-similarity/blob/master/LICENSE.md")
       .suppliedByPersons("Thibault Debatty"),
@@ -713,6 +710,10 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "jsch-agent-proxy", url = "https://github.com/ymnk/jsch-agent-proxy")
       .newBsd("https://github.com/ymnk/jsch-agent-proxy/blob/master/LICENSE.txt")
       .suppliedByPersons("Atsuhiko Yamanaka"),
+
+    LibraryLicense("jSerialComm", libraryName = "jetbrains.intellij.deps.jSerialComm", url= "https://github.com/JetBrains/jSerialComm")
+      .apache("https://github.com/JetBrains/jSerialComm/blob/master/LICENSE-APACHE-2.0")
+      .forkedFrom(groupId = "com.fazecast", artifactId = "jSerialComm", version = "2.11.2", mavenRepositoryUrl = "https://repo1.maven.org/maven2/"),
 
     LibraryLicense("JSON", libraryName = "json.jar", version = LibraryLicense.CUSTOM_REVISION, url = "https://www.json.org/")
       .license("JSON License", "https://www.json.org/license.html"),

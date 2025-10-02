@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -23,6 +24,7 @@ import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import java.net.URI
 import java.nio.file.Path
 import java.util.Locale
 
@@ -233,7 +235,15 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.cucumber.jvmFormatter5", "cucumber-jvmFormatter5.jar")
     },
     pluginAuto("intellij.serial.monitor") { spec ->
-      spec.withProjectLibrary("io.github.java.native.jssc", LibraryPackMode.STANDALONE_SEPARATE)
+      // jSerialComm java JAR - Remember to update the binary dependency when updating to a new version!
+      spec.withProjectLibrary("jetbrains.intellij.deps.jSerialComm", LibraryPackMode.STANDALONE_SEPARATE)
+
+      // jSerialComm native library
+      spec.withGeneratedResources { targetDir, context ->
+        val uri = URI.create("https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/25666bc98300c6fd674d3a03afd700714c6fe571/jSerialComm.zip")
+        val downloaded = BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDirRoot, uri)
+        BuildDependenciesDownloader.extractFile(downloaded, targetDir.resolve("bin"), context.paths.communityHomeDirRoot)
+      }
     },
   )
 
