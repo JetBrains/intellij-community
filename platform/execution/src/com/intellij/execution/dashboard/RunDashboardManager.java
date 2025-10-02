@@ -1,10 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard;
 
+import com.intellij.execution.RunContentDescriptorId;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
@@ -16,9 +20,18 @@ import java.util.Set;
  */
 public interface RunDashboardManager {
 
+  @ApiStatus.Internal
+  void updateServiceRunContentDescriptor(@NotNull Content contentWithNewDescriptor, @NotNull RunContentDescriptor oldDescriptor);
+
   static RunDashboardManager getInstance(@NotNull Project project) {
     return RunDashboardManagerProxy.getInstance(project);
   }
+
+  // Sorry for that, but it's unbearable to move the api classes from the actual dashboard module to lang or execution
+  // only to be able to add them into an interface which in turn can not be moved to the dashboard module because of existing external dependencies
+  // AND the fact that it solves cyclic dependencies issue between debugger, execution and lang modules
+  @ApiStatus.Internal
+  @Nullable default Object findService(@NotNull RunContentDescriptorId descriptorId) { return null; };
 
   void updateDashboard(boolean withStructure);
 

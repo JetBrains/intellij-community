@@ -82,18 +82,18 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
-  public void updateServiceRunContentDescriptor(@NotNull Content newContent, @NotNull RunContentDescriptor oldDescriptor) {
+  public void updateServiceRunContentDescriptor(@NotNull Content contentWithNewDescriptor, @NotNull RunContentDescriptor oldDescriptor) {
     RunContentDescriptorId oldDescriptorId = oldDescriptor.getId();
     if (oldDescriptorId == null) return;
 
-    var newDescriptor = RunContentManagerImpl.getRunContentDescriptorByContent(newContent);
+    var newDescriptor = RunContentManagerImpl.getRunContentDescriptorByContent(contentWithNewDescriptor);
 
     var newContentId = newDescriptor == null ? null : newDescriptor.getId();
     if (newContentId instanceof  RunContentDescriptorIdImpl newContentIdImpl) {
       updateServiceRunContentDescriptor(oldDescriptorId, newContentIdImpl);
     }
 
-    RunDashboardUiManagerImpl.getInstance(myProject).getDashboardContentManager().addContent(newContent);
+    RunDashboardUiManagerImpl.getInstance(myProject).getDashboardContentManager().addContent(contentWithNewDescriptor);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})

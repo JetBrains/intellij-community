@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.splitApi.frontend
 
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.dashboard.RunDashboardManager
+import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.execution.services.ServiceEventListener
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
@@ -11,7 +13,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper
 import com.intellij.platform.execution.dashboard.splitApi.*
@@ -42,10 +43,9 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     RunDashboardServiceRpc.getInstance().getServices(project.projectId()).collect { updatesFromBackend ->
       frontendDtos.value = updatesFromBackend
 
-      // todo split: update configuration name and type id in corresponding RunContentDescriptor's
       updateDashboard(true)
       withContext(Dispatchers.EDT) {
-        (RunDashboardUiManagerImpl.getInstance(project) as RunDashboardUiManagerImpl).syncContentsFromBackend()
+        RunDashboardUiManagerImpl.getInstance(project).syncContentsFromBackend()
       }
     }
   }
@@ -164,9 +164,9 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     return emptySet()
   }
 
-  fun updateServiceRunContentDescriptor(content: Content, oldDescriptor: RunContentDescriptor) {
-    val descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content) ?: return
-    val contentId = descriptor.id ?: return
+  override fun updateServiceRunContentDescriptor(contentWithNewDescriptor: Content, oldDescriptor: RunContentDescriptor) {
+    val descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(contentWithNewDescriptor) ?: return
+    val contentId = descriptor.id as? RunContentDescriptorIdImpl ?: return
     val newDtos = ArrayList(frontendDtos.value)
     for ((index, serviceDto) in newDtos.withIndex()) {
       if (serviceDto.contentId == oldDescriptor.id) {
@@ -174,11 +174,12 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
           val newDto = serviceDto.copy(contentId = contentId)
           newDtos[index] = newDto
         }
-        else if (serviceDto is RunDashboardAdditionalServiceDto){
+        else if (serviceDto is RunDashboardAdditionalServiceDto) {
           val newDto = serviceDto.copy(contentId = contentId)
           newDtos[index] = newDto
         }
         frontendDtos.value = newDtos
+        updateDashboard(true)
         RunDashboardServiceViewContributorHelper.scheduleAttachRunContentDescriptorId(project, oldDescriptor.id, contentId)
         break
       }
@@ -198,15 +199,18 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
    */
   fun attachServiceRunContentDescriptor(content: Content) {
     val descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content) ?: return
-    val contentId = descriptor.id ?: return
+    val contentId = descriptor.id as? RunContentDescriptorIdImpl ?: return
     val runConfigurationName = descriptor.runConfigurationName ?: return
     val runConfigurationTypeId = descriptor.runConfigurationTypeId ?: return
 
     val newDtos = ArrayList(frontendDtos.value)
     for ((index, serviceDto) in newDtos.withIndex()) {
-      if (serviceDto.name == runConfigurationName && serviceDto.typeId == runConfigurationTypeId &&
-          serviceDto is RunDashboardMainServiceDto) {
-        if (serviceDto.contentId == null) {
+      if (serviceDto.name == runConfigurationName && serviceDto.typeId == runConfigurationTypeId && serviceDto is RunDashboardMainServiceDto) {
+        if (serviceDto.contentId == contentId) {
+          updateDashboard(true)
+          return
+        }
+        else if (serviceDto.contentId == null) {
           val newDto = serviceDto.copy(contentId = contentId)
           newDtos[index] = newDto
         }
@@ -220,6 +224,7 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
         }
 
         frontendDtos.value = newDtos
+        updateDashboard(true)
         RunDashboardServiceViewContributorHelper.scheduleAttachRunContentDescriptorId(project, null, contentId)
         break
       }
