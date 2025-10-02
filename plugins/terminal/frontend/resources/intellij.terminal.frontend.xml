@@ -48,10 +48,6 @@
                             implementationClass="com.intellij.terminal.frontend.completion.TerminalCommandSpecCompletionContributorGen2"
                             order="first, before terminalPowerShell, after ml_context"/>
     <lookup.bottomPanelProvider implementation="com.intellij.terminal.frontend.completion.TerminalLookupBottomPanelProvider"/>
-
-    <applicationService
-      serviceInterface="org.jetbrains.plugins.terminal.fus.TerminalFocusFusService"
-      serviceImplementation="com.intellij.terminal.frontend.fus.TerminalFocusFusServiceImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

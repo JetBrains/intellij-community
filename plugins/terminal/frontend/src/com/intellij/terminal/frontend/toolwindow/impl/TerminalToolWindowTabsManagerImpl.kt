@@ -19,6 +19,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.TerminalTabBuilder
 import com.intellij.terminal.frontend.TerminalView
+import com.intellij.terminal.frontend.fus.TerminalFocusFusService
 import com.intellij.terminal.frontend.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
@@ -338,6 +339,8 @@ internal class TerminalToolWindowTabsManagerImpl(
         toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"))
         toolWindow.setTabDoubleClickActions(listOf(RenameTerminalSessionAction()))
       }
+
+      TerminalFocusFusService.ensureInitialized()
     }
 
     private fun scheduleTabsRestoring(manager: TerminalToolWindowTabsManagerImpl) {

@@ -3,6 +3,8 @@
 package com.intellij.terminal.frontend.fus
 
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.toolWindow.InternalDecoratorImpl
@@ -15,7 +17,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
-import org.jetbrains.plugins.terminal.fus.TerminalFocusFusService
 import org.jetbrains.plugins.terminal.fus.TerminalNonToolWindowFocus
 import java.awt.AWTEvent.FOCUS_EVENT_MASK
 import java.awt.AWTEvent.WINDOW_FOCUS_EVENT_MASK
@@ -28,7 +29,8 @@ import java.awt.event.FocusEvent
 import java.awt.event.WindowEvent
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class TerminalFocusFusServiceImpl(private val coroutineScope: CoroutineScope) : TerminalFocusFusService {
+@Service(Service.Level.APP)
+internal class TerminalFocusFusService(private val coroutineScope: CoroutineScope) {
 
   private val initialized = AtomicBoolean(false)
 
@@ -80,7 +82,7 @@ internal class TerminalFocusFusServiceImpl(private val coroutineScope: Coroutine
     }
   }
 
-  override fun ensureInitialized() {
+  private fun ensureInitialized() {
     if (!initialized.compareAndSet(false, true)) return
     coroutineScope.launch(Dispatchers.UI + CoroutineName("TerminalFocusFusService initialization")) {
       initializeState()
@@ -147,6 +149,12 @@ internal class TerminalFocusFusServiceImpl(private val coroutineScope: Coroutine
     }
     LOG.debug("Focus is going from the terminal to '$fusString'")
     ReworkedTerminalUsageCollector.logFocusLost(fusString)
+  }
+
+  companion object {
+    fun ensureInitialized() {
+      service<TerminalFocusFusService>().ensureInitialized()
+    }
   }
 }
 

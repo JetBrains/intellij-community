@@ -39,7 +39,6 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
-import org.jetbrains.plugins.terminal.fus.TerminalFocusFusService;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 
 import javax.swing.*;
@@ -112,11 +111,6 @@ public final class TerminalToolWindowManager implements Disposable {
       return;
     }
     myToolWindow = toolWindow;
-
-    var focusService = TerminalFocusFusService.getInstance();
-    if (focusService != null) { // the service only exists on the frontend
-      focusService.ensureInitialized();
-    }
   }
 
   /** Restores tabs for Classic Terminal and New Terminal Gen1. */
