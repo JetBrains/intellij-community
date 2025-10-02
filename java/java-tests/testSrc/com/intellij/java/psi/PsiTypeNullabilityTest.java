@@ -227,7 +227,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       }
       """);
     assertEquals("X<?>", type.getCanonicalText());
-    assertEquals("NULLABLE (@Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
+    assertEquals("NULLABLE (inherited @Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
   }
   
   public void testSubstitutorOnTypeParameterUnknown() {

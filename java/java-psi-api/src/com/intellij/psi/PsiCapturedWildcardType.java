@@ -96,14 +96,14 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
   public @NotNull TypeNullability getNullability() {
     if (myNullability == null) {
       TypeNullability nullability = TypeNullability.UNKNOWN;
-      if (myExistential.isBounded()) {
+      if (myExistential.isExtends()) {
         nullability = myExistential.getNullability();
       } else {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(myContext.getProject());
         if (manager != null) {
           NullabilityAnnotationInfo defaultNullability = manager.findDefaultTypeUseNullability(myContext);
           if (defaultNullability != null && defaultNullability.getNullability() == Nullability.NOT_NULL) {
-            nullability = getUpperBound().getNullability();
+            nullability = getUpperBound().getNullability().inherited();
           }
         }
       }
