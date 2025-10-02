@@ -79,7 +79,9 @@ public final class RunDashboardUiUtils {
   public static @Nullable ActionToolbar findActionToolbar(@Nullable RunContentDescriptor descriptor) {
     if (descriptor == null) return null;
 
-    for (Component component : descriptor.getComponent().getComponents()) {
+    JComponent descriptorComponent = descriptor.getComponent();
+    if (descriptorComponent == null) return null;
+    for (Component component : descriptorComponent.getComponents()) {
       if (component instanceof ActionToolbar) {
         return ((ActionToolbar)component);
       }
