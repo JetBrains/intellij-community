@@ -1,8 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.terminal.action
+package com.intellij.terminal.frontend.action
 
 import com.intellij.ide.actions.ToolWindowTabRenameActionBase
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
@@ -11,11 +9,10 @@ import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
-@Deprecated("Please avoid referencing the action class directly, get it by action ID instead: ActionManager.getInstance().getAction(\"Terminal.RenameSession\"")
-class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(
+internal class TerminalRenameTabAction : ToolWindowTabRenameActionBase(
   TerminalToolWindowFactory.TOOL_WINDOW_ID,
   TerminalBundle.message("action.RenameSession.newSessionName.label")
-), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+), DumbAware {
   override fun getContentDisplayNameToEdit(content: Content, project: Project): String {
     val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return content.displayName
     return widget.terminalTitle.buildFullTitle()

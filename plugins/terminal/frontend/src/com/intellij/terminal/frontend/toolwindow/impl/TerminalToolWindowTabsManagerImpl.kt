@@ -19,6 +19,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.TerminalTabBuilder
 import com.intellij.terminal.frontend.TerminalView
+import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
 import com.intellij.terminal.frontend.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
@@ -36,7 +37,6 @@ import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.*
-import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction
 import org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
@@ -337,7 +337,7 @@ internal class TerminalToolWindowTabsManagerImpl(
         TerminalDockContainer.install(toolWindow.project, toolWindow.decorator)
 
         toolWindow.setTabActions(ActionManager.getInstance().getAction("TerminalToolwindowActionGroup"))
-        toolWindow.setTabDoubleClickActions(listOf(RenameTerminalSessionAction()))
+        toolWindow.setTabDoubleClickActions(listOf(TerminalRenameTabAction()))
       }
 
       TerminalFocusFusService.ensureInitialized()
