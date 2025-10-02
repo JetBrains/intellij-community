@@ -84,7 +84,7 @@ internal suspend fun linkProject(project: Project, projectModelRoot: Path) {
       listener.onProjectReloadStart()
       try {
         project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { mutableStorage -> // Fake module entity is added by default if nothing was discovered
-          removeFakeModuleEntity(mutableStorage)
+          removeFakeModuleEntity(mutableStorage, entries.map { it.name.name }.toSet())
           mutableStorage.replaceBySource({ it is PyProjectTomlEntitySource }, storage)
         }
 
@@ -115,6 +115,7 @@ internal suspend fun linkProject(project: Project, projectModelRoot: Path) {
 
 private suspend fun generatePyProjectTomlEntries(files: Map<Path, PyProjectToml>, allExcludeDirs: Set<Directory>): Set<PyProjectTomlBasedEntryImpl> = withContext(Dispatchers.Default) {
   val entries = ArrayList<PyProjectTomlBasedEntryImpl>()
+  val usedNamed = mutableSetOf<String>()
   // Any tool that helped us somehow must be tracked here
   for ((tomlFile, toml) in files.entries) {
     val participatedTools = mutableSetOf<ToolId>()
@@ -126,6 +127,12 @@ private suspend fun generatePyProjectTomlEntries(files: Map<Path, PyProjectToml>
         projectNameAsString = toolAndName.second
         participatedTools.add(toolAndName.first.id)
       }
+    }
+    if (projectNameAsString != null) {
+      if (projectNameAsString in usedNamed) {
+        projectNameAsString = "$projectNameAsString@${usedNamed.size}"
+      }
+      usedNamed.add(projectNameAsString)
     }
     val projectName = ProjectName(projectNameAsString ?: "${root.name}@${tomlFile.hashCode()}")
     val sourceRootsAndTools = Tool.EP.extensionList.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
@@ -238,14 +245,16 @@ private data class PyProjectTomlBasedEntryImpl(
  *
  * @see com.intellij.openapi.project.impl.getOrInitializeModule
  */
-private fun removeFakeModuleEntity(storage: MutableEntityStorage) {
+private fun removeFakeModuleEntity(storage: MutableEntityStorage, modulesToRemove: Set<String>) {
   val contentRoots = storage
     .entitiesBySource { it !is PyProjectTomlEntitySource }
     .filterIsInstance<ContentRootEntity>()
     .toList()
   for (entity in contentRoots) {
-    storage.removeEntity(entity.module)
-    storage.removeEntity(entity)
+    if (entity.module.name in modulesToRemove) {
+      storage.removeEntity(entity.module)
+      storage.removeEntity(entity)
+    }
   }
 }
 

@@ -53,6 +53,6 @@ internal var ModuleEntity.Builder.pyProjectTomlEntity: PyProjectTomlWorkspaceEnt
   by WorkspaceEntity.extensionBuilder(PyProjectTomlWorkspaceEntity::class.java)
 //endregion
 
-internal val ModuleEntity.pyProjectTomlEntity: PyProjectTomlWorkspaceEntity
+internal val ModuleEntity.pyProjectTomlEntity: PyProjectTomlWorkspaceEntity?
   by WorkspaceEntity.extension()
 

@@ -1,4 +1,4 @@
-package com.intellij.python.sdkConfigurator
+package com.intellij.python.sdkConfigurator.backend.impl
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
+import com.intellij.python.sdkConfigurator.common.ModuleName
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
@@ -16,15 +17,15 @@ import com.jetbrains.python.sdk.setAssociationToPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-// TODO: Add UI to ask user to choose from
-
 /**
  * Configures SDK for modules without SDK in automatic manner trying to fix as many modules as possible.
  * Errors are logged.
  */
-internal suspend fun configureSdkAutomatically(project: Project) {
+internal suspend fun configureSdkAutomatically(project: Project, modulesOnly: Set<ModuleName>? = null) {
   withContext(Dispatchers.Default) {
-    val modules = project.modules.filter { ModuleRootManager.getInstance(it).sdk == null }
+    val modules = project.modules
+      .filter { ModuleRootManager.getInstance(it).sdk == null }
+      .filter { modulesOnly == null || it.name in modulesOnly }
     if (modules.isEmpty()) {
       // All modules have SDK
       return@withContext
