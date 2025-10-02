@@ -34,7 +34,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
     super.setUp();
     WriteAction.run(() -> IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_17));
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
-    MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE, "GrazieInspection");
+    MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
   }
 
   public void testMakeClassSealed() {

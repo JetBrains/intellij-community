@@ -36,7 +36,7 @@ public class UnivocityTest extends BaseUnivocityTest {
   public void setUp() throws Exception {
     super.setUp();
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
-    MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE, "GrazieInspection");
+    MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
   }
 
   @Override
