@@ -36,8 +36,6 @@ import kotlin.random.Random
 
 class KotlinJ2KOnboardingImportListener(private val project: Project) : ProjectDataImportListener {
     override fun onImportFinished(projectPath: String?) {
-        // This is seemingly only called for Gradle projects, but even if it is called from Maven projects too,
-        // it should not break anything.
         KotlinJ2KOnboardingFUSCollector.logProjectSyncCompleted(project)
     }
 }
@@ -74,8 +72,8 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     private val completeProjectSync = GROUP.registerVarargEvent("project_sync.completed", *commonFields)
     private val undoConfigureKotlin = GROUP.registerVarargEvent("configure_kt.undone", *commonFields)
 
-    private fun KotlinOnboardingSession.log(eventId: VarargEventId, vararg pairs: EventPair<*>) {
-        eventId.log(getPairs() + pairs)
+    private fun KotlinOnboardingSession.log(project: Project, eventId: VarargEventId, vararg pairs: EventPair<*>) {
+        eventId.log(project, getPairs() + pairs)
     }
 
     private fun Project.runEventLogger(runnable: suspend KotlinOnboardingJ2KSessionService.() -> Unit) {
@@ -96,57 +94,57 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     fun logKtFileDialogOpened(project: Project): Unit = project.runEventLogger {
         if (hasKotlinPlugin() || hasKotlinFiles()) return@runEventLogger
         val session = getOrCreateSession()
-        session.log(openFirstKtFileDialog)
+        session.log(project, openFirstKtFileDialog)
     }
 
     fun logFirstKtFileCreated(project: Project): Unit = project.runEventLogger {
         if (hasKotlinPlugin() || hasKotlinFiles()) return@runEventLogger
         markFirstKotlinFileCreated()
         val session = getOrCreateSession()
-        session.log(createFirstKtFile)
+        session.log(project, createFirstKtFile)
     }
 
     fun logCheckAutoConfigStatus(project: Project, canAutoConfigure: Boolean): Unit = project.runEventLogger {
         if (hasKotlinPlugin()) return@runEventLogger
         val session = getOrCreateSession()
-        session.log(autoConfigStatusChecked, canAutoConfigureField.with(canAutoConfigure))
+        session.log(project, autoConfigStatusChecked, canAutoConfigureField.with(canAutoConfigure))
     }
 
     fun logShowConfigureKtPanel(project: Project): Unit = project.runEventLogger {
         if (hasKotlinPlugin()) return@runEventLogger
         val session = getOrCreateSession()
-        session.log(showConfigureKtPanel)
+        session.log(project, showConfigureKtPanel)
     }
 
     fun logShowConfigureKtNotification(project: Project): Unit = project.runEventLogger {
         if (hasKotlinPlugin()) return@runEventLogger
         val session = getOrCreateSession()
-        session.log(showConfigureKtNotification)
+        session.log(project, showConfigureKtNotification)
     }
 
     fun logClickConfigureKtNotification(project: Project): Unit = project.runEventLogger {
         if (hasKotlinPlugin()) return@runEventLogger
         val session = getOrCreateSession()
-        session.log(clickConfigureKtNotification)
+        session.log(project, clickConfigureKtNotification)
     }
 
     @JvmStatic
     fun logShowConfigureKtWindow(project: Project): Unit = project.runEventLogger {
         if (hasKotlinPlugin()) return@runEventLogger
         val session = getOrCreateSession()
-        session.log(showConfigureKtWindow)
+        session.log(project, showConfigureKtWindow)
     }
 
     fun logStartConfigureKt(project: Project, isAutoConfiguration: Boolean = false): Unit = project.runEventLogger {
         if (hasKotlinPlugin()) return@runEventLogger
         val session = getOrCreateSession()
-        session.log(startConfigureKt, isAutoConfigurationField.with(isAutoConfiguration))
+        session.log(project, startConfigureKt, isAutoConfigurationField.with(isAutoConfiguration))
     }
 
     fun logShowConfiguredKtNotification(project: Project): Unit = project.runEventLogger {
         if (hasKotlinPlugin()) return@runEventLogger
         val session = getOrCreateSession()
-        session.log(showConfiguredKtNotification)
+        session.log(project, showConfiguredKtNotification)
     }
 
     fun logProjectSyncStarted(
@@ -159,7 +157,7 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
         kotlinConfiguredBeforeSync = if (modulesWereLoadedBefore) hasKotlinPlugin else null
         // Do not start a new session here
         val session = openSession ?: return@runEventLogger
-        session.log(startProjectSync)
+        session.log(project, startProjectSync)
     }
 
     fun logProjectSyncCompleted(project: Project): Unit = project.runEventLogger {
@@ -169,7 +167,7 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
         if (!hasKotlinPlugin) return@runEventLogger
 
         openSession?.let { session ->
-            session.log(completeProjectSync)
+            session.log(project, completeProjectSync)
             endSession(true)
             return@runEventLogger
         }
@@ -179,14 +177,14 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
         // If the value is true, then we did not add the KT plugin because it was already added before.
         if (wasConfiguredBeforeSync == false) {
             val session = getOrCreateSession()
-            session.log(completeProjectSync)
+            session.log(project, completeProjectSync)
             endSession(true)
         }
     }
 
     fun logConfigureKtUndone(project: Project): Unit = project.runEventLogger {
         val session = openSession ?: lastSuccessfullyCompletedSession ?: return@runEventLogger
-        session.log(undoConfigureKotlin)
+        session.log(project, undoConfigureKotlin)
     }
 }
 
