@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -76,7 +76,14 @@ public final class JavadocNavigationDelegate extends EditorNavigationDelegateAda
   }
   
   public static Result navigateToLineEnd(@NotNull Editor editor, @NotNull PsiFile psiFile) {
-    final Document document = psiFile.getFileDocument();
+    final Document document;
+
+    try {
+      document = psiFile.getFileDocument();
+    } catch (UnsupportedOperationException ignored) {
+      return Result.CONTINUE;
+    }
+
     final CaretModel caretModel = editor.getCaretModel();
     final int offset = caretModel.getOffset();
 
