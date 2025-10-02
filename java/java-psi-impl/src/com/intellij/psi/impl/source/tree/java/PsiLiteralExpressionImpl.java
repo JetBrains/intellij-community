@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -60,7 +61,8 @@ public class PsiLiteralExpressionImpl
     }
     if (ElementType.STRING_LITERALS.contains(type)) {
       PsiFile file = getContainingFile();
-      return PsiType.getJavaLangString(file.getManager(), ResolveScopeManager.getElementResolveScope(file));
+      return PsiType.getJavaLangString(file.getManager(), ResolveScopeManager.getElementResolveScope(file))
+        .withNullability(TypeNullability.NOT_NULL_MANDATED);
     }
     if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
       return PsiTypes.booleanType();

@@ -93,8 +93,8 @@ public class JetBrainsNotNullByDefault {
   }
 
   void use2(String s) {
-    // T is inferred as String from "hello" type
-    if (generic3("hello") == null) {}
+    // T is inferred as @NotNull String from "hello" type
+    if (<warning descr="Condition 'generic3(\"hello\") == null' is always 'false'">generic3("hello") == null</warning>) {}
     // T is inferred as @NotNull String from the `s` type
     if (<warning descr="Condition 'generic3(s) == null' is always 'false'">generic3(s) == null</warning>) {}
   }
