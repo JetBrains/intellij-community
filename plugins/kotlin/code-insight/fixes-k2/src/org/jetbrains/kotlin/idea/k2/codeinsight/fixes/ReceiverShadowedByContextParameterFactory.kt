@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
+import com.intellij.psi.util.parents
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -15,15 +16,20 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.types.Variance
+import kotlin.math.exp
 
 internal object ReceiverShadowedByContextParameterFactory {
     @OptIn(KaExperimentalApi::class)
     val addReceiverFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReceiverShadowedByContextParameter ->
-        val call = diagnostic.psi.parentsOfType<KtCallExpression>(withSelf = true).first()
-        val expression = call.parent as? KtQualifiedExpression ?: call
+        val expression = diagnostic.psi
+            .parents(withSelf = true)
+            .takeWhile { it is KtNameReferenceExpression || it is KtCallExpression || it is KtQualifiedExpression }
+            .lastOrNull() as? KtExpression
+            ?: return@ModCommandBased emptyList()
 
         buildList {
             add(AddExplicitThisFix(expression, diagnostic.isDispatchOfMemberExtension))

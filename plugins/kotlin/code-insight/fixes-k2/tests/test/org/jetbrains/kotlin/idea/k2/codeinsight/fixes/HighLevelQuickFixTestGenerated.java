@@ -11140,6 +11140,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/memberExtensionAddThis.kt");
         }
 
+        @TestMetadata("propertyAddThis.kt")
+        public void testPropertyAddThis() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/propertyAddThis.kt");
+        }
+
+        @TestMetadata("propertyWithoutOuterCall.kt")
+        public void testPropertyWithoutOuterCall() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/propertyWithoutOuterCall.kt");
+        }
+
         @TestMetadata("simpleAddContextOf.kt")
         public void testSimpleAddContextOf() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/receiverShadowedByContextParameter/simpleAddContextOf.kt");
