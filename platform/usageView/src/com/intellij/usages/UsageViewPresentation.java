@@ -24,9 +24,10 @@ public class UsageViewPresentation {
   private @NlsSafe String myUsagesString;
   private @NlsSafe String mySearchString;
   private @NlsContexts.ListItem String myTargetsNodeText = UsageViewBundle.message("node.targets");
-    // Default value. to be overwritten in most cases.
-  private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
+  // Default value. to be overwritten in most cases.
   private @NlsContexts.ListItem String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
+  private @NlsContexts.ListItem String myDynamicCodeUsagesString = UsageViewBundle.message("list.item.dynamic.usages");
+  private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
   private boolean myShowReadOnlyStatusAsRed;
   private boolean myShowCancelButton;
   private boolean myOpenInNewTab = true;
@@ -38,7 +39,6 @@ public class UsageViewPresentation {
   private @NlsContexts.TabTitle String myToolwindowTitle;
 
   private boolean myDetachedMode; // no UI will be shown
-  private @NlsContexts.ListItem String myDynamicCodeUsagesString;
   private boolean myMergeDupLinesAvailable = true;
   private boolean myExcludeAvailable = true;
   private boolean myNonCodeUsageAvailable = true;
@@ -177,11 +177,11 @@ public class UsageViewPresentation {
     myDetachedMode = detachedMode;
   }
 
-  public void setDynamicUsagesString(@NlsContexts.ListItem String dynamicCodeUsagesString) {
+  public void setDynamicUsagesString(@NotNull @NlsContexts.ListItem String dynamicCodeUsagesString) {
     myDynamicCodeUsagesString = dynamicCodeUsagesString;
   }
 
-  public @NlsContexts.ListItem String getDynamicCodeUsagesString() {
+  public @NotNull @NlsContexts.ListItem String getDynamicCodeUsagesString() {
     return myDynamicCodeUsagesString;
   }
 

@@ -80,10 +80,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     }
     else {
       myCodeGroup = new CodeUsageGroup(() -> buildText(presentation.getCodeUsagesString(), presentation.getScopeText()));
-      myDynamicCodeGroup = new DynamicUsageGroup(() -> {
-        String dynamicCodeUsagesString = presentation.getDynamicCodeUsagesString();
-        return dynamicCodeUsagesString != null ? dynamicCodeUsagesString : ourDynamicGroup.getPresentableGroupText();
-      });
+      myDynamicCodeGroup = new DynamicUsageGroup(() -> buildText(presentation.getDynamicCodeUsagesString(), presentation.getScopeText()));
       myNonCodeGroup = new NonCodeUsageGroup(() -> buildText(presentation.getNonCodeUsagesString(), presentation.getScopeText()));
     }
   }
