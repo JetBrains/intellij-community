@@ -115,12 +115,12 @@
                  defaultValue="true"
                  description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>
 
-    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Grammar" id="treeRules"
-                        order="before languageTool"/>
-    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$GrammarLowPriority" id="grammarLowPriority"
-                        order="after languageTool"/>
-    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Style" id="styleTreeRules"
-                        order="after languageTool"/>
+    <!-- Order matters here, please do not change it until it's on purpose -->
+    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Grammar" id="treeRules"/>
+    <grazie.textChecker implementation="com.intellij.grazie.grammar.LanguageToolChecker" id="languageTool"/>
+    <grazie.textChecker implementation="com.intellij.grazie.mlec.MlecChecker" id="mlec"/>
+    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$GrammarLowPriority" id="grammarLowPriority"/>
+    <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Style" id="styleTreeRules"/>
 
     <grazie.problemFilter language="" implementationClass="com.intellij.grazie.text.TreeRuleChecker$DocProblemFilter"/>
 
@@ -134,8 +134,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <textChecker implementation="com.intellij.grazie.grammar.LanguageToolChecker" id="languageTool"/>
-
     <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
 
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CodeProblemFilter"/>
