@@ -31,7 +31,7 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
 
   private val feedbackAgreementBlock: Row.(Project?) -> Unit = { project: Project? ->
     feedbackAgreement(project, CommonFeedbackBundle.message("dialog.feedback.consent.withEmail")) {
-      showFeedbackSystemInfoDialog(mySystemInfoDataComputation.getComputationResult())
+      myShowFeedbackSystemInfoDialog()
     }
   }
 
@@ -95,7 +95,7 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
 
     stringBuilder.appendLine()
     stringBuilder.appendLine()
-    stringBuilder.appendLine(mySystemInfoDataComputation.getComputationResult().toString())
+    stringBuilder.appendLine(mySystemInfoData.toString())
     return stringBuilder.toString()
   }
 }

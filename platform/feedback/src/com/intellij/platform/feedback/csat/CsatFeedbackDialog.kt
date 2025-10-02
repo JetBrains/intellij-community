@@ -62,13 +62,15 @@ internal class CsatFeedbackDialog(
 
   override val myFeedbackReportId: String = "csat_feedback"
 
-  override suspend fun computeSystemInfoData(): CsatFeedbackSystemData = getCsatSystemInfo(myProject)
+  override val mySystemInfoData: CsatFeedbackSystemData by lazy {
+    getCsatSystemInfo(project)
+  }
 
   @Suppress("HardCodedStringLiteral")
-  override fun showFeedbackSystemInfoDialog(systemInfoData: CsatFeedbackSystemData) {
-    showFeedbackSystemInfoDialog(myProject, systemInfoData.systemInfo) {
+  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
+    showFeedbackSystemInfoDialog(myProject, mySystemInfoData.systemInfo) {
       row("Is new installation:") {
-        label(systemInfoData.isNewUser.toString())
+        label(mySystemInfoData.isNewUser.toString())
       }
     }
   }
@@ -96,7 +98,7 @@ internal class CsatFeedbackDialog(
 
   init {
     val customFeedbackAgreementBlock = getExtraDataProvider()?.getFeedbackAgreementBlock {
-      showFeedbackSystemInfoDialog(mySystemInfoDataComputation.getComputationResult())
+      myShowFeedbackSystemInfoDialog()
     }
     if (customFeedbackAgreementBlock != null) {
       emailBlockWithAgreement = EmailBlock(myProject, customFeedbackAgreementBlock)
