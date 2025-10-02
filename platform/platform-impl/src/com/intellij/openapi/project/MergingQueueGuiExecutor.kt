@@ -4,7 +4,6 @@ package com.intellij.openapi.project
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.impl.InvisibleInStatusBarTask
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -192,7 +191,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   protected open val taskId: Any? = null
 
   private fun startInBackgroundWithVisibleOrInvisibleProgress(task: (ProgressIndicator) -> Unit) {
-    val backgroundableTask = object : Task.Backgroundable(project, myProgressTitle, false), InvisibleInStatusBarTask {
+    val backgroundableTask = object : Task.Backgroundable(project, myProgressTitle, false) {
       override fun run(visibleIndicator: ProgressIndicator) {
         task(visibleIndicator)
       }
