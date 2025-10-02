@@ -20,6 +20,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
+import java.util.concurrent.atomic.AtomicBoolean
 
 private val ASCII_PATTERN = Regex("\\p{ASCII}+")
 
@@ -57,11 +58,19 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
 
     val domains = GrazieInspection.checkedDomains()
     val areChecksDisabled = GrazieInspection.getDisabledChecker(file)
+    val earlyBreak = AtomicBoolean(false)
     return object : PsiElementVisitor() {
+      override fun visitWhiteSpace(space: PsiWhiteSpace) {}
+
       override fun visitElement(element: PsiElement) {
-        if (element is PsiWhiteSpace || areChecksDisabled(element)) return
+        if (earlyBreak.get() || areChecksDisabled(element)) return
+
         val texts = TextExtractor.findUniqueTextsAt(element, domains)
-        if (GrazieInspection.skipCheckingTooLargeTexts(texts)) return
+        if (texts.isEmpty() || GrazieInspection.skipCheckingTooLargeTexts(texts)) return
+        if (GrazieInspection.skipCheckingTooLargeFiles(file)) {
+          earlyBreak.set(true)
+          return
+        }
 
         val context = session.getUserData(key)!!
         texts.forEach {
