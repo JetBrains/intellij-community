@@ -39,7 +39,7 @@ import javax.swing.ListCellRenderer
 private val LOG = Logger.getInstance(FileSearchEverywhereContributor::class.java)
 
 open class FileSearchEverywhereContributor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?) : AbstractGotoSEContributor(
-  event, contributorModules), EssentialContributor, SearchEverywherePreviewProvider {
+  event, contributorModules), EssentialContributor, SearchEverywherePreviewProvider, FilesTabSEContributor {
   private val modelForRenderer: GotoFileModel
   private val filter: PersistentSearchEverywhereContributorFilter<FileTypeRef>
 
