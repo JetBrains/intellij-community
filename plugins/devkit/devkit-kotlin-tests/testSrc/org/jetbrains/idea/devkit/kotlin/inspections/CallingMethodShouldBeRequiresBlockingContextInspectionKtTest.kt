@@ -5,6 +5,7 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -12,7 +13,8 @@ import org.junit.runners.JUnit4
 import kotlin.test.assertNotNull as assertNotNullK
 
 @RunWith(JUnit4::class)
-class CallingMethodShouldBeRequiresBlockingContextInspectionKtTest : KtBlockingContextInspectionTestCase() {
+class CallingMethodShouldBeRequiresBlockingContextInspectionKtTest : KtBlockingContextInspectionTestCase(), ExpectedPluginModeProvider {
+
   @Before
   fun enableInspection() {
     myFixture.enableInspections(CallingMethodShouldBeRequiresBlockingContextInspection::class.java)

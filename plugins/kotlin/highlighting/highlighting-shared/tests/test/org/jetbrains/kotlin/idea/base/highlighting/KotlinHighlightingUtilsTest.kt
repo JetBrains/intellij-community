@@ -10,11 +10,19 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
-class KotlinHighlightingUtilsTest : LightPlatformTestCase() {
+class KotlinHighlightingUtilsTest : LightPlatformTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     private fun createKotlinFileAtPath(path: String): KtFile {
         val file = File(project.basePath, path.replace("/", File.separator))
         file.parentFile.mkdirs()

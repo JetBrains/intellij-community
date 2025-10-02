@@ -15,8 +15,11 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.uast.toUElement
@@ -25,7 +28,13 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class CommonIntentionActionsTest : BasePlatformTestCase() {
+class CommonIntentionActionsTest : BasePlatformTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     private class SimpleMethodRequest(
         project: Project,
         private val methodName: String,
