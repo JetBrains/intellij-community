@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.qualifiedCalleeExpressionTextRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.qualifiedCalleeExpressionTextRangeInThis
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -22,6 +21,7 @@ import org.jetbrains.kotlin.idea.refactoring.parentLabeledExpression
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 
@@ -56,7 +56,7 @@ internal class SuspendCoroutineLacksCancellationGuaranteesInspection :
         val calledFunction = functionCall?.symbol ?: return null
         if (calledFunction.callableId != SUSPEND_COROUTINE_ID) return null
 
-        if (!CoroutinesIds.SUSPEND_CANCELLABLE_COROUTINE_ID.canBeResolved()) return null
+        if (!CoroutinesIds.suspendCancellableCoroutine.canBeResolved()) return null
 
         val singlePassedArgument = functionCall.argumentMapping.keys.single()
 
@@ -83,7 +83,7 @@ internal class SuspendCoroutineLacksCancellationGuaranteesInspection :
 
             override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
                 val labeledReturn = KtPsiFactory(project).createExpression(
-                    "return@${CoroutinesIds.SUSPEND_CANCELLABLE_COROUTINE_ID.callableName}"
+                    "return@${CoroutinesIds.suspendCancellableCoroutine.callableName}"
                 ) as KtReturnExpression
                 val updatedLabeledExpression = labeledReturn.getTargetLabel() ?: return
 
@@ -92,7 +92,7 @@ internal class SuspendCoroutineLacksCancellationGuaranteesInspection :
                     it.replace(updatedLabeledExpression)
                 }
 
-                val updatedCall = element.replacePossiblyQualifiedCallee(CoroutinesIds.SUSPEND_CANCELLABLE_COROUTINE_ID) ?: return
+                val updatedCall = element.replacePossiblyQualifiedCallee(CoroutinesIds.suspendCancellableCoroutine) ?: return
                 val updatedCallQualifierRangeInFile = updatedCall.qualifiedCalleeExpressionTextRange ?: return
 
                 ShortenReferencesFacility.getInstance().shorten(updatedCall.containingKtFile, updatedCallQualifierRangeInFile)

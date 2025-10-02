@@ -18,11 +18,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -109,7 +105,7 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
 
     context(_: KaSession)
     private fun KaType.isCoroutineScopeType(acceptSubtypes: Boolean = true): Boolean {
-        val coroutineScopeType = findClass(CoroutinesIds.COROUTINE_SCOPE_CLASS_ID)?.defaultType ?: return false
+        val coroutineScopeType = findClass(CoroutinesIds.CoroutineScope.ID)?.defaultType ?: return false
 
         return if (acceptSubtypes) {
             this@isCoroutineScopeType.isSubtypeOf(coroutineScopeType)
@@ -162,8 +158,8 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
      */
     private fun isAllowedSuspendingFunction(functionSymbol: KaFunctionSymbol): Boolean =
         when (functionSymbol.callableId) {
-            CoroutinesIds.SELECT_BUILDER_INVOKE_ID,
-            CoroutinesIds.SELECT_BUILDER_ON_TIMEOUT_ID -> true
+            CoroutinesIds.Selects.SelectBuilder.invoke,
+            CoroutinesIds.Selects.onTimeout -> true
 
             else -> false
         }
