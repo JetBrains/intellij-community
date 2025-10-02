@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.codeinsight.utils.qualifiedCalleeExpressionTextRangeInThis
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
@@ -68,6 +69,8 @@ internal object InvokeImportQuickFixFactory : AbstractImportQuickFixFactory() {
 
             else -> null
         } ?: return null
+
+        if (invokeReceiverType is KaErrorType) return null
 
         return ImportContextWithFixedReceiverType(
             psiElement,
