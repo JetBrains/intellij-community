@@ -317,11 +317,18 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
                 // In the split mode this id is assigned on the backend side when the mock run content descriptor is created.
                 descriptor.id = descriptor.storeGlobally(coroutineScope)
               }
-              RunContentManager.getInstance(project).registerRunContentDescriptor(descriptor)
+              descriptor.runConfigurationName = environment.runProfile.name
+              descriptor.runConfigurationTypeId = (environment.runProfile as? RunConfiguration)?.type?.id
+
               runningConfigurations.add(entry)
               Disposer.register(descriptor, Disposable { runningConfigurations.remove(entry) })
+
+              project.getMessageBus()
+                .syncPublisher(RUN_CONTENT_DESCRIPTOR_LIFECYCLE_TOPIC).beforeContentShown(descriptor, executor)
               if (!descriptor.isHiddenContent && !environment.isHeadless) {
                 RunContentManager.getInstance(project).showRunContent(executor, descriptor, environment.contentToReuse)
+                project.getMessageBus()
+                  .syncPublisher(RUN_CONTENT_DESCRIPTOR_LIFECYCLE_TOPIC).afterContentShown(descriptor, executor)
               }
               activity?.stageStarted(UI_SHOWN_STAGE)
               environment.contentToReuse = descriptor
