@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getLeafTargets;
+import static com.intellij.openapi.actionSystem.LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
 /**
  * @author konstantin.aleev
@@ -64,7 +65,8 @@ public abstract class ExecutorAction extends DumbAwareAction implements ActionRe
       return;
     }
     List<RunDashboardRunConfigurationNode> targetNodes = getLeafTargets(e).toList();
-    boolean running = ContainerUtil.find(targetNodes, node -> { return isRunning(node);}) != null;
+
+    boolean running = isAnythingRunningInSelection(e, targetNodes) | isContextualDescriptorNotTerminated(e);
     update(e, running);
     List<Integer> runnableLeaves = getRunnableLeaves(targetNodes, project);
     Presentation presentation = e.getPresentation();
@@ -76,6 +78,18 @@ public abstract class ExecutorAction extends DumbAwareAction implements ActionRe
     }
     presentation.setEnabled(!runnableLeaves.isEmpty());
     presentation.setVisible(!targetNodes.isEmpty());
+  }
+
+  private static boolean isAnythingRunningInSelection(@NotNull AnActionEvent e, List<RunDashboardRunConfigurationNode> targetNodes) {
+    return ContainerUtil.find(targetNodes, node -> {
+      return isRunning(node);
+    }) != null;
+  }
+
+  private static boolean isContextualDescriptorNotTerminated(@NotNull AnActionEvent e) {
+    var descriptor = e.getData(RUN_CONTENT_DESCRIPTOR);
+    ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
+    return processHandler != null && !processHandler.isProcessTerminated();
   }
 
   @ApiStatus.Internal
