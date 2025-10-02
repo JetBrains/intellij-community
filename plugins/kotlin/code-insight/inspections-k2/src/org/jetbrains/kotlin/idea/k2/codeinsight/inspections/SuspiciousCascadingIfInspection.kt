@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -59,7 +60,7 @@ internal class SuspiciousCascadingIfInspection : KotlinApplicableInspectionBase<
     }
 }
 
-private class AddBracesToElseFix() : KotlinModCommandQuickFix<KtIfExpression>() {
+private class AddBracesToElseFix : KotlinModCommandQuickFix<KtIfExpression>(), LowPriorityAction {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("add.clarifying.braces.to.nested.else.statement")
 
@@ -71,7 +72,7 @@ private class AddBracesToElseFix() : KotlinModCommandQuickFix<KtIfExpression>() 
     }
 }
 
-private class ConvertIfToWhenFix() : KotlinModCommandQuickFix<KtIfExpression>() {
+private class ConvertIfToWhenFix : KotlinModCommandQuickFix<KtIfExpression>() {
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("replace.if.with.when.changes.semantics")
 

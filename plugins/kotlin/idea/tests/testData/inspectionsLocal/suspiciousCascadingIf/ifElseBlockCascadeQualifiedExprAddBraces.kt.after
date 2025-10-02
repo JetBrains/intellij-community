@@ -1,5 +1,6 @@
 // PROBLEM: Suspicious cascading 'if' expression
 // FIX: Add clarifying braces to nested 'else' statement
+// PRIORITY: LOW
 // IGNORE_K1
 // WITH_STDLIB
 fun test() {
