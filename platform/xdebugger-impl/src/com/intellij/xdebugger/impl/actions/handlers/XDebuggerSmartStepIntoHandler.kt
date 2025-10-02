@@ -13,12 +13,19 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
+import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -161,6 +168,10 @@ class SmartStepData(
     UP, DOWN, LEFT, RIGHT
   }
 
+  init {
+    setSyntheticHighlighterIfNeeded()
+  }
+
   internal val myVariants: List<VariantInfo> = targets
     .map { VariantInfo(it) }
     .sortedWith(Comparator
@@ -243,6 +254,39 @@ class SmartStepData(
     editor.putUserData(SMART_STEP_HINT_DATA, null)
     val highlightManager = HighlightManager.getInstance(session.project) as HighlightManagerImpl
     highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE or HighlightManager.HIDE_BY_TEXT_CHANGE)
+    clearSyntheticHighlighter()
+  }
+
+  // for the LUX remote development scenario we have to add a fake invisible highlighter on the whole document with extra payload
+  // that will be restored on the client and used to alternate actions availability
+  // see com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt.addActionAvailabilityHint
+  // It can be removed when we migrate to split debugger mode
+  private var myActionHintSyntheticHighlighter: RangeHighlighter? = null
+
+  private fun clearSyntheticHighlighter() {
+    val highlighter = myActionHintSyntheticHighlighter ?: return
+    // since we don't use HighlightManagerImpl to mark the highlighting with the hide flags it can't be used to remove it as well
+    // just remove it manually
+    editor.getMarkupModel().removeHighlighter(highlighter)
+  }
+
+  private fun setSyntheticHighlighterIfNeeded() {
+    if (!AppMode.isRemoteDevHost()) return
+    myActionHintSyntheticHighlighter = (editor.getMarkupModel() as MarkupModelEx)
+      .addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0,
+                                              editor.getDocument().textLength,
+                                              HighlighterLayer.LAST,
+                                              HighlighterTargetArea.EXACT_RANGE, false) { h ->
+        // this hints should be added in this lambda in order to be serialized by RD markup machinery
+        h.addActionAvailabilityHint(
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside))
+      }
   }
 
   internal inner class VariantInfo(val target: XSmartStepIntoTarget) {
