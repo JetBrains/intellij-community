@@ -69,6 +69,7 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import kotlin.math.min
 
+@Suppress("TestOnlyProblems")
 @ApiStatus.Internal
 class TerminalViewImpl(
   private val project: Project,
@@ -168,15 +169,15 @@ class TerminalViewImpl(
     }
 
     outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.childScope("TerminalOutputEditor"))
-    outputEditor.putUserData(TerminalInput.Companion.KEY, terminalInput)
+    outputEditor.putUserData(TerminalInput.KEY, terminalInput)
     outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
 
     scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel,
                                                       coroutineScope.childScope("TerminalOutputScrollingModel"))
-    outputEditor.putUserData(TerminalOutputScrollingModel.Companion.KEY, scrollingModel)
+    outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
 
     blocksModel = TerminalBlocksModelImpl(outputEditor.document)
-    outputEditor.putUserData(TerminalBlocksModel.Companion.KEY, blocksModel)
+    outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
 
     val outputModelController = TerminalTypeAheadOutputModelController(
@@ -185,7 +186,7 @@ class TerminalViewImpl(
       blocksModel,
       coroutineScope.childScope("TerminalTypeAheadOutputModelController")
     )
-    outputEditor.putUserData(TerminalTypeAhead.Companion.KEY, outputModelController)
+    outputEditor.putUserData(TerminalTypeAhead.KEY, outputModelController)
 
     outputEditorEventsHandler = TerminalEventsHandlerImpl(
       sessionModel,
@@ -211,7 +212,7 @@ class TerminalViewImpl(
       outputEditorEventsHandler,
     )
 
-    outputEditor.putUserData(TerminalSessionModel.Companion.KEY, sessionModel)
+    outputEditor.putUserData(TerminalSessionModel.KEY, sessionModel)
     terminalSearchController = TerminalSearchController(project)
 
     outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
@@ -227,7 +228,7 @@ class TerminalViewImpl(
       null
     }
 
-    outputEditor.putUserData(CompletionPhase.Companion.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Gen2")
+    outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Gen2")
 
     val terminalAliasesStorage = TerminalAliasesStorage()
 
@@ -242,7 +243,7 @@ class TerminalViewImpl(
       coroutineScope.childScope("TerminalSessionController"),
       terminalAliasesStorage
     )
-    outputEditor.putUserData(TerminalAliasesStorage.Companion.KEY, terminalAliasesStorage)
+    outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)
 
     configureInlineCompletion(outputEditor, outputModel, coroutineScope.childScope("TerminalInlineCompletion"))
     configureCommandCompletion(
@@ -265,7 +266,7 @@ class TerminalViewImpl(
       terminalPanel,
       coroutineScope.childScope("TerminalVfsSynchronizer"),
     )
-    outputEditor.putUserData(TerminalVfsSynchronizer.Companion.KEY, synchronizer)
+    outputEditor.putUserData(TerminalVfsSynchronizer.KEY, synchronizer)
   }
 
   fun connectToSession(session: TerminalSession) {
@@ -370,7 +371,7 @@ class TerminalViewImpl(
   ) {
     val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
 
-    editor.putUserData(TerminalOutputModel.Companion.KEY, outputModel)
+    editor.putUserData(TerminalOutputModel.KEY, outputModel)
 
     // Document modifications can change the scroll position.
     // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
@@ -398,10 +399,10 @@ class TerminalViewImpl(
     editor.highlighter = TerminalTextHighlighter { model.getHighlightings() }
 
     if (!isSplitHyperlinksSupportEnabled()) {
-      TerminalHyperlinkHighlighter.Companion.install(project, model, editor, coroutineScope)
+      TerminalHyperlinkHighlighter.install(project, model, editor, coroutineScope)
     }
 
-    val cursorPainter = TerminalCursorPainter.Companion.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
+    val cursorPainter = TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
     if (fusCursorPainterListener != null) {
       cursorPainter.addListener(parentDisposable, fusCursorPainterListener)
     }
@@ -445,7 +446,7 @@ class TerminalViewImpl(
 
       override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
         val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
-        val lastBlock = editor.getUserData(TerminalBlocksModel.Companion.KEY)?.blocks?.lastOrNull() ?: return
+        val lastBlock = editor.getUserData(TerminalBlocksModel.KEY)?.blocks?.lastOrNull() ?: return
         val lastBlockCommandStartIndex = if (lastBlock.commandStartOffset != -1) lastBlock.commandStartOffset else lastBlock.startOffset
 
         // When resizing the terminal, the blocks model may fall out of sync for a short time.
@@ -479,12 +480,12 @@ class TerminalViewImpl(
   ) {
     val eelDescriptor = LocalEelDescriptor // TODO: it should be determined by where shell is running to work properly in WSL and Docker
     val services = TerminalCommandCompletionServices(
-      commandSpecsManager = ShellCommandSpecsManagerImpl.Companion.getInstance(),
+      commandSpecsManager = ShellCommandSpecsManagerImpl.getInstance(),
       runtimeContextProvider = ShellRuntimeContextProviderReworkedImpl(project, sessionModel, eelDescriptor),
       dataGeneratorsExecutor = ShellDataGeneratorsExecutorReworkedImpl(controller,
                                                                        coroutineScope.childScope("ShellDataGeneratorsExecutorReworkedImpl"))
     )
-    editor.putUserData(TerminalCommandCompletionServices.Companion.KEY, services)
+    editor.putUserData(TerminalCommandCompletionServices.KEY, services)
   }
 
   private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider, TerminalPanelMarker {
@@ -511,13 +512,13 @@ class TerminalViewImpl(
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[TerminalActionUtil.EDITOR_KEY] = curEditor
-      sink[TerminalInput.Companion.DATA_KEY] = terminalInput
-      sink[TerminalOutputModel.Companion.DATA_KEY] = outputModel
-      sink[TerminalSearchController.Companion.KEY] = terminalSearchController
-      sink[TerminalSessionId.Companion.KEY] = (sessionFuture.getNow(null) as? FrontendTerminalSession?)?.id
+      sink[TerminalInput.DATA_KEY] = terminalInput
+      sink[TerminalOutputModel.DATA_KEY] = outputModel
+      sink[TerminalSearchController.KEY] = terminalSearchController
+      sink[TerminalSessionId.KEY] = (sessionFuture.getNow(null) as? FrontendTerminalSession?)?.id
       sink[TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY] = isAlternateScreenBuffer
       val hyperlinkFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
-      sink[TerminalHyperlinkId.Companion.KEY] = hyperlinkFacade?.getHoveredHyperlinkId()
+      sink[TerminalHyperlinkId.KEY] = hyperlinkFacade?.getHoveredHyperlinkId()
       sink.setNull(PlatformDataKeys.COPY_PROVIDER)
     }
 
