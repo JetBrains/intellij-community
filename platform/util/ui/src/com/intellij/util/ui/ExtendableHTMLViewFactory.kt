@@ -370,16 +370,7 @@ private class Base64ImagesExtension : Extension {
     }
 
     private fun getIntAttr(name: HTML.Attribute, defaultValue: Int): Int {
-      val attr = element.attributes
-      if (!attr.isDefined(name)) return defaultValue
-
-      val value = attr.getAttribute(name) as? String ?: return defaultValue
-      return try {
-        max(0, value.toInt())
-      }
-      catch (x: NumberFormatException) {
-        defaultValue
-      }
+      return element.getIntAttr(name, defaultValue)
     }
 
     override fun getPreferredSpan(axis: Int): Float {

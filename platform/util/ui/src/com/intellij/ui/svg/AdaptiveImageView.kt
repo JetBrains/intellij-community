@@ -7,6 +7,8 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.DataUrl
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.html.ImageViewPreferredSpan
+import com.intellij.util.ui.html.getIntAttr
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Container
 import java.awt.Graphics
@@ -146,18 +148,7 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
     }
   }
 
-  private fun getIntAttr(name: HTML.Attribute, defaultValue: Int): Int {
-    val attr = element.attributes
-    if (!attr.isDefined(name)) return defaultValue
-
-    val value = attr.getAttribute(name) as? String ?: return defaultValue
-    return try {
-      max(0, value.toInt())
-    }
-    catch (_: NumberFormatException) {
-      defaultValue
-    }
-  }
+  private fun getIntAttr(name: HTML.Attribute, defaultValue: Int): Int = element.getIntAttr(name, defaultValue)
 
   private fun getImageOrigin(): AdaptiveImageOrigin? {
     val src = element.attributes.getAttribute(HTML.Attribute.SRC) as? String? ?: return null
@@ -313,7 +304,7 @@ private sealed interface ViewState {
  * Similar to [com.intellij.util.ui.html.FitToWidthImageView]
  */
 internal class FitToWidthAdaptiveImageView(element: Element) : AdaptiveImageView(element) {
-  private var myAvailableWidth = 0
+  private val preferredSpan = ImageViewPreferredSpan(this) { axis -> super.getPreferredSpan(axis) }
 
   override fun getResizeWeight(axis: Int): Int =
     if (axis == X_AXIS) 1 else 0
@@ -321,42 +312,5 @@ internal class FitToWidthAdaptiveImageView(element: Element) : AdaptiveImageView
   override fun getMaximumSpan(axis: Int): Float =
     getPreferredSpan(axis)
 
-  override fun getPreferredSpan(axis: Int): Float {
-    val baseSpan = super.getPreferredSpan(axis)
-    if (axis == X_AXIS) {
-      return baseSpan
-    }
-    else {
-      var availableWidth = availableWidth
-      if (availableWidth <= 0) return baseSpan
-      val baseXSpan = super.getPreferredSpan(X_AXIS)
-      if (baseXSpan <= 0) return baseSpan
-      if (availableWidth > baseXSpan) {
-        availableWidth = baseXSpan.toInt()
-      }
-      if (myAvailableWidth > 0 && availableWidth != myAvailableWidth) {
-        preferenceChanged(null, false, true)
-      }
-      myAvailableWidth = availableWidth
-      return baseSpan * availableWidth / baseXSpan
-    }
-  }
-
-  private val availableWidth: Int
-    get() {
-      var v: View? = this
-      while (v != null) {
-        val parent = v.parent
-        if (parent is FlowView) {
-          val childCount = parent.viewCount
-          for (i in 0 until childCount) {
-            if (parent.getView(i) === v) {
-              return parent.getFlowSpan(i)
-            }
-          }
-        }
-        v = parent
-      }
-      return 0
-    }
+  override fun getPreferredSpan(axis: Int): Float = preferredSpan.get(axis)
 }
