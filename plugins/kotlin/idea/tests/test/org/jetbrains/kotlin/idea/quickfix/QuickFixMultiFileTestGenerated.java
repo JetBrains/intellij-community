@@ -269,6 +269,26 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             public void testNoImportOfPartiallyPrivateCallables() throws Exception {
                 runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/noImportOfPartiallyPrivateCallables.test");
             }
+
+            @TestMetadata("objectExtendsJavaClassWithField.test")
+            public void testObjectExtendsJavaClassWithField() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/objectExtendsJavaClassWithField.test");
+            }
+
+            @TestMetadata("objectExtendsJavaClassWithGetter_explicitGetterCall.test")
+            public void testObjectExtendsJavaClassWithGetter_explicitGetterCall() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/objectExtendsJavaClassWithGetter_explicitGetterCall.test");
+            }
+
+            @TestMetadata("objectExtendsJavaClassWithGetter_syntheticPropertyAccess.test")
+            public void testObjectExtendsJavaClassWithGetter_syntheticPropertyAccess() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/objectExtendsJavaClassWithGetter_syntheticPropertyAccess.test");
+            }
+
+            @TestMetadata("objectExtendsJavaInterfaceWithDefaultImplementation.test")
+            public void testObjectExtendsJavaInterfaceWithDefaultImplementation() throws Exception {
+                runTest("testData/quickfix/autoImports/callablesDeclaredInClasses/objectExtendsJavaInterfaceWithDefaultImplementation.test");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

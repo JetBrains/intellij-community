@@ -2,19 +2,19 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.psi.PsiModifier
 import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.analysisScope
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.components.withNullability
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import java.util.concurrent.ConcurrentMap
 
 /**
@@ -45,10 +45,45 @@ private fun KtSymbolFromIndexProvider.getKotlinSubclassObjectsSymbolsCached(): L
 }
 
 /**
+ * Retrieves all non-local callable symbols (functions, properties, fields) with the given [name] 
+ * that can be potentially inherited by subclasses.
+ *
+ * This includes:
+ * - Non-top-level Kotlin callables (functions and properties)
+ * - Non-static, non-top-level Java methods and fields
+ *
+ * Callables declared in `final` classes are excluded, as they cannot be inherited.
+ * 
+ * N.B. No synthetic Java properties are included here.
+ */
+context(_: KaSession)
+private fun KtSymbolFromIndexProvider.getNonLocalInheritableCallablesByName(name: Name): Sequence<KaCallableSymbol> =
+    sequence {
+        yieldAll(getKotlinCallableSymbolsByName(name) { !it.isTopLevelKtOrJavaMember() })
+
+        yieldAll(getJavaMethodsByName(name) { !it.isTopLevelKtOrJavaMember() && !it.hasModifierProperty(PsiModifier.STATIC) })
+        yieldAll(getJavaFieldsByName(name) { !it.isTopLevelKtOrJavaMember() && !it.hasModifierProperty(PsiModifier.STATIC) })
+    }.filter { callableSymbol ->
+        val container = callableSymbol.containingDeclaration
+
+        container is KaClassLikeSymbol &&
+                container.classId != null &&
+                container.modality != KaSymbolModality.FINAL
+    }
+
+/**
  * Consider moving this to [KtSymbolFromIndexProvider] when there is a good API to represent inherited callables.
  */
 context(_: KaSession)
 internal fun KtSymbolFromIndexProvider.getCallableSymbolsFromSubclassObjects(name: Name): Sequence<Pair<KaClassSymbol, KaCallableSymbol>> {
+    // If there are no callables by this name which can be inherited,
+    // there's no point to traverse all objects.
+    // This check is supposed to be quick enough compared to computing `memberScope`s.
+    // See KTIJ-35825 for details. 
+    if (getNonLocalInheritableCallablesByName(name).none()) {
+        return emptySequence()
+    }
+    
     val allObjects = getKotlinSubclassObjectsSymbolsCached()
 
     return allObjects.asSequence().flatMap { objectSymbol ->
