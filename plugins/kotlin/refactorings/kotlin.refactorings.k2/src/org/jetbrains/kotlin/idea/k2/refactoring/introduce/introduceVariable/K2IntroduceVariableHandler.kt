@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
@@ -304,7 +305,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
         val isInplaceAvailable = isInplaceAvailable(editor, project)
 
-        val allOccurrences = occurrencesToReplace ?: expression.findOccurrences(containers.occurrenceContainer)
+        val allOccurrences = occurrencesToReplace ?: ActionUtil.underModalProgress(expression.project, KotlinBundle.message("find.usages.prepare.dialog.progress")) { expression.findOccurrences(containers.occurrenceContainer) }
 
         val callback = Pass.create { replaceChoice: OccurrencesChooser.ReplaceChoice ->
             val allReplaces = when (replaceChoice) {
@@ -449,7 +450,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
     }
 
     override fun KtExpression.findOccurrences(occurrenceContainer: KtElement): List<KtExpression> =
-        analyzeInModalWindow(contextElement = extractableSubstringInfo?.template ?: this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+        analyze(extractableSubstringInfo?.template ?: this) {
             K2SemanticMatcher.findMatches(patternElement = this@findOccurrences, scopeElement = occurrenceContainer)
                 .filterNot { it.isAssignmentLHS() }
                 .mapNotNull { match ->

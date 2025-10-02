@@ -351,6 +351,7 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
         val elements = myFixture.completeBasic()
         selectItem(myFixture, elements.first { element -> element.lookupString.contains("Introduce parameter", ignoreCase = true) })
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
         myFixture.checkResult(
             """
