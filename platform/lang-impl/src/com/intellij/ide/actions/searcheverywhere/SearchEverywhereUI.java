@@ -29,7 +29,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -837,15 +836,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       if (contributors.isEmpty() && DumbService.isDumb(myProject)) {
         DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.SearchEverywhere);
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported",
-                                                     myHeader.getSelectedTab().getName(),
-                                                     ApplicationNamesInfo.getInstance().getFullProductName()));
+                                                     myHeader.getSelectedTab().getName()));
         myListModel.clear();
         return;
       }
       if (contributors.size() != contributorsMap.size()) {
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.incomplete.results",
-                                                     myHeader.getSelectedTab().getName(),
-                                                     ApplicationNamesInfo.getInstance().getFullProductName()));
+                                                     myHeader.getSelectedTab().getName()));
       }
     }
 
