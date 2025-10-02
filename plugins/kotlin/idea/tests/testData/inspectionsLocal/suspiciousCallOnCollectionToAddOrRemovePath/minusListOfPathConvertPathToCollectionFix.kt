@@ -1,5 +1,6 @@
 // PROBLEM: 'minus' call removes Path elements
 // FIX: Convert Path to explicit Collection
+// PRIORITY: LOW
 // IGNORE_K1
 // WITH_STDLIB
 package java.nio.file
