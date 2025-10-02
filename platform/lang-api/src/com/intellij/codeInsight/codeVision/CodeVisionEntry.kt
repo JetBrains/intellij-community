@@ -2,6 +2,7 @@ package com.intellij.codeInsight.codeVision
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 

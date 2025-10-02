@@ -36,9 +36,8 @@ import javax.swing.SwingUtilities
 abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTheme()) : CodeVisionInlayRenderer {
   private var isHovered = false
   private var hoveredEntry: Property<CodeVisionEntry?> = Property(null)
-  protected val painter: CodeVisionListPainter = CodeVisionListPainter(theme = theme)
+  protected val painter: CodeVisionListPainter = CodeVisionListPainterFactory.getInstance().createCodeVisionListPainter(theme)
   protected lateinit var inlay: Inlay<*>
-
 
   fun initialize(inlay: Inlay<*>){
     assert(!::inlay.isInitialized) { "Inlay already defined for current renderer" }

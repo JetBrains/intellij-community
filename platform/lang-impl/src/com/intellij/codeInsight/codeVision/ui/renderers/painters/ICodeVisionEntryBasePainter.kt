@@ -4,6 +4,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
@@ -23,4 +24,7 @@ interface ICodeVisionEntryBasePainter<T> : ICodeVisionPainter {
     state: RangeCodeVisionModel.InlayState,
     value: T
   ): Dimension
+
+  @ApiStatus.Internal
+  fun shouldBeDelimited(): Boolean = true
 }
