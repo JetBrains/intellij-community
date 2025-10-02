@@ -488,9 +488,7 @@ class InfoAndProgressPanel internal constructor(
 
   private fun updateProgressIcon() {
     val progressIcon = mainPanel.inlinePanel.progressIcon
-    if (originals.isEmpty() ||
-        PowerSaveMode.isEnabled() ||
-        originals.asSequence().mapNotNull { ProgressSuspender.getSuspender(it.getProgressIndicator()) }.all { it.isSuspended }) {
+    if (originals.isEmpty() || PowerSaveMode.isEnabled()) {
       progressIcon.suspend()
     }
     else {
