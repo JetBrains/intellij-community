@@ -9019,36 +9019,36 @@ jvm_import(
 
 jvm_import(
   name = "rd-core",
-  jar = "@com_jetbrains_rd-rd-core-2025_2_3_http//file",
-  source_jar = "@com_jetbrains_rd-rd-core-2025_2_3_http//file",
+  jar = "@com_jetbrains_rd-rd-core-2025_3_1_http//file",
+  source_jar = "@com_jetbrains_rd-rd-core-2025_3_1_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rd-framework",
-  jar = "@com_jetbrains_rd-rd-framework-2025_2_3_http//file",
-  source_jar = "@com_jetbrains_rd-rd-framework-2025_2_3_http//file",
+  jar = "@com_jetbrains_rd-rd-framework-2025_3_1_http//file",
+  source_jar = "@com_jetbrains_rd-rd-framework-2025_3_1_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rd-gen",
-  jar = "@com_jetbrains_rd-rd-gen-2025_2_3_http//file",
-  source_jar = "@com_jetbrains_rd-rd-gen-2025_2_3_http//file",
+  jar = "@com_jetbrains_rd-rd-gen-2025_3_1_http//file",
+  source_jar = "@com_jetbrains_rd-rd-gen-2025_3_1_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rd-swing",
-  jar = "@com_jetbrains_rd-rd-swing-2025_2_3_http//file",
-  source_jar = "@com_jetbrains_rd-rd-swing-2025_2_3_http//file",
+  jar = "@com_jetbrains_rd-rd-swing-2025_3_1_http//file",
+  source_jar = "@com_jetbrains_rd-rd-swing-2025_3_1_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rd-text",
-  jar = "@com_jetbrains_rd-rd-text-2025_2_3_http//file",
-  source_jar = "@com_jetbrains_rd-rd-text-2025_2_3_http//file",
+  jar = "@com_jetbrains_rd-rd-text-2025_3_1_http//file",
+  source_jar = "@com_jetbrains_rd-rd-text-2025_3_1_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -13174,73 +13174,73 @@ http_file(
 )
 
 http_file(
-  name = "com_jetbrains_rd-rd-core-2025_2_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-core/2025.2.3/rd-core-2025.2.3.jar",
-  sha256 = "44d8b541d37dd6612aceeaef844a7058a5ca5f6f24443fee88b6875b226dfdff",
-  downloaded_file_path = "rd-core-2025.2.3.jar"
+  name = "com_jetbrains_rd-rd-core-2025_3_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-core/2025.3.1/rd-core-2025.3.1.jar",
+  sha256 = "05492a77e70f6a35f1ce19b60841ba39f2fcbe03b1b26eee7aea0c8745cc5e7e",
+  downloaded_file_path = "rd-core-2025.3.1.jar"
 )
 
 http_file(
-  name = "com_jetbrains_rd-rd-core-2025_2_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-core/2025.2.3/rd-core-2025.2.3-sources.jar",
-  sha256 = "8cc59604d70c0d7cffe079bc2bf880d700cf4afa8e04db168de847d9828c78d7",
-  downloaded_file_path = "rd-core-2025.2.3-sources.jar"
+  name = "com_jetbrains_rd-rd-core-2025_3_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-core/2025.3.1/rd-core-2025.3.1-sources.jar",
+  sha256 = "3f45b8fbd229fcc0618dfe618a372739c2ad68b7e84c5a0f9b04905065bdac21",
+  downloaded_file_path = "rd-core-2025.3.1-sources.jar"
 )
 
 http_file(
-  name = "com_jetbrains_rd-rd-framework-2025_2_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-framework/2025.2.3/rd-framework-2025.2.3.jar",
-  sha256 = "b44711c34b74c039ea5476a422fd84561c769bcffbe7804af709931760b17737",
-  downloaded_file_path = "rd-framework-2025.2.3.jar"
+  name = "com_jetbrains_rd-rd-framework-2025_3_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-framework/2025.3.1/rd-framework-2025.3.1.jar",
+  sha256 = "85f2a329245e4a6a1e4552ac62db4c1f23b6f02bf3c96e4df8240668187c848a",
+  downloaded_file_path = "rd-framework-2025.3.1.jar"
 )
 
 http_file(
-  name = "com_jetbrains_rd-rd-framework-2025_2_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-framework/2025.2.3/rd-framework-2025.2.3-sources.jar",
-  sha256 = "181833319b89d18dea890c328135f8d64ffc45ffb8ce57435c57a08586010656",
-  downloaded_file_path = "rd-framework-2025.2.3-sources.jar"
+  name = "com_jetbrains_rd-rd-framework-2025_3_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-framework/2025.3.1/rd-framework-2025.3.1-sources.jar",
+  sha256 = "fd1ba2eac2e5f2c8b334947a61d58fe7e264b5cfe90e573ca72ea95e8f411475",
+  downloaded_file_path = "rd-framework-2025.3.1-sources.jar"
 )
 
 http_file(
-  name = "com_jetbrains_rd-rd-gen-2025_2_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-gen/2025.2.3/rd-gen-2025.2.3.jar",
-  sha256 = "1fe6a25cbd6c787e0054330d7cd7779704adcb7f7e7114ffbfcbe2d9b832dd23",
-  downloaded_file_path = "rd-gen-2025.2.3.jar"
+  name = "com_jetbrains_rd-rd-gen-2025_3_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-gen/2025.3.1/rd-gen-2025.3.1.jar",
+  sha256 = "03b276130c0c1417c9bd07cfd8d2eea1fa465fc930dd132ac11fc383cf11deec",
+  downloaded_file_path = "rd-gen-2025.3.1.jar"
 )
 
 http_file(
-  name = "com_jetbrains_rd-rd-gen-2025_2_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-gen/2025.2.3/rd-gen-2025.2.3-sources.jar",
-  sha256 = "6657f5d11eb4cfe346b08c9429afa8b5280d1cb2fd4c0f7cc2d6100617879975",
-  downloaded_file_path = "rd-gen-2025.2.3-sources.jar"
+  name = "com_jetbrains_rd-rd-gen-2025_3_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-gen/2025.3.1/rd-gen-2025.3.1-sources.jar",
+  sha256 = "6328ca318a836817266969291dd0234a32b93e3158642c42cfcc1f3a619236bf",
+  downloaded_file_path = "rd-gen-2025.3.1-sources.jar"
 )
 
 http_file(
-  name = "com_jetbrains_rd-rd-swing-2025_2_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-swing/2025.2.3/rd-swing-2025.2.3.jar",
-  sha256 = "fe40802aed0c211a85c9fdad153d08e1970652409c74bcd3b15f502c7b1cc763",
-  downloaded_file_path = "rd-swing-2025.2.3.jar"
+  name = "com_jetbrains_rd-rd-swing-2025_3_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-swing/2025.3.1/rd-swing-2025.3.1.jar",
+  sha256 = "8103c08a017068f9ba79aa260471780b38e3a68bce8995ec1d5279b523ac87ca",
+  downloaded_file_path = "rd-swing-2025.3.1.jar"
 )
 
 http_file(
-  name = "com_jetbrains_rd-rd-swing-2025_2_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-swing/2025.2.3/rd-swing-2025.2.3-sources.jar",
-  sha256 = "8079fec3638c6f08bd90d63be6a44cd8f6403a9d14d84553d1e971858d6f6adc",
-  downloaded_file_path = "rd-swing-2025.2.3-sources.jar"
+  name = "com_jetbrains_rd-rd-swing-2025_3_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-swing/2025.3.1/rd-swing-2025.3.1-sources.jar",
+  sha256 = "668367957ef4b4054755eb245b2f2ed635ac39f094593d57af926559e90b0c81",
+  downloaded_file_path = "rd-swing-2025.3.1-sources.jar"
 )
 
 http_file(
-  name = "com_jetbrains_rd-rd-text-2025_2_3_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-text/2025.2.3/rd-text-2025.2.3.jar",
-  sha256 = "9ba33e21d71d82f282872366a811b7171296e403076a6e059917686413e64ed0",
-  downloaded_file_path = "rd-text-2025.2.3.jar"
+  name = "com_jetbrains_rd-rd-text-2025_3_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-text/2025.3.1/rd-text-2025.3.1.jar",
+  sha256 = "e465ab42d9c79cdec7147c8210f8e65d5f816704d47b959ac9f2cfc3f68dedb5",
+  downloaded_file_path = "rd-text-2025.3.1.jar"
 )
 
 http_file(
-  name = "com_jetbrains_rd-rd-text-2025_2_3-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-text/2025.2.3/rd-text-2025.2.3-sources.jar",
-  sha256 = "e2da2dedbe00f191bfb34a48b3713d20641875f345ba43eb5365ee02e0b674c5",
-  downloaded_file_path = "rd-text-2025.2.3-sources.jar"
+  name = "com_jetbrains_rd-rd-text-2025_3_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/jetbrains/rd/rd-text/2025.3.1/rd-text-2025.3.1-sources.jar",
+  sha256 = "9b086e084c27c47fd39bf8a7bacb9485f12eada20a45deb64cb39ce43daddc54",
+  downloaded_file_path = "rd-text-2025.3.1-sources.jar"
 )
 
 http_file(
