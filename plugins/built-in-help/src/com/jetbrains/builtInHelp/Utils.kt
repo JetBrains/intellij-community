@@ -8,7 +8,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.util.ResourceUtil
 import com.jetbrains.builtInHelp.settings.SettingsPage
 import org.jetbrains.annotations.NonNls
-import java.io.IOException
 
 class Utils {
   companion object {
@@ -31,8 +30,8 @@ class Utils {
         try {
           res.readAllBytes()
         }
-        catch (e: IOException) {
-          LOG.warn(e)
+        catch (e: Exception) {
+          LOG.warn("$localePath resource failed", e)
           //So we couldn't find any localized resource, try the default English one
           ResourceUtil.getResourceAsStream(
             HelpRequestHandlerBase::class.java.classLoader,
@@ -41,7 +40,8 @@ class Utils {
             try {
               res.readAllBytes()
             }
-            catch (e: IOException) {
+            catch (e: Exception) {
+              LOG.warn("Fallback resource failed", e)
               null
             }
           }
