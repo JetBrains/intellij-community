@@ -210,9 +210,9 @@ fun loadPluginSubDescriptors(
 ) {
   val moduleDir = pluginDir.resolve("lib/modules").takeIf { Files.isDirectory(it) }
   for (module in descriptor.content.modules) {
-    val subDescriptorFile = module.configFile ?: "${module.moduleId}.xml"
+    val subDescriptorFile = module.configFile ?: "${module.moduleId.id}.xml"
     if (module.descriptorContent == null) {
-      val jarFile = moduleDir?.resolve("${module.moduleId}.jar")
+      val jarFile = moduleDir?.resolve("${module.moduleId.id}.jar")
       if (jarFile != null && Files.exists(jarFile)) {
         val subRaw = loadModuleFromSeparateJar(pool, jarFile, subDescriptorFile, loadingContext)
         val subDescriptor = descriptor.createContentModule(subRaw, subDescriptorFile, module)
@@ -241,7 +241,7 @@ fun loadPluginSubDescriptors(
           subDescriptor.jarFiles = customRoots
         }
         else {
-          subDescriptor.jarFiles = Collections.singletonList(pluginDir.resolve("lib/modules/${module.moduleId}.jar"))
+          subDescriptor.jarFiles = Collections.singletonList(pluginDir.resolve("lib/modules/${module.moduleId.id}.jar"))
         }
       }
       module.assignDescriptor(subDescriptor)
@@ -722,11 +722,11 @@ private fun loadPluginDescriptor(
   val descriptor = PluginMainDescriptor(raw, pluginDir, isBundled = true)
   for (module in descriptor.content.modules) {
     var classPath: List<Path>? = null
-    val subDescriptorFile = module.configFile ?: "${module.moduleId}.xml"
+    val subDescriptorFile = module.configFile ?: "${module.moduleId.id}.xml"
     val subRaw: PluginDescriptorBuilder = if (module.descriptorContent == null) {
       val input = dataLoader.load(subDescriptorFile, pluginDescriptorSourceOnly = true)
       if (input == null) {
-        val jarFile = pluginDir.resolve("lib/modules/${module.moduleId}.jar")
+        val jarFile = pluginDir.resolve("lib/modules/${module.moduleId.id}.jar")
         classPath = Collections.singletonList(jarFile)
         loadModuleFromSeparateJar(pool = zipPool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, loadingContext = loadingContext)
       }
@@ -748,7 +748,7 @@ private fun loadPluginDescriptor(
         it.getBuilder()
       }
       if (subRaw.`package` == null || subRaw.isSeparateJar) {
-        classPath = Collections.singletonList(pluginDir.resolve("lib/modules/${module.moduleId}.jar"))
+        classPath = Collections.singletonList(pluginDir.resolve("lib/modules/${module.moduleId.id}.jar"))
       }
       subRaw
     }
@@ -972,7 +972,7 @@ private fun loadContentModuleDescriptors(
     }
 
     val moduleId = module.moduleId
-    val subDescriptorFile = "$moduleId.xml"
+    val subDescriptorFile = "${moduleId.id}.xml"
 
     if (moduleDirExists &&
         !isRunningFromSourcesWithoutDevBuild && moduleId.id.startsWith("intellij.") &&
@@ -1014,7 +1014,7 @@ private fun loadProductModule(
   val moduleRaw: PluginDescriptorBuilder = if (jarFile == null) {
     // do not log - the severity of the error is determined by the loadingStrategy, the default strategy does not return null at all
     PluginDescriptorBuilder.builder().apply {
-      `package` = "unresolved.$moduleId"
+      `package` = "unresolved.${moduleId.id}"
     }
   }
   else {
@@ -1276,7 +1276,7 @@ private fun loadDescriptorFromResource(
     if (libDir == null) {
       val runFromSources = pathResolver.isRunningFromSourcesWithoutDevBuild || PluginManagerCore.isUnitTestMode || forceUseCoreClassloader()
       for (module in descriptor.content.modules) {
-        val subDescriptorFile = module.configFile ?: "${module.moduleId}.xml"
+        val subDescriptorFile = module.configFile ?: "${module.moduleId.id}.xml"
         val subRaw = pathResolver.resolveModuleFile(loadingContext.readContext, dataLoader, subDescriptorFile)
         val subDescriptor = descriptor.createContentModule(subRaw, subDescriptorFile, module)
         if (runFromSources && subDescriptor.packagePrefix == null) {
