@@ -49,12 +49,19 @@ object LambdaTestModel : Ext(LambdaTestRoot) {
     field("parameters", immutableList(string).nullable)
   }
 
+  private val LambdaRdSerializedLambdaParameters = structdef {
+    field("clazzName", string)
+    field("methodName", string)
+    field("serializedDataBase64", string)
+  }
+
   private val LambdaRdTestSession = classdef {
     field("rdIdeInfo", LambdaRdIdeInfo)
     property("ready", bool.nullable)
     signal("sendException", LambdaRdTestSessionException).async
     call("closeAllOpenedProjects", void, bool).async
     call("runLambda", LambdaRdTestActionParameters, void).async
+    call("runSerializedLambda", LambdaRdSerializedLambdaParameters, void).async
     call("requestFocus", bool, bool).async
     call("isFocused", void, bool).async
     call("visibleFrameNames", void, immutableList(string)).async

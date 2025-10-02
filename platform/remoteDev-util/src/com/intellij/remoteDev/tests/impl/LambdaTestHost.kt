@@ -8,13 +8,12 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginModuleId.Companion.asPluginModuleId
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.setSuspend
@@ -45,6 +44,9 @@ import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
+import java.io.InputStream
+import java.io.ObjectInputStream
+import java.io.ObjectStreamClass
 import java.net.InetAddress
 import java.time.LocalTime
 import javax.imageio.ImageIO
@@ -85,6 +87,17 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         }
       }
     }
+
+    class ClassLoaderObjectInputStream(
+      inputStream: InputStream,
+      private val classLoader: ClassLoader,
+    ) : ObjectInputStream(inputStream) {
+
+      override fun resolveClass(desc: ObjectStreamClass): Class<*> {
+        return Class.forName(desc.name, false, classLoader)
+      }
+    }
+
   }
 
   open fun setUpTestLoggingFactory(sessionLifetime: Lifetime, session: LambdaRdTestSession) {
@@ -161,7 +174,8 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
 
         val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME)
                            ?: error("Test module ID '$TEST_MODULE_ID_PROPERTY_NAME' is not specified")
-        val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule((PluginId(testModuleId).asPluginModuleId()))
+
+        val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId))
                          ?: error("Test plugin with test module '$testModuleId' is not found")
 
         LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
@@ -222,6 +236,51 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             LOG.warn("${session.rdIdeInfo.id}: ${parameters.let { "'$it' " }}hasn't finished successfully", ex)
             throw ex
           }
+        }
+
+        // Advice for processing events
+        session.runSerializedLambda.setSuspend(sessionBgtDispatcher) { _, serializedLambda ->
+          try {
+            assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
+            LOG.info("'$serializedLambda': received serialized lambda execution request")
+
+            val providedCoroutineContext = Dispatchers.EDT + CoroutineName("Lambda task: SerializedLambda:${serializedLambda.clazzName}#${serializedLambda.methodName}")
+            val requestFocusBeforeStart = false
+            val clientId = providedCoroutineContext.clientId() ?: ClientId.current
+
+            withContext(providedCoroutineContext) {
+              assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
+              if (!app.isHeadlessEnvironment && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
+                requestFocus()
+              }
+
+              assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
+
+              val consumer = run {
+                val old = Thread.currentThread().contextClassLoader
+                Thread.currentThread().contextClassLoader = testPlugin.pluginClassLoader
+                try {
+                  val bytes = java.util.Base64.getDecoder().decode(serializedLambda.serializedDataBase64)
+                  ClassLoaderObjectInputStream(bytes.inputStream(), testPlugin.pluginClassLoader!!).use { it.readObject() } as java.util.function.Consumer<Application>
+                }
+                finally {
+                  Thread.currentThread().contextClassLoader = old
+                }
+              }
+
+              runLogged(serializedLambda.methodName, 1.minutes) {
+                consumer.accept(app)
+              }
+
+              // Assert state
+              assertLoggerFactory()
+            }
+          }
+          catch (ex: Throwable) {
+            LOG.warn("${session.rdIdeInfo.id}: ${serializedLambda.methodName.let { "'$it' " }}hasn't finished successfully", ex)
+            throw ex
+          }
+          return@setSuspend
         }
 
         session.isResponding.setSuspend(sessionBgtDispatcher + NonCancellable) { _, _ ->
