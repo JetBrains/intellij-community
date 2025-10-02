@@ -13,9 +13,12 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.serialization.KotlinFacetSettingsWorkspaceModel
 
 class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurationBridge<KotlinSettingsEntity, KotlinSettingsEntity.Builder> {
-    override val settings: IKotlinFacetSettings by lazy { KotlinFacetSettingsWorkspaceModel(kotlinSettingsEntity) }
-
+    private val kotlinFacetSettingsWorkspaceModel by lazy { KotlinFacetSettingsWorkspaceModel(kotlinSettingsEntity) }
     private val kotlinSettingsEntity: KotlinSettingsEntity.Builder
+
+    override val settings: IKotlinFacetSettings by lazy { kotlinFacetSettingsWorkspaceModel }
+
+    val compilerArguments get() = kotlinFacetSettingsWorkspaceModel.compilerArguments
 
     private constructor(kotlinSettingsEntity: KotlinSettingsEntity.Builder) : super() {
         this.kotlinSettingsEntity = kotlinSettingsEntity
