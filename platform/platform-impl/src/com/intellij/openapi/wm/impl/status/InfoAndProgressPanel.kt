@@ -1273,6 +1273,7 @@ private class CounterLabel : JPanel() {
     val labelText = when {
       isPopupShowing -> ""
       numberToShow <= 0 -> ""
+      !isProgressVisible && numberToShow == 1 -> ""
       isProgressVisible -> "+${numberToShow}"
       else -> "${numberToShow}"
     }
