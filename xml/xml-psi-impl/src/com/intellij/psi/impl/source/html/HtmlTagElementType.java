@@ -8,11 +8,11 @@ import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.xml.IXmlTagElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class HtmlStubBasedTagElementType
+public class HtmlTagElementType
   extends XmlStubBasedElementType<HtmlStubBasedTagImpl> implements ICompositeElementType, IXmlTagElementType {
 
-  public HtmlStubBasedTagElementType(@NotNull String debugName,
-                                     @NotNull Language language) {
+  public HtmlTagElementType(@NotNull String debugName,
+                            @NotNull Language language) {
     super(debugName, language);
   }
 
