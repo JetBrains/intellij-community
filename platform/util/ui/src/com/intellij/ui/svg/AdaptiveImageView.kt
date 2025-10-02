@@ -34,23 +34,6 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
   private val sysScale: Float
     get() = scaleContext?.getScale(ScaleType.SYS_SCALE)?.toFloat() ?: 1f
 
-  /**
-   * [com.intellij.util.ui.html.HiDpiScalingImageView], which is currently used [com.intellij.codeInsight.documentation.DocumentationEditorPane]
-   * treats raster images' dimensions as physical (ignoring scaling), so image pixel is the same as screen pixel
-   * Correctness of that behavior is questionable since on small hi-dpi displays (like 4k 15.6") with huge (2.25+) scaling
-   * those images become unreadable
-   *
-   * The '1.0f / sysScale' expression here reproduces that behavior.
-   * Replace with just '1.0f' to treat image dimensions as logical dimensions (default behavior in all browsers)
-   */
-  private val imageToLogicalScale: Float
-    get() {
-      return when (val state = myState) {
-        is ViewState.Idle, is ViewState.LoadError, is ViewState.SrcParseError -> 1.0f
-        is ViewState.Loaded -> if (state.isVector) 1.0f else 1.0f / sysScale
-      }
-    }
-
   private var myImageRenderer: AdaptiveImageRenderer? = null
   private var myState: ViewState = ViewState.Idle()
   private var myCachedContainer: Container? = null
@@ -174,8 +157,8 @@ open class AdaptiveImageView(elem: Element) : View(elem) {
   }
 
   override fun getPreferredSpan(axis: Int): Float = when (axis) {
-    X_AXIS -> (myPreferredImageViewDimensions.width * imageToLogicalScale) + 2 * myBorder
-    Y_AXIS -> (myPreferredImageViewDimensions.height * imageToLogicalScale) + 2 * myBorder
+    X_AXIS -> myPreferredImageViewDimensions.width + 2 * myBorder
+    Y_AXIS -> myPreferredImageViewDimensions.height + 2 * myBorder
     else -> throw IllegalArgumentException("Invalid axis: $axis")
   }
 
