@@ -101,7 +101,8 @@ abstract class PyDataViewerAbstractPanel(
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
         doStrategyInitExecution(debugValue.frameAccessor, strategy)
-        val arrayChunk = debugValue.frameAccessor.getArrayItems(debugValue, 0, 0, 0, 0, formatValueFromUI)
+        // For this initial request, we should pass the "%" as the format parameter to correctly reduce 3D tables' dimension to 2.
+        val arrayChunk = debugValue.frameAccessor.getArrayItems(debugValue, 0, 0, 0, 0, "%")
         ApplicationManager.getApplication().invokeLater {
           updateUI(arrayChunk, debugValue, strategy, modifier)
           dataViewerModel.isModified = modifier
