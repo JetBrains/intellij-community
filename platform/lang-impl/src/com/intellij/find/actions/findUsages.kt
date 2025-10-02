@@ -52,6 +52,7 @@ internal fun findUsages(project: Project, target: SearchTarget, allOptions: AllS
     scopeText = allOptions.options.searchScope.displayName
     tabText = UsageViewBundle.message("search.title.0.in.1", searchString, scopeText)
     isOpenInNewTab = FindUsagesSettings.getInstance().isShowResultsInSeparateView || !canReuseTab(project)
+    setDynamicUsagesString(UsageViewBundle.message("node.potential.usages"))
   }
   UsageViewManager.getInstance(project).searchAndShowUsages(
     arrayOf(SearchTarget2UsageTarget(project, target, allOptions)),
