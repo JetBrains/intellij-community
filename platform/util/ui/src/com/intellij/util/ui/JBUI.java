@@ -2674,6 +2674,11 @@ public final class JBUI {
       private static final @NotNull Color SEPARATOR_COLOR =
         JBColor.namedColor("LicenseDialog.separatorColor", 0xEBECF0, 0x393B40);
 
+      private static final @NotNull Color FREE_BADGE_FOREGROUND =
+        JBColor.namedColor("LicenseDialog.freeBadgeForeground", 0xFFFFFF, 0x1E1F22);
+      private static final @NotNull Color FREE_BADGE_BACKGROUND =
+        JBColor.namedColor("LicenseDialog.freeBadgeBackground", 0x208A3C, 0x57965C);
+
       public static @NotNull Color getTermsAndConditionsForeground() {
         return TERMS_AND_CONDITIONS_COLOR;
       }
@@ -2684,6 +2689,14 @@ public final class JBUI {
 
       public static @NotNull Color getSeparatorColor() {
         return SEPARATOR_COLOR;
+      }
+
+      public static @NotNull Color getFreeBadgeForeground() {
+        return FREE_BADGE_FOREGROUND;
+      }
+
+      public static @NotNull Color getFreeBadgeBackground() {
+        return FREE_BADGE_BACKGROUND;
       }
 
       public static final class LicenseList {
