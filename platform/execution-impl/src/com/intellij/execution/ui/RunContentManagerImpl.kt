@@ -57,7 +57,9 @@ import java.util.function.Predicate
 import javax.swing.Icon
 import kotlin.concurrent.Volatile
 
-private val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
+@ApiStatus.Internal
+@JvmField
+val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
 
 @Suppress("LiftReturnOrAssignment")
 class RunContentManagerImpl(private val project: Project) : RunContentManager {
