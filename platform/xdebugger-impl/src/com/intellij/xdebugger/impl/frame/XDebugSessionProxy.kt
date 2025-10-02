@@ -157,7 +157,7 @@ interface XDebugSessionProxy {
     override val editorsProvider: XDebuggerEditorsProvider
       get() = session.debugProcess.editorsProvider
     override val valueMarkers: XValueMarkers<*, *>?
-      get() = (session as XDebugSessionImpl).valueMarkers
+      get() = (session as? XDebugSessionImpl)?.valueMarkers
     override val sessionTab: XDebugSessionTab?
       get() = (session as? XDebugSessionImpl)?.sessionTab
     override val sessionTabWhenInitialized: Deferred<XDebugSessionTab>
