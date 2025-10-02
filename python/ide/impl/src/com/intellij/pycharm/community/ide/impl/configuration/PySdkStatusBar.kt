@@ -17,7 +17,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.util.PlatformUtils
 import com.intellij.util.messages.MessageBusConnection
@@ -40,7 +39,7 @@ private class PySdkStatusBarWidgetFactory : StatusBarWidgetFactory {
   override fun getDisplayName(): String = PyBundle.message("configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name")
 
   override fun isAvailable(project: Project): Boolean {
-    return PythonIdeLanguageCustomization.isMainlyPythonIde() && !isDataSpellInterpreterWidgetEnabled() && !isWelcomeScreenProject(project)
+    return PythonIdeLanguageCustomization.isMainlyPythonIde() && !isDataSpellInterpreterWidgetEnabled()
   }
 
   override fun createWidget(project: Project, scope: CoroutineScope): StatusBarWidget = PySdkStatusBar(project, scope)
