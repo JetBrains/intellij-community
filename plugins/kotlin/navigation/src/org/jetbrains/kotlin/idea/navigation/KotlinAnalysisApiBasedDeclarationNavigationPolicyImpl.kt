@@ -294,6 +294,7 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
         crossinline matchesByPsi: (C, C) -> Boolean
     ): C? {
         val filteredCandidates = candidates.filterIsInstance<C>().filter { matchesByPsi(original, it) }
+        filteredCandidates.singleOrNull()?.let { return it }
 
         return filteredCandidates.firstOrNull { compareCallableTypesByResolve(original, it) }
             ?: filteredCandidates.firstOrNull()
