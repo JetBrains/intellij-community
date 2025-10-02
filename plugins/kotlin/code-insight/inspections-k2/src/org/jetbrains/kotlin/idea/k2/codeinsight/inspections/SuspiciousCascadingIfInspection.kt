@@ -30,7 +30,7 @@ internal class SuspiciousCascadingIfInspection : KotlinApplicableInspectionBase<
         if (element.parent.node.elementType == KtNodeTypes.ELSE) return false
 
         val candidateExpression = when (val lastElseBranch = element.findLastElseBranch()) {
-            is KtDotQualifiedExpression -> lastElseBranch.receiverExpression
+            is KtQualifiedExpression -> lastElseBranch.receiverExpression
             is KtBinaryExpression -> lastElseBranch.left
             else -> null
         }
@@ -89,12 +89,13 @@ private class ConvertIfToWhenFix : KotlinModCommandQuickFix<KtIfExpression>() {
                 whenExpr.replace(outerBinaryExpr)
             }
 
-            is KtDotQualifiedExpression -> {
+            is KtQualifiedExpression -> {
                 val selectorText = lastElseBranch.selectorExpression?.text ?: ""
                 val nestedIf = lastElseBranch.receiverExpression
                 lastElseBranch.replace(nestedIf)
                 val whenExpr = convertIfToWhen(element, updater)
-                val outerQualifiedExpr = psiFactory.createExpressionByPattern("$0.$1", whenExpr, selectorText)
+                val operator = lastElseBranch.operationSign.value // . or ?.
+                val outerQualifiedExpr = psiFactory.createExpressionByPattern("$0$1$2", whenExpr, operator, selectorText)
                 whenExpr.replace(outerQualifiedExpr)
             }
         }
