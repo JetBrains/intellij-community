@@ -36,7 +36,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressBarUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -912,44 +911,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       for (SMTestProxy proxy : tests) {
         String url = proxy.getLocationUrl();
         if (url != null && proxy.getLocator() != null) {
-          String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
-          boolean isConfigurationDumbAware = myConfiguration != null && myConfiguration.getType().isDumbAware();
-          boolean isSMTestLocatorDumbAware = DumbService.isDumbAware(proxy.getLocator());
-          if (isConfigurationDumbAware && isSMTestLocatorDumbAware) {
-            ApplicationManager.getApplication().runReadAction(() -> {
-              writeTestState(proxy, url, configurationName);
-            });
-          }
-          else {
-            if (isConfigurationDumbAware /*&& !isSMTestLocatorDumbAware*/) {
-              LOG.warn("Configuration " + myConfiguration.getType() +
-                       " is dumb aware, but it's test locator " + proxy.getLocator() + " is not. " +
-                       "It leads to an hanging update task on finishing a test case in dumb mode.");
-            }
-            DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
-              writeTestState(proxy, url, configurationName);
-            });
-          }
+          SMTestRunnerTestStateWriter.writeState(getProject(), proxy, url, myConfiguration, myConsoleProperties);
         }
-      }
-    }
-
-    private void writeTestState(@NotNull SMTestProxy proxy, @NotNull String url, @Nullable String configurationName) {
-      Project project = getProject();
-      TestStackTraceParser info = getStackTraceParser(proxy, url, project);
-      TestStateStorage storage = TestStateStorage.getInstance(project);
-      storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
-                                                          configurationName == null ? 0 : configurationName.hashCode(),
-                                                          info.getFailedLine(), info.getFailedMethodName(),
-                                                          info.getErrorMessage(), info.getTopLocationLine()));
-    }
-
-    private TestStackTraceParser getStackTraceParser(@NotNull SMTestProxy proxy, @NotNull String url, @NotNull Project project) {
-      if (myConsoleProperties instanceof SMStacktraceParser) {
-        return ((SMStacktraceParser)myConsoleProperties).getTestStackTraceParser(url, proxy, project);
-      }
-      else {
-        return new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
       }
     }
 
