@@ -41,6 +41,23 @@ public final class ClassPath {
   private static final Measurer resourceLoading = new Measurer();
   private static final AtomicLong classDefineTotalTime = new AtomicLong();
 
+  /**
+   * Hotswap support on the debuggee side.
+   * <p>
+   * When .jars are stuffed with new classes or resources, the classloader
+   * won't find them because it opens and does not close old .jar files.
+   * <p>
+   * Changing this field leads to resetting all instances of {@link ClassPath}.
+   * This is handled by {@link ClassPath#resetOnHotSwap()} method.
+   * <p>
+   * An alternative method would be to call {@link ClassPath#reset()} directly from JDI,
+   * but this is problematic due to needing to iterate over all instances of {@link ClassPath} and
+   * invoking methods on it (which is troublesome with suspending/resuming vm, and also needing a thread).
+   */
+  @SuppressWarnings({"FieldCanBeLocal", "FieldMayBeFinal"})
+  private static int staticClassesHotSwapStamp = 0;
+  private final AtomicInteger myClassesHotSwapStamp = new AtomicInteger();
+
   private Path[] files;
   private boolean filesConvertedToDefaultFs;
   private int searchOffset = 0;
@@ -195,10 +212,22 @@ public final class ClassPath {
     allUrlsWereProcessed = false;
   }
 
+  /**
+   * see javadoc on {@link #staticClassesHotSwapStamp}
+   */
+  private void resetOnHotSwap() {
+    int staticValue = staticClassesHotSwapStamp;
+    if (myClassesHotSwapStamp.getAndSet(staticValue) != staticValue) {
+      reset();
+    }
+  }
+
   public @Nullable Class<?> findClass(String className,
                                       String fileName,
                                       long packageNameHash,
                                       ClassDataConsumer classDataConsumer) throws IOException {
+    resetOnHotSwap();
+
     long start = classLoading.startTiming();
     try {
       int i;
@@ -269,6 +298,8 @@ public final class ClassPath {
   }
 
   public @Nullable Resource findResource(@NotNull String resourceName) {
+    resetOnHotSwap();
+
     long start = resourceLoading.startTiming();
     try {
       int i;
@@ -315,6 +346,8 @@ public final class ClassPath {
   }
 
   public @NotNull Enumeration<URL> getResources(@NotNull String name) {
+    resetOnHotSwap();
+
     if (name.endsWith("/")) {
       name = name.substring(0, name.length() - 1);
     }
