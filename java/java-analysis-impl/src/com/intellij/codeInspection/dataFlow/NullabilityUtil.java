@@ -141,12 +141,12 @@ public final class NullabilityUtil {
         // only initial nullability
         if (block == null || !ControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block)) return Nullability.UNKNOWN;
       }
-      return DfaPsiUtil.getElementNullabilityIgnoringParameterInference(expression.getType(), (PsiModifierListOwner)target);
+      return DfaPsiUtil.getElementNullabilityForRead(expression.getType(), (PsiModifierListOwner)target);
     }
     if (expression instanceof PsiMethodCallExpression || expression instanceof PsiTemplateExpression) {
       if (dumb) return Nullability.UNKNOWN;
       PsiMethod method = ((PsiCall)expression).resolveMethod();
-      return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullability.UNKNOWN;
+      return method != null ? DfaPsiUtil.getElementNullabilityForRead(expression.getType(), method) : Nullability.UNKNOWN;
     }
     return Nullability.UNKNOWN;
   }

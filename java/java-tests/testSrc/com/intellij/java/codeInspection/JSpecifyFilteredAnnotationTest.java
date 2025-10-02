@@ -102,12 +102,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         new Pair<>("TypeVariableUnionNullToSelf.java", 118), // see: IDEA-377691
         new Pair<>("TypeVariableToParent.java", 94), // see: IDEA-377691
 
-        new Pair<>("SuperObject.java", 31),  // see: IDEA-377694
-        new Pair<>("SuperTypeVariable.java", 28),  // see: IDEA-377694
-        new Pair<>("SuperTypeVariable.java", 57),  // see: IDEA-377694
-        new Pair<>("SuperTypeVariable.java", 86),  // see: IDEA-377694
-        new Pair<>("SuperTypeVariable.java", 115), // see: IDEA-377694
-
         new Pair<>("UninitializedField.java", 29), // see: IDEA-377695
 
         new Pair<>("ContainmentExtends.java", 27),  // see: IDEA-377696

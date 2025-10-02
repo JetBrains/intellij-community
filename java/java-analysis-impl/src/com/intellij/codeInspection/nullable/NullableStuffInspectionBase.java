@@ -1052,7 +1052,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       PsiSubstitutor substitutor = base == null || derived == null ? PsiSubstitutor.EMPTY : 
                                    TypeConversionUtil.getSuperClassSubstitutor(base, derived, PsiSubstitutor.EMPTY);
       PsiType superType = substitutor.substitute(superParameter.getType());
-      if (DfaPsiUtil.getElementNullabilityIgnoringParameterInference(superType, superParameter) == Nullability.NULLABLE) {
+      if (DfaPsiUtil.getElementNullabilityForRead(superType, superParameter) == Nullability.NULLABLE) {
         return superParameter;
       }
     }

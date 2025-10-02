@@ -55,7 +55,7 @@ public abstract class PsiVarDescriptor extends JvmVariableDescriptor {
     PsiType type = getType(null);
     PsiModifierListOwner element = ObjectUtils.tryCast(getPsiElement(), PsiModifierListOwner.class);
     LongRangeSet range = JvmPsiRangeSetUtil.fromPsiElement(element);
-    DfType dfType = DfTypes.typedObject(type, DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, element));
+    DfType dfType = DfTypes.typedObject(type, DfaPsiUtil.getElementNullabilityForRead(type, element));
     if (dfType instanceof DfIntegralType) {
       dfType = ((DfIntegralType)dfType).meetRange(range);
     }

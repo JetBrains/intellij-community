@@ -77,7 +77,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       }
       else {
         myType = resolveResult.getSubstitutor().substitute(myTargetMethod.getReturnType());
-        myReturnNullability = DfaPsiUtil.getElementNullability(myType, myTargetMethod);
+        myReturnNullability = DfaPsiUtil.getElementNullabilityForRead(myType, myTargetMethod);
       }
     }
     myArgRequiredNullability = myTargetMethod == null
@@ -108,7 +108,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     }
 
     myMutation = MutationSignature.fromCall(call);
-    myReturnNullability = call instanceof PsiNewExpression ? Nullability.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
+    myReturnNullability = call instanceof PsiNewExpression ? Nullability.NOT_NULL : DfaPsiUtil.getElementNullabilityForRead(myType, myTargetMethod);
   }
 
   /**
@@ -139,7 +139,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
 
     Nullability[] nullabilities = new Nullability[myArgCount];
     for (int i = 0; i < checkedCount; i++) {
-      nullabilities[i] = DfaPsiUtil.getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]);
+      nullabilities[i] = DfaPsiUtil.getElementNullabilityForWrite(substitutor.substitute(parameters[i].getType()), parameters[i]);
     }
     return nullabilities;
   }
@@ -393,7 +393,7 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       Mutability mutable = Mutability.UNKNOWN;
       if (myTargetMethod != null) {
         if (realMethod != myTargetMethod) {
-          nullability = DfaPsiUtil.getElementNullability(type, realMethod);
+          nullability = DfaPsiUtil.getElementNullabilityForRead(type, realMethod);
           mutable = Mutability.getMutability(realMethod);
         } else {
           mutable = Mutability.getMutability(myTargetMethod);

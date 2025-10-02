@@ -70,7 +70,7 @@ public final class JavaDfaValueFactory {
         }
         PsiType type = expression.getType();
         if (type != null) {
-          yield factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, null)));
+          yield factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullabilityForRead(type, null)));
         }
         yield null;
       }
