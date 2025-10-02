@@ -4,6 +4,7 @@ import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
@@ -25,6 +26,9 @@ interface TerminalTabBuilder {
    * True by default.
    */
   fun shouldAddToToolWindow(addToToolWindow: Boolean): TerminalTabBuilder
+
+  @ApiStatus.Internal
+  fun startupFusInfo(startupFusInfo: TerminalStartupFusInfo?): TerminalTabBuilder
 
   @RequiresEdt
   fun createTab(): TerminalToolWindowTab

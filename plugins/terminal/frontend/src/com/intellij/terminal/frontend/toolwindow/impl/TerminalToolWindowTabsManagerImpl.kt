@@ -194,16 +194,16 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   private fun createTerminalViewAndStartSession(builder: TerminalTabBuilderImpl): TerminalView {
-    val terminal = createTerminalView()
+    val terminal = createTerminalView(builder.startupFusInfo)
     val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
     terminal.title.change { defaultTitle = tabName }
     createBackendTabAndStartSession(terminal, builder)
     return terminal
   }
 
-  private fun createTerminalView(): TerminalViewImpl {
+  private fun createTerminalView(fusInfo: TerminalStartupFusInfo?): TerminalViewImpl {
     val scope = coroutineScope.childScope("Terminal")
-    return TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, scope)
+    return TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), fusInfo, scope)
   }
 
   @OptIn(AwaitCancellationAndInvoke::class)
@@ -394,6 +394,8 @@ internal class TerminalToolWindowTabsManagerImpl(
       private set
     var shouldAddToToolWindow: Boolean = true
       private set
+    var startupFusInfo: TerminalStartupFusInfo? = null
+      private set
 
     var backendTabId: Int? = null
       private set
@@ -439,6 +441,11 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     override fun shouldAddToToolWindow(addToToolWindow: Boolean): TerminalTabBuilder {
       shouldAddToToolWindow = addToToolWindow
+      return this
+    }
+
+    override fun startupFusInfo(startupFusInfo: TerminalStartupFusInfo?): TerminalTabBuilder {
+      this.startupFusInfo = startupFusInfo
       return this
     }
 

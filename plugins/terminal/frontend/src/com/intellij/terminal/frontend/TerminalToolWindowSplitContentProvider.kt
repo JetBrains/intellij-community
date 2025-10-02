@@ -8,23 +8,27 @@ import com.intellij.ui.content.Content
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabState
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 
 internal class TerminalToolWindowSplitContentProvider : ToolWindowSplitContentProvider {
   override fun createContentCopy(project: Project, content: Content): Content {
+    val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SPLIT_TOOLWINDOW)
+
     return if (shouldUseReworkedTerminal()) {
-      createReworkedTerminalContent(project)
+      createReworkedTerminalContent(project, fusInfo)
     }
     else {
       createClassicTerminalContent(project, content)
     }
   }
 
-  private fun createReworkedTerminalContent(project: Project): Content {
+  private fun createReworkedTerminalContent(project: Project, fusInfo: TerminalStartupFusInfo): Content {
     // todo: determine the current directory of the existing terminal tab
-    // todo: pass startupFusInfo there as well
     return TerminalToolWindowTabsManager.getInstance(project)
       .createTabBuilder()
       .shouldAddToToolWindow(false)
+      .startupFusInfo(fusInfo)
       .createTab()
       .content
   }

@@ -26,12 +26,12 @@ internal fun createTerminalTab(
   startupFusInfo: TerminalStartupFusInfo? = null,
 ) {
   if (shouldUseReworkedTerminal()) {
-    // todo: pass fusInfo there
     TerminalToolWindowTabsManager.getInstance(project).createTabBuilder()
       .shellCommand(shellCommand)
       .workingDirectory(workingDirectory)
       .tabName(tabName)
       .contentManager(contentManager)
+      .startupFusInfo(startupFusInfo)
       .createTab()
   }
   else {
