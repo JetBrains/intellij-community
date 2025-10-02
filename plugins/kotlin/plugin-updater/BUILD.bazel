@@ -33,6 +33,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
     "//java/compiler/openapi:java-compiler",
+    "//platform/statistics",
   ]
 )
 ### auto-generated section `build kotlin.plugin-updater` end
