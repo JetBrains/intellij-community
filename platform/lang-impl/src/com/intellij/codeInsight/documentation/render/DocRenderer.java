@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -67,8 +67,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static final DocRendererMemoryManager MEMORY_MANAGER = new DocRendererMemoryManager();
   private static final DocRenderImageManager IMAGE_MANAGER = new DocRenderImageManager();
 
-  private static final int MIN_WIDTH = 350;
-  private static final int MAX_WIDTH = 680;
   private static final int LEFT_INSET = 14;
   private static final int RIGHT_INSET = 12;
   private static final int TOP_BOTTOM_INSETS = 2;
@@ -208,7 +206,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     if (toggleRenderAllAction != null) {
       group.add(toggleRenderAllAction);
     }
-    group.add(new ChangeFontSize());
+    group.add(new DocRendererAppearanceSettingsAction());
 
     PsiDocCommentBase comment = getComment();
     for (DocumentationActionProvider provider : DocumentationActionProvider.EP_NAME.getExtensions()) {
@@ -238,9 +236,9 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     if (availableWidth <= 0) {
       // if editor is not shown yet, we create the inlay with maximum possible width,
       // assuming that there's a higher probability that editor will be shown with larger width than with smaller width
-      return MAX_WIDTH;
+      return DocRendererAppearanceSettings.getMaxWidth();
     }
-    return Math.max(scale(MIN_WIDTH), Math.min(scale(MAX_WIDTH), availableWidth));
+    return Math.clamp(availableWidth, scale(DocRendererAppearanceSettings.MIN_WIDTH), scale(DocRendererAppearanceSettings.getMaxWidth()));
   }
 
   private int calcInlayStartX() {
@@ -393,19 +391,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
            itemImpl.isZombie();
   }
 
-  private static final class ChangeFontSize extends DumbAwareAction {
-    ChangeFontSize() {
-      super(CodeInsightBundle.messagePointer("javadoc.adjust.font.size"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != null) {
-        DocFontSizePopup.show(editor.getContentComponent(), () -> DocRenderItemUpdater.updateRenderers(editor, true));
-      }
-    }
-  }
 
   final class EditorInlineHtmlPane extends JBHtmlPane {
     private final List<Image> myImages = new ArrayList<>();
