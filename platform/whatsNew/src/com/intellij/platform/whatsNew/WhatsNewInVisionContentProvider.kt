@@ -27,7 +27,7 @@ open class WhatsNewInVisionContentProvider {
     const val DEFAULT_VISION_JSON_FILE_NAME: String = "vision-in-product-pages.json"
   }
 
-  suspend fun isAvailable(): Boolean {
+  open suspend fun isAvailable(): Boolean {
     return content.checkAvailability()
   }
 
