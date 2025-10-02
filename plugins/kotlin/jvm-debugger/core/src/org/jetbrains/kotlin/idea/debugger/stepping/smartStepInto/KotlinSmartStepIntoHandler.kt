@@ -66,13 +66,18 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
         }.asCompletableFuture().asPromise()
     }
 
-    override fun findSmartStepTargets(position: SourcePosition): List<SmartStepTarget> = findSmartStepTargetsSync(position, null)
+    override fun findSmartStepTargets(position: SourcePosition): List<SmartStepTarget> = findSmartStepTargetsSync(position, null, null)
 
     @ApiStatus.Internal
-    fun findSmartStepTargetsSync(position: SourcePosition, session: DebuggerSession?, suspendContext: SuspendContextImpl? = null): List<SmartStepTarget> =
-        runBlockingCancellable {
+    fun findSmartStepTargetsSync(
+        position: SourcePosition,
+        session: DebuggerSession?,
+        suspendContext: SuspendContextImpl?
+    ): List<SmartStepTarget> {
+        return runBlockingCancellable {
             findSmartStepTargetsInternal(position, session, suspendContext)
         }
+    }
 
     override fun createMethodFilter(stepTarget: SmartStepTarget?): MethodFilter? =
         when (stepTarget) {
@@ -115,9 +120,9 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
             readAction { findSmartStepTargets(expression, lines) }
         }
         if (targets.isEmpty()) return emptyList()
-        if (session != null) {
-            val location = suspendContext?.frameProxy?.safeLocation()
-            val currentMethodName = location?.safeMethod()?.name()
+        val location = suspendContext?.frameProxy?.safeLocation()
+        if (session != null && location != null) {
+            val currentMethodName = location.safeMethod()?.name()
             // Cannot analyze method calls in the default method body, as they are located in a different method in bytecode
             if (currentMethodName?.endsWith("\$default") == true) {
                 DebuggerStatistics.logSmartStepIntoTargetsDetection(session.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.NO_TARGETS)
@@ -308,5 +313,5 @@ data class SmartStepIntoContext(
     val debugProcess: DebugProcessImpl,
     val position: SourcePosition,
     val lines: ClosedRange<Int>,
-    val location: Location?
+    val location: Location,
 )
