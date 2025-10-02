@@ -12,8 +12,8 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.JetBrainsPermanentInstallationID
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
@@ -187,7 +187,7 @@ internal open class StandalonePluginUpdateChecker(
         val buildNumber = ApplicationInfo.getInstance().apiVersion
         val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
 
-        val uid = PermanentInstallationID.get()
+        val uid = JetBrainsPermanentInstallationID.get()
         val pluginId = pluginId.idString
         var url =
             "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os&uuid=$uid"
