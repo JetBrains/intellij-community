@@ -98,7 +98,7 @@ object ConfigFactory {
 
     if (map != null) {
       val resultProjectPath = projectPath ?: map.handleEnv("projectPath")
-      builder.actions = Config.ActionsGeneration(
+      builder.actions = Config.ActionsGenerationIml(
         resultProjectPath,
         projectName ?: map.getIfExists<String>("projectName")?.handleEnv() ?: resultProjectPath.split('/').last(),
         language ?: map.getIfExists("language"),
@@ -120,7 +120,7 @@ object ConfigFactory {
       return
     }
 
-    builder.fileDataset = Config.FileDataset(
+    builder.fileDataset = Config.FileDatasetImpl(
       map.getAs("url"),
       map.getIfExists<Double?>("chunkSize")?.toInt(),
     )

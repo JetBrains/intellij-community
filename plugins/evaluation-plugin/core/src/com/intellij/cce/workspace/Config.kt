@@ -58,14 +58,23 @@ data class Config private constructor(
    * @property evaluationRoots The list of evaluation roots. Directories and files with relative and absolute paths are allowed.
    * @property ignoreFileNames The set of file names to ignore. Files and directories with these names inside [evaluationRoots] will be skipped.
    */
-  data class ActionsGeneration internal constructor(
-    val projectPath: String,
-    val projectName: String,
-    val language: String?,
-    val evaluationRoots: List<String>,
-    val ignoreFileNames: Set<String>,
-    val sourceFile: String?,
-  )
+  interface ActionsGeneration {
+    val projectPath: String
+    val projectName: String
+    val language: String?
+    val evaluationRoots: List<String>
+    val ignoreFileNames: Set<String>
+    val sourceFile: String?
+  }
+
+  data class ActionsGenerationIml internal constructor(
+    override var projectPath: String,
+    override val projectName: String,
+    override val language: String?,
+    override val evaluationRoots: List<String>,
+    override val ignoreFileNames: Set<String>,
+    override val sourceFile: String?,
+  ): ActionsGeneration
 
   /**
    * Represents a configuration for datasets stored on a file system (probably in one file).
@@ -73,10 +82,15 @@ data class Config private constructor(
    * @property url The URL of the file. Check DatasetRef for available options.
    * @property chunkSize The size of each chunk when reading and rendering the file.
    */
-  data class FileDataset internal constructor(
-    val url: String,
-    val chunkSize: Int?,
-  )
+  interface FileDataset {
+    val url: String
+    val chunkSize: Int?
+  }
+  
+  data class FileDatasetImpl internal constructor(
+    override val url: String,
+    override val chunkSize: Int?,
+  ) : FileDataset
 
   /**
    * Represents the configuration for the interpretation of actions.
@@ -262,3 +276,14 @@ data class Config private constructor(
     )
   }
 }
+
+// todo: create better approach
+fun Config.ActionsGeneration.copy(projectPath: String): Config.ActionsGeneration =
+  Config.ActionsGenerationIml(
+    projectPath,
+    projectName,
+    language,
+    evaluationRoots,
+    ignoreFileNames,
+    sourceFile
+  )
