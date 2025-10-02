@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets
 val LOG: Logger = Logger.getInstance(BuiltInHelpManager::class.java)
 
 //Later we'll add more languages here, for now it's Chinese only
-val localesToUrls = mapOf(
+val localesToUrls: Map<String, String> = mapOf(
   "zh-cn" to "zh-cn",
 )
 
@@ -48,7 +48,6 @@ class BuiltInHelpManager : HelpManager() {
 
     val helpIdToUse = URLEncoder.encode(helpId, StandardCharsets.UTF_8) ?: "top"
     logWillOpenHelpId(helpIdToUse)
-    val locale = LocalizationStateService.getInstance()?.selectedLocale
 
     var activeKeymap: Keymap? = KeymapManagerEx.getInstanceEx().getActiveKeymap()
     if (true == activeKeymap?.canModify())
