@@ -15,8 +15,14 @@ import java.nio.file.Path
 internal suspend fun createCommunityBuildContext(
   options: BuildOptions = BuildOptions(),
   projectHome: Path = COMMUNITY_ROOT.communityRoot,
-): BuildContext = BuildContextImpl.createContext(
-  projectHome, IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot), setupTracer = true, options = options)
+): BuildContext {
+  return BuildContextImpl.createContext(
+    projectHome = projectHome,
+    productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+    setupTracer = true,
+    options = options,
+  )
+}
 
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIdeaProperties() {
   companion object {
@@ -35,7 +41,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     )
   }
 
-  override val baseFileName: String = "idea"
+  override val baseFileName: String
+    get() = "idea"
 
   init {
     platformPrefix = "Idea"
@@ -65,7 +72,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       layout.withModule("intellij.platform.duplicates.analysis")
       layout.withModule("intellij.platform.structuralSearch")
     }
-    
+
     productLayout.skipUnresolvedContentModules = true
 
     mavenArtifacts.forIdeModules = true
@@ -126,7 +133,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     bundleExternalPlugins(context, targetDir)
   }
 
-  protected open suspend fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) { }
+  protected open suspend fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {}
 
   override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer = CommunityWindowsDistributionCustomizer()
   override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer = CommunityLinuxDistributionCustomizer()
@@ -144,8 +151,9 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
 
     override fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String = "IntelliJ IDEA Community Edition"
 
-    override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String =
-      "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
+    override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String {
+      return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
+    }
   }
 
   protected open inner class CommunityLinuxDistributionCustomizer : LinuxDistributionCustomizer() {
@@ -160,10 +168,16 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "idea-IC-$buildNumber"
 
-    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture, targetLibcImpl: LibcImpl): Sequence<String> =
-      super.generateExecutableFilesPatterns(context, includeRuntime, arch, targetLibcImpl)
+    override fun generateExecutableFilesPatterns(
+      context: BuildContext,
+      includeRuntime: Boolean,
+      arch: JvmArchitecture,
+      targetLibcImpl: LibcImpl,
+    ): Sequence<String> {
+      return super.generateExecutableFilesPatterns(context, includeRuntime, arch, targetLibcImpl)
         .plus(KotlinBinaries.kotlinCompilerExecutables)
         .filterNot { it == "plugins/**/*.sh" }
+    }
   }
 
   protected open inner class CommunityMacDistributionCustomizer : MacDistributionCustomizer() {
@@ -177,18 +191,25 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       dmgImagePath = "${communityHomeDir}/build/conf/ideaCE/mac/images/dmg_background.tiff"
     }
 
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-      if (appInfo.isEAP) "IntelliJ IDEA ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} CE EAP.app"
-      else "IntelliJ IDEA CE.app"
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+      if (appInfo.isEAP) {
+        return "IntelliJ IDEA ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} CE EAP.app"
+      }
+      else {
+        return "IntelliJ IDEA CE.app"
+      }
+    }
 
-    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> =
-      super.generateExecutableFilesPatterns(context, includeRuntime, arch)
+    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
+      return super.generateExecutableFilesPatterns(context, includeRuntime, arch)
         .plus(KotlinBinaries.kotlinCompilerExecutables)
         .filterNot { it == "plugins/**/*.sh" }
+    }
   }
 
-  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+  }
 
   override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "ideaIC-$buildNumber"
 

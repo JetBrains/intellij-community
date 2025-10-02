@@ -19,43 +19,45 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import kotlin.io.path.exists
 
+private const val GROUP_ID: String = "org.jetbrains.jewel"
+private val CORE: Map<String, String> = mapOf(
+  "intellij.platform.jewel.foundation" to "jewel-foundation",
+  "intellij.platform.jewel.markdown.core" to "jewel-markdown-core",
+  "intellij.platform.jewel.ui" to "jewel-ui",
+  "intellij.platform.jewel.markdown.extensions.gfmTables" to "jewel-markdown-extensions-gfm-tables",
+  "intellij.platform.jewel.markdown.extensions.gfmStrikethrough" to "jewel-markdown-extensions-gfm-strikethrough",
+  "intellij.platform.jewel.markdown.extensions.autolink" to "jewel-markdown-extensions-autolink",
+  "intellij.platform.jewel.markdown.extensions.gfmAlerts" to "jewel-markdown-extensions-gfm-alerts",
+  "intellij.platform.jewel.markdown.extensions.images" to "jewel-markdown-extensions-images",
+)
+private val NOT_PUBLISHED: Set<String> = setOf("intellij.platform.jewel.ideLafBridge", "intellij.platform.jewel.markdown.ideLafBridgeStyling")
+
+private val transitiveJewelDependencies = mapOf(
+  "jewel-foundation" to emptySet(),
+  "jewel-ui" to emptySet(),
+  "jewel-decorated-window" to setOf("jewel-foundation", "jewel-ui"),
+  "jewel-markdown-core" to setOf("jewel-foundation"),
+  "jewel-markdown-extensions-autolink" to setOf("jewel-foundation", "jewel-ui"),
+  "jewel-markdown-extensions-gfm-alerts" to setOf("jewel-foundation", "jewel-ui"),
+  "jewel-markdown-extensions-gfm-strikethrough" to setOf("jewel-foundation", "jewel-ui"),
+  "jewel-markdown-extensions-gfm-tables" to setOf("jewel-foundation", "jewel-ui"),
+  "jewel-markdown-extensions-images" to setOf("jewel-foundation", "jewel-ui"),
+  "jewel-int-ui-standalone" to setOf("jewel-foundation"),
+  "jewel-int-ui-decorated-window" to setOf("jewel-foundation", "jewel-ui", "jewel-int-ui-standalone"),
+  "jewel-markdown-int-ui-standalone-styling" to setOf("jewel-foundation", "jewel-ui"),
+)
+
 internal object JewelMavenArtifacts {
-  private const val GROUP_ID: String = "org.jetbrains.jewel"
-  private val CORE: Map<String, String> = mapOf(
-    "intellij.platform.jewel.foundation" to "jewel-foundation",
-    "intellij.platform.jewel.markdown.core" to "jewel-markdown-core",
-    "intellij.platform.jewel.ui" to "jewel-ui",
-    "intellij.platform.jewel.markdown.extensions.gfmTables" to "jewel-markdown-extensions-gfm-tables",
-    "intellij.platform.jewel.markdown.extensions.gfmStrikethrough" to "jewel-markdown-extensions-gfm-strikethrough",
-    "intellij.platform.jewel.markdown.extensions.autolink" to "jewel-markdown-extensions-autolink",
-    "intellij.platform.jewel.markdown.extensions.gfmAlerts" to "jewel-markdown-extensions-gfm-alerts",
-    "intellij.platform.jewel.markdown.extensions.images" to "jewel-markdown-extensions-images",
-  )
   internal val STANDALONE: Map<String, String> = mapOf(
     "intellij.platform.jewel.markdown.intUiStandaloneStyling" to "jewel-markdown-int-ui-standalone-styling",
     "intellij.platform.jewel.intUi.decoratedWindow" to "jewel-int-ui-decorated-window",
     "intellij.platform.jewel.intUi.standalone" to "jewel-int-ui-standalone",
     "intellij.platform.jewel.decoratedWindow" to "jewel-decorated-window",
   )
-  private val NOT_PUBLISHED: Set<String> = setOf("intellij.platform.jewel.ideLafBridge", "intellij.platform.jewel.markdown.ideLafBridgeStyling")
 
   private val ALL: Map<String, String> = CORE + STANDALONE
-  internal val ALL_MODULES: Set<String> = ALL.keys
 
-  private val transitiveJewelDependencies = mapOf(
-    "jewel-foundation" to emptySet(),
-    "jewel-ui" to emptySet(),
-    "jewel-decorated-window" to setOf("jewel-foundation", "jewel-ui"),
-    "jewel-markdown-core" to setOf("jewel-foundation"),
-    "jewel-markdown-extensions-autolink" to setOf("jewel-foundation", "jewel-ui"),
-    "jewel-markdown-extensions-gfm-alerts" to setOf("jewel-foundation", "jewel-ui"),
-    "jewel-markdown-extensions-gfm-strikethrough" to setOf("jewel-foundation", "jewel-ui"),
-    "jewel-markdown-extensions-gfm-tables" to setOf("jewel-foundation", "jewel-ui"),
-    "jewel-markdown-extensions-images" to setOf("jewel-foundation", "jewel-ui"),
-    "jewel-int-ui-standalone" to setOf("jewel-foundation"),
-    "jewel-int-ui-decorated-window" to setOf("jewel-foundation", "jewel-ui", "jewel-int-ui-standalone"),
-    "jewel-markdown-int-ui-standalone-styling" to setOf("jewel-foundation", "jewel-ui"),
-  )
+  internal val ALL_MODULES: Set<String> = ALL.keys
 
   init {
     check(ALL.values.toSet() == transitiveJewelDependencies.keys) { "One or more Jewel dependencies are mismatched" }
@@ -67,9 +69,9 @@ internal object JewelMavenArtifacts {
     DependenciesProperties(COMMUNITY_ROOT, jewelProperties).property("jewel.release.version")
   }
 
-  fun isPublishedJewelModule(module: JpsModule): Boolean =
-    module.name.startsWith("intellij.platform.jewel.") &&
-    module.name !in NOT_PUBLISHED
+  fun isPublishedJewelModule(module: JpsModule): Boolean {
+    return module.name.startsWith("intellij.platform.jewel.") && module.name !in NOT_PUBLISHED
+  }
 
   fun patchCoordinates(module: JpsModule, coordinates: MavenCoordinates): MavenCoordinates {
     check(isPublishedJewelModule(module))
@@ -85,8 +87,8 @@ internal object JewelMavenArtifacts {
     for (dependency in dependencies) {
       val coordinates = dependency.coordinates
 
-      when {
-        coordinates.groupId == GROUP_ID -> {
+      when (coordinates.groupId) {
+        GROUP_ID -> {
           // Do not add transitive dependencies directly, let them be transitive
           if (module.isTransitiveJewelDependency(coordinates)) {
             continue
@@ -105,19 +107,19 @@ internal object JewelMavenArtifacts {
 
           add(dependency.withTransitiveDependencies(scope))
         }
-        coordinates.groupId == "org.jetbrains.compose.foundation" && module.name == "intellij.platform.jewel.foundation" -> {
+        "org.jetbrains.compose.foundation" if module.name == "intellij.platform.jewel.foundation" -> {
           // Only add the Compose dependency to foundation, let other modules get it transitively
           add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
         }
-        coordinates.groupId == "org.commonmark" -> {
+        "org.commonmark" -> {
           // Add CommonMark dependencies as "compile" dependencies when present
           add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
         }
-        coordinates.groupId == "io.coil-kt.coil3" -> {
+        "io.coil-kt.coil3" -> {
           // Add Coil 3 dependencies as "compile" dependencies when present
           add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
         }
-        coordinates.groupId == "org.jetbrains.compose.components" -> {
+        "org.jetbrains.compose.components" -> {
           add(dependency.withTransitiveDependencies(DependencyScope.COMPILE))
         }
 
@@ -171,7 +173,7 @@ internal object JewelMavenArtifacts {
 
   private fun isProductionDependency(dep: JpsDependencyElement): Boolean {
     val scope = JpsJavaExtensionService.getInstance().getDependencyExtension(dep)?.scope ?: return false
-    return (scope == JpsJavaDependencyScope.COMPILE || scope == JpsJavaDependencyScope.PROVIDED)
+    return scope == JpsJavaDependencyScope.COMPILE || scope == JpsJavaDependencyScope.PROVIDED
   }
 
   fun validate(context: BuildContext, mavenArtifacts: Collection<GeneratedMavenArtifacts>) {
