@@ -23,7 +23,9 @@ import org.jetbrains.jewel.ui.icons.AllIconsKeys
 internal fun ToolWindowHeader(
   pathsCount: Int,
   searchQuery: TextFieldValue,
-  onSearchQueryChange: (TextFieldValue) -> Unit
+  onSearchQueryChange: (TextFieldValue) -> Unit,
+  filters: List<LockTypeFilterChip> = emptyList(),
+  onToggleFilter: (LockTypeFilterChip) -> Unit = {},
 ) {
   Row(
     modifier = Modifier
@@ -46,7 +48,20 @@ internal fun ToolWindowHeader(
       )
     }
 
-    Row(modifier = Modifier.weight(1f)) {}
+    // Filters
+    if (filters.isNotEmpty()) {
+      Row(
+        modifier = Modifier.weight(1f),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        filters.forEach { chip ->
+          FilterToggleChip(chip = chip, onToggle = { onToggleFilter(chip) })
+        }
+      }
+    } else {
+      Row(modifier = Modifier.weight(1f)) {}
+    }
 
     if (pathsCount > 0) {
       TextField(
