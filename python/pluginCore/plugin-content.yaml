@@ -10,9 +10,6 @@
 - name: lib/modules/intellij.python.ast.jar
   contentModules:
   - name: intellij.python.ast
-- name: lib/modules/intellij.python.common.frontend.jar
-  contentModules:
-  - name: intellij.python.common.frontend
 - name: lib/modules/intellij.python.common.jar
   contentModules:
   - name: intellij.python.common
