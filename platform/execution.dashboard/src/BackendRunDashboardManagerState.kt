@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard
 
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.dashboard.RunDashboardCustomizer
@@ -86,6 +87,7 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
       val settings = backendServiceModel.configurationSettings
       val configuration = settings.configuration
       val project = configuration.project
+      val contentIdImpl = backendServiceModel.descriptor?.id as? RunContentDescriptorIdImpl
 
       if (backendServiceModel is RunDashboardManagerImpl.RunDashboardServiceImpl) {
         return RunDashboardMainServiceDto(
@@ -96,7 +98,7 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
           typeDisplayName = configuration.type.displayName,
           typeIconId = configuration.type.icon.rpcId(),
           folderName = settings.folderName,
-          contentId = backendServiceModel.descriptor?.id,
+          contentId = contentIdImpl,
           isRemovable = RunManager.getInstance(project).hasSettings(settings),
           serviceViewId = backendServiceModel.serviceViewId,
           isStored = RunManager.getInstance(project).hasSettings(settings),
@@ -113,7 +115,7 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
           typeDisplayName = configuration.type.displayName,
           typeIconId = configuration.type.icon.rpcId(),
           folderName = settings.folderName,
-          contentId = backendServiceModel.descriptor?.id,
+          contentId = contentIdImpl,
           isRemovable = RunManager.getInstance(project).hasSettings(settings),
           serviceViewId = backendServiceModel.serviceViewId,
           isStored = RunManager.getInstance(project).hasSettings(settings),

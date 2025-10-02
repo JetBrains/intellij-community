@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.splitApi
 
-import com.intellij.execution.RunContentDescriptorId
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.ide.ui.icons.IconId
 import kotlinx.serialization.Serializable
@@ -19,7 +19,7 @@ sealed interface RunDashboardServiceDto {
   val typeIconId: IconId
   val folderName: String?
 
-  val contentId: RunContentDescriptorId?
+  val contentId: RunContentDescriptorIdImpl?
 
   val isRemovable: Boolean
   val serviceViewId: String
@@ -39,7 +39,7 @@ data class RunDashboardMainServiceDto(
   override val typeDisplayName: String,
   override val typeIconId: IconId,
   override val folderName: String?,
-  override val contentId: RunContentDescriptorId?,
+  override val contentId: RunContentDescriptorIdImpl?,
   override val isRemovable: Boolean,
   override val serviceViewId: String,
   override val isStored: Boolean,
@@ -57,7 +57,7 @@ data class RunDashboardAdditionalServiceDto(
   override val typeDisplayName: String,
   override val typeIconId: IconId,
   override val folderName: String?,
-  override val contentId: RunContentDescriptorId?,
+  override val contentId: RunContentDescriptorIdImpl?,
   override val isRemovable: Boolean,
   override val serviceViewId: String,
   override val isStored: Boolean,
@@ -66,7 +66,7 @@ data class RunDashboardAdditionalServiceDto(
 ) : RunDashboardServiceDto
 
 @ApiStatus.Internal
-fun RunDashboardMainServiceDto.toAdditionalServiceDto(contentId: RunContentDescriptorId): RunDashboardAdditionalServiceDto {
+fun RunDashboardMainServiceDto.toAdditionalServiceDto(contentId: RunContentDescriptorIdImpl): RunDashboardAdditionalServiceDto {
   return RunDashboardAdditionalServiceDto(
     uuid = uuid,
     name = name,

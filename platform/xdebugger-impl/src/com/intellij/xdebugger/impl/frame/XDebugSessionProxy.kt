@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
-import com.intellij.execution.RunContentDescriptorId
+import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.Disposable
@@ -42,7 +42,7 @@ import javax.swing.event.HyperlinkListener
 
 @ApiStatus.Internal
 interface XDebugSessionProxy {
-  val runContentDescriptorId: RunContentDescriptorId?
+  val runContentDescriptorId: RunContentDescriptorIdImpl?
 
   val project: Project
 
@@ -129,8 +129,8 @@ interface XDebugSessionProxy {
 
   // TODO WeakReference<XDebugSession>?
   class Monolith(val session: XDebugSession) : XDebugSessionProxy {
-    override val runContentDescriptorId: RunContentDescriptorId?
-      get() = (session as XDebugSessionImpl).getRunContentDescriptorIfInitialized()?.id
+    override val runContentDescriptorId: RunContentDescriptorIdImpl?
+      get() = (session as XDebugSessionImpl).getRunContentDescriptorIfInitialized()?.id as RunContentDescriptorIdImpl?
 
     override val project: Project
       get() = session.project
