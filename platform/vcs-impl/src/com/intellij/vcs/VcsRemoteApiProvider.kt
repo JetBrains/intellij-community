@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.impl.projectlevelman.VcsMappingsApiImpl
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import com.intellij.platform.vcs.impl.shared.rpc.*
 import com.intellij.vcs.changes.ChangeListsApiImpl
+import com.intellij.vcs.changes.PartialChangesApiImpl
 import com.intellij.vcs.shelf.BackendShelfActionsApi
 import com.intellij.vcs.shelf.BackendShelfApi
 import fleet.rpc.remoteApiDescriptor
@@ -27,6 +28,10 @@ internal class VcsRemoteApiProvider : RemoteApiProvider {
 
     remoteApi(remoteApiDescriptor<VcsMappingsApi>()) {
       VcsMappingsApiImpl()
+    }
+
+    remoteApi(remoteApiDescriptor<PartialChangesApi>()) {
+      PartialChangesApiImpl()
     }
   }
 }

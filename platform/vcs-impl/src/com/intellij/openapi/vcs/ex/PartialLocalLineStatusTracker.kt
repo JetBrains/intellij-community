@@ -88,6 +88,9 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 
   fun addListener(listener: Listener, disposable: Disposable)
 
+  @ApiStatus.Internal
+  fun addListener(listener: LineStatusTrackerListener, disposable: Disposable)
+
   open class ListenerAdapter : Listener
 
   /**
@@ -1023,6 +1026,9 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     eventDispatcher.addListener(listener, disposable)
   }
 
+  override fun addListener(listener: LineStatusTrackerListener, disposable: Disposable) {
+    listeners.addListener(listener, disposable)
+  }
 
   internal class FullState(virtualFile: VirtualFile,
                            ranges: List<RangeState>,

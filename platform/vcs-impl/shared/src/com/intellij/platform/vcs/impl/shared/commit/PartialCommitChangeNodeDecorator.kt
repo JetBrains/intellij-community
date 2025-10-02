@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.commit
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.vcs.impl.shared.commit
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
@@ -9,10 +9,10 @@ import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.ex.countAffectedVisibleChanges
-import com.intellij.openapi.vcs.impl.PartialChangesUtil
+import com.intellij.platform.vcs.impl.shared.changes.PartialChangesHolder
 import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES
-import com.intellij.util.FontUtil.spaceAndThinSpace
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.FontUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -30,13 +30,15 @@ class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
 
   private fun appendPartialCommitState(change: Change, renderer: SimpleColoredComponent) {
     val changeListId = (change as? ChangeListChange)?.changeListId ?: return
-    val ranges = PartialChangesUtil.getPartialTracker(project, change)?.getRanges() ?: return
+    val filePath = change.afterRevision?.file ?: return
+    val ranges = PartialChangesHolder.Companion.getInstance(project).getRanges(filePath) ?: return
     val rangesToCommit = ranges.filter { it.changelistId == changeListId }
       .sumOf { it.exclusionState.countAffectedVisibleChanges(true) }
     val totalRanges = ranges.sumOf { it.exclusionState.countAffectedVisibleChanges(false) }
     if (rangesToCommit != 0 && rangesToCommit != totalRanges) {
-      renderer.append(spaceAndThinSpace()).append(VcsBundle.message("ranges.to.commit.of.ranges.size.changes", rangesToCommit, totalRanges),
-                                                  GRAY_ITALIC_ATTRIBUTES)
+      renderer.append(FontUtil.spaceAndThinSpace()).append(
+        VcsBundle.message("ranges.to.commit.of.ranges.size.changes", rangesToCommit, totalRanges),
+        SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES)
     }
   }
 
