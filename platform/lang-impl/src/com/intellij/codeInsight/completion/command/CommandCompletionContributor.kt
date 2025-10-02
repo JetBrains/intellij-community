@@ -39,6 +39,6 @@ internal class CommandCompletionContributor : CompletionContributor(), DumbAware
   init {
     extend(CompletionType.BASIC,
            PlatformPatterns.psiElement(),
-           CommandCompletionProvider())
+           CommandCompletionProvider(this))
   }
 }
