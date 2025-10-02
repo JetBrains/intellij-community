@@ -3,6 +3,8 @@ package com.intellij.terminal.frontend.action
 import com.intellij.ide.actions.ToolWindowTabRenameActionBase
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
@@ -14,13 +16,20 @@ internal class TerminalRenameTabAction : ToolWindowTabRenameActionBase(
   TerminalBundle.message("action.RenameSession.newSessionName.label")
 ), DumbAware {
   override fun getContentDisplayNameToEdit(content: Content, project: Project): String {
-    val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return content.displayName
-    return widget.terminalTitle.buildFullTitle()
+    return findTerminalTitle(content, project)?.buildFullTitle() ?: content.displayName
   }
 
   override fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {
-    TerminalToolWindowManager.findWidgetByContent(content)?.terminalTitle?.change {
+    val title = findTerminalTitle(content, project) ?: return
+    title.change {
       userDefinedTitle = newContentName
     }
+  }
+
+  private fun findTerminalTitle(content: Content, project: Project): TerminalTitle? {
+    val manager = TerminalToolWindowTabsManager.getInstance(project)
+    val terminalView = manager.tabs.find { it.content == content }?.view
+    val terminalWidget = TerminalToolWindowManager.findWidgetByContent(content)
+    return terminalView?.title ?: terminalWidget?.terminalTitle
   }
 }
