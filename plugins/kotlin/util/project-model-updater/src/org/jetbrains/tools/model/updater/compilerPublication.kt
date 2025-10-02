@@ -40,15 +40,23 @@ internal fun publishCompiler(preferences: GeneratorPreferences) {
  * The root of the Kotlin compiler repository.
  */
 internal val GeneratorPreferences.kotlinCompilerRepositoryRoot: Path
-    get() = KotlinTestsDependenciesUtil.projectRoot
-        .resolve(kotlinCompilerRepoPath)
-        .also {
-            if (!it.isDirectory()) {
-                exitWithErrorMessage("Kotlin compiler repo path does not exist or is not a directory: $it")
-            }
+    get() {
+        val kotlinCompilerRepoPath = kotlinCompilerRepoPath ?: run {
+            val defaultPath = ".."
+            println("No '${GeneratorPreferences::kotlinCompilerRepoPath.name}' preference is provided; using the default '$defaultPath'")
+            defaultPath
         }
-        .absolute()
-        .normalize()
+
+        return KotlinTestsDependenciesUtil.projectRoot
+            .resolve(kotlinCompilerRepoPath)
+            .also {
+                if (!it.isDirectory()) {
+                    exitWithErrorMessage("Kotlin compiler repository path does not exist or is not a directory: $it")
+                }
+            }
+            .absolute()
+            .normalize()
+    }
 
 private val gradleWrapperExecutable: String
     get() {

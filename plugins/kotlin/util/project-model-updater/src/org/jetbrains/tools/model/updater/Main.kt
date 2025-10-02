@@ -24,7 +24,10 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
 
     val applicationMode: ApplicationMode? by OptionalPreference(ApplicationMode::valueOf)
 
-    val kotlinCompilerRepoPath: String by MandatoryPreference
+    /**
+     * A path to the Kotlin compiler repository. It can be either a relative or an absolute path. `.` points to the root of this project
+     */
+    val kotlinCompilerRepoPath: String? by OptionalPreference
 
     /**
      * Whether to convert the JPS project to Bazel format.
