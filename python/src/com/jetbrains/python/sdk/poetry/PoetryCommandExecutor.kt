@@ -1,20 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.execution.Platform
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.systemOs
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.util.SystemProperties
 import com.jetbrains.python.*
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackage
@@ -49,7 +52,8 @@ private val VERSION_2 = "2.0.0".toVersion()
 
 @Internal
 suspend fun runPoetry(projectPath: Path?, vararg args: String): PyResult<String> {
-  val executable = getPoetryExecutable().getOr { return it }
+  val eel = withContext(Dispatchers.IO) { projectPath?.getEelDescriptor()?.toEelApi() }
+  val executable = getPoetryExecutable(eel ?: localEel).getOr { return it }
   return runExecutableWithProgress(executable, projectPath, 10.minutes, args = args)
 }
 
@@ -57,17 +61,22 @@ suspend fun runPoetry(projectPath: Path?, vararg args: String): PyResult<String>
 /**
  * Detects the poetry executable in `$PATH`.
  */
-internal suspend fun detectPoetryExecutable(): PyResult<Path> {
-  val name = when {
-    SystemInfo.isWindows -> "poetry.bat"
-    else -> "poetry"
+internal suspend fun detectPoetryExecutable(eel: EelApi = localEel): PyResult<Path> {
+  val windows = eel.systemOs().platform == Platform.WINDOWS
+  val poetryBinNames = if (windows) {
+    setOf("poetry.exe", "poetry.bat")
+  }
+  else {
+    setOf("poetry")
   }
 
+  // TODO: Poetry from store isn't detected because local eel doesn't obey appx binaries. We need to fix it on eel side
+  val userHomePoetry = eel.userInfo.home.resolve(".poetry").resolve(".bin")
   val executablePath = withContext(Dispatchers.IO) {
-    PathEnvironmentVariableUtil.findInPath(name)?.toPath() ?: SystemProperties.getUserHome().let { homePath ->
-      Path.of(homePath, ".poetry", "bin", name).takeIf { it.exists() }
-    }
+    poetryBinNames.flatMap { eel.exec.findExeFilesInPath(it) }.firstOrNull()?.asNioPath()
+    ?: poetryBinNames.map { userHomePoetry.resolve(it).asNioPath() }.firstOrNull { it.exists() }
   }
+
   return executablePath?.let { PyResult.success(it) } ?: PyResult.localizedError(poetryNotFoundException)
 }
 
@@ -75,9 +84,9 @@ internal suspend fun detectPoetryExecutable(): PyResult<Path> {
  * Returns the configured poetry executable or detects it automatically.
  */
 @Internal
-suspend fun getPoetryExecutable(): PyResult<Path> = withContext(Dispatchers.IO) {
-  PropertiesComponent.getInstance().poetryPath?.let { Path.of(it) }?.takeIf { it.exists() }
-}?.let { PyResult.success(it) } ?: detectPoetryExecutable()
+suspend fun getPoetryExecutable(eel: EelApi = localEel): PyResult<Path> = withContext(Dispatchers.IO) {
+  PropertiesComponent.getInstance().poetryPath?.let { Path.of(it) }?.takeIf { it.exists() && it.getEelDescriptor() == eel.descriptor }
+}?.let { PyResult.success(it) } ?: detectPoetryExecutable(eel)
 
 /**
  * Runs poetry command for the specified Poetry SDK.
