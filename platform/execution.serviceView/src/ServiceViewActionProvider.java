@@ -131,6 +131,7 @@ public final class ServiceViewActionProvider {
   }
 
   static boolean isActionToolBarRequired(JComponent component) {
+    if (component instanceof FrontendServiceViewLuxComponent) return false;
     Boolean holder = ClientProperty.get(component, ServiceViewDescriptor.ACTION_HOLDER_KEY);
     if (Boolean.TRUE == holder) {
       return false;
