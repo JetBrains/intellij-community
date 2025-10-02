@@ -68,45 +68,45 @@ internal suspend fun linkProject(project: Project, projectModelRoot: Path) {
     val externalProjectPath = projectModelRoot.pathString
     val (files, excludeDirs) = walkFileSystem(projectModelRoot)
     val entries = generatePyProjectTomlEntries(files, excludeDirs)
-    if (entries.isEmpty()) {
-      return
-    }
-    val sdks = project.modules.associate { Pair(it.name, ModuleRootManager.getInstance(it).sdk?.name) }
-    project.workspaceModel.currentSnapshot.entities(ModuleEntity::class.java)
-    unlinkProjectImpl(project, externalProjectPath)
 
+    if (entries.isNotEmpty()) {
+      val sdks = project.modules.associate { Pair(it.name, ModuleRootManager.getInstance(it).sdk?.name) }
+      project.workspaceModel.currentSnapshot.entities(ModuleEntity::class.java)
+      unlinkProjectImpl(project, externalProjectPath)
 
-    val tracker = ExternalSystemProjectTracker.getInstance(project)
-    val projectAware = PyExternalSystemProjectAware(ExternalSystemProjectId(SYSTEM_ID, externalProjectPath), files.map { it.key.pathString }.toSet(), project, projectModelRoot)
-    tracker.register(projectAware)
-    tracker.activate(projectAware.projectId)
-    project.putUserData(PY_PROJECT_TOML_KEY, projectAware.projectId)
-    val storage = createEntityStorage(project, entries, project.workspaceModel.getVirtualFileUrlManager())
-    val listener = project.messageBus.syncPublisher(PROJECT_AWARE_TOPIC)
-    listener.onProjectReloadStart()
-    try {
-      project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { mutableStorage -> // Fake module entity is added by default if nothing was discovered
-        removeFakeModuleEntity(mutableStorage)
-        mutableStorage.replaceBySource({ it is PyProjectTomlEntitySource }, storage)
-      }
+      val tracker = ExternalSystemProjectTracker.getInstance(project)
+      val projectAware = PyExternalSystemProjectAware(ExternalSystemProjectId(SYSTEM_ID, externalProjectPath), files.map { it.key.pathString }.toSet(), project, projectModelRoot)
+      tracker.register(projectAware)
+      tracker.activate(projectAware.projectId)
+      project.putUserData(PY_PROJECT_TOML_KEY, projectAware.projectId)
+      val storage = createEntityStorage(project, entries, project.workspaceModel.getVirtualFileUrlManager())
+      val listener = project.messageBus.syncPublisher(PROJECT_AWARE_TOPIC)
+      listener.onProjectReloadStart()
+      try {
+        project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { mutableStorage -> // Fake module entity is added by default if nothing was discovered
+          removeFakeModuleEntity(mutableStorage)
+          mutableStorage.replaceBySource({ it is PyProjectTomlEntitySource }, storage)
+        }
 
-      // Restore SDK assoc
-      for (module in project.modules) {
-        if (ModuleRootManager.getInstance(module).sdk == null) {
-          val sdkName = sdks[module.name] ?: continue
-          ProjectJdkTable.getInstance().findJdk(sdkName)?.let { sdk ->
-            ModuleRootModificationUtil.setModuleSdk(module, sdk)
+        // Restore SDK assoc
+        for (module in project.modules) {
+          if (ModuleRootManager.getInstance(module).sdk == null) {
+            val sdkName = sdks[module.name] ?: continue
+            ProjectJdkTable.getInstance().findJdk(sdkName)?.let { sdk ->
+              ModuleRootModificationUtil.setModuleSdk(module, sdk)
+            }
           }
         }
       }
+      catch (e: Exception) {
+        listener.onProjectReloadFinish(ExternalSystemRefreshStatus.FAILURE)
+        throw e
+      }
+      listener.onProjectReloadFinish(ExternalSystemRefreshStatus.SUCCESS)
+      project.messageBus.syncPublisher(PROJECT_LINKER_AWARE_TOPIC).onProjectLinked(externalProjectPath)
     }
-    catch (e: Exception) {
-      listener.onProjectReloadFinish(ExternalSystemRefreshStatus.FAILURE)
-      throw e
-    }
-    listener.onProjectReloadFinish(ExternalSystemRefreshStatus.SUCCESS)
-    project.messageBus.syncPublisher(PROJECT_LINKER_AWARE_TOPIC).onProjectLinked(externalProjectPath)
 
+    // Even though we have no entities, we still "rebuilt" the model
     withContext(Dispatchers.Default) {
       project.messageBus.syncPublisher(MODEL_REBUILD).modelRebuilt(project)
     }
