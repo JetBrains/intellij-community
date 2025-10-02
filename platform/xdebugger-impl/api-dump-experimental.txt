@@ -165,5 +165,28 @@ com.intellij.xdebugger.impl.ui.XValueTextProvider
 - a:getDebuggersShortName():java.lang.String
 *:com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction$ReferrersTreeCustomizer
 - a:getDialog(com.intellij.xdebugger.XDebugSession,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.impl.frame.XValueMarkers):com.intellij.openapi.ui.DialogWrapper
+*a:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase
+- com.intellij.openapi.actionSystem.AnAction
+- *sf:Companion:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase$Companion
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- sf:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSelectedValue
+- sf:getSelectedValues(com.intellij.openapi.actionSystem.DataContext):java.util.List
+- p:isEnabled(com.intellij.xdebugger.frame.XValue,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- pa:perform(com.intellij.xdebugger.frame.XValue,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+*f:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeBackendOnlyActionBase$Companion
+- f:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSelectedValue
+- f:getSelectedValues(com.intellij.openapi.actionSystem.DataContext):java.util.List
+*f:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSelectedValue
+- <init>(com.intellij.xdebugger.frame.XValue,java.lang.String):V
+- f:component1():com.intellij.xdebugger.frame.XValue
+- f:component2():java.lang.String
+- f:copy(com.intellij.xdebugger.frame.XValue,java.lang.String):com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSelectedValue
+- bs:copy$default(com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSelectedValue,com.intellij.xdebugger.frame.XValue,java.lang.String,I,java.lang.Object):com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeSelectedValue
+- equals(java.lang.Object):Z
+- f:getName():java.lang.String
+- f:getXValue():com.intellij.xdebugger.frame.XValue
+- hashCode():I
 f:com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil
 - *s:renderName(java.lang.String,I,java.util.function.Consumer):V

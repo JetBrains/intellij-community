@@ -27,6 +27,9 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
     return block(valueId)
   }
 
+  override fun getXValueId(value: XValue): XValueId? =
+    FrontendXValue.asFrontendXValueOrNull(value)?.xValueDto?.id
+
   override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
     val executionStackId = (stack as FrontendXExecutionStack).id
     return block(executionStackId)

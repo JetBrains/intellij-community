@@ -50,6 +50,14 @@ interface XDebugManagerProxy {
     return getSessions(project).firstOrNull { it.id == sessionId }
   }
 
+  /**
+   * Gets ID of the given [value].
+   *
+   * This method is used in split mode to pass the ID of the value from frontend to backend.
+   * It's not supported in monolith mode.
+   */
+  fun getXValueId(value: XValue): XValueId?
+
   companion object {
     private val EP_NAME = ExtensionPointName.create<XDebugManagerProxy>("com.intellij.xdebugger.managerProxy")
 
