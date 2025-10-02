@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.JS_FUNCTION_NAME
+import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Request.Companion.html
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -40,12 +41,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, request: Request): FileEditor? {
-      logger<HTMLEditorProvider>().info(if (request.url == null) "HTML (${request.html!!.length} chars)" else "URL=${request.url}")
-      val file = LightVirtualFile(title, WebPreviewFileType.INSTANCE, "")
-      REQUEST_KEY.set(file, request)
-      return FileEditorManager.getInstance(project)
-        .openFile(file, true)
-        .find { it is HTMLFileEditor }
+      return openEditor(project, title, request, WebPreviewFileType.INSTANCE)
     }
 
     @JvmStatic
@@ -94,7 +90,17 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     internal var requestHandler: ResourceHandler? = null; private set
 
     companion object {
-      @JvmStatic
+      @JvmOverloads
+        /**
+         * Creates a Request object with the provided HTML content.
+         *
+         * @param html The HTML content to display in the editor.
+         * @param url A synthetic URL that will be observable from inside the page's JavaScript.
+         *            This is not the actual URL where content will be loaded from, but rather
+         *            a value that can be accessed by scripts running in the page.
+         *            It can be used for routing or state management within the HTML.
+         * @return A new Request instance configured with the provided HTML content and URL.
+         */
       fun html(html: String, url: String? = null): Request = Request(html = html, url = url)
 
       @JvmStatic
