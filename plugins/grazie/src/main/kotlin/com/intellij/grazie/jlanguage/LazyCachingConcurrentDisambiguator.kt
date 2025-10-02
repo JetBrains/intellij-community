@@ -21,17 +21,11 @@ internal class LazyCachingConcurrentDisambiguator(private val jLanguage: Languag
   private var disambiguator: Disambiguator? = null
   private val lock = Any()
 
-  override fun disambiguate(input: AnalyzedSentence): AnalyzedSentence {
-    ensureInitialized()
-    return cache.computeIfAbsent(copy(input.tokens)) { disambiguator!!.disambiguate(input) }
-  }
+  override fun disambiguate(input: AnalyzedSentence): AnalyzedSentence = disambiguate(input, null)
 
   override fun disambiguate(input: AnalyzedSentence, checkCanceled: JLanguageTool.CheckCancelledCallback?): AnalyzedSentence {
     ensureInitialized()
-    return cache.computeIfAbsent(copy(input.tokens)) {
-      checkCanceled?.checkCancelled()
-      disambiguator!!.disambiguate(input)
-    }
+    return cache.computeIfAbsent(copy(input.tokens)) { disambiguator!!.disambiguate(input, checkCanceled) }
   }
 
   private fun ensureInitialized() {
