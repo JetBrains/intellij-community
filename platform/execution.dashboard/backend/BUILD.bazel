@@ -34,6 +34,8 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl/rpc",
+    "//platform/util/coroutines",
+    "//platform/execution.serviceView",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard.backend` end
