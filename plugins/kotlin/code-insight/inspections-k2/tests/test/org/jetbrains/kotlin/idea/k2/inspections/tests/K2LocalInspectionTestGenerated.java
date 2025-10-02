@@ -4273,6 +4273,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeQualifiedExprAddBraces.kt");
         }
 
+        @TestMetadata("ifElseBlockCascadeSafeCallExpr.kt")
+        public void testIfElseBlockCascadeSafeCallExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeSafeCallExpr.kt");
+        }
+
         @TestMetadata("ifElseBlockQualifiedExpr.kt")
         public void testIfElseBlockQualifiedExpr() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockQualifiedExpr.kt");

@@ -980,6 +980,8 @@
       "termsAndConditionsForeground": "Gray8",
       "waitingLabelForeground": "Gray8",
       "separatorColor": "Gray12",
+      "freeBadgeForeground": "Gray14",
+      "freeBadgeBackground": "Green4",
       "LicenseList": {
         "licenseDetailsForeground": "Gray6",
         "licenseIdForeground": "Gray8",

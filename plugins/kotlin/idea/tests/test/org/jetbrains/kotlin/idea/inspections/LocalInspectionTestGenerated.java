@@ -15584,6 +15584,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeQualifiedExprAddBraces.kt");
         }
 
+        @TestMetadata("ifElseBlockCascadeSafeCallExpr.kt")
+        public void testIfElseBlockCascadeSafeCallExpr() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeSafeCallExpr.kt");
+        }
+
         @TestMetadata("ifElseBlockQualifiedExpr.kt")
         public void testIfElseBlockQualifiedExpr() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockQualifiedExpr.kt");

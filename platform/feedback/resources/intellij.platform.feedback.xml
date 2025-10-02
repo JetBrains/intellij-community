@@ -2,6 +2,8 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.feedback.idleFeedbackSurvey" interface="com.intellij.platform.feedback.FeedbackSurvey"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.feedback.csat.feedbackExtraDataProvider"
+                    interface="com.intellij.platform.feedback.csat.CsatFeedbackExtraDataProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

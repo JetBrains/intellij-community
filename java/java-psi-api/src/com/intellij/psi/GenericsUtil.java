@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.codeInsight.TypeNullability;
@@ -692,5 +692,45 @@ public final class GenericsUtil {
            method.hasModifierProperty(PsiModifier.STATIC) ||
            method.isConstructor() ||
            method.hasModifierProperty(PsiModifier.PRIVATE) && PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_9);
+  }
+
+  /**
+   * Checks whether a given type is a wildcard type with explicit extends bound.
+   *
+   * @param type the type to check
+   * @return {@code true} if the type is a wildcard type with explicit extends bound, {@code false} otherwise
+   */
+  @Contract("null -> false")
+  public static boolean isWildcardWithExtendsBound(@Nullable PsiType type) {
+    if (type instanceof PsiWildcardType) {
+      PsiWildcardType wildcardType = (PsiWildcardType)type;
+      return wildcardType.isExtends();
+    } else if (type instanceof PsiCapturedWildcardType) {
+      PsiCapturedWildcardType wildcardType = (PsiCapturedWildcardType)type;
+      return isWildcardWithExtendsBound(wildcardType.getWildcard());
+    }
+    return false;
+  }
+
+  /**
+   * Calculates the type bounded to the given wildcard type.
+   * <ul>
+   * <li>for ? extends XXX: XXX</li>
+   * <li>for ? super YYY: YYY</li>
+   * </ul>
+   * @param type wildcard type to calculate bounded type for
+   * @return bounded type if {@code type} is bounded, {@code null} otherwise
+   */
+  @Contract("null -> null")
+  public static @Nullable PsiType getWildcardBound(@Nullable PsiType type) {
+    if (type instanceof PsiWildcardType) {
+      PsiWildcardType wildcardType = (PsiWildcardType)type;
+      if (wildcardType.isExtends()) return wildcardType.getExtendsBound();
+      if (wildcardType.isSuper()) return wildcardType.getSuperBound();
+    } else if (type instanceof PsiCapturedWildcardType) {
+      PsiCapturedWildcardType wildcardType = (PsiCapturedWildcardType)type;
+      return getWildcardBound(wildcardType.getWildcard());
+    }
+    return null;
   }
 }

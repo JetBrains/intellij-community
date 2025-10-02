@@ -276,7 +276,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     //noinspection StringEquality
     return o1 == o2 ? 0 : o1 == null ? -1 : o2 == null ? 1 : o1.compareTo(o2);
   }
-  private static final Comparator<HighlightInfo> BY_OFFSETS_AND_HASH_ERRORS_FIRST = (o1, o2) -> {
+
+  @VisibleForTesting
+  public static final Comparator<HighlightInfo> BY_OFFSETS_AND_HASH_ERRORS_FIRST = (o1, o2) -> {
     if (o1 == o2) return 0;
     int r = Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(o1, o2);
     if (r != 0) return r;
@@ -360,8 +362,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                       " for invalid " + psiElement + " from " + requestor +
                       " " +session.getProgressIndicator());
           }
-          invalidPsiRecycler.recycleHighlighter(psiElement, info);
-        }
+           if (info.getHighlighter() != null) {
+             invalidPsiRecycler.recycleHighlighter(psiElement, info);
+           }
+         }
     );
 
     if (LOG.isDebugEnabled()) {
@@ -629,7 +633,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       .filter(Objects::nonNull)
       .filter(h->h.toolId != null)
       .filter(h->toolIdPredicate.matches(h.toolId))
-      .filter(h -> h.isFromInjection() == isInjected && hostRange.intersects(h.getHighlighter()))
+      .filter(h -> h.isFromInjection() == isInjected && h.getHighlighter() != null && hostRange.intersects(h.getHighlighter()))
       .collect(Collectors.toList());
   }
 
@@ -1266,8 +1270,11 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         removeFromDataAtomically(data, List.of(recycled), session);
       }
       changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer, severityRegistrar);
+      if (recycled != null) {
+        recycled.info().invalidate();
+      }
     }
-
+    
     List<HighlightInfo> sorted = ContainerUtil.sorted(newInfosToStore, BY_OFFSETS_AND_HASH_ERRORS_FIRST);
     // this list must be sorted by BY_OFFSETS_AND_HASH
     for (int i = 0; i < sorted.size(); i++) {

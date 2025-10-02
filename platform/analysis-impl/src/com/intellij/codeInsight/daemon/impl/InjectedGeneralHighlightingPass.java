@@ -26,7 +26,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -200,15 +199,14 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
     Divider.divideInsideAndOutsideAllRoots(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), GeneralHighlightingPass.SHOULD_HIGHLIGHT_FILTER, dividedElements -> {
       List<? extends @NotNull PsiElement> inside = dividedElements.inside();
-      LongList insideRanges = dividedElements.insideRanges();
       Runnable runnable = () -> {
         HighlightVisitorRunner highlightVisitorRunner = new HighlightVisitorRunner(injectedPsi, myGlobalScheme, myRunVisitors, myHighlightErrorElements);
 
         highlightVisitorRunner.createHighlightVisitorsFor(visitors -> {
           int chunkSize = Math.max(1, inside.size() / 100); // one percent precision is enough
-          highlightVisitorRunner.runVisitors(injectedPsi, injectedPsi.getTextRange(), inside,
-                                               insideRanges, List.of(), LongList.of(), visitors, false, chunkSize, true,
-                                               () -> createInfoHolder(injectedPsi), (toolId, psiElement, infos) -> {
+          highlightVisitorRunner.runVisitors(injectedPsi, inside,
+                                             List.of(), visitors, false, chunkSize, true,
+                                             () -> createInfoHolder(injectedPsi), (toolId, psiElement, infos) -> {
               // convert injected infos to host
               List<? extends HighlightInfo> hostInfos = infos.isEmpty()
                                                         ? List.of()

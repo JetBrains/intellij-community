@@ -256,6 +256,9 @@ class InlineBreakpointInlayManager(private val project: Project, parentScope: Co
         return readAndEdtWriteAction {
           if (onlyLine != null && !DocumentUtil.isValidLine(onlyLine, document)) return@readAndEdtWriteAction value(false)
           checkPostponed()
+          if (variantsByLine.keys.any { !DocumentUtil.isValidLine(it, document) }) {
+            postpone()
+          }
           val inlays = variantsByLine.flatMap { (line, variants) ->
             collectInlayData(document, line, variants)
           }

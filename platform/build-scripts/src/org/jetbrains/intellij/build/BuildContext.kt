@@ -177,7 +177,7 @@ interface BuildContext : CompilationContext {
    * @param forceUseDevBuild if `true`, the 'dev build' approach will be used to run the IDE even if it uses the module-based loader
    * which supports running the IDE without running the build scripts.
    */
-  suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList(), forceUseDevBuild: Boolean = false): IntellijProductRunner
+  suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
 
   /**
    * Loads raw data from product-modules.xml file located in module [rootModuleName], for a product running in [productMode].

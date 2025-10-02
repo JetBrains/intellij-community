@@ -225,6 +225,13 @@ jvm_library(
     "//platform/statistics/testFramework",
     "//platform/testFramework/junit5/projectStructure",
     "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
+    "@lib//:kotlinx-coroutines-test",
+    "//platform/util/coroutines",
+    "@lib//:mockito-kotlin",
+    "@lib//:mockito-junit-jupiter",
+    "@lib//:mockito",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
   ],
   exports = [
     "//platform/lang-api:lang",

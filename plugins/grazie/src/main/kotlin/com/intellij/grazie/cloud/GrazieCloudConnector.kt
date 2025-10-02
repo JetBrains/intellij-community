@@ -1,16 +1,16 @@
 package com.intellij.grazie.cloud
 
+import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.ner.model.SentenceWithNERAnnotations
 import ai.grazie.nlp.langs.Language
+import ai.grazie.text.exclusions.SentenceWithExclusions
 import ai.grazie.tree.model.SentenceWithTreeDependencies
 import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 interface GrazieCloudConnector {
 
   /**
@@ -42,6 +42,11 @@ interface GrazieCloudConnector {
    * Returns syntactic dependency trees for the given [sentences] using specified language model and parser options.
    */
   suspend fun trees(language: Language, modelName: String, parserOptions: List<String>, sentences: List<String>, project: Project): List<SentenceWithTreeDependencies>?
+
+  /**
+   * Returns machine learning errors for the given [sentences] in the given [language].
+   */
+  suspend fun mlec(sentences: List<SentenceWithExclusions>, lang: Language, project: Project): List<SentenceWithProblems>?
 
   /**
    * Subscribe to authorization state change events.

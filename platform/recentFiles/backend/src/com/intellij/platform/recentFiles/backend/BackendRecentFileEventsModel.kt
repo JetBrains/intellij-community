@@ -12,6 +12,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -120,7 +121,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
     val reasonablyLimitedFilesList = files.take(bufferSize).takeIf { it.isNotEmpty() } ?: return
 
     coroutineScope.launch {
-      LOG.debug("Switcher emit file update initiated by backend, file: $reasonablyLimitedFilesList, change kind: ${changeKind}, project: $project")
+      LOG.debug { "Switcher emit file update initiated by backend, file: $reasonablyLimitedFilesList, change kind: ${changeKind}, project: $project" }
       val fileEvent = when (changeKind) {
         FileChangeKind.ADDED -> {
           val models = readAction {

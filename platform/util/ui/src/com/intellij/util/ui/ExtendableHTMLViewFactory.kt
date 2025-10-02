@@ -11,6 +11,8 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.icons.getClassNameByIconPath
 import com.intellij.ui.icons.isReflectivePath
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.svg.AdaptiveImageView
+import com.intellij.ui.svg.FitToWidthAdaptiveImageView
 import com.intellij.util.asSafely
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extension
@@ -172,6 +174,12 @@ class ExtendableHTMLViewFactory internal constructor(
      */
     @JvmField
     val FIT_TO_WIDTH_IMAGES: Extension = FitToWidthImageViewExtension()
+
+    @JvmField
+    val ADAPTIVE_IMAGE_EXTENSION: Extension = AdaptiveImageViewExtension()
+
+    @JvmField
+    val FIT_TO_WIDTH_ADAPTIVE_IMAGE_EXTENSION: Extension = FitToWidthAdaptiveImageViewExtension()
 
     /**
      * Adds support for `<wbr>` tags
@@ -362,16 +370,7 @@ private class Base64ImagesExtension : Extension {
     }
 
     private fun getIntAttr(name: HTML.Attribute, defaultValue: Int): Int {
-      val attr = element.attributes
-      if (!attr.isDefined(name)) return defaultValue
-
-      val value = attr.getAttribute(name) as? String ?: return defaultValue
-      return try {
-        max(0, value.toInt())
-      }
-      catch (x: NumberFormatException) {
-        defaultValue
-      }
+      return element.getIntAttr(name, defaultValue)
     }
 
     override fun getPreferredSpan(axis: Int): Float {
@@ -505,6 +504,17 @@ private class LineViewExExtension : Extension {
 
 private class FitToWidthImageViewExtension : Extension {
   override fun invoke(element: Element, view: View): View? = if (view is ImageView) FitToWidthImageView(element) else null
+}
+
+private class AdaptiveImageViewExtension : Extension {
+  override fun invoke(element: Element, view: View): View? = when (view) {
+    is ImageView -> AdaptiveImageView(element)
+    else -> null
+  }
+}
+
+private class FitToWidthAdaptiveImageViewExtension : Extension {
+  override fun invoke(element: Element, view: View): View? = if (view is ImageView) FitToWidthAdaptiveImageView(element) else null
 }
 
 private class WbrSupportExtension : Extension {

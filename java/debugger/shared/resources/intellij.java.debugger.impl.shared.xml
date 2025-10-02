@@ -14,6 +14,12 @@
     <registryKey defaultValue="1000"
                  description="Maximum number of dump items that can be serialized to pass to the frontend"
                  key="debugger.thread.dump.max.items.frontend"/>
+
+    <registryKey defaultValue="true"
+                 overrides="true"
+                 description="Use split Debugger implementation for remote dev"
+                 key="xdebugger.toolwindow.split.remdev"
+                 restartRequired="true"/>
   </extensions>
   <actions resource-bundle="messages.JavaDebuggerSharedBundle">
     <action id="Debugger.AsyncStacks" class="com.intellij.java.debugger.impl.shared.actions.AsyncStacksToggleAction">

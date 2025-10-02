@@ -30,7 +30,9 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.components.JBHtmlPaneConfiguration;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.svg.AdaptiveImageView;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StyleSheetUtil;
 import com.intellij.util.ui.UIUtil;
@@ -335,6 +337,9 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       }
     });
     pane.getDocument().putProperty("imageCache", IMAGE_MANAGER.getImageProvider());
+    if (CachingAdaptiveImageManagerService.isEnabled()) {
+      pane.getDocument().putProperty(AdaptiveImageView.ADAPTIVE_IMAGES_MANAGER_PROPERTY, CachingAdaptiveImageManagerService.getInstance());
+    }
     return pane;
   }
 
@@ -416,32 +421,70 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         return true;
       }
     };
+
+    private boolean initialized;
+
+    private int repaintTracking = 0;
+
     private boolean myRepaintRequested;
     private float myScaleFactor = 1f;
 
-    EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
+    EditorInlineHtmlPane(boolean trackMemory, @NotNull Editor editor) {
       super(
         QuickDocHighlightingHelper.getDefaultDocStyleOptions(() -> editor.getColorsScheme(), true),
-        JBHtmlPaneConfiguration.builder()
-          .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
-          .customStyleSheetProvider(pane -> getStyleSheet(pane, editor))
-          .fontResolver(EditorCssFontResolver.getInstance(editor))
-          .build()
+        buildConfiguration(editor)
       );
       if (trackMemory) {
         MEMORY_MANAGER.register(DocRenderer.this, 50 /* rough size estimation */);
       }
+
+      initialized = true;
+    }
+
+    private static @NotNull JBHtmlPaneConfiguration buildConfiguration(@NotNull Editor editor) {
+      var builder = JBHtmlPaneConfiguration.builder()
+        .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
+        .customStyleSheetProvider(pane -> getStyleSheet(pane, editor))
+        .fontResolver(EditorCssFontResolver.getInstance(editor));
+      if (CachingAdaptiveImageManagerService.isEnabled()) {
+        builder = builder.extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_ADAPTIVE_IMAGE_EXTENSION);
+      }
+      return builder.build();
     }
 
     @Override
     public void repaint(long tm, int x, int y, int width, int height) {
-      myRepaintRequested = true;
+      if (!CachingAdaptiveImageManagerService.isEnabled()) {
+        myRepaintRequested = true;
+        return;
+      }
+
+      if (!initialized) {
+        return;
+      }
+
+      if (repaintTracking > 0) {
+        myRepaintRequested = true;
+      } else {
+        scheduleRepaint();
+      }
     }
 
     void doWithRepaintTracking(Runnable task) {
-      myRepaintRequested = false;
-      task.run();
-      if (myRepaintRequested) repaintRenderer();
+      if (!CachingAdaptiveImageManagerService.isEnabled()) {
+        myRepaintRequested = false;
+        task.run();
+        if (myRepaintRequested) repaintRenderer();
+        return;
+      }
+
+      repaintTracking++;
+      try {
+        task.run();
+        if (myRepaintRequested) repaintRenderer();
+      } finally {
+        repaintTracking--;
+      }
     }
 
     private void repaintRenderer() {
@@ -509,10 +552,20 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
     @Override
     public void revalidate() {
-      super.revalidate();
+      if (!CachingAdaptiveImageManagerService.isEnabled()) {
+        super.revalidate();
+        myCachedHeight = -1;
+        myCachedWidth = -1;
+        scheduleUpdate();
+        return;
+      }
+
       myCachedHeight = -1;
       myCachedWidth = -1;
-      scheduleUpdate();
+      super.revalidate();
+      if (initialized) {
+        scheduleUpdate();
+      }
     }
 
     private void scheduleUpdate() {

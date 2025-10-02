@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionResult.SHOULD_NOT_CHECK_WHE
 import com.intellij.codeInsight.completion.command.commands.AfterHighlightingCommandProvider
 import com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider
 import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
 import com.intellij.codeInsight.lookup.LookupElement
@@ -62,7 +63,7 @@ private val CHAR_TO_FILTER_WITH_SPACE = setOf('\'', '"', '_', '-', ' ')
  *
  */
 @ApiStatus.Internal
-internal class CommandCompletionProvider : CompletionProvider<CompletionParameters?>() {
+internal class CommandCompletionProvider(val contributor: CommandCompletionContributor) : CompletionProvider<CompletionParameters?>() {
 
   companion object {
     private val LOG = logger<CommandCompletionProvider>()
@@ -84,6 +85,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     resultSet.runRemainingContributors(parameters) {
       resultSet.passResult(it)
     }
+    enableFastShown(parameters)
     val project = parameters.editor.project ?: return
     var editor = parameters.editor
     var isReadOnly = false
@@ -188,6 +190,21 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         }
       }
       true
+    }
+  }
+
+  private fun enableFastShown(parameters: CompletionParameters) {
+    if (Registry.`is`("ide.completion.command.faster.paint")) {
+      if (!GroupedCompletionContributor.isGroupEnabledInApp()) return
+      if (!contributor.groupIsEnabled(parameters)) return
+      val completionProgressIndicator = parameters.process as? CompletionProgressIndicator
+      val count = completionProgressIndicator?.lookup?.list?.model?.size ?: 0
+      //just to avoid irritating flickering
+      if (count > 0 &&
+          //see com.intellij.codeInsight.completion.CompletionProgressIndicator.ourInsertSingleItemTimeSpan
+          System.currentTimeMillis() - (completionProgressIndicator?.lookup?.createdTimestampMillis ?: 0) > 300) {
+        completionProgressIndicator?.showLookupAsSoonAsPossible()
+      }
     }
   }
 
