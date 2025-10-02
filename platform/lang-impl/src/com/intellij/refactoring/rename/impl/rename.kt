@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.impl
 
 import com.intellij.codeInsight.actions.VcsFacade
+import com.intellij.find.usages.api.DynamicUsage
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -161,7 +162,10 @@ private suspend fun processUsages(usageChannel: ReceiveChannel<UsagePointer>, ne
     usagePointers += pointer
     val forcePreview: Boolean? = readAction {
       pointer.dereference()?.let { renameUsage ->
-        renameUsage !is ModifiableRenameUsage || renameUsage is TextRenameUsage || renameUsage.conflicts(newName).isNotEmpty()
+        renameUsage !is ModifiableRenameUsage ||
+        (renameUsage is DynamicUsage && renameUsage.isDynamic) ||
+        renameUsage is TextRenameUsage ||
+        renameUsage.conflicts(newName).isNotEmpty()
       }
     }
     if (forcePreview == true) {
