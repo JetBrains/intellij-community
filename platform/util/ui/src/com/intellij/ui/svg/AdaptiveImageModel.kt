@@ -163,7 +163,7 @@ abstract class Unloadable<S, T : MemorySizeAware>(val src: S, initialValue: T) {
 
 @ApiStatus.Internal
 class UnloadableCache<S, V : MemorySizeAware, T : Unloadable<S, V>> : UnloadableManager<S, V>, MemorySizeAware {
-  class MyReference<S, V : MemorySizeAware, T : Unloadable<S, V>>(
+  private class MyReference<S, V : MemorySizeAware, T : Unloadable<S, V>>(
     val key: S,
     ref: T,
     refQueue: ReferenceQueue<T>
