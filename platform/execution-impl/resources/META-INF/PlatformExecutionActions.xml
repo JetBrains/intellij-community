@@ -94,6 +94,8 @@
                  description="Run implementation for split mode."
                  key="run.toolwindow.split.enabled"
                  restartRequired="true"/>
+    <remote.customDataContextSerializer implementation="com.intellij.execution.RunContentDescriptorIdSerializer"/>
+    <uiDataRule implementation="com.intellij.execution.RunContentDescriptorIdDataRule"/>
   </extensions>
   <extensionPoints>
     <extensionPoint interface="com.intellij.execution.DisplayDescriptorChooser"
