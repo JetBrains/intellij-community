@@ -26,6 +26,7 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/execution-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//java/java-psi-api:psi",
