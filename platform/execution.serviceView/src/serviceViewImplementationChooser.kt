@@ -39,7 +39,8 @@ fun isNewFrontendServiceViewEnabled(): Boolean {
   return Registry.`is`("services.view.split.enabled")
 }
 
-private fun isOldMonolithServiceViewEnabled(): Boolean {
+@ApiStatus.Internal
+fun isOldMonolithServiceViewEnabled(): Boolean {
   if (isSplitDebuggerEnabledInTestsCopyPaste()) return false
 
   return Registry.`is`("services.view.monolith.enabled")
@@ -48,4 +49,10 @@ private fun isOldMonolithServiceViewEnabled(): Boolean {
 private fun isSplitDebuggerEnabledInTestsCopyPaste(): Boolean {
   val testProperty = System.getProperty("xdebugger.toolwindow.split.for.tests")
   return testProperty?.toBoolean() ?: false
+}
+
+// dedicated key for the RUN toolwindow since it is not properly split
+@ApiStatus.Internal
+fun isShowLuxedRunToolwindowInServicesView(): Boolean {
+  return Registry.`is`("services.view.split.run.luxing.enabled", true)
 }
