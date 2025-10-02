@@ -19,14 +19,13 @@ import com.intellij.util.indexing.IndexingIteratorsProvider
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
-import com.intellij.util.indexing.roots.origin.MutableIndexingUrlSourceRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 
@@ -58,8 +57,6 @@ class IndexingIteratorsProviderImpl(
     val model = WorkspaceModel.getInstance(project)
     val index = WorkspaceFileIndexEx.getInstance(project)
     val storage = model.currentSnapshot
-    val virtualFileUrlManager = model.getVirtualFileUrlManager()
-    val moduleDependencyIndex by lazy { ModuleDependencyIndex.getInstance(project) }
 
     val iterators = ArrayList<IndexableFilesIterator>()
     val libraryOrigins = HashSet<LibraryOrigin>()
@@ -112,25 +109,14 @@ class IndexingIteratorsProviderImpl(
           iterators.add(CustomKindEntityIteratorImpl(entityPointer, rootHolder))
         }
         else {
-          val virtualFileUrl = root.toVirtualFileUrl(virtualFileUrlManager)
-          val holder = MutableIndexingUrlSourceRootHolder()
+          val rootHolder: IndexingSourceRootHolder
           if (fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE) {
-            if (fileSet.recursive) {
-              holder.sourceRoots.add(virtualFileUrl)
-            }
-            else {
-              holder.nonRecursiveSourceRoots.add(virtualFileUrl)
-            }
+            rootHolder = IndexingSourceRootHolder.fromFiles(emptyList(), listOf(root))
           }
           else {
-            if (fileSet.recursive) {
-              holder.roots.add(virtualFileUrl)
-            }
-            else {
-              holder.nonRecursiveRoots.add(virtualFileUrl)
-            }
+            rootHolder = IndexingSourceRootHolder.fromFiles(listOf(root), emptyList())
           }
-          iterators.addAll(IndexableEntityProviderMethods.createExternalEntityIterators(entityPointer, holder))
+          iterators.add(IndexableEntityProviderMethods.createExternalEntityIterators(entityPointer, rootHolder))
         }
       }
     }
