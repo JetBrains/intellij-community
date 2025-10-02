@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunContentDescriptorId;
+import com.intellij.execution.dashboard.RunDashboardManagerProxy;
 import com.intellij.execution.dashboard.RunDashboardService;
 import com.intellij.execution.dashboard.RunDashboardUiManager;
 import com.intellij.execution.services.ServiceEventListener;
@@ -35,7 +36,6 @@ import com.intellij.ui.ClientProperty;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +51,8 @@ import java.util.function.Predicate;
 
 import static com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardGroupingRule.GROUPING_RULE_EP_NAME;
 import static com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiUtils.updateContentToolbar;
+import static com.intellij.platform.execution.serviceView.ServiceViewImplementationChooserKt.isOldMonolithServiceViewEnabled;
+import static com.intellij.platform.execution.serviceView.ServiceViewImplementationChooserKt.isShowLuxedRunToolwindowInServicesView;
 
 @ApiStatus.Internal
 public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
@@ -235,13 +237,16 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
   @Override
   public void contentReused(@NotNull Content content, @NotNull RunContentDescriptor oldDescriptor) {
     if (content.getManager() == myContentManager) {
-      FrontendRunDashboardManager.getInstance(myProject).updateServiceRunContentDescriptor(content, oldDescriptor);
+      RunDashboardManagerProxy.getInstance(myProject).updateServiceRunContentDescriptor(content, oldDescriptor);
     }
   }
 
   @Override
   public boolean isSupported(@NotNull Executor executor) {
-    return !executor.getToolWindowId().equals(ToolWindowId.RUN) || IdeProductMode.isMonolith();
+    return IdeProductMode.isMonolith()
+           || (IdeProductMode.isBackend() && isOldMonolithServiceViewEnabled())
+           || ToolWindowId.DEBUG.equals(executor.getId())
+           || (ToolWindowId.RUN.equals(executor.getId()) && isShowLuxedRunToolwindowInServicesView());
   }
 
   @ApiStatus.Internal
@@ -311,9 +316,8 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
     @Override
     public void contentAdded(@NotNull ContentManagerEvent event) {
       Content content = event.getContent();
-      if (PlatformUtils.isJetBrainsClient()) {
+      if (IdeProductMode.isFrontend()) {
         FrontendRunDashboardManager.getInstance(myProject).attachServiceRunContentDescriptor(content);
-        // TODO [nikita.katkov] implement open running config in tab in split mode
         return;
       }
 
@@ -325,7 +329,7 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
       if (descriptorId == null) return;
 
       RunDashboardService backendService = runDashboardManager.attachServiceRunContentDescriptor(descriptorId);
-      if (runDashboardManager.isOpenRunningConfigInNewTab() && backendService != null) {
+      if (IdeProductMode.isMonolith() && runDashboardManager.isOpenRunningConfigInNewTab() && backendService != null) {
         RunDashboardServiceDto dto = BackendRunDashboardManagerState.createServiceDto(backendService);
         FrontendRunDashboardService frontendService = new FrontendRunDashboardService(dto);
         ServiceViewManager.getInstance(myProject).extract(new FrontendRunConfigurationNode(myProject, frontendService),
