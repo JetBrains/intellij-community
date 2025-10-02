@@ -5,8 +5,8 @@ package com.jetbrains.builtInHelp.search
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.ResourceUtil
 import com.intellij.util.io.safeOutputStream
+import com.jetbrains.builtInHelp.Utils
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.queryparser.simple.SimpleQueryParser
@@ -19,6 +19,7 @@ import org.apache.lucene.store.NIOFSDirectory
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import java.io.BufferedReader
+import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
@@ -48,22 +49,23 @@ class HelpSearch {
             val indexDirPath = indexDir.toAbsolutePath().toString()
             Files.createDirectories(indexDir)
 
-            //Read required names from rlist and then load resources based off of them
-            ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader, "${locale}/search", "rlist")
-              .use { resourceList ->
-                BufferedReader(InputStreamReader(resourceList)).useLines { lines ->
-                  lines.forEach { line ->
-                    val path = Paths.get(indexDirPath, line)
-                    ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
-                                                     "$locale/search", line)
-                      ?.use { resourceStream ->
-                        path.safeOutputStream().use { resourceOutput ->
-                          resourceOutput.write(resourceStream.readAllBytes())
-                        }
-                      }
-                  }
+            //Read required names from the rlist file and then load resources based off of them
+            val searchList = Utils.getResourceWithFallback("search", "rlist", locale)
+                             ?: return NOT_FOUND
+
+            BufferedReader(InputStreamReader(ByteArrayInputStream(searchList))).useLines { lines ->
+              lines.forEach { line ->
+                val path = Paths.get(indexDirPath, line)
+
+                val dataToDeploy = Utils.getResourceWithFallback("search", line, locale)
+                                   ?: return@forEach
+
+                path.safeOutputStream().use { resourceOutput ->
+                  resourceOutput.write(dataToDeploy)
                 }
+
               }
+            }
 
             indexDirectory = NIOFSDirectory(indexDir)
             reader = DirectoryReader.open(indexDirectory)
