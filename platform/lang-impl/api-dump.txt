@@ -50,6 +50,8 @@ com.intellij.application.options.GeneralCodeStyleOptionsProvider
 - a:apply(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - a:isModified(com.intellij.psi.codeStyle.CodeStyleSettings):Z
 - a:reset(com.intellij.psi.codeStyle.CodeStyleSettings):V
+c:com.intellij.application.options.ModuleListCellRenderer
+- installSpeedSearch(com.intellij.openapi.ui.popup.IPopupChooserBuilder):com.intellij.openapi.ui.popup.IPopupChooserBuilder
 com.intellij.application.options.ModulesCombo
 - a:allowEmptySelection(java.lang.String):V
 - a:getSelectedModule():com.intellij.openapi.module.Module
