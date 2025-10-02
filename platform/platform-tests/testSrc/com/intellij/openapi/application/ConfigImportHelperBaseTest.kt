@@ -16,7 +16,7 @@ import java.time.ZoneOffset
 import java.util.function.Function
 
 abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
-  @JvmField @Rule val memoryFs = InMemoryFsRule(windows = OS.CURRENT == OS.Windows)
+  @JvmField @Rule val memoryFs = InMemoryFsRule(OS.CURRENT)
   @JvmField @Rule val configImportMarketplaceStub = ConfigImportMarketplaceStub()
 
   protected fun newTempDir(name: String): Path =

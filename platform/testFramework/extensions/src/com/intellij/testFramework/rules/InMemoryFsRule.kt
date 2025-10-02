@@ -2,6 +2,7 @@
 package com.intellij.testFramework.rules
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
+import com.github.marschall.memoryfilesystem.StringTransformers
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.system.OS
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -13,22 +14,21 @@ import org.junit.runners.model.Statement
 import java.net.URLEncoder
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
-import java.nio.file.Path
 import kotlin.properties.Delegates
 
-class InMemoryFsRule(private val windows: Boolean = false) : ExternalResource() {
+class InMemoryFsRule(private val os: OS = OS.Linux) : ExternalResource() {
   private var _fs: FileSystem? = null
-  private var sanitizedName: String by Delegates.notNull()
+  private var name: String by Delegates.notNull()
 
   override fun apply(base: Statement, description: Description): Statement {
-    sanitizedName = URLEncoder.encode(description.methodName, Charsets.UTF_8.name())
+    name = description.methodName
     return super.apply(base, description)
   }
 
   val fs: FileSystem
     get() {
       if (_fs == null) {
-        _fs = fsBuilder(windows).build(sanitizedName)
+        _fs = fs(os, name)
       }
       return _fs!!
     }
@@ -39,44 +39,48 @@ class InMemoryFsRule(private val windows: Boolean = false) : ExternalResource() 
   }
 }
 
-class InMemoryFsExtension(private val windows: Boolean = false) : BeforeEachCallback, AfterEachCallback {
+class InMemoryFsExtension(private val os: OS = OS.Linux) : BeforeEachCallback, AfterEachCallback {
   private var _fs: FileSystem? = null
-  private var sanitizedName: String by Delegates.notNull()
+  private var name: String by Delegates.notNull()
 
-  val root: Path
-    get() {
-      return fs.getPath("/")
-    }
-  
   val fs: FileSystem
     get() {
       if (_fs == null) {
-        _fs = fsBuilder(windows).build(sanitizedName)
+        _fs = fs(os, name)
       }
       return _fs!!
     }
 
   override fun beforeEach(context: ExtensionContext) {
-    sanitizedName = URLEncoder.encode(context.displayName, Charsets.UTF_8.name())
+    name = context.displayName
   }
 
   override fun afterEach(context: ExtensionContext) {
-    (_fs ?: return).close()
+    _fs?.close()
     _fs = null
   }
 }
 
-private fun fsBuilder(windows: Boolean): MemoryFileSystemBuilder =
-  if (windows) {
-    val builder = MemoryFileSystemBuilder.newWindows().setCurrentWorkingDirectory("C:\\")
-    if (OS.CURRENT == OS.Windows) {
-      FileSystems.getDefault().rootDirectories.asSequence()
-        .map { it.toString() }
-        .filter { OSAgnosticPathUtil.isAbsoluteDosPath(it) }
-        .forEach { builder.addRoot(it) }
+private fun fs(os: OS, name: String): FileSystem {
+  val builder = when (os) {
+    OS.Windows -> MemoryFileSystemBuilder.newWindows().setCurrentWorkingDirectory("C:\\").apply {
+      if (OS.CURRENT == OS.Windows) {
+        FileSystems.getDefault().rootDirectories.asSequence()
+          .map { it.toString() }
+          .filter { OSAgnosticPathUtil.isAbsoluteDosPath(it) }
+          .forEach { addRoot(it) }
+      }
     }
-    builder
+    OS.macOS -> MemoryFileSystemBuilder.newMacOs().setCurrentWorkingDirectory("/")
+    OS.Linux -> MemoryFileSystemBuilder.newLinux().setCurrentWorkingDirectory("/")
+    else -> throw UnsupportedOperationException("Unsupported: ${os}")
   }
-  else {
-    MemoryFileSystemBuilder.newLinux().setCurrentWorkingDirectory("/")
+
+  if (os != OS.Linux) {
+    // https://github.com/marschall/memoryfilesystem/issues/56
+    builder.setLookUpTransformer(StringTransformers.IDENTIY).setStoreTransformer(StringTransformers.IDENTIY)
   }
+
+  val sanitizedName = URLEncoder.encode(name, Charsets.UTF_8)
+  return builder.build(sanitizedName)
+}
