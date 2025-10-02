@@ -15,6 +15,9 @@ import java.util.function.Consumer
 
 /**
  * An [GradleIssueChecker] handling Daemon JVM criteria exceptions like:
+ * "Toolchain resolvers did not return download URLs providing a JDK matching
+ * {languageVersion=21, vendor=Tencent, implementation=vendor-specific} for any of the requested platforms"
+ * or
  * "Cannot find a Java installation on your machine (Mac OS X 14.7.1 aarch64) matching: {languageVersion=99, vendor=any vendor,
  * implementation=vendor-specific}. Toolchain download repositories have not been configured."
  */
@@ -22,7 +25,8 @@ class GradleUndefinedToolchainRepositoriesIssueChecker : GradleIssueChecker {
 
     override fun check(issueData: GradleIssueData): BuildIssue? {
         val rootCause = getRootCauseAndLocation(issueData.error).first
-        if (rootCause.message?.contains("Toolchain download repositories have not been configured.") == true) {
+        if (rootCause.message?.contains("Toolchain download repositories have not been configured.") == true ||
+            rootCause.message?.contains("Toolchain resolvers did not return download URLs providing a JDK matching") == true) {
             return GradleUndefinedToolchainRepositoriesBuildIssue(rootCause, issueData.projectPath)
         }
         return null
