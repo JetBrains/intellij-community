@@ -18,6 +18,7 @@ public class LocalChangesListView extends ChangesListView {
     putClientProperty(LOG_COMMIT_SESSION_EVENTS, true);
 
     setTreeExpander(new MyTreeExpander(this));
+    setSelectionModel(new NonSelectableNodeFilteringSelectionModel());
 
     new HoverChangesTree(this) {
       @Override
