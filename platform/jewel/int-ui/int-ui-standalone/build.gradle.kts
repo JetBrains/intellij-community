@@ -1,6 +1,7 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.jewel.buildlogic.metalava.GenerateMetalavaApiTask
 import org.jetbrains.jewel.buildlogic.theme.IntelliJThemeGeneratorTask
+import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
     jewel
@@ -41,7 +42,7 @@ tasks {
     }
 
     val generateThemes by
-        register("generateThemes") {
+        register<Task>("generateThemes") {
             description = "Updates the ThemeDescription dumps and reformats them."
             dependsOn(themeGeneratorTasks)
             dependsOn(ktfmtFormatMain)
@@ -54,7 +55,7 @@ tasks {
         mustRunAfter(ktfmtFormatMain)
     }
 
-    lintKotlinMain {
+    withType<LintTask> {
         mustRunAfter(generateThemes)
         mustRunAfter(ktfmtFormatMain)
     }
