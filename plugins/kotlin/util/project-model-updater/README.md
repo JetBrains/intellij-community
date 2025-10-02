@@ -13,6 +13,8 @@ All run configurations starts with `Kotlin Coop:` prefix and support as argument
 
 **The order of arguments is important**: the last one overrides the previous ones.
 
+Alternatively, you can run all configurations below from a terminal via `gradle run` command with required arguments (they can be found in the corresponding run configuration).
+
 ### `Kotlin Coop: Publish Compiler JARs`
 
 The configuration runs the Kotlin compiler artifacts publication directly to this project. This is needed to work with a bootstrap compiler in `kt-master` setup.  
@@ -44,5 +46,6 @@ The configuration automatically updates the compiler version in the project and 
 - `kotlinCompilerRepoPath` – path to the local copy of the Kotlin compiler repository. It is recommended to use `local.properties` file to specify it to not place the project inside the Kotlin repository
   - Default: `..` (the parent directory of this project)
 
+### `Kotlin Coop: Switch to Bootstrap`
 
-Alternatively, you can run all configurations above from a terminal via `gradle run` command with required arguments (they can be found in the corresponding run configuration)
+The configuration switches the Kotlin compiler version in the project to the bootstrap mode. It is a necessary step to work with a bootstrap compiler in `kt-master` setup locally.

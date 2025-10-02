@@ -67,6 +67,13 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
          * @see advanceCompilerVersion
          */
         ADVANCE_COMPILER_VERSION,
+
+        /**
+         * Switches the Kotlin compiler in the project to the bootstrap version.
+         *
+         * @see switchToBootstrapKotlinCompiler
+         */
+        SWITCH_TO_BOOTSTRAP,
         ;
     }
 
@@ -125,5 +132,6 @@ fun main(args: Array<String>) {
         null, ApplicationMode.PROJECT_MODEL_UPDATER -> updateProjectModel(preferences)
         ApplicationMode.COMPILER_PUBLICATION -> publishCompiler(preferences)
         ApplicationMode.ADVANCE_COMPILER_VERSION -> advanceCompilerVersion(preferences)
+        ApplicationMode.SWITCH_TO_BOOTSTRAP -> switchToBootstrapKotlinCompiler(preferences)
     }
 }
