@@ -861,6 +861,38 @@ public class Py3CompletionTest extends PyTestCase {
     );
   }
 
+  public void testImportNestedBinarySubModule() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        for (String fileName : List.of("import_binary",
+                                       "from_import_binary",
+                                       "import_attribute_from_binary",
+                                       "import_and_reference_binary")) {
+          myFixture.configureByFile("%s/%s.py".formatted(testDir, fileName));
+          myFixture.completeBasic();
+          myFixture.checkResultByFile("%s/%s.after.py".formatted(testDir, fileName));
+        }
+      });
+    });
+  }
+
+  public void testImportNestedBinarySubModuleNoInitPy() {
+    final String testDir = getTestName(true);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        for (String fileName : List.of("import_binary",
+                                       "from_import_binary",
+                                       "import_attribute_from_binary",
+                                       "import_and_reference_binary")) {
+          myFixture.configureByFile("%s/%s.py".formatted(testDir, fileName));
+          myFixture.completeBasic();
+          myFixture.checkResultByFile("%s/%s.after.py".formatted(testDir, fileName));
+        }
+      });
+    });
+  }
+
   private void doTestVariants(String @NotNull ... expected) {
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
