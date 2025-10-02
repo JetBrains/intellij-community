@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,6 +51,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -80,6 +81,8 @@ public fun EditableComboBox(
     textFieldState: TextFieldState,
     modifier: Modifier = Modifier,
     popupModifier: Modifier = Modifier,
+    maxPopupHeight: Dp = Dp.Unspecified,
+    maxPopupWidth: Dp = Dp.Unspecified,
     enabled: Boolean = true,
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -194,10 +197,11 @@ public fun EditableComboBox(
                     }
                 },
                 modifier =
-                    popupModifier
-                        .testTag("Jewel.ComboBox.Popup")
+                    Modifier.testTag("Jewel.ComboBox.Popup")
                         .semantics { contentDescription = "Jewel.EditableComboBox.Popup" }
-                        .width(comboBoxWidth)
+                        .heightIn(max = maxPopupHeight)
+                        .widthIn(min = comboBoxWidth, max = maxPopupWidth.coerceAtLeast(comboBoxWidth))
+                        .then(popupModifier)
                         .onClick { popupManager.setPopupVisible(false) },
                 horizontalAlignment = Alignment.Start,
                 popupProperties = PopupProperties(focusable = false),
@@ -205,6 +209,47 @@ public fun EditableComboBox(
             )
         }
     }
+}
+
+@Suppress("UnavailableSymbol") // TODO(JEWEL-983) Address Metalava suppressions
+@Composable
+@Deprecated(
+    "Deprecated in favor of the method with 'maxPopupHeight, and 'maxPopupWidth' parameters",
+    level = DeprecationLevel.HIDDEN,
+)
+public fun EditableComboBox(
+    textFieldState: TextFieldState,
+    modifier: Modifier = Modifier,
+    popupModifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    outline: Outline = Outline.None,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ComboBoxStyle = JewelTheme.comboBoxStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    onArrowDownPress: () -> Unit = {},
+    onArrowUpPress: () -> Unit = {},
+    onEnterPress: () -> Unit = {},
+    // TODO(JEWEL-983) Address Metalava suppressions
+    @Suppress("HiddenTypeParameter", "ReferencesHidden") popupManager: PopupManager = remember { PopupManager() },
+    popupContent: @Composable () -> Unit,
+) {
+    EditableComboBox(
+        textFieldState = textFieldState,
+        modifier = modifier,
+        popupModifier = popupModifier,
+        maxPopupHeight = Dp.Unspecified,
+        maxPopupWidth = Dp.Unspecified,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
+        onArrowDownPress = onArrowDownPress,
+        onArrowUpPress = onArrowUpPress,
+        onEnterPress = onEnterPress,
+        popupManager = popupManager,
+        popupContent = popupContent,
+    )
 }
 
 @Composable
