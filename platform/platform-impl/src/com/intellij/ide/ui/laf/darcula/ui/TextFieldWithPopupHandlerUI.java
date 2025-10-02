@@ -310,7 +310,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         for (IconHolder holder : icons.values()) {
           if (holder.iconButton != null) {
             holder.iconButton.setEnabled(enabled);
-            holder.iconButton.setFocusable(enabled);
           }
         }
       }
@@ -616,7 +615,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     if (component != null && holder.iconButton != null) {
       component.add(holder.iconButton);
       holder.iconButton.setEnabled(component.isEnabled());
-      holder.iconButton.setFocusable(component.isEnabled());
     }
   }
 
