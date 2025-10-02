@@ -173,9 +173,18 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         return false;
       }
     },
+
+    new SkipIndividuallyFilter( // see: IDEA-375132
+      Set.of(
+        new Pair<>("NotNullMarkedUseOfWildcardAsTypeArgument.java", 30),
+        new Pair<>("SameTypeTypeVariable.java", 31),
+        new Pair<>("SameTypeTypeVariable.java", 51),
+        new Pair<>("SuperVsObject.java", 24), // see: IDEA-379303
+        new Pair<>("SuperNullableForNonNullableTypeParameter.java", 27) // see: IDEA-379303
+      )
+    ),
     new CallWithParameterWithNestedGenericsFilter(), // see: IDEA-377682
-    new VariableWithNestedGenericsFilter(), // see: IDEA-377683
-    new ReturnWithNestedGenericsFilter() // see: IDEA-375132
+    new VariableWithNestedGenericsFilter() // see: IDEA-377683
   );
 
   private static final LightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
@@ -239,6 +248,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       var dfaInspection = new JSpecifyDataFlowInspection(actual);
       dfaInspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
       var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
+      nullableStuffInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
       var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
       List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
       ReadAction.run(() -> {
@@ -425,29 +435,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     }
   }
 
-  private static class ReturnWithNestedGenericsFilter implements ErrorFilter {
-
-    @Override
-    public boolean filterActual(@NotNull PsiFile file,
-                                @NotNull String strippedText,
-                                int lineNumber,
-                                int startLineOffset,
-                                @NotNull String errorMessage) {
-      if (!errorMessage.contains("jspecify_nullness_mismatch")) return false;
-      PsiElement element = findElement(file, strippedText, lineNumber, startLineOffset);
-      PsiReturnStatement returnStatement = PsiTreeUtil.getParentOfType(element, PsiReturnStatement.class, true);
-      if (returnStatement == null) return false;
-      PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, true);
-      return method.getReturnType() instanceof PsiClassType classType && classType.hasParameters();
-    }
-
-    @Override
-    public boolean filterExpected(@NotNull PsiElement psiElement, @NotNull String errorMessage) {
-      //filter only actual file
-      return false;
-    }
-  }
-
 
   private static class SkipIndividuallyFilter implements ErrorFilter {
     private final Set<Pair<String, Integer>> places;
@@ -593,7 +580,9 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
              "inspection.nullable.problems.at.local.variable" -> warnings.put(anchor, "jspecify_unrecognized_location");
         case "inspection.nullable.problems.Nullable.method.overrides.NotNull",
              "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
-             "assigning.a.collection.of.nullable.elements"
+             "assigning.a.collection.of.nullable.elements",
+             "returning.a.class.with.nullable.parameters",
+             "returning.a.class.with.notnull.parameters"
           //,  "non.null.type.argument.is.expected"  //todo see IDEA-377707
           -> warnings.put(anchor, "jspecify_nullness_mismatch");
         case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull" ->

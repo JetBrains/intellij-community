@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.codeInspection;
 
@@ -474,6 +474,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
 
   public void testIncompatibleContainer() {
     addJSpecifyNullMarked(myFixture);
+    doTest();
+  }
+
+  public void testReturnIncompatibilitiesWithGeneric() {
+    myInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
 }

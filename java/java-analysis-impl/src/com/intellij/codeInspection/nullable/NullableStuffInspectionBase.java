@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
@@ -35,6 +35,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jdom.Element;
@@ -67,6 +68,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("WeakerAccess") public boolean IGNORE_EXTERNAL_SUPER_NOTNULL;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABILITY_ANNOTATION_ON_LOCALS = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = false;
   /**
    * @deprecated the field remains to minimize changes to users' inspection profiles.
    */
@@ -93,7 +95,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           "REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED".equals(name) && "false".equals(value) ||
           "REQUIRE_NOTNULL_FIELDS_INITIALIZED".equals(name) && "true".equals(value) ||
           "REPORT_NULLABILITY_ANNOTATION_ON_LOCALS".equals(name) && "true".equals(value) ||
-          "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER".equals(name) && "true".equals(value)) {
+          "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER".equals(name) && "true".equals(value) ||
+          "REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS".equals(name) && "false".equals(value)) {
         node.removeContent(child);
       }
     }
@@ -474,7 +477,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         PsiExpression returnValue = statement.getReturnValue();
         if (returnValue == null) return;
 
-        checkCollectionNullityOnAssignment(statement.getReturnValue(), PsiTypesUtil.getMethodReturnType(statement), returnValue);
+        checkGenericClassOnReturn(PsiTypesUtil.getMethodReturnType(statement), returnValue);
       }
 
       @Override
@@ -503,6 +506,18 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             checkCollectionNullityOnAssignment(argument, substitutor.substitute(parameters[i].getType()), argument);
           }
         }
+      }
+
+      private void checkGenericClassOnReturn(@Nullable PsiType expectedType,
+                                             @NotNull PsiExpression returnValue) {
+        PsiType returnType = returnValue.getType();
+        JavaTypeNullabilityUtil.NullabilityConflict
+          conflict = JavaTypeNullabilityUtil.getNullabilityConflictInAssignment(expectedType, returnType,
+                                                                                REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS);
+        if (conflict == JavaTypeNullabilityUtil.NullabilityConflict.UNKNOWN) return;
+        String messageKey = conflict == JavaTypeNullabilityUtil.NullabilityConflict.NOT_NULL_TO_NULL ?
+                            "returning.a.class.with.notnull.parameters" : "returning.a.class.with.nullable.parameters";
+        reportProblem(holder, returnValue, messageKey);
       }
 
       private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,
