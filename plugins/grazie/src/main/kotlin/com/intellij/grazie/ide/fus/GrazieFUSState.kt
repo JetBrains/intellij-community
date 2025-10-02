@@ -18,7 +18,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.getPluginInfo
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("grazie.state", 10)
+  private val GROUP = EventLogGroup("grazie.state", 11)
   private val ENABLE_LANGUAGE = GROUP.registerEvent(
     "enabled.language",
     EventFields.Enum("value", LanguageISO::class.java) { it.name.lowercase() }
@@ -27,7 +27,7 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
   private val RULE = GROUP.registerEvent(
     "rule",
     EventFields.PluginInfo,
-    EventFields.StringValidatedByEnum("id", "grazie_rule_long_ids"),
+    EventFields.StringValidatedByDictionary("id", "grazie_rule_long_ids.ndjson"),
     EventFields.Enabled
   )
 
