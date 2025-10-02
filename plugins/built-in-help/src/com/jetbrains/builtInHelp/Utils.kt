@@ -63,14 +63,14 @@ class Utils {
     }
 
     @JvmStatic
-    fun setStoredValue(key: SettingsPage.SettingKey, value: String?): Boolean {
+    fun setStoredValue(key: SettingsPage.SettingKey, value: String?) {
       if (!key.second) {
         PropertiesComponent.getInstance().setValue(key.first, value, EMPTY_STRING)
-        return true
       }
-      val passwordSafe = PasswordSafe.instance
-      passwordSafe.set(secureKey, Credentials(key.first, value))
-      return true
+      else {
+        val passwordSafe = PasswordSafe.instance
+        passwordSafe.set(secureKey, Credentials(key.first, value))
+      }
     }
   }
 }
