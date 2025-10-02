@@ -146,7 +146,7 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
       if (descriptorId == null) return null;
       return new ServiceViewDescriptorId(contributorId, descriptorId);
     });
-    sink.set(ServiceViewActionProvider.SERVICES_SELECTED_DESCRIPTOR_IDS, selectedDescriptorIds);
+    sink.set(ServiceViewUIUtils.SERVICES_SELECTED_DESCRIPTOR_IDS, selectedDescriptorIds);
 
     ServiceViewDescriptor descriptor = onlyItem == null || onlyItem.isRemoved() ? null : onlyItem.getViewDescriptor();
     if (descriptor instanceof UiDataProvider uiDataProvider) {
