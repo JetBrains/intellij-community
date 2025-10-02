@@ -191,6 +191,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       val moduleCoordinates = modules.mapTo(HashSet()) { aModule -> generateMavenCoordinatesForModule(aModule) }
       val dependencies = modules
         .asSequence()
+        .filter { !it.isLibraryModule() }
         .flatMap { aModule -> squashingMavenArtifactsData.getValue(aModule).dependencies }
         .distinct()
         .filter { !moduleCoordinates.contains(it.coordinates) }
