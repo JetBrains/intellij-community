@@ -10,9 +10,7 @@ internal fun publishCompiler(preferences: GeneratorPreferences) {
     val kotlinRepoRoot = preferences.kotlinCompilerRepositoryRoot
     println("Kotlin compiler repository: $kotlinRepoRoot")
 
-    val kotlinSnapshotPath = KotlinTestsDependenciesUtil.communityRoot
-        .resolve("lib")
-        .resolve("kotlin-snapshot")
+    val kotlinSnapshotPath = KotlinTestsDependenciesUtil.kotlinCompilerSnapshotPath
 
     println("Artifacts path: $kotlinSnapshotPath")
     println("Publishing Kotlin compiler...")

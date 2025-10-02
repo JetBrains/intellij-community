@@ -79,6 +79,12 @@ object KotlinTestsDependenciesUtil {
     val projectRoot: Path
         get() = monorepoRoot ?: communityRoot
 
+    internal val kotlinCompilerSnapshotLocationInsideCommunity: String
+        get() = "lib/kotlin-snapshot"
+
+    val kotlinCompilerSnapshotPath: Path
+        get() = communityRoot.resolve(kotlinCompilerSnapshotLocationInsideCommunity)
+
     private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
 
     data class DownloadFile(

@@ -90,8 +90,6 @@ object TestKotlinArtifacts {
             ?: error("Unable to find URL for '${label.asLabel}'")
     }
 
-    private val cooperativeRepoRoot = communityRoot.communityRoot.resolve("lib/kotlin-snapshot")
-
     private fun downloadFile(label: BazelLabel): Path {
         val downloadFile = findDownloadFile(label)
         val labelUrl = URI(downloadFile.url)
@@ -102,9 +100,9 @@ object TestKotlinArtifacts {
         // https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/docs/cooperative-development/environment-setup.md
         val fileInCache = if (labelUrl.toString().contains("255-dev-255")) {
             val relativePath = labelUrl.path.substringAfter("/intellij-dependencies/")
-            val file = cooperativeRepoRoot.resolve(relativePath)
+            val file = KotlinTestsDependenciesUtil.kotlinCompilerSnapshotPath.resolve(relativePath)
             if (!Files.exists(file)) {
-                error("File $file doesn't exist in cooperative repo $cooperativeRepoRoot. " +
+                error("File $file doesn't exist in cooperative repo ${KotlinTestsDependenciesUtil.kotlinCompilerSnapshotPath}. " +
                               "Please run 'Kotlin Coop: Publish Compiler JARs' run configuration in IntelliJ.")
             }
             file
