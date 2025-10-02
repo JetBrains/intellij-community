@@ -79,7 +79,8 @@ class JavaCallGraphBuilder : CallGraphBuilder {
   private fun buildNodeFromMethod(method: PsiMethod, nodeId: String): CallGraphNode {
     val nodeLocation = method.getNodeLocation()!!
     val projectName = method.project.name
-    val qualifiedName = QualifiedNameProviderUtil.getQualifiedName(method)!!
+    val qualifiedNameOrNull = QualifiedNameProviderUtil.getQualifiedName(method)
+    val qualifiedName = qualifiedNameOrNull ?: method.name
 
     return CallGraphNode(
       address = nodeLocation,
