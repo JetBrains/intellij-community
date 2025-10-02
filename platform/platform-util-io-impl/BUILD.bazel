@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:jna",
     "@lib//:jackson",
   ],
-  exports = ["//platform/platform-util-io:ide-util-io"]
+  exports = ["//platform/platform-util-io:ide-util-io"],
+  runtime_deps = ["@lib//:rhino"]
 )
 ### auto-generated section `build intellij.platform.ide.util.io.impl` end
