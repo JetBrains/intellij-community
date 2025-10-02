@@ -224,11 +224,6 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
-  protected boolean canUpdateAllIndexes() {
-    return ContainerUtil.all(getAsyncState().myIndices.values(), it -> it.canUpdate());
-  }
-
-  @Override
   public void forceRebuild(@NotNull Throwable e) {
     FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID, e);
   }
