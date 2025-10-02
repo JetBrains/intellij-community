@@ -2,6 +2,7 @@
 package com.intellij.python.community.impl.huggingFace.service
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.platform.util.coroutines.childScope
@@ -12,11 +13,14 @@ import org.jetbrains.annotations.ApiStatus
 @Service
 @ApiStatus.Internal
 class HuggingFaceCoroutine(coroutineScope: CoroutineScope) {
-  val ioScope = coroutineScope.childScope(context = Dispatchers.IO)
+  val ioScope: CoroutineScope = coroutineScope.childScope("HuggingFace IO Scope", context = Dispatchers.IO)
+  val edtScope: CoroutineScope = coroutineScope.childScope("HuggingFace EDT Scope", context = Dispatchers.EDT)
 
   object Utils {
     val ioScope: CoroutineScope
       get() = ApplicationManager.getApplication().service<HuggingFaceCoroutine>().ioScope
 
+    val edtScope: CoroutineScope
+      get() = ApplicationManager.getApplication().service<HuggingFaceCoroutine>().edtScope
   }
 }
