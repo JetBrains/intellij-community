@@ -16,8 +16,9 @@ import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import org.jetbrains.plugins.terminal.action.TerminalSessionContextMenuActionBase
+import org.jetbrains.plugins.terminal.ui.TerminalContainer
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl
 
 internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBase(), DumbAware {
@@ -28,7 +29,7 @@ internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBa
     }
 
     val reworkedTerminalTab = findReworkedTerminalTab(project, content)
-    val classicTerminal = TerminalSessionContextMenuActionBase.findContextTerminal(e, content)
+    val classicTerminal = findClassicTerminal(e, content)
     if (reworkedTerminalTab != null) {
       performForReworkedTerminalTab(project, reworkedTerminalTab)
     }
@@ -83,13 +84,25 @@ internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBa
     }
 
     val reworkedTerminalTab = findReworkedTerminalTab(project, content)
-    val classicTerminal = TerminalSessionContextMenuActionBase.findContextTerminal(e, content)
+    val classicTerminal = findClassicTerminal(e, content)
     e.presentation.isEnabledAndVisible = reworkedTerminalTab != null || classicTerminal != null
   }
 
   private fun findReworkedTerminalTab(project: Project, content: Content): TerminalToolWindowTab? {
     val manager = TerminalToolWindowTabsManager.getInstance(project)
     return manager.tabs.find { it.content == content }
+  }
+
+  private fun findClassicTerminal(e: AnActionEvent, content: Content): TerminalWidget? {
+    val newWidget = e.dataContext.getData(TerminalContainer.TERMINAL_WIDGET_DATA_KEY)
+    if (newWidget != null) return newWidget
+    val terminalWidget = e.dataContext.getData(JBTerminalWidget.TERMINAL_DATA_KEY)
+    return if (terminalWidget != null && UIUtil.isAncestor(content.component, terminalWidget)) {
+      terminalWidget.asNewWidget()
+    }
+    else {
+      TerminalToolWindowManager.findWidgetByContent(content)
+    }
   }
 }
 
