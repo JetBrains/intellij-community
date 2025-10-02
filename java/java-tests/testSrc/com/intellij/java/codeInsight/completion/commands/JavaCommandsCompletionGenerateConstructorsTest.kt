@@ -130,7 +130,7 @@ class JavaCommandsCompletionGenerateConstructorsTest : LightFixtureCompletionTes
     assertNull(elements.firstOrNull { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
   }
 
-  fun testNoExceptionGenerateAllArgsConstructorForAnonymousClass() {
+  fun testNoExceptionGenerateAllArgsConstructorForMarkdown() {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A {
           int a;
@@ -150,6 +150,43 @@ class JavaCommandsCompletionGenerateConstructorsTest : LightFixtureCompletionTes
         class A {
             int a;
             /// some comment
+            A(int a){}
+        }
+        
+        class B extends A {
+            int c;
+        
+            public B(int a, int c) {
+                super(a);
+                this.c = c;
+            }
+        }""".trimIndent())
+  }
+
+  fun testNoExceptionGenerateAllArgsConstructorForUsualComments() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      class A {
+          int a;
+          /**
+          * some comments
+          */
+          A(int a){}
+      }
+      
+      class B extends A {
+          int c;
+          gen<caret>
+      }
+      """.trimIndent())
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Generate 'All-Args Constructor'", ignoreCase = true) })
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    myFixture.checkResult("""
+        class A {
+            int a;
+            /**
+            * some comments
+            */
             A(int a){}
         }
         
