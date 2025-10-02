@@ -23,6 +23,8 @@ internal class XDebuggerRunDashboardCustomizer : RunDashboardCustomizer() {
                   ?: return false
     if (session.isPaused) {
       customizationBuilder.setIcon(AllIcons.Actions.Pause)
+    } else if (!session.isStopped) {
+      customizationBuilder.setIcon(AllIcons.Actions.StartDebugger)
     }
     return false
   }
