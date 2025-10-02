@@ -404,7 +404,12 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 - p:textIconGap():I
 - update(java.awt.Graphics,javax.swing.JComponent):V
 f:com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI$IconHolder
+- f:bounds:java.awt.Rectangle
+- f:extension:com.intellij.ui.components.fields.ExtendableTextComponent$Extension
+- hovered:Z
+- icon:javax.swing.Icon
 - iconButton:javax.swing.JButton
+- isClickable():Z
 com.intellij.ide.util.ElementsChooser$ElementsMarkListener
 - a:elementMarkChanged(java.lang.Object,Z):V
 com.intellij.ide.util.ElementsChooser$StatisticsCollector

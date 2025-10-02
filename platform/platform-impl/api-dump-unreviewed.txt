@@ -4499,12 +4499,6 @@ a:com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 - p:updatePreferredSize(javax.swing.JComponent,java.awt.Dimension):V
 - value(java.lang.Object):Z
 - viewToModel(javax.swing.text.JTextComponent,java.awt.Point,javax.swing.text.Position$Bias[]):I
-f:com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI$IconHolder
-- f:bounds:java.awt.Rectangle
-- f:extension:com.intellij.ui.components.fields.ExtendableTextComponent$Extension
-- hovered:Z
-- icon:javax.swing.Icon
-- isClickable():Z
 c:com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI$MarginAwareCaret
 - javax.swing.plaf.basic.BasicTextUI$BasicCaret
 - <init>():V
