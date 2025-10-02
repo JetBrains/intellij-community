@@ -1,14 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.builtInHelp
 
-import com.intellij.util.ResourceUtil
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.HttpRequest
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.HttpRequestHandler
-import java.io.IOException
 import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
@@ -51,33 +49,10 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
       else -> resourceName
     }
 
-    val resStream = ResourceUtil.getResourceAsStream(
-      HelpRequestHandlerBase::class.java.classLoader,
-      if (isImage) "images" else "${getRequestLocalePath(request)}/topics", retrieveName
-    )
-
-    //First, try to deliver a topic from the selected locale and fallback to en-us when needed
-    val contentToSend = resStream.use { res ->
-      try {
-        res.readAllBytes()
-      }
-      catch (e: IOException) {
-        LOG.warn(e)
-        //Because of space concerns, images are only shipped for en-us anyway and stored under /images
-        if (!isImage) {
-          ResourceUtil.getResourceAsStream(
-            HelpRequestHandlerBase::class.java.classLoader,
-            "topics", retrieveName
-          ).use { res ->
-            res.readAllBytes()
-          }
-        }
-        else null
-      }
-    }
-
+    val content = Utils.getResourceWithFallback(if (isImage) "images" else "topics",
+                                                retrieveName, getRequestLocalePath(request))
     return sendData(
-      contentToSend ?: throw Exception("$resourceName not found in $resourceLocation via ${request.uri()}"), resourceName,
+      content ?: throw Exception("$resourceName not found in $resourceLocation via ${request.uri()}"), resourceName,
       request, channel,
       extraHeaders
     )

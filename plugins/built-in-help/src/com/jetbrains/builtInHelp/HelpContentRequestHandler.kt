@@ -43,7 +43,7 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
 
         val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.PERMANENT_REDIRECT)
 
-        var location = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/${
+        var location = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}${getRequestLocalePath(request)}/help/${
           map.getUrlForId(
             name
           )
@@ -61,16 +61,16 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
       }
     }
 
+    val locale = getRequestLocalePath(request)
+
     when (val resourceName: String = urlDecoder.path().substringAfterLast("/")) {
       "config.json" -> {
-        val configStream = ResourceUtil.getResourceAsStream(
-          HelpContentRequestHandler::class.java.classLoader,
-          "topics", "config.json"
-        )
+
+        val configContent = Utils.getResourceWithFallback("topics", resourceName, locale)
 
         @Suppress("UNCHECKED_CAST")
         val configJson: LinkedHashMap<String, Any> = jacksonObjectMapper().readValue(
-          configStream,
+          configContent,
           LinkedHashMap::class.java
         ) as LinkedHashMap<String, Any>
 
