@@ -41,7 +41,7 @@ tasks {
     }
 
     val generateThemes by
-        register("generateThemes") {
+        register<Task>("generateThemes") {
             description = "Updates the ThemeDescription dumps and reformats them."
             dependsOn(themeGeneratorTasks)
             dependsOn(ktfmtFormatMain)
@@ -53,7 +53,7 @@ tasks {
         mustRunAfter(generateThemes)
         mustRunAfter(ktfmtFormatMain)
     }
-    lintKotlinMain {
+    withType<org.jmailen.gradle.kotlinter.tasks.LintTask> {
         mustRunAfter(generateThemes)
         mustRunAfter(ktfmtFormatMain)
     }

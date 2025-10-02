@@ -59,14 +59,14 @@ tasks {
     // We need to use relative paths for patterns.
     // Exclude does not work; this is how the Kotlinter plugin docs recommend doing it, and it works...
     val buildDir = layout.buildDirectory.asFile.get().relativeTo(project.projectDir).path
-    detektMain { source = (source - fileTree(buildDir)).asFileTree }
+    detektMain { exclude { it.file.path.contains(buildDir) } }
 
-    formatKotlinMain { source = (source - fileTree(buildDir)).asFileTree }
+    withType<KtfmtBaseTask> { exclude { it.file.path.contains(buildDir) } }
 
-    withType<KtfmtBaseTask> { source = (source - fileTree(buildDir)).asFileTree }
+    withType<org.jmailen.gradle.kotlinter.tasks.FormatTask> { exclude { it.file.path.contains(buildDir) } }
 
-    lintKotlinMain {
-        source = (source - fileTree(buildDir)).asFileTree
+    withType<org.jmailen.gradle.kotlinter.tasks.LintTask> {
+        exclude { it.file.path.contains(buildDir) }
 
         reports = provider {
             mapOf(
