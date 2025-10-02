@@ -383,7 +383,7 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
       // it's necessary to use the dev build to get correct paths in 'layout' data
 
-      context.createProductRunner(forceUseDevBuild = true).runProduct(
+      context.createProductRunner().runProduct(
         listOf("listBundledPlugins", providedModuleFile.toString()),
         additionalVmProperties = additionalProperties()
       )
