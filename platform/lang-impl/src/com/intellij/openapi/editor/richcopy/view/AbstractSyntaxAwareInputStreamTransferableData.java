@@ -14,6 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 
 @ApiStatus.Internal
 public abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStream implements RawTextWithMarkup {
@@ -72,8 +73,11 @@ public abstract class AbstractSyntaxAwareInputStreamTransferableData extends Inp
     if (LOG.isDebugEnabled()) {
       LOG.debug("Resulting text: \n" + s);
     }
+
     try {
-      myDelegate = new ByteArrayInputStream(s.getBytes(getCharset()));
+      byte[] data = s.getBytes(getCharset());
+      byte[] dataWithNullTerminator = Arrays.copyOf(data, data.length + 1);
+      myDelegate = new ByteArrayInputStream(dataWithNullTerminator);
     }
     catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
