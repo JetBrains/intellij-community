@@ -38,11 +38,8 @@ import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jediterm.core.util.TermSize
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalPanelMarker
@@ -274,6 +271,13 @@ class TerminalViewImpl(
   fun connectToSession(session: TerminalSession) {
     sessionFuture.complete(session)
     controller.handleEvents(session)
+  }
+
+  override suspend fun hasChildProcesses(): Boolean {
+    val session = sessionFuture.getNow(null) ?: return false
+    return withContext(Dispatchers.IO) {
+      session.hasRunningCommands()
+    }
   }
 
   override fun addTerminationCallback(parentDisposable: Disposable, callback: () -> Unit) {

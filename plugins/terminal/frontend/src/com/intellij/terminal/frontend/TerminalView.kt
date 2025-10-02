@@ -22,5 +22,7 @@ interface TerminalView {
 
   fun addTerminationCallback(parentDisposable: Disposable, callback: () -> Unit)
 
+  suspend fun hasChildProcesses(): Boolean
+
   // todo
 }

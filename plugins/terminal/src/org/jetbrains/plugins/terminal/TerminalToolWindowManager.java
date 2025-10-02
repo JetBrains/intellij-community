@@ -38,6 +38,7 @@ import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightActio
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
+import org.jetbrains.plugins.terminal.classic.ClassicTerminalTabCloseListener;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 
@@ -343,8 +344,7 @@ public final class TerminalToolWindowManager implements Disposable {
     myTerminalSetupHandlers.forEach(consumer -> consumer.accept(finalWidget));
 
     content.setPreferredFocusedComponent(() -> finalWidget.getPreferredFocusableComponent());
-    //noinspection ResultOfObjectAllocationIgnored
-    new TerminalTabCloseListener(content, myProject, this);
+    ClassicTerminalTabCloseListener.install(content, myProject, content);
 
     return content;
   }

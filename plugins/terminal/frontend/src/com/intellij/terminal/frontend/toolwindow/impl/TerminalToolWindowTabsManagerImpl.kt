@@ -136,10 +136,10 @@ internal class TerminalToolWindowTabsManagerImpl(
     panel.setContent(terminal.component)
     val content = ContentFactory.getInstance().createContent(panel, null, false)
     content.setPreferredFocusedComponent { terminal.preferredFocusableComponent }
+    TerminalTabCloseListenerImpl.install(content, project, parentDisposable = content)
 
     val tabScope = coroutineScope.childScope("TerminalToolWindowTab")
     updateTabNameOnTitleChange(terminal.title, content, tabScope.childScope("Tab name updating"))
-    // todo: install TerminalTabCloseListener
 
     // Terminate the session if the tab was closed.
     // But if the tab was detached, leave the session alive.
