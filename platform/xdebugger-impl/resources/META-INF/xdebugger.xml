@@ -40,7 +40,7 @@
                     interface="com.intellij.xdebugger.frame.CustomXDescriptorSerializerProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.managerProxy" interface="com.intellij.xdebugger.impl.frame.XDebugManagerProxy"
                     dynamic="true"/>
-    <extensionPoint name="xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.impl.XDebuggerSplitModeEnabler"
+    <extensionPoint name="xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.XDebuggerSplitModeEnabler"
                     dynamic="false"/>
     <extensionPoint name="xdebugger.xTextValueModificationPreparatorProvider" interface="com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider"
                     dynamic="true"/>

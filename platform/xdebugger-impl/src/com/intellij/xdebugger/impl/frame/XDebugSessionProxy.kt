@@ -13,6 +13,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
@@ -23,7 +24,6 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.XDebuggerSplitModeEnabler
 import com.intellij.xdebugger.impl.XSourceKind
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
@@ -118,11 +118,7 @@ interface XDebugSessionProxy {
 
     @JvmStatic
     fun useFeProxy(): Boolean {
-      val testProperty = System.getProperty("xdebugger.toolwindow.split.for.tests")
-      if (testProperty != null) {
-        return testProperty.toBoolean()
-      }
-      return useFeProxyCachedValue
+      return SplitDebuggerMode.useFeProxy()
     }
 
     @JvmStatic
@@ -361,8 +357,4 @@ interface XDebugSessionProxy {
 @ApiStatus.Internal
 interface XSmartStepIntoHandlerEntry {
   val popupTitle: String
-}
-
-private val useFeProxyCachedValue by lazy {
-  Registry.`is`("xdebugger.toolwindow.split") || XDebuggerSplitModeEnabler.EP_NAME.extensionList.any { it.useSplitDebuggerMode() }
 }
