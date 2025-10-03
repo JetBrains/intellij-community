@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
 @StressTestApplication
 class ReadWriteActionPerformanceTest {
@@ -28,11 +27,9 @@ class ReadWriteActionPerformanceTest {
             } // constant spam with write-intents
           }
         }
-        repeat(100) { globalCounter ->
+        repeat(100) { _ ->
           launch(dispatcher) {
-            val localCounter = AtomicInteger(0)
             readAndBackgroundWriteActionUndispatched {
-              localCounter.incrementAndGet()
               val currentTime = System.currentTimeMillis()
               while (System.currentTimeMillis() - currentTime < 3) {
                 Cancellation.checkCancelled()
@@ -40,7 +37,6 @@ class ReadWriteActionPerformanceTest {
               writeAction {
               }
             }
-            println("RA $globalCounter: $localCounter restarts")
           }
         }
         canEnd.set(true)
