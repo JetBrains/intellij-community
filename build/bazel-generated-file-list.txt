@@ -347,6 +347,7 @@ libraries/detekt-compose-rules
 libraries/dokka
 libraries/grpc
 libraries/grpc-netty-shaded
+libraries/guava
 libraries/hamcrest
 libraries/hamcrest-more-matchers
 libraries/io
