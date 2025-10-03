@@ -9,7 +9,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.util.application
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
@@ -47,8 +46,10 @@ class SuvorovProgressTest {
     val edtActionCompleted = Job(coroutineContext.job)
     launch {
       backgroundWriteAction {
-        application.invokeLater {
-          edtActionCompleted.complete()
+        launch(Dispatchers.UiWithModelAccess) {
+          WriteIntentReadAction.run {
+            edtActionCompleted.complete()
+          }
         }
         writeActionMayFinish.asCompletableFuture().join()
       }

@@ -268,7 +268,6 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     while (!boundedTaskExecutor.isEmpty || commitInProgressCounter.get() > 0) {
       try {
         boundedTaskExecutor.waitAllTasksExecuted(10, TimeUnit.MILLISECONDS)
-        Thread.sleep(10)
       }
       catch (e: TimeoutException) {
         if (System.nanoTime() > deadLine) {

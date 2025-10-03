@@ -602,7 +602,10 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         // In short, we apply the parallelization of write-intent lock here with downgrading of write permits back to write intent.
         val token = downgradeWriteLockToWriteIntent()
         val (newState, cleanup) = currentComputationState.parallelizeWriteIntent(thisLevelPermit.get() as WriteIntentPermit)
+        statesOfWIThread.set(statesOfWIThread.get() ?: mutableListOf())
+        statesOfWIThread.get()?.add(newState)
         return ComputationStateContextElement(newState) to {
+          statesOfWIThread.get()?.removeLast()
           cleanup.finish()
           token.finish()
         }
