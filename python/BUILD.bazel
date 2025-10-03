@@ -305,7 +305,7 @@ jvm_library(
     "@lib//:jsr305",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/util/jdom",
     "//platform/extensions",
     "//libraries/kotlinx/serialization/json",

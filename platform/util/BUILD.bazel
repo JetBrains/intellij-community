@@ -179,7 +179,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/util-ex",
     "@lib//:netty-buffer",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:aalto-xml",
     "//platform/util/xmlDom",
     "//platform/util/zip",

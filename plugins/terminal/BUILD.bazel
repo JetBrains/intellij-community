@@ -44,7 +44,7 @@ jvm_library(
     "//plugins/terminal/completion",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/refactoring",
     "@lib//:terminal-terminal-completion-db-with-extensions",
     "//platform/util/coroutines",

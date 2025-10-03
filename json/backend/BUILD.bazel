@@ -45,7 +45,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:jackson-dataformat-yaml",
     "@lib//:jetbrains-markdown",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:stream_ex",
     "@lib//:kotlinx-collections-immutable",
     "//json",

@@ -148,7 +148,7 @@ jvm_library(
     "//platform/util/jdom",
     "//jps/jps-builders:build-tests_test_lib",
     "//xml/xml-psi-api:psi",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
   ],
   exports = [
     "//java/compiler/forms-compiler:java-guiForms-compiler",

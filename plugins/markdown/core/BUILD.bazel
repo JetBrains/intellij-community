@@ -54,7 +54,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic",
     "//platform/util/coroutines",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/ui.jcef",
     "@lib//:kotlin-stdlib",
     "//platform/project/shared:project",

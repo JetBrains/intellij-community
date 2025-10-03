@@ -71,23 +71,27 @@ Add the entry in alphabetical order.
 
 ### 5. Register in Project Modules
 
-Add the module to both `modules.xml` files in alphabetical order:
+Add the module to both `modules.xml` files. **CRITICAL**: Entries must be sorted by the `filepath` attribute value, not by module name or directory name. The IDE will auto-sort on save, but you should place entries in the correct position initially.
 
 #### Root project file: `.idea/modules.xml`
 ```xml
-<module fileurl="file://$PROJECT_DIR$/community/libraries/example-lib/intellij.libraries.example.lib.iml" 
+<module fileurl="file://$PROJECT_DIR$/community/libraries/example-lib/intellij.libraries.example.lib.iml"
         filepath="$PROJECT_DIR$/community/libraries/example-lib/intellij.libraries.example.lib.iml" />
 ```
 
 #### Community project file: `community/.idea/modules.xml`
 ```xml
-<module fileurl="file://$PROJECT_DIR$/libraries/example-lib/intellij.libraries.example.lib.iml" 
+<module fileurl="file://$PROJECT_DIR$/libraries/example-lib/intellij.libraries.example.lib.iml"
         filepath="$PROJECT_DIR$/libraries/example-lib/intellij.libraries.example.lib.iml" />
 ```
 
-**Important:** 
+**Important:**
 - Root `modules.xml` uses full path with `community/` prefix
 - Community `modules.xml` uses relative path without `community/` prefix
+- **Sorting**: Entries are sorted by `filepath` attribute (standard string comparison)
+  - Example: `libraries/hamcrest` < `libraries/hamcrest-more-matchers` < `libraries/hash4j`
+  - Note: Hyphen `-` comes before slash `/` in sorting, so `hamcrest-more-matchers` comes before `hash4j`
+- The IDE will auto-correct sorting on save, but tests will fail if order is incorrect
 
 ### 6. Register in LIBRARY_MODULE_NAMES
 

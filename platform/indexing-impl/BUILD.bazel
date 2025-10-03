@@ -26,7 +26,7 @@ jvm_library(
     "//libraries/guava",
     "//platform/workspace/jps",
     "//platform/diagnostic",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/util/nanoxml",
     "@lib//:aalto-xml",
     "//platform/util/xmlDom",

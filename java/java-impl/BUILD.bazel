@@ -88,7 +88,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/platform-impl/internal",
     "//platform/backend/workspace",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/platform-impl:ide-impl",
     "//platform/markdown-utils",
     "@lib//:jetbrains-markdown",

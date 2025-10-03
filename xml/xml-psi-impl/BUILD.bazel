@@ -41,7 +41,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:jackson-databind",
     "@lib//:jackson-module-kotlin",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/util/jdom",
     "//platform/markdown-utils",
     "//platform/polySymbols",

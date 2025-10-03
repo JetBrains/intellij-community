@@ -79,7 +79,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="netty-buffer" level="project" />
     <orderEntry type="library" scope="TEST" name="lz4-java" level="project" />
-    <orderEntry type="library" scope="TEST" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />

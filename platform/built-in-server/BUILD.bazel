@@ -36,7 +36,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:jackson-jr-objects",
     "@lib//:netty-buffer",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/util/concurrency",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",

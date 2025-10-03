@@ -93,7 +93,7 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "@lib//:netty-buffer",
     "@lib//:lz4-java",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:jackson",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",

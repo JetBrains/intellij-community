@@ -15,7 +15,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:fastutil-min",
     "@lib//:netty-buffer",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/util/base",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:lz4-java",

@@ -20,7 +20,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/statistics",
     "//platform/platform-impl/internal",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/ml-impl",
   ]
 )

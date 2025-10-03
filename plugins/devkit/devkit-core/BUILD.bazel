@@ -88,7 +88,7 @@ jvm_library(
     "//json/backend",
     "@lib//:kotlinx-serialization-protobuf",
     "//platform/built-in-server-api:builtInServer",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/ijent/buildConstants",
     "//platform/markdown-utils",

@@ -16,7 +16,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/projectModel-api:projectModel",

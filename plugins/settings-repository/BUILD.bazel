@@ -39,7 +39,7 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/statistics",
     "//platform/core-ui",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
     "//platform/credential-store-impl:credentialStore-impl",

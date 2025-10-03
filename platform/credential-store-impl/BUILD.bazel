@@ -37,7 +37,7 @@ jvm_library(
     "@lib//:snakeyaml",
     "@lib//:fastutil-min",
     "@lib//:platform-credential_store-impl-dbus-java",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
   ]
 )
 
@@ -71,7 +71,7 @@ jvm_library(
     "@lib//:snakeyaml",
     "@lib//:fastutil-min",
     "@lib//:platform-credential_store-impl-dbus-java",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/extensions:testExtensions",

@@ -63,7 +63,7 @@
     <orderEntry type="module" module-name="intellij.terminal.completion" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
-    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module-library">
       <library name="terminal-completion-db-with-extensions" type="repository">

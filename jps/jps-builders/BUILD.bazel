@@ -37,7 +37,7 @@ jvm_library(
     "//platform/tracing:tracing-rt",
     "//platform/util/zip",
     "@community//build:dependency-graph",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:kotlin-stdlib-provided",
     "//libraries/hash4j",
     "@lib//:jetbrains-annotations",

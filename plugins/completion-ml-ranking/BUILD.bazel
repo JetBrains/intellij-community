@@ -26,7 +26,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/core-ui",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:jackson-jr-objects",
     "@lib//:jackson",
     "//libraries/kotlinx/serialization/json",

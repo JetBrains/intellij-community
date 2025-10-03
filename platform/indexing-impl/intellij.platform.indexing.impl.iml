@@ -26,7 +26,7 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
-    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="library" name="aalto-xml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />

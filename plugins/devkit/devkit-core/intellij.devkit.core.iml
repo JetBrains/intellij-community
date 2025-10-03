@@ -95,7 +95,7 @@
     <orderEntry type="module" module-name="intellij.json.backend" />
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
-    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />

@@ -69,7 +69,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:kryo5",
     "//libraries/guava",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlinx-collections-immutable",

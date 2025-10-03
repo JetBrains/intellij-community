@@ -41,7 +41,7 @@ jvm_library(
     "//platform/inline-completion/shared:inline-completion",
     "//plugins/terminal/completion",
     "//platform/eel-provider",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/observable",
     "@lib//:kotlinx-datetime-jvm",
     "//libraries/kotlinx/serialization/core",

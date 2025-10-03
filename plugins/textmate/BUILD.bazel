@@ -31,7 +31,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//libraries/kotlinx/serialization/core",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//fleet/fastutil",
     "@lib//:fastutil-min",
     "//platform/util/xmlDom",

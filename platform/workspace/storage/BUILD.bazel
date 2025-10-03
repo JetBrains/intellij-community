@@ -32,7 +32,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "//platform/util",
     "@lib//:fastutil-min",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:kryo5",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",

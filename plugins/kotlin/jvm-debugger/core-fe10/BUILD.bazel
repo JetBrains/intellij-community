@@ -21,7 +21,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:asm",
     "@lib//:stream_ex",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "//java/debugger/openapi:java-debugger",

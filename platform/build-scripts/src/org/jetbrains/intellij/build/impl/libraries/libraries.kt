@@ -19,6 +19,7 @@ fun JpsModule.isLibraryModule(): Boolean {
  */
 private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
   "intellij.libraries.assertj.core",
+  "intellij.libraries.caffeine",
   "intellij.libraries.compose.foundation.desktop",
   "intellij.libraries.compose.foundation.desktop.junit",
   "intellij.libraries.compose.runtime.desktop",
