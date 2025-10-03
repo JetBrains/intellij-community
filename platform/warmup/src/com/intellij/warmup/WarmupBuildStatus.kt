@@ -3,6 +3,7 @@ package com.intellij.warmup
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 sealed interface WarmupBuildStatus {
@@ -20,7 +21,7 @@ sealed interface WarmupBuildStatus {
 
   object NotInvoked : WarmupBuildStatus
 
-  sealed class InvocationStatus protected constructor(val message: @NonNls String) : WarmupBuildStatus
-  class Success internal constructor(message: @NonNls String) : InvocationStatus(message)
-  class Failure internal constructor(message: @NonNls String) : InvocationStatus(message)
+  sealed class InvocationStatus(val message: @NonNls String) : WarmupBuildStatus
+  class Success @ApiStatus.Internal constructor(message: @NonNls String) : InvocationStatus(message)
+  class Failure @ApiStatus.Internal constructor(message: @NonNls String) : InvocationStatus(message)
 }

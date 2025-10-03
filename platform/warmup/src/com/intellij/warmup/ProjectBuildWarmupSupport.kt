@@ -30,16 +30,5 @@ interface ProjectBuildWarmupSupport {
    *
    * @return build status message
    */
-  @Deprecated("Return type is not descriptive enough")
-  @ApiStatus.ScheduledForRemoval
-  suspend fun buildProject(rebuild: Boolean = false): String
-
-  /**
-   * Start custom build process and return a future which is completed only when a custom build is finished
-   * @param rebuild indicates if rebuild should be done instead of ordinary build
-   *
-   * @return build status message
-   */
-  suspend fun buildProjectWithStatus(rebuild: Boolean = false): WarmupBuildStatus.InvocationStatus =
-    buildProject(rebuild).let(WarmupBuildStatus::Success)
+  suspend fun buildProjectWithStatus(rebuild: Boolean = false): WarmupBuildStatus.InvocationStatus
 }
