@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
 import com.intellij.java.library.JavaLibraryUtil
@@ -249,14 +249,13 @@ class LoggingUtil {
       if (receiver is USimpleNameReferenceExpression) {
         val resolvedReceiver = receiver.resolveToUElement()
         if (resolvedReceiver is UVariable) {
-          val loggerVariable = resolvedReceiver as? UVariable ?: return null
-          val type = loggerVariable.type
+          val type = resolvedReceiver.type
           val canonicalText = type.canonicalText
           if (LOGGER_CLASSES.contains(canonicalText) || LEGACY_LOGGER_CLASSES.contains(canonicalText)) {
-            return loggerVariable
+            return resolvedReceiver
           }
           if (type.equalsToText(SLF4J_EVENT_BUILDER) || type.equalsToText(LOG4J_LOG_BUILDER)) {
-            val uastInitializer = (loggerVariable.uastInitializer as? UQualifiedReferenceExpression) ?: return null
+            val uastInitializer = (resolvedReceiver.uastInitializer as? UQualifiedReferenceExpression) ?: return null
             return getLoggerQualifier(uastInitializer.selector as? UCallExpression)
           }
         }
@@ -440,7 +439,7 @@ class LoggingUtil {
       FATAL, ERROR, SEVERE, WARN, WARNING, INFO, DEBUG, TRACE, CONFIG, FINE, FINER, FINEST
     }
 
-    val GUARD_MAP = mapOf(
+    internal val GUARD_MAP = mapOf(
       Pair("isTraceEnabled", "trace"),
       Pair("isDebugEnabled", "debug"),
       Pair("isInfoEnabled", "info"),

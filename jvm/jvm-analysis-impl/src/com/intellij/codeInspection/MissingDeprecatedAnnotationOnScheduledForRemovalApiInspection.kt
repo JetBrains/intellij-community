@@ -20,7 +20,7 @@ private inline val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME get() = ApiStatus.Sched
 @VisibleForTesting
 class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspectionTool() {
 
-  override fun runForWholeFile() = true
+  override fun runForWholeFile(): Boolean = true
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (!AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME, holder.file)) {
