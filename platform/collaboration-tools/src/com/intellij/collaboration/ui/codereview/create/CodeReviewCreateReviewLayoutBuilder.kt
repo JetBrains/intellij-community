@@ -8,7 +8,6 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.HideMode
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.BorderFactory
 import javax.swing.JComponent
@@ -21,18 +20,6 @@ class CodeReviewCreateReviewLayoutBuilder @Internal constructor() {
   private var addSeparator = false
 
   private val componentsWithConstraints = mutableListOf<ComponentWithConstrains>()
-
-  @Internal
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use a separate method without MigLayout constraints")
-  fun addComponent(component: JComponent,
-                   cc: CC,
-                   withoutBorder: Boolean = false,
-                   withListBackground: Boolean = true): CodeReviewCreateReviewLayoutBuilder {
-    componentsWithConstraints.add(ComponentWithConstrains(component, cc))
-    setupBorderAndBackground(component, withoutBorder, withListBackground)
-    return this
-  }
 
   fun addComponent(component: JComponent,
                    zeroMinWidth: Boolean = false,

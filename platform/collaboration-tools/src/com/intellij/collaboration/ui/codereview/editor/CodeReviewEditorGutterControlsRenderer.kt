@@ -2,7 +2,6 @@
 package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.codeInsight.documentation.render.DocRenderer
-import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.THREAD_TOP_MARGIN
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
@@ -32,11 +31,9 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import icons.CollaborationToolsIcons
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
@@ -337,14 +334,6 @@ private constructor(
         TOGGLE_COMMENT,
         CLOSE_NEW_COMMENT,
         START_NEW_COMMENT
-      }
-    }
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use a suspending function", ReplaceWith("cs.launch { render(model, editor) }"))
-    fun setupIn(cs: CoroutineScope, model: CodeReviewEditorGutterControlsModel, editor: EditorEx) {
-      cs.launchNow(Dispatchers.EDT) {
-        render(model, editor)
       }
     }
 
