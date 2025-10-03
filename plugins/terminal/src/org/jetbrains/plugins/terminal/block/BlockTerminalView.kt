@@ -270,7 +270,8 @@ class BlockTerminalView(
       promptView.let { it.terminalWidth to it.charSize }
     }
     return if (width > 0 && component.height > 0) {
-      TerminalUiUtils.calculateTerminalSize(Dimension(width, component.height), charSize)
+      val gridSize = TerminalUiUtils.calculateTerminalSize(Dimension(width, component.height), charSize)
+      TermSize(gridSize.columns, gridSize.rows)
     }
     else null
   }

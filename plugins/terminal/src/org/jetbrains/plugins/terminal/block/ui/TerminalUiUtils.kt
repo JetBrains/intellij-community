@@ -52,7 +52,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
@@ -67,6 +66,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
+import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
@@ -190,10 +190,10 @@ object TerminalUiUtils {
     return CustomShortcutSet(keyStroke)
   }
 
-  fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension2D): TermSize {
+  fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension2D): TerminalGridSize {
     val width = componentSize.width / charSize.width
     val height = componentSize.height / charSize.height
-    return ensureTermMinimumSize(TermSize(width.toInt(), height.toInt()))
+    return ensureTermMinimumSize(TerminalGridSize(width.toInt(), height.toInt()))
   }
 
   @RequiresEdt
@@ -473,17 +473,17 @@ internal fun Editor.getCharSize(): Dimension2D {
   return Dimension2DDouble(width.toDouble() * columnSpacing, lineHeight.toDouble())
 }
 
-fun Editor.calculateTerminalSize(): TermSize? {
+fun Editor.calculateTerminalSize(): TerminalGridSize? {
   val grid = (this as? EditorImpl)?.characterGrid ?: return null
   return if (grid.rows > 0 && grid.columns > 0) {
-    ensureTermMinimumSize(TermSize(grid.columns, grid.rows))
+    ensureTermMinimumSize(TerminalGridSize(grid.columns, grid.rows))
   } else {
     null
   }
 }
 
-private fun ensureTermMinimumSize(size: TermSize): TermSize {
-  return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
+private fun ensureTermMinimumSize(size: TerminalGridSize): TerminalGridSize {
+  return TerminalGridSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
 }
 
 private class Dimension2DDouble(private var width: Double, private var height: Double) : Dimension2D() {

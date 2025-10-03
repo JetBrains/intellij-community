@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.session.dto.TerminalSizeDto
 import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Internal
@@ -39,7 +38,7 @@ sealed class TerminalInputEventBase : TerminalInputEvent {
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalResizeEvent(val newSize: TerminalSizeDto) : TerminalInputEventBase()
+data class TerminalResizeEvent(val newSize: TerminalGridSize) : TerminalInputEventBase()
 
 @ApiStatus.Internal
 @Serializable

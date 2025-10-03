@@ -293,7 +293,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     return if (calculateSizeFromComponent) {
       withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
         TerminalUiUtils.getComponentSizeInitializedFuture(terminal.component).await()
-        baseOptions.initialTermSize(terminal.size).build()
+        val termSize = terminal.gridSize?.let { TermSize(it.columns, it.rows) }
+        baseOptions.initialTermSize(termSize).build()
       }
     }
     else {

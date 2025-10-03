@@ -3,10 +3,10 @@ package com.intellij.terminal.frontend
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.terminal.TerminalTitle
-import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
@@ -18,7 +18,7 @@ interface TerminalView {
 
   val preferredFocusableComponent: JComponent
 
-  val size: TermSize?
+  val gridSize: TerminalGridSize?
 
   val title: TerminalTitle
 

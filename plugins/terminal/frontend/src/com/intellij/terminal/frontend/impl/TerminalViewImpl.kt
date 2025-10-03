@@ -35,7 +35,6 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
@@ -57,6 +56,7 @@ import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.session.TerminalSession
 import java.awt.Component
@@ -105,7 +105,7 @@ class TerminalViewImpl(
     get() = terminalPanel
   override val preferredFocusableComponent: JComponent
     get() = terminalPanel.preferredFocusableComponent
-  override val size: TermSize?
+  override val gridSize: TerminalGridSize?
     get() = getCurEditor().calculateTerminalSize()
   override val title: TerminalTitle = TerminalTitle()
 
@@ -344,7 +344,7 @@ class TerminalViewImpl(
   }
 
   private fun sendResizeEvent() {
-    val newSize = size ?: return
+    val newSize = gridSize ?: return
     terminalInput.sendResize(newSize)
   }
 

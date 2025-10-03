@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.frontend.impl.TerminalSendTextOptions
-import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -17,7 +16,6 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
 import org.jetbrains.plugins.terminal.fus.*
 import org.jetbrains.plugins.terminal.session.*
-import org.jetbrains.plugins.terminal.session.dto.toDto
 import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
@@ -150,9 +148,9 @@ internal class TerminalInput(
   /**
    * Note that resize events sent before the terminal session is initialized will be ignored.
    */
-  fun sendResize(newSize: TermSize) {
+  fun sendResize(newSize: TerminalGridSize) {
     terminalSessionFuture.getNow(null) ?: return
-    val event = TerminalResizeEvent(newSize.toDto())
+    val event = TerminalResizeEvent(newSize)
     sendEvent(InputEventSubmission(event))
   }
   
