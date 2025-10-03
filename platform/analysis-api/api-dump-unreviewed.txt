@@ -233,7 +233,7 @@ f:com.intellij.codeInsight.completion.CompletionParameters
 - isExtendedCompletion():Z
 - isTestingMode():Z
 - setCompleteOnlyNotImported(Z):V
-- setIsTestingMode(Z):V
+- setTestingMode(Z):V
 - withInvocationCount(I):com.intellij.codeInsight.completion.CompletionParameters
 - withPosition(com.intellij.psi.PsiElement,I):com.intellij.codeInsight.completion.CompletionParameters
 - withType(com.intellij.codeInsight.completion.CompletionType):com.intellij.codeInsight.completion.CompletionParameters

@@ -149,7 +149,7 @@ public final class CompletionParameters {
     return myIsTestingMode;
   }
 
-  public void setIsTestingMode(boolean runTestingMode) {
+  public void setTestingMode(boolean runTestingMode) {
     myIsTestingMode = runTestingMode;
   }
 

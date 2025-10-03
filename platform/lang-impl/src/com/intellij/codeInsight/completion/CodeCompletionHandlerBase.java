@@ -402,7 +402,7 @@ public class CodeCompletionHandlerBase {
           indicator.registerChildDisposable(finalOffsets::getOffsets);
 
           CompletionParameters parameters = CompletionInitializationUtil.createCompletionParameters(initContext, indicator, finalOffsets);
-          parameters.setIsTestingMode(isTestingMode());
+          parameters.setTestingMode(isTestingMode());
           indicator.setParameters(parameters);
 
           indicator.runContributors(initContext);
