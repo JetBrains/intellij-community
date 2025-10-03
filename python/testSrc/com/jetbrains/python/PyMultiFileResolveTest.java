@@ -619,11 +619,11 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   }
 
   // PY-38322 PY-39171
-  public void testImportOfNestedBinarySubModule() {
+  public void testImportAttributeFromNestedBinarySubModule() {
     final String testDir = getTestName(true);
     runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
       runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
-        PsiFile file = myFixture.configureByFile(testDir + "/ImportOfNestedBinarySubModule.py");
+        PsiFile file = myFixture.configureByFile(testDir + "/ImportAttributeFromNestedBinarySubModule.py");
         assertResolveResult(doResolve(file), PyFunction.class, "func", null);
       });
     });
