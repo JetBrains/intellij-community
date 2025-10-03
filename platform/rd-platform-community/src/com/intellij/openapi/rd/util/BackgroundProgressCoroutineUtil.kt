@@ -458,16 +458,4 @@ class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndica
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use progress reporter api")
-  inline fun withDetails(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
-    val oldText = indicator.text2
-    try {
-      indicator.text2 = text
-      action()
-    }
-    finally {
-      indicator.text2 = oldText
-    }
-  }
 }
