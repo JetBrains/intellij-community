@@ -17,7 +17,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.intellij.openapi.application.ApplicationManager
-import java.util.concurrent.CopyOnWriteArraySet
+import com.intellij.openapi.application.EDT
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 private val EP_NAME: ExtensionPointName<LockReqAnalyzer> = create("DevKit.lang.LockReqsAnalyzer")
@@ -37,7 +39,6 @@ class LockReqsService(private val project: Project) {
       if (streaming != null) {
         val method = smartReadAction(project) { methodPtr.element }
         if (method == null) return@withBackgroundProgress
-
         val consumer = DefaultLockReqConsumer(method) { snapshot ->
           ApplicationManager.getApplication().invokeLater {
             _currentResults = listOf(snapshot)
@@ -52,7 +53,7 @@ class LockReqsService(private val project: Project) {
           val method = methodPtr.element ?: return@smartReadAction null
           analyzer.analyzeMethod(method)
         }
-        ApplicationManager.getApplication().invokeLater {
+        withContext(Dispatchers.EDT) {
           _currentResults = listOf(result)
         }
       }
@@ -87,10 +88,5 @@ class LockReqsService(private val project: Project) {
       }
       _currentResults = results
     }
-  }
-
-
-  companion object {
-    const val TOOL_WINDOW_ID: String = "Lock Requirements"
   }
 }

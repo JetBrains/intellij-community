@@ -1,63 +1,43 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.threadingModelHelper
 
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
 import org.jetbrains.idea.devkit.threadingModelHelper.*
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.idea.references.mainReference
 
-class KtLockReqDetector(private val patterns: LockReqRules = BaseLockReqRules()) {
+class KtLockReqDetector(private val patterns: LockReqRules = BaseLockReqRules()) : LockReqDetector {
 
   private val psiOps = KtLockReqPsiOps()
 
-  fun findAnnotationRequirements(function: KtNamedFunction): List<LockRequirement> {
+  override fun findAnnotationRequirements(method: PsiMethod): List<LockRequirement> {
     val requirements = mutableListOf<LockRequirement>()
-    function.annotationEntries.forEach { annotation ->
-      val qualifiedName = resolveAnnotationName(annotation)
-      patterns.lockAnnotations[qualifiedName]?.let { lockType ->
-        requirements.add(LockRequirement(function, lockType, RequirementReason.ANNOTATION))
+    method.annotations.forEach { annotation ->
+      patterns.lockAnnotations[annotation.qualifiedName]?.let { lockType ->
+        requirements.add(LockRequirement(method, lockType, RequirementReason.ANNOTATION))
       }
     }
     return requirements
   }
 
-  private fun resolveAnnotationName(annotation: KtAnnotationEntry): String? {
-    return when (val callee = annotation.calleeExpression) {
-      is KtNameReferenceExpression -> {
-        analyze(callee) {
-          val symbol = callee.mainReference.resolveToSymbol() as? KaClassSymbol
-          symbol?.classId?.asFqNameString()
-        }
-      }
-      is KtDotQualifiedExpression -> callee.text
-      else -> null
-    }
-  }
-
-  fun findBodyRequirements(function: KtNamedFunction): List<LockRequirement> {
+  override fun findBodyRequirements(method: PsiMethod): List<LockRequirement> {
     val requirements = mutableListOf<LockRequirement>()
-    val className = function.containingClassOrObject?.fqName?.asString()
-    val methodName = function.name
+    val className = method.containingClass?.qualifiedName
+    val methodName = method.name
 
     patterns.assertionMethods[className]?.get(methodName)?.let { lockType ->
-      requirements.add(LockRequirement(function, lockType, RequirementReason.ASSERTION))
+      requirements.add(LockRequirement(method, lockType, RequirementReason.ASSERTION))
     }
 
-    if (isSwingMethod(function)) {
-      requirements.add(LockRequirement(function, LockType.EDT, RequirementReason.SWING_COMPONENT))
+    if (isSwingMethod(method)) {
+      requirements.add(LockRequirement(method, LockType.EDT, RequirementReason.SWING_COMPONENT))
     }
     return requirements
   }
 
-  private fun isSwingMethod(function: KtNamedFunction): Boolean {
-    val containingClass = function.containingClassOrObject ?: return false
-    val className = containingClass.fqName?.asString() ?: return false
-
-    if (isSwingClass(className)) {
-      return function.name !in patterns.safeSwingMethods
-    }
+  private fun isSwingMethod(method: PsiMethod): Boolean {
+    val containingClass = method.containingClass ?: return false
+    val className = containingClass.qualifiedName ?: return false
+    if (isSwingClass(className)) return method.name !in patterns.safeSwingMethods
     return psiOps.inheritsFromAny(containingClass, patterns.edtRequiredClasses)
   }
 
@@ -66,38 +46,25 @@ class KtLockReqDetector(private val patterns: LockReqRules = BaseLockReqRules())
            psiOps.isInPackages(className, patterns.edtRequiredPackages)
   }
 
-  fun isAsyncDispatch(call: KtCallExpression): Boolean {
-    val callName = call.calleeExpression?.text ?: return false
-    val receiverType = psiOps.getReceiverType(call)
-
-    return callName in patterns.asyncMethods &&
-           receiverType in patterns.asyncClasses
+  override fun isAsyncDispatch(method: PsiMethod): Boolean {
+    return method.name in patterns.asyncMethods &&
+           method.containingClass?.qualifiedName in patterns.asyncClasses
   }
 
-  fun isMessageBusCall(call: KtCallExpression): Boolean {
-    val receiverType = psiOps.getReceiverType(call) ?: return false
-    val callName = call.calleeExpression?.text ?: return false
-
-    return patterns.messageBusClasses.contains(receiverType) &&
-           callName in patterns.messageBusSyncMethods
+  override fun isMessageBusCall(method: PsiMethod): Boolean {
+    val containingClass = method.containingClass?.qualifiedName ?: return false
+    return patterns.messageBusClasses.contains(containingClass) &&
+           method.name in patterns.messageBusSyncMethods
   }
 
-  fun extractMessageBusTopic(call: KtCallExpression): KtClass? {
-    val callName = call.calleeExpression?.text ?: return null
-    if (callName in patterns.messageBusSyncMethods) {
-      return psiOps.resolveReturnType(call)
+  override fun extractMessageBusTopic(method: PsiMethod): PsiClass? {
+    if (method.name in patterns.messageBusSyncMethods) {
+      return psiOps.resolveReturnType(method)
     }
     return null
   }
 
-  fun isCoroutineDispatch(call: KtCallExpression): Boolean {
-    val callName = call.calleeExpression?.text ?: return false
-    val receiverType = psiOps.getReceiverType(call)
-
-    return true
-  }
-
-  fun isCommonMethod(function: KtNamedFunction): Boolean {
-    return function.name in patterns.commonMethods
+  fun isCommonMethod(method: PsiMethod): Boolean {
+    return method.name in patterns.commonMethods
   }
 }

@@ -1,137 +1,63 @@
-
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.threadingModelHelper
 
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiType
+import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.util.InheritanceUtil
+import com.intellij.util.Processor
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-class KtLockReqPsiOps : LockReqPsiOps {
+class KtLockReqPsiOps(
+  private val resolver: KtCallResolver = KtFirUastCallResolver()
+) : LockReqPsiOps {
+
 
   override fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
-    val ktFunction = method as? KtNamedFunction ?: return emptyList()
-    val callees = mutableListOf<PsiMethod>()
-
-    ktFunction.collectDescendantsOfType<KtCallExpression>().forEach { call ->
-      resolveCallToFunction(call)?.let { resolvedFunction ->
-        if (resolvedFunction is PsiMethod) {
-          callees.add(resolvedFunction)
-        }
-      }
-    }
-    return callees
+    return resolver.resolveCallees(method).distinct()
   }
 
-  fun canBeOverridden(method: PsiMethod): Boolean {
-    val ktFunction = method as? KtNamedFunction ?: return false
-    return !ktFunction.hasModifier(KtTokens.PRIVATE_KEYWORD) &&
-           !ktFunction.hasModifier(KtTokens.FINAL_KEYWORD) &&
-           ktFunction.containingClassOrObject?.hasModifier(KtTokens.OPEN_KEYWORD) == true
-  }
-
-  override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImplementations: Int): List<PsiMethod> {
-    val ktFunction = method as? KtNamedFunction ?: return emptyList()
+  override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int): List<PsiMethod> {
     val inheritors = mutableListOf<PsiMethod>()
-
-    analyze(ktFunction) {
-      val functionSymbol = ktFunction.symbol as? KaNamedFunctionSymbol ?: return emptyList()
-      val overridingSymbols = functionSymbol.allOverriddenSymbols
-
-      overridingSymbols.take(maxImplementations).forEach { symbol ->
-        val psi = symbol.psi
-        if (psi is PsiMethod) {
-          inheritors.add(psi)
-        }
-      }
+    if (method.body != null) {
+      inheritors.add(method)
     }
+    OverridingMethodsSearch.search(method, scope, true)
+      .allowParallelProcessing()
+      .forEach(Processor { overridden ->
+        if (inheritors.size >= maxImpl) return@Processor false
+        inheritors.add(overridden)
+        true
+      })
     return inheritors
   }
 
-  override fun findImplementations(topicClass: PsiClass, scope: GlobalSearchScope, maxImplementations: Int): List<PsiClass> {
-    val ktClass = topicClass as? KtClass ?: return emptyList()
+  override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int): List<PsiClass> {
     val implementations = mutableListOf<PsiClass>()
-
-    analyze(ktClass) {
-      val classSymbol = ktClass.symbol as? KaNamedClassSymbol ?: return emptyList()
-
-    }
+    ClassInheritorsSearch.search(interfaceClass, scope, true)
+      .allowParallelProcessing()
+      .forEach(Processor { implementor ->
+        if (implementations.size >= maxImpl) return@Processor false
+        implementations.add(implementor)
+        true
+      })
     return implementations
   }
 
   override fun inheritsFromAny(psiClass: PsiClass, baseClassNames: Collection<String>): Boolean {
-    TODO("Not yet implemented")
-  }
-
-  fun inheritsFromAny(ktClassOrObject: KtClassOrObject, baseClassNames: Collection<String>): Boolean {
-    analyze(ktClassOrObject) {
-      val classSymbol = ktClassOrObject.symbol as? KaClassSymbol ?: return false
-      val allSuperTypes = classSymbol.superTypes
-
-      return allSuperTypes.any { superType ->
-        val className = (superType as? KaClassType)?.classId?.asFqNameString()
-        className in baseClassNames
-      }
-    }
+    return baseClassNames.any { base -> InheritanceUtil.isInheritor(psiClass, base) }
   }
 
   override fun isInPackages(className: String, packagePrefixes: Collection<String>): Boolean {
-    return packagePrefixes.any { prefix -> className.startsWith(prefix) }
+    return packagePrefixes.any { prefix -> className.startsWith("$prefix.") }
   }
 
   override fun resolveReturnType(method: PsiMethod): PsiClass? {
-    TODO("Not yet implemented")
+    return resolver.resolveReturnPsiClass(method)
   }
 
   override fun extractTypeArguments(type: PsiType): List<PsiType> {
-    TODO("Not yet implemented")
-  }
-
-  fun resolveReturnType(call: KtCallExpression): KtClass? {
-    analyze(call) {
-      val callSymbol = call.resolveToCall()?.successfulFunctionCallOrNull()
-      //val returnType = callSymbol?.symbol?.returnType as? KaClassType
-      //return returnType?.classId as? KtClass
-    }
-  }
-
-  fun getReceiverType(call: KtCallExpression): String? {
-    val receiverExpression = call.calleeExpression?.let { callee ->
-      when (callee) {
-        is KtDotQualifiedExpression -> callee.receiverExpression
-        else -> null
-      }
-    }
-
-    return when (receiverExpression) {
-      is KtNameReferenceExpression -> {
-        analyze(receiverExpression) {
-          val symbol = receiverExpression.mainReference.resolveToSymbol()
-          when (symbol) {
-            is KaVariableSymbol -> (symbol.returnType as? KaClassType)?.classId?.asFqNameString()
-            is KaClassSymbol -> symbol.classId?.asFqNameString()
-            else -> null
-          }
-        }
-      }
-      else -> null
-    }
-  }
-
-  private fun resolveCallToFunction(call: KtCallExpression): KtNamedFunction? {
-    analyze(call) {
-      val callSymbol = call.resolveToCall()?.successfulFunctionCallOrNull()
-      return null
-    }
+    return (type as? PsiClassType)?.parameters?.toList() ?: emptyList()
   }
 }
