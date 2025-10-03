@@ -14,7 +14,7 @@ class BinarizeImageAction : BaseImageAction() {
     currentImage: BufferedImage,
     imageFile: VirtualFile,
     transformationData: ImageTransformationData
-  ): BufferedImage? {
+  ): BufferedImage {
     val binarizationThreshold = BinarizationThresholdConfig.getInstance().threshold
     transformationData.setIsNormalized(false)
     val transformedImage = transformationData.applyTransformations(originalImage)
