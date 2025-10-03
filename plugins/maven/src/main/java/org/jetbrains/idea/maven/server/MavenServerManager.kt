@@ -31,10 +31,6 @@ interface MavenServerManager : Disposable {
 
   fun getMavenEventListener(): File
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use createIndexer()")
-  fun createIndexer(project: Project): MavenIndexerWrapper
-
   fun createIndexer(): MavenIndexerWrapper
 
 

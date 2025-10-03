@@ -310,15 +310,6 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return createDedicatedIndexer()!!
   }
 
-  override fun createIndexer(project: Project): MavenIndexerWrapper {
-    return if (Registry.`is`("maven.dedicated.indexer")) {
-      createDedicatedIndexer()!!
-    }
-    else {
-      createLegacyIndexer(project)
-    }
-  }
-
   private fun createDedicatedIndexer(): MavenIndexerWrapper? {
     if (myIndexerWrapper != null) return myIndexerWrapper
     synchronized(myMultimoduleDirToConnectorMap) {
