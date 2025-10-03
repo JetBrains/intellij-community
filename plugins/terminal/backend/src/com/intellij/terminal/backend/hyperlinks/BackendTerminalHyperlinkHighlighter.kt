@@ -99,9 +99,9 @@ internal class BackendTerminalHyperlinkHighlighter(
   init {
     filterWrapper.getFilter() // kickstart computation
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
         val existingPendingTask = pendingTask
-        val startLine = model.lineByOffset(model.relativeOffset(startOffset))
+        val startLine = model.lineByOffset(startOffset)
         val dirtyRegionStart = if (existingPendingTask == null) {
           startLine
         }

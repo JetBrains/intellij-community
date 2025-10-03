@@ -13,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
@@ -147,9 +148,9 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   @Test
   fun `update exceeds maxCapacity`() = runBlocking(Dispatchers.EDT) {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
-    val startOffsets = mutableListOf<Int>()
+    val startOffsets = mutableListOf<TerminalOffset>()
     model.addListener(testRootDisposable, object: TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
         startOffsets.add(startOffset)
       }
     })
@@ -158,6 +159,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       abcdef
       ghijkl
     """.trimIndent(), emptyList())
+    val firstStartOffset = model.relativeOffset(0)
 
     assertEquals("""
       def
@@ -168,12 +170,13 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       mnopqrs
       tuvwxyz
     """.trimIndent(), emptyList())
+    val secondStartOffset = model.relativeOffset(0)
 
     assertEquals("""
       rs
       tuvwxyz
     """.trimIndent(), model.document.text)
-    assertEquals(listOf(0, 0), startOffsets)
+    assertEquals(listOf(firstStartOffset, secondStartOffset), startOffsets)
   }
 
   @Test

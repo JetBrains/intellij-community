@@ -273,7 +273,7 @@ class MutableTerminalOutputModelImpl(
       contentUpdateInProgress = false
     }
 
-    dispatcher.multicaster.afterContentChanged(this, changeStartOffset, isTypeAhead)
+    dispatcher.multicaster.afterContentChanged(this, relativeOffset(changeStartOffset), isTypeAhead)
   }
 
   override fun getHighlightings(): TerminalOutputHighlightingsSnapshot {

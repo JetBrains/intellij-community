@@ -396,11 +396,11 @@ class TerminalViewImpl(
         editor.isTerminalOutputScrollChangingActionInProgress = true
       }
 
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
         editor.isTerminalOutputScrollChangingActionInProgress = false
 
         // Also repaint the changed part of the document to ensure that highlightings are properly painted.
-        editor.repaint(startOffset, editor.document.textLength)
+        editor.repaint(startOffset.toRelative(), editor.document.textLength)
 
         // Update the PSI file content
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile((model as MutableTerminalOutputModel).document) as? TerminalOutputPsiFile
@@ -456,7 +456,7 @@ class TerminalViewImpl(
       var commandText: String? = null
       var cursorPosition: Int? = null
 
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
         val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
         val lastBlock = editor.getUserData(TerminalBlocksModel.KEY)?.blocks?.lastOrNull() ?: return
         val lastBlockCommandStartIndex = if (lastBlock.commandStartOffset != -1) lastBlock.commandStartOffset else lastBlock.startOffset

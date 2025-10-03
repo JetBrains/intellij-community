@@ -13,10 +13,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import kotlinx.coroutines.cancel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
-import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
-import org.jetbrains.plugins.terminal.block.reworked.endOffset
+import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import kotlin.math.max
@@ -177,7 +174,7 @@ private class TerminalLookupOutputModelListener(
 ) : TerminalOutputModelListener {
   private val initialTextBelowCursor = model.getTextBelowCursorLine().trim()
 
-  override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
+  override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
     val textBelowCursor = model.getTextBelowCursorLine().trim()
     if (textBelowCursor != initialTextBelowCursor) {
       lookup.hideLookup(true)
