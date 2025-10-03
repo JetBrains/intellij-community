@@ -83,7 +83,7 @@ abstract class WelcomeScreenProjectProvider {
       LOG.debug("Project: ", project)
 
       val recentProjectsManager = serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase
-      recentProjectsManager.setProjectHidden(project, true)
+      recentProjectsManager.setProjectHidden(project, extension.doIsHiddenInRecentProjects())
       TipAndTrickManager.DISABLE_TIPS_FOR_PROJECT.set(project, true)
 
       return project
@@ -106,4 +106,6 @@ abstract class WelcomeScreenProjectProvider {
     return PlatformProjectOpenProcessor.openProjectAsync(path)
            ?: throw IllegalStateException("Cannot open project at $path (not expected that user can cancel welcome-project loading)")
   }
+
+  protected open fun doIsHiddenInRecentProjects(): Boolean = true
 }

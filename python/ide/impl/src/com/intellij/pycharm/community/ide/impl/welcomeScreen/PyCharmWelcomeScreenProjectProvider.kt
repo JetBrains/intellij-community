@@ -29,4 +29,6 @@ private class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvider
     }
     return project
   }
+
+  override fun doIsHiddenInRecentProjects(): Boolean = false
 }
