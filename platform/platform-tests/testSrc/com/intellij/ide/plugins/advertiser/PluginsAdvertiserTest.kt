@@ -41,7 +41,7 @@ class PluginsAdvertiserTest {
                                        activeProductCode = "IC",
                                        fileName = "foo.js",
                                        fileType = PlainTextFileType.INSTANCE)
-    assertEquals(listOf("IntelliJ IDEA Ultimate"), suggestion!!.suggestedIdes.map { it.name })
+    assertEquals(listOf("IntelliJ IDEA"), suggestion!!.suggestedIdes.map { it.name })
   }
 
   @Test

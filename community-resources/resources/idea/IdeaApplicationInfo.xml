@@ -5,7 +5,7 @@
   <logo url="/idea_community_logo.png"/>
   <icon svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/>
   <icon-eap svg="/idea-ce-eap.svg" svg-small="/idea-ce-eap_16.svg"/>
-  <names product="IDEA" fullname="IntelliJ IDEA" edition="Community Edition" script="idea" motto="Capable and Ergonomic IDE for JVM"/>
+  <names product="IDEA" fullname="IntelliJ IDEA" script="idea" motto="The Leading IDE for Professional Development in Java and Kotlin"/>
 
   <essential-plugin>com.intellij.java</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>
