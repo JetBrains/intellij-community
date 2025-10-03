@@ -4,9 +4,7 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel.ModelProvider.ExtendedTreeModel
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
-import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vfs.VirtualFile
@@ -107,20 +105,18 @@ internal class BackendLocalCommitChangesViewModel(private val panel: CommitChang
   override fun getPreferredFocusableComponent(): JComponent = panel.changesView.preferredFocusedComponent
 
   private inner class ModelProvider : CommitChangesViewWithToolbarPanel.ModelProvider {
-    override fun getModel(grouping: ChangesGroupingPolicyFactory): ExtendedTreeModel {
+    override fun getModelData(): CommitChangesViewWithToolbarPanel.ModelProvider.ModelData {
       val project = panel.project
       val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
       val changeLists = changeListManager.changeLists
       val unversionedFiles = changeListManager.unversionedFilesPaths
 
-      val treeModel = ChangesViewUtil.createTreeModel(
-        project,
-        grouping,
+      val ignoredFiles = if (ChangesViewSettings.getInstance(project).showIgnored) changeListManager.ignoredFilePaths else emptyList()
+      return CommitChangesViewWithToolbarPanel.ModelProvider.ModelData(
         changeLists,
         unversionedFiles,
-        ChangesViewSettings.getInstance(project).showIgnored
+        ignoredFiles,
       ) { commitWorkflowHandler?.isActive == true }
-      return ExtendedTreeModel(changeLists, unversionedFiles, treeModel)
     }
 
     override fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {

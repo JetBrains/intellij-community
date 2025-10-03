@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,8 +24,15 @@ internal class BackendChangesViewModelBuilderService(private val project: Projec
   ): ChangeNodeDecorator =
     RemoteStatusChangeNodeDecorator(revisionsCache, listRemoteState, index)
 
-  override fun modifyTreeModelBuilder(modelBuilder: TreeModelBuilder) {
+  override fun modifyTreeModelBuilder(modelBuilder: TreeModelBuilder, unversionedFiles: List<FilePath>) {
     val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+
+    val shouldShowUntrackedLoading = unversionedFiles.isEmpty() &&
+                                     !project.getService(InitialVfsRefreshService::class.java).isInitialVfsRefreshFinished() &&
+                                     changeListManager.isUnversionedInUpdateMode
+    if (shouldShowUntrackedLoading) {
+      modelBuilder.insertSubtreeRoot(ChangesBrowserUnversionedLoadingPendingNode())
+    }
 
     modelBuilder.setLocallyDeletedPaths(changeListManager.deletedFiles)
       .setModifiedWithoutEditing(changeListManager.modifiedWithoutEditing)

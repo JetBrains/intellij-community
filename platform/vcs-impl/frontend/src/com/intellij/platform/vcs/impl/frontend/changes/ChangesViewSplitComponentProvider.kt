@@ -4,8 +4,6 @@ package com.intellij.platform.vcs.impl.frontend.changes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.ui.split.SplitComponentBinding
 import com.intellij.ui.split.SplitComponentProvider
@@ -21,11 +19,11 @@ internal class ChangesViewSplitComponentProvider : SplitComponentProvider<Change
     val panel = CommitChangesViewWithToolbarPanel(tree, scope)
     panel.id = modelId
     panel.initPanel(object : CommitChangesViewWithToolbarPanel.ModelProvider {
-      override fun getModel(grouping: ChangesGroupingPolicyFactory): CommitChangesViewWithToolbarPanel.ModelProvider.ExtendedTreeModel {
+      override fun getModelData(): CommitChangesViewWithToolbarPanel.ModelProvider.ModelData {
         val changeLists = ChangeListsViewModel.getInstance(project).changeLists.value
-        return CommitChangesViewWithToolbarPanel.ModelProvider.ExtendedTreeModel(
-          changeLists.lists, emptyList(), buildModel(project, grouping, changeLists)
-        )
+        return CommitChangesViewWithToolbarPanel.ModelProvider.ModelData(changeLists.lists,
+                                                                         emptyList(),
+                                                                         emptyList()) { true }
       }
 
       override fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
@@ -40,10 +38,4 @@ internal class ChangesViewSplitComponentProvider : SplitComponentProvider<Change
 
     return panel
   }
-
-  private fun buildModel(
-    project: Project,
-    grouping: ChangesGroupingPolicyFactory,
-    lists: ChangeListsViewModel.ChangeLists
-  ) = TreeModelBuilder(project, grouping).setChangeLists(lists.lists, false, null).build()
 }

@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesViewModifier.ChangesViewModifierListener
-import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
@@ -34,7 +33,6 @@ import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.lang.Runnable
-import javax.swing.tree.DefaultTreeModel
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
@@ -141,16 +139,25 @@ class CommitChangesViewWithToolbarPanel(
     if (!cs.isActive || !project.isInitialized || application.isUnitTestMode) return
     val modelProvider = modelProvider ?: return
 
-    val model = TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.name).use {
-      modelProvider.getModel(changesView.grouping)
+    val (modelData, model) = TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.name).use {
+      val modelData = modelProvider.getModelData()
+
+      modelData to ChangesViewUtil.createTreeModel(
+        project,
+        changesView.grouping,
+        modelData.changeLists,
+        modelData.unversionedFiles,
+        modelData.ignoredFiles,
+        modelData.isAllowExcludeFromCommit,
+      )
     }
 
     checkCanceled()
     withContext(Dispatchers.EDT) {
       TRACER.spanBuilder(ChangesView.ChangesViewRefreshEdt.getName()).use {
-        changesView.updateTreeModel(model.treeModel, ChangesViewTreeStateStrategy())
+        changesView.updateTreeModel(model, ChangesViewTreeStateStrategy())
         checkCanceled()
-        modelProvider.synchronizeInclusion(model.changeLists, model.unversionedFiles)
+        modelProvider.synchronizeInclusion(modelData.changeLists, modelData.unversionedFiles)
       }
     }
   }
@@ -191,11 +198,14 @@ class CommitChangesViewWithToolbarPanel(
   }
 
   interface ModelProvider {
-    fun getModel(grouping: ChangesGroupingPolicyFactory): ExtendedTreeModel
+    fun getModelData(): ModelData
 
     fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>)
 
-    class ExtendedTreeModel(val changeLists: List<LocalChangeList>, val unversionedFiles: List<FilePath>, val treeModel: DefaultTreeModel)
+    class ModelData(val changeLists: List<LocalChangeList>,
+                    val unversionedFiles: List<FilePath>,
+                    val ignoredFiles: List<FilePath>,
+                    val isAllowExcludeFromCommit: () -> Boolean)
   }
 
   interface Initializer {
