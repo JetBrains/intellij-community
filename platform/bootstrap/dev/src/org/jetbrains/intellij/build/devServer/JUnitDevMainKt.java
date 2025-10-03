@@ -63,8 +63,7 @@ public final class JUnitDevMainKt {
   private static boolean build(MethodHandles.Lookup lookup, PathClassLoader classLoader) throws Throwable {
     // do not use classLoader as a parent - make sure that we don't make the initial classloader dirty
     // (say, do not load kotlin coroutine classes)
-    Class<?> implClass = new PathClassLoader(UrlClassLoader.build()
-                                               .files(classLoader.getFiles())
+    Class<?> implClass = new PathClassLoader(UrlClassLoader.buildAsSystemClassLoader(classLoader.getFiles())
                                                .parent(ClassLoader.getPlatformClassLoader()))
       .loadClass("org.jetbrains.intellij.build.devServer.DevMainImpl");
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
@@ -166,9 +167,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
   }
 
-  private suspend fun runTestsImpl(additionalJvmOptions: List<String>,
-                                   additionalSystemProperties: Map<String, String>,
-                                   rootExcludeCondition: ((Path) -> Boolean)?) {
+  private suspend fun runTestsImpl(
+    additionalJvmOptions: List<String>,
+    additionalSystemProperties: Map<String, String>,
+    rootExcludeCondition: ((Path) -> Boolean)?,
+  ) {
     if (options.enableCoverage && options.isPerformanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Coverage, {build.status.text}")
       return
@@ -208,13 +211,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         compilationTasks.compileAllModulesAndTests()
       }
       else if (runConfigurations.any()) {
-        compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
-                                        listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
+        compilationTasks.compileModules(
+          listOf("intellij.tools.testsBootstrap"),
+          listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
         compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
       }
       else {
-        compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
-                                        listOfNotNull(mainModule, "intellij.platform.buildScripts"))
+        compilationTasks.compileModules(
+          listOf("intellij.tools.testsBootstrap"),
+          listOfNotNull(mainModule, "intellij.platform.buildScripts")
+        )
       }
       val runtimeModuleRepository = context.getOriginalModuleRepository()
       systemProperties["intellij.platform.runtime.repository.path"] = runtimeModuleRepository.repositoryPath.pathString
@@ -280,7 +286,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     if (options.batchTestIncludes != null && !isRunningInBatchMode) {
       context.messages.warning(
-        "'intellij.build.test.batchTest.includes' option will be ignored as other tests matching options are specified.")
+        "'intellij.build.test.batchTest.includes' option will be ignored as other tests matching options are specified."
+      )
     }
 
     if (options.validateMainModule && mainModule.isNullOrEmpty()) {
@@ -413,13 +420,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   private val testDiscoveryTraceFilePath: String
     get() = options.testDiscoveryTraceFilePath ?: context.paths.projectHome.resolve("intellij-tracing/td.tr").toString()
 
-  private suspend fun debugTests(remoteDebugJvmOptions: String,
-                         additionalJvmOptions: List<String>,
-                         mainModule: String) {
+  private suspend fun debugTests(
+    remoteDebugJvmOptions: String,
+    additionalJvmOptions: List<String>,
+    mainModule: String,
+  ) {
     val testConfigurationType = System.getProperty("teamcity.remote-debug.type")
     if (testConfigurationType != "junit") {
       context.messages.logErrorAndThrow(
-        "Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is $testConfigurationType")
+        "Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is $testConfigurationType"
+      )
     }
     val testObject = System.getProperty("teamcity.remote-debug.junit.type")
     val junitClass = System.getProperty("teamcity.remote-debug.junit.class")
@@ -442,12 +452,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     if (options.testConfigurations != null) {
       context.messages.warning("'intellij.build.test.configurations' option is ignored while debugging via TeamCity plugin")
     }
-    runTestsProcess(mainModule = mainModule,
-                    testGroups = null,
-                    testPatterns = junitClass,
-                    jvmArgs = removeStandardJvmOptions(StringUtilRt.splitHonorQuotes(remoteDebugJvmOptions, ' ')) + additionalJvmOptions,
-                    systemProperties = emptyMap(),
-                    remoteDebugging = true)
+    runTestsProcess(
+      mainModule = mainModule,
+      testGroups = null,
+      testPatterns = junitClass,
+      jvmArgs = removeStandardJvmOptions(StringUtilRt.splitHonorQuotes(remoteDebugJvmOptions, ' ')) + additionalJvmOptions,
+      systemProperties = emptyMap(),
+      remoteDebugging = true
+    )
   }
 
   private suspend fun runTestsProcess(
@@ -580,7 +592,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     notifySnapshotBuilt(allJvmArgs)
   }
 
-  private suspend fun replaceWithArchivedIfNeededLF(files: List<File>, context:CompilationContext = this.context): List<File> {
+  private suspend fun replaceWithArchivedIfNeededLF(files: List<File>, context: CompilationContext = this.context): List<File> {
     return when (context) {
       is BuildContextImpl -> replaceWithArchivedIfNeededLF(files, context.compilationContext)
       is ArchivedCompilationContext -> context.replaceWithCompressedIfNeededLF(files)
@@ -1280,8 +1292,31 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     devBuildSettings: DevBuildServerSettings?,
   ): Int {
     val useDevMode = devBuildSettings != null && devBuildSettings.mainClass.isNotEmpty() && suiteName == null
-    val classpath = if (useDevMode) {
-      context.getModuleRuntimeClasspath(module = context.findRequiredModule(devBuildSettings.mainClassModule), forTests = false)
+    if (useDevMode) {
+      val bootClasspath = context.getModuleRuntimeClasspath(module = context.findRequiredModule(IJENT_BOOT_CLASSPATH_MODULE), forTests = false)
+      val classpath = context.getModuleRuntimeClasspath(module = context.findRequiredModule(devBuildSettings.mainClassModule), forTests = false)
+        .filter { !bootClasspath.contains(it) }
+
+      val messages = context.messages
+      messages.info("Effective main module: $mainModule")
+      messages.info("Effective classpath:\n${classpath.joinToString("\n")}")
+      messages.info("Effective boot classpath:\n${bootClasspath.joinToString("\n")}")
+
+      val args = jvmArgs.toMutableList()
+      args.add("-Didea.dev.mode.in.process.build.boot.classpath.correct=true")
+      args.add("-Xbootclasspath/a:${bootClasspath.joinToString(File.pathSeparator)}")
+
+      return doRunJUnit5Engine(
+        mainModule = mainModule,
+        systemProperties = systemProperties,
+        jvmArgs = args,
+        envVariables = envVariables,
+        modulePath = modulePath,
+        suiteName = suiteName,
+        methodName = methodName,
+        devBuildModeSettings = devBuildSettings,
+        classpath = classpath,
+      )
     }
     else {
       val classpath = ArrayList<String>(bootstrapClasspath)
@@ -1293,30 +1328,18 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         classpath.addAll(testClasspath)
       }
 
-      if (LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL) {
-        prepareMuslClassPath(classpath)
-      }
-      else {
-        classpath
-      }
+      return doRunJUnit5Engine(
+        mainModule = mainModule,
+        systemProperties = systemProperties,
+        jvmArgs = jvmArgs,
+        envVariables = envVariables,
+        modulePath = modulePath,
+        suiteName = suiteName,
+        methodName = methodName,
+        devBuildModeSettings = null,
+        classpath = if (LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL) prepareMuslClassPath(classpath) else classpath,
+      )
     }
-
-    if (useDevMode) {
-      context.messages.info("Effective classpath:\n${classpath.joinToString("\n")}")
-      context.messages.info("Effective main module: $mainModule")
-    }
-
-    return doRunJUnit5Engine(
-      mainModule = mainModule,
-      systemProperties = systemProperties,
-      jvmArgs = jvmArgs,
-      envVariables = envVariables,
-      modulePath = modulePath,
-      suiteName = suiteName,
-      methodName = methodName,
-      devBuildModeSettings = devBuildSettings.takeIf { useDevMode },
-      classpath = classpath,
-    )
   }
 
   private suspend fun doRunJUnit5Engine(
@@ -1343,8 +1366,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
 
     args.addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
-    args.add("-Didea.dev.mode.in.process.build.boot.classpath.correct=true")
-
     args.addAll(jvmArgs)
 
     args.add("-Dintellij.build.test.runner=junit5")
@@ -1448,10 +1469,12 @@ private suspend fun publishTestDiscovery(messages: BuildMessages, file: String?)
   val path = file?.let { Path.of(it) }
   if (path != null && Files.exists(path)) {
     if (serverUrl == null) {
-      messages.warning("""
+      messages.warning(
+        """
         Test discovery server url is not defined, but test discovery capturing enabled. 
         Will not upload to remote server. Please set 'intellij.test.discovery.url' system property.
-        """.trimIndent())
+        """.trimIndent()
+      )
       return
     }
 
