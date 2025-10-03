@@ -163,7 +163,6 @@ a:com.intellij.extapi.psi.ASTDelegatePsiElement
 - delete():V
 - deleteChildInternal(com.intellij.lang.ASTNode):V
 - deleteChildRange(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
-- p:findChildByFilter(com.intellij.psi.tree.TokenSet):com.intellij.psi.PsiElement
 - p:findChildByType(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
 - p:findChildByType(com.intellij.psi.tree.TokenSet):com.intellij.psi.PsiElement
 - p:findChildrenByType(com.intellij.psi.tree.IElementType):java.util.List
