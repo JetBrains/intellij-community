@@ -151,6 +151,11 @@
                                       id="venv" order="before requirementsTxtOrSetupPy"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="com.intellij.pycharm.community.ide.impl.welcomeScreen.PyWelcomeScreenNewUsersTracker"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
   <actions resource-bundle="messages.ActionsBundle">
     <action id="PySwitchSdkAction" class="com.intellij.pycharm.community.ide.impl.configuration.PySwitchSdkAction"/>
     <action id="NewDirectoryProject" class="com.intellij.pycharm.community.ide.impl.newProjectWizard.PyCharmNewProjectAction">
