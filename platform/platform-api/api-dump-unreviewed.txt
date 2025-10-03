@@ -9527,15 +9527,8 @@ f:com.intellij.util.net.ssl.UntrustedCertificateStrategyWithReason
 - f:getStrategy():com.intellij.util.net.ssl.UntrustedCertificateStrategy
 - hashCode():I
 f:com.intellij.util.text.DateFormatUtil
-- sf:DAY:J
-- sf:HOUR:J
-- sf:MINUTE:J
-- sf:MONTH:J
-- sf:SECOND:J
 - sf:TIME_SHORT_12H:java.lang.String
 - sf:TIME_SHORT_24H:java.lang.String
-- sf:WEEK:J
-- sf:YEAR:J
 - s:formatAboutDialogDate(java.util.Date):java.lang.String
 - s:formatBetweenDates(J,J):java.lang.String
 - s:formatDate(J):java.lang.String
