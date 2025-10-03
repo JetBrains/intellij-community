@@ -113,6 +113,7 @@ android/device-manager-v2
 android/device-manager-v2/integration
 android/execution/common
 android/glance-designer
+android/glasses-pairing
 android/gmaven
 android/gradle-declarative-lang
 android/gradle-declarative-lang-flags
