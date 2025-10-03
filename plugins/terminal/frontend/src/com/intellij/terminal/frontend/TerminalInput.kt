@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.frontend.impl.TerminalSendTextOptions
-import com.intellij.terminal.session.*
-import com.intellij.terminal.session.dto.toDto
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -18,6 +16,8 @@ import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
 import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.dto.toDto
 import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture

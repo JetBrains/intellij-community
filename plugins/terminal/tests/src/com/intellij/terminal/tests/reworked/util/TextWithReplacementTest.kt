@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.util
 
-import com.intellij.terminal.session.StyleRange
 import com.intellij.terminal.tests.reworked.util.TextWithReplacement.Companion.STYLE1
 import com.intellij.terminal.tests.reworked.util.TextWithReplacement.Companion.STYLE2
 import com.intellij.terminal.tests.reworked.util.TextWithReplacement.Companion.STYLE3
 import com.intellij.terminal.tests.reworked.util.TextWithReplacement.Companion.STYLE4
 import com.jediterm.terminal.TextStyle
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.terminal.session.StyleRange
 import org.junit.Test
 
 class TextWithReplacementTest {

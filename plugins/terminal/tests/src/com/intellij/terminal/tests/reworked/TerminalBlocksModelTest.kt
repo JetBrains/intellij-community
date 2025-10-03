@@ -2,8 +2,6 @@
 package com.intellij.terminal.tests.reworked
 
 import com.intellij.openapi.application.EDT
-import com.intellij.terminal.session.TerminalBlocksModelState
-import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -11,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
+import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith

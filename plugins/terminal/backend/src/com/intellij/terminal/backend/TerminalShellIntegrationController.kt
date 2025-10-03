@@ -2,11 +2,11 @@
 package com.intellij.terminal.backend
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.terminal.session.TerminalAliasesInfo
 import com.intellij.util.EventDispatcher
 import com.jediterm.terminal.Terminal
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
+import org.jetbrains.plugins.terminal.session.TerminalAliasesInfo
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.*
 

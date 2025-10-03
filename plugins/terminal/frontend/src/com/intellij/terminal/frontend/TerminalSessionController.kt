@@ -9,9 +9,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
-import com.intellij.terminal.session.*
-import com.intellij.terminal.session.dto.toState
-import com.intellij.terminal.session.dto.toTerminalState
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
@@ -19,6 +16,9 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
+import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.dto.toState
+import org.jetbrains.plugins.terminal.session.dto.toTerminalState
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 

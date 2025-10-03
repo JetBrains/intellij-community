@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
-import com.intellij.terminal.session.*
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -24,6 +23,7 @@ import kotlinx.coroutines.flow.*
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.updateContent
+import org.jetbrains.plugins.terminal.session.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

@@ -2,8 +2,6 @@
 package com.intellij.terminal.tests.reworked
 
 import com.intellij.openapi.application.EDT
-import com.intellij.terminal.session.StyleRange
-import com.intellij.terminal.session.TerminalOutputModelState
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.restore
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
@@ -18,6 +16,8 @@ import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
+import org.jetbrains.plugins.terminal.session.StyleRange
+import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

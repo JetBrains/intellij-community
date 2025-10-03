@@ -3,12 +3,12 @@ package com.intellij.terminal.backend
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.util.CharUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.ui.getLengthWithoutDwc
 import org.jetbrains.plugins.terminal.block.ui.withLock
+import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
 
 @ApiStatus.Internal
 class TerminalCursorPositionTracker(

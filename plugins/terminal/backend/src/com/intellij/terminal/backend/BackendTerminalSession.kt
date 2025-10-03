@@ -2,9 +2,9 @@ package com.intellij.terminal.backend
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.session.TerminalSession
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.TerminalSession
 
 @ApiStatus.Internal
 interface BackendTerminalSession : TerminalSession {

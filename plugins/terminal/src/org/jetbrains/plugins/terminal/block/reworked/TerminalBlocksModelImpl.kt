@@ -4,8 +4,6 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.terminal.session.TerminalBlocksModelState
-import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,6 +11,8 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
+import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 import kotlin.math.max
 
 @ApiStatus.Internal

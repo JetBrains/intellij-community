@@ -30,8 +30,6 @@ import com.intellij.terminal.frontend.completion.ShellRuntimeContextProviderRewo
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
 import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
-import com.intellij.terminal.session.TerminalHyperlinkId
-import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
@@ -59,6 +57,8 @@ import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.block.ui.isTerminalOutputScrollChangingActionInProgress
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.TerminalSession
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter

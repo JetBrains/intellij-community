@@ -93,11 +93,14 @@ com.intellij.terminal.TerminalShellCommandHandler
 - sf:Companion:com.intellij.terminal.TerminalShellCommandHandler$Companion
 - a:execute(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String,com.intellij.execution.Executor):Z
 - a:matches(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String):Z
+com.intellij.terminal.session.TerminalSession
 com.intellij.terminal.ui.TerminalWidget
 - com.intellij.openapi.ui.ComponentContainer
 - a:addNotification(javax.swing.JComponent,com.intellij.openapi.Disposable):V
 - a:addTerminationCallback(java.lang.Runnable,com.intellij.openapi.Disposable):V
+- connectToSession(com.intellij.terminal.session.TerminalSession):V
 - a:connectToTty(com.jediterm.terminal.TtyConnector,com.jediterm.core.util.TermSize):V
+- getSession():com.intellij.terminal.session.TerminalSession
 - a:getShellCommand():java.util.List
 - a:getTermSize():com.jediterm.core.util.TermSize
 - a:getTerminalTitle():com.intellij.terminal.TerminalTitle

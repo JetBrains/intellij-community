@@ -1,9 +1,9 @@
 package com.intellij.terminal.frontend
 
-import com.intellij.terminal.session.TerminalContentUpdatedEvent
-import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
 
 /**
  * A controller for the output model updates.

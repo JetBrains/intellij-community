@@ -6,14 +6,14 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.FrozenDocument
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.session.StyleRange
-import com.intellij.terminal.session.TerminalContentUpdatedEvent
-import com.intellij.terminal.session.TerminalOutputModelState
-import com.intellij.terminal.session.dto.toStyleRange
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
+import org.jetbrains.plugins.terminal.session.StyleRange
+import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
+import org.jetbrains.plugins.terminal.session.dto.toStyleRange
 
 /**
  * Model that should manage the terminal output content: text, highlightings, and cursor position.

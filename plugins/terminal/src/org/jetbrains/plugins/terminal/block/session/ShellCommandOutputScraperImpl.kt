@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
-import com.intellij.terminal.session.StyleRange
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.session.scraper.*
 import org.jetbrains.plugins.terminal.block.session.util.Debouncer
 import org.jetbrains.plugins.terminal.block.ui.withLock
+import org.jetbrains.plugins.terminal.session.StyleRange
 import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max

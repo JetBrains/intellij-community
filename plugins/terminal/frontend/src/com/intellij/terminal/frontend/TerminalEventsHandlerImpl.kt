@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.session.TerminalState
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
@@ -19,6 +18,7 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
+import org.jetbrains.plugins.terminal.session.TerminalState
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent

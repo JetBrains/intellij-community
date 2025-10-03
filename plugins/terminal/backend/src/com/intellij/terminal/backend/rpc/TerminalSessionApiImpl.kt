@@ -1,13 +1,13 @@
 package com.intellij.terminal.backend.rpc
 
 import com.intellij.terminal.backend.TerminalSessionsManager
-import com.intellij.terminal.session.TerminalInputEvent
-import com.intellij.terminal.session.TerminalOutputEvent
-import com.intellij.terminal.session.TerminalSession
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionApi
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
+import org.jetbrains.plugins.terminal.session.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.TerminalSession
 
 internal class TerminalSessionApiImpl : TerminalSessionApi {
   override suspend fun getInputChannel(sessionId: TerminalSessionId): SendChannel<TerminalInputEvent> {

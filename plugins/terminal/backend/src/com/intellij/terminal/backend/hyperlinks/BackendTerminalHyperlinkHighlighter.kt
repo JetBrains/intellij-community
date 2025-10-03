@@ -15,10 +15,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.FrozenDocument
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.session.TerminalHyperlinkId
-import com.intellij.terminal.session.TerminalHyperlinksChangedEvent
-import com.intellij.terminal.session.TerminalHyperlinksHeartbeatEvent
-import com.intellij.terminal.session.dto.*
 import com.intellij.util.asDisposable
 import com.intellij.util.containers.ComparatorUtil.min
 import kotlinx.coroutines.*
@@ -26,6 +22,10 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinksChangedEvent
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinksHeartbeatEvent
+import org.jetbrains.plugins.terminal.session.dto.*
 import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.LinkedBlockingDeque

@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.session.StyleRange
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
@@ -24,6 +23,7 @@ import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.session.*
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
+import org.jetbrains.plugins.terminal.session.StyleRange
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.util.*

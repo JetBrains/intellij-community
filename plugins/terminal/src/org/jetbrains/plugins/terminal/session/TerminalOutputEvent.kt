@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.session
+package org.jetbrains.plugins.terminal.session
 
-import com.intellij.terminal.session.dto.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.dto.*
 import kotlin.time.TimeMark
 
 @ApiStatus.Internal

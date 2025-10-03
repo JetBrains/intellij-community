@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.session.dto
+package org.jetbrains.plugins.terminal.session.dto
 
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.InlayProvider
@@ -7,10 +7,10 @@ import com.intellij.execution.ui.tryRecoverConsoleTextAttributesKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.terminal.session.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.*
 
 @ApiStatus.Internal
 @Serializable

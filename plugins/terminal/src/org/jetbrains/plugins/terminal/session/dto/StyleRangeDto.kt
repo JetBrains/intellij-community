@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.session.dto
+package org.jetbrains.plugins.terminal.session.dto
 
-import com.intellij.terminal.session.StyleRange
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.StyleRange
 
 @ApiStatus.Internal
 @Serializable

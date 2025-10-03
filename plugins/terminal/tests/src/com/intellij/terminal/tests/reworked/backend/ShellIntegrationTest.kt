@@ -4,9 +4,6 @@ package com.intellij.terminal.tests.reworked.backend
 import com.google.common.base.Ascii
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.session.*
-import com.intellij.terminal.session.dto.toState
-import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.ENTER_BYTES
 import com.intellij.terminal.tests.reworked.util.TerminalSessionTestUtil.awaitOutputEvent
@@ -19,6 +16,9 @@ import kotlinx.coroutines.channels.SendChannel
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.dto.toState
+import org.jetbrains.plugins.terminal.session.dto.toStyleRange
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test

@@ -11,9 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.terminal.session.TerminalContentUpdatedEvent
-import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
-import com.intellij.terminal.session.TerminalOutputEvent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,6 +20,9 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.isCommandTypingMode
 import org.jetbrains.plugins.terminal.block.reworked.updateContent
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
+import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
+import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
 import java.lang.Runnable
 
 /**

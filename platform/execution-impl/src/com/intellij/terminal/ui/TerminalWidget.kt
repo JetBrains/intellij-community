@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.terminal.ui
 
 import com.intellij.openapi.Disposable
@@ -42,19 +44,6 @@ interface TerminalWidget : ComponentContainer {
 
   val ttyConnector: TtyConnector?
     get() = ttyConnectorAccessor.ttyConnector
-
-  @get:ApiStatus.Internal
-  val session: TerminalSession?
-
-  /**
-   * Makes this terminal widget handle output events from this [session] and send input events to it.
-   *
-   * Note that session lifecycle is not bound to the lifecycle of the widget.
-   * If the widget is disposed, the session will continue running.
-   * To close the session, send [com.intellij.terminal.session.TerminalCloseEvent] using [TerminalSession.sendInputEvent].
-   */
-  @ApiStatus.Internal
-  fun connectToSession(session: TerminalSession)
 
   fun writePlainMessage(message: @Nls String)
 
@@ -101,6 +90,15 @@ interface TerminalWidget : ComponentContainer {
 
   @RequiresEdt(generateAssertion = false)
   fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable)
+
+  @Deprecated("TerminalSession was moved to the terminal plugin: org.jetbrains.plugins.terminal.session.TerminalSession")
+  val session: TerminalSession?
+    get() = throw UnsupportedOperationException("Deprecated")
+
+  @Deprecated("TerminalSession was moved to the terminal plugin: org.jetbrains.plugins.terminal.session.TerminalSession")
+  fun connectToSession(session: TerminalSession) {
+    throw UnsupportedOperationException("Deprecated")
+  }
 }
 
 fun TerminalWidget.setNewParentDisposable(newParentDisposable: Disposable) {

@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.session.TerminalBlocksModelState
-import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.SharedFlow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
+import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 
 @ApiStatus.Internal
 interface TerminalBlocksModel {

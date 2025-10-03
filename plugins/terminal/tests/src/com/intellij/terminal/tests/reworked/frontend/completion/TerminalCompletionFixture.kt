@@ -19,8 +19,6 @@ import com.intellij.terminal.frontend.TimedKeyEvent
 import com.intellij.terminal.frontend.activeOutputModel
 import com.intellij.terminal.frontend.completion.TerminalLookupPrefixUpdater
 import com.intellij.terminal.frontend.impl.TerminalViewImpl
-import com.intellij.terminal.session.TerminalBlocksModelState
-import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import kotlinx.coroutines.cancel
@@ -30,6 +28,8 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
+import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.junit.Assume
 import java.awt.event.KeyEvent

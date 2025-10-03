@@ -2,8 +2,6 @@ package com.intellij.terminal.backend
 
 import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.terminal.session.*
-import com.intellij.terminal.session.dto.toTermSize
 import com.jediterm.terminal.RequestOrigin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -12,6 +10,8 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.ui.withLock
+import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.dto.toTermSize
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 import java.util.concurrent.CancellationException

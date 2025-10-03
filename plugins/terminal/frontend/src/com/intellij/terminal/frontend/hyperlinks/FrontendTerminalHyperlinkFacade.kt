@@ -3,13 +3,13 @@ package com.intellij.terminal.frontend.hyperlinks
 import com.intellij.execution.impl.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.frontend.TerminalInput
-import com.intellij.terminal.session.*
-import com.intellij.terminal.session.dto.TerminalHyperlinksModelStateDto
-import com.intellij.terminal.session.dto.toFilterResultInfo
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
+import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.dto.TerminalHyperlinksModelStateDto
+import org.jetbrains.plugins.terminal.session.dto.toFilterResultInfo
 
 internal class FrontendTerminalHyperlinkFacade(
   private val isInAlternateBuffer: Boolean,

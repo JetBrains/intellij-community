@@ -7,9 +7,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
-import com.intellij.terminal.session.*
-import com.intellij.terminal.session.dto.toDto
-import com.intellij.terminal.session.dto.toTerminalState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -20,12 +17,15 @@ import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.isSplitHyperlinksSupportEnabled
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.dto.toDto
+import org.jetbrains.plugins.terminal.session.dto.toTerminalState
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
 
 /**
  * TerminalSession implementation that stores the state of the [delegate] session output.
- * This state is then passed as the [TerminalInitialStateEvent] to the output flow as the first event
+ * This state is then passed as the [org.jetbrains.plugins.terminal.session.TerminalInitialStateEvent] to the output flow as the first event
  * every time when [getOutputFlow] is requested.
  *
  * So, actually it allows restoring the state of UI that requests the [getOutputFlow].

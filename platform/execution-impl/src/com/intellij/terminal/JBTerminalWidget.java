@@ -15,7 +15,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.search.DefaultJediTermSearchComponent;
 import com.intellij.terminal.search.JediTermSearchComponentProvider;
-import com.intellij.terminal.session.TerminalSession;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.ui.components.JBScrollBar;
@@ -351,16 +350,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
       widget().getComponent().revalidate();
       widget().notifyStarted();
       myTtyConnectorAccessor.setTtyConnector(ttyConnector);
-    }
-
-    @Override
-    public @Nullable TerminalSession getSession() {
-      return null;
-    }
-
-    @Override
-    public void connectToSession(@NotNull TerminalSession session) {
-      throw new IllegalStateException("TerminalSession is not supported in TerminalWidgetBridge");
     }
 
     @Override

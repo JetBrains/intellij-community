@@ -1,10 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked.session
 
-import com.intellij.terminal.session.TerminalInputEvent
-import com.intellij.terminal.session.TerminalOutputEvent
-import com.intellij.terminal.session.TerminalSession
-import com.intellij.terminal.session.TerminalSessionTerminatedEvent
 import fleet.rpc.client.durable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -14,6 +10,10 @@ import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionApi
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
+import org.jetbrains.plugins.terminal.session.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.TerminalSession
+import org.jetbrains.plugins.terminal.session.TerminalSessionTerminatedEvent
 
 /**
  * [TerminalSession] implementation that is delegating the methods to [TerminalSessionApi] RPC to backend.

@@ -2,10 +2,10 @@ package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.terminal.backend.StateAwareTerminalSession
 import com.intellij.terminal.backend.TerminalSessionsManager
-import com.intellij.terminal.session.TerminalHyperlinkId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfo
 import org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfoService
+import org.jetbrains.plugins.terminal.session.TerminalHyperlinkId
 
 internal class BackendHyperlinkInfoServiceImpl : BackendHyperlinkInfoService {
   override fun getHyperlinkInfo(sessionId: TerminalSessionId, isAlternateBuffer: Boolean, hyperlinkId: TerminalHyperlinkId): BackendHyperlinkInfo? {
