@@ -73,7 +73,6 @@ jvm_library(
     "//platform/core-api:core",
     "@lib//:guava",
     "//platform/util/trove",
-    "//java/java-psi-api:psi",
   ],
   exports = [
     "//platform/external-system-api:externalSystem",
