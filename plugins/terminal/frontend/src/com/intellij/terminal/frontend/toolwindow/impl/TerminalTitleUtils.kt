@@ -11,6 +11,7 @@ import com.intellij.terminal.TerminalTitleListener
 import com.intellij.ui.content.Content
 import com.intellij.util.asDisposable
 import com.intellij.util.text.UniqueNameGenerator
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,12 +49,14 @@ internal fun updateBackendTabNameOnTitleChange(
 ) {
   title.addListener(scope) {
     withContext(Dispatchers.IO) {
-      TerminalTabsManagerApi.getInstance().renameTerminalTab(
-        project.projectId(),
-        backendTabId,
-        it.text,
-        it.isUserDefined
-      )
+      durable {
+        TerminalTabsManagerApi.getInstance().renameTerminalTab(
+          project.projectId(),
+          backendTabId,
+          it.text,
+          it.isUserDefined
+        )
+      }
     }
   }
 }

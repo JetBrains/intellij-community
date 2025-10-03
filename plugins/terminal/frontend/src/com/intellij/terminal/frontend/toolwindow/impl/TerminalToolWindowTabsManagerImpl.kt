@@ -34,6 +34,7 @@ import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
+import fleet.rpc.client.durable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.*
@@ -211,8 +212,10 @@ internal class TerminalToolWindowTabsManagerImpl(
     terminal: TerminalViewImpl,
     builder: TerminalTabBuilderImpl,
   ) = terminal.coroutineScope.launch(Dispatchers.IO) {
-    val backendTabId = builder.backendTabId
-                       ?: TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId()).id
+    val backendTabId = builder.backendTabId ?: durable {
+      // todo: worth making it idempotent to avoid creating multiple tabs because of network issues
+      TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId()).id
+    }
 
     terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.IO) {
       // Backend terminal session tab lifecycle is not directly bound to the terminal frontend lifecycle.
@@ -222,7 +225,9 @@ internal class TerminalToolWindowTabsManagerImpl(
       // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
       val isProjectClosing = getToolWindow().contentManager.isDisposed
       if (!isProjectClosing) {
-        TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), backendTabId)
+        durable {
+          TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), backendTabId)
+        }
       }
     }
 
@@ -345,7 +350,9 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     private fun scheduleTabsRestoring(manager: TerminalToolWindowTabsManagerImpl) {
       manager.tabsRestoredDeferred = manager.coroutineScope.async(Dispatchers.IO) {
-        val tabs: List<TerminalSessionTab> = TerminalTabsManagerApi.getInstance().getTerminalTabs(manager.project.projectId())
+        val tabs: List<TerminalSessionTab> = durable {
+          TerminalTabsManagerApi.getInstance().getTerminalTabs(manager.project.projectId())
+        }
         withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
           restoreTabs(tabs, manager)
         }
