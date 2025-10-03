@@ -14,7 +14,17 @@ import java.util.concurrent.atomic.AtomicReference
 @Internal
 @Experimental
 fun Job.cancelOnDispose(disposable: Disposable) {
-  val childDisposable = Disposable { cancel("disposed") }
+  val origin = Throwable()
+  val childDisposable = object : Disposable {
+    override fun dispose() {
+      cancel("disposed")
+    }
+
+    override fun toString(): String {
+      val topTrace = origin.stackTrace[1]
+      return "Cancel on dispose spawned in `$topTrace`"
+    }
+  }
   Disposer.register(disposable, childDisposable)
   invokeOnCompletion {
     Disposer.dispose(childDisposable)
