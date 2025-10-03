@@ -124,8 +124,15 @@ suspend fun buildCommunityStandaloneJpsBuilder(
   }
   try {
     JarPackager.pack(
-      layout.includedModules, tempDir, isRootDir = false, isCodesignEnabled = false, layout, platformLayout = null, ModuleOutputPatcher(),
-      dryRun, context = context
+      includedModules = layout.includedModules,
+      outputDir = tempDir,
+      isRootDir = false,
+      isCodesignEnabled = false,
+      layout = layout,
+      platformLayout = null,
+      moduleOutputPatcher = ModuleOutputPatcher(),
+      dryRun = dryRun,
+      context = context
     )
 
     val targetFile = targetDir.resolve("standalone-jps-$buildNumber.zip")
@@ -138,7 +145,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(
           "intellij.platform.jps.model.serialization.tests"
         ),
         context)
-      zipWithCompression(targetFile, dirs = mapOf(tempDir to ""))
+      zipWithCompression(targetFile = targetFile, dirs = mapOf(tempDir to ""))
     }
 
     context.notifyArtifactBuilt(targetFile)
