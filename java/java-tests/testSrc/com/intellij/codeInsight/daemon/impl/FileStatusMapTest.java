@@ -160,11 +160,13 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
   }
 
   public void testRenameClass() {
-    configureByText(JavaFileType.INSTANCE, """
-      class AClass<caret> {
-    
-      }
-    """);
+    @Language("JAVA")
+    String text = """
+        class AClass<caret> {
+      
+        }
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
     Document document = getDocument(getFile());
     assertEmpty(highlightErrors());
     PsiClass psiClass = ((PsiJavaFile)getFile()).getClasses()[0];
@@ -178,11 +180,13 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
   }
 
   public void testTypingSpace() {
-    configureByText(JavaFileType.INSTANCE, """
-      class AClass<caret> {
-    
-      }
-    """);
+    @Language("JAVA")
+    String text = """
+        class AClass<caret> {
+      
+        }
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
     Document document = getDocument(getFile());
     assertEmpty(highlightErrors());
 
@@ -200,7 +204,9 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
   public void testFileStatusMapDirtyPSICachingWorks() {
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(false); // to prevent auto-start highlighting
     UIUtil.dispatchAllInvocationEvents();
-    configureByText(JavaFileType.INSTANCE, "class <caret>S { int ffffff =  0;}");
+    @Language("JAVA")
+    String text = "class <caret>S { int ffffff =  0;}";
+    configureByText(JavaFileType.INSTANCE, text);
     UIUtil.dispatchAllInvocationEvents();
 
     int[] creation = {0};
@@ -248,7 +254,9 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
   }
 
   public void testFileStatusMapDirtyDocumentRangeWorks() {
-    configureByText(JavaFileType.INSTANCE, "class <caret>S { int ffffff =  0;}");
+    @Language("JAVA")
+    String text = "class <caret>S { int ffffff =  0;}";
+    configureByText(JavaFileType.INSTANCE, text);
     UIUtil.dispatchAllInvocationEvents();
     doHighlighting();
     Document document = myEditor.getDocument();
@@ -272,7 +280,9 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
     TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
     registrar.registerTextEditorHighlightingPass(new Fac(), null, null, false, -1);
 
-    configureByText(JavaFileType.INSTANCE, "@Deprecated<caret> class S { } ");
+    @Language("JAVA")
+    String text = "@Deprecated<caret> class S { } ";
+    configureByText(JavaFileType.INSTANCE, text);
 
     List<HighlightInfo> infos = doHighlighting(HighlightInfoType.SYMBOL_TYPE_SEVERITY);
     assertSize(2, infos);
@@ -323,7 +333,9 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
   }
 
   public void testModificationInWorkspaceXmlDoesNotCauseRehighlight() {
-    configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
+    @Language("JAVA")
+    String text = "class X { <caret> }";
+    configureByText(JavaFileType.INSTANCE, text);
     StoreUtilKt.runInAllowSaveMode(true, () -> {
       StoreUtil.saveDocumentsAndProjectsAndApp(true);
       VirtualFile workspaceFile = Objects.requireNonNull(getProject().getWorkspaceFile());
@@ -434,6 +446,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
   }
 
   public void testPsiTouchedScopes() {
+    @Language("JAVA")
     String text = """
       import java.util.*;
       class S {

@@ -57,6 +57,7 @@ public class HighlightAfterRandomTypingTest extends LightDaemonAnalyzerTestCase 
     }
     // preload extensions to avoid "PSI/document/model changes are not allowed during highlighting"
     EntryPointsManagerBase.getInstance(getProject()).getAdditionalAnnotations();
+    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).disableUpdateByTimer(getTestRootDisposable());
   }
 
   @Override
@@ -421,7 +422,7 @@ class X {
     randomTypeAndCheckForDuplicates(seed, random);
   }
   public void testCheckThatRandomTypingDoesNotCreateDuplicateRangeHighlighters() {
-    long seed =//8812599550819766708L;
+    long seed =//-1816450852840074871L;
     new Random().nextLong();
     Random random = new Random(seed);
     randomTypeAndCheckForDuplicates(seed, random);
