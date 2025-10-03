@@ -6,9 +6,10 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.platform.experiment.ab.impl.ABExperimentOption.*
+import com.intellij.platform.experiment.ab.impl.ABExperimentOption.UNASSIGNED
 import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.*
 import kotlin.math.absoluteValue
 
 /**
@@ -77,18 +78,22 @@ internal fun ABExperimentOption.reportableName(): String {
 private val thisUserDecision: ABExperimentDecision by lazy {
   val currentBucket = getUserBucketNumber()
   val currentVersion = ApplicationInfo.getInstance().fullVersion
+  val currentProduct = IntelliJPlatformProduct.get()
   val option = experimentsPartition.find {
     (it.majorVersion == null || currentVersion.startsWith(it.majorVersion)) &&
-    (it.experimentBuckets.contains(currentBucket) || it.controlBuckets.contains(currentBucket))
+    (it.experimentBuckets.contains(currentBucket) || it.controlBuckets.contains(currentBucket)) &&
+    it.products.contains(currentProduct)
   } ?: return@lazy ABExperimentDecision(option = UNASSIGNED, isControlGroup = true, bucketNumber = currentBucket)
   ABExperimentDecision(option = option.experiment, isControlGroup = option.controlBuckets.contains(currentBucket), bucketNumber = currentBucket)
 }
 
-data class ExperimentAssignment(
+internal data class ExperimentAssignment(
   val experiment: ABExperimentOption,
   val experimentBuckets: Set<Int>,
   val controlBuckets: Set<Int>,
-  val majorVersion: String? = null)
+  val majorVersion: String? = null,
+  val products: Set<IntelliJPlatformProduct> = EnumSet.allOf(IntelliJPlatformProduct::class.java)
+)
 
 internal fun getUserBucketNumber(): Int {
   val overridingBucket = Integer.getInteger("ide.ab.test.overriding.bucket")
@@ -110,3 +115,16 @@ private fun getDeviceIdPurpose(): String {
 }
 
 private val LOG = logger<ABExperimentOption>()
+
+/**
+ * There is no need to list all available products. Add if a product-specific experiment is needed.
+ */
+internal enum class IntelliJPlatformProduct {
+  OTHER,
+  ;
+
+  companion object {
+    fun get(): IntelliJPlatformProduct =
+      OTHER
+  }
+}
