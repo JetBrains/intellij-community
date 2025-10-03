@@ -14,6 +14,7 @@ import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertContains
+import kotlin.test.assertFalse
 import kotlin.time.Duration.Companion.seconds
 
 private const val REPETITIONS: Int = 100
@@ -231,7 +232,8 @@ class SuspendingReadAndWriteActionTest {
           // contains because in debug mode coroutines append coroutine id
           assertContains(Thread.currentThread().name, name)
           writeAction {
-            assertContains(Thread.currentThread().name, name)
+            // DO NOT run write action in the inherited dispatcher; causes issues like `com.intellij.openapi.application.impl.ReadWriteActionPerformanceTest.readWriteActionBenchmark`
+            assertFalse { Thread.currentThread().name.contains(name) }
           }
         }
       }

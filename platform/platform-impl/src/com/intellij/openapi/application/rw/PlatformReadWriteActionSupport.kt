@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.writeText
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -82,7 +81,7 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
             executeWriteActionOnEdt(stamp, readResult.action)
           }
           else {
-            executeWriteActionOnBackgroundWithAtomicCheck(lock, stamp, undispatched, readResult.action)
+            executeWriteActionOnBackgroundWithAtomicCheck(lock, stamp, readResult.action)
           }
           if (writeResult !== retryMarker) {
             @Suppress("UNCHECKED_CAST")
@@ -107,8 +106,8 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
     }
   }
 
-  private suspend fun <T> executeWriteActionOnBackgroundWithAtomicCheck(lock: ThreadingSupport, originalStamp: Long, undispatched: Boolean, action: () -> T): /*T or retryMarker */ Any? {
-    val dispatcher = if (undispatched) EmptyCoroutineContext else Dispatchers.Default
+  private suspend fun <T> executeWriteActionOnBackgroundWithAtomicCheck(lock: ThreadingSupport, originalStamp: Long, action: () -> T): /*T or retryMarker */ Any? {
+    val dispatcher = Dispatchers.Default
     val ref = withContext(dispatcher + InternalThreading.RunInBackgroundWriteActionMarker) {
       lock.runWriteActionWithCheckInWriteIntent(
         {
