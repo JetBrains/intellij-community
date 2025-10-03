@@ -221,18 +221,6 @@ class GitRepositoryImpl private constructor(
   companion object {
     private val LOG = Logger.getInstance(GitRepositoryImpl::class.java)
 
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.")
-    fun getInstance(
-      root: VirtualFile,
-      project: Project,
-      listenToRepoChanges: Boolean,
-    ): GitRepository {
-      val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root)
-      return repository ?: createInstance(root, project, GitDisposable.getInstance(project))
-    }
-
     /**
      * Creates a new instance of the GitRepository for the given Git root directory. <br></br>
      * Use [GitRepositoryManager.getRepositoryForRoot] if you need to obtain an instance
