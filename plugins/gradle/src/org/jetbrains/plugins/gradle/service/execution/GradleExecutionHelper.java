@@ -3,6 +3,10 @@ package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.BuildIssueEventImpl;
+import com.intellij.build.issue.BuildIssueQuickFix;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.Application;
@@ -21,6 +25,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
@@ -38,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService;
+import org.jetbrains.plugins.gradle.issue.ConfigurableGradleBuildIssue;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
@@ -59,6 +65,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * This is the low-level Gradle execution API that connects and interacts with the Gradle daemon using the Gradle tooling API.
@@ -612,6 +619,7 @@ public final class GradleExecutionHelper {
 
       checkThatGradleBuildEnvironmentIsSupportedByIdea(buildEnvironment);
       checkThatGradleBuildEnvironmentIsDeprecatedByIdea(context, buildEnvironment);
+      checkThatLatestGradleMinorVersionIsUsed(context, buildEnvironment);
 
       return buildEnvironment;
     }
@@ -626,6 +634,57 @@ public final class GradleExecutionHelper {
     finally {
       span.end();
     }
+  }
+
+  private static void checkThatLatestGradleMinorVersionIsUsed(
+    @NotNull GradleExecutionContext context,
+    @NotNull BuildEnvironment buildEnvironment
+  ) {
+    // check if the inspection is enabled
+    final HighlightDisplayKey key = HighlightDisplayKey.find("LatestMinorVersion");
+    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(context.getProject());
+    final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
+    if (!inspectionProfile.isToolEnabled(key)) return;
+
+    // check if the used minor Gradle version is outdated
+    final GradleVersion currentVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+    final GradleVersion latestVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(
+      GradleVersion.version(buildEnvironment.getGradle().getGradleVersion()).getMajorVersion()
+    );
+    if (currentVersion.compareTo(latestVersion) >= 0) return;
+
+    final var issue = new ConfigurableGradleBuildIssue() {
+    };
+    issue.setTitle(GradleBundle.message("gradle.build.issue.gradle.outdated.minor.version.title"));
+    issue.addDescription(GradleBundle.message(
+      "gradle.build.issue.gradle.outdated.minor.version.description", currentVersion.getVersion(), latestVersion.getVersion()
+    ));
+    issue.addGradleVersionQuickFix(context.getProjectPath(), latestVersion);
+
+    // find the responsible inspection and offer a link to its settings if available
+    if (key != null) {
+      final String hyperlinkReference = issue.addQuickFix(new BuildIssueQuickFix() {
+        @Override
+        public @NotNull String getId() {
+          return "navigate.to.latest.gradle.minor.version.inspection";
+        }
+
+        @Override
+        public @NotNull CompletableFuture<?> runQuickFix(@NotNull Project project, @NotNull DataContext dataContext) {
+          EditInspectionToolsSettingsAction.editToolSettings(context.getProject(), inspectionProfile, key.toString());
+          return CompletableFuture.completedFuture(null);
+        }
+      });
+
+      issue.addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.edit.inspection.settings", hyperlinkReference));
+    }
+
+    context.getListener().onStatusChange(
+      new ExternalSystemBuildEvent(
+        context.getTaskId(),
+        new BuildIssueEventImpl(context.getTaskId(), issue, MessageEvent.Kind.INFO)
+      )
+    );
   }
 
   private static void checkThatGradleBuildEnvironmentIsDeprecatedByIdea(

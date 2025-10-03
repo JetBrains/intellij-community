@@ -225,6 +225,7 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
       return getInstance().getOldestSupportedJavaVersionByIdeaImpl()
     }
 
+    @JvmStatic
     fun getLatestMinorGradleVersion(major: Int): GradleVersion {
       return getInstance().getLatestMinorGradleVersionImpl(major)
     }
