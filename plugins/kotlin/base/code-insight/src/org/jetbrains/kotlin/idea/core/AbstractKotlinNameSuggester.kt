@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -9,6 +10,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 @Suppress("DEPRECATION")
+@ApiStatus.Internal
 @Deprecated("Use 'org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester' instead")
 abstract class AbstractKotlinNameSuggester {
     fun suggestNamesByFqName(
