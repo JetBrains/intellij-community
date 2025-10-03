@@ -44,16 +44,6 @@ fun getVersionCatalogFiles(module: Module) : Map<String, VirtualFile> {
   return container
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Doesn't work for included builds of a composite build", ReplaceWith("getVersionCatalogFiles(module)"))
-fun getGradleStaticallyHandledExtensions(project: Project) : Set<String> {
-  val container = mutableSetOf<String>()
-  for (extension in EP_NAME.extensionList) {
-    container.addAll(extension.getExternallyHandledExtension(project))
-  }
-  return container
-}
-
 fun getVersionCatalogAccessor(context: PsiElement, name: String) : PsiClass? {
   for (extension in EP_NAME.extensionList) {
     return extension.getAccessorClass(context, name) ?: continue
