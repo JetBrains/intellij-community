@@ -15,7 +15,7 @@ jvm_library(
   resources = [":featuresTrainer_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:assert_j",
     "@lib//:assertj-swing",
     "//platform/analysis-api:analysis",
@@ -61,7 +61,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:assert_j",
     "@lib//:assertj-swing",
     "//platform/analysis-api:analysis",

@@ -28,7 +28,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/workspace/jps",
     "@lib//:fastutil-min",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/util/jdom",
     "@lib//:kryo5",
     "//platform/diagnostic/telemetry",

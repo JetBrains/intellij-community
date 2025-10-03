@@ -101,7 +101,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "@lib//:jet_check",
     "@lib//:commons-compress",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/extensions:testExtensions",

@@ -19,7 +19,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-build-common-tests",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//plugins/kotlin/plugin/k2",

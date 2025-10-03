@@ -24,7 +24,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/util/coroutines",
     "//platform/indexing-api:indexing",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:caffeine",
   ]
 )
@@ -46,7 +46,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/util/coroutines",
     "//platform/indexing-api:indexing",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:junit5",
     "@lib//:assert_j",
     "@lib//:caffeine",

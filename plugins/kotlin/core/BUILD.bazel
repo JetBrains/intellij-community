@@ -17,7 +17,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/util/jdom",
     "@lib//:javax-inject",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-ir",

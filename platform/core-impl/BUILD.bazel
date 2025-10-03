@@ -24,7 +24,7 @@ jvm_library(
     "@lib//:aalto-xml",
     "//platform/util/xmlDom",
     "@lib//:automaton",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/util/diff",
     "//platform/diagnostic",
     "//platform/util",

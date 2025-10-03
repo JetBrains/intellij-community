@@ -43,7 +43,7 @@ jvm_library(
     "@lib//:jediterm-core",
     "@lib//:jediterm-ui",
     "@lib//:pty4j",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:junit4",
     "//platform/eel-provider",
     "//platform/lang-impl",

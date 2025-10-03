@@ -19,7 +19,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:kotlinc-analysis-api-impl-base-tests",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//jps/model-api:model",

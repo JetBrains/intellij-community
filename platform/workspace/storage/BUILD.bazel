@@ -28,7 +28,7 @@ jvm_library(
   kotlinc_opts = ":custom_storage",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:kotlin-reflect",
     "//platform/util",
     "@lib//:fastutil-min",

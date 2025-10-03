@@ -46,7 +46,7 @@ jvm_library(
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:gradle",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",

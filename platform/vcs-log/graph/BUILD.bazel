@@ -17,7 +17,7 @@ jvm_library(
     "//platform/util",
     "//platform/vcs-log/graph-api:vcs-log-graph",
     "@lib//:kotlin-stdlib",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:fastutil-min",
   ],
   exports = [
@@ -38,7 +38,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit4",
     "@lib//:kotlin-stdlib",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:fastutil-min",
     "@lib//:assert_j",
     "@lib//:kotlin-test",

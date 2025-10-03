@@ -43,7 +43,7 @@ jvm_library(
     "//platform/diagnostic/telemetry.exporters",
     "//platform/util/coroutines",
     "//platform/diagnostic/telemetry/rt",
-    "@lib//:guava",
+    "//libraries/guava",
   ],
   exports = [
     "//platform/diagnostic/telemetry.exporters",

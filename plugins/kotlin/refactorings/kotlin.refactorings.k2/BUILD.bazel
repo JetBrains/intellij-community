@@ -66,7 +66,7 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/kotlin.searching/base",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2",
     "//platform/util/text-matching",
     "//plugins/kotlin/base/indices",

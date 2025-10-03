@@ -42,7 +42,7 @@ jvm_library(
     "@lib//:asm",
     "//platform/core-api:core",
     "//platform/lang-core",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:jb-jdi",

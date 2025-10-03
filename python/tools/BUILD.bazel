@@ -21,7 +21,7 @@ jvm_library(
     "//platform/testFramework",
     "//python/python-psi-api:psi",
     "//python:python-community-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//python/python-sdk:sdk",
     "@lib//:kotlin-script-runtime",
     "@lib//ant/lib:ant-antlr-provided",

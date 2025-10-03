@@ -44,7 +44,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-core",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/projectModel-api:projectModel",
     "@lib//:jsoup",
     "//python/python-sdk:sdk",

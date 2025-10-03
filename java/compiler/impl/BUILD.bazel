@@ -68,7 +68,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-reflect",
     "@lib//:kryo5",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:caffeine",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

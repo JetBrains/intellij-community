@@ -32,7 +32,7 @@ jvm_library(
     "//platform/diff-impl",
     "//platform/util/concurrency",
     "//platform/util-ex",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:ini4j",
     "@lib//:oro_matcher",
     "@lib//:jaxb-api",

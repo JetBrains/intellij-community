@@ -23,7 +23,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/workspace/jps",
     "//platform/diagnostic",
     "@lib//:caffeine",

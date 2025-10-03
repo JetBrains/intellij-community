@@ -23,7 +23,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:pty4j",
     "@lib//:jna",
     "//platform/projectModel-api:projectModel",

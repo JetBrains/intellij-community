@@ -32,7 +32,7 @@ jvm_library(
     "@lib//:vavr",
     "//platform/util/jdom",
     "@lib//:javax-inject",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:junit4",
     "@lib//:kotlin-test",
     "@lib//:kotlinc-kotlin-compiler-common",

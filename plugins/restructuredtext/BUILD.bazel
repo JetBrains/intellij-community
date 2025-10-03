@@ -44,7 +44,7 @@ jvm_library(
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/editor-ui-ex:editor-ex",

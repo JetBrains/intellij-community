@@ -25,7 +25,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:junit4",
     "@lib//:kotlin-test",
     "//plugins/kotlin/base/util",

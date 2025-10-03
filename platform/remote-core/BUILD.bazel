@@ -23,7 +23,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
-    "@lib//:guava",
+    "//libraries/guava",
   ],
   runtime_deps = [
     "@lib//:slf4j-api",

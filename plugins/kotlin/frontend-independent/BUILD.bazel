@@ -24,7 +24,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api-platform-interface",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-core",

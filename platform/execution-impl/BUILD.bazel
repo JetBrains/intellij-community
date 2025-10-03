@@ -32,7 +32,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/macro",
     "@lib//:miglayout-swing",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/refactoring",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",

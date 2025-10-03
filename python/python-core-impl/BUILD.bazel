@@ -23,7 +23,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/lang-impl",
     "//RegExpSupport:regexp",
-    "@lib//:guava",
+    "//libraries/guava",
     "//python/python-psi-impl:psi-impl",
     "//python/python-sdk:sdk",
   ]

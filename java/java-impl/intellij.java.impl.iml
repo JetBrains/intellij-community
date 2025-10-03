@@ -67,7 +67,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.java.structureView" exported="" />
     <orderEntry type="module" module-name="intellij.spellchecker" />

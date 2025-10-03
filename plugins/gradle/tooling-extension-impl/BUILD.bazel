@@ -40,7 +40,7 @@ jvm_library(
     "//platform/diagnostic/telemetry/rt",
     "@lib//:commons-lang3",
     "@lib//:commons-io",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/util/trove",
   ],
   exports = [
@@ -87,7 +87,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/boot",
     "//plugins/gradle",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/util/trove",
     "@lib//:commons-lang3",
   ]

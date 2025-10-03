@@ -57,7 +57,7 @@ jvm_library(
     "@lib//:jgoodies-forms",
     "@lib//:gson",
     "//plugins/groovy",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/lang-impl",
     "//jps/model-impl",
     "//plugins/maven/jps-plugin:jps",

@@ -29,7 +29,7 @@ jvm_library(
     "@lib//:jediterm-ui",
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/kernel/shared:kernel",
     "//platform/ide-core-impl",
     "//platform/statistics",

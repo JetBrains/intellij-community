@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.debugger" />
     <orderEntry type="library" scope="TEST" name="jb-jdi" level="project" />

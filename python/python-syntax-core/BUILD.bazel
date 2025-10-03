@@ -24,7 +24,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/util",
     "//platform/core-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/projectModel-impl",
     "//platform/analysis-api:analysis",
     "//platform/ide-core-impl",

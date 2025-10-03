@@ -37,7 +37,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/observable",
     "//platform/diff-api:diff",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:jna",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",

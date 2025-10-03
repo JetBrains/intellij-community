@@ -55,7 +55,7 @@ jvm_library(
     "//jps/model-impl",
     "//platform/util/progress",
     "//platform/workspace/jps",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/maven/artifact-resolver/common",
     "//libraries/mockito",
     "//plugins/maven/jps-plugin:jps",

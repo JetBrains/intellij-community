@@ -43,7 +43,7 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/analysis",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/base/facet",
     "//platform/platform-impl:ide-impl",

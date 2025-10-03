@@ -24,7 +24,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/script-debugger/backend",
     "//platform/xdebugger-impl:debugger-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/execution-impl",
     "@lib//:netty-codec-http",
     "@lib//:fastutil-min",

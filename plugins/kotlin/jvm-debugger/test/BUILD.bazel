@@ -55,7 +55,7 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "@lib//:asm",
     "//java/execution/impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//java/idea-ui:ui",
     "//java/debugger/openapi:java-debugger",
     "@lib//:jb-jdi",

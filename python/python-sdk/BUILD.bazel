@@ -22,7 +22,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:gson",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:stream_ex",
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
@@ -61,7 +61,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:gson",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:stream_ex",
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",

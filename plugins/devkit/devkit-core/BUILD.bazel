@@ -49,7 +49,7 @@ jvm_library(
     "//plugins/properties:properties-backend",
     "//xml/impl",
     "//java/openapi:java",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/observable",
     "//spellchecker",
     "//plugins/properties/properties-psi-api:psi",

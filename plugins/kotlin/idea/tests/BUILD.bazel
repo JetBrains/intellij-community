@@ -53,7 +53,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView",
     "@lib//:gson",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:fastutil-min",
     "//platform/usageView-impl",
     "//platform/vcs-api:vcs",

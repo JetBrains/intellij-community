@@ -71,7 +71,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/ijent",
     "//platform/core-api:core",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/util/trove",
   ],
   exports = [
@@ -168,7 +168,7 @@ jvm_library(
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "@lib//:gson",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/eel",
     "//platform/eel-provider",
   ],

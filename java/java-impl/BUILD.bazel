@@ -63,7 +63,7 @@ jvm_library(
     "//jps/model-impl",
     "//java/java-analysis-impl:analysis-impl",
     "//platform/external-system-api:externalSystem",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:velocity",
     "//java/java-structure-view:structureView",
     "//spellchecker",

@@ -54,7 +54,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/editor-ui-api:editor-ui",
     "//java/java-psi-api:psi",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/kotlin/base/facet",
     "//java/java-impl:impl",
     "//plugins/kotlin/base/analysis",

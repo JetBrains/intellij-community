@@ -67,7 +67,7 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
     "//plugins/kotlin/kotlin.searching:searching-k2",
-    "@lib//:guava",
+    "//libraries/guava",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.intentions.k2` end

@@ -17,7 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:protobuf",
     "@lib//:jna",
     "//platform/execution-process-mediator/common",

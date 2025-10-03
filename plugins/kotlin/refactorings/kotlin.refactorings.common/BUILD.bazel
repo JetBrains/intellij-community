@@ -50,7 +50,7 @@ jvm_library(
     "//plugins/kotlin/base/kdoc",
     "//java/java-impl:impl",
     "//plugins/kotlin/code-insight/utils",
-    "@lib//:guava",
+    "//libraries/guava",
     "//plugins/kotlin/kotlin.searching/base",
     "//plugins/kotlin/formatter",
   ],

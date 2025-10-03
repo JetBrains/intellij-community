@@ -56,7 +56,7 @@ jvm_library(
     "//xml/xml-analysis-impl:analysis-impl",
     "//platform/core-ui",
     "@lib//:assert_j",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:jackson",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",

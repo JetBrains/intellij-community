@@ -42,7 +42,7 @@ jvm_library(
     "//platform/statistics/uploader",
     "//platform/util/jdom",
     "//platform/service-container",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:miglayout-swing",
     "//libraries/kotlinx/serialization/json",
     "@lib//:fastutil-min",
