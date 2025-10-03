@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.terminal.TerminalTitle
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
@@ -31,4 +32,8 @@ interface TerminalView {
   fun createSendTextBuilder(): TerminalSendTextBuilder
 
   // todo
+
+  companion object {
+    val DATA_KEY: DataKey<TerminalView> = DataKey.create("TerminalView")
+  }
 }

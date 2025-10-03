@@ -129,15 +129,6 @@ internal class TerminalInput(
     doSendBytes(data.toByteArray(StandardCharsets.UTF_8), eventTime)
   }
 
-  fun sendBracketedString(data: String) {
-    if (sessionModel.terminalState.value.isBracketedPasteMode) {
-      sendString("\u001b[200~$data\u001b[201~")
-    }
-    else {
-      sendString(data)
-    }
-  }
-
   fun sendBytes(data: ByteArray) {
     doSendBytes(data, eventTime = null)
   }

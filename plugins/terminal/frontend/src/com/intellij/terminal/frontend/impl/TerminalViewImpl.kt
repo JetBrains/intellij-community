@@ -520,6 +520,7 @@ class TerminalViewImpl(
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
+      sink[TerminalView.DATA_KEY] = this@TerminalViewImpl
       sink[TerminalActionUtil.EDITOR_KEY] = curEditor
       sink[TerminalInput.DATA_KEY] = terminalInput
       sink[TerminalOutputModel.DATA_KEY] = outputModel
