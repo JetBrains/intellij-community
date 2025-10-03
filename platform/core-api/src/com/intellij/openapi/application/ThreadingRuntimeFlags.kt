@@ -46,7 +46,7 @@ val useDebouncedDrawingInSuvorovProgress: Boolean = System.getProperty("ide.suvo
  * - `false` means that the write-intent lock will be acquired in a blocking way
  */
 @get:ApiStatus.Internal
-val useNonBlockingFlushQueue: Boolean = System.getProperty("ide.use.non.blocking.flush.queue", "false").toBoolean()
+val useNonBlockingFlushQueue: Boolean = System.getProperty("ide.use.non.blocking.flush.queue", "true").toBoolean()
 
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads
