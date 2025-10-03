@@ -13,14 +13,14 @@ public abstract class CompletionSorter {
    * @param weighers weighers to add
    * @return a sorter combining the current one and added weighers
    */
-  public abstract @NotNull CompletionSorter weighBefore(@NotNull String beforeId, LookupElementWeigher... weighers);
+  public abstract @NotNull CompletionSorter weighBefore(@NotNull String beforeId, @NotNull LookupElementWeigher @NotNull ... weighers);
 
   /**
    * @param afterId  id of the weigher which must be run before {@code weighers}
    * @param weighers weighers to add.
    * @return a sorter combining the current one and added weighers
    */
-  public abstract @NotNull CompletionSorter weighAfter(@NotNull String afterId, LookupElementWeigher... weighers);
+  public abstract @NotNull CompletionSorter weighAfter(@NotNull String afterId, @NotNull LookupElementWeigher @NotNull ... weighers);
 
   /**
    * @param weigher a new weigher to append

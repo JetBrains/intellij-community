@@ -32,7 +32,7 @@ public class CompletionSorterImpl extends CompletionSorter {
   }
 
   @Override
-  public @NotNull CompletionSorterImpl weighBefore(@NotNull String beforeId, LookupElementWeigher... weighers) {
+  public @NotNull CompletionSorterImpl weighBefore(@NotNull String beforeId, @NotNull LookupElementWeigher @NotNull ... weighers) {
     if (weighers.length == 0) return this;
 
     CompletionSorterImpl result = this;
@@ -43,7 +43,7 @@ public class CompletionSorterImpl extends CompletionSorter {
   }
 
   @Override
-  public @NotNull CompletionSorterImpl weighAfter(@NotNull String afterId, LookupElementWeigher... weighers) {
+  public @NotNull CompletionSorterImpl weighAfter(@NotNull String afterId, @NotNull LookupElementWeigher @NotNull ... weighers) {
     if (weighers.length == 0) return this;
 
     CompletionSorterImpl result = this;
