@@ -32,8 +32,13 @@ internal fun generateClassPathByLayoutReport(libDir: Path, entries: List<Distrib
       continue
     }
 
-    if (entry is ModuleOutputEntry && (TEST_FRAMEWORK_MODULE_NAMES.contains(entry.moduleName) || entry.moduleName.startsWith("intellij.platform.unitTestMode"))) {
-      continue
+    if (entry is ModuleOutputEntry) {
+      if (TEST_FRAMEWORK_MODULE_NAMES.contains(entry.moduleName) || entry.moduleName.startsWith("intellij.platform.unitTestMode")) {
+        continue
+      }
+      if (skipNioFs && entry.moduleName == "intellij.platform.core.nio.fs") {
+        continue
+      }
     }
 
     val parent = file.parent

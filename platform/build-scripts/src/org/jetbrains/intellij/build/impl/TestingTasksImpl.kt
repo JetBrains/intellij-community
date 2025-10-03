@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
-import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
@@ -1343,9 +1342,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       args.add("--add-modules=ALL-MODULE-PATH")
     }
 
-    if (isMultiRoutingFileSystemEnabledForProduct(null)) {
-      args.addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
-    }
+    args.addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
+    args.add("-Didea.dev.mode.in.process.build.boot.classpath.correct=true")
 
     args.addAll(jvmArgs)
 
