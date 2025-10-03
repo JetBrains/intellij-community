@@ -100,12 +100,6 @@ After creating the module, run the following tests to ensure project structure c
 - **`IdeaUltimatePluginStructureTest`** - Verifies the plugin structure for IDEA Ultimate
 - **`CommunityProjectConsistencyTest`** - Verifies community project consistency
 
-Run tests using:
-```bash
-./tests.cmd -Dintellij.build.test.patterns=IdeaUltimatePluginStructureTest
-./tests.cmd -Dintellij.build.test.patterns=CommunityProjectConsistencyTest
-```
-
 ## Examples
 
 - **Simple library:** `hamcrest/` - single library dependency
@@ -159,6 +153,7 @@ node community/libraries/replace-lib-with-module.js --help
   - Regular scope: `<orderEntry type="library" name="Guava" ... />` → `<orderEntry type="module" module-name="intellij.libraries.guava" />`
   - TEST scope: `<orderEntry type="library" scope="TEST" name="Guava" ... />` → `<orderEntry type="module" ... scope="TEST" />`
   - TEST scope with exported attribute
+  - PROVIDED scope: `<orderEntry type="library" scope="PROVIDED" name="Guava" ... />` → `<orderEntry type="module" ... scope="PROVIDED" />`
 - Excludes specified directories (default: `fleet/`, `toolbox/`)
 - Provides detailed statistics of files modified and replacements made
 - Dry-run mode to preview changes without modifying files
@@ -183,8 +178,9 @@ Files scanned: 14500
 Files modified: 450
 Files skipped: 550
 Replacements by type:
-  Regular scope: 396
-  TEST scope: 109
-  TEST scope (exported): 3
-  Total: 508
+  Regular scope: 330
+  TEST scope: 122
+  TEST scope (exported): 1
+  PROVIDED scope: 7
+  Total: 460
 ```

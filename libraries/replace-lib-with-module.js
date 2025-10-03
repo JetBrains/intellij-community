@@ -104,7 +104,8 @@ const stats = {
   replacements: {
     regular: 0,
     testScope: 0,
-    testScopeExported: 0
+    testScopeExported: 0,
+    providedScope: 0
   }
 };
 
@@ -167,6 +168,15 @@ function createReplacementPatterns(oldLib, newModule) {
         'g'
       ),
       replacement: `<orderEntry type="module" module-name="${newModule}" exported="" scope="TEST" />`
+    },
+    {
+      name: 'providedScope',
+      // <orderEntry type="library" scope="PROVIDED" name="Guava" level="project" />
+      pattern: new RegExp(
+        `<orderEntry type="library" scope="PROVIDED" name="${oldLib}" level="project" />`,
+        'g'
+      ),
+      replacement: `<orderEntry type="module" module-name="${newModule}" scope="PROVIDED" />`
     }
   ];
 }
@@ -248,7 +258,8 @@ function main() {
   console.log(`  Regular scope: ${stats.replacements.regular}`);
   console.log(`  TEST scope: ${stats.replacements.testScope}`);
   console.log(`  TEST scope (exported): ${stats.replacements.testScopeExported}`);
-  console.log(`  Total: ${stats.replacements.regular + stats.replacements.testScope + stats.replacements.testScopeExported}`);
+  console.log(`  PROVIDED scope: ${stats.replacements.providedScope}`);
+  console.log(`  Total: ${stats.replacements.regular + stats.replacements.testScope + stats.replacements.testScopeExported + stats.replacements.providedScope}`);
 
   if (config.dryRun) {
     console.log('\n⚠ DRY RUN MODE - No files were modified');
