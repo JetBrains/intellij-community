@@ -6,8 +6,10 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.platform.experiment.ab.impl.ABExperimentOption.TYPESCRIPT_SERVICE_TYPES
 import com.intellij.platform.experiment.ab.impl.ABExperimentOption.UNASSIGNED
 import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import kotlin.math.absoluteValue
@@ -22,6 +24,7 @@ enum class ABExperimentOption {
   FUZZY_FILE_SEARCH,
   SHOW_TRIAL_SURVEY,
   NEW_USERS_ONBOARDING,
+  TYPESCRIPT_SERVICE_TYPES,
 
   /**
    * A group for users which are not assigned to any experiment.
@@ -57,6 +60,13 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
   //  controlBuckets = (128 until 256).toSet(),
   //  majorVersion = "2025.2"
   //),
+  ExperimentAssignment(
+    experiment = TYPESCRIPT_SERVICE_TYPES,
+    experimentBuckets = (0 until 512).toSet(),
+    controlBuckets = (512 until 1024).toSet(),
+    majorVersion = "2025.3 EAP",
+    products = EnumSet.of(IntelliJPlatformProduct.WEBSTORM),
+  ),
   // the rest belongs to the "unassigned" experiment
 )
 
@@ -120,11 +130,15 @@ private val LOG = logger<ABExperimentOption>()
  * There is no need to list all available products. Add if a product-specific experiment is needed.
  */
 internal enum class IntelliJPlatformProduct {
+  WEBSTORM,
   OTHER,
   ;
 
   companion object {
     fun get(): IntelliJPlatformProduct =
-      OTHER
+      when {
+        PlatformUtils.isWebStorm() -> WEBSTORM
+        else -> OTHER
+      }
   }
 }
