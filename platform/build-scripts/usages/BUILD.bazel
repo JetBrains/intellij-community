@@ -15,7 +15,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "@lib//:kaml",
     "@community//build:zip",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:kotlinx-coroutines-core",
     "//jps/model-api:model",
     "//jps/model-serialization",

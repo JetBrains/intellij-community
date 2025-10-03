@@ -35,7 +35,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/diagnostic",
     "//platform/util/coroutines",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "//platform/workspace/storage",
     "//platform/backend/observation",
   ]

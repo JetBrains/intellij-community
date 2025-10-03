@@ -11,7 +11,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util:util-ui",
     "@lib//:kotlin-stdlib",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
   ]
 )
 ### auto-generated section `build intellij.platform.core.ui` end

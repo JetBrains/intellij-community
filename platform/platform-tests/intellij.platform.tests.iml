@@ -121,7 +121,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.ui.inspector" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.progress.tests" scope="TEST" />
     <orderEntry type="library" name="jsvg" level="project" />
-    <orderEntry type="library" scope="TEST" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />

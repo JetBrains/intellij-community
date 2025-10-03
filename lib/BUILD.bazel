@@ -2060,13 +2060,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "hash4j",
-  jar = "@com_dynatrace_hash4j-hash4j-0_26_0_http//file",
-  source_jar = "@com_dynatrace_hash4j-hash4j-0_26_0_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "hdr_histogram",
   jar = "@org_hdrhistogram-HdrHistogram-2_2_2_http//file",
   source_jar = "@org_hdrhistogram-HdrHistogram-2_2_2_http//file",
@@ -5153,6 +5146,13 @@ jvm_import(
   name = "libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers",
   jar = "@com_github_seregamorph-hamcrest-more-matchers-0_1_http//file",
   source_jar = "@com_github_seregamorph-hamcrest-more-matchers-0_1_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-hash4j-hash4j",
+  jar = "@com_dynatrace_hash4j-hash4j-0_26_0_http//file",
+  source_jar = "@com_dynatrace_hash4j-hash4j-0_26_0_http//file",
   visibility = ["//visibility:public"]
 )
 

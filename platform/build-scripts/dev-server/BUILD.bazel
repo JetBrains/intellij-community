@@ -25,7 +25,7 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "//platform/util/rt-java8",
     "@lib//:fastutil-min",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "//platform/diagnostic/telemetry.exporters",
     "//platform/util/coroutines",
     "//platform/util/zip",

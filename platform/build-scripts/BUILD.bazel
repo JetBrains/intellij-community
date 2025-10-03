@@ -73,7 +73,7 @@ jvm_library(
     "@lib//:jsoup",
     "@lib//:asm",
     "@lib//:platform-build_scripts-spdx-tools-java",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:jbr-api",
     "@lib//:kotlinx-serialization-protobuf",
     "@lib//:jackson-dataformat-yaml",

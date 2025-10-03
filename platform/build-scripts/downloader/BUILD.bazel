@@ -20,7 +20,7 @@ jvm_library(
     "@lib//:opentelemetry-extension-kotlin",
     "@lib//:ktor-client-okhttp",
     "@lib//:okhttp",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "//libraries/ktor/client",
     "//libraries/ktor/io",
   ]

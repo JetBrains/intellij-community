@@ -32,7 +32,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//jps/model-serialization",
     "//plugins/devkit/runtimeModuleRepository/generator",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
   ]
 )
 
@@ -53,7 +53,7 @@ jvm_library(
     "//jps/jps-builders:build-tests_test_lib",
     "//jps/model-serialization",
     "//plugins/devkit/runtimeModuleRepository/generator",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
   ]
 )
 ### auto-generated section `build intellij.devkit.runtimeModuleRepository.jps` end

@@ -46,7 +46,7 @@ jvm_library(
     "@lib//:miglayout-swing",
     "//libraries/kotlinx/serialization/json",
     "@lib//:fastutil-min",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:gson",
     "//libraries/kotlinx/serialization/core",
     "@lib//:kotlin-reflect",

@@ -40,7 +40,7 @@ jvm_library(
     "@lib//:aalto-xml",
     "//platform/util/xmlDom",
     "//platform/util/jdom",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/diagnostic/telemetry",

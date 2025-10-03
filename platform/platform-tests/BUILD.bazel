@@ -140,7 +140,7 @@ jvm_library(
     "//platform/platform-impl/ui-inspector:ide-ui-inspector",
     "//platform/util/progress:progress-tests_test_lib",
     "@lib//:jsvg",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "//java/java-impl:impl",
     "//platform/platform-impl/internal",
     "//platform/util/storages",

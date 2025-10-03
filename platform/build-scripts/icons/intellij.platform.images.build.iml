@@ -48,7 +48,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="library" name="jetbrains.intellij.deps.eclipse.jgit" level="project" />
   </component>
 </module>

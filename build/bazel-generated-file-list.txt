@@ -350,6 +350,7 @@ libraries/grpc-netty-shaded
 libraries/guava
 libraries/hamcrest
 libraries/hamcrest-more-matchers
+libraries/hash4j
 libraries/io
 libraries/junit4
 libraries/junit5

@@ -7,5 +7,6 @@
     <module name="intellij.libraries.kotlinx.serialization.json" loading="embedded"/>
 
     <module name="intellij.libraries.guava" loading="embedded"/>
+    <module name="intellij.libraries.hash4j" loading="embedded"/>
   </content>
 </idea-plugin>

@@ -48,7 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="library" scope="RUNTIME" name="xz" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />

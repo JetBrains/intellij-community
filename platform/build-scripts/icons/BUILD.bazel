@@ -32,7 +32,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/util/zip",
     "@lib//:platform-images-build-pngencoder",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:jetbrains-intellij-deps-eclipse-jgit",
     ":platform_util_xmlDom_provided",
   ],
@@ -68,7 +68,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/util/zip",
     "@lib//:platform-images-build-pngencoder",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:jetbrains-intellij-deps-eclipse-jgit",
   ]
 )

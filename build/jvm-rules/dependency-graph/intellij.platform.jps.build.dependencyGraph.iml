@@ -29,7 +29,7 @@
     <orderEntry type="library" name="kotlin-metadata" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
-    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
   </component>

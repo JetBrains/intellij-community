@@ -50,7 +50,7 @@ jvm_library(
     "//python/python-parser:parser",
     "//python/python-syntax-core:syntax-core",
     "//python/impl.helperLocator:community-helpersLocator",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
   ],
   exports = ["//python/python-syntax-core:syntax-core"]
 )

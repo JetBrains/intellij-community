@@ -37,7 +37,7 @@ jvm_library(
     "//platform/util-ex",
     "@community//build:zip",
     "@lib//:netty-buffer",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:fastutil-min",
     "@lib//:maven-resolver-provider",
     "//libraries/mockito",

@@ -186,7 +186,7 @@ jvm_library(
     "@lib//:jbr-api",
     "@lib//:jsvg",
     "//platform/util/rt-java8",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:kotlinx-coroutines-core",
     "//platform/diagnostic",
     "//libraries/kotlinx/serialization/core",

@@ -2723,20 +2723,6 @@ http_file(
 )
 
 http_file(
-  name = "com_dynatrace_hash4j-hash4j-0_26_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.26.0/hash4j-0.26.0.jar",
-  sha256 = "47c319c7015d31df78c17962c4008861f8630f383d12275cf7abd09f6a804c43",
-  downloaded_file_path = "hash4j-0.26.0.jar"
-)
-
-http_file(
-  name = "com_dynatrace_hash4j-hash4j-0_26_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.26.0/hash4j-0.26.0-sources.jar",
-  sha256 = "c101d3ddb83b3ddac9d20097cfa3df498ea9b77017b3c69c1d40527607e503fe",
-  downloaded_file_path = "hash4j-0.26.0-sources.jar"
-)
-
-http_file(
   name = "org_hdrhistogram-HdrHistogram-2_2_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/hdrhistogram/HdrHistogram/2.2.2/HdrHistogram-2.2.2.jar",
   sha256 = "22d1d4316c4ec13a68b559e98c8256d69071593731da96136640f864fa14fad8",
@@ -7424,6 +7410,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/seregamorph/hamcrest-more-matchers/0.1/hamcrest-more-matchers-0.1-sources.jar",
   sha256 = "288966e91a2383888ae5e68dde67991daf8cef90959870f75f090b9dd310c9ac",
   downloaded_file_path = "hamcrest-more-matchers-0.1-sources.jar"
+)
+
+http_file(
+  name = "com_dynatrace_hash4j-hash4j-0_26_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.26.0/hash4j-0.26.0.jar",
+  sha256 = "47c319c7015d31df78c17962c4008861f8630f383d12275cf7abd09f6a804c43",
+  downloaded_file_path = "hash4j-0.26.0.jar"
+)
+
+http_file(
+  name = "com_dynatrace_hash4j-hash4j-0_26_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/dynatrace/hash4j/hash4j/0.26.0/hash4j-0.26.0-sources.jar",
+  sha256 = "c101d3ddb83b3ddac9d20097cfa3df498ea9b77017b3c69c1d40527607e503fe",
+  downloaded_file_path = "hash4j-0.26.0-sources.jar"
 )
 
 http_file(

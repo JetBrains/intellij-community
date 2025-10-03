@@ -69,7 +69,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:kotlin-reflect",
     "//libraries/kotlinx/serialization/core",
     "//platform/statistics/testFramework",

@@ -71,7 +71,7 @@ jvm_library(
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/backend/workspace",
     "//platform/backend/observation",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "@lib//:fastutil-min",
     "//platform/platform-impl/ui",
     "//java/debugger/shared",

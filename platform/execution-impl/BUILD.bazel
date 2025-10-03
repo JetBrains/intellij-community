@@ -53,7 +53,7 @@ jvm_library(
     "//platform/workspace/storage",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jna",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/diagnostic",

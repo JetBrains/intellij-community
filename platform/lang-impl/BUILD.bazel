@@ -102,7 +102,7 @@ jvm_library(
     "@lib//:jsoup",
     "//platform/backend/workspace",
     "//platform/diagnostic",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:kotlinx-serialization-protobuf",
     "//libraries/kotlinx/serialization/core",

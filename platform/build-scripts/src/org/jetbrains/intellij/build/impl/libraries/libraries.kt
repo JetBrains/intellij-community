@@ -39,5 +39,7 @@ private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
   "intellij.libraries.coil",
   "intellij.libraries.testng",
   "intellij.libraries.dokka",
+  "intellij.libraries.guava",
+  "intellij.libraries.hash4j",
   "intellij.libraries.xerces",
 )
