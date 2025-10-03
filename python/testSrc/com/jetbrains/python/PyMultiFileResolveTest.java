@@ -623,7 +623,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final String testDir = getTestName(true);
     runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
       runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
-        assertResolvesTo(PyFunction.class, "func");
+        PsiFile file = myFixture.configureByFile(testDir + "/ImportOfNestedBinarySubModule.py");
+        assertResolveResult(doResolve(file), PyFunction.class, "func", null);
       });
     });
   }
