@@ -12,6 +12,7 @@ import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
+import com.intellij.driver.sdk.ui.xQuery
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JLabel
@@ -23,7 +24,7 @@ fun WelcomeScreenUI.pluginsPage(action: PluginsSettingsPageUiComponent.() -> Uni
   onPluginsPage().apply(action)
 
 private fun Finder.onPluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
-  x("//div[@class='ListPluginComponent']/ancestor::div[.//div[@accessiblename='Installed' and @javaclass='javax.swing.JLabel']][1]", PluginsSettingsPageUiComponent::class.java).apply(action)
+  x("${xQuery { byType("com.intellij.ide.plugins.newui.PluginSearchTextField") }}/ancestor::div[.//div[@accessiblename='Installed' and @javaclass='javax.swing.JLabel']][1]", PluginsSettingsPageUiComponent::class.java).apply(action)
 
 class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   val searchPluginTextField = textField { byAccessibleName("Search plugins") }
@@ -77,5 +78,6 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val disableButton = x { and(byType(JButton::class.java), byAccessibleName("Disable")) }
     val enableButton = x { and(byType(JButton::class.java), byAccessibleName("Enable")) }
     val arrowButton = x { byType($$"com.intellij.ui.components.BasicOptionButtonUI$ArrowButton")}
+    val restartIdeButton = x { byAccessibleName("Restart IDE") }
   }
 }
