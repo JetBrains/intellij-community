@@ -83,18 +83,6 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
     }
 
     companion object {
-        @ApiStatus.ScheduledForRemoval
-        @Deprecated(
-            "Use 'KotlinMainFunctionDetector.findMainOwner()' instead",
-            ReplaceWith(
-                "KotlinMainFunctionDetector.getInstance().findMainOwner(locationElement)",
-                "org.jetbrains.kotlin.idea.base.lineMarkers.run.KotlinMainFunctionDetector",
-                "org.jetbrains.kotlin.idea.base.lineMarkers.run.findMainOwner"
-            )
-        )
-        fun getEntryPointContainer(locationElement: PsiElement): KtDeclarationContainer? {
-            return KotlinMainFunctionDetector.getInstance().findMainOwner(locationElement)
-        }
 
         @Deprecated(
             "Use 'getStartClassFqName() instead",

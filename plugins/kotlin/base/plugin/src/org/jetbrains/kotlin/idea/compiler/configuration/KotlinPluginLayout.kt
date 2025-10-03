@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.testFramework.TestKotlinArtifactsProvider
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.ServiceLoader
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.exists
 
@@ -62,12 +62,6 @@ enum class KotlinPluginLayoutMode {
 }
 
 object KotlinPluginLayout {
-    @get:ApiStatus.ScheduledForRemoval
-    @Deprecated("Use 'KotlinPluginLayout' directly", ReplaceWith("KotlinPluginLayout"))
-    @get:Deprecated("Use 'KotlinPluginLayout' directly", ReplaceWith("KotlinPluginLayout"))
-    @JvmStatic
-    val instance: KotlinPluginLayout
-        get() = KotlinPluginLayout
 
     /**
      * Directory with the bundled Kotlin compiler distribution. Includes the compiler itself and a set of compiler plugins
