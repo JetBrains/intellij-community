@@ -807,6 +807,21 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="DevKit.lang.LockReqAnalyzer"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzer"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.LockReqDetector"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockReqDetector"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.LockReqPsiOps"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.cancellationCheckProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
@@ -950,3 +965,5 @@
     </action>
   </actions>
 </idea-plugin>
+
+

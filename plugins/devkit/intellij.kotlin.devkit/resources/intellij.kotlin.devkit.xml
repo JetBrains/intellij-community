@@ -102,7 +102,7 @@
   <extensions defaultExtensionNs="DevKit.lang">
     <LockReqAnalyzer
       language="kotlin"
-      implementationClass="org.jetbrains.idea.devkit.kotlin.threadingModelHelper.KtLockReqAnalyzer"/>
+      implementationClass="org.jetbrains.idea.devkit.kotlin.threadingModelHelper.KtLockReqAnalyzerBFS"/>
     <LockReqDetector
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.threadingModelHelper.KtLockReqDetector"/>
