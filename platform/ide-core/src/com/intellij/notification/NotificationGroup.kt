@@ -136,13 +136,6 @@ class NotificationGroup private constructor(val displayId: String,
       ?: NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId)
 
     @JvmStatic
-    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
-    @ApiStatus.ScheduledForRemoval
-    fun toolWindowGroup(displayId: String, toolWindowId: String, logByDefault: Boolean, pluginId: PluginId): NotificationGroup =
-      findRegisteredNotificationGroup(displayId)
-      ?: NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId, pluginId = pluginId, registerGroup = true)
-
-    @JvmStatic
     @Deprecated("Use `<notificationGroup>` extension point to register notification groups")
     @ApiStatus.ScheduledForRemoval
     fun createIdWithTitle(displayId: String, @NotificationTitle title: String): String {

@@ -19,7 +19,6 @@ import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator
-import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -74,11 +73,6 @@ class EditorWindow internal constructor(
   companion object {
     @JvmField
     val DATA_KEY: DataKey<EditorWindow> = DataKey.create("editorWindow")
-
-    @JvmField
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use SINGLETON_EDITOR_IN_WINDOW instead")
-    val HIDE_TABS: Key<Boolean> = FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW
 
     // Metadata to support editor tab drag&drop process: initial index
     internal val DRAG_START_INDEX_KEY: Key<Int> = KeyWithDefaultValue.create("drag start editor index", -1)
@@ -155,13 +149,6 @@ class EditorWindow internal constructor(
 
   val selectedComposite: EditorComposite?
     get() = currentCompositeFlow.value
-
-  @Suppress("DEPRECATION")
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use getSelectedComposite", ReplaceWith("getSelectedComposite(ignorePopup)"), level = DeprecationLevel.ERROR)
-  fun getSelectedEditor(@Suppress("UNUSED_PARAMETER") ignorePopup: Boolean): EditorWithProviderComposite? {
-    return selectedComposite as EditorWithProviderComposite?
-  }
 
   // used externally
   /**

@@ -259,7 +259,6 @@ c:com.intellij.execution.process.KillableProcessHandler
 - shouldKillProcessSoftly():Z
 f:com.intellij.execution.process.LocalPtyOptions
 - sf:Companion:com.intellij.execution.process.LocalPtyOptions$Companion
-- sf:DEFAULT:com.intellij.execution.process.LocalPtyOptions
 - f:builder():com.intellij.execution.process.LocalPtyOptions$Builder
 - sf:defaults():com.intellij.execution.process.LocalPtyOptions
 - f:getConsoleMode():Z

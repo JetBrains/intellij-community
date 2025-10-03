@@ -155,16 +155,6 @@ object ExecUtil {
     else "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
 
   @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(
-    "It is an oversimplified quoting. Prefer CommandLineUtil.posixQuote instead.",
-    ReplaceWith("CommandLineUtil.posixQuote(arg)", "com.intellij.execution.CommandLineUtil.posixQuote"),
-    level = DeprecationLevel.ERROR
-  )
-  @JvmStatic
-  fun escapeUnixShellArgument(arg: String): String = "'${arg.replace("'", "'\"'\"'")}'"
-
-  @ApiStatus.Internal
   @JvmStatic
   fun hasTerminalApp(): Boolean = OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || hasSupportedTerminals.value
 

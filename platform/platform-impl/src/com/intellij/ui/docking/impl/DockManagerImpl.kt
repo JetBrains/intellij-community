@@ -80,13 +80,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
                                           imports = ["com.intellij.openapi.fileEditor.FileEditorManagerKeys"]))
     val WINDOW_DIMENSION_KEY: Key<String> = FileEditorManagerKeys.WINDOW_DIMENSION_KEY
 
-    @JvmField
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Prefer using FileEditorManagerKeys.REOPEN_WINDOW",
-                replaceWith = ReplaceWith("FileEditorManagerKeys.REOPEN_WINDOW",
-                                          imports = ["com.intellij.openapi.fileEditor.FileEditorManagerKeys"]))
-    val REOPEN_WINDOW: Key<Boolean> = FileEditorManagerKeys.REOPEN_WINDOW
-
     private fun getWindowDimensionKey(content: DockableContent<*>): String? {
       return if (content is DockableEditor) getWindowDimensionKey(content.file) else null
     }

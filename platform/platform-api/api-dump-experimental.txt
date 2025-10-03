@@ -190,9 +190,6 @@ f:com.intellij.openapi.observable.util.PropertyOperationUtil
 - a:createOptionEditor(java.lang.Object):com.intellij.openapi.options.OptionEditor
 - s:forOptions(java.lang.Object):com.intellij.openapi.options.OptionEditor
 *f:com.intellij.openapi.progress.TasksKt
-- sf:runBlockingModal(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2):java.lang.Object
-- sf:runBlockingModal(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):java.lang.Object
-- bs:runBlockingModal$default(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
 - sf:runBlockingModalWithRawProgressReporter(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2):java.lang.Object
 - sf:runBlockingModalWithRawProgressReporter(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):java.lang.Object
 - bs:runBlockingModalWithRawProgressReporter$default(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,I,java.lang.Object):java.lang.Object
@@ -204,8 +201,6 @@ f:com.intellij.openapi.observable.util.PropertyOperationUtil
 - sf:withBackgroundProgress(com.intellij.openapi.project.Project,java.lang.String,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withBackgroundProgressIndicator(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withBackgroundProgressIndicator(com.intellij.openapi.project.Project,java.lang.String,Z,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- sf:withModalProgress(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- sf:withModalProgress(com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - sf:withModalProgressIndicator(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 *c:com.intellij.openapi.ui.BrowseFolderRunnable
 - java.lang.Runnable

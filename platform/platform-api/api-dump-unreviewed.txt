@@ -6630,7 +6630,6 @@ c:com.intellij.ui.components.JBList
 - removeNotify():V
 - repaint(J,I,I,I,I):V
 - setCellRenderer(javax.swing.ListCellRenderer):V
-- setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
 - setDropTargetIndex(I):V
 - setEmptyText(java.lang.String):V
 - setExpandableItemsEnabled(Z):V
@@ -8707,7 +8706,6 @@ a:com.intellij.ui.treeStructure.SimpleNode
 - isAlwaysLeaf():Z
 - isAlwaysShowPlus():Z
 - isAutoExpandNode():Z
-- f:setPlainText(java.lang.String):V
 - shouldHaveSeparator():Z
 - p:update(com.intellij.ide.projectView.PresentationData):V
 - p:updateElement():java.lang.Object

@@ -289,7 +289,6 @@ f:com.intellij.openapi.application.impl.AWTExceptionHandler
 c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - com.intellij.openapi.components.PersistentStateComponent
 - sf:BLINKING_RANGE:com.intellij.ide.ui.UINumericRange
-- sf:PROP_BREADCRUMBS_PER_LANGUAGE:java.lang.String
 - sf:PROP_DOC_COMMENT_RENDERING:java.lang.String
 - sf:STRIP_TRAILING_SPACES_CHANGED:java.lang.String
 - sf:STRIP_TRAILING_SPACES_NONE:java.lang.String

@@ -1489,7 +1489,6 @@ f:com.intellij.ide.IdeTooltipManager
 - <init>(kotlinx.coroutines.CoroutineScope):V
 - f:cancelAutoHide():V
 - dispose():V
-- f:getBorderColor(Z):java.awt.Color
 - f:getCustomTooltip(javax.swing.JComponent):com.intellij.ide.IdeTooltip
 - sf:getInstance():com.intellij.ide.IdeTooltipManager
 - f:getLinkForeground(Z):java.awt.Color
@@ -3840,7 +3839,6 @@ f:com.intellij.ide.ui.customization.CustomisedActionGroup
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.ide.ui.customization.CustomActionsSchema,java.lang.String,java.lang.String):V
 - equals(java.lang.Object):Z
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- getOrigin():com.intellij.openapi.actionSystem.ActionGroup
 - hashCode():I
 - resetChildren():V
 a:com.intellij.ide.ui.customization.CustomizableActionGroupProvider
@@ -7582,7 +7580,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorTabbedContainer
 f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - sf:Companion:com.intellij.openapi.fileEditor.impl.EditorWindow$Companion
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
-- sf:HIDE_TABS:com.intellij.openapi.util.Key
 - f:changeOrientation():V
 - f:closeAllExcept(com.intellij.openapi.vfs.VirtualFile):V
 - f:closeFile(com.intellij.openapi.vfs.VirtualFile):V
@@ -7603,7 +7600,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:getSelectedComposite():com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:getSelectedComposite(Z):com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:getSelectedEditor():com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite
-- f:getSelectedEditor(Z):com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite
 - f:getSelectedFile():com.intellij.openapi.vfs.VirtualFile
 - f:getSize():java.awt.Dimension
 - f:getTabCount():I
@@ -7657,7 +7653,6 @@ c:com.intellij.openapi.fileEditor.impl.EditorsSplitters
 - f:getWindows():com.intellij.openapi.fileEditor.impl.EditorWindow[]
 - f:isEmptyVisible():Z
 - isFloating():Z
-- f:openFilesAsync():kotlinx.coroutines.Job
 - f:openFilesAsync(Z):kotlinx.coroutines.Job
 - f:openInRightSplit(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:openInRightSplit(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.impl.EditorWindow
@@ -9563,9 +9558,7 @@ c:com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 - findFileByPathIfCached(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - getArchiveCrcHashes(com.intellij.openapi.vfs.VirtualFile):java.util.Map
 - p:getHandler(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.impl.ZipHandlerBase
-- getMirroredFile(com.intellij.openapi.vfs.VirtualFile):java.io.File
 - getProtocol():java.lang.String
-- isMakeCopyOfJar(java.io.File):Z
 - markDirtyAndRefreshVirtualFileDeepInsideJarForTest(com.intellij.openapi.vfs.VirtualFile):V
 - p:normalize(java.lang.String):java.lang.String
 - refresh(Z):V

@@ -583,7 +583,6 @@ f:com.intellij.notification.NotificationGroup
 - f:setParentId(java.lang.String):com.intellij.notification.NotificationGroup
 - sf:toolWindowGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - sf:toolWindowGroup(java.lang.String,java.lang.String,Z):com.intellij.notification.NotificationGroup
-- sf:toolWindowGroup(java.lang.String,java.lang.String,Z,com.intellij.openapi.extensions.PluginId):com.intellij.notification.NotificationGroup
 f:com.intellij.notification.NotificationGroup$Companion
 - f:balloonGroup(java.lang.String):com.intellij.notification.NotificationGroup
 - f:balloonGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
@@ -597,7 +596,6 @@ f:com.intellij.notification.NotificationGroup$Companion
 - f:logOnlyGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - f:toolWindowGroup(java.lang.String,java.lang.String):com.intellij.notification.NotificationGroup
 - f:toolWindowGroup(java.lang.String,java.lang.String,Z):com.intellij.notification.NotificationGroup
-- f:toolWindowGroup(java.lang.String,java.lang.String,Z,com.intellij.openapi.extensions.PluginId):com.intellij.notification.NotificationGroup
 - bs:toolWindowGroup$default(com.intellij.notification.NotificationGroup$Companion,java.lang.String,java.lang.String,Z,I,java.lang.Object):com.intellij.notification.NotificationGroup
 a:com.intellij.notification.NotificationListener$Adapter
 - com.intellij.notification.NotificationListener
@@ -1487,7 +1485,6 @@ a:com.intellij.openapi.vfs.JarFileSystem
 - getJarRootForLocalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getLocalVirtualFileFor(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getVirtualFileForJar(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
-- setNoCopyJarForPath(java.lang.String):V
 f:com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile
 - com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
 - sf:INSTANCE:com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile
@@ -2057,7 +2054,6 @@ c:com.intellij.util.ui.update.UiNotifyConnector
 - java.awt.event.HierarchyListener
 - sf:Companion:com.intellij.util.ui.update.UiNotifyConnector$Companion
 - <init>(java.awt.Component,com.intellij.util.ui.update.Activatable):V
-- <init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):V
 - p:<init>(java.awt.Component,com.intellij.util.ui.update.Activatable,Z,java.lang.Object):V
 - dispose():V
 - sf:doWhenFirstShown(java.awt.Component,java.lang.Runnable):V
