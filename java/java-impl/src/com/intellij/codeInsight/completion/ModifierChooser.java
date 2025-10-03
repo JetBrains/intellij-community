@@ -34,15 +34,6 @@ public final class ModifierChooser {
     }
   }
 
-  private static final ArrayOfModifiers[] CLASS_MODIFIERS = {
-    new ArrayOfModifiers(new String[]{JavaKeywords.PUBLIC}),
-    new ArrayOfModifiers(new String[]{JavaKeywords.FINAL, JavaKeywords.ABSTRACT})
-  };
-
-  private static final String[] CLASS_MODIFIERS_WITH_SEALED = {
-    JavaKeywords.PUBLIC, JavaKeywords.FINAL, JavaKeywords.SEALED, JavaKeywords.NON_SEALED, JavaKeywords.ABSTRACT
-  };
-
   private static final ArrayOfModifiers[] CLASS_MEMBER_MODIFIERS = {
     new ArrayOfModifiers(new String[]{JavaKeywords.PUBLIC, JavaKeywords.PROTECTED, JavaKeywords.PRIVATE}),
     new ArrayOfModifiers(new String[]{JavaKeywords.STATIC}),
@@ -95,47 +86,6 @@ public final class ModifierChooser {
       if (scope instanceof PsiDirectory) break;
     }
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
-  }
-
-  /**
-   * @deprecated: it is not used.
-   */
-  @Deprecated(forRemoval = true)
-  public static String[] addClassModifiers(PsiModifierList list, @NotNull PsiElement scope) {
-    if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, scope)) {
-      if (list == null) {
-        return CLASS_MODIFIERS_WITH_SEALED.clone();
-      }
-      else {
-        final List<String> ret = new ArrayList<>();
-        addIfNotPresent(PsiModifier.PUBLIC, list, ret);
-        if (!list.hasModifierProperty(PsiModifier.FINAL)) {
-          boolean hasNonSealed = list.hasModifierProperty(PsiModifier.NON_SEALED);
-          boolean hasSealed = list.hasModifierProperty(PsiModifier.SEALED);
-          if (!hasNonSealed) {
-            addIfNotPresent(PsiModifier.SEALED, list, ret);
-          }
-          if (!hasSealed) {
-            addIfNotPresent(PsiModifier.NON_SEALED, list, ret);
-          }
-          boolean hasAbstract = list.hasModifierProperty(PsiModifier.ABSTRACT);
-          if (!hasAbstract) {
-            ret.add(PsiModifier.ABSTRACT);
-            if (!hasNonSealed && !hasSealed) {
-              ret.add(PsiModifier.FINAL);
-            }
-          }
-        }
-        return ArrayUtilRt.toStringArray(ret);
-      }
-    }
-    return addKeywords(list, CLASS_MODIFIERS, scope);
-  }
-
-  private static void addIfNotPresent(String modifier, PsiModifierList list, List<String> ret) {
-    if (!list.hasModifierProperty(modifier)) {
-      ret.add(modifier);
-    }
   }
 
   private static String[] addJavaFileMemberModifiers(@Nullable PsiModifierList list, @NotNull PsiElement position) {

@@ -456,14 +456,6 @@ public final class ModuleStructureConfigurable extends BaseStructureConfigurable
     return ModuleGrouper.instanceFor(myProject, myContext.myModulesConfigurator.getModuleModel());
   }
 
-  /**
-   * @deprecated use {@link ProjectStructureConfigurable#getModulesConfig()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static ModuleStructureConfigurable getInstance(final Project project) {
-    return ProjectStructureConfigurable.getInstance(project).getModulesConfig();
-  }
-
   public Project getProject() {
     return myProject;
   }

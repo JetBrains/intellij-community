@@ -205,15 +205,6 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   /**
-   * @see #getDisplayName()
-   * @deprecated better use {@link Breakpoint#getDisplayName()}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull @Nls String getDescription() {
-    return getDisplayName();
-  }
-
-  /**
    * Description lines of Java-specific breakpoint properties, XML formatted.
    */
   public List<@Nls String> getPropertyXMLDescriptions() {
