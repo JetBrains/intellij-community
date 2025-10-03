@@ -281,6 +281,10 @@ class TerminalViewImpl(
     }
   }
 
+  override fun getCurrentDirectory(): String {
+    return sessionModel.terminalState.value.currentDirectory
+  }
+
   override fun addTerminationCallback(parentDisposable: Disposable, callback: () -> Unit) {
     controller.addTerminationCallback(callback, parentDisposable)
   }

@@ -24,5 +24,7 @@ interface TerminalView {
 
   suspend fun hasChildProcesses(): Boolean
 
+  fun getCurrentDirectory(): String?
+
   // todo
 }

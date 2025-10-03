@@ -16,17 +16,20 @@ internal class TerminalToolWindowSplitContentProvider : ToolWindowSplitContentPr
     val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SPLIT_TOOLWINDOW)
 
     return if (shouldUseReworkedTerminal()) {
-      createReworkedTerminalContent(project, fusInfo)
+      createReworkedTerminalContent(project, content, fusInfo)
     }
     else {
       createClassicTerminalContent(project, content)
     }
   }
 
-  private fun createReworkedTerminalContent(project: Project, fusInfo: TerminalStartupFusInfo): Content {
-    // todo: determine the current directory of the existing terminal tab
-    return TerminalToolWindowTabsManager.getInstance(project)
-      .createTabBuilder()
+  private fun createReworkedTerminalContent(project: Project, content: Content, fusInfo: TerminalStartupFusInfo): Content {
+    val manager = TerminalToolWindowTabsManager.getInstance(project)
+    val originalView = manager.tabs.find { it.content == content }?.view
+    val currentDirectory = originalView?.getCurrentDirectory()
+
+    return manager.createTabBuilder()
+      .workingDirectory(currentDirectory)
       .shouldAddToToolWindow(false)
       .startupFusInfo(fusInfo)
       .createTab()
