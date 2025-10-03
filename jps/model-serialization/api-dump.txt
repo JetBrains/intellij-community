@@ -119,7 +119,6 @@ a:org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer
 - p:<init>(org.jetbrains.jps.model.module.JpsModuleType,java.lang.String,java.lang.String):V
 - getComponentName():java.lang.String
 - a:loadProperties(org.jdom.Element):org.jetbrains.jps.model.JpsElement
-- saveProperties(org.jetbrains.jps.model.JpsElement,org.jdom.Element):V
 f:org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootDummyPropertiesSerializer
 - org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 - <init>(org.jetbrains.jps.model.module.JpsModuleSourceRootType,java.lang.String):V
