@@ -7,7 +7,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.lang.UrlUtilRt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -339,18 +338,6 @@ public final class URLUtil {
     }
     catch (URISyntaxException e) {
       return path;
-    }
-  }
-
-  /** @deprecated unused; inline if needed */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static String encodeQuery(String query) {
-    try {
-      return new URI(null, null, null, query, null).toASCIIString().substring(1);
-    }
-    catch (URISyntaxException e) {
-      return query;
     }
   }
 

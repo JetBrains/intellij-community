@@ -2887,7 +2887,6 @@ f:com.intellij.ui.awt.RelativeRectangle
 - <init>(java.awt.event.MouseEvent,java.awt.Dimension):V
 - <init>(javax.swing.JComponent):V
 - contains(com.intellij.ui.awt.DevicePoint):Z
-- contains(com.intellij.ui.awt.RelativePoint):Z
 - s:fromScreen(javax.swing.JComponent,java.awt.Rectangle):com.intellij.ui.awt.RelativeRectangle
 - getComponent():java.awt.Component
 - getDimension():java.awt.Dimension
@@ -3365,9 +3364,6 @@ f:com.intellij.ui.scale.ScaleContext
 - hashCode():I
 - setScale(com.intellij.ui.scale.Scale):Z
 - update():Z
-c:com.intellij.ui.scale.ScaleContext$Cache
-- com.intellij.ui.scale.ScaleContextCache
-- <init>(java.util.function.Function):V
 f:com.intellij.ui.scale.ScaleContext$Companion
 - f:create():com.intellij.ui.scale.ScaleContext
 - f:create(com.intellij.ui.scale.Scale):com.intellij.ui.scale.ScaleContext
@@ -3489,14 +3485,6 @@ f:com.intellij.util.ImageLoader
 - sf:scaleImage(java.awt.Image,D):java.awt.Image
 - sf:scaleImage(java.awt.Image,I):java.awt.Image
 - sf:scaleImage(java.awt.Image,I,I):java.awt.Image
-f:com.intellij.util.ImageLoader$Dimension2DDouble
-- <init>(D,D):V
-- f:getHeight():D
-- f:getWidth():D
-- f:setHeight(D):V
-- f:setSize(D,D):V
-- f:setSize(com.intellij.util.ImageLoader$Dimension2DDouble):V
-- f:setWidth(D):V
 f:com.intellij.util.RetinaImage
 - <init>():V
 - s:create(java.awt.GraphicsConfiguration,D,D,I,com.intellij.ui.paint.PaintUtil$RoundingMode):java.awt.image.BufferedImage

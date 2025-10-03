@@ -4150,7 +4150,6 @@ c:com.intellij.util.io.IntInlineKeyDescriptor
 - toInt(java.lang.Integer):I
 f:com.intellij.util.io.IoKt
 - sf:decodeBase64(java.lang.String):B[]
-- sf:encodeUrlQueryParameter(java.lang.String):java.lang.String
 - sf:readCharSequence(java.io.Reader,I):java.lang.CharSequence
 - sf:toByteArray(java.nio.ByteBuffer,Z):B[]
 - bs:toByteArray$default(java.nio.ByteBuffer,Z,I,java.lang.Object):B[]
@@ -4322,7 +4321,6 @@ f:com.intellij.util.io.URLUtil
 - s:containsScheme(java.lang.String):Z
 - s:decode(java.lang.String):java.lang.String
 - s:encodePath(java.lang.String):java.lang.String
-- s:encodeQuery(java.lang.String):java.lang.String
 - s:encodeURIComponent(java.lang.String):java.lang.String
 - s:extractPath(java.lang.String):java.lang.String
 - s:findUrl(java.lang.CharSequence,I,I):com.intellij.openapi.util.TextRange

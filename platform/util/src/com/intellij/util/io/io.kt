@@ -11,7 +11,6 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.io.Reader
 import java.net.SocketTimeoutException
-import java.net.URLEncoder
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.math.min
@@ -50,11 +49,6 @@ fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
   get(bytes)
   return bytes
 }
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use URLEncoder.encode()")
-@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
-inline fun String.encodeUrlQueryParameter(): String = URLEncoder.encode(this, Charsets.UTF_8.name())!!
 
 @Deprecated("Use java.util.Base64.getDecoder().decode()")
 @Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")

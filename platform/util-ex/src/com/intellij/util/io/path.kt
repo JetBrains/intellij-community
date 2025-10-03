@@ -10,14 +10,14 @@ import java.nio.channels.Channels
 import java.nio.charset.Charset
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.FileTime
 import java.util.*
-import kotlin.io.path.*
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
+import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
-import kotlin.io.path.readBytes
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 
 /** See [NioFiles.createDirectories]. */
@@ -191,13 +191,6 @@ fun generateRandomPath(parentDirectory: Path): Path {
   return path
 }
 
-//<editor-fold desc="Deprecated stuff.">
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Use kotlin.io.path.readText", level = DeprecationLevel.ERROR)
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Throws(IOException::class)
-fun Path.readBytes(): ByteArray = readBytes()
-
 @Deprecated(message = "Use kotlin.io.path.readText", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Throws(IOException::class)
@@ -215,16 +208,6 @@ fun Path.isDirectory(): Boolean = isDirectory()
 @Suppress("DeprecatedCallableAddReplaceWith")
 fun Path.isFile(): Boolean = isRegularFile()
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Use kotlin.io.path.fileSize", level = DeprecationLevel.ERROR)
-@Suppress("DeprecatedCallableAddReplaceWith")
-fun Path.size(): Long = fileSize()
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Use kotlin.io.path.getLastModifiedTime", level = DeprecationLevel.ERROR)
-@Suppress("DeprecatedCallableAddReplaceWith")
-fun Path.lastModified(): FileTime = getLastModifiedTime()
-
 @Deprecated(message = "Trivial, just inline", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith")
 fun Path.isAncestor(child: Path): Boolean = child.startsWith(this)
@@ -233,16 +216,6 @@ fun Path.isAncestor(child: Path): Boolean = child.startsWith(this)
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Throws(IOException::class)
 fun Path.inputStream(): InputStream = inputStream()
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Trivial, just inline", ReplaceWith("resolve(relativePath).write(data.toByteArray())"), level = DeprecationLevel.ERROR)
-@Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: String): Path = resolve(relativePath).write(data.toByteArray())
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Use `kotlin.io.path.createSymbolicLinkPointingTo` with `com.intellij.util.io.createParentDirectories`", level = DeprecationLevel.ERROR)
-@Suppress("DeprecatedCallableAddReplaceWith")
-fun Path.createSymbolicLink(target: Path): Path = this.createParentDirectories().createSymbolicLinkPointingTo(target)
 
 @Deprecated(message = "Use `kotlin.io.path.createFile` with `com.intellij.util.io.createParentDirectories`", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith")

@@ -2,14 +2,12 @@
 package com.intellij.ui.scale
 
 import com.intellij.ui.JreHiDpiUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Function
 
 /**
  * Extends [UserScaleContext] with the system scale, and is thus used for raster-based painting.
@@ -208,10 +206,6 @@ class ScaleContext : UserScaleContext {
   }
 
   override fun toString(): String = "$usrScale, $sysScale, $objScale, $pixScale"
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use ScaleContextCache")
-  open class Cache<T>(dataProvider: Function<in ScaleContext, out T>) : ScaleContextCache<T>(dataProvider::apply)
 }
 
 /**

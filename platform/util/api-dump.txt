@@ -371,7 +371,6 @@ com.intellij.util.containers.Convertor
 - java.util.function.Function
 - sf:SELF:com.intellij.util.containers.Convertor$IntoSelf
 - apply(java.lang.Object):java.lang.Object
-- asFunction():java.util.function.Function
 - a:convert(java.lang.Object):java.lang.Object
 - s:self():com.intellij.util.containers.Convertor
 com.intellij.util.containers.IntObjectMap
