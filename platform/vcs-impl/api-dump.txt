@@ -215,13 +215,11 @@ c:com.intellij.openapi.vcs.VcsNotifier
 - notifyError(java.lang.String,java.lang.String,java.lang.String,java.util.Collection):com.intellij.notification.Notification
 - notifyError(java.lang.String,java.lang.String,java.lang.String,Z):com.intellij.notification.Notification
 - notifyError(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationAction[]):com.intellij.notification.Notification
-- notifyImportantInfo(java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyImportantInfo(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyImportantInfo(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyImportantWarning(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyImportantWarning(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyImportantWarning(java.lang.String,java.lang.String,java.lang.String,java.util.Collection):com.intellij.notification.Notification
-- notifyInfo(java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyInfo(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyInfo(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyMinorInfo(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
@@ -231,10 +229,8 @@ c:com.intellij.openapi.vcs.VcsNotifier
 - notifyMinorWarning(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyMinorWarning(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
 - notifyMinorWarning(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationAction[]):com.intellij.notification.Notification
-- notifySuccess(java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifySuccess(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifySuccess(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationListener):com.intellij.notification.Notification
-- notifyWarning(java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyWarning(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyWarning(java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationAction[]):com.intellij.notification.Notification
 - notifyWeakError(java.lang.String,java.lang.String):com.intellij.notification.Notification
@@ -782,7 +778,6 @@ com.intellij.openapi.vcs.changes.ChangesViewEx
 - a:isAllowExcludeFromCommit():Z
 - promiseRefresh():org.jetbrains.concurrency.Promise
 - a:promiseRefresh(com.intellij.openapi.application.ModalityState):org.jetbrains.concurrency.Promise
-- a:refreshImmediately():V
 - a:resetViewImmediatelyAndRefreshLater():V
 com.intellij.openapi.vcs.changes.ChangesViewI
 - a:scheduleRefresh():V
@@ -805,7 +800,6 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - isAllowExcludeFromCommit():Z
 - isDiffPreviewAvailable():Z
 - promiseRefresh(com.intellij.openapi.application.ModalityState):org.jetbrains.concurrency.Promise
-- refreshImmediately():V
 - resetViewImmediatelyAndRefreshLater():V
 - scheduleRefresh():V
 - selectChanges(java.util.List):V
@@ -862,12 +856,6 @@ com.intellij.openapi.vcs.changes.DiffPreviewProvider
 - a:createDiffRequestProcessor():com.intellij.diff.impl.DiffRequestProcessor
 - a:getEditorTabName(com.intellij.diff.impl.DiffRequestProcessor):java.lang.String
 - a:getOwner():java.lang.Object
-f:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
-- sf:Companion:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager$Companion
-- sf:EDITOR_TAB_DIFF_PREVIEW:com.intellij.openapi.actionSystem.DataKey
-- <init>(com.intellij.openapi.project.Project):V
-- f:subscribeToPreviewVisibilityChange(com.intellij.openapi.Disposable,java.lang.Runnable):V
-f:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager$Companion
 c:com.intellij.openapi.vcs.changes.FakeRevision
 - com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):V
@@ -1170,14 +1158,6 @@ com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
 - a:canCreate(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change):Z
 - a:isEquals(com.intellij.openapi.vcs.changes.Change,com.intellij.openapi.vcs.changes.Change):com.intellij.util.ThreeState
 - a:process(com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer,com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
-f:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
-- sf:Companion:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel$Companion
-- <init>():V
-- sf:prepareCombinedDiffModelRequests(com.intellij.openapi.project.Project,java.util.List):java.util.List
-- sf:prepareCombinedDiffModelRequestsFromProducers(java.util.List):java.util.List
-f:com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel$Companion
-- f:prepareCombinedDiffModelRequests(com.intellij.openapi.project.Project,java.util.List):java.util.List
-- f:prepareCombinedDiffModelRequestsFromProducers(java.util.List):java.util.List
 a:com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 - com.intellij.diff.actions.impl.GoToChangePopupBuilder$BaseGoToChangePopupAction
 - <init>():V
@@ -4418,7 +4398,6 @@ f:com.intellij.vcs.commit.SingleChangeListCommitter
 - com.intellij.vcs.commit.LocalChangesCommitter
 - sf:Companion:com.intellij.vcs.commit.SingleChangeListCommitter$Companion
 - <init>(com.intellij.openapi.project.Project,com.intellij.vcs.commit.ChangeListCommitState,com.intellij.openapi.vcs.changes.CommitContext,java.lang.String,Z):V
-- f:addResultHandler(com.intellij.openapi.vcs.changes.CommitResultHandler):V
 - sf:create(com.intellij.openapi.project.Project,com.intellij.vcs.commit.ChangeListCommitState,com.intellij.openapi.vcs.changes.CommitContext,java.lang.String):com.intellij.vcs.commit.LocalChangesCommitter
 f:com.intellij.vcs.commit.SingleChangeListCommitter$Companion
 - f:create(com.intellij.openapi.project.Project,com.intellij.vcs.commit.ChangeListCommitState,com.intellij.openapi.vcs.changes.CommitContext,java.lang.String):com.intellij.vcs.commit.LocalChangesCommitter

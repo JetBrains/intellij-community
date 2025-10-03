@@ -239,12 +239,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   }
 
   @Override
-  public void refreshImmediately() {
-    if (myToolWindowPanel == null) return;
-    myToolWindowPanel.scheduleRefreshNow();
-  }
-
-  @Override
   public boolean isAllowExcludeFromCommit() {
     if (myToolWindowPanel == null) return false;
     return myToolWindowPanel.isAllowExcludeFromCommit();

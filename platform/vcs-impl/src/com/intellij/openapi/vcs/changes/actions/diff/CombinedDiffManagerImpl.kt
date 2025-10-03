@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
-import org.jetbrains.annotations.ApiStatus
 
 private class CombinedDiffManagerImpl(private val project: Project) : CombinedDiffManager {
   override fun createProcessor(diffPlace: String?): CombinedDiffComponentProcessor {
@@ -40,24 +39,6 @@ private class MyGoToChangePopupAction(val model: CombinedDiffModel) : Presentabl
   override fun onSelected(change: PresentableChange) {
     viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true,
                             CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
-  }
-}
-
-class CombinedDiffPreviewModel {
-  companion object {
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use prepareCombinedBlocksFromWrappers", ReplaceWith("prepareCombinedBlocksFromWrappers(project, changes)"))
-    fun prepareCombinedDiffModelRequests(project: Project, changes: List<Wrapper>): List<CombinedBlockProducer> {
-      return prepareCombinedBlocksFromWrappers(project, changes)
-    }
-
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use prepareCombinedBlocksFromProducers", ReplaceWith("prepareCombinedBlocksFromProducers(changes)"))
-    fun prepareCombinedDiffModelRequestsFromProducers(changes: List<ChangeDiffRequestChain.Producer>): List<CombinedBlockProducer> {
-      return prepareCombinedBlocksFromProducers(changes)
-    }
   }
 }
 
