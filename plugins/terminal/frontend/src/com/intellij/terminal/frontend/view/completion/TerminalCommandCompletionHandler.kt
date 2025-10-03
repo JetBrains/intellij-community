@@ -16,6 +16,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalOutputModel
+import com.intellij.terminal.frontend.view.impl.toRelative
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
@@ -80,7 +81,7 @@ internal class TerminalCommandCompletionHandler(
   private fun prepareCaret(commonEditor: Editor, outputModel: TerminalOutputModel): Caret {
     val caret = commonEditor.caretModel
     val primaryCaret = caret.primaryCaret
-    primaryCaret.moveToOffset(outputModel.cursorOffset.toRelative())
+    primaryCaret.moveToOffset(outputModel.cursorOffset.toRelative(outputModel))
     clearCaretMarkers(commonEditor)
     markCaretAsProcessed(primaryCaret)
     return primaryCaret

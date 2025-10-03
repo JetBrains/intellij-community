@@ -29,6 +29,8 @@ sealed interface TerminalOutputModel {
    */
   val cursorOffsetState: StateFlow<TerminalOffset>
 
+  val startOffset: TerminalOffset
+
   val firstLine: TerminalLine
 
   val lastLine: TerminalLine
@@ -36,8 +38,6 @@ sealed interface TerminalOutputModel {
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 
   fun snapshot(): TerminalOutputModelSnapshot
-
-  fun relativeOffset(offset: Int): TerminalOffset
 
   fun absoluteOffset(offset: Long): TerminalOffset
 
@@ -59,7 +59,7 @@ sealed interface TerminalOutputModel {
 
   /** Returns null if there is no specific highlighting range at [documentOffset] */
   @ApiStatus.Internal
-  fun getHighlightingAt(documentOffset: Int): HighlightingInfo?
+  fun getHighlightingAt(documentOffset: TerminalOffset): HighlightingInfo?
 }
 
 @ApiStatus.Experimental
@@ -68,7 +68,9 @@ sealed interface TerminalOutputModelSnapshot : TerminalOutputModel
 @ApiStatus.Experimental
 sealed interface TerminalOffset : Comparable<TerminalOffset> {
   fun toAbsolute(): Long
-  fun toRelative(): Int
+  operator fun plus(charCount: Long): TerminalOffset
+  operator fun minus(charCount: Long): TerminalOffset
+  operator fun minus(other: TerminalOffset): Long
 }
 
 @ApiStatus.Experimental
@@ -84,4 +86,4 @@ val TerminalOutputModel.textLength: Int
 
 @get:ApiStatus.Experimental
 val TerminalOutputModel.endOffset: TerminalOffset
-  get() = relativeOffset(textLength)
+  get() = startOffset + textLength.toLong()

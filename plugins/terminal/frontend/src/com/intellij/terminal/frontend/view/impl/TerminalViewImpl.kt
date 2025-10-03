@@ -400,7 +400,7 @@ class TerminalViewImpl(
         editor.isTerminalOutputScrollChangingActionInProgress = false
 
         // Also repaint the changed part of the document to ensure that highlightings are properly painted.
-        editor.repaint(startOffset.toRelative(), editor.document.textLength)
+        editor.repaint(startOffset.toRelative(model), editor.document.textLength)
 
         // Update the PSI file content
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile((model as MutableTerminalOutputModel).document) as? TerminalOutputPsiFile
@@ -426,10 +426,10 @@ class TerminalViewImpl(
       editor,
       coroutineScope = coroutineScope.childScope("TerminalInputMethodSupport"),
       getCaretPosition = {
-        val offset = model.cursorOffsetState.value.toRelative()
+        val offset = model.cursorOffset.toRelative(model)
         editor.offsetToLogicalPosition(offset)
       },
-      cursorOffsetFlow = model.cursorOffsetState.map { it.toRelative() },
+      cursorOffsetFlow = model.cursorOffsetState.map { it.toRelative(model) },
       sendInputString = { text -> terminalInput.sendString(text) },
     )
 
@@ -469,13 +469,13 @@ class TerminalViewImpl(
         if (isTypeAhead) {
           // Trim because of differing whitespace between terminal and type ahead
           commandText = curCommandText
-          val newCursorOffset = model.cursorOffsetState.value.toRelative() + 1
+          val newCursorOffset = model.cursorOffset.toRelative(model) + 1
           editor.caretModel.moveToOffset(newCursorOffset)
           inlineCompletionTypingSession?.ignoreDocumentChanges = true
           inlineCompletionTypingSession?.endTypingSession(editor)
           cursorPosition = newCursorOffset
         }
-        else if (commandText != null && (curCommandText != commandText || cursorPosition != model.cursorOffsetState.value.toRelative())) {
+        else if (commandText != null && (curCommandText != commandText || cursorPosition != model.cursorOffset.toRelative(model))) {
           inlineCompletionTypingSession?.ignoreDocumentChanges = false
           inlineCompletionTypingSession?.collectTypedCharOrInvalidateSession(MockDocumentEvent(editor.document, 0), editor)
           commandText = null
@@ -628,3 +628,5 @@ class TerminalViewImpl(
     }
   }
 }
+
+internal fun TerminalOffset.toRelative(model: TerminalOutputModel): Int = (this - model.startOffset).toInt()

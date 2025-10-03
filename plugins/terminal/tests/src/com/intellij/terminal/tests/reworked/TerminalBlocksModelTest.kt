@@ -29,9 +29,9 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     assertEquals(1, blocksModel.blocks.size)
 
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
 
     assertEquals(1, blocksModel.blocks.size)
   }
@@ -42,9 +42,9 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
 
     val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
 
@@ -60,9 +60,9 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
     outputModel.update(0, "myPrompt: myCommand\n\n\n")
 
     val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
@@ -76,11 +76,11 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
     outputModel.update(0, "myPrompt: myCommand\n\n\n")
-    blocksModel.commandStarted(20)
+    blocksModel.commandStarted(outputModel.startOffset + 20L)
     outputModel.update(1, "someOutput\n\n")
 
     val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
@@ -95,15 +95,15 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
     outputModel.update(0, "myPrompt: myCommand\n\n\n")
-    blocksModel.commandStarted(20)
+    blocksModel.commandStarted(outputModel.startOffset + 20L)
     outputModel.update(1, "someOutput\n\n")
-    blocksModel.promptStarted(31)
+    blocksModel.promptStarted(outputModel.startOffset + 31L)
     outputModel.update(2, "updatedPrompt: \n")
-    blocksModel.promptFinished(46)
+    blocksModel.promptFinished(outputModel.startOffset + 46L)
 
     assertEquals(2, blocksModel.blocks.size)
 
@@ -120,9 +120,9 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     outputModel.update(0, "\n\n\n")
     outputModel.update(0, "welcomeText\n\n\n")
-    blocksModel.promptStarted(12)
+    blocksModel.promptStarted(outputModel.startOffset + 12L)
     outputModel.update(1, "myPrompt: \n\n")
-    blocksModel.promptFinished(22)
+    blocksModel.promptFinished(outputModel.startOffset + 22L)
 
     assertEquals(2, blocksModel.blocks.size)
 
@@ -142,15 +142,15 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     // Prepare
     outputModel.update(0, "\n\n\n")
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
     outputModel.update(0, "myPrompt: myCommand\n\n\n")
-    blocksModel.commandStarted(20)
+    blocksModel.commandStarted(outputModel.startOffset + 20L)
     outputModel.update(1, "output123\n\n")
-    blocksModel.promptStarted(30)
+    blocksModel.promptStarted(outputModel.startOffset + 30L)
     outputModel.update(2, "myPrompt: \n")
-    blocksModel.promptFinished(40)
+    blocksModel.promptFinished(outputModel.startOffset + 40L)
     outputModel.update(2, "myPrompt: otherCommand\n")
 
     assertEquals(2, blocksModel.blocks.size)
@@ -178,25 +178,25 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     // Prepare
     outputModel.update(0, "\n\n\n")
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
     outputModel.update(0, "myPrompt: myCommand\n\n\n")
-    blocksModel.commandStarted(20)
+    blocksModel.commandStarted(outputModel.startOffset + 20L)
     outputModel.update(1, "output123\n\n")
-    blocksModel.promptStarted(30)
+    blocksModel.promptStarted(outputModel.startOffset + 30L)
     outputModel.update(2, "myPrompt: \n")
-    blocksModel.promptFinished(40)
+    blocksModel.promptFinished(outputModel.startOffset + 40L)
 
     assertEquals(2, blocksModel.blocks.size)
 
     // Test
     outputModel.update(2, "myPrompt: clear\n")
-    blocksModel.commandStarted(46)
+    blocksModel.commandStarted(outputModel.startOffset + 46L)
     outputModel.update(0, "\n\n\n")  // all text cleared
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
 
     val block = blocksModel.blocks.singleOrNull() ?: error("Single block expected")
     assertEquals("myPrompt: \n\n\n", outputModel.getText(block.startOffset, block.endOffset))
@@ -213,15 +213,15 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     // Prepare
     outputModel.update(0, "\n\n\n")
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
     outputModel.update(0, "myPrompt: myCommand\n\n\n")
-    blocksModel.commandStarted(20)
+    blocksModel.commandStarted(outputModel.startOffset + 20L)
     outputModel.update(1, "output123\n\n")
-    blocksModel.promptStarted(30)
+    blocksModel.promptStarted(outputModel.startOffset + 30L)
     outputModel.update(2, "myPrompt: \n")
-    blocksModel.promptFinished(40)
+    blocksModel.promptFinished(outputModel.startOffset + 40L)
 
     assertEquals(2, blocksModel.blocks.size)
 
@@ -238,15 +238,15 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
     outputModel.update(0, "myPrompt: myCommand\n\n\n")
-    blocksModel.commandStarted(20)
+    blocksModel.commandStarted(outputModel.startOffset + 20L)
     outputModel.update(1, "output123456\n\n")  // 4 chars from the start should be trimmed
-    blocksModel.promptStarted(29)
+    blocksModel.promptStarted(outputModel.startOffset + 29L)
     outputModel.update(2, "myPrompt: \n")      // 10 chars from the start should be trimmed
-    blocksModel.promptFinished(29)
+    blocksModel.promptFinished(outputModel.startOffset + 29L)
 
     assertEquals(2, blocksModel.blocks.size)
 
@@ -266,15 +266,15 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     outputModel.update(0, "\n\n\n")
     outputModel.update(0, "welcome12\n\n\n")
-    blocksModel.promptStarted(10)
+    blocksModel.promptStarted(outputModel.startOffset + 10L)
     outputModel.update(1, "myPrompt: \n\n")
-    blocksModel.promptFinished(20)
+    blocksModel.promptFinished(outputModel.startOffset + 20L)
     outputModel.update(1, "myPrompt: myCommand\n\n")  // 1 char from that start should be trimmed
-    blocksModel.commandStarted(29)
+    blocksModel.commandStarted(outputModel.startOffset + 29L)
     outputModel.update(2, "output123456\n")           // 12 chars from the start should be trimmed (and first block removed)
-    blocksModel.promptStarted(30)
+    blocksModel.promptStarted(outputModel.startOffset + 30L)
     outputModel.update(3, "myPrompt: \n")             // 10 chars from the start should be trimmed
-    blocksModel.promptFinished(29)
+    blocksModel.promptFinished(outputModel.startOffset + 29L)
 
     assertEquals(2, blocksModel.blocks.size)
 
@@ -294,15 +294,15 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     // Prepare
     outputModel.update(0, "\n\n\n")
-    blocksModel.promptStarted(0)
+    blocksModel.promptStarted(outputModel.startOffset + 0L)
     outputModel.update(0, "myPrompt: \n\n\n")
-    blocksModel.promptFinished(10)
+    blocksModel.promptFinished(outputModel.startOffset + 10L)
     outputModel.update(0, "myPrompt: myCommand\n\n\n")
-    blocksModel.commandStarted(20)
+    blocksModel.commandStarted(outputModel.startOffset + 20L)
     outputModel.update(1, "someOutput\n\n")
-    blocksModel.promptStarted(31)
+    blocksModel.promptStarted(outputModel.startOffset + 31L)
     outputModel.update(2, "updatedPrompt: \n")
-    blocksModel.promptFinished(46)
+    blocksModel.promptFinished(outputModel.startOffset + 46L)
 
     // Test
     val state = blocksModel.dumpState()
@@ -373,15 +373,15 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     // Prepare
     sourceOutputModel.update(0, "\n\n\n")
-    sourceBlocksModel.promptStarted(0)
+    sourceBlocksModel.promptStarted(sourceOutputModel.startOffset + 0)
     sourceOutputModel.update(0, "myPrompt: \n\n\n")
-    sourceBlocksModel.promptFinished(10)
+    sourceBlocksModel.promptFinished(sourceOutputModel.startOffset + 10)
     sourceOutputModel.update(0, "myPrompt: myCommand\n\n\n")
-    sourceBlocksModel.commandStarted(20)
+    sourceBlocksModel.commandStarted(sourceOutputModel.startOffset + 20)
     sourceOutputModel.update(1, "someOutput\n\n")
-    sourceBlocksModel.promptStarted(31)
+    sourceBlocksModel.promptStarted(sourceOutputModel.startOffset + 31)
     sourceOutputModel.update(2, "updatedPrompt: \n")
-    sourceBlocksModel.promptFinished(46)
+    sourceBlocksModel.promptFinished(sourceOutputModel.startOffset + 46)
 
     // Test
     val state = sourceBlocksModel.dumpState()

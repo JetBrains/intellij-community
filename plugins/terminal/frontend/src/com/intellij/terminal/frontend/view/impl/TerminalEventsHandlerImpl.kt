@@ -164,7 +164,7 @@ internal open class TerminalEventsHandlerImpl(
     val typedString = keyChar.toString()
     if (e.original.id == KeyEvent.KEY_TYPED) {
       val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
-      editor.caretModel.moveToOffset(outputModel.cursorOffsetState.value.toRelative())
+      editor.caretModel.moveToOffset(outputModel.cursorOffset.toRelative(outputModel))
       inlineCompletionTypingSession?.startTypingSession(editor)
 
       typeAhead?.type(typedString)
@@ -374,7 +374,7 @@ internal open class TerminalEventsHandlerImpl(
    * Essential for correct lookup behavior.
    */
   private fun syncEditorCaretWithModel() {
-    val expectedCaretOffset = outputModel.cursorOffsetState.value.toRelative()
+    val expectedCaretOffset = outputModel.cursorOffset.toRelative(outputModel)
     val moveCaretAction = { editor.caretModel.moveToOffset(expectedCaretOffset) }
     if (editor.caretModel.offset != expectedCaretOffset) {
       val lookup = LookupManager.getActiveLookup(editor)

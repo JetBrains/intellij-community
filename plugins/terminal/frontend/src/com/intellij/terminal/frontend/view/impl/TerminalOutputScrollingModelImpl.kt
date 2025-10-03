@@ -51,7 +51,7 @@ class TerminalOutputScrollingModelImpl(
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       outputModel.cursorOffsetState.collect { offset ->
         if (shouldScrollToCursor) {
-          updateScrollPosition(offset.toRelative())
+          updateScrollPosition(offset)
         }
       }
     }
@@ -61,7 +61,7 @@ class TerminalOutputScrollingModelImpl(
         if (shouldScrollToCursor) {
           // We already called in an EDT, but let's update the scroll later to not block output model updates.
           coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            updateScrollPosition(outputModel.cursorOffsetState.value.toRelative())
+            updateScrollPosition(outputModel.cursorOffset)
           }
         }
       }
@@ -94,7 +94,7 @@ class TerminalOutputScrollingModelImpl(
       shouldScrollToCursor = true
     }
     if (shouldScrollToCursor) {
-      updateScrollPosition(outputModel.cursorOffsetState.value.toRelative())
+      updateScrollPosition(outputModel.cursorOffset)
     }
   }
 
@@ -109,7 +109,7 @@ class TerminalOutputScrollingModelImpl(
    * But if the cursor or last non-blank line becomes out of viewport, we increase the offset to make them visible.
    * The cursor is considered only if it is visible.
    */
-  private fun updateScrollPosition(cursorOffset: Int) {
+  private fun updateScrollPosition(cursorOffset: TerminalOffset) {
     val screenRows = editor.calculateTerminalSize()?.rows ?: return
 
     val screenBottomVisualLine = editor.offsetToVisualLine(editor.document.textLength, true)
@@ -122,7 +122,7 @@ class TerminalOutputScrollingModelImpl(
     val lastNotBlankLineBottomY = editor.visualLineToY(lastNotBlankVisualLine) + editor.lineHeight + bottomInset
 
     val isCursorVisible = sessionModel.terminalState.value.isCursorVisible
-    val cursorVisualLine = editor.offsetToVisualLine(cursorOffset, true)
+    val cursorVisualLine = editor.offsetToVisualLine(cursorOffset.toRelative(outputModel), true)
     val screenBottomY = if (isCursorVisible) {
       // Take the cursor into account only if it is visible.
       val cursorBottomY = editor.visualLineToY(cursorVisualLine) + editor.lineHeight + bottomInset
@@ -196,8 +196,8 @@ class TerminalOutputScrollingModelImpl(
   }
 
   private fun getCurrentOutputModelState(): OutputModelState {
-    return OutputModelState(outputModel.cursorOffsetState.value.toRelative(), outputModel.modificationStamp)
+    return OutputModelState(outputModel.cursorOffset, outputModel.modificationStamp)
   }
 
-  private data class OutputModelState(val cursorOffset: Int, val docStamp: Long)
+  private data class OutputModelState(val cursorOffset: TerminalOffset, val docStamp: Long)
 }

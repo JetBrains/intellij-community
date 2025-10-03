@@ -46,10 +46,10 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
       editor,
       coroutineScope,
       getCaretPosition = {
-        val offset = model.cursorOffsetState.value.toRelative()
+        val offset = (model.cursorOffset - model.startOffset).toInt()
         editor.offsetToLogicalPosition(offset)
       },
-      cursorOffsetFlow = model.cursorOffsetState.map { it.toRelative() },
+      cursorOffsetFlow = model.cursorOffsetState.map { (it - model.startOffset).toInt() },
       sendInputString = echoer::echo,
     )
   }

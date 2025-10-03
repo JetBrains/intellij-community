@@ -27,7 +27,7 @@ object TerminalTestUtil {
   }
 
   suspend fun MutableTerminalOutputModel.replace(relativeStartOffset: Int, length: Int, text: String, styles: List<StyleRange> = emptyList()) {
-    updateOutputModel { replaceContent(relativeOffset(relativeStartOffset), length, text, styles) }
+    updateOutputModel { replaceContent(startOffset + relativeStartOffset.toLong(), length, text, styles) }
   }
 
   suspend fun MutableTerminalOutputModel.updateCursor(absoluteLineIndex: Long, column: Int) {

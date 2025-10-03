@@ -122,9 +122,9 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
     val lineNumber = outputModel.lineByOffset(cursorOffset)
     val lineStartOffset = outputModel.startOffset(lineNumber)
 
-    val length = cursorOffset.toRelative() - lineStartOffset.toRelative()
+    val length = cursorOffset - lineStartOffset
     return if (length <= MAX_LINE_LENGTH) {
-      outputModel.getText(lineStartOffset, outputModel.relativeOffset(lineStartOffset.toRelative() + length))
+      outputModel.getText(lineStartOffset, lineStartOffset + length)
     }
     else null // Line is too long, let's do not try to track it.
   }

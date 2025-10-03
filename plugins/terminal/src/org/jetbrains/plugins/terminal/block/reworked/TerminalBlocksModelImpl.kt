@@ -20,6 +20,8 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
   @VisibleForTesting
   var blockIdCounter: Int = 0
 
+  private var trimmedCharsCount = 0L
+
   override val blocks: MutableList<TerminalOutputBlock> = mutableListOf()
 
   private val mutableEventsFlow: MutableSharedFlow<TerminalBlocksModelEvent> = MutableSharedFlow(replay = Int.MAX_VALUE,
@@ -33,6 +35,7 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
           // The start of the output was trimmed, so we need to remove blocks that became out of bounds.
           // And adjust offsets of the other blocks.
           trimBlocksBefore(offset = event.oldLength)
+          trimmedCharsCount += event.oldLength
         }
         else {
           // It can be either an update of the last block or full replace (in case of clear).
@@ -46,7 +49,8 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
     mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(newBlock))
   }
 
-  override fun promptStarted(offset: Int) {
+  override fun promptStarted(offset: TerminalOffset) {
+    val offset = offset.toRelative()
     val lastBlock = blocks.last()
     if (offset == lastBlock.startOffset) {
       blocks.removeLast()
@@ -63,15 +67,19 @@ class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksMo
     mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(newBlock))
   }
 
-  override fun promptFinished(offset: Int) {
+  override fun promptFinished(offset: TerminalOffset) {
+    val offset = offset.toRelative()
     val curBlock = blocks.last()
     blocks[blocks.lastIndex] = curBlock.copy(commandStartOffset = offset)
   }
 
-  override fun commandStarted(offset: Int) {
+  override fun commandStarted(offset: TerminalOffset) {
+    val offset = offset.toRelative()
     val curBlock = blocks.last()
     blocks[blocks.lastIndex] = curBlock.copy(outputStartOffset = offset)
   }
+
+  private fun TerminalOffset.toRelative(): Int = (toAbsolute() - trimmedCharsCount).toInt()
 
   override fun commandFinished(exitCode: Int) {
     val curBlock = blocks.last()

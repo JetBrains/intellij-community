@@ -9,16 +9,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
-import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
-import org.jetbrains.plugins.terminal.block.reworked.isCommandTypingMode
-import org.jetbrains.plugins.terminal.block.reworked.updateContent
+import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
@@ -77,7 +73,7 @@ internal class TerminalTypeAheadOutputModelController(
     if (!isTypeAheadEnabled()) return
 
     val lastBlock = blocksModel.blocks.lastOrNull()
-    val cursorOffset = outputModel.cursorOffsetState.value.toRelative()
+    val cursorOffset = outputModel.cursorOffset.toRelative(outputModel)
     if (lastBlock == null || cursorOffset <= lastBlock.commandStartOffset || cursorOffset == 0) {
       // Cursor is placed before or at the command start, so we can't backspace anymore.
       return
@@ -213,29 +209,28 @@ private fun MutableTerminalOutputModel.insertAtCursor(string: String) {
     replaceContent(replaceOffset, replaceLength, string, emptyList())
     // Do not reuse the cursorOffsetState.value because replaceContent might change it.
     // Instead, compute the new offset using the absolute offsets.
-    val newCursorOffset = absoluteOffset(replaceOffset.toAbsolute() + string.length).coerceAtMost(relativeOffset(document.textLength))
+    val newCursorOffset = absoluteOffset(replaceOffset.toAbsolute() + string.length).coerceAtMost(endOffset)
     updateCursorPosition(newCursorOffset)
   }
 }
 
 private fun MutableTerminalOutputModel.backspace() {
-  val offset = cursorOffsetState.value.toRelative()
-  if (offset < 1) return
-  val replaceOffset = relativeOffset(offset - 1)
+  val offset = cursorOffset
+  if (offset <= startOffset) return
+  val replaceOffset = offset - 1
   replaceContent(replaceOffset, 1, " ", emptyList())
   updateCursorPosition(replaceOffset)
 }
 
-private fun MutableTerminalOutputModel.getRemainingLinePart(): @NlsSafe String {
-  val cursorOffset = cursorOffsetState.value.toRelative()
-  val document = document
-  val line = document.getLineNumber(cursorOffset)
-  val lineEnd = document.getLineEndOffset(line)
-  val remainingLinePart = document.getText(TextRange(cursorOffset, lineEnd))
+private fun TerminalOutputModel.getRemainingLinePart(): @NlsSafe String {
+  val cursorOffset = cursorOffset
+  val line = lineByOffset(cursorOffset)
+  val lineEnd = endOffset(line)
+  val remainingLinePart = getText(cursorOffset, lineEnd)
   return remainingLinePart
 }
 
-private fun MutableTerminalOutputModel.getTextAfterCursor(): @NlsSafe String {
-  val cursorOffset = cursorOffsetState.value.toRelative()
-  return document.getText(TextRange(cursorOffset, document.textLength))
+private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe String {
+  val cursorOffset = cursorOffset
+  return getText(cursorOffset, endOffset)
 }

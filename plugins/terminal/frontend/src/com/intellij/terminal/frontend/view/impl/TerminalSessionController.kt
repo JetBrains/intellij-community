@@ -103,21 +103,21 @@ internal class TerminalSessionController(
       TerminalPromptStartedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          blocksModel.promptStarted(outputModelController.model.cursorOffsetState.value.toRelative())
+          blocksModel.promptStarted(outputModelController.model.cursorOffset)
         }
         shellIntegrationEventDispatcher.multicaster.promptStarted()
       }
       TerminalPromptFinishedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          blocksModel.promptFinished(outputModelController.model.cursorOffsetState.value.toRelative())
+          blocksModel.promptFinished(outputModelController.model.cursorOffset)
         }
         shellIntegrationEventDispatcher.multicaster.promptFinished()
       }
       is TerminalCommandStartedEvent -> {
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
-          blocksModel.commandStarted(outputModelController.model.cursorOffsetState.value.toRelative())
+          blocksModel.commandStarted(outputModelController.model.cursorOffset)
         }
         shellIntegrationEventDispatcher.multicaster.commandStarted(event.command)
       }

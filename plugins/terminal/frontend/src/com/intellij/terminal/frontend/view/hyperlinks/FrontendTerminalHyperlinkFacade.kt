@@ -3,6 +3,7 @@ package com.intellij.terminal.frontend.view.hyperlinks
 import com.intellij.execution.impl.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.frontend.view.impl.TerminalInput
+import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
@@ -55,8 +56,8 @@ internal class FrontendTerminalHyperlinkFacade(
       is TerminalHyperlinkInfo -> {
         buildHyperlink(
           id = id.toPlatformId(),
-          startOffset = outputModel.absoluteOffset(absoluteStartOffset).toRelative(),
-          endOffset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(),
+          startOffset = outputModel.absoluteOffset(absoluteStartOffset).toRelative(outputModel),
+          endOffset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(outputModel),
           action = { terminalInput.sendLinkClicked(isInAlternateBuffer, id, it) },
         ) {
           attributes = style
@@ -68,8 +69,8 @@ internal class FrontendTerminalHyperlinkFacade(
       is TerminalHighlightingInfo -> style?.let { style ->
         buildHighlighting(
           id = id.toPlatformId(),
-          startOffset = outputModel.absoluteOffset(absoluteStartOffset).toRelative(),
-          endOffset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(),
+          startOffset = outputModel.absoluteOffset(absoluteStartOffset).toRelative(outputModel),
+          endOffset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(outputModel),
           attributes = style,
         ) {
           layer = layer
@@ -78,7 +79,7 @@ internal class FrontendTerminalHyperlinkFacade(
       is TerminalInlayInfo -> inlayProvider?.let { inlayProvider ->
         buildInlay(
           id = id.toPlatformId(),
-          offset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(), // for inlays the end offset corresponds to the position
+          offset = outputModel.absoluteOffset(absoluteEndOffset).toRelative(outputModel), // for inlays the end offset corresponds to the position
           inlayProvider = inlayProvider,
         )
       }

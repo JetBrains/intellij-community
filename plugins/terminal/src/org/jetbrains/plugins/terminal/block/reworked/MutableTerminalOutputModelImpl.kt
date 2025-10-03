@@ -41,13 +41,16 @@ sealed class AbstractTerminalOutputModelImpl(
   override val modificationStamp: Long
     get() = document.modificationStamp
 
+  override val startOffset: TerminalOffset
+    get() = relativeOffset(0)
+
   override val firstLine: TerminalLine
     get() = TerminalLineImpl(trimmedLinesCount)
 
   override val lastLine: TerminalLine
     get() = TerminalLineImpl(trimmedLinesCount + lineCount - 1)
 
-  override fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, offset)
+  protected fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, offset)
 
   override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, (offset - trimmedCharsCount).toInt())
 
@@ -73,6 +76,8 @@ sealed class AbstractTerminalOutputModelImpl(
   override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
     // Do nothing, because the model is immutable, and therefore no events can be fired.
   }
+
+  protected fun TerminalOffset.toRelative(): Int = (this - startOffset).toInt()
 
   private fun TerminalLine.toRelative(): Int = (this - firstLine).toInt()
 }
@@ -292,8 +297,8 @@ class MutableTerminalOutputModelImpl(
     else highlightingsModel.getHighlightingsSnapshot()
   }
 
-  override fun getHighlightingAt(documentOffset: Int): HighlightingInfo? {
-    return highlightingsModel.getHighlightingAt(documentOffset)
+  override fun getHighlightingAt(documentOffset: TerminalOffset): HighlightingInfo? {
+    return highlightingsModel.getHighlightingAt(documentOffset.toRelative())
   }
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
@@ -545,7 +550,7 @@ class TerminalOutputModelSnapshotImpl(
     throw UnsupportedOperationException("Not implemented for performance reasons")
   }
 
-  override fun getHighlightingAt(documentOffset: Int): HighlightingInfo? {
+  override fun getHighlightingAt(documentOffset: TerminalOffset): HighlightingInfo? {
     throw UnsupportedOperationException("Not implemented for performance reasons")
   }
 }
@@ -556,8 +561,10 @@ private data class TerminalOffsetImpl(
 ) : TerminalOffset {
   override fun compareTo(other: TerminalOffset): Int = toAbsolute().compareTo(other.toAbsolute())
   override fun toAbsolute(): Long = trimmedCharsCount + relative
-  override fun toRelative(): Int = relative
-  override fun toString(): String = "${toAbsolute()}(${toRelative()})"
+  override fun plus(charCount: Long): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, (relative + charCount).toInt())
+  override fun minus(charCount: Long): TerminalOffset = plus(-charCount)
+  override fun minus(other: TerminalOffset): Long = toAbsolute() - other.toAbsolute()
+  override fun toString(): String = "${toAbsolute()}L"
 }
 
 private data class TerminalLineImpl(private val absolute: Long) : TerminalLine {

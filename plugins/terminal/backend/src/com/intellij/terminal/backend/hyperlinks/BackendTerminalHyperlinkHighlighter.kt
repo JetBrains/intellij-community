@@ -131,7 +131,7 @@ internal class BackendTerminalHyperlinkHighlighter(
     val currentFilter = filterWrapper.getFilter()
     val currentTaskRunner = checkNotNull(currentTaskRunner) { "The task runner must be present since we have results" }
     if (currentTaskRunner.filter !== currentFilter) return false
-    if (taskResult.absoluteStartOffset < outputModel.relativeOffset(0).toAbsolute()) return false // trimmed
+    if (outputModel.absoluteOffset(taskResult.absoluteStartOffset) < outputModel.startOffset) return false // trimmed
     val pendingTask = pendingTask
     return if (pendingTask == null) {
       true // No updates since the current task started, therefore, all results are valid
@@ -248,7 +248,7 @@ private fun HighlightTask.toString(outputModel: TerminalOutputModelSnapshot): St
 
 private fun describe(outputModel: TerminalOutputModelSnapshot) = buildString {
   append("OutputModel(trimmedChars=")
-  append(outputModel.relativeOffset(0).toAbsolute())
+  append(outputModel.startOffset)
   append(",trimmedLines=")
   append(outputModel.firstLine.toAbsolute())
   append(",lengthChars=")
@@ -488,13 +488,15 @@ private class HyperlinkProcessor(
 
 }
 
+private fun TerminalOutputModel.relativeOffset(offset: Int): TerminalOffset = startOffset + offset.toLong()
+
 private fun TerminalOutputModelSnapshot.asHypertext(): HypertextInput = HypertextFromFrozenTerminalOutputModelAdapter(this)
 
 private class HypertextFromFrozenTerminalOutputModelAdapter(private val model: TerminalOutputModelSnapshot) : HypertextInput {
   override val lineCount: Int
     get() = model.lineCount
 
-  override fun getLineStartOffset(lineIndex: Int): Int = model.startOffset(model.relativeLine(lineIndex)).toRelative()
+  override fun getLineStartOffset(lineIndex: Int): Int = model.startOffset(model.relativeLine(lineIndex)).toRelative(model)
 
   override fun getLineText(lineIndex: Int): String = model.getLineText(model.relativeLine(lineIndex))
 }
@@ -515,3 +517,4 @@ private val LOG = logger<BackendTerminalHyperlinkHighlighter>()
 
 private fun TerminalOutputModelSnapshot.relativeLine(lineIndex: Int): TerminalLine = firstLine + lineIndex.toLong()
 private fun TerminalLine.toRelative(model: TerminalOutputModel): Int = (this - model.firstLine).toInt()
+private fun TerminalOffset.toRelative(model: TerminalOutputModel): Int = (this - model.startOffset).toInt()

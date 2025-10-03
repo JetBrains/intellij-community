@@ -123,7 +123,7 @@ internal class TerminalCursorPainter private constructor(
       CursorShape.BLINK_VERTICAL_BAR, CursorShape.STEADY_VERTICAL_BAR -> VerticalBarCursorRenderer(editor, outputModel, listeners)
     }
 
-    val documentOffset = state.offset.toRelative()
+    val documentOffset = state.offset
     if (shouldBlink) {
       paintBlinkingCursor(renderer, documentOffset)
     }
@@ -132,7 +132,7 @@ internal class TerminalCursorPainter private constructor(
     }
   }
 
-  private suspend fun paintBlinkingCursor(renderer: CursorRenderer, offset: Int) {
+  private suspend fun paintBlinkingCursor(renderer: CursorRenderer, offset: TerminalOffset) {
     var highlighter: RangeHighlighter? = renderer.installCursorHighlighter(offset)
     try {
       val blinkingPeriod = editor.settings.caretBlinkPeriod.toLong()
@@ -157,7 +157,7 @@ internal class TerminalCursorPainter private constructor(
     }
   }
 
-  private suspend fun paintStaticCursor(renderer: CursorRenderer, offset: Int) {
+  private suspend fun paintStaticCursor(renderer: CursorRenderer, offset: TerminalOffset) {
     val highlighter = renderer.installCursorHighlighter(offset)
     try {
       awaitCancellation()
@@ -190,7 +190,7 @@ internal class TerminalCursorPainter private constructor(
 
   private sealed interface CursorRenderer {
     @RequiresEdt
-    fun installCursorHighlighter(offset: Int): RangeHighlighter
+    fun installCursorHighlighter(offset: TerminalOffset): RangeHighlighter
   }
 
   private sealed class CursorRendererBase(
@@ -216,7 +216,7 @@ internal class TerminalCursorPainter private constructor(
       }
     }
 
-    final override fun installCursorHighlighter(offset: Int): RangeHighlighter {
+    final override fun installCursorHighlighter(offset: TerminalOffset): RangeHighlighter {
       val cursorAttributes = getCursorTextAttributes(offset)
       val foregroundColor = cursorAttributes.foregroundColor ?: editor.colorsScheme.defaultForeground
       val backgroundColor = cursorAttributes.backgroundColor ?: editor.colorsScheme.defaultBackground
@@ -225,8 +225,9 @@ internal class TerminalCursorPainter private constructor(
       val attributes = TextAttributes(effectiveForeground, null, null, null, Font.PLAIN)
 
       // offset == textLength is allowed (it means that the cursor is at the end, a very common case)
-      val startOffset = offset.coerceIn(0..editor.document.textLength)
-      val endOffset = (offset + 1).coerceIn(0..editor.document.textLength)
+      val relativeOffset = offset.toRelative(outputModel)
+      val startOffset = relativeOffset.coerceIn(0..editor.document.textLength)
+      val endOffset = (relativeOffset + 1).coerceIn(0..editor.document.textLength)
       val highlighter = editor.markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST,
                                                                attributes, HighlighterTargetArea.EXACT_RANGE)
       highlighter.setCustomRenderer { _, _, g ->
@@ -248,7 +249,7 @@ internal class TerminalCursorPainter private constructor(
       return highlighter
     }
 
-    private fun getCursorTextAttributes(offset: Int): TextAttributes {
+    private fun getCursorTextAttributes(offset: TerminalOffset): TextAttributes {
       val highlighting = outputModel.getHighlightingAt(offset)
       return highlighting?.textAttributesProvider?.getTextAttributes()
              ?: TextAttributes.ERASE_MARKER // If there are no specific highlighting, use the default
