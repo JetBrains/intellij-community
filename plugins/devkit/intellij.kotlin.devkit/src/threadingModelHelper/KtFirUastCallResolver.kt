@@ -1,12 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.threadingModelHelper
 
-import com.intellij.psi.*
-import org.jetbrains.uast.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiMethod
+import org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
 
-
-class KtFirUastCallResolver(private val rules: org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules = org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules()) : KtCallResolver {
+class KtFirUastCallResolver(private val rules: LockReqRules = BaseLockReqRules()) : KtCallResolver {
 
   override fun resolveCallees(method: PsiMethod): List<PsiMethod> {
     return resolveCalleesWithUast(method)

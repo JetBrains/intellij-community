@@ -3,10 +3,13 @@ package org.jetbrains.idea.devkit.kotlin.threadingModelHelper
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.idea.devkit.threadingModelHelper.*
+import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
+import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
+import org.jetbrains.idea.devkit.threadingModelHelper.LockRequirement
+import org.jetbrains.idea.devkit.threadingModelHelper.MethodCall
+import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
 
 data class KtMethodSignature(val qualifiedName: String, val parameterTypes: List<String>) {
   companion object {

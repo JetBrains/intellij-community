@@ -3,7 +3,12 @@ package org.jetbrains.idea.devkit.kotlin.threadingModelHelper
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
-import org.jetbrains.idea.devkit.threadingModelHelper.*
+import org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqDetector
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
+import org.jetbrains.idea.devkit.threadingModelHelper.LockRequirement
+import org.jetbrains.idea.devkit.threadingModelHelper.LockType
+import org.jetbrains.idea.devkit.threadingModelHelper.RequirementReason
 
 class KtLockReqDetector(private val patterns: LockReqRules = BaseLockReqRules()) : LockReqDetector {
 

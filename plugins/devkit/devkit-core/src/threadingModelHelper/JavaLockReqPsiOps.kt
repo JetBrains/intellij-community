@@ -68,8 +68,8 @@ class JavaLockReqPsiOps(private val rules: LockReqRules = BaseLockReqRules()) : 
       val disposableClass = JavaPsiFacade.getInstance(project)
         .findClass(disposableFqn, GlobalSearchScope.allScope(project))
       if (disposableClass != null) {
-        val faceDispose = findZeroArgDispose(disposableClass)
-        if (faceDispose.isNotEmpty()) return faceDispose
+        val ifaceDispose = findZeroArgDispose(disposableClass)
+        if (ifaceDispose.isNotEmpty()) return ifaceDispose
       }
     }
     return emptyList()
@@ -88,35 +88,35 @@ class JavaLockReqPsiOps(private val rules: LockReqRules = BaseLockReqRules()) : 
       })
     }.let { println("findInheritors: ${it}") }
 
-      return inheritors
-    }
+    return inheritors
+  }
 
-    override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int): List<PsiClass> {
-      val implementations = mutableListOf<PsiClass>()
-      val query = ClassInheritorsSearch.search(interfaceClass, scope, true)
-      query.allowParallelProcessing().forEach(Processor { implementor ->
-        if (implementations.size >= maxImpl) return@Processor false
-        implementations.add(implementor)
-      })
-      return implementations
-    }
+  override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int): List<PsiClass> {
+    val implementations = mutableListOf<PsiClass>()
+    val query = ClassInheritorsSearch.search(interfaceClass, scope, true)
+    query.allowParallelProcessing().forEach(Processor { implementor ->
+      if (implementations.size >= maxImpl) return@Processor false
+      implementations.add(implementor)
+    })
+    return implementations
+  }
 
-    override fun inheritsFromAny(psiClass: PsiClass, baseClassNames: Collection<String>): Boolean {
-      return baseClassNames.any { baseClassName ->
-        InheritanceUtil.isInheritor(psiClass, baseClassName)
-      }
-    }
-
-    override fun isInPackages(className: String, packagePrefixes: Collection<String>): Boolean {
-      return packagePrefixes.any { prefix -> className.startsWith("$prefix.") }
-    }
-
-    override fun resolveReturnType(method: PsiMethod): PsiClass? {
-      val returnType = method.returnType as? PsiClassType ?: return null
-      return returnType.resolve()
-    }
-
-    override fun extractTypeArguments(type: PsiType): List<PsiType> {
-      return (type as? PsiClassType)?.parameters?.toList() ?: emptyList()
+  override fun inheritsFromAny(psiClass: PsiClass, baseClassNames: Collection<String>): Boolean {
+    return baseClassNames.any { baseClassName ->
+      InheritanceUtil.isInheritor(psiClass, baseClassName)
     }
   }
+
+  override fun isInPackages(className: String, packagePrefixes: Collection<String>): Boolean {
+    return packagePrefixes.any { prefix -> className.startsWith("$prefix.") }
+  }
+
+  override fun resolveReturnType(method: PsiMethod): PsiClass? {
+    val returnType = method.returnType as? PsiClassType ?: return null
+    return returnType.resolve()
+  }
+
+  override fun extractTypeArguments(type: PsiType): List<PsiType> {
+    return (type as? PsiClassType)?.parameters?.toList() ?: emptyList()
+  }
+}

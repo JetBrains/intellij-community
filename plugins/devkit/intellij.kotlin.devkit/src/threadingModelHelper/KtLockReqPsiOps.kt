@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.threadingModelHelper
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -9,10 +12,7 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.Processor
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
 
-class KtLockReqPsiOps(
-  private val resolver: KtCallResolver = KtFirUastCallResolver()
-) : LockReqPsiOps {
-
+class KtLockReqPsiOps(private val resolver: KtCallResolver = KtFirUastCallResolver()) : LockReqPsiOps {
 
   override fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
     return resolver.resolveCallees(method).distinct()
