@@ -6,6 +6,7 @@ import com.intellij.terminal.TerminalTitle
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import javax.swing.JComponent
 
 @ApiStatus.Experimental
@@ -20,6 +21,8 @@ interface TerminalView {
   val size: TermSize?
 
   val title: TerminalTitle
+
+  val outputModels: TerminalOutputModelsSet
 
   fun addTerminationCallback(parentDisposable: Disposable, callback: () -> Unit)
 
@@ -36,4 +39,9 @@ interface TerminalView {
   companion object {
     val DATA_KEY: DataKey<TerminalView> = DataKey.create("TerminalView")
   }
+}
+
+@ApiStatus.Experimental
+fun TerminalView.activeOutputModel(): TerminalOutputModel {
+  return outputModels.active.value
 }

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.frontend.TimedKeyEvent
+import com.intellij.terminal.frontend.activeOutputModel
 import com.intellij.terminal.frontend.completion.TerminalLookupPrefixUpdater
 import com.intellij.terminal.frontend.impl.TerminalViewImpl
 import com.intellij.terminal.session.TerminalBlocksModelState
@@ -40,7 +41,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
   private val view: TerminalViewImpl
 
   val outputModel: TerminalOutputModel
-    get() = view.outputModel
+    get() = view.activeOutputModel()
 
   init {
     val terminalScope = terminalProjectScope(project).childScope("TerminalViewImpl")
@@ -116,13 +117,14 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
       KeyEvent.KEY_LOCATION_STANDARD
     )
     view.outputEditorEventsHandler.keyPressed(TimedKeyEvent(keyPressEvent, TimeSource.Monotonic.markNow()))
-    val offset = view.outputModel.cursorOffsetState.value.toRelative()
+
+    val offset = outputModel.cursorOffsetState.value.toRelative()
     val newOffset = when (keycode) {
       KeyEvent.VK_LEFT -> offset - 1
       KeyEvent.VK_RIGHT -> offset + 1
       else -> offset
     }
-    view.outputModel.updateCursorPosition(view.outputModel.relativeOffset(newOffset))
+    outputModel.updateCursorPosition(outputModel.relativeOffset(newOffset))
 
     awaitLookupPrefixUpdated()
   }
@@ -132,7 +134,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     val context = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
       .add(CommonDataKeys.EDITOR, view.outputEditor)
-      .add(TerminalOutputModel.DATA_KEY, view.outputModel)
+      .add(TerminalOutputModel.DATA_KEY, outputModel)
       .build()
     val event = AnActionEvent.createEvent(action, context, null,
                                           "", ActionUiKind.NONE, null)

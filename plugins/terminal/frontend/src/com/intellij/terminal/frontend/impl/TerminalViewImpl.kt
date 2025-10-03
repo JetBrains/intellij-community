@@ -93,8 +93,6 @@ class TerminalViewImpl(
   private val outputHyperlinkFacade: FrontendTerminalHyperlinkFacade?
   private val alternateBufferEditor: EditorEx
 
-  @VisibleForTesting
-  val outputModel: TerminalOutputModelImpl
   private val alternateBufferHyperlinkFacade: FrontendTerminalHyperlinkFacade?
   private val scrollingModel: TerminalOutputScrollingModel
   private var isAlternateScreenBuffer = false
@@ -110,6 +108,9 @@ class TerminalViewImpl(
   override val size: TermSize?
     get() = getCurEditor().calculateTerminalSize()
   override val title: TerminalTitle = TerminalTitle()
+
+  private val mutableOutputModels: TerminalOutputModelsSetImpl
+  override val outputModels: TerminalOutputModelsSet
 
   init {
     val hyperlinkScope = coroutineScope.childScope("TerminalViewImpl hyperlink facades")
@@ -170,7 +171,7 @@ class TerminalViewImpl(
 
     outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.childScope("TerminalOutputEditor"))
     outputEditor.putUserData(TerminalInput.KEY, terminalInput)
-    outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
+    val outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
 
     scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, sessionModel,
                                                       coroutineScope.childScope("TerminalOutputScrollingModel"))
@@ -213,6 +214,10 @@ class TerminalViewImpl(
     )
 
     outputEditor.putUserData(TerminalSessionModel.KEY, sessionModel)
+
+    mutableOutputModels = TerminalOutputModelsSetImpl(outputModel, alternateBufferModel)
+    outputModels = mutableOutputModels
+
     terminalSearchController = TerminalSearchController(project)
 
     outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
@@ -353,6 +358,7 @@ class TerminalViewImpl(
           val editor = if (state.isAlternateScreenBuffer) alternateBufferEditor else outputEditor
           terminalPanel.setTerminalContent(editor)
           terminalSearchController.finishSearchSession()
+          mutableOutputModels.setActiveModel(state.isAlternateScreenBuffer)
 
           if (terminalWasFocused) {
             IdeFocusManager.getInstance(project).requestFocus(terminalPanel.preferredFocusableComponent, true)
@@ -380,7 +386,7 @@ class TerminalViewImpl(
   ) {
     val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
 
-    editor.putUserData(TerminalOutputModel.KEY, outputModel)
+    editor.putUserData(TerminalOutputModel.KEY, model)
 
     // Document modifications can change the scroll position.
     // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
@@ -466,13 +472,13 @@ class TerminalViewImpl(
         if (isTypeAhead) {
           // Trim because of differing whitespace between terminal and type ahead
           commandText = curCommandText
-          val newCursorOffset = outputModel.cursorOffsetState.value.toRelative() + 1
+          val newCursorOffset = model.cursorOffsetState.value.toRelative() + 1
           editor.caretModel.moveToOffset(newCursorOffset)
           inlineCompletionTypingSession?.ignoreDocumentChanges = true
           inlineCompletionTypingSession?.endTypingSession(editor)
           cursorPosition = newCursorOffset
         }
-        else if (commandText != null && (curCommandText != commandText || cursorPosition != outputModel.cursorOffsetState.value.toRelative())) {
+        else if (commandText != null && (curCommandText != commandText || cursorPosition != model.cursorOffsetState.value.toRelative())) {
           inlineCompletionTypingSession?.ignoreDocumentChanges = false
           inlineCompletionTypingSession?.collectTypedCharOrInvalidateSession(MockDocumentEvent(editor.document, 0), editor)
           commandText = null
@@ -523,7 +529,7 @@ class TerminalViewImpl(
       sink[TerminalView.DATA_KEY] = this@TerminalViewImpl
       sink[TerminalActionUtil.EDITOR_KEY] = curEditor
       sink[TerminalInput.DATA_KEY] = terminalInput
-      sink[TerminalOutputModel.DATA_KEY] = outputModel
+      sink[TerminalOutputModel.DATA_KEY] = outputModels.active.value
       sink[TerminalSearchController.KEY] = terminalSearchController
       sink[TerminalSessionId.KEY] = (sessionFuture.getNow(null) as? FrontendTerminalSession?)?.id
       sink[TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY] = isAlternateScreenBuffer
