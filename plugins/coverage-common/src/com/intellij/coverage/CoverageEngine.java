@@ -403,23 +403,6 @@ public abstract class CoverageEngine {
   protected void deleteAssociatedTraces(CoverageSuite suite) { }
 
   /**
-   * @deprecated Is not used
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
-                                                     @NotNull String name,
-                                                     @NotNull CoverageFileProvider coverageDataFileProvider,
-                                                     String @Nullable [] filters,
-                                                     long lastCoverageTimeStamp,
-                                                     @Nullable String suiteToMerge,
-                                                     boolean coverageByTestEnabled,
-                                                     boolean branchCoverage,
-                                                     boolean trackTestFolders) {
-    return createCoverageSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge,
-                               coverageByTestEnabled, branchCoverage, trackTestFolders, null);
-  }
-
-  /**
    * Coverage suite is coverage settings & coverage data gather by coverage runner. This method is used for external suites.
    *
    * @param runner                Coverage Runner
