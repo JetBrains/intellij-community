@@ -755,22 +755,6 @@ a:com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper
 f:com.intellij.openapi.vcs.changes.ChangesPreprocess
 - <init>():V
 - s:preprocessChangesRemoveDeletedForDuplicateMoved(java.util.List):java.util.List
-a:com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
-- com.intellij.openapi.vcs.changes.EditorTabDiffPreview
-- <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,javax.swing.JComponent):V
-- b:<init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,javax.swing.JComponent,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- pf:getTree():com.intellij.openapi.vcs.changes.ui.ChangesTree
-- handleDoubleClick(java.awt.event.MouseEvent):Z
-- handleEnterKey():Z
-- p:handleEscapeKey():V
-- p:handleNextDiffShortcut():V
-- p:handleSingleClick():V
-- p:isOpenPreviewWithNextDiffShortcut():Z
-- p:isOpenPreviewWithSingleClick():Z
-- p:isOpenPreviewWithSingleClickEnabled():Z
-- p:isPreviewOnDoubleClick():Z
-- p:isPreviewOnEnter():Z
-- p:returnFocusToTree():V
 com.intellij.openapi.vcs.changes.ChangesViewEx
 - com.intellij.openapi.vcs.changes.ChangesViewI
 - a:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
@@ -2623,7 +2607,7 @@ c:com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
 - pf:selectChange(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
 - p:showAllChangesForEmptySelection():Z
 a:com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
-- com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
+- com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview$Companion
 - <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler):V
 - <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,javax.swing.JComponent,com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler):V
@@ -2634,7 +2618,19 @@ a:com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 - pf:getEditorTabName(com.intellij.diff.impl.DiffEditorViewer):java.lang.String
 - a:getEditorTabName(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):java.lang.String
 - pf:getHandler():com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
+- pf:getTree():com.intellij.openapi.vcs.changes.ui.ChangesTree
+- handleDoubleClick(java.awt.event.MouseEvent):Z
+- handleEnterKey():Z
+- p:handleEscapeKey():V
+- p:handleNextDiffShortcut():V
+- p:handleSingleClick():V
 - f:hasContent():Z
+- p:isOpenPreviewWithNextDiffShortcut():Z
+- p:isOpenPreviewWithSingleClick():Z
+- p:isOpenPreviewWithSingleClickEnabled():Z
+- p:isPreviewOnDoubleClick():Z
+- p:isPreviewOnEnter():Z
+- p:returnFocusToTree():V
 f:com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview$Companion
 - f:createDefaultViewer(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler,java.lang.String):com.intellij.diff.impl.DiffEditorViewer
 a:com.intellij.openapi.vcs.changes.ui.VcsToolWindowFactory
