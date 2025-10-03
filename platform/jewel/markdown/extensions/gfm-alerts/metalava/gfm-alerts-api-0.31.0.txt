@@ -1,0 +1,225 @@
+// Signature format: 4.0
+package org.jetbrains.jewel.markdown.extensions.github.alerts {
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class AlertStyling {
+    ctor public AlertStyling(org.jetbrains.jewel.markdown.extensions.github.alerts.NoteAlertStyling note, org.jetbrains.jewel.markdown.extensions.github.alerts.TipAlertStyling tip, org.jetbrains.jewel.markdown.extensions.github.alerts.ImportantAlertStyling important, org.jetbrains.jewel.markdown.extensions.github.alerts.WarningAlertStyling warning, org.jetbrains.jewel.markdown.extensions.github.alerts.CautionAlertStyling caution);
+    method public org.jetbrains.jewel.markdown.extensions.github.alerts.CautionAlertStyling getCaution();
+    method public org.jetbrains.jewel.markdown.extensions.github.alerts.ImportantAlertStyling getImportant();
+    method public org.jetbrains.jewel.markdown.extensions.github.alerts.NoteAlertStyling getNote();
+    method public org.jetbrains.jewel.markdown.extensions.github.alerts.TipAlertStyling getTip();
+    method public org.jetbrains.jewel.markdown.extensions.github.alerts.WarningAlertStyling getWarning();
+    property public org.jetbrains.jewel.markdown.extensions.github.alerts.CautionAlertStyling caution;
+    property public org.jetbrains.jewel.markdown.extensions.github.alerts.ImportantAlertStyling important;
+    property public org.jetbrains.jewel.markdown.extensions.github.alerts.NoteAlertStyling note;
+    property public org.jetbrains.jewel.markdown.extensions.github.alerts.TipAlertStyling tip;
+    property public org.jetbrains.jewel.markdown.extensions.github.alerts.WarningAlertStyling warning;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling.Companion Companion;
+  }
+
+  public static final class AlertStyling.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface BaseAlertStyling {
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public androidx.compose.ui.graphics.PathEffect? getPathEffect();
+    method public org.jetbrains.jewel.ui.icon.IconKey? getTitleIconKey();
+    method public androidx.compose.ui.text.TextStyle getTitleTextStyle();
+    property public abstract androidx.compose.ui.graphics.Color lineColor;
+    property public abstract androidx.compose.ui.unit.Dp lineWidth;
+    property public abstract androidx.compose.foundation.layout.PaddingValues padding;
+    property public abstract androidx.compose.ui.graphics.PathEffect? pathEffect;
+    property public abstract androidx.compose.ui.graphics.StrokeCap strokeCap;
+    property public abstract androidx.compose.ui.graphics.Color textColor;
+    property public abstract org.jetbrains.jewel.ui.icon.IconKey? titleIconKey;
+    property public abstract androidx.compose.ui.graphics.Color titleIconTint;
+    property public abstract androidx.compose.ui.text.TextStyle titleTextStyle;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class CautionAlertStyling implements org.jetbrains.jewel.markdown.extensions.github.alerts.BaseAlertStyling {
+    ctor @KotlinOnly public CautionAlertStyling(androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.unit.Dp lineWidth, androidx.compose.ui.graphics.Color lineColor, androidx.compose.ui.graphics.PathEffect? pathEffect, androidx.compose.ui.graphics.StrokeCap strokeCap, androidx.compose.ui.text.TextStyle titleTextStyle, org.jetbrains.jewel.ui.icon.IconKey? titleIconKey, androidx.compose.ui.graphics.Color titleIconTint, androidx.compose.ui.graphics.Color textColor);
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public androidx.compose.ui.graphics.PathEffect? getPathEffect();
+    method public org.jetbrains.jewel.ui.icon.IconKey? getTitleIconKey();
+    method public androidx.compose.ui.text.TextStyle getTitleTextStyle();
+    property public androidx.compose.ui.graphics.Color lineColor;
+    property public androidx.compose.ui.unit.Dp lineWidth;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.PathEffect? pathEffect;
+    property public androidx.compose.ui.graphics.StrokeCap strokeCap;
+    property public androidx.compose.ui.graphics.Color textColor;
+    property public org.jetbrains.jewel.ui.icon.IconKey? titleIconKey;
+    property public androidx.compose.ui.graphics.Color titleIconTint;
+    property public androidx.compose.ui.text.TextStyle titleTextStyle;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.alerts.CautionAlertStyling.Companion Companion;
+  }
+
+  public static final class CautionAlertStyling.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public sealed interface GitHubAlert extends org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock {
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> getContent();
+    property public abstract java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> content;
+  }
+
+  public static final class GitHubAlert.Caution implements org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert {
+    ctor public GitHubAlert.Caution(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> content);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> component1();
+    method public org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert.Caution copy(optional java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> content);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> getContent();
+    property public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> content;
+  }
+
+  public static final class GitHubAlert.Important implements org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert {
+    ctor public GitHubAlert.Important(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> content);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> component1();
+    method public org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert.Important copy(optional java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> content);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> getContent();
+    property public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> content;
+  }
+
+  public static final class GitHubAlert.Note implements org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert {
+    ctor public GitHubAlert.Note(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> content);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> component1();
+    method public org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert.Note copy(optional java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> content);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> getContent();
+    property public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> content;
+  }
+
+  public static final class GitHubAlert.Tip implements org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert {
+    ctor public GitHubAlert.Tip(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> content);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> component1();
+    method public org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert.Tip copy(optional java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> content);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> getContent();
+    property public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> content;
+  }
+
+  public static final class GitHubAlert.Warning implements org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert {
+    ctor public GitHubAlert.Warning(java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> content);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> component1();
+    method public org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlert.Warning copy(optional java.util.List<? extends org.jetbrains.jewel.markdown.MarkdownBlock> content);
+    method public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> getContent();
+    property public java.util.List<org.jetbrains.jewel.markdown.MarkdownBlock> content;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubAlertBlockRenderer implements org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension {
+    ctor public GitHubAlertBlockRenderer(org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling styling, org.jetbrains.jewel.markdown.rendering.MarkdownStyling rootStyling);
+    method @androidx.compose.runtime.Composable public void RenderCustomBlock(org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock block, org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer blockRenderer, org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer inlineRenderer, boolean enabled, androidx.compose.ui.Modifier modifier, kotlin.jvm.functions.Function1<? super java.lang.String,kotlin.Unit> onUrlClick);
+    method public boolean canRender(org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock block);
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubAlertIcons {
+    method public org.jetbrains.jewel.ui.icon.IconKey getCaution();
+    method public org.jetbrains.jewel.ui.icon.IconKey getImportant();
+    method public org.jetbrains.jewel.ui.icon.IconKey getNote();
+    method public org.jetbrains.jewel.ui.icon.IconKey getTip();
+    method public org.jetbrains.jewel.ui.icon.IconKey getWarning();
+    property public org.jetbrains.jewel.ui.icon.IconKey Caution;
+    property public org.jetbrains.jewel.ui.icon.IconKey Important;
+    property public org.jetbrains.jewel.ui.icon.IconKey Note;
+    property public org.jetbrains.jewel.ui.icon.IconKey Tip;
+    property public org.jetbrains.jewel.ui.icon.IconKey Warning;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertIcons INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubAlertProcessorExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension {
+    method public org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension getBlockProcessorExtension();
+    method public org.commonmark.parser.Parser.ParserExtension getParserExtension();
+    method public org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension getTextRendererExtension();
+    property public org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension blockProcessorExtension;
+    property public org.commonmark.parser.Parser.ParserExtension parserExtension;
+    property public org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension textRendererExtension;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertProcessorExtension INSTANCE;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class GitHubAlertRendererExtension implements org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension {
+    ctor public GitHubAlertRendererExtension(org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling alertStyling, org.jetbrains.jewel.markdown.rendering.MarkdownStyling rootStyling);
+    method public org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension getBlockRenderer();
+    property public org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension blockRenderer;
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class ImportantAlertStyling implements org.jetbrains.jewel.markdown.extensions.github.alerts.BaseAlertStyling {
+    ctor @KotlinOnly public ImportantAlertStyling(androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.unit.Dp lineWidth, androidx.compose.ui.graphics.Color lineColor, androidx.compose.ui.graphics.PathEffect? pathEffect, androidx.compose.ui.graphics.StrokeCap strokeCap, androidx.compose.ui.text.TextStyle titleTextStyle, org.jetbrains.jewel.ui.icon.IconKey? titleIconKey, androidx.compose.ui.graphics.Color titleIconTint, androidx.compose.ui.graphics.Color textColor);
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public androidx.compose.ui.graphics.PathEffect? getPathEffect();
+    method public org.jetbrains.jewel.ui.icon.IconKey? getTitleIconKey();
+    method public androidx.compose.ui.text.TextStyle getTitleTextStyle();
+    property public androidx.compose.ui.graphics.Color lineColor;
+    property public androidx.compose.ui.unit.Dp lineWidth;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.PathEffect? pathEffect;
+    property public androidx.compose.ui.graphics.StrokeCap strokeCap;
+    property public androidx.compose.ui.graphics.Color textColor;
+    property public org.jetbrains.jewel.ui.icon.IconKey? titleIconKey;
+    property public androidx.compose.ui.graphics.Color titleIconTint;
+    property public androidx.compose.ui.text.TextStyle titleTextStyle;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.alerts.ImportantAlertStyling.Companion Companion;
+  }
+
+  public static final class ImportantAlertStyling.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class NoteAlertStyling implements org.jetbrains.jewel.markdown.extensions.github.alerts.BaseAlertStyling {
+    ctor @KotlinOnly public NoteAlertStyling(androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.unit.Dp lineWidth, androidx.compose.ui.graphics.Color lineColor, androidx.compose.ui.graphics.PathEffect? pathEffect, androidx.compose.ui.graphics.StrokeCap strokeCap, androidx.compose.ui.text.TextStyle titleTextStyle, org.jetbrains.jewel.ui.icon.IconKey? titleIconKey, androidx.compose.ui.graphics.Color titleIconTint, androidx.compose.ui.graphics.Color textColor);
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public androidx.compose.ui.graphics.PathEffect? getPathEffect();
+    method public org.jetbrains.jewel.ui.icon.IconKey? getTitleIconKey();
+    method public androidx.compose.ui.text.TextStyle getTitleTextStyle();
+    property public androidx.compose.ui.graphics.Color lineColor;
+    property public androidx.compose.ui.unit.Dp lineWidth;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.PathEffect? pathEffect;
+    property public androidx.compose.ui.graphics.StrokeCap strokeCap;
+    property public androidx.compose.ui.graphics.Color textColor;
+    property public org.jetbrains.jewel.ui.icon.IconKey? titleIconKey;
+    property public androidx.compose.ui.graphics.Color titleIconTint;
+    property public androidx.compose.ui.text.TextStyle titleTextStyle;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.alerts.NoteAlertStyling.Companion Companion;
+  }
+
+  public static final class NoteAlertStyling.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class TipAlertStyling implements org.jetbrains.jewel.markdown.extensions.github.alerts.BaseAlertStyling {
+    ctor @KotlinOnly public TipAlertStyling(androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.unit.Dp lineWidth, androidx.compose.ui.graphics.Color lineColor, androidx.compose.ui.graphics.PathEffect? pathEffect, androidx.compose.ui.graphics.StrokeCap strokeCap, androidx.compose.ui.text.TextStyle titleTextStyle, org.jetbrains.jewel.ui.icon.IconKey? titleIconKey, androidx.compose.ui.graphics.Color titleIconTint, androidx.compose.ui.graphics.Color textColor);
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public androidx.compose.ui.graphics.PathEffect? getPathEffect();
+    method public org.jetbrains.jewel.ui.icon.IconKey? getTitleIconKey();
+    method public androidx.compose.ui.text.TextStyle getTitleTextStyle();
+    property public androidx.compose.ui.graphics.Color lineColor;
+    property public androidx.compose.ui.unit.Dp lineWidth;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.PathEffect? pathEffect;
+    property public androidx.compose.ui.graphics.StrokeCap strokeCap;
+    property public androidx.compose.ui.graphics.Color textColor;
+    property public org.jetbrains.jewel.ui.icon.IconKey? titleIconKey;
+    property public androidx.compose.ui.graphics.Color titleIconTint;
+    property public androidx.compose.ui.text.TextStyle titleTextStyle;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.alerts.TipAlertStyling.Companion Companion;
+  }
+
+  public static final class TipAlertStyling.Companion {
+  }
+
+  @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi @org.jetbrains.jewel.foundation.GenerateDataFunctions public final class WarningAlertStyling implements org.jetbrains.jewel.markdown.extensions.github.alerts.BaseAlertStyling {
+    ctor @KotlinOnly public WarningAlertStyling(androidx.compose.foundation.layout.PaddingValues padding, androidx.compose.ui.unit.Dp lineWidth, androidx.compose.ui.graphics.Color lineColor, androidx.compose.ui.graphics.PathEffect? pathEffect, androidx.compose.ui.graphics.StrokeCap strokeCap, androidx.compose.ui.text.TextStyle titleTextStyle, org.jetbrains.jewel.ui.icon.IconKey? titleIconKey, androidx.compose.ui.graphics.Color titleIconTint, androidx.compose.ui.graphics.Color textColor);
+    method public androidx.compose.foundation.layout.PaddingValues getPadding();
+    method public androidx.compose.ui.graphics.PathEffect? getPathEffect();
+    method public org.jetbrains.jewel.ui.icon.IconKey? getTitleIconKey();
+    method public androidx.compose.ui.text.TextStyle getTitleTextStyle();
+    property public androidx.compose.ui.graphics.Color lineColor;
+    property public androidx.compose.ui.unit.Dp lineWidth;
+    property public androidx.compose.foundation.layout.PaddingValues padding;
+    property public androidx.compose.ui.graphics.PathEffect? pathEffect;
+    property public androidx.compose.ui.graphics.StrokeCap strokeCap;
+    property public androidx.compose.ui.graphics.Color textColor;
+    property public org.jetbrains.jewel.ui.icon.IconKey? titleIconKey;
+    property public androidx.compose.ui.graphics.Color titleIconTint;
+    property public androidx.compose.ui.text.TextStyle titleTextStyle;
+    field public static final org.jetbrains.jewel.markdown.extensions.github.alerts.WarningAlertStyling.Companion Companion;
+  }
+
+  public static final class WarningAlertStyling.Companion {
+  }
+
+}
+
