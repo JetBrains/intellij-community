@@ -3,6 +3,8 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -28,7 +30,14 @@ public abstract class PsiBasedFileIndentOptionsProvider extends FileIndentOption
   public final @Nullable CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project,
                                                                                 @NotNull CodeStyleSettings settings,
                                                                                 @NotNull VirtualFile file) {
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    FileType type = file.getFileType();
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+
+    //calling getDocument causes decompilation, which is unnecessary
+    if (type.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(type) != null) {
+      return null;
+    }
+    Document document = documentManager.getDocument(file);
     if (document != null) {
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (psiFile != null) {
