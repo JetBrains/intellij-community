@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,11 @@ public interface CopyPastePreProcessor {
    */
   @NotNull
   String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText);
+
+  @ApiStatus.Experimental
+  default boolean isReformatCodeBeforePaste() {
+    return true;
+  }
 
   //For performance optimization implementations can return false in case when they dont have access to any other documents(psi file)
   // except current one

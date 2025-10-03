@@ -394,6 +394,8 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - supportNewLineCompletion():Z
 *:com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider
 - a:calcFocusZones(com.intellij.psi.PsiFile):java.util.List
+com.intellij.codeInsight.editorActions.CopyPastePreProcessor
+- *:isReformatCodeBeforePaste():Z
 *:com.intellij.codeInsight.editorActions.TypingActionsExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - endCopy(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
