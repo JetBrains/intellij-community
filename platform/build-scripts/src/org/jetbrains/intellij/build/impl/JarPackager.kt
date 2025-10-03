@@ -76,7 +76,6 @@ private val libsUsedInJps = setOf(
   "netty-codec-http",
   "netty-codec-protobuf",
   "netty-handler-proxy",
-  "gson",
   "Log4J",
   "slf4j-api",
   "slf4j-jdk14",
