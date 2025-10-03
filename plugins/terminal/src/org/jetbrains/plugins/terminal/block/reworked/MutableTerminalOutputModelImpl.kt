@@ -64,11 +64,6 @@ sealed class AbstractTerminalOutputModelImpl(
   override fun getText(start: TerminalOffset, end: TerminalOffset): String =
     document.getText(TextRange(start.toRelative(), end.toRelative()))
 
-  override fun getAbsoluteLineIndex(documentOffset: Int): Long {
-    val documentLineIndex = document.getLineNumber(documentOffset)
-    return trimmedLinesCount + documentLineIndex.toLong()
-  }
-
   override fun snapshot(): TerminalOutputModelSnapshot = this
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {

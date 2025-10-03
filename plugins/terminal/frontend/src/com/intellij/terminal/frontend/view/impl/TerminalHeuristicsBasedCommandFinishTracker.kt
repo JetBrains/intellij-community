@@ -15,6 +15,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.block.reworked.TerminalLine
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import java.awt.event.KeyEvent
@@ -67,7 +69,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
 
     val lineInfo = curLineInfo
     if (e.keyCode == KeyEvent.VK_ENTER && lineInfo != null) {
-      val cursorOffset = outputModel.cursorOffsetState.value.toRelative()
+      val cursorOffset = outputModel.cursorOffset
       val textBeforeCursor = getTextBeforeCursor(cursorOffset) ?: return
       if (textBeforeCursor.startsWith(lineInfo.promptText) && textBeforeCursor.length > lineInfo.promptText.length) {
         // There is some command to execute
@@ -79,16 +81,16 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
 
   private fun updateCurLineInfo() {
     val lineInfo = curLineInfo
-    val cursorOffset = outputModel.cursorOffsetState.value.toRelative()
-    val absoluteLineIndex = outputModel.getAbsoluteLineIndex(cursorOffset)
+    val cursorOffset = outputModel.cursorOffset
+    val cursorLine = outputModel.lineByOffset(cursorOffset)
     val textBeforeCursor = getTextBeforeCursor(cursorOffset)
 
     when {
       textBeforeCursor == null -> {
         curLineInfo = null
       }
-      lineInfo?.absoluteIndex != absoluteLineIndex -> {
-        curLineInfo = LineInfo(absoluteLineIndex, textBeforeCursor)
+      lineInfo?.line != cursorLine -> {
+        curLineInfo = LineInfo(cursorLine, textBeforeCursor)
       }
       !textBeforeCursor.startsWith(lineInfo.promptText) -> {
         curLineInfo = lineInfo.copy(promptText = textBeforeCursor)
@@ -105,10 +107,10 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
     // Heuristic: suspend until we detect the current line has the same prompt as in the provided LineInfo
     // Then we can consider that command is finished
     modelUpdatesFlow.debounce(PROMPT_CHECKING_DELAY).first {
-      val cursorOffset = outputModel.cursorOffsetState.value.toRelative()
-      val absoluteLineIndex = outputModel.getAbsoluteLineIndex(cursorOffset)
+      val cursorOffset = outputModel.cursorOffset
+      val cursorLine = outputModel.lineByOffset(cursorOffset)
 
-      absoluteLineIndex != lineInfo.absoluteIndex && getTextBeforeCursor(cursorOffset) == lineInfo.promptText
+      cursorLine != lineInfo.line && getTextBeforeCursor(cursorOffset) == lineInfo.promptText
     }
 
     onCommandFinish()
@@ -116,11 +118,11 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
     LOG.debug { "Command finish detected" }
   }
 
-  private fun getTextBeforeCursor(cursorOffset: Int): String? {
-    val lineNumber = outputModel.lineByOffset(outputModel.relativeOffset(cursorOffset))
+  private fun getTextBeforeCursor(cursorOffset: TerminalOffset): String? {
+    val lineNumber = outputModel.lineByOffset(cursorOffset)
     val lineStartOffset = outputModel.lineStartOffset(lineNumber)
 
-    val length = cursorOffset - lineStartOffset.toRelative()
+    val length = cursorOffset.toRelative() - lineStartOffset.toRelative()
     return if (length <= MAX_LINE_LENGTH) {
       outputModel.getText(lineStartOffset, outputModel.relativeOffset(lineStartOffset.toRelative() + length))
     }
@@ -140,7 +142,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
   }
 
   private data class LineInfo(
-    val absoluteIndex: Long,
+    val line: TerminalLine,
     val promptText: String,
   )
 

@@ -33,8 +33,6 @@ sealed interface TerminalOutputModel {
 
   fun snapshot(): TerminalOutputModelSnapshot
 
-  fun getAbsoluteLineIndex(documentOffset: Int): Long
-
   fun relativeOffset(offset: Int): TerminalOffset
 
   fun absoluteOffset(offset: Long): TerminalOffset
