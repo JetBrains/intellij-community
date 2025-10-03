@@ -4,7 +4,7 @@
 // ACTION: Make private
 // ERROR: Expected annotation class 'Foo' has no actual declaration in module light_idea_test_case for JVM
 // ERROR: This class does not have a constructor
-// K2_AFTER_ERROR: Unresolved reference 'Foo'.
+// K2_AFTER_ERROR: Expect class does not declare any constructors.
 expect annotation class Foo
 
 @Foo("")<caret>

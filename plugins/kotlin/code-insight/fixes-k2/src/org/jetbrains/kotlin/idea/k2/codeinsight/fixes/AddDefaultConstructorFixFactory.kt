@@ -8,11 +8,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddDefaultConstructorFix
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object AddDefaultConstructorFixFactory {
-
-    val addDefaultConstructorFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnresolvedReference ->
+    val addDefaultConstructorFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoImplicitDefaultConstructorOnExpectClass ->
         val baseClass = elementToBaseClass(diagnostic.psi) ?: return@ModCommandBased emptyList()
 
         listOf(
@@ -22,28 +20,17 @@ internal object AddDefaultConstructorFixFactory {
 }
 
 private fun KaSession.elementToBaseClass(element: PsiElement): KtClass? {
-    return when {
-        element is KtConstructorCalleeExpression ->
-            element.getStrictParentOfType<KtClassOrObject>()
-                ?.superTypeListEntries
-                ?.asSequence()
-                ?.filterIsInstance<KtSuperTypeCallEntry>()
-                ?.firstOrNull()?.let {
-                    superTypeEntryToClass(it)
-                }
-
-
-        element is KtNameReferenceExpression && element.parent is KtUserType ->
-            element.getStrictParentOfType<KtAnnotationEntry>()
-                ?.let {
-                    annotationEntryToClass(it)
-                }
-
+    return when (element) {
+        is KtSuperTypeCallEntry -> superTypeEntryToClass(element)
+        is KtAnnotationEntry -> annotationEntryToClass(element)
         else -> null
     }
 }
 
 private fun KaSession.superTypeEntryToClass(typeEntry: KtSuperTypeListEntry): KtClass? {
+    if ((typeEntry as? KtSuperTypeCallEntry)?.valueArguments?.isNotEmpty() == true) {
+        return null // Don't suggest the quick fix because the default constructor should not have arguments
+    }
     val baseType = typeEntry.typeReference?.type ?: return null
     val baseClassSymbol = baseType.expandedSymbol ?: return null
     if (!baseClassSymbol.isExpect) return null
@@ -52,6 +39,9 @@ private fun KaSession.superTypeEntryToClass(typeEntry: KtSuperTypeListEntry): Kt
 }
 
 private fun KaSession.annotationEntryToClass(entry: KtAnnotationEntry): KtClass? {
+    if (entry.valueArguments.isNotEmpty()) {
+        return null // Don't suggest the quick fix because the default constructor should not have arguments
+    }
     val symbol = entry.typeReference?.type?.expandedSymbol ?: return null
     if (!symbol.isExpect) return null
     return symbol.psi as? KtClass

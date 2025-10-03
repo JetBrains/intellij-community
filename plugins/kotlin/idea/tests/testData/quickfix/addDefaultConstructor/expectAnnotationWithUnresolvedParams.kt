@@ -5,7 +5,7 @@
 // ERROR: Unresolved reference: x
 // ERROR: Unresolved reference: y
 // ERROR: Unresolved reference: z
-// K2_AFTER_ERROR: Unresolved reference 'Foo'.
+// K2_AFTER_ERROR: Expect class does not declare any constructors.
 // K2_AFTER_ERROR: Unresolved reference 'x'.
 // K2_AFTER_ERROR: Unresolved reference 'y'.
 // K2_AFTER_ERROR: Unresolved reference 'z'.
