@@ -26,7 +26,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//libraries/guava",
-    "@lib//:gson",
+    "//libraries/gson",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//java/testFramework",

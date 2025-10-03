@@ -36,7 +36,7 @@ jvm_library(
     "//plugins/xslt-debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
-    "@lib//:gson",
+    "//libraries/gson",
     "//plugins/tasks/tasks-core/jira",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

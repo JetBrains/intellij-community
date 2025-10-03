@@ -7,7 +7,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/script-debugger/protocol/protocol-reader-runtime",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlin-stdlib",

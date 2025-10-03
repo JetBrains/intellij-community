@@ -40,7 +40,7 @@ jvm_library(
     "@lib//:intellij-test-discovery",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:jackson",
     "@lib//:miglayout-swing",
     "//platform/vcs-impl",

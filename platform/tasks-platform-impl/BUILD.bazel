@@ -22,7 +22,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/vcs-api:vcs",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/execution-impl",

@@ -47,7 +47,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "@lib//:fastutil-min",
     "//libraries/hash4j",
-    "@lib//:gson",
+    "//libraries/gson",
     "//libraries/kotlinx/serialization/core",
     "@lib//:kotlin-reflect",
     "@lib//:jna",

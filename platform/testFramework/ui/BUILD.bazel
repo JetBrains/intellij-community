@@ -24,7 +24,7 @@ jvm_library(
     "@lib//:netty-codec-http",
     "@lib//:netty-buffer",
     "@lib//:platform-test_framework-ui-intellij-remoterobot-robot-server-core",
-    "@lib//:gson",
+    "//libraries/gson",
   ],
   exports = [
     "@lib//:platform-test_framework-ui-intellij-remoterobot-remote-fixtures",

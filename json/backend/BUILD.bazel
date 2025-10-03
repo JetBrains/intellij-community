@@ -31,7 +31,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/indexing-impl",
     "//platform/refactoring",
     "//platform/statistics",

@@ -87,7 +87,7 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/plugin",

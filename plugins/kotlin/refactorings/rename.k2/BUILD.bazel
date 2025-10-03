@@ -58,7 +58,7 @@ jvm_library(
   deps = [
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:kotlinc-analysis-api",
     "//platform/analysis-api:analysis",
     "//platform/core-ui",

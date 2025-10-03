@@ -39,7 +39,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
-    "@lib//:gson",
+    "//libraries/gson",
   ]
 )
 ### auto-generated section `build kotlin.base.facet` end

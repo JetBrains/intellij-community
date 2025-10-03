@@ -30,7 +30,7 @@ jvm_library(
     "//java/debugger/openapi:java-debugger",
     "@lib//:kotlinc-analysis-api",
     "@lib//:maven-resolver-provider",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:asm",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",

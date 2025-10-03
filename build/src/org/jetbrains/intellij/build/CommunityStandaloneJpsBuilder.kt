@@ -36,6 +36,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.platform.util.nanoxml",
     "intellij.libraries.hash4j",
     "intellij.libraries.caffeine",
+    "intellij.libraries.gson",
     "intellij.libraries.aalto.xml",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
@@ -99,7 +100,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "slf4j-api",
     "plexus-utils",
     "jetbrains-annotations",
-    "gson",
     "jps-javac-extension",
     "fastutil-min",
     "kotlin-stdlib",

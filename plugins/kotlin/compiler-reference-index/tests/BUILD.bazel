@@ -17,7 +17,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:junit4",
     "//java/java-indexing-api:indexing",
     "//jps/model-api:model",

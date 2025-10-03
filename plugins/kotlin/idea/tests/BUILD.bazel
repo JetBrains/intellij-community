@@ -52,7 +52,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView",
-    "@lib//:gson",
+    "//libraries/gson",
     "//libraries/guava",
     "@lib//:fastutil-min",
     "//platform/usageView-impl",

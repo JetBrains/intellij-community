@@ -24,7 +24,7 @@ jvm_library(
     "@lib//:http-client",
     "//platform/platform-impl:ide-impl",
     "//libraries/guava",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:stats_collector-completion-log-events",
     "//platform/projectModel-api:projectModel",
     "//platform/statistics",

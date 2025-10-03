@@ -49,7 +49,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/java-impl:impl",
     "//platform/smRunner",
-    "@lib//:gson",
+    "//libraries/gson",
     "//jps/jps-builders:build",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "@lib//:x_stream",

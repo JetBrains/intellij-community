@@ -20,7 +20,7 @@ jvm_library(
     "//java/testFramework",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/util",

@@ -65,7 +65,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/util",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "@lib//:gson",
+    "//libraries/gson",
     "//java/debugger/shared",
     "//platform/util/jdom",
     "//java/java-runtime:rt",

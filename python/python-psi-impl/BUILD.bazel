@@ -44,7 +44,7 @@ jvm_library(
     "//platform/lvcs-api:lvcs",
     "//platform/ide-core-impl",
     "//platform/util/jdom",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//python/python-parser:parser",

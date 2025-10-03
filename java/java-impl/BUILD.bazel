@@ -68,7 +68,7 @@ jvm_library(
     "//java/java-structure-view:structureView",
     "//spellchecker",
     "//platform/built-in-server:builtInServer-impl",
-    "@lib//:gson",
+    "//libraries/gson",
     "//java/compiler/openapi:java-compiler",
     "//platform/object-serializer:objectSerializer-annotations",
     "//platform/external-system-impl:externalSystem-impl",

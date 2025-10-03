@@ -29,7 +29,7 @@ jvm_library(
     "//platform/external-system-rt:externalSystem-rt",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "@lib//:gradle",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/object-serializer:objectSerializer-annotations",
     "@lib//:ion",
     "//platform/util-rt",

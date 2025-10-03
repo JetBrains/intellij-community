@@ -87,7 +87,7 @@ jvm_library(
     "@lib//:kotlinc-low-level-api-fir",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlin-base-fir-analysis-api-platform-ehcache-sizeof",
-    "@lib//:gson",
+    "//libraries/gson",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/project-structure",

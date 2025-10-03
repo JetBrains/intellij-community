@@ -38,7 +38,7 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "@lib//:jackson-jr-objects",
     "@lib//:fastutil-min",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:protobuf",
     "//build/tasks",
     "//build/deps:dependencies",

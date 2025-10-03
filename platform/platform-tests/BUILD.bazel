@@ -68,7 +68,7 @@ jvm_library(
     "//plugins/grazie/src:core",
     "@lib//:http-client",
     "//jps/model-impl",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:kotlin-stdlib",
     "@lib//:easymock",
     "@lib//:assert_j",

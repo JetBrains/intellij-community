@@ -64,7 +64,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView-impl",
     "//platform/util/jdom",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:asm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",

@@ -30,7 +30,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//platform/observable",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/ide-core-impl",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",

@@ -17,7 +17,7 @@ jvm_library(
   deps = [
     "//jps/jps-builders:build",
     "//platform/util",
-    "@lib//:gson",
+    "//libraries/gson",
     "//jps/model-api:model",
   ]
 )

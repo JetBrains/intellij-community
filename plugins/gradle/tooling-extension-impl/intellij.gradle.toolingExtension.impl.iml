@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.rt" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />
     <orderEntry type="library" name="Gradle" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="library" name="ion" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />

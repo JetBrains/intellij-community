@@ -21,7 +21,7 @@ jvm_library(
   resources = [":sdk_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:gson",
+    "//libraries/gson",
     "//libraries/guava",
     "@lib//:stream_ex",
     "//platform/analysis-api:analysis",
@@ -60,7 +60,7 @@ jvm_library(
   associates = [":sdk"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:gson",
+    "//libraries/gson",
     "//libraries/guava",
     "@lib//:stream_ex",
     "//platform/analysis-api:analysis",

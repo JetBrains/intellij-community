@@ -34,7 +34,7 @@ jvm_library(
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/compiler-configuration",
