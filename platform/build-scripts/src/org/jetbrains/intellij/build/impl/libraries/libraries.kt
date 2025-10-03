@@ -18,6 +18,7 @@ fun JpsModule.isLibraryModule(): Boolean {
  * Please mind that intellij.libraries.microba and intellij.libraries.cglib are exceptions and should not be included in this list
  */
 private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
+  "intellij.libraries.aalto.xml",
   "intellij.libraries.assertj.core",
   "intellij.libraries.caffeine",
   "intellij.libraries.compose.foundation.desktop",

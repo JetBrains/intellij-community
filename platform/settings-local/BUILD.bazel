@@ -45,7 +45,7 @@ jvm_library(
     "//platform/util",
     "//platform/object-serializer",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "@lib//:kotlinx-serialization-cbor",
   ]
 )
@@ -87,7 +87,7 @@ jvm_library(
     "//platform/object-serializer",
     "//platform/object-serializer:object-serializer_test_lib",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "//community-resources:customization",
     "//platform/testFramework/core",
     "@lib//:kotlinx-serialization-cbor",

@@ -37,7 +37,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/diff-api:diff",
     "//platform/core-ui",
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "//platform/util/xmlDom",
     "//platform/util/jdom",
     "//libraries/hash4j",

@@ -34,6 +34,9 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "intellij.platform.util.rt.java8",
     "intellij.platform.util.trove",
     "intellij.platform.util.nanoxml",
+    "intellij.libraries.hash4j",
+    "intellij.libraries.caffeine",
+    "intellij.libraries.aalto.xml",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
@@ -103,11 +106,8 @@ suspend fun buildCommunityStandaloneJpsBuilder(
     "kotlinx-coroutines-core",
     "commons-lang3",
     "maven-resolver-provider",
-    "aalto-xml",
-    "caffeine",
     "mvstore",
     "kotlin-metadata",
-    "hash4j"
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
   }

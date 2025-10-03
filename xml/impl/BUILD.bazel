@@ -50,7 +50,7 @@ jvm_library(
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/util/xmlDom",
     "//platform/util/jdom",
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "//platform/polySymbols/backend",
     "//libraries/xerces",
     "//xml/xml-syntax:syntax",

@@ -10,7 +10,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util/xmlDom",
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "//platform/util",
   ]
 )

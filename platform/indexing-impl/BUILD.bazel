@@ -28,7 +28,7 @@ jvm_library(
     "//platform/diagnostic",
     "//libraries/caffeine",
     "//platform/util/nanoxml",
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "//platform/util/xmlDom",
     "//platform/workspace/storage",
     "//platform/util/storages",

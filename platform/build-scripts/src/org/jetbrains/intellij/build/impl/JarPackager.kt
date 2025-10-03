@@ -129,7 +129,7 @@ private val predefinedMergeRules = listOf<Pair<String, (String, FrontendModuleFi
   },
 
   // used in an external process - see `ConsoleProcessListFetcher.getConsoleProcessCount`
-  UTIL_JAR to { it, _ -> it == "pty4j" || it == "jvm-native-trusted-roots" || it == "caffeine" },
+  UTIL_JAR to { it, _ -> it == "pty4j" || it == "jvm-native-trusted-roots" },
 )
 
 internal fun getLibraryFileName(library: JpsLibrary): String {

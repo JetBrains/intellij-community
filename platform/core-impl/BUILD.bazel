@@ -21,7 +21,7 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:fastutil-min",
     "//platform/util-class-loader:util-classLoader",
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "//platform/util/xmlDom",
     "@lib//:automaton",
     "//libraries/guava",

@@ -99,7 +99,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/statistics/uploader",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "//platform/util/xmlDom",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/platform-util-netty:ide-util-netty",

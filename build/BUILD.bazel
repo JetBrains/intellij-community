@@ -15,7 +15,7 @@ jvm_library(
     "@lib//:kotlin-metadata",
     "@lib//:caffeine",
     "@lib//:asm",
-    "@lib//:hash4j",
+    "@community//libraries/hash4j:hash4j",
     "@lib//:fastutil-min",
     "@lib//:kotlin-stdlib-provided",
   ]
@@ -50,7 +50,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:netty-buffer",
     "@lib//:fastutil-min",
-    "@lib//:hash4j",
+    "@community//libraries/hash4j:hash4j",
   ]
 )
 

@@ -337,6 +337,7 @@ jvm/jvm-analysis-kotlin-tests-shared
 jvm/jvm-analysis-quickFix
 jvm/jvm-analysis-refactoring
 jvm/jvm-analysis-testFramework
+libraries/aalto-xml
 libraries/ai.grazie.spell.gec.engine.local
 libraries/assertj-core
 libraries/caffeine

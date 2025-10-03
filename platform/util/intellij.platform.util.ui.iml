@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
-    <orderEntry type="library" name="aalto-xml" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.aalto.xml" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" name="jbr-api" level="project" />
