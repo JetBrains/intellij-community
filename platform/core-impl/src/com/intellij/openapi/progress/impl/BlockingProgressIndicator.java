@@ -18,15 +18,6 @@ public interface BlockingProgressIndicator extends ProgressIndicator {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   default void startBlocking(@NotNull Runnable init, boolean isSynchronousHeadlessExecution, @NotNull CompletableFuture<?> stopCondition) {
-    startBlocking(init, stopCondition);
-  }
-
-  /**
-   * @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link com.intellij.openapi.progress.ProgressManager} or {@link ProgressRunner}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  default void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition) {
     throw new UnsupportedOperationException();
   }
 }

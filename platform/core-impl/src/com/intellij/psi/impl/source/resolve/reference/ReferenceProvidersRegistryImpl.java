@@ -3,12 +3,10 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.*;
@@ -207,14 +205,5 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
     }
 
     return list;
-  }
-
-  /**
-   * @deprecated to attract attention and motivate to fix tests which fail these checks
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static void disableUnderlyingElementChecks(@NotNull Disposable parentDisposable) {
-    Registry.get("ide.check.reference.provider.underlying.element").setValue(false, parentDisposable);
   }
 }

@@ -2698,7 +2698,6 @@ f:com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP
 f:com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl
 - com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 - <init>():V
-- s:disableUnderlyingElementChecks(com.intellij.openapi.Disposable):V
 - unloadProvidersFor(com.intellij.lang.Language):V
 a:com.intellij.psi.impl.source.resolve.reference.impl.CachingReference
 - com.intellij.psi.PsiReference
@@ -3395,7 +3394,6 @@ f:com.intellij.psi.stubs.StubTextInconsistencyException
 - com.intellij.openapi.diagnostic.ExceptionWithAttachments
 - s:checkStubTextConsistency(com.intellij.psi.PsiFile):V
 - s:checkStubTextConsistency(com.intellij.psi.PsiFile,com.intellij.psi.stubs.StubInconsistencyReporter$SourceOfCheck):V
-- s:checkStubTextConsistency(com.intellij.psi.PsiFile,com.intellij.psi.stubs.StubInconsistencyReporter$SourceOfCheck,com.intellij.psi.stubs.StubInconsistencyReporter$EnforcedInconsistencyType):V
 - getAttachments():com.intellij.openapi.diagnostic.Attachment[]
 - getStubsFromPsi():java.lang.String
 - getStubsFromText():java.lang.String
