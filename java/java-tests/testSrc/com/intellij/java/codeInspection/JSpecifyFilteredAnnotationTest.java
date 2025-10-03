@@ -174,11 +174,11 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       }
     },
 
-    new SkipIndividuallyFilter( // see: IDEA-375132
+    new SkipIndividuallyFilter( // after: IDEA-375132
       Set.of(
-        new Pair<>("NotNullMarkedUseOfWildcardAsTypeArgument.java", 30),
-        new Pair<>("SameTypeTypeVariable.java", 31),
-        new Pair<>("SameTypeTypeVariable.java", 51),
+        new Pair<>("NotNullMarkedUseOfWildcardAsTypeArgument.java", 30), //IDEA-380248
+        new Pair<>("SameTypeTypeVariable.java", 31), //IDEA-380143
+        new Pair<>("SameTypeTypeVariable.java", 51), //IDEA-380143
         new Pair<>("SuperVsObject.java", 24), // see: IDEA-379303
         new Pair<>("SuperNullableForNonNullableTypeParameter.java", 27) // see: IDEA-379303
       )
