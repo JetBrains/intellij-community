@@ -1148,7 +1148,6 @@ c:com.intellij.execution.wsl.WSLDistribution
 - s:findWslExe():java.nio.file.Path
 - getEnvironment():java.util.Map
 - getExecutablePath():java.nio.file.Path
-- f:getHostIpAddress():java.net.InetAddress
 - getId():java.lang.String
 - f:getMntRoot():java.lang.String
 - getMsId():java.lang.String
