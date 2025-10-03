@@ -29,6 +29,10 @@ sealed interface TerminalOutputModel {
    */
   val cursorOffsetState: StateFlow<TerminalOffset>
 
+  val firstLine: TerminalLine
+
+  val lastLine: TerminalLine
+
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 
   fun snapshot(): TerminalOutputModelSnapshot
@@ -36,8 +40,6 @@ sealed interface TerminalOutputModel {
   fun relativeOffset(offset: Int): TerminalOffset
 
   fun absoluteOffset(offset: Long): TerminalOffset
-
-  fun relativeLine(line: Int): TerminalLine
 
   fun absoluteLine(line: Long): TerminalLine
 
@@ -72,7 +74,8 @@ sealed interface TerminalOffset : Comparable<TerminalOffset> {
 @ApiStatus.Experimental
 sealed interface TerminalLine : Comparable<TerminalLine> {
   fun toAbsolute(): Long
-  fun toRelative(): Int
+  operator fun plus(lineCount: Long): TerminalLine
+  operator fun minus(other: TerminalLine): Long
 }
 
 @get:ApiStatus.Experimental

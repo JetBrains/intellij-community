@@ -41,15 +41,19 @@ sealed class AbstractTerminalOutputModelImpl(
   override val modificationStamp: Long
     get() = document.modificationStamp
 
+  override val firstLine: TerminalLine
+    get() = TerminalLineImpl(trimmedLinesCount, 0)
+
+  override val lastLine: TerminalLine
+    get() = TerminalLineImpl(trimmedLinesCount, lineCount - 1)
+
   override fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, offset)
 
   override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, (offset - trimmedCharsCount).toInt())
 
-  override fun relativeLine(line: Int): TerminalLine = TerminalLineImpl(trimmedLinesCount, line)
-
   override fun absoluteLine(line: Long): TerminalLine = TerminalLineImpl(trimmedLinesCount, (line - trimmedLinesCount).toInt())
 
-  override fun lineByOffset(offset: TerminalOffset): TerminalLine = relativeLine(document.getLineNumber(offset.toRelative()))
+  override fun lineByOffset(offset: TerminalOffset): TerminalLine = TerminalLineImpl(trimmedLinesCount, document.getLineNumber(offset.toRelative()))
 
   override fun startOffset(line: TerminalLine): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
 
@@ -69,6 +73,8 @@ sealed class AbstractTerminalOutputModelImpl(
   override fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener) {
     // Do nothing, because the model is immutable, and therefore no events can be fired.
   }
+
+  private fun TerminalLine.toRelative(): Int = (this - firstLine).toInt()
 }
 
 /**
@@ -560,8 +566,9 @@ private data class TerminalLineImpl(
 ) : TerminalLine {
   override fun compareTo(other: TerminalLine): Int = toAbsolute().compareTo(other.toAbsolute())
   override fun toAbsolute(): Long = trimmedLinesCount + relative
-  override fun toRelative(): Int = relative
-  override fun toString(): String = "${toAbsolute()}(${toRelative()})"
+  override fun plus(lineCount: Long): TerminalLine = TerminalLineImpl(trimmedLinesCount, (relative + lineCount).toInt())
+  override fun minus(other: TerminalLine): Long = toAbsolute() - other.toAbsolute()
+  override fun toString(): String = "${toAbsolute()}($relative)"
 }
 
 private val LOG = logger<MutableTerminalOutputModelImpl>()
