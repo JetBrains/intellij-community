@@ -69,12 +69,6 @@ public final class CheckRegExpForm {
   private static final Key<List<RegExpMatch>> LATEST_MATCHES = Key.create("REG_EXP_LATEST_MATCHES");
   private static final Key<RegExpMatchResult> RESULT = Key.create("REG_EXP_RESULT");
 
-  /**
-   * @deprecated Use {{@link Keys#CHECK_REG_EXP_EDITOR} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Keys.CHECK_REG_EXP_EDITOR;
-
   public static final class Keys {
     // do not load CheckRegExpForm early, declare this key in separate class
     public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Key.create("CHECK_REG_EXP_EDITOR");
