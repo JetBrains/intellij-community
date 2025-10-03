@@ -8,7 +8,7 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
-class LockReqsUnitTest : BasePlatformTestCase() {
+class JavaLockReqUnitTest : BasePlatformTestCase() {
 
   private lateinit var analyzerDFS: JavaLockReqAnalyzerDFS
   private lateinit var analyzerBFS: JavaLockReqAnalyzerBFS

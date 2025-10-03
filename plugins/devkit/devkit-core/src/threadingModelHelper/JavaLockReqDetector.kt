@@ -6,6 +6,8 @@ import com.intellij.psi.PsiMethod
 
 class JavaLockReqDetector(private val patterns: LockReqRules = BaseLockReqRules()) : LockReqDetector {
 
+  private val psiOps = JavaLockReqPsiOps()
+
   override fun findAnnotationRequirements(method: PsiMethod): List<LockRequirement> {
     val requirements = mutableListOf<LockRequirement>()
     method.annotations.forEach { annotation ->
@@ -33,12 +35,12 @@ class JavaLockReqDetector(private val patterns: LockReqRules = BaseLockReqRules(
     val containingClass = method.containingClass ?: return false
     val className = containingClass.qualifiedName ?: return false
     if (isSwingClass(className)) return method.name !in patterns.safeSwingMethods
-    return JavaLockReqPsiOps.inheritsFromAny(containingClass, patterns.edtRequiredClasses)
+    return psiOps.inheritsFromAny(containingClass, patterns.edtRequiredClasses)
   }
 
   private fun isSwingClass(className: String): Boolean {
     return patterns.edtRequiredClasses.contains(className) ||
-           JavaLockReqPsiOps.isInPackages(className, patterns.edtRequiredPackages)
+           psiOps.isInPackages(className, patterns.edtRequiredPackages)
   }
 
   override fun isAsyncDispatch(method: PsiMethod): Boolean {
@@ -54,7 +56,7 @@ class JavaLockReqDetector(private val patterns: LockReqRules = BaseLockReqRules(
 
   override fun extractMessageBusTopic(method: PsiMethod): PsiClass? {
     if (method.name in patterns.messageBusSyncMethods) {
-      return JavaLockReqPsiOps.resolveReturnType(method)
+      return psiOps.resolveReturnType(method)
     }
     return null
   }
