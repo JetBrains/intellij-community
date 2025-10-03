@@ -289,12 +289,17 @@ class TerminalViewImpl(
     controller.addTerminationCallback(callback, parentDisposable)
   }
 
-  //override fun sendCommandToExecute(shellCommand: String) {
-  //  val newLineBytes = encodingManager.getCode(KeyEvent.VK_ENTER, 0)!!
-  //   TODO: should we always use UTF8?
-  //val bytes = shellCommand.toByteArray(Charsets.UTF_8) + newLineBytes
-  //terminalInput.sendBytes(bytes)
-  //}
+  override fun sendText(text: String) {
+    createSendTextBuilder().send(text)
+  }
+
+  override fun createSendTextBuilder(): TerminalSendTextBuilder {
+    return TerminalSendTextBuilderImpl(this::doSendText)
+  }
+
+  private fun doSendText(options: TerminalSendTextOptions) {
+    terminalInput.sendText(options)
+  }
 
   fun setTopComponent(component: JComponent, disposable: Disposable) {
     val resizeListener = object : ComponentAdapter() {

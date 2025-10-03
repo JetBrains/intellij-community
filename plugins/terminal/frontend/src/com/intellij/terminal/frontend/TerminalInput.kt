@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.util.Key
+import com.intellij.terminal.frontend.impl.TerminalSendTextOptions
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toDto
 import com.jediterm.core.util.TermSize
@@ -15,6 +16,7 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
 import org.jetbrains.plugins.terminal.fus.*
 import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets
@@ -22,7 +24,7 @@ import java.util.concurrent.CompletableFuture
 import kotlin.time.TimeMark
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TerminalInput(
+internal class TerminalInput(
   private val terminalSessionFuture: CompletableFuture<TerminalSession>,
   private val sessionModel: TerminalSessionModel,
   startupFusInfo: TerminalStartupFusInfo?,
@@ -93,6 +95,24 @@ class TerminalInput(
     job.invokeOnCompletion {
       bufferChannel.close()
     }
+  }
+
+  fun sendText(options: TerminalSendTextOptions) {
+    var text = options.text
+    if (text.isEmpty()) {
+      return
+    }
+    text = sanitizeLineSeparators(text)
+
+    if (options.useBracketedPasteMode && sessionModel.terminalState.value.isBracketedPasteMode) {
+      text = "\u001b[200~$text\u001b[201~"
+    }
+
+    if (options.shouldExecute && !text.endsWith('\r')) {
+      text += '\r'
+    }
+
+    sendString(text)
   }
 
   fun sendString(data: String) {

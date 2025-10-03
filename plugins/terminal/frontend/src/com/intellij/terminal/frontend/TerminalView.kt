@@ -26,5 +26,9 @@ interface TerminalView {
 
   fun getCurrentDirectory(): String?
 
+  fun sendText(text: String)
+
+  fun createSendTextBuilder(): TerminalSendTextBuilder
+
   // todo
 }
