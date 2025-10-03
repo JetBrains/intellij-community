@@ -201,7 +201,7 @@ sealed class IdeaPluginDescriptorImpl(
       LOG.warnInProduction(PluginException(buildString {
         append("Plugin descriptor for ")
         when (this@logUnexpectedElement) {
-          is ContentModuleDescriptor -> append("content module '${moduleId}' of plugin '${pluginId}'")
+          is ContentModuleDescriptor -> append("content module '${moduleId.id}' of plugin '${pluginId}'")
           is DependsSubDescriptor -> append("'depends' sub-descriptor '${descriptorPath}' of plugin '${pluginId}'")
           is PluginMainDescriptor -> append("plugin '${pluginId}'")
         }
@@ -582,10 +582,10 @@ class ContentModuleDescriptor(
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun toString(): String =
-    "ContentModuleDescriptor(id=${this@ContentModuleDescriptor.moduleId}" +
+    "ContentModuleDescriptor(id=${this@ContentModuleDescriptor.moduleId.id}" +
     (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
     (if (packagePrefix == null) "" else ", package=$packagePrefix") +
-    (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId}.xml") "" else ", descriptorPath=$descriptorPath") +
+    (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId.id}.xml") "" else ", descriptorPath=$descriptorPath") +
     ") <- $parent"
 
   init {

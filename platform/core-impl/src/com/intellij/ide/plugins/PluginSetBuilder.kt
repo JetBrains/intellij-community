@@ -113,7 +113,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       for (module in plugin.contentModules) {
         if (module.moduleLoadingRule.required && enabledRequiredContentModules.remove(module.moduleId) != null) {
           module.isMarkedForLoading = false
-          logMessages.add("Module ${module.moduleId} is disabled because the containing plugin ${plugin.pluginId} won't be loaded")
+          logMessages.add("Module ${module.moduleId.id} is disabled because the containing plugin ${plugin.pluginId} won't be loaded")
         }
       }
     }
@@ -121,7 +121,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
     m@ for (module in sortedModulesWithDependencies.modules) {
       if (module is ContentModuleDescriptor && module.moduleId == moduleIncompatibleWithCurrentMode) {
         module.isMarkedForLoading = false
-        logMessages.add("Module ${module.moduleId} is disabled because it is not compatible with the current product mode")
+        logMessages.add("Module ${module.moduleId.id} is disabled because it is not compatible with the current product mode")
         continue
       }
 
