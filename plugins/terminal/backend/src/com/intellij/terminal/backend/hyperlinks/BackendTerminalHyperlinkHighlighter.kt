@@ -4,6 +4,8 @@ package com.intellij.terminal.backend.hyperlinks
 
 import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.Filter
+import com.intellij.execution.impl.EditorHyperlinkSupport
+import com.intellij.execution.impl.HypertextInput
 import com.intellij.execution.impl.InlayProvider
 import com.intellij.execution.impl.applyToLineRange
 import com.intellij.openapi.application.ModalityState
@@ -443,7 +445,7 @@ private class HyperlinkProcessor(
   ): List<TerminalFilterResultInfoDto> =
     readAction {
       mutableListOf<TerminalFilterResultInfoDto>().also { results ->
-        filter.applyToLineRange(outputModel.document, startLine.toRelative(), endLine.toRelative()) { applyResult ->
+        filter.applyToLineRange(HypertextInputFromOutputModel(outputModel), startLine.toRelative(), endLine.toRelative()) { applyResult ->
           checkCanceled()
           val hyperlinks = applyResult.filterResult?.resultItems?.flatMap { createHyperlinkOrHighlighting(outputModel, it) } ?: emptyList()
           results.addAll(hyperlinks)
@@ -488,6 +490,19 @@ private class HyperlinkProcessor(
     return listOfNotNull(notInlayResult, inlayResult)
   }
 
+}
+
+private class HypertextInputFromOutputModel(private val outputModel: FrozenTerminalOutputModel) : HypertextInput {
+  override val lineCount: Int
+    get() = outputModel.document.lineCount
+
+  override fun getLineStartOffset(lineIndex: Int): Int {
+    return outputModel.document.getLineStartOffset(lineIndex)
+  }
+
+  override fun getLineText(lineIndex: Int): String {
+    return EditorHyperlinkSupport.getLineText(outputModel.document, lineIndex, true)
+  }
 }
 
 /**
