@@ -138,22 +138,6 @@ public class TestCaseLoader {
     return scheme;
   });
 
-  /**
-   * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).build();` instead
-   */
-  @Deprecated(forRemoval = true)
-  public TestCaseLoader(String classFilterName) {
-    this(classFilterName, false);
-  }
-
-  /**
-   * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).withForceLoadPerformanceTests(flag).build();` instead
-   */
-  @Deprecated(forRemoval = true)
-  public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
-    this(getFilter(getTestPatterns(), classFilterName, getTestGroups(), false), forceLoadPerformanceTests);
-  }
-
   private TestCaseLoader(TestClassesFilter filter, boolean forceLoadPerformanceTests) {
     myForceLoadPerformanceTests = forceLoadPerformanceTests;
     myTestClassesFilter = filter;

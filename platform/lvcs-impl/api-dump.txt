@@ -339,7 +339,6 @@ a:com.intellij.history.integration.revertion.Reverter
 - p:myVcs:com.intellij.history.core.LocalHistoryFacade
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,java.util.function.Supplier):V
 - p:askForReadOnlyStatusClearing():Z
-- askUserForProceeding():java.util.List
 - checkCanRevert():java.util.List
 - pa:doRevert():V
 - getCommandName():java.lang.String

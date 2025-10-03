@@ -778,7 +778,6 @@ com.intellij.openapi.roots.ProjectFileIndex
 - a:getModuleForFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.module.Module
 - a:getOrderEntriesForFile(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - a:getPackageNameByDirectory(com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- getSourceFolder(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.roots.SourceFolder
 - a:getSourceRootForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - a:getUnloadedModuleNameForFile(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - a:isExcluded(com.intellij.openapi.vfs.VirtualFile):Z

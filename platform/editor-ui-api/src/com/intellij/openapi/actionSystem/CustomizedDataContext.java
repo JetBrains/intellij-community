@@ -43,22 +43,10 @@ public class CustomizedDataContext implements DataContext, UserDataHolder, AnAct
   }
 
   @Deprecated(forRemoval = true)
-  protected CustomizedDataContext(boolean delegateUserData) {
-    myParent = getParent();
-    myDataHolder = delegateUserData && myParent instanceof UserDataHolder o ? o : new UserDataHolderBase();
-    myCustomized = DataManager.getInstance().customizeDataContext(myParent, (DataProvider)this::getRawCustomData);
-  }
-
-  @Deprecated(forRemoval = true)
   protected CustomizedDataContext(@NotNull DataContext parent, boolean delegateUserData) {
     myParent = parent;
     myDataHolder = delegateUserData && parent instanceof UserDataHolder o ? o : new UserDataHolderBase();
     myCustomized = myParent;
-  }
-
-  @Deprecated(forRemoval = true)
-  public CustomizedDataContext() {
-    this(false);
   }
 
   @ApiStatus.NonExtendable

@@ -2283,7 +2283,6 @@ c:com.intellij.codeInspection.ex.InspectionProfileImpl
 - writeScheme():org.jdom.Element
 - ps:writeVersion(org.jdom.Element):V
 f:com.intellij.codeInspection.ex.InspectionProfileKt
-- sf:DEFAULT_PROFILE_NAME:java.lang.String
 - sf:createSimple(java.lang.String,com.intellij.openapi.project.Project,java.util.List):com.intellij.codeInspection.ex.InspectionProfileImpl
 - sf:getBASE_PROFILE():com.intellij.codeInspection.ex.InspectionProfileImpl
 c:com.intellij.codeInspection.ex.InspectionProfileModifiableModel

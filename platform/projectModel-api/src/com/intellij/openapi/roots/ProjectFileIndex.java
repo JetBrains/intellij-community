@@ -223,16 +223,6 @@ public interface ProjectFileIndex extends FileIndex {
   boolean isInGeneratedSources(@NotNull VirtualFile file);
 
   /**
-   * @deprecated use other methods from this class to obtain the information you need to get from {@link SourceFolder} instance, e.g. 
-   * {@link #getContainingSourceRootType} or {@link #isInGeneratedSources}.
-   */
-  @Deprecated(forRemoval = true)
-  @RequiresReadLock
-  default @Nullable SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
-    return null;
-  }
-
-  /**
    * Returns name of the unloaded module to which content {@code fileOrDir} belongs, or {@code null} if {@code fileOrDir} doesn't belong
    * to an unloaded module.
    */

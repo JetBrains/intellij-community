@@ -17,13 +17,6 @@ public class StubInconsistencyReporterImpl implements StubInconsistencyReporter 
   }
 
   @Override
-  public void reportEnforcedStubInconsistency(@NotNull Project project,
-                                              @NotNull StubInconsistencyReporter.SourceOfCheck reason,
-                                              @SuppressWarnings("deprecation") @NotNull EnforcedInconsistencyType enforcedInconsistencyType) {
-    //ignore
-  }
-
-  @Override
   public void reportStubInconsistencyBetweenPsiAndText(@NotNull Project project,
                                                        @NotNull StubInconsistencyReporter.SourceOfCheck reason,
                                                        @NotNull InconsistencyType type,

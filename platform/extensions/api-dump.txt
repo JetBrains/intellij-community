@@ -116,7 +116,6 @@ f:com.intellij.openapi.extensions.ExtensionPointName
 - f:getPoint():com.intellij.openapi.extensions.ExtensionPoint
 - f:getPoint(com.intellij.openapi.extensions.AreaInstance):com.intellij.openapi.extensions.ExtensionPoint
 - f:hasAnyExtensions():Z
-- f:removeExtensionPointListener(com.intellij.openapi.extensions.ExtensionPointListener):V
 f:com.intellij.openapi.extensions.ExtensionPointName$Companion
 - f:create(java.lang.String):com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.openapi.extensions.ExtensionPointUtil

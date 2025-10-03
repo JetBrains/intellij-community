@@ -252,7 +252,6 @@ a:com.intellij.execution.actions.BaseRunConfigurationAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:createChildActions(com.intellij.execution.actions.ConfigurationContext,java.util.List):java.util.List
 - p:findExisting(com.intellij.execution.actions.ConfigurationContext):com.intellij.execution.RunnerAndConfigurationSettings
-- p:fullUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
 - p:isEnabledFor(com.intellij.execution.configurations.RunConfiguration):Z
