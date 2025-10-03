@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -103,18 +102,4 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   public @NotNull Map<String, Long> getArchiveCrcHashes(@NotNull VirtualFile file) throws IOException {
     return getHandler(file).getArchiveCrcHashes();
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated pointless; inline or avoid */
-  @Deprecated(forRemoval = true)
-  public @Nullable File getMirroredFile(@NotNull VirtualFile file) {
-    return new File(file.getPath());
-  }
-
-  /** @deprecated no-op; stop using */
-  @Deprecated(forRemoval = true)
-  public boolean isMakeCopyOfJar(@SuppressWarnings("unused") @NotNull File originalJar) {
-    return false;
-  }
-  //</editor-fold>
 }
