@@ -390,17 +390,17 @@ class MacDistributionBuilder(
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(NO_RUNTIME_SUFFIX)
 
   private suspend fun generateProductJson(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean): String {
-    val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context) {
+    val embeddedFrontendLaunchData = generateEmbeddedFrontendLaunchData(arch = arch, os = OsFamily.MACOS, ideContext = context) {
       "../bin/${it.productProperties.baseFileName}.vmoptions"
     }
-    val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.MACOS)
+    val qodanaCustomLaunchData = generateQodanaLaunchData(ideContext = context, arch = arch, os = OsFamily.MACOS)
     return generateProductInfoJson(
       relativePathToBin = "../bin",
       builtinModules = context.builtinModule,
       launch = listOf(
         ProductInfoLaunchData.create(
-          OsFamily.MACOS.osName,
-          arch.dirName,
+          os = OsFamily.MACOS.osName,
+          arch = arch.dirName,
           launcherPath = "../MacOS/${context.productProperties.baseFileName}",
           javaExecutablePath = if (withRuntime) "../jbr/Contents/Home/bin/java" else null,
           vmOptionsFilePath = "../bin/${context.productProperties.baseFileName}.vmoptions",
@@ -410,7 +410,7 @@ class MacDistributionBuilder(
           customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData)
         )
       ),
-      context
+      context = context
     )
   }
 
@@ -569,8 +569,9 @@ class MacDistributionBuilder(
       }
   }
 
-  private fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String =
-    "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
+  private fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String {
+    return "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
+  }
 
   private val publishSitArchive: Boolean
     get() = !context.isStepSkipped(BuildOptions.MAC_SIT_PUBLICATION_STEP)
@@ -592,7 +593,7 @@ class MacDistributionBuilder(
       notarize(sitFile, context)
     }
 
-    buildDmg(sitFile, productInfoJson, "${baseName}.dmg", notarize)
+    buildDmg(sitFile = sitFile, productInfoJson = productInfoJson, dmgName = "${baseName}.dmg", staple = notarize)
 
     if (publishSitArchive) {
       context.notifyArtifactBuilt(sitFile)
@@ -600,7 +601,7 @@ class MacDistributionBuilder(
     }
 
     val zipRoot = getMacZipRoot(customizer, context)
-    checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled, arch, targetLibcImpl)
+    checkExecutablePermissions(distribution = sitFile, root = zipRoot, includeRuntime = isRuntimeBundled, arch = arch, libc = targetLibcImpl)
 
     if (isRuntimeBundled) {
       generateIntegrityManifest(sitFile, zipRoot, arch, context)
