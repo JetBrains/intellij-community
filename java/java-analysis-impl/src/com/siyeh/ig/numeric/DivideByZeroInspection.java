@@ -18,6 +18,8 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -26,6 +28,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -34,6 +38,8 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public final class DivideByZeroInspection extends BaseInspection {
 
@@ -45,13 +51,18 @@ public final class DivideByZeroInspection extends BaseInspection {
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("divide.by.zero.problem.descriptor");
+    if (infos.length > 1 && infos[1] instanceof ThreeState threeState && threeState == ThreeState.UNSURE) {
+      return InspectionGadgetsBundle.message("divide.by.zero.problem.may.descriptor");
+    }
+    else {
+      return InspectionGadgetsBundle.message("divide.by.zero.problem.descriptor");
+    }
   }
 
   @Override
   protected @Nullable LocalQuickFix buildFix(Object... infos) {
     if (infos.length > 0 && infos[0] instanceof PsiBinaryExpression binOp) {
-      if (binOp.getOperationTokenType().equals(JavaTokenType.DIV) && isZero(binOp.getLOperand())) {
+      if (binOp.getOperationTokenType().equals(JavaTokenType.DIV) && isZero(binOp.getLOperand()) == ThreeState.YES) {
         PsiType type = binOp.getType();
         if (PsiTypes.doubleType().equals(type) || PsiTypes.floatType().equals(type)) {
           return new ReplaceWithNaNFix();
@@ -78,8 +89,9 @@ public final class DivideByZeroInspection extends BaseInspection {
       final PsiExpression[] operands = expression.getOperands();
       for (int i = 1; i < operands.length; i++) {
         final PsiExpression operand = operands[i];
-        if (isZero(operand)) {
-          registerError(operand, expression);
+        ThreeState zero = isZero(operand);
+        if (zero != ThreeState.NO) {
+          registerError(operand, expression, zero);
           return;
         }
       }
@@ -93,22 +105,35 @@ public final class DivideByZeroInspection extends BaseInspection {
         return;
       }
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.DIVEQ) && !tokenType.equals(JavaTokenType.PERCEQ) || !isZero(rhs)) {
+      if (!tokenType.equals(JavaTokenType.DIVEQ) && !tokenType.equals(JavaTokenType.PERCEQ) || isZero(rhs) != ThreeState.YES) {
         return;
       }
       registerError(expression);
     }
   }
 
-  private static boolean isZero(PsiExpression expression) {
+  private static ThreeState isZero(PsiExpression expression) {
     final Object value = ConstantExpressionUtil.computeCastTo(expression, PsiTypes.doubleType());
     if (value instanceof Double) {
       final double constantValue = ((Double)value).doubleValue();
-      return constantValue == 0.0;
+      return constantValue == 0.0 ? ThreeState.YES : ThreeState.NO;
     }
     DfType dfType = CommonDataflow.getDfType(expression);
     Number val = dfType.getConstantOfType(Number.class);
-    return val != null && val.doubleValue() == 0.0;
+    if (val != null) {
+      return val.doubleValue() == 0.0 ? ThreeState.YES : ThreeState.NO;
+    }
+    if (dfType instanceof DfIntType dfIntType) {
+      LongRangeSet range = dfIntType.getRange();
+      List<LongRangeSet> ranges = range.asRanges();
+      if (ranges.size() < 4 &&
+          ContainerUtil.exists(ranges, t ->
+            t.getConstantValue() != null && t.getConstantValue() == 0L ||
+            t.max() - t.min() < 2 && t.contains(0L))) {
+        return ThreeState.UNSURE;
+      }
+    }
+    return ThreeState.NO;
   }
 
   private static class ReplaceWithNaNFix extends PsiUpdateModCommandQuickFix {
