@@ -199,10 +199,8 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
       if (!contributor.groupIsEnabled(parameters)) return
       val completionProgressIndicator = parameters.process as? CompletionProgressIndicator
       val count = completionProgressIndicator?.lookup?.list?.model?.size ?: 0
-      //just to avoid irritating flickering
-      if (count > 0 &&
-          //see com.intellij.codeInsight.completion.CompletionProgressIndicator.ourInsertSingleItemTimeSpan
-          System.currentTimeMillis() - (completionProgressIndicator?.lookup?.createdTimestampMillis ?: 0) > 300) {
+      //just to avoid irritating flickering without items
+      if (count > 0) {
         completionProgressIndicator?.showLookupAsSoonAsPossible()
       }
     }
