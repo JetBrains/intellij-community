@@ -50,9 +50,9 @@ sealed class AbstractTerminalOutputModelImpl(
   override val lastLine: TerminalLine
     get() = TerminalLineImpl(trimmedLinesCount + lineCount - 1)
 
-  protected fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, offset)
+  protected fun relativeOffset(offset: Int): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount + offset)
 
-  override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, (offset - trimmedCharsCount).toInt())
+  override fun absoluteOffset(offset: Long): TerminalOffset = TerminalOffsetImpl(offset)
 
   override fun absoluteLine(line: Long): TerminalLine = TerminalLineImpl(line)
 
@@ -555,13 +555,10 @@ class TerminalOutputModelSnapshotImpl(
   }
 }
 
-private data class TerminalOffsetImpl(
-  val trimmedCharsCount: Long,
-  val relative: Int,
-) : TerminalOffset {
+private data class TerminalOffsetImpl(private val absolute: Long) : TerminalOffset {
   override fun compareTo(other: TerminalOffset): Int = toAbsolute().compareTo(other.toAbsolute())
-  override fun toAbsolute(): Long = trimmedCharsCount + relative
-  override fun plus(charCount: Long): TerminalOffset = TerminalOffsetImpl(trimmedCharsCount, (relative + charCount).toInt())
+  override fun toAbsolute(): Long = absolute
+  override fun plus(charCount: Long): TerminalOffset = TerminalOffsetImpl(absolute + charCount)
   override fun minus(charCount: Long): TerminalOffset = plus(-charCount)
   override fun minus(other: TerminalOffset): Long = toAbsolute() - other.toAbsolute()
   override fun toString(): String = "${toAbsolute()}L"
