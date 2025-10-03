@@ -24,6 +24,8 @@ import org.jetbrains.plugins.gradle.model.tests.DefaultExternalTestsModel
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl
 import com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.DefaultGradleBuildScriptClasspathModel
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializer
+import org.jetbrains.plugins.gradle.model.ClasspathEntryModel
+import org.jetbrains.plugins.gradle.model.MavenRepositoryModel
 import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoryModels
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.*
 import org.jetbrains.plugins.gradle.tooling.util.GradleVersionComparator
@@ -35,6 +37,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.function.Consumer
+import java.util.stream.Collectors
 import kotlin.random.Random
 
 /**
@@ -77,6 +80,13 @@ class ToolingSerializerTest {
   @Test
   @Throws(Exception::class)
   fun `build script classpath serialization test`() {
+    myRandomParameters.randomize(DefaultGradleBuildScriptClasspathModel::class.java) {
+      val result = DefaultGradleBuildScriptClasspathModel()
+      result.gradleVersion = myRandom.nextObject(String::class.java)
+      myRandom.objects(ClasspathEntryModel::class.java, myRandom.nextInt(1, 10))
+        .forEach { result.add(it) }
+      return@randomize result
+    }
     doTest(
       DefaultGradleBuildScriptClasspathModel::class.java)
   }
@@ -98,6 +108,11 @@ class ToolingSerializerTest {
   @Test
   @Throws(Exception::class)
   fun `repository models serialization test`() {
+    myRandomParameters.randomize(DefaultRepositoryModels::class.java) {
+      DefaultRepositoryModels(myRandom
+                                .objects(MavenRepositoryModel::class.java, myRandom.nextInt(1, 10))
+                                .collect(Collectors.toList()))
+    }
     doTest(DefaultRepositoryModels::class.java)
   }
 
