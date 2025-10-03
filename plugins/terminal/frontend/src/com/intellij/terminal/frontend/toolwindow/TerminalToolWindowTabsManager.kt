@@ -3,7 +3,6 @@ package com.intellij.terminal.frontend.toolwindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.frontend.TerminalTabBuilder
 import com.intellij.terminal.frontend.TerminalView
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -17,7 +16,7 @@ interface TerminalToolWindowTabsManager {
   @get:RequiresEdt
   val tabs: List<TerminalToolWindowTab>
 
-  fun createTabBuilder(): TerminalTabBuilder
+  fun createTabBuilder(): TerminalToolWindowTabBuilder
 
   @RequiresEdt
   fun closeTab(tab: TerminalToolWindowTab)

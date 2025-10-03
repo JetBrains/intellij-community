@@ -17,7 +17,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.frontend.TerminalTabBuilder
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
 import com.intellij.terminal.frontend.TerminalView
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
@@ -76,8 +76,8 @@ internal class TerminalToolWindowTabsManagerImpl(
     })
   }
 
-  override fun createTabBuilder(): TerminalTabBuilder {
-    return TerminalTabBuilderImpl()
+  override fun createTabBuilder(): TerminalToolWindowTabBuilder {
+    return TerminalToolWindowTabBuilderImpl()
   }
 
   override fun closeTab(tab: TerminalToolWindowTab) {
@@ -122,7 +122,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
   }
 
-  private fun createTab(builder: TerminalTabBuilderImpl): TerminalToolWindowTab {
+  private fun createTab(builder: TerminalToolWindowTabBuilderImpl): TerminalToolWindowTab {
     val terminal = createTerminalViewAndStartSession(builder)
     val tab = doCreateTab(terminal)
     addToTabsList(tab)
@@ -194,7 +194,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
   }
 
-  private fun createTerminalViewAndStartSession(builder: TerminalTabBuilderImpl): TerminalView {
+  private fun createTerminalViewAndStartSession(builder: TerminalToolWindowTabBuilderImpl): TerminalView {
     val terminal = createTerminalView(builder.startupFusInfo)
     val tabName = builder.tabName ?: createDefaultTabName(getToolWindow())
     terminal.title.change { defaultTitle = tabName }
@@ -210,7 +210,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   @OptIn(AwaitCancellationAndInvoke::class)
   private fun createBackendTabAndStartSession(
     terminal: TerminalViewImpl,
-    builder: TerminalTabBuilderImpl,
+    builder: TerminalToolWindowTabBuilderImpl,
   ) = terminal.coroutineScope.launch(Dispatchers.IO) {
     val backendTabId = builder.backendTabId ?: durable {
       // todo: worth making it idempotent to avoid creating multiple tabs because of network issues
@@ -244,7 +244,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   private suspend fun scheduleSessionStart(
     terminal: TerminalViewImpl,
-    builder: TerminalTabBuilderImpl,
+    builder: TerminalToolWindowTabBuilderImpl,
     backendTabId: Int,
   ) {
     if (builder.deferSessionStartUntilUiShown) {
@@ -262,7 +262,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   private fun doScheduleSessionStart(
     terminal: TerminalViewImpl,
-    builder: TerminalTabBuilderImpl,
+    builder: TerminalToolWindowTabBuilderImpl,
     backendTabId: Int,
     calculateSizeFromComponent: Boolean,
   ) = terminal.coroutineScope.launch(Dispatchers.IO) {
@@ -283,7 +283,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   private suspend fun prepareStartupOptions(
     terminal: TerminalView,
-    builder: TerminalTabBuilderImpl,
+    builder: TerminalToolWindowTabBuilderImpl,
     calculateSizeFromComponent: Boolean,
   ): ShellStartupOptions {
     val baseOptions = ShellStartupOptions.Builder()
@@ -362,7 +362,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
     private fun restoreTabs(tabs: List<TerminalSessionTab>, manager: TerminalToolWindowTabsManagerImpl) {
       for (tab in tabs) {
-        val builder = manager.createTabBuilder() as TerminalTabBuilderImpl
+        val builder = manager.createTabBuilder() as TerminalToolWindowTabBuilderImpl
         with(builder) {
           shellCommand(tab.shellCommand)
           workingDirectory(tab.workingDirectory)
@@ -385,7 +385,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
   }
 
-  private inner class TerminalTabBuilderImpl : TerminalTabBuilder {
+  private inner class TerminalToolWindowTabBuilderImpl : TerminalToolWindowTabBuilder {
     var workingDirectory: String? = null
       private set
     var shellCommand: List<String>? = null
@@ -412,62 +412,62 @@ internal class TerminalToolWindowTabsManagerImpl(
     var portForwardingId: TerminalPortForwardingId? = null
       private set
 
-    override fun workingDirectory(directory: String?): TerminalTabBuilder {
+    override fun workingDirectory(directory: String?): TerminalToolWindowTabBuilder {
       workingDirectory = directory
       return this
     }
 
-    override fun shellCommand(command: List<String>?): TerminalTabBuilder {
+    override fun shellCommand(command: List<String>?): TerminalToolWindowTabBuilder {
       shellCommand = command
       return this
     }
 
-    override fun tabName(name: String?): TerminalTabBuilder {
+    override fun tabName(name: String?): TerminalToolWindowTabBuilder {
       tabName = name
       return this
     }
 
-    fun userDefinedName(isUserDefinedName: Boolean): TerminalTabBuilder {
+    fun userDefinedName(isUserDefinedName: Boolean): TerminalToolWindowTabBuilder {
       this.isUserDefinedName = isUserDefinedName
       return this
     }
 
-    override fun requestFocus(requestFocus: Boolean): TerminalTabBuilder {
+    override fun requestFocus(requestFocus: Boolean): TerminalToolWindowTabBuilder {
       this.requestFocus = requestFocus
       return this
     }
 
-    override fun deferSessionStartUntilUiShown(defer: Boolean): TerminalTabBuilder {
+    override fun deferSessionStartUntilUiShown(defer: Boolean): TerminalToolWindowTabBuilder {
       deferSessionStartUntilUiShown = defer
       return this
     }
 
-    override fun contentManager(manager: ContentManager?): TerminalTabBuilder {
+    override fun contentManager(manager: ContentManager?): TerminalToolWindowTabBuilder {
       contentManager = manager
       return this
     }
 
-    override fun shouldAddToToolWindow(addToToolWindow: Boolean): TerminalTabBuilder {
+    override fun shouldAddToToolWindow(addToToolWindow: Boolean): TerminalToolWindowTabBuilder {
       shouldAddToToolWindow = addToToolWindow
       return this
     }
 
-    override fun startupFusInfo(startupFusInfo: TerminalStartupFusInfo?): TerminalTabBuilder {
+    override fun startupFusInfo(startupFusInfo: TerminalStartupFusInfo?): TerminalToolWindowTabBuilder {
       this.startupFusInfo = startupFusInfo
       return this
     }
 
-    fun backendTabId(id: Int?): TerminalTabBuilder {
+    fun backendTabId(id: Int?): TerminalToolWindowTabBuilder {
       backendTabId = id
       return this
     }
 
-    fun sessionId(id: TerminalSessionId?): TerminalTabBuilder {
+    fun sessionId(id: TerminalSessionId?): TerminalToolWindowTabBuilder {
       sessionId = id
       return this
     }
 
-    fun portForwardingId(id: TerminalPortForwardingId?): TerminalTabBuilder {
+    fun portForwardingId(id: TerminalPortForwardingId?): TerminalToolWindowTabBuilder {
       portForwardingId = id
       return this
     }
