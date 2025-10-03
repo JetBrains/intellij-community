@@ -105,7 +105,6 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/eel-provider",
     "//platform/eel",
-    "//platform/eel-impl",
     "//platform/platform-impl/recentProjects",
   ],
   exports = [
@@ -219,7 +218,6 @@ jvm_library(
     "//platform/testFramework/extensions:testExtensions",
     "//platform/eel-provider",
     "//platform/eel",
-    "//platform/eel-impl",
     "//platform/platform-impl/recentProjects",
   ],
   exports = [
