@@ -54,6 +54,7 @@ fun Disposable.disposingMainScope(): CoroutineScope = DisposingMainScope(this)
 /**
  * Prefer creating a service to supply a parent scope
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Prefer creating a service to supply a parent scope")
 fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope = CoroutineScope(context).also {
   Disposer.register(this) {

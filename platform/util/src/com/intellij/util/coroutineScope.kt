@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
@@ -64,6 +65,8 @@ fun Disposable.disposeOnCompletion(cs: CoroutineScope) {
  * - Its disposal happens out of scope, after the scope is completed. The scope does not wait for the disposal.
  * - The disposal failure does not cancel the scope.
  */
+@Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use `disposeOnCompletion` instead", ReplaceWith("disposeOnCompletion(cs)"))
 fun Disposable.attachAsChildTo(cs: CoroutineScope) {
   disposeOnCompletion(cs)

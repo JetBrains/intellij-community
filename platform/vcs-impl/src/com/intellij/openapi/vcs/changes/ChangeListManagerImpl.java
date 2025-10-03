@@ -805,6 +805,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   /**
    * @deprecated use {@link #getUnversionedFilesPaths}
    */
+  @ApiStatus.Internal
   @Deprecated
   public @NotNull List<VirtualFile> getUnversionedFiles() {
     return mapNotNull(getUnversionedFilesPaths(), FilePath::getVirtualFile);

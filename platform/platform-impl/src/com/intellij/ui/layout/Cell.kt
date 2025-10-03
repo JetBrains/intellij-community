@@ -144,6 +144,7 @@ abstract class Cell : BaseBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   abstract fun <T : JComponent> component(component: T): CellBuilder<T>
 
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   internal fun internalPlaceholder(): CellBuilder<JComponent>{

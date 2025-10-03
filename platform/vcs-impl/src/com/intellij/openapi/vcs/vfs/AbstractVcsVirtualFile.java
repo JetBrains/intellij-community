@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,8 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   /**
    * @deprecated {@link VcsFileSystem} cannot be overwritten
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   protected AbstractVcsVirtualFile(@NotNull @NlsSafe String path, @NotNull VirtualFileSystem ignored) {
     this(path);
   }
@@ -54,7 +56,8 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   /**
    * @deprecated {@link VcsFileSystem} cannot be overwritten
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @NotNull VirtualFileSystem ignored) {
     this(parent, name);
   }

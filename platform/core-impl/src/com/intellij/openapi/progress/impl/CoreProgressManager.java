@@ -522,6 +522,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, progressIndicator.getModalityState());
   }
 
+  @ApiStatus.Internal
   @Deprecated
   protected void startTask(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
     try {
@@ -1044,6 +1045,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    * @deprecated This method incorrectly prefers {@link com.intellij.openapi.application.ModalityKt#currentThreadContextModality}.
    * Use {@link ModalityState#defaultModalityState()}.
    */
+  @ApiStatus.Internal
   @Deprecated
   public static @NotNull ModalityState getCurrentThreadProgressModality() {
     ModalityState contextModality = currentThreadContextModality();

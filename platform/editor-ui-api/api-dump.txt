@@ -992,7 +992,6 @@ c:com.intellij.openapi.actionSystem.AnActionEvent
 - s:createEvent(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.Presentation,java.lang.String,com.intellij.openapi.actionSystem.ActionUiKind,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromAnAction(com.intellij.openapi.actionSystem.AnAction,java.awt.event.InputEvent,java.lang.String,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromDataContext(java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
-- s:createFromInputEvent(com.intellij.openapi.actionSystem.AnAction,java.awt.event.InputEvent,java.lang.String):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromInputEvent(java.awt.event.InputEvent,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.AnActionEvent
 - s:createFromInputEvent(java.awt.event.InputEvent,java.lang.String,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext,Z,Z):com.intellij.openapi.actionSystem.AnActionEvent
 - f:getActionManager():com.intellij.openapi.actionSystem.ActionManager
@@ -1065,7 +1064,6 @@ c:com.intellij.openapi.actionSystem.CustomizedDataContext
 - sf:EXPLICIT_NULL:java.lang.Object
 - p:<init>(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider,com.intellij.openapi.util.UserDataHolder):V
 - p:<init>(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider,Z):V
-- p:<init>(com.intellij.openapi.actionSystem.DataContext,Z):V
 - s:create(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider):com.intellij.openapi.actionSystem.CustomizedDataContext
 - F:getData(java.lang.String):java.lang.Object
 - getInjectedDataContext():com.intellij.openapi.actionSystem.DataContext
@@ -1318,7 +1316,6 @@ c:com.intellij.openapi.editor.CaretState
 - getSelectionStart():com.intellij.openapi.editor.LogicalPosition
 - getVisualColumnAdjustment():I
 f:com.intellij.openapi.editor.CaretVisualAttributes
-- sf:DEFAULT:com.intellij.openapi.editor.CaretVisualAttributes
 - <init>(java.awt.Color,com.intellij.openapi.editor.CaretVisualAttributes$Weight):V
 - <init>(java.awt.Color,com.intellij.openapi.editor.CaretVisualAttributes$Weight,com.intellij.openapi.editor.CaretVisualAttributes$Shape,F):V
 - getColor():java.awt.Color

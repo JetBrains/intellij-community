@@ -951,8 +951,6 @@ f:com.intellij.openapi.application.ex.ApplicationManagerEx
 - s:setInStressTest(Z):V
 f:com.intellij.openapi.application.ex.ApplicationUtil
 - sf:INSTANCE:com.intellij.openapi.application.ex.ApplicationUtil
-- sf:invokeAndWaitSomewhere(com.intellij.openapi.application.EdtReplacementThread,com.intellij.openapi.application.ModalityState,java.lang.Runnable):V
-- sf:invokeLaterSomewhere(com.intellij.openapi.application.EdtReplacementThread,com.intellij.openapi.application.ModalityState,java.lang.Runnable):V
 - sf:runWithCheckCanceled(java.util.concurrent.Callable,com.intellij.openapi.progress.ProgressIndicator):java.lang.Object
 - sf:runWithCheckCanceled(java.util.concurrent.Future,com.intellij.openapi.progress.ProgressIndicator):java.lang.Object
 - sf:showDialogAfterWriteAction(java.lang.Runnable):V
@@ -1277,7 +1275,6 @@ c:com.intellij.openapi.progress.impl.CoreProgressManager
 - executeProcessUnderProgress(java.lang.Runnable,com.intellij.openapi.progress.ProgressIndicator):V
 - p:finishTask(com.intellij.openapi.progress.Task,Z,java.lang.Throwable):V
 - getCurrentProgressModality():com.intellij.openapi.application.ModalityState
-- s:getCurrentThreadProgressModality():com.intellij.openapi.application.ModalityState
 - getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
 - hasModalProgressIndicator():Z
 - hasProgressIndicator():Z
@@ -1302,7 +1299,6 @@ c:com.intellij.openapi.progress.impl.CoreProgressManager
 - runProcessWithProgressSynchronously(java.lang.Runnable,java.lang.String,Z,com.intellij.openapi.project.Project,javax.swing.JComponent):Z
 - silenceGlobalIndicator(java.util.function.Supplier):java.lang.Object
 - p:sleepIfNeededToGivePriorityToAnotherThread():Z
-- p:startTask(com.intellij.openapi.progress.Task,com.intellij.openapi.progress.ProgressIndicator,java.lang.Runnable):V
 f:com.intellij.openapi.progress.impl.ProgressResult
 - <init>(java.lang.Object,Z,java.lang.Throwable):V
 - equals(java.lang.Object):Z
@@ -1496,7 +1492,6 @@ c:com.intellij.openapi.vfs.local.CoreLocalFileSystem
 - refreshAndFindFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 c:com.intellij.openapi.vfs.local.CoreLocalVirtualFile
 - com.intellij.openapi.vfs.VirtualFile
-- <init>(com.intellij.openapi.vfs.local.CoreLocalFileSystem,java.io.File):V
 - <init>(com.intellij.openapi.vfs.local.CoreLocalFileSystem,java.nio.file.Path):V
 - <init>(com.intellij.openapi.vfs.local.CoreLocalFileSystem,java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes):V
 - <init>(com.intellij.openapi.vfs.local.CoreLocalFileSystem,java.nio.file.Path,Z):V

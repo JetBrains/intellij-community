@@ -231,7 +231,8 @@ public final class BuildOperations {
   /**
    * @deprecated Use {@link #deleteRecursivelyAndCollectDeleted}
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("SSBasedInspection")
   public static boolean deleteRecursively(@NotNull String path, @NotNull Collection<String> deletedPaths, @Nullable Set<File> parentDirs) {
     Set<Path> nioParentDirs = parentDirs == null ? null : parentDirs.stream().map(file -> file.toPath()).collect(Collectors.toSet());

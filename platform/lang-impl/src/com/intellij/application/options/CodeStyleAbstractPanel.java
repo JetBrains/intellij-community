@@ -47,6 +47,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.PresentableEnumUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -303,6 +304,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
    * @deprecated Do not override this method. Use LanguageCodeStyleSettingsProvider.createFileFromText() instead.
    * @see LanguageCodeStyleSettingsProvider#createFileFromText(Project, String)
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   protected PsiFile createFileFromText(@NotNull Project project, @NotNull String text) {
     Language language = getDefaultLanguage();

@@ -7,20 +7,12 @@ f:com.intellij.openapi.rd.LifetimeDisposableExKt
 - sf:doIfAlive(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 f:com.intellij.openapi.rd.util.BackgroundProgressCoroutineUtilKt
 - sf:launchUnderBackgroundProgress(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
-- sf:launchUnderBackgroundProgress(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - bs:launchUnderBackgroundProgress$default(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Job
-- bs:launchUnderBackgroundProgress$default(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Job
-- sf:launchUnderModalProgress(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
-- bs:launchUnderModalProgress$default(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Job
 - sf:launchWithBackgroundProgress(com.jetbrains.rd.util.lifetime.Lifetime,com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - sf:launchWithBackgroundProgress(com.jetbrains.rd.util.lifetime.Lifetime,com.intellij.openapi.project.Project,java.lang.String,Z,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - bs:launchWithBackgroundProgress$default(com.jetbrains.rd.util.lifetime.Lifetime,com.intellij.openapi.project.Project,java.lang.String,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Job
 - sf:launchWithModalProgress(com.jetbrains.rd.util.lifetime.Lifetime,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - sf:launchWithModalProgress(com.jetbrains.rd.util.lifetime.Lifetime,com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
-- sf:startUnderBackgroundProgressAsync(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2):kotlinx.coroutines.Deferred
-- sf:startUnderBackgroundProgressAsync(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,kotlin.jvm.functions.Function2):kotlinx.coroutines.Deferred
-- bs:startUnderBackgroundProgressAsync$default(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Deferred
-- bs:startUnderBackgroundProgressAsync$default(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Deferred
 - sf:startUnderModalProgressAsync(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2):kotlinx.coroutines.Deferred
 - bs:startUnderModalProgressAsync$default(com.jetbrains.rd.util.lifetime.Lifetime,java.lang.String,Z,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Deferred
 - sf:startWithBackgroundProgressAsync(com.jetbrains.rd.util.lifetime.Lifetime,com.intellij.openapi.project.Project,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):kotlinx.coroutines.Deferred
@@ -28,14 +20,6 @@ f:com.intellij.openapi.rd.util.BackgroundProgressCoroutineUtilKt
 - bs:startWithBackgroundProgressAsync$default(com.jetbrains.rd.util.lifetime.Lifetime,com.intellij.openapi.project.Project,java.lang.String,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Deferred
 - sf:startWithModalProgressAsync(com.jetbrains.rd.util.lifetime.Lifetime,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - sf:startWithModalProgressAsync(com.jetbrains.rd.util.lifetime.Lifetime,com.intellij.platform.ide.progress.ModalTaskOwner,java.lang.String,com.intellij.platform.ide.progress.TaskCancellation,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
-- sf:withBackgroundProgressContext(java.lang.String,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- sf:withBackgroundProgressContext(java.lang.String,Z,Z,com.jetbrains.rd.util.lifetime.Lifetime,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- bs:withBackgroundProgressContext$default(java.lang.String,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- bs:withBackgroundProgressContext$default(java.lang.String,Z,Z,com.jetbrains.rd.util.lifetime.Lifetime,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- sf:withModalProgressContext(java.lang.String,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- sf:withModalProgressContext(java.lang.String,Z,Z,com.intellij.openapi.project.Project,com.jetbrains.rd.util.lifetime.Lifetime,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- bs:withModalProgressContext$default(java.lang.String,Z,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- bs:withModalProgressContext$default(java.lang.String,Z,Z,com.intellij.openapi.project.Project,com.jetbrains.rd.util.lifetime.Lifetime,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 a:com.intellij.openapi.rd.util.ProgressCoroutineScope
 - <init>(com.intellij.openapi.progress.ProgressIndicator):V
 - f:getIndicator():com.intellij.openapi.progress.ProgressIndicator

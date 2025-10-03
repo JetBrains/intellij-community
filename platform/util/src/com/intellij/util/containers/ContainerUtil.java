@@ -98,6 +98,7 @@ public final class ContainerUtil {
    * DO NOT REMOVE this method until {@link ContainerUtil#newLinkedList(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @Contract(pure = true)
   @ApiStatus.ScheduledForRemoval
   @Deprecated
@@ -284,6 +285,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #newHashSet(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
@@ -454,6 +456,7 @@ public final class ContainerUtil {
    * DO NOT REMOVE this method until {@link ContainerUtil#immutableList(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @Contract(pure = true)
   @ApiStatus.ScheduledForRemoval
   @Deprecated
@@ -1747,6 +1750,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #iterateAndGetLastItem(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
@@ -2184,6 +2188,7 @@ public final class ContainerUtil {
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
@@ -2197,6 +2202,7 @@ public final class ContainerUtil {
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   @Contract(pure = true)
@@ -2691,6 +2697,7 @@ public final class ContainerUtil {
   /**
    * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectMap()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(value = " -> new", pure = true)
@@ -2892,6 +2899,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #toCollection(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)

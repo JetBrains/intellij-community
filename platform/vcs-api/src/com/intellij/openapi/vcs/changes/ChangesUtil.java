@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -86,6 +87,7 @@ public final class ChangesUtil {
    * @deprecated This method will detect {@link FilePath#isDirectory()} using NIO.
    * Avoid using the method, if {@code isDirectory} is known from context or not important.
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static @Nullable AbstractVcs getVcsForFile(@NotNull File file, @NotNull Project project) {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsUtil.getFilePath(file));
@@ -173,6 +175,7 @@ public final class ChangesUtil {
   /**
    * @deprecated Prefer using {@link com.intellij.vcsUtil.VcsImplUtil#findValidParentAccurately(FilePath)}
    */
+  @ApiStatus.Internal
   @Deprecated
   public static @Nullable VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
     VirtualFile result = filePath.getVirtualFile();

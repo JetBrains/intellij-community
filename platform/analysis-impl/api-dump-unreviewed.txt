@@ -259,21 +259,6 @@ c:com.intellij.codeInsight.completion.CompletionContext
 - <init>(com.intellij.psi.PsiFile,com.intellij.codeInsight.completion.OffsetMap):V
 - getOffsetMap():com.intellij.codeInsight.completion.OffsetMap
 - getStartOffset():I
-c:com.intellij.codeInsight.completion.CompletionData
-- sf:LOOKUP_ELEMENT_PSI_REFERENCE:com.intellij.openapi.util.Key
-- sf:NOT_JAVA_ID:com.intellij.patterns.ObjectPattern$Capture
-- pf:myGenericVariant:com.intellij.codeInsight.completion.CompletionVariant
-- p:<init>():V
-- addKeywordVariants(java.util.Set,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):V
-- p:addLookupItem(java.util.Set,com.intellij.codeInsight.TailType,java.lang.Object,com.intellij.codeInsight.completion.CompletionVariant):V
-- p:completeReference(com.intellij.psi.PsiReference,com.intellij.psi.PsiElement,java.util.Set,com.intellij.codeInsight.TailType,com.intellij.psi.filters.ElementFilter,com.intellij.codeInsight.completion.CompletionVariant):V
-- completeReference(com.intellij.psi.PsiReference,java.util.Set,com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):V
-- findPrefix(com.intellij.psi.PsiElement,I):java.lang.String
-- s:findPrefixStatic(com.intellij.psi.PsiElement,I):java.lang.String
-- findVariants(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):com.intellij.codeInsight.completion.CompletionVariant[]
-- ps:getReferences(com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference):com.intellij.psi.PsiReference[]
-- s:objectToLookupItem(java.lang.Object):com.intellij.codeInsight.lookup.LookupElement
-- p:registerVariant(com.intellij.codeInsight.completion.CompletionVariant):V
 com.intellij.codeInsight.completion.CompletionProcessBase
 - com.intellij.codeInsight.completion.CompletionProcess
 - a:addWatchedPrefix(I,com.intellij.patterns.ElementPattern):V
@@ -291,7 +276,6 @@ f:com.intellij.codeInsight.completion.CompletionUtil
 - s:findReferenceOrAlphanumericPrefix(com.intellij.codeInsight.completion.CompletionParameters):java.lang.String
 - s:findReferencePrefix(com.intellij.codeInsight.completion.CompletionParameters):java.lang.String
 - s:findReferencePrefix(com.intellij.psi.PsiElement,I):java.lang.String
-- s:getCompletionDataByElement(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):com.intellij.codeInsight.completion.CompletionData
 - s:getOriginalElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - s:getOriginalOrSelf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - s:getTargetElement(com.intellij.codeInsight.lookup.LookupElement):com.intellij.psi.PsiElement
@@ -299,19 +283,6 @@ f:com.intellij.codeInsight.completion.CompletionUtil
 - s:newContext(com.intellij.codeInsight.completion.InsertionContext,com.intellij.codeInsight.lookup.LookupElement,I,I):com.intellij.codeInsight.completion.InsertionContext
 - s:shouldShowFeature(com.intellij.codeInsight.completion.CompletionParameters,java.lang.String):Z
 - s:shouldShowFeature(com.intellij.openapi.project.Project,java.lang.String):Z
-c:com.intellij.codeInsight.completion.CompletionVariant
-- psf:DEFAULT_TAIL_TYPE:com.intellij.codeInsight.TailType
-- <init>():V
-- <init>(com.intellij.psi.filters.ElementFilter):V
-- <init>(java.lang.Class,com.intellij.psi.filters.ElementFilter):V
-- addCompletion(java.lang.String):V
-- addCompletion(java.lang.String,com.intellij.codeInsight.TailType):V
-- addCompletionFilter(com.intellij.psi.filters.ElementFilter):V
-- addCompletionFilter(com.intellij.psi.filters.ElementFilter,com.intellij.codeInsight.TailType):V
-- includeScopeClass(java.lang.Class):V
-- includeScopeClass(java.lang.Class,Z):V
-- setCaseInsensitive(Z):V
-- setInsertHandler(com.intellij.codeInsight.completion.InsertHandler):V
 c:com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 - com.intellij.codeInsight.completion.InsertHandler
 - sf:Companion:com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler$Companion
@@ -1528,7 +1499,6 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.ConditionalGotoInstruction
 - <init>(com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow$ControlFlowOffset,com.intellij.codeInspection.dataFlow.types.DfType,com.intellij.psi.PsiElement):V
 - accept(com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState[]
 - getOffset():I
-- getPsiAnchor():com.intellij.psi.PsiElement
 - getSuccessorIndexes():I[]
 - isTarget(com.intellij.codeInspection.dataFlow.types.DfType,com.intellij.codeInspection.dataFlow.lang.ir.Instruction):Z
 - setOffset(I):V

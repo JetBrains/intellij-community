@@ -1857,7 +1857,6 @@ f:com.intellij.ui.ComponentUtil
 - s:findParentByCondition(java.awt.Component,java.util.function.Predicate):java.awt.Component
 - s:findUltimateParent(java.awt.Component):java.awt.Component
 - s:getActiveWindow():java.awt.Window
-- s:getClientProperty(javax.swing.JComponent,com.intellij.openapi.util.Key):java.lang.Object
 - s:getParentOfType(java.lang.Class,java.awt.Component):java.lang.Object
 - s:getScrollPane(java.awt.Component):javax.swing.JScrollPane
 - s:getScrollPane(javax.swing.JScrollBar):javax.swing.JScrollPane

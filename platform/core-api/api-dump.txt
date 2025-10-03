@@ -385,7 +385,6 @@ com.intellij.openapi.application.AppUIExecutor
 - s:onUiThread(com.intellij.openapi.application.ModalityState):com.intellij.openapi.application.AppUIExecutor
 - s:onWriteThread():com.intellij.openapi.application.AppUIExecutor
 - s:onWriteThread(com.intellij.openapi.application.ModalityState):com.intellij.openapi.application.AppUIExecutor
-- a:withDocumentsCommitted(com.intellij.openapi.project.Project):com.intellij.openapi.application.AppUIExecutor
 com.intellij.openapi.application.Application
 - com.intellij.openapi.components.ComponentManager
 - a:acquireReadActionLock():com.intellij.openapi.application.AccessToken

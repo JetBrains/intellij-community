@@ -1659,7 +1659,6 @@ a:org.jetbrains.jps.builders.BuildTarget
 org.jetbrains.jps.builders.BuildTargetIndex
 - org.jetbrains.jps.builders.BuildTargetRegistry
 - a:getDependencies(org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.CompileContext):java.util.Collection
-- a:getDependenciesRecursively(org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.incremental.CompileContext):java.util.Set
 - a:getSortedTargetChunks(org.jetbrains.jps.incremental.CompileContext):java.util.List
 - a:isDummy(org.jetbrains.jps.builders.BuildTarget):Z
 a:org.jetbrains.jps.builders.BuildTargetLoader
@@ -1829,10 +1828,8 @@ f:org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 org.jetbrains.jps.builders.storage.BuildDataPaths
 - a:getDataStorageDir():java.nio.file.Path
 - getDataStorageRoot():java.io.File
-- getTargetDataRoot(org.jetbrains.jps.builders.BuildTarget):java.io.File
 - a:getTargetDataRoot(org.jetbrains.jps.builders.BuildTargetType,java.lang.String):java.nio.file.Path
 - a:getTargetDataRootDir(org.jetbrains.jps.builders.BuildTarget):java.nio.file.Path
-- getTargetTypeDataRoot(org.jetbrains.jps.builders.BuildTargetType):java.io.File
 - a:getTargetTypeDataRootDir(org.jetbrains.jps.builders.BuildTargetType):java.nio.file.Path
 - a:getTargetsDataRoot():java.nio.file.Path
 org.jetbrains.jps.builders.storage.SourceToOutputMapping
@@ -1856,7 +1853,6 @@ f:org.jetbrains.jps.cmdline.BuildRunner
 - s:getRootCompilerName():java.lang.String
 - s:isParallelBuildAutomakeEnabled():Z
 - s:isParallelBuildEnabled():Z
-- load(org.jetbrains.jps.incremental.MessageHandler,java.io.File,org.jetbrains.jps.incremental.fs.BuildFSState):org.jetbrains.jps.cmdline.ProjectDescriptor
 - load(org.jetbrains.jps.incremental.MessageHandler,java.nio.file.Path,org.jetbrains.jps.incremental.fs.BuildFSState):org.jetbrains.jps.cmdline.ProjectDescriptor
 - loadModelAndGetJpsProject():org.jetbrains.jps.model.JpsProject
 - runBuild(org.jetbrains.jps.cmdline.ProjectDescriptor,org.jetbrains.jps.api.CanceledStatus,org.jetbrains.jps.incremental.MessageHandler,org.jetbrains.jps.api.BuildType,java.util.List,Z):V
@@ -1903,7 +1899,6 @@ org.jetbrains.jps.incremental.BuildListener
 - filesGenerated(org.jetbrains.jps.incremental.messages.FileGeneratedEvent):V
 f:org.jetbrains.jps.incremental.BuildOperations
 - s:cleanOutputsCorrespondingToChangedFiles(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.DirtyFilesHolder):java.util.Map
-- s:deleteRecursively(java.lang.String,java.util.Collection,java.util.Set):Z
 - s:deleteRecursivelyAndCollectDeleted(java.nio.file.Path,java.util.Collection,java.util.Set):Z
 - s:ensureFSStateInitialized(org.jetbrains.jps.incremental.CompileContext,org.jetbrains.jps.builders.BuildTarget,Z):V
 - s:markTargetsUpToDate(org.jetbrains.jps.incremental.CompileContext,java.util.Collection):V
@@ -1964,7 +1959,6 @@ org.jetbrains.jps.incremental.CompileContext
 - a:getProjectDescriptor():org.jetbrains.jps.cmdline.ProjectDescriptor
 - a:getScope():org.jetbrains.jps.incremental.CompileScope
 - isCanceled():Z
-- isProjectRebuild():Z
 - a:markNonIncremental(org.jetbrains.jps.incremental.ModuleBuildTarget):V
 - a:removeBuildListener(org.jetbrains.jps.incremental.BuildListener):V
 - a:setCompilationStartStamp(java.util.Collection,J):V
@@ -1973,7 +1967,6 @@ org.jetbrains.jps.incremental.CompileContext
 a:org.jetbrains.jps.incremental.CompileScope
 - <init>():V
 - a:isAffected(org.jetbrains.jps.builders.BuildTarget):Z
-- f:isAffected(org.jetbrains.jps.builders.BuildTarget,java.io.File):Z
 - a:isAffected(org.jetbrains.jps.builders.BuildTarget,java.nio.file.Path):Z
 - a:isAllTargetsOfTypeAffected(org.jetbrains.jps.builders.BuildTargetType):Z
 - a:isBuildForced(org.jetbrains.jps.builders.BuildTarget):Z
@@ -2462,13 +2455,11 @@ f:org.jetbrains.jps.incremental.storage.BuildDataManager
 - flush(Z):V
 - getDataPaths():org.jetbrains.jps.builders.storage.BuildDataPaths
 - getDependencyGraph():org.jetbrains.jps.dependency.GraphConfiguration
-- getFileStampService():org.jetbrains.jps.incremental.storage.ProjectStamps
 - getFileStampStorage(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.incremental.storage.StampsStorage
 - s:getMappingsRoot(java.nio.file.Path):java.nio.file.Path
 - getRelativizer():org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 - getSourceToOutputMap(org.jetbrains.jps.builders.BuildTarget):org.jetbrains.jps.builders.storage.SourceToOutputMapping
 - getStorage(org.jetbrains.jps.builders.BuildTarget,org.jetbrains.jps.builders.storage.StorageProvider):org.jetbrains.jps.incremental.storage.StorageOwner
-- getTargetsState():org.jetbrains.jps.incremental.storage.BuildTargetsState
 - isProcessConstantsIncrementally():Z
 - reportUnhandledRelativizerPaths():V
 - saveVersion():V

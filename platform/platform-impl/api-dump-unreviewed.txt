@@ -13434,7 +13434,6 @@ f:com.intellij.ui.filterField.SearchQueryParserBase$QueryCompletionPosition
 - f:getAttributeName():java.lang.String
 - f:getAttributeValue():java.lang.String
 - f:getStartPosition():I
-com.intellij.ui.layout.BaseBuilder
 e:com.intellij.ui.layout.CCFlags
 - java.lang.Enum
 - sf:grow:com.intellij.ui.layout.CCFlags
@@ -13447,7 +13446,6 @@ e:com.intellij.ui.layout.CCFlags
 - s:valueOf(java.lang.String):com.intellij.ui.layout.CCFlags
 - s:values():com.intellij.ui.layout.CCFlags[]
 a:com.intellij.ui.layout.Cell
-- com.intellij.ui.layout.BaseBuilder
 - <init>():V
 - bf:button(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.layout.CellBuilder
 - a:component(javax.swing.JComponent):com.intellij.ui.layout.CellBuilder
@@ -14652,14 +14650,12 @@ c:com.intellij.util.ui.ButtonlessScrollBarUI
 - getSupportsAbsolutePositioning():Z
 - p:getThickness():I
 - getThumbBounds():java.awt.Rectangle
-- p:getThumbOffset(I):I
 - p:installDefaults():V
 - p:installListeners():V
 - p:isDark():Z
 - p:isMacOverlayScrollbar():Z
 - s:isMacOverlayScrollbarSupported():Z
 - p:isMacScrollbarHiddenAndXcodeLikeScrollbar():Z
-- p:isThumbTranslucent():Z
 - p:isVertical():Z
 - layoutContainer(java.awt.Container):V
 - p:paintThumb(java.awt.Graphics,javax.swing.JComponent,java.awt.Rectangle):V

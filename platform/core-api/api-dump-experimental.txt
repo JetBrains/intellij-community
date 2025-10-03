@@ -204,7 +204,6 @@ com.intellij.lexer.RestartableLexer
 com.intellij.openapi.application.Application
 - com.intellij.openapi.components.ComponentManager
 - *a:assertIsNonDispatchThread():V
-- *:assertIsWriteThread():V
 - *a:assertReadAccessNotAllowed():V
 - *a:assertWriteIntentLockAcquired():V
 - *a:isWriteIntentLockAcquired():Z
@@ -223,7 +222,6 @@ f:com.intellij.openapi.application.CoroutinesKt
 - *sf:writeAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeIntentReadAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.application.ReadAction
-- com.intellij.openapi.application.BaseActionRunnable
 - *s:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 *a:com.intellij.openapi.application.WriteIntentReadAction
 - <init>():V

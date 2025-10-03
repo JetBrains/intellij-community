@@ -15,13 +15,6 @@ a:com.intellij.ide.favoritesTreeView.AbstractFavoritesListProvider
 - getListName(com.intellij.openapi.project.Project):java.lang.String
 - handle(com.intellij.ui.CommonActionsPanel$Buttons,com.intellij.openapi.project.Project,java.util.Set,javax.swing.JComponent):V
 - willHandle(com.intellij.ui.CommonActionsPanel$Buttons,com.intellij.openapi.project.Project,java.util.Set):Z
-c:com.intellij.ide.favoritesTreeView.AbstractUrlFavoriteAdapter
-- com.intellij.ide.projectView.impl.AbstractUrl
-- <init>(java.lang.String,java.lang.String,com.intellij.ide.favoritesTreeView.FavoriteNodeProvider):V
-- createPath(com.intellij.openapi.project.Project):java.lang.Object[]
-- p:createUrl(java.lang.String,java.lang.String):com.intellij.ide.projectView.impl.AbstractUrl
-- createUrlByElement(java.lang.Object):com.intellij.ide.projectView.impl.AbstractUrl
-- getNodeProvider():com.intellij.ide.favoritesTreeView.FavoriteNodeProvider
 c:com.intellij.ide.favoritesTreeView.FavoritesListNode
 - com.intellij.ide.util.treeView.AbstractTreeNode
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V

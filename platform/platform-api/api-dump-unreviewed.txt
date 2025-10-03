@@ -1528,7 +1528,6 @@ a:com.intellij.openapi.actionSystem.ex.ActionManagerEx
 - a:fireAfterEditorTyping(C,com.intellij.openapi.actionSystem.DataContext):V
 - a:fireBeforeEditorTyping(C,com.intellij.openapi.actionSystem.DataContext):V
 - sf:getInstanceEx():com.intellij.openapi.actionSystem.ex.ActionManagerEx
-- sf:getKeyStroke(java.lang.String):javax.swing.KeyStroke
 - a:getLastPreformedActionId():java.lang.String
 - a:getPluginActions(com.intellij.openapi.extensions.PluginId):java.lang.String[]
 - a:getPrevPreformedActionId():java.lang.String
@@ -1537,7 +1536,6 @@ a:com.intellij.openapi.actionSystem.ex.ActionManagerEx
 - a:performWithActionCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,java.lang.Runnable):com.intellij.openapi.actionSystem.AnActionResult
 f:com.intellij.openapi.actionSystem.ex.ActionManagerEx$Companion
 - f:getInstanceEx():com.intellij.openapi.actionSystem.ex.ActionManagerEx
-- f:getKeyStroke(java.lang.String):javax.swing.KeyStroke
 f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:ALLOW_PlAIN_LETTER_SHORTCUTS:com.intellij.openapi.util.Key
 - sf:ALWAYS_VISIBLE_GROUP:com.intellij.openapi.util.Key
@@ -4705,10 +4703,6 @@ c:com.intellij.ui.AnActionButton$AnActionButtonWrapper
 - getDelegate():com.intellij.openapi.actionSystem.AnAction
 - isDumbAware():Z
 - updateButton(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.ui.AnActionButton$CheckedAnActionButton
-- com.intellij.ui.AnActionButton$AnActionButtonWrapper
-- com.intellij.openapi.actionSystem.CheckedActionGroup
-- <init>(com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.AnAction):V
 a:com.intellij.ui.AutoScrollFromSourceHandler
 - pf:myAlarm:com.intellij.util.Alarm
 - pf:myProject:com.intellij.openapi.project.Project

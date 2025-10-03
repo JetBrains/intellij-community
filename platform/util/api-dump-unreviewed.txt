@@ -1798,7 +1798,6 @@ c:com.intellij.util.ConstantFunction
 - fun(java.lang.Object):java.lang.Object
 f:com.intellij.util.CoroutineScopeKt
 - sf:asDisposable(kotlinx.coroutines.CoroutineScope):com.intellij.openapi.Disposable
-- sf:attachAsChildTo(com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
 - sf:disposeOnCompletion(com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
 f:com.intellij.util.CurrentJavaVersion
 - sf:currentJavaVersion():com.intellij.util.lang.JavaVersion
@@ -2448,7 +2447,6 @@ f:com.intellij.util.containers.ContainerUtil
 - s:copyAndClear(java.util.Collection,com.intellij.util.ArrayFactory,Z):java.lang.Object[]
 - s:copyList(java.util.List):java.util.List
 - s:count(java.lang.Iterable,com.intellij.openapi.util.Condition):I
-- s:createConcurrentIntObjectMap():com.intellij.util.containers.ConcurrentIntObjectMap
 - s:createConcurrentList():com.intellij.util.containers.ConcurrentList
 - s:createConcurrentList(java.util.Collection):com.intellij.util.containers.ConcurrentList
 - s:createConcurrentSoftKeySoftValueMap():java.util.concurrent.ConcurrentMap
@@ -2517,7 +2515,6 @@ f:com.intellij.util.containers.ContainerUtil
 - s:getOrCreate(java.util.Map,java.lang.Object,java.lang.Object):java.lang.Object
 - s:getOrElse(java.util.List,I,java.lang.Object):java.lang.Object
 - s:groupBy(java.lang.Iterable,com.intellij.util.NullableFunction):com.intellij.util.containers.MultiMap
-- s:immutableList():java.util.List
 - s:immutableList(java.lang.Object):java.util.List
 - s:immutableList(java.util.List):com.intellij.util.containers.ImmutableList
 - s:immutableList(java.lang.Object[]):com.intellij.util.containers.ImmutableList
@@ -2535,7 +2532,6 @@ f:com.intellij.util.containers.ContainerUtil
 - s:iterate(java.util.Enumeration):java.util.Iterator
 - s:iterate(java.lang.Object[]):java.util.Iterator
 - s:iterateAndGetLastItem(java.lang.Iterable):java.lang.Object
-- s:iterateAndGetLastItem(java.util.List):java.lang.Object
 - s:iterateBackward(java.util.List):java.lang.Iterable
 - s:lastIndexOf(java.util.List,com.intellij.openapi.util.Condition):I
 - s:list(java.lang.Object[]):java.util.List
@@ -2579,7 +2575,6 @@ f:com.intellij.util.containers.ContainerUtil
 - s:newHashOrEmptySet(java.lang.Iterable):java.util.Set
 - s:newHashSet():java.util.HashSet
 - s:newHashSet(java.lang.Iterable):java.util.HashSet
-- s:newHashSet(java.util.Collection):java.util.HashSet
 - s:newHashSet(java.util.Iterator):java.util.HashSet
 - s:newHashSet(java.lang.Object[]):java.util.HashSet
 - s:newLinkedHashMap():java.util.LinkedHashMap
@@ -2588,7 +2583,6 @@ f:com.intellij.util.containers.ContainerUtil
 - s:newLinkedHashSet(java.lang.Iterable):java.util.LinkedHashSet
 - s:newLinkedHashSet(java.util.Collection):java.util.LinkedHashSet
 - s:newLinkedHashSet(java.lang.Object[]):java.util.LinkedHashSet
-- s:newLinkedList():java.util.LinkedList
 - s:newLinkedList(java.lang.Object[]):java.util.LinkedList
 - s:newMapFromKeys(java.util.Iterator,com.intellij.util.containers.Convertor):java.util.Map
 - s:newMapFromValues(java.util.Iterator,com.intellij.util.containers.Convertor):java.util.Map
@@ -2618,8 +2612,6 @@ f:com.intellij.util.containers.ContainerUtil
 - s:retainAll(java.util.Collection,com.intellij.openapi.util.Condition):Z
 - s:reverse(java.util.List):java.util.List
 - s:reverseMap(java.util.Map):java.util.Map
-- s:set():java.util.Set
-- s:set(java.lang.Object):java.util.Set
 - s:set(java.lang.Object[]):java.util.Set
 - s:skipNulls(java.util.Collection):java.util.List
 - s:sort(java.util.List):V
@@ -2640,7 +2632,6 @@ f:com.intellij.util.containers.ContainerUtil
 - s:toArray(java.util.Collection,java.lang.Object[]):java.lang.Object[]
 - s:toArray(java.util.List,java.lang.Object[]):java.lang.Object[]
 - s:toCollection(java.lang.Iterable):java.util.Collection
-- s:toCollection(java.util.Collection):java.util.Collection
 - s:toList(java.util.Enumeration):java.util.List
 - s:trimToSize(java.util.List):java.util.List
 - s:union(java.util.Collection,java.util.Collection):java.util.Set
@@ -3842,7 +3833,6 @@ a:com.intellij.util.io.Compressor
 - f:addDirectory(java.io.File):V
 - f:addDirectory(java.lang.String):V
 - f:addDirectory(java.lang.String,J):V
-- f:addDirectory(java.lang.String,java.io.File):V
 - f:addDirectory(java.lang.String,java.nio.file.Path):V
 - f:addDirectory(java.lang.String,java.nio.file.Path,J):V
 - f:addDirectory(java.nio.file.Path):V
@@ -3863,7 +3853,6 @@ f:com.intellij.util.io.Compressor$Jar
 - addManifest(java.util.jar.Manifest):V
 c:com.intellij.util.io.Compressor$Tar
 - com.intellij.util.io.Compressor
-- <init>(java.io.File,com.intellij.util.io.Compressor$Tar$Compression):V
 - <init>(java.nio.file.Path,com.intellij.util.io.Compressor$Tar$Compression):V
 - close():V
 - p:writeDirectoryEntry(java.lang.String,J):V
@@ -4991,7 +4980,6 @@ c:com.intellij.util.xmlb.BeanBinding
 - serialize(java.lang.Object,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
 - f:serialize(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):V
 - f:serialize(java.lang.Object,Z,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
-- f:serializeInto(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
 - serializeProperties(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
 - f:sortBindings(it.unimi.dsi.fastutil.objects.Object2FloatMap):V
 - toJson(java.lang.Object,com.intellij.util.xmlb.SerializationFilter):kotlinx.serialization.json.JsonElement

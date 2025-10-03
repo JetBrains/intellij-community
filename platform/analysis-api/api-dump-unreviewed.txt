@@ -273,7 +273,6 @@ a:com.intellij.codeInsight.completion.CompletionService
 - p:getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer,com.intellij.codeInsight.completion.CompletionSorter):V
 - getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.util.Consumer):V
 - performCompletion(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer):V
-- a:setAdvertisementText(java.lang.String):V
 - pa:suggestPrefix(com.intellij.codeInsight.completion.CompletionParameters):java.lang.String
 a:com.intellij.codeInsight.completion.CompletionSorter
 - <init>():V
@@ -1827,7 +1826,6 @@ f:com.intellij.lang.annotation.Annotation
 - getTooltip():java.lang.String
 - isAfterEndOfLine():Z
 - isFileLevelAnnotation():Z
-- registerBatchFix(com.intellij.codeInsight.intention.IntentionAction,com.intellij.codeInspection.LocalQuickFix,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
 - registerBatchFix(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
 - registerFix(com.intellij.codeInsight.intention.IntentionAction):V
 - registerFix(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.util.TextRange):V
@@ -1840,7 +1838,6 @@ f:com.intellij.lang.annotation.Annotation
 - setGutterIconRenderer(com.intellij.openapi.editor.markup.GutterIconRenderer):V
 - setHighlightType(com.intellij.codeInspection.ProblemHighlightType):V
 - setNeedsUpdateOnTyping(Z):V
-- setProblemGroup(com.intellij.lang.annotation.ProblemGroup):V
 - setTextAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - setTooltip(java.lang.String):V
 f:com.intellij.lang.annotation.Annotation$QuickFixInfo

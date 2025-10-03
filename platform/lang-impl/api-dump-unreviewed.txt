@@ -1,6 +1,5 @@
 f:com.intellij.analysis.AnalysisActionUtils
 - <init>():V
-- s:getInspectionScope(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.project.Project,java.lang.Boolean):com.intellij.analysis.AnalysisScope
 - s:getInspectionScope(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.project.Project,Z):com.intellij.analysis.AnalysisScope
 f:com.intellij.analysis.AnalysisUIOptions
 - com.intellij.openapi.components.PersistentStateComponent
@@ -325,7 +324,6 @@ a:com.intellij.application.options.CodeStyleAbstractPanel
 - p:addPanelToWatch(java.awt.Component):V
 - a:apply(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - p:applySettingsToModel():V
-- p:createFileFromText(com.intellij.openapi.project.Project,java.lang.String):com.intellij.psi.PsiFile
 - pa:createHighlighter(com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.highlighter.EditorHighlighter
 - dispose():V
 - p:doReformat(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):com.intellij.psi.PsiFile
@@ -2372,17 +2370,6 @@ f:com.intellij.codeInsight.daemon.quickFix.TargetDirectory
 - <init>(com.intellij.psi.PsiDirectory,java.lang.String[]):V
 - getDirectory():com.intellij.psi.PsiDirectory
 - getPathToCreate():java.lang.String[]
-a:com.intellij.codeInsight.documentation.AbstractDocToolWindowManager
-- com.intellij.codeInsight.documentation.DocToolWindowManager
-- <init>():V
-- disposeToolWindow(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
-- getDocumentationComponent(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):com.intellij.codeInsight.documentation.DocumentationComponent
-- getDocumentationContent(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):com.intellij.ui.content.Content
-- installToolWindowActions(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
-- isAutoUpdateAvailable():Z
-- prepareForShowDocumentation(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
-- setToolWindowDefaultState(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
-- updateToolWindowDocumentationTabName(com.intellij.openapi.wm.ToolWindow,com.intellij.psi.PsiElement,com.intellij.codeInsight.documentation.DocumentationManager):V
 a:com.intellij.codeInsight.documentation.AbstractExternalFilter
 - psf:HTML:java.lang.String
 - psf:HTML_CLOSE:java.lang.String
@@ -5949,7 +5936,6 @@ c:com.intellij.execution.console.ConsoleHistoryController
 - <init>(com.intellij.execution.console.ConsoleRootType,java.lang.String,com.intellij.execution.console.LanguageConsoleView):V
 - <init>(com.intellij.execution.console.ConsoleRootType,java.lang.String,com.intellij.execution.console.LanguageConsoleView,Z):V
 - <init>(com.intellij.execution.console.ConsoleRootType,java.lang.String,java.lang.String,com.intellij.execution.console.LanguageConsoleView):V
-- <init>(java.lang.String,java.lang.String,com.intellij.execution.console.LanguageConsoleView):V
 - s:addToHistory(com.intellij.execution.console.LanguageConsoleView,java.lang.String):V
 - addToHistory(java.lang.String):V
 - p:createBrowseAction():com.intellij.execution.console.ConsoleHistoryController$BrowseAction
@@ -9297,7 +9283,6 @@ a:com.intellij.ide.projectView.impl.AbstractProjectViewPane
 - f:getSelectedElement():java.lang.Object
 - f:getSelectedElements():java.lang.Object[]
 - f:getSelectedNode():javax.swing.tree.DefaultMutableTreeNode
-- p:getSelectedNodes(java.lang.Class):java.util.List
 - f:getSelectedPSIElements():com.intellij.psi.PsiElement[]
 - f:getSelectedPath():javax.swing.tree.TreePath
 - f:getSelectedUserObjects():java.lang.Object[]
@@ -14303,7 +14288,6 @@ a:com.intellij.refactoring.changeSignature.ChangeSignatureDialogBase
 - p:getMethodName():java.lang.String
 - getParameters():java.util.List
 - getPreferredFocusedComponent():javax.swing.JComponent
-- p:getRowPresentation(com.intellij.refactoring.changeSignature.ParameterTableModelItemBase,Z,Z):javax.swing.JComponent
 - p:getSelectedIdx():I
 - p:getTableComponent():com.intellij.ui.table.JBTable
 - p:getTableEditor(javax.swing.JTable,com.intellij.refactoring.changeSignature.ParameterTableModelItemBase):com.intellij.util.ui.table.JBTableRowEditor
@@ -14548,7 +14532,6 @@ c:com.intellij.refactoring.copy.CopyFilesOrDirectoriesDialog
 - p:areButtonsValid():Z
 - p:createCenterPanel():javax.swing.JComponent
 - p:createNorthPanel():javax.swing.JComponent
-- s:createOpenInEditorCB():javax.swing.JCheckBox
 - p:doAction():V
 - p:getHelpId():java.lang.String
 - getNewName():java.lang.String
@@ -14560,7 +14543,6 @@ c:com.intellij.refactoring.copy.CopyFilesOrDirectoriesDialog
 - isOpenInEditor():Z
 - p:isOpenInEditorEnabledByDefault():Z
 - openInEditor():Z
-- s:saveOpenInEditorState(Z):V
 - s:shortenPath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 c:com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler
 - com.intellij.refactoring.copy.CopyHandlerDelegateBase

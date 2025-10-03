@@ -1013,6 +1013,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     ourInsertSingleItemTimeSpan = timeSpan;
   }
 
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static void setAutopopupTriggerTime(int timeSpan) {
     ourShowPopupGroupingTime = timeSpan;

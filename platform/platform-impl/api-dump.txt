@@ -1263,9 +1263,7 @@ com.intellij.ui.dsl.builder.CellBase
 - a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.CellBase
 - a:enabledIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.CellBase
 - a:gap(com.intellij.ui.dsl.builder.RightGap):com.intellij.ui.dsl.builder.CellBase
-- a:horizontalAlign(com.intellij.ui.dsl.gridLayout.HorizontalAlign):com.intellij.ui.dsl.builder.CellBase
 - a:resizableColumn():com.intellij.ui.dsl.builder.CellBase
-- a:verticalAlign(com.intellij.ui.dsl.gridLayout.VerticalAlign):com.intellij.ui.dsl.builder.CellBase
 - a:visible(Z):com.intellij.ui.dsl.builder.CellBase
 - a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.CellBase
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.CellBase
@@ -1408,6 +1406,9 @@ com.intellij.ui.dsl.validation.CellValidation
 - a:enabledIf(com.intellij.ui.layout.ComponentPredicate):V
 - a:getEnabled():Z
 - a:setEnabled(Z):V
+com.intellij.ui.layout.BaseBuilder
+a:com.intellij.ui.layout.Cell
+- com.intellij.ui.layout.BaseBuilder
 com.intellij.ui.layout.CellBuilder
 - ba:comment(java.lang.String,I,Z):com.intellij.ui.layout.CellBuilder
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder

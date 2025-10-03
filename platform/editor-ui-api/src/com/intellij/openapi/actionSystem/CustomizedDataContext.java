@@ -42,6 +42,7 @@ public class CustomizedDataContext implements DataContext, UserDataHolder, AnAct
     myCustomized = customized;
   }
 
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   protected CustomizedDataContext(@NotNull DataContext parent, boolean delegateUserData) {
     myParent = parent;

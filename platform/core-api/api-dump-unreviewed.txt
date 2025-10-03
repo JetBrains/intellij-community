@@ -602,10 +602,6 @@ f:com.intellij.openapi.application.ApplicationNamesInfo
 - getMotto():java.lang.String
 - getProductName():java.lang.String
 - getScriptName():java.lang.String
-a:com.intellij.openapi.application.BaseActionRunnable
-- <init>():V
-- a:execute():com.intellij.openapi.application.RunResult
-- pa:run(com.intellij.openapi.application.Result):V
 f:com.intellij.openapi.application.CoroutinesKt
 - bsf:asContextElement(com.intellij.openapi.application.ModalityState):kotlin.coroutines.CoroutineContext
 - sf:constrainedReadAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
@@ -677,7 +673,6 @@ a:com.intellij.openapi.application.QueryExecutorBase
 - f:execute(java.lang.Object,com.intellij.util.Processor):Z
 - a:processQuery(java.lang.Object,com.intellij.util.Processor):V
 a:com.intellij.openapi.application.ReadAction
-- com.intellij.openapi.application.BaseActionRunnable
 - <init>():V
 - s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - execute():com.intellij.openapi.application.RunResult
@@ -702,7 +697,6 @@ c:com.intellij.openapi.application.Result
 - f:setResult(java.lang.Object):V
 f:com.intellij.openapi.application.RunResult
 - com.intellij.openapi.application.Result
-- <init>(com.intellij.openapi.application.BaseActionRunnable):V
 - getResultObject():java.lang.Object
 - getThrowable():java.lang.Throwable
 - hasException():Z
@@ -723,7 +717,6 @@ a:com.intellij.openapi.application.TransactionGuard
 - a:submitTransactionLater(com.intellij.openapi.Disposable,java.lang.Runnable):V
 com.intellij.openapi.application.TransactionId
 a:com.intellij.openapi.application.WriteAction
-- com.intellij.openapi.application.BaseActionRunnable
 - <init>():V
 - s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeAndWait(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
@@ -782,7 +775,6 @@ e:com.intellij.openapi.command.UndoConfirmationPolicy
 - s:valueOf(java.lang.String):com.intellij.openapi.command.UndoConfirmationPolicy
 - s:values():com.intellij.openapi.command.UndoConfirmationPolicy[]
 a:com.intellij.openapi.command.WriteCommandAction
-- com.intellij.openapi.application.BaseActionRunnable
 - p:<init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.psi.PsiFile[]):V
 - p:<init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.PsiFile[]):V
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile[]):V

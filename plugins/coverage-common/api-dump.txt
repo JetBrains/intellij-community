@@ -59,7 +59,6 @@ a:com.intellij.coverage.CoverageDataManager
 - a:addCoverageSuite(com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration):com.intellij.coverage.CoverageSuite
 - a:addCoverageSuite(java.lang.String,com.intellij.coverage.CoverageFileProvider,java.lang.String[],J,java.lang.String,com.intellij.coverage.CoverageRunner,Z,Z):com.intellij.coverage.CoverageSuite
 - f:addExternalCoverageSuite(java.io.File,com.intellij.coverage.CoverageRunner):com.intellij.coverage.CoverageSuite
-- a:addExternalCoverageSuite(java.lang.String,J,com.intellij.coverage.CoverageRunner,com.intellij.coverage.CoverageFileProvider):com.intellij.coverage.CoverageSuite
 - a:addSuiteListener(com.intellij.coverage.CoverageSuiteListener,com.intellij.openapi.Disposable):V
 - a:attachToProcess(com.intellij.execution.process.ProcessHandler,com.intellij.execution.configurations.RunConfigurationBase,com.intellij.execution.configurations.RunnerSettings):V
 - a:chooseSuitesBundle(com.intellij.coverage.CoverageSuitesBundle):V

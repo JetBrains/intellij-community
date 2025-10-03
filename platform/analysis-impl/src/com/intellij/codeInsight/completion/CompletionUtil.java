@@ -42,6 +42,7 @@ public final class CompletionUtil {
   public static final @NonNls String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER;
   public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 
+  @ApiStatus.Internal
   public static @Nullable CompletionData getCompletionDataByElement(final @Nullable PsiElement position, @NotNull PsiFile originalFile) {
     if (position == null) return null;
     return ourGenericCompletionData;

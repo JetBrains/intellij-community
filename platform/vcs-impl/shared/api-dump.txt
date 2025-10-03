@@ -433,8 +433,6 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - addGroupingChangeListener(java.beans.PropertyChangeListener):V
 - addSelectionListener(java.lang.Runnable):V
 - addSelectionListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
-- createCollapseAllAction(Z):com.intellij.openapi.actionSystem.AnAction
-- createExpandAllAction(Z):com.intellij.openapi.actionSystem.AnAction
 - excludeChange(java.lang.Object):V
 - excludeChanges(java.util.Collection):V
 - expandAll():V

@@ -31,23 +31,12 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - *sf:JsonHttpApiHelper(com.intellij.openapi.diagnostic.Logger,com.intellij.collaboration.api.HttpApiHelper,com.intellij.collaboration.api.json.JsonDataSerializer,com.intellij.collaboration.api.json.JsonDataDeserializer):com.intellij.collaboration.api.json.JsonHttpApiHelper
 *f:com.intellij.collaboration.async.CompletableFutureUtil
 - sf:INSTANCE:com.intellij.collaboration.async.CompletableFutureUtil
-- f:cancellationOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
-- bs:cancellationOnEdt$default(com.intellij.collaboration.async.CompletableFutureUtil,java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.concurrent.CompletableFuture
-- f:completionOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function0):java.util.concurrent.CompletableFuture
-- bs:completionOnEdt$default(com.intellij.collaboration.async.CompletableFutureUtil,java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function0,I,java.lang.Object):java.util.concurrent.CompletableFuture
 - f:errorOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
 - bs:errorOnEdt$default(com.intellij.collaboration.async.CompletableFutureUtil,java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.concurrent.CompletableFuture
 - f:extractError(java.lang.Throwable):java.lang.Throwable
-- f:handleOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function2):java.util.concurrent.CompletableFuture
-- f:handleOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function2):java.util.concurrent.CompletableFuture
-- bs:handleOnEdt$default(com.intellij.collaboration.async.CompletableFutureUtil,java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function2,I,java.lang.Object):java.util.concurrent.CompletableFuture
 - f:isCancellation(java.lang.Throwable):Z
 - f:submitIOTask(com.intellij.openapi.progress.ProgressManager,com.intellij.collaboration.util.ProgressIndicatorsProvider,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
-- f:submitIOTask(com.intellij.openapi.progress.ProgressManager,com.intellij.collaboration.util.ProgressIndicatorsProvider,Z,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
 - f:submitIOTask(com.intellij.openapi.progress.ProgressManager,com.intellij.openapi.progress.ProgressIndicator,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
-- f:submitIOTask(com.intellij.openapi.progress.ProgressManager,com.intellij.openapi.progress.ProgressIndicator,Z,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
-- bs:submitIOTask$default(com.intellij.collaboration.async.CompletableFutureUtil,com.intellij.openapi.progress.ProgressManager,com.intellij.collaboration.util.ProgressIndicatorsProvider,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.concurrent.CompletableFuture
-- bs:submitIOTask$default(com.intellij.collaboration.async.CompletableFutureUtil,com.intellij.openapi.progress.ProgressManager,com.intellij.openapi.progress.ProgressIndicator,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.concurrent.CompletableFuture
 - f:successOnEdt(java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1):java.util.concurrent.CompletableFuture
 - bs:successOnEdt$default(com.intellij.collaboration.async.CompletableFutureUtil,java.util.concurrent.CompletableFuture,com.intellij.openapi.application.ModalityState,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.concurrent.CompletableFuture
 *f:com.intellij.collaboration.async.CoroutineUtilKt

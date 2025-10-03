@@ -643,6 +643,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   /**
    * @deprecated Prefer using {@link IdeActions#ACTION_EXPAND_ALL}
    */
+  @ApiStatus.Internal
   @Deprecated
   public @NotNull AnAction createExpandAllAction(boolean headerAction) {
     if (headerAction) {
@@ -656,6 +657,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   /**
    * @deprecated Prefer using {@link IdeActions#ACTION_COLLAPSE_ALL}
    */
+  @ApiStatus.Internal
   @Deprecated
   public @NotNull AnAction createCollapseAllAction(boolean headerAction) {
     if (headerAction) {

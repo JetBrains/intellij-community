@@ -19,6 +19,7 @@ interface AbstractScopeModel : Disposable {
 
   suspend fun getScopes(dataContext: DataContext): ScopesSnapshot
 
+  @ApiStatus.Internal
   @Deprecated("Slow and blocking, use getScopes() in a suspending context, or addScopeModelListener() and refreshScopes()")
   fun getScopesImmediately(dataContext: DataContext): ScopesSnapshot
 
