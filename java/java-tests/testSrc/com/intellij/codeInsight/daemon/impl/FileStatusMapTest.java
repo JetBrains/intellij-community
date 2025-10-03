@@ -182,7 +182,7 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
   public void testTypingSpace() {
     @Language("JAVA")
     String text = """
-        class AClass<caret> {
+        class AClass <caret> {
       
         }
       """;

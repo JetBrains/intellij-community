@@ -51,7 +51,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   PsiChangeHandler(@NotNull Project project, @NotNull DaemonCodeAnalyzerEx daemonCodeAnalyzerEx, @NotNull Disposable parentDisposable) {
     myProject = project;
     myFileStatusMap = daemonCodeAnalyzerEx.getFileStatusMap();
-    DocumentAfterCommitListener.listen(project, parentDisposable, document -> updateChangesForDocument(daemonCodeAnalyzerEx, document));
+    DocumentAfterCommitListener.listen(project, parentDisposable, document -> updateChangesForDocument(document));
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(ProjectDisposeAwareDocumentListener.create(project, new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent event) {
@@ -61,7 +61,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     myUpdateFileStatusAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
   }
 
-  private void updateChangesForDocument(@NotNull DaemonCodeAnalyzerEx daemonCodeAnalyzerEx, @NotNull Document document) {
+  private void updateChangesForDocument(@NotNull Document document) {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();// to prevent changedElements corruption
     if (myProject.isDisposed()) {
@@ -242,7 +242,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   @RequiresReadLock
   private void doUpdateChild(@NotNull Document document, @NotNull PsiElement child, boolean whitespaceOptimizationAllowed) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (myProject.isDisposed() /*|| !child.isValid()*//* || document.getModificationStamp() != documentOldModificationStamp*/) {
+    if (myProject.isDisposed()) {
       return;
     }
     PsiFile psiFile;
@@ -274,7 +274,9 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     }
 
     TextRange existingDirtyScope = myFileStatusMap.getFileDirtyScopeForAllPassesCombined(document);
-    PsiElement element = whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document) ? child : child.getParent();
+    PsiElement element = child instanceof PsiFile || whitespaceOptimizationAllowed &&
+                                                     UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)
+                         ? child : child.getParent();
     while (true) {
       if (element == null || element instanceof PsiFile || element instanceof PsiDirectory) {
         myFileStatusMap.markAllFilesDirty("Top element: " + element+"; changed child: "+child);

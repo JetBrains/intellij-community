@@ -2439,4 +2439,25 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
+
+  public void testStartingTypingCommentMustExtendExistingHighlighterButShrinkItBackAfterRehighlighting() {
+    @Language("JAVA")
+    String text = """
+      class X {
+         void foo() {
+           Str/*ing xxx;
+         }
+      }""";
+
+    configureByText(JavaFileType.INSTANCE, text);
+    List<HighlightInfo> errs = highlightErrors();
+    HighlightInfo info = ContainerUtil.find(errs, e -> "Cannot resolve symbol 'Str'".equals(e.getDescription()));
+    assertTrue(errs.toString(), info != null && info.getText().equals("Str"));
+
+    int i = getEditor().getDocument().getText().indexOf("/*");
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().insertString(i, "/*"));
+    errs = highlightErrors();
+    info = ContainerUtil.find(errs, e -> "Cannot resolve symbol 'Str'".equals(e.getDescription()));
+    assertTrue(errs.toString(), info != null && info.getText().equals("Str"));
+  }
 }
