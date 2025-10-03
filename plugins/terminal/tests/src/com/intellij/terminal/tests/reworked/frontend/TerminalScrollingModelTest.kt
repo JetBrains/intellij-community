@@ -18,7 +18,7 @@ import kotlinx.coroutines.cancel
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
@@ -452,7 +452,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
   ) {
     val scrollingModelScope = childScope("TerminalOutputScrollingModel")
     try {
-      val outputModel = TerminalOutputModelImpl(editor.document, maxOutputLength = 0)
+      val outputModel = MutableTerminalOutputModelImpl(editor.document, maxOutputLength = 0)
       val sessionModel = createSessionModel(showCursor)
       val scrollingModel = TerminalOutputScrollingModelImpl(editor, outputModel, sessionModel, scrollingModelScope)
 

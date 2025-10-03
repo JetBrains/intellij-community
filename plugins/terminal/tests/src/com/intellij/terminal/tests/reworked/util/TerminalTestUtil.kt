@@ -11,15 +11,15 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.session.StyleRange
 import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
 
 @ApiStatus.Internal
 object TerminalTestUtil {
-  fun createOutputModel(maxLength: Int = 0): TerminalOutputModelImpl {
+  fun createOutputModel(maxLength: Int = 0): MutableTerminalOutputModelImpl {
     val document = DocumentImpl("", true)
-    return TerminalOutputModelImpl(document, maxLength)
+    return MutableTerminalOutputModelImpl(document, maxLength)
   }
 
   suspend fun MutableTerminalOutputModel.update(absoluteLineIndex: Long, text: String, styles: List<StyleRange> = emptyList()) {

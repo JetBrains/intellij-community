@@ -72,7 +72,7 @@ internal class StateAwareTerminalSession(
     // Create a Non-AWT thread document to be able to update it without switching to EDT and Write Action.
     // It is OK here to handle synchronization manually, because this document will be used only in our services.
     val outputDocument = DocumentImpl("", true)
-    outputModel = TerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength())
+    outputModel = MutableTerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength())
     outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
       BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, isInAlternateBuffer = false)
     }
@@ -81,7 +81,7 @@ internal class StateAwareTerminalSession(
     }
 
     val alternateBufferDocument = DocumentImpl("", true)
-    alternateBufferModel = TerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
+    alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
     alternateBufferHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
       BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true)
     }

@@ -29,7 +29,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.junit.Test
@@ -52,7 +52,7 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
     useFilters(*filter)
     withContext(Dispatchers.EDT) {
       editor = createEditor()
-      model = TerminalOutputModelImpl(editor.document, maxCapacity)
+      model = MutableTerminalOutputModelImpl(editor.document, maxCapacity)
       hyperlinkHighlighter = TerminalHyperlinkHighlighter.install(project, model, editor, coroutineScope)
     }
     hyperlinkHighlighter.awaitInitialized()

@@ -17,7 +17,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -128,7 +128,7 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
 
 }
 
-private class InputTextEchoer(val outputModel: TerminalOutputModelImpl, val coroutineScope: CoroutineScope) {
+private class InputTextEchoer(val outputModel: MutableTerminalOutputModelImpl, val coroutineScope: CoroutineScope) {
 
   private val lineBuffer: StringBuilder = StringBuilder()
   private val jobs: MutableList<Job> = CopyOnWriteArrayList()
