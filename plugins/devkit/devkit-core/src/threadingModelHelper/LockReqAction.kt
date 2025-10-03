@@ -55,7 +55,6 @@ class LockReqAction : AnAction() {
         is AnalysisTarget.File -> service.analyzeFile(target.filePtr)
       }
     }
-    // project.service<LockReqsService>().updateResults(method)
   }
 
   override fun update(e: AnActionEvent) {

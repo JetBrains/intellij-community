@@ -32,6 +32,4 @@ class KtFirUastCallResolver : KtCallResolver {
     })
     return set.toList()
   }
-
-
 }

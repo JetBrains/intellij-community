@@ -22,7 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-private val EP_NAME: ExtensionPointName<LockReqAnalyzer> = create("DevKit.lang.LockReqsAnalyzer")
+private val EP_NAME: ExtensionPointName<LockReqAnalyzer> = create("DevKit.lang.LockReqAnalyzer")
 internal object LockReqAnalyzerProvider : LanguageExtension<LockReqAnalyzer>(EP_NAME.name)
 
 @Service(Service.Level.PROJECT)
