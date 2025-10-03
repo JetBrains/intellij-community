@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.toolwindow.findTabByContent
 import com.intellij.ui.content.Content
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 
@@ -13,8 +14,8 @@ internal class TerminalTabCloseListenerImpl private constructor(
   parentDisposable: Disposable,
 ) : TerminalTabCloseListener(content, project, parentDisposable) {
   override fun hasChildProcesses(content: Content): Boolean {
-    val manager = TerminalToolWindowTabsManager.getInstance(myProject)
-    val terminalView = manager.tabs.find { it.content == content }?.view ?: return false
+    val terminalView = TerminalToolWindowTabsManager.getInstance(myProject).findTabByContent(content)?.view
+                       ?: return false
     return runWithModalProgressBlocking(myProject, "") {
       terminalView.hasChildProcesses()
     }

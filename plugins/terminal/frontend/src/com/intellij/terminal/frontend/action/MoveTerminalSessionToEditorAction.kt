@@ -14,6 +14,7 @@ import com.intellij.terminal.JBTerminalWidgetListener
 import com.intellij.terminal.frontend.editor.TerminalViewVirtualFile
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.toolwindow.findTabByContent
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
@@ -89,8 +90,7 @@ internal class MoveTerminalSessionToEditorAction : ToolWindowContextMenuActionBa
   }
 
   private fun findReworkedTerminalTab(project: Project, content: Content): TerminalToolWindowTab? {
-    val manager = TerminalToolWindowTabsManager.getInstance(project)
-    return manager.tabs.find { it.content == content }
+    return TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content)
   }
 
   private fun findClassicTerminal(e: AnActionEvent, content: Content): TerminalWidget? {

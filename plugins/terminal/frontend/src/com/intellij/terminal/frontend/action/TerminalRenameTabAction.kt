@@ -5,6 +5,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.toolwindow.findTabByContent
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
@@ -27,8 +28,7 @@ internal class TerminalRenameTabAction : ToolWindowTabRenameActionBase(
   }
 
   private fun findTerminalTitle(content: Content, project: Project): TerminalTitle? {
-    val manager = TerminalToolWindowTabsManager.getInstance(project)
-    val terminalView = manager.tabs.find { it.content == content }?.view
+    val terminalView = TerminalToolWindowTabsManager.getInstance(project).findTabByContent(content)?.view
     val terminalWidget = TerminalToolWindowManager.findWidgetByContent(content)
     return terminalView?.title ?: terminalWidget?.terminalTitle
   }

@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend
 
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.toolwindow.findTabByContent
 import com.intellij.terminal.frontend.toolwindow.impl.shouldUseReworkedTerminal
 import com.intellij.toolWindow.ToolWindowSplitContentProvider
 import com.intellij.ui.content.Content
@@ -25,7 +26,7 @@ internal class TerminalToolWindowSplitContentProvider : ToolWindowSplitContentPr
 
   private fun createReworkedTerminalContent(project: Project, content: Content, fusInfo: TerminalStartupFusInfo): Content {
     val manager = TerminalToolWindowTabsManager.getInstance(project)
-    val originalView = manager.tabs.find { it.content == content }?.view
+    val originalView = manager.findTabByContent(content)?.view
     val currentDirectory = originalView?.getCurrentDirectory()
 
     return manager.createTabBuilder()

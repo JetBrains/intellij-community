@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.TerminalTabBuilder
 import com.intellij.terminal.frontend.TerminalView
+import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
@@ -33,6 +34,12 @@ interface TerminalToolWindowTabsManager {
     @JvmStatic
     fun getInstance(project: Project): TerminalToolWindowTabsManager = project.service()
   }
+}
+
+@ApiStatus.Experimental
+@RequiresEdt
+fun TerminalToolWindowTabsManager.findTabByContent(content: Content): TerminalToolWindowTab? {
+  return tabs.find { it.content == content }
 }
 
 @ApiStatus.Experimental
