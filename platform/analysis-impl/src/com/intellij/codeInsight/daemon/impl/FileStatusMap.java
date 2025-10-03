@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -196,14 +195,6 @@ public final class FileStatusMap implements Disposable {
   public @Nullable TextRange getFileDirtyScope(@NotNull Document document, @NotNull PsiFile psiFile, int passId) {
     CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     return getFileDirtyScope(document, context, psiFile, passId);
-  }
-
-  @ApiStatus.Internal
-  public void addTouchedPsi(@NotNull Document document, @NotNull PsiElement psiElement) {
-    synchronized (myFileStatusMapState) {
-      FileStatus status = myFileStatusMapState.getOrCreateStatus(document, CodeInsightContexts.anyContext());
-      status.addTouchedPsi(psiElement, document);
-    }
   }
 
   /**
