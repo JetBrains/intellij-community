@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ import static com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWri
  *
  * @deprecated use {@link BackgroundTaskQueue}
  */
+@ApiStatus.Internal
 @Deprecated
 public class BackgroundTaskGroup extends BackgroundTaskQueue {
 
