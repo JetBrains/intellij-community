@@ -1186,7 +1186,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
    * otherwise classpath may be too long and contradict with maximal allowed parameter size (see ARG_MAX)
    */
   @OptIn(ExperimentalPathApi::class)
-  private fun prepareMuslClassPath(classpath: ArrayList<String>) : ArrayList<String> {
+  private fun prepareMuslClassPath(classpath: List<String>): List<String> {
     val muslClasspathEntries = ArrayList<String>()
 
     val muslClassPath = ULTIMATE_HOME.resolve("musl_classpath_${Random.nextInt(Int.MAX_VALUE)}").let {
@@ -1198,12 +1198,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     muslClasspathEntries.add("${muslClassPath.absolutePathString()}/*")
 
-    classpath.forEach { classPathFile ->
-      val cpf = Path.of(classPathFile)
-      if (cpf.isRegularFile()) {
-        //copy the original classpath entry to the directory, which is already included in the resulting classpath above
-        cpf.copyTo(muslClassPath.resolve(cpf.fileName.toString()), overwrite = true)
-      } else {
+    for (classPathFile in classpath) {
+      val file = Path.of(classPathFile)
+      if (file.isRegularFile()) {
+        // copy the original classpath entry to the directory, which is already included in the resulting classpath above
+        file.copyTo(muslClassPath.resolve(file.fileName.toString()), overwrite = true)
+      }
+      else {
         muslClasspathEntries.add(classPathFile)
       }
     }
@@ -1231,6 +1232,30 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       classpath.addAll(testClasspath)
     }
 
+    return doRunJUnit5Engine(
+      mainModule = mainModule,
+      systemProperties = systemProperties,
+      jvmArgs = jvmArgs,
+      envVariables = envVariables,
+      modulePath = modulePath,
+      suiteName = suiteName,
+      methodName = methodName,
+      devBuildServerSettings = devBuildServerSettings.takeIf { useDevBuildServer },
+      classpath = classpath,
+    )
+  }
+
+  private suspend fun doRunJUnit5Engine(
+    mainModule: String,
+    systemProperties: Map<String, String?>,
+    jvmArgs: List<String>,
+    envVariables: Map<String, String>,
+    modulePath: List<String>?,
+    classpath: List<String>,
+    suiteName: String?,
+    methodName: String?,
+    devBuildServerSettings: DevBuildServerSettings?,
+  ): Int {
     val args = ArrayList<String>()
     args.add("-classpath")
 
@@ -1271,11 +1296,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     args += "--add-opens"
     args += "java.base/java.nio.file.spi=ALL-UNNAMED"
 
-    if (useDevBuildServer) {
-      devBuildServerSettings.apply(mainModule, args)
+    if (devBuildServerSettings == null) {
+      args.add(if (suiteName == null) "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath" else "com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite")
     }
     else {
-      args.add(if (suiteName == null) "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath" else "com.intellij.tests.JUnit5TeamCityRunnerForTestAllSuite")
+      devBuildServerSettings.apply(mainModule, args)
     }
 
     if (suiteName != null) {
