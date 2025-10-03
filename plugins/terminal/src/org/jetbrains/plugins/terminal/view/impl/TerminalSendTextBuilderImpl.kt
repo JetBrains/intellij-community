@@ -1,8 +1,10 @@
-package com.intellij.terminal.frontend.impl
+package org.jetbrains.plugins.terminal.view.impl
 
-import com.intellij.terminal.frontend.TerminalSendTextBuilder
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
 
-internal class TerminalSendTextBuilderImpl(
+@ApiStatus.Internal
+class TerminalSendTextBuilderImpl(
   val doSend: (TerminalSendTextOptions) -> Unit,
 ) : TerminalSendTextBuilder {
   var shouldExecute: Boolean = false
@@ -23,7 +25,8 @@ internal class TerminalSendTextBuilderImpl(
   }
 }
 
-internal data class TerminalSendTextOptions(
+@ApiStatus.Internal
+data class TerminalSendTextOptions(
   val text: String,
   val shouldExecute: Boolean,
   val useBracketedPasteMode: Boolean,

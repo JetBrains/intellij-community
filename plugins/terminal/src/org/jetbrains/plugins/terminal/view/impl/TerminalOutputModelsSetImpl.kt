@@ -1,12 +1,15 @@
-package com.intellij.terminal.frontend.impl
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.view.impl
 
-import com.intellij.terminal.frontend.TerminalOutputModelsSet
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 
-internal class TerminalOutputModelsSetImpl(
+@ApiStatus.Internal
+class TerminalOutputModelsSetImpl(
   override val regular: TerminalOutputModel,
   override val alternative: TerminalOutputModel,
 ) : TerminalOutputModelsSet {

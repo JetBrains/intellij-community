@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.frontend.impl.TerminalSendTextOptions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -16,6 +15,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
 import org.jetbrains.plugins.terminal.fus.*
 import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
 import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
