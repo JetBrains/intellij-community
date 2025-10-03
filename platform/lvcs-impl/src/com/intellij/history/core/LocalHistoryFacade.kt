@@ -63,20 +63,13 @@ open class LocalHistoryFacade internal constructor() {
   internal val changes: Iterable<ChangeSet> get() = changeList.iterChanges()
 
   fun beginChangeSet() {
-    val newChangeSet = changeList.beginChangeSet()
-    if (newChangeSet != null) {
-      fireChangeSetAdded(newChangeSet)
-    }
+    changeList.beginChangeSet()
   }
 
   fun forceBeginChangeSet() {
     val lastChangeSet = changeList.forceBeginChangeSet()
     if (lastChangeSet != null) {
       fireChangeSetFinished(lastChangeSet)
-    }
-    val newChangeSet = changeList.doBeginChangeSet()
-    if (newChangeSet != null) {
-      fireChangeSetAdded(newChangeSet)
     }
   }
 
@@ -205,15 +198,9 @@ open class LocalHistoryFacade internal constructor() {
     listeners.remove(l)
   }
 
-  fun fireChangeAdded(c: Change) {
+  private fun fireChangeAdded(c: Change) {
     for (each in listeners) {
       each.changeAdded(c)
-    }
-  }
-
-  private fun fireChangeSetAdded(changeSet: ChangeSet) {
-    for (each in listeners) {
-      each.changeSetAdded(changeSet)
     }
   }
 
@@ -225,7 +212,6 @@ open class LocalHistoryFacade internal constructor() {
 
   abstract class Listener {
     open fun changeAdded(c: Change): Unit = Unit
-    open fun changeSetAdded(changeSet: ChangeSet): Unit = Unit
     open fun changeSetFinished(changeSet: ChangeSet): Unit = Unit
   }
 }
