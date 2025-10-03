@@ -13,6 +13,11 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.SmartPsiElementPointer
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.intellij.openapi.application.ApplicationManager
+import java.util.concurrent.CopyOnWriteArraySet
 
 
 private val EP_NAME: ExtensionPointName<LockReqAnalyzer> = create("DevKit.lang.LockReqsAnalyzer")
@@ -21,18 +26,36 @@ internal object LockReqAnalyzerProvider : LanguageExtension<LockReqAnalyzer>(EP_
 @Service(Service.Level.PROJECT)
 class LockReqsService(private val project: Project) {
 
-  private  var _currentResults: List<AnalysisResult?> = emptyList()
+  private var _currentResults by mutableStateOf<List<AnalysisResult?>>(emptyList())
   val currentResults: List<AnalysisResult?>
     get() = _currentResults
 
   suspend fun analyzeMethod(methodPtr: SmartPsiElementPointer<PsiMethod>) {
     val analyzer = LockReqAnalyzerProvider.forLanguage(methodPtr.element?.language!!)
-    withBackgroundProgress(project, "", true) {
-      val result = smartReadAction(project) {
-        val method = methodPtr.element ?: return@smartReadAction null
-        analyzer.analyzeMethod(method)
+    withBackgroundProgress(project, "Analyzing lock requirements", true) {
+      val streaming = analyzer as? LockReqAnalyzerStreaming
+      if (streaming != null) {
+        val method = smartReadAction(project) { methodPtr.element }
+        if (method == null) return@withBackgroundProgress
+
+        val consumer = DefaultLockReqConsumer(method) { snapshot ->
+          ApplicationManager.getApplication().invokeLater {
+            _currentResults = listOf(snapshot)
+          }
+        }
+        smartReadAction(project) {
+          streaming.analyzeMethodStreaming(method, consumer)
+        }
+      } else {
+        // Fallback to blocking mode
+        val result = smartReadAction(project) {
+          val method = methodPtr.element ?: return@smartReadAction null
+          analyzer.analyzeMethod(method)
+        }
+        ApplicationManager.getApplication().invokeLater {
+          _currentResults = listOf(result)
+        }
       }
-      _currentResults = listOf(result)
     }
   }
 
@@ -66,25 +89,6 @@ class LockReqsService(private val project: Project) {
     }
   }
 
-  //private fun displayResults() {
-  //  _currentResults.forEach { result ->
-  //    println("Method: ${result?.method?.containingClass?.qualifiedName}.${result?.method?.name}")
-  //    result?.paths?.forEach { path ->
-  //      println("  Path: ${path.methodChain.joinToString(" -> ") { it.method.name }}")
-  //      println("  Requirement: ${path.lockRequirement}")
-  //    }
-  //  }
-  //}
-
-  //var onResultsUpdated: ((AnalysisResult?) -> Unit)? = null
-  //
-  //fun updateResults(method: PsiMethod) {
-  //  val analyzer = LockReqsAnalyzerDFS()
-  //  _currentResult = analyzer.analyzeMethod(method)
-  //  onResultsUpdated?.invoke(_currentResult)
-  //
-  //  ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID)?.show()
-  //}
 
   companion object {
     const val TOOL_WINDOW_ID: String = "Lock Requirements"

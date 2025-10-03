@@ -9,7 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import java.util.concurrent.Callable
 
 
-class JavaLockReqAnalyzerBFS(private val detector: JavaLockReqDetector = JavaLockReqDetector()) : LockReqAnalyzer {
+class JavaLockReqAnalyzerBFS(private val detector: JavaLockReqDetector = JavaLockReqDetector()) : LockReqAnalyzer, LockReqAnalyzerStreaming {
 
   private data class TraversalContext(
     val config: AnalysisConfig,
@@ -23,13 +23,21 @@ class JavaLockReqAnalyzerBFS(private val detector: JavaLockReqDetector = JavaLoc
   private val psiOps = JavaLockReqPsiOps()
 
   private lateinit var context: TraversalContext
+  private var consumer: LockReqConsumer? = null
 
   override fun analyzeMethod(method: PsiMethod): AnalysisResult {
+    return analyzeMethodStreaming(method, object : LockReqConsumer {})
+  }
+
+  override fun analyzeMethodStreaming(method: PsiMethod, consumer: LockReqConsumer): AnalysisResult {
     val config = AnalysisConfig.forProject(method.project)
-    println("Root: ${method.containingClass?.qualifiedName}.${method.name}")
+    this.consumer = consumer
+    consumer.onStart(method)
     context = TraversalContext(config)
     traverseMethod(method)
-    return AnalysisResult(method, context.paths, context.messageBusTopics, context.swingComponents)
+    val result = AnalysisResult(method, context.paths, context.messageBusTopics, context.swingComponents)
+    consumer.onDone(result)
+    return result
   }
 
   private fun traverseMethod(root: PsiMethod) {
@@ -43,7 +51,9 @@ class JavaLockReqAnalyzerBFS(private val detector: JavaLockReqDetector = JavaLoc
       val (method, currentPath) = queue.poll()
       val annotationRequirements = detector.findAnnotationRequirements(method)
       annotationRequirements.forEach { requirement ->
-        context.paths.add(ExecutionPath(currentPath, requirement))
+        val path = ExecutionPath(currentPath, requirement)
+        context.paths.add(path)
+        consumer?.onPath(path)
         println("Found requirement: $requirement")
       }
 
@@ -56,7 +66,9 @@ class JavaLockReqAnalyzerBFS(private val detector: JavaLockReqDetector = JavaLoc
   private fun processCallee(method: PsiMethod, currentPath: List<MethodCall>) {
     println("Traversing method ${method.containingClass?.qualifiedName}.${method.name}, ${currentPath.size} steps deep")
     detector.findBodyRequirements(method).forEach { requirement ->
-      context.paths.add(ExecutionPath(currentPath, requirement))
+      val path = ExecutionPath(currentPath, requirement)
+      context.paths.add(path)
+      consumer?.onPath(path)
       println("Found requirement: $requirement")
     }
     if (detector.isAsyncDispatch(method)) return
@@ -78,6 +90,7 @@ class JavaLockReqAnalyzerBFS(private val detector: JavaLockReqDetector = JavaLoc
     ProgressManager.checkCanceled()
     detector.extractMessageBusTopic(method)?.let { topicClass ->
       context.messageBusTopics.add(topicClass)
+      consumer?.onMessageBusTopic(topicClass)
       val listeners = ReadAction.nonBlocking(Callable {
         psiOps.findImplementations(topicClass, context.config.scope, context.config.maxImplementations)
       }).executeSynchronously()
