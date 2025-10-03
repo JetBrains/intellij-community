@@ -274,10 +274,6 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
       }
     }
 
-    for (AnnotationCustomConfigurator configurator: AnnotationCustomConfigurator.EP_NAME.getExtensionList()) {
-      configurator.configure(editor);
-    }
-
     InlineDiffFromAnnotation.showDiffOnHover(editor, fileAnnotation, presentation, disposable);
   }
 
