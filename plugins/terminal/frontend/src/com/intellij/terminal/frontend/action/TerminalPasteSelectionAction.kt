@@ -2,8 +2,8 @@ package com.intellij.terminal.frontend.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.terminal.frontend.TerminalOutputScrollingModel
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
+import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.ui.getClipboardText

@@ -24,7 +24,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.actions.TerminalActionUtil
-import com.intellij.terminal.frontend.*
 import com.intellij.terminal.frontend.completion.ShellDataGeneratorsExecutorReworkedImpl
 import com.intellij.terminal.frontend.completion.ShellRuntimeContextProviderReworkedImpl
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener

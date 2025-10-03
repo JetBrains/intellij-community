@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.frontend
+package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.BundleBase
 import com.intellij.find.*
@@ -25,8 +25,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.util.maximumWidth
-import com.intellij.ui.util.preferredWidth
 import com.intellij.util.SmartList
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI

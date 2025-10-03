@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend
+package com.intellij.terminal.frontend.view.impl
 
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyEvent

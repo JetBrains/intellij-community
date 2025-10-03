@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend
+package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.testFramework.LightVirtualFile

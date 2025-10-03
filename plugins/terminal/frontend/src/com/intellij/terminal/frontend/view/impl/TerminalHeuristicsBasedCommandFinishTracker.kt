@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend
+package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -6,7 +6,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.frontend.TerminalHeuristicsBasedCommandFinishTracker.Companion.MAX_LINE_LENGTH
+import com.intellij.terminal.frontend.view.impl.TerminalHeuristicsBasedCommandFinishTracker.Companion.MAX_LINE_LENGTH
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope

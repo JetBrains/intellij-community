@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
-import com.intellij.terminal.frontend.TerminalSessionController
+import com.intellij.terminal.frontend.view.impl.TerminalSessionController
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCacheableDataGenerator

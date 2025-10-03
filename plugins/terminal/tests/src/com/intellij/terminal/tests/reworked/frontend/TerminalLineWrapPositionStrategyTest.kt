@@ -1,7 +1,7 @@
 package com.intellij.terminal.tests.reworked.frontend
 
 import com.intellij.openapi.editor.impl.SoftWrapEngine
-import com.intellij.terminal.frontend.TerminalLineWrapPositionStrategy
+import com.intellij.terminal.frontend.view.impl.TerminalLineWrapPositionStrategy
 import org.junit.Assert
 import org.junit.Test
 

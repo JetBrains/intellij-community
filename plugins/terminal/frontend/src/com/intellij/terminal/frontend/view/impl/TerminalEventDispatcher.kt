@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.frontend
+package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
@@ -25,11 +25,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.AWTEvent
-import java.awt.event.InputEvent
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
-import java.awt.event.MouseWheelListener
+import java.awt.event.*
 import javax.swing.KeyStroke
 
 /**

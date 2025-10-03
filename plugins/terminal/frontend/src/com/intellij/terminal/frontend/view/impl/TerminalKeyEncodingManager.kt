@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.frontend
+package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -14,7 +14,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.session.TerminalState
 
 /**
- * Actually a wrapper around [com.jediterm.terminal.TerminalKeyEncoder].
+ * Actually a wrapper around [TerminalKeyEncoder].
  * Listens for terminal state changes and updates keys encoding.
  */
 @ApiStatus.Internal

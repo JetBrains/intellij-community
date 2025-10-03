@@ -3,8 +3,8 @@ package com.intellij.terminal.frontend.inlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEditorInsertHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
-import com.intellij.terminal.frontend.TerminalInput
-import com.intellij.terminal.frontend.TerminalTypeAhead
+import com.intellij.terminal.frontend.view.impl.TerminalInput
+import com.intellij.terminal.frontend.view.impl.TerminalTypeAhead
 
 private class TerminalInlineCompletionEditorInsertHandler : InlineCompletionEditorInsertHandler {
   override fun insert(editor: Editor, textToInsert: String, offset: Int, file: PsiFile) {

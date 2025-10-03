@@ -2,7 +2,7 @@ package com.intellij.terminal.frontend.hyperlinks
 
 import com.intellij.execution.impl.*
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.terminal.frontend.TerminalInput
+import com.intellij.terminal.frontend.view.impl.TerminalInput
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel

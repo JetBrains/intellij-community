@@ -8,7 +8,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 /**
- * See [com.intellij.terminal.frontend.TerminalTextSelectioner]
+ * See [com.intellij.terminal.frontend.view.impl.TerminalTextSelectioner]
  */
 @RunWith(JUnit4::class)
 internal class TerminalTextSelectionTest : BasePlatformTestCase() {

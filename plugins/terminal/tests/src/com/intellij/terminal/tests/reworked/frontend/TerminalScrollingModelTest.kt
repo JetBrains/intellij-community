@@ -5,8 +5,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.frontend.TerminalEditorFactory
-import com.intellij.terminal.frontend.TerminalOutputScrollingModelImpl
+import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
+import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModelImpl
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.updateCursor
 import com.intellij.testFramework.EditorTestUtil

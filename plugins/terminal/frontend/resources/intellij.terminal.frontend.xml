@@ -28,11 +28,11 @@
     <editorActionHandler action="Replace" implementationClass="com.intellij.terminal.frontend.action.TerminalReplaceHandler"
                          id="terminalReplace" order="first"/>
 
-    <extendWordSelectionHandler implementation="com.intellij.terminal.frontend.TerminalTextSelectioner"/>
-    <basicWordSelectionFilter implementation="com.intellij.terminal.frontend.TerminalWordSelectionFilter"/>
+    <extendWordSelectionHandler implementation="com.intellij.terminal.frontend.view.impl.TerminalTextSelectioner"/>
+    <basicWordSelectionFilter implementation="com.intellij.terminal.frontend.view.impl.TerminalWordSelectionFilter"/>
 
     <toolWindow.splitContentProvider toolWindowId="terminal"
-                                     implementationClass="com.intellij.terminal.frontend.TerminalToolWindowSplitContentProvider"/>
+                                     implementationClass="com.intellij.terminal.frontend.view.impl.TerminalToolWindowSplitContentProvider"/>
 
     <applicationService
       serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"

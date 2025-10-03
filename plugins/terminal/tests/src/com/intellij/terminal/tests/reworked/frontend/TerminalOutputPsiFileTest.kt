@@ -3,7 +3,7 @@ package com.intellij.terminal.tests.reworked.frontend
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.terminal.frontend.TerminalEditorFactory
+import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.cancel
 import org.assertj.core.api.Assertions.assertThat

@@ -6,9 +6,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.frontend.TerminalEventsHandler
-import com.intellij.terminal.frontend.TimedKeyEvent
-import com.intellij.terminal.frontend.handleKeyEvent
+import com.intellij.terminal.frontend.view.impl.TerminalEventsHandler
+import com.intellij.terminal.frontend.view.impl.TimedKeyEvent
+import com.intellij.terminal.frontend.view.impl.handleKeyEvent
 import org.jetbrains.plugins.terminal.TerminalBundle
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
