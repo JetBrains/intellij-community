@@ -61,12 +61,12 @@ class LockReqsService(private val project: Project) {
   }
 
   suspend fun analyzeClass(psiPtr: SmartPsiElementPointer<PsiClass>) {
-    val analyzer = JavaLockReqAnalyzerBFS()
     withBackgroundProgress(project, "", true) {
       val results = smartReadAction(project) {
         val psiClass = psiPtr.element ?: return@smartReadAction emptyList()
         psiClass.methods.map { method ->
           ProgressManager.checkCanceled()
+          val analyzer = LockReqAnalyzerProvider.forLanguage(method.language)
           analyzer.analyzeMethod(method)
         }
       }
@@ -75,13 +75,13 @@ class LockReqsService(private val project: Project) {
   }
 
   suspend fun analyzeFile(filePtr: SmartPsiElementPointer<PsiJavaFile>) {
-    val analyzer = JavaLockReqAnalyzerBFS()
     withBackgroundProgress(project, "", true) {
       val results = smartReadAction(project) {
         val psiFile = filePtr.element ?: return@smartReadAction emptyList()
         psiFile.classes.flatMap { psiClass ->
           psiClass.methods.map { method ->
             ProgressManager.checkCanceled()
+            val analyzer = LockReqAnalyzerProvider.forLanguage(method.language)
             analyzer.analyzeMethod(method)
           }
         }

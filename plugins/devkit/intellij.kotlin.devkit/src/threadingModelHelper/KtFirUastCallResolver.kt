@@ -6,7 +6,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 
-class KtFirUastCallResolver : KtCallResolver {
+class KtFirUastCallResolver(private val rules: org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules = org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules()) : KtCallResolver {
 
   override fun resolveCallees(method: PsiMethod): List<PsiMethod> {
     return resolveCalleesWithUast(method)
@@ -22,7 +22,13 @@ class KtFirUastCallResolver : KtCallResolver {
     val uMethod = method.toUElement(UMethod::class.java) ?: return emptyList()
     uMethod.accept(object : AbstractUastVisitor() {
       override fun visitCallExpression(node: UCallExpression): Boolean {
-        node.resolve()?.let { set.add(it) }
+        node.resolve()?.let { resolved ->
+          set.add(resolved)
+          val qName = resolved.containingClass?.qualifiedName
+          if (qName == rules.disposerUtilityClassFqn && rules.disposeMethodNames.contains(resolved.name)) {
+            disposeTargets(node).forEach { set.add(it) }
+          }
+        }
         return super.visitCallExpression(node)
       }
       override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
@@ -31,5 +37,26 @@ class KtFirUastCallResolver : KtCallResolver {
       }
     })
     return set.toList()
+  }
+
+  private fun disposeTargets(node: UCallExpression): List<PsiMethod> {
+    val arg = node.valueArguments.firstOrNull() ?: return emptyList()
+    val psiType = arg.getExpressionType() as? PsiClassType ?: return emptyList()
+    val psiClass = psiType.resolve() ?: return emptyList()
+
+    fun zeroArgDispose(c: PsiClass): List<PsiMethod> = c.findMethodsByName("dispose", true)
+      .filter { it.parameterList.parametersCount == 0 }
+
+    val direct = zeroArgDispose(psiClass)
+    if (direct.isNotEmpty()) return direct
+
+    val disposableFqn = rules.disposableInterfaceFqn
+    if (com.intellij.psi.util.InheritanceUtil.isInheritor(psiClass, disposableFqn)) {
+      val project = (node.sourcePsi ?: return emptyList()).project
+      val disposableClass = com.intellij.psi.JavaPsiFacade.getInstance(project)
+        .findClass(disposableFqn, com.intellij.psi.search.GlobalSearchScope.allScope(project))
+      if (disposableClass != null) return zeroArgDispose(disposableClass)
+    }
+    return emptyList()
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiMethodReferenceExpression
 import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -17,7 +18,7 @@ import com.intellij.util.Processor
 import kotlin.time.measureTime
 
 
-class JavaLockReqPsiOps : LockReqPsiOps {
+class JavaLockReqPsiOps(private val rules: LockReqRules = BaseLockReqRules()) : LockReqPsiOps {
 
   override fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
     val callees = mutableListOf<PsiMethod>()
@@ -25,7 +26,13 @@ class JavaLockReqPsiOps : LockReqPsiOps {
     method.body?.accept(object : JavaRecursiveElementVisitor() {
       override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
         super.visitMethodCallExpression(expression)
-        expression.resolveMethod()?.let { callees.add(it) }
+        expression.resolveMethod()?.let { resolved ->
+          callees.add(resolved)
+          val qualifierClass = resolved.containingClass?.qualifiedName
+          if (qualifierClass == rules.disposerUtilityClassFqn && rules.disposeMethodNames.contains(resolved.name)) {
+            collectDisposeTargets(expression)?.let { targets -> callees.addAll(targets) }
+          }
+        }
       }
 
       override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
@@ -39,7 +46,34 @@ class JavaLockReqPsiOps : LockReqPsiOps {
       }
     })
 
-    return callees  }
+    return callees.distinct()
+  }
+
+  private fun collectDisposeTargets(call: PsiMethodCallExpression): List<PsiMethod>? {
+    val args = call.argumentList.expressions
+    if (args.isEmpty()) return null
+    val argType = args.first().type as? PsiClassType ?: return null
+    val psiClass = argType.resolve() ?: return null
+
+    fun findZeroArgDispose(c: PsiClass): List<PsiMethod> = c.findMethodsByName("dispose", true)
+      .filter { it.parameterList.parametersCount == 0 }
+
+    val direct = findZeroArgDispose(psiClass)
+    if (direct.isNotEmpty()) return direct
+
+    val disposableFqn = rules.disposableInterfaceFqn
+    val implementsDisposable = InheritanceUtil.isInheritor(psiClass, disposableFqn)
+    if (implementsDisposable) {
+      val project = call.project
+      val disposableClass = JavaPsiFacade.getInstance(project)
+        .findClass(disposableFqn, GlobalSearchScope.allScope(project))
+      if (disposableClass != null) {
+        val faceDispose = findZeroArgDispose(disposableClass)
+        if (faceDispose.isNotEmpty()) return faceDispose
+      }
+    }
+    return emptyList()
+  }
 
   override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int): List<PsiMethod> {
     val inheritors = mutableListOf<PsiMethod>()

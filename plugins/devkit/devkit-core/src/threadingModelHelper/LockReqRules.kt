@@ -13,6 +13,9 @@ interface LockReqRules {
   val commonMethods: Set<String>
   val safeSwingMethods: Set<String>
   val commonClassesQualified: Set<String>
+  val disposerUtilityClassFqn: String
+  val disposableInterfaceFqn: String
+  val disposeMethodNames: Set<String>
 }
 
 class BaseLockReqRules : LockReqRules {
@@ -82,4 +85,8 @@ class BaseLockReqRules : LockReqRules {
   )
 
   override val safeSwingMethods: Set<String> = setOf()
+
+  override val disposerUtilityClassFqn: String = "com.intellij.openapi.util.Disposer"
+  override val disposableInterfaceFqn: String = "com.intellij.openapi.Disposable"
+  override val disposeMethodNames: Set<String> = setOf("dispose")
 }
