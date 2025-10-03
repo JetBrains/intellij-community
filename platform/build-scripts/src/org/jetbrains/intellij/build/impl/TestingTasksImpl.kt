@@ -540,8 +540,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       messages.info("Runtime options: $allJvmArgs")
       messages.info("System properties: $systemProperties")
 
-      messages.info("Bootstrap classpath: $bootstrapClasspath")
-      messages.info("Dev build server settings: $it")
+      if (devBuildServerSettings == null) {
+        messages.info("Bootstrap classpath: $bootstrapClasspath")
+      }
 
       messages.info("Tests classpath: $testClasspath")
       modulePath?.let { mp ->
@@ -1279,8 +1280,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     methodName: String?,
     devBuildSettings: DevBuildServerSettings?,
   ): Int {
-    val useDevBuildServer = devBuildSettings != null && devBuildSettings.mainClass.isNotEmpty() && suiteName == null
-    val classpath = if (useDevBuildServer) {
+    val useDevMode = devBuildSettings != null && devBuildSettings.mainClass.isNotEmpty() && suiteName == null
+    val classpath = if (useDevMode) {
       context.getModuleRuntimeClasspath(module = context.findRequiredModule(devBuildSettings.mainClassModule), forTests = false)
     }
     else {
@@ -1301,6 +1302,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
     }
 
+    if (useDevMode) {
+      context.messages.info("Effective classpath:\n${classpath.joinToString("\n")}")
+      context.messages.info("Effective main module: $mainModule")
+    }
+
     return doRunJUnit5Engine(
       mainModule = mainModule,
       systemProperties = systemProperties,
@@ -1309,7 +1315,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       modulePath = modulePath,
       suiteName = suiteName,
       methodName = methodName,
-      devBuildModeSettings = devBuildSettings.takeIf { useDevBuildServer },
+      devBuildModeSettings = devBuildSettings.takeIf { useDevMode },
       classpath = classpath,
     )
   }
