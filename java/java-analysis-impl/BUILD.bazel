@@ -46,7 +46,7 @@ jvm_library(
     "//platform/util:util-ui",
     "@lib//:fastutil-min",
     "//platform/workspace/storage",
-    "@lib//:icu4j",
+    "//libraries/icu4j",
     "//platform/util/jdom",
     "//platform/workspace/jps",
     "//platform/backend/workspace",

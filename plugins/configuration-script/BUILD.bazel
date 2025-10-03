@@ -64,7 +64,7 @@ jvm_library(
     "//platform/configuration-store-impl:configurationStore-impl",
     "//platform/object-serializer",
     "//platform/object-serializer:object-serializer_test_lib",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "//platform/service-container",
     "//platform/service-container:service-container_test_lib",
     "@lib//:snakeyaml-engine",

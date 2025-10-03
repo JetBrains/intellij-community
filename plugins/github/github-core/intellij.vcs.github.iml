@@ -47,7 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
@@ -61,8 +61,8 @@
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
-    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />

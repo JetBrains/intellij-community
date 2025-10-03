@@ -35,12 +35,12 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
-    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.lang" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />

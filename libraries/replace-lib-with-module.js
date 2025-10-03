@@ -105,7 +105,8 @@ const stats = {
     regular: 0,
     testScope: 0,
     testScopeExported: 0,
-    providedScope: 0
+    providedScope: 0,
+    runtimeScope: 0
   }
 };
 
@@ -177,6 +178,15 @@ function createReplacementPatterns(oldLib, newModule) {
         'g'
       ),
       replacement: `<orderEntry type="module" module-name="${newModule}" scope="PROVIDED" />`
+    },
+    {
+      name: 'runtimeScope',
+      // <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
+      pattern: new RegExp(
+        `<orderEntry type="library" scope="RUNTIME" name="${oldLib}" level="project" />`,
+        'g'
+      ),
+      replacement: `<orderEntry type="module" module-name="${newModule}" scope="RUNTIME" />`
     }
   ];
 }
@@ -259,7 +269,8 @@ function main() {
   console.log(`  TEST scope: ${stats.replacements.testScope}`);
   console.log(`  TEST scope (exported): ${stats.replacements.testScopeExported}`);
   console.log(`  PROVIDED scope: ${stats.replacements.providedScope}`);
-  console.log(`  Total: ${stats.replacements.regular + stats.replacements.testScope + stats.replacements.testScopeExported + stats.replacements.providedScope}`);
+  console.log(`  RUNTIME scope: ${stats.replacements.runtimeScope}`);
+  console.log(`  Total: ${stats.replacements.regular + stats.replacements.testScope + stats.replacements.testScopeExported + stats.replacements.providedScope + stats.replacements.runtimeScope}`);
 
   if (config.dryRun) {
     console.log('\n⚠ DRY RUN MODE - No files were modified');

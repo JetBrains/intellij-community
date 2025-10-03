@@ -43,8 +43,8 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
-    <orderEntry type="library" name="jackson-jr-objects" level="project" />
-    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.jr.objects" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />

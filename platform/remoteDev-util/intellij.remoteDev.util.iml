@@ -47,8 +47,8 @@
     <orderEntry type="library" name="bouncy-castle-pgp" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
-    <orderEntry type="library" name="jackson" level="project" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />

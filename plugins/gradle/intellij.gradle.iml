@@ -34,7 +34,7 @@
     <orderEntry type="library" exported="" name="Gradle" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
-    <orderEntry type="library" name="ion" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.ion" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" name="fastutil-min" level="project" />

@@ -63,8 +63,8 @@ jvm_library(
     "@lib//:slf4j-api",
     "//xml/xml-psi-api:psi",
     "@lib//:asm",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
   ]
 )
 ### auto-generated section `build intellij.java.ui` end

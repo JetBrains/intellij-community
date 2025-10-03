@@ -42,8 +42,8 @@
     <orderEntry type="module" module-name="intellij.textmate.joni" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="library" name="jackson" level="project" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />

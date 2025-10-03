@@ -36,9 +36,9 @@ jvm_library(
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/databind",
     "@lib//:jackson-dataformat-toml",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
   ]
 )
 ### auto-generated section `build kotlin.project-wizard.gradle` end

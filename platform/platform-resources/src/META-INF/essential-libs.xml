@@ -11,5 +11,17 @@
     <module name="intellij.libraries.gson" loading="embedded"/>
     <module name="intellij.libraries.guava" loading="embedded"/>
     <module name="intellij.libraries.hash4j" loading="embedded"/>
+    <module name="intellij.libraries.icu4j" loading="embedded"/>
+
+    <module name="intellij.libraries.ion" loading="embedded"/>
+
+    <module name="intellij.libraries.jackson" loading="embedded"/>
+    <module name="intellij.libraries.jackson.jr.objects" loading="embedded"/>
+    <module name="intellij.libraries.jackson.databind" loading="embedded"/>
+    <module name="intellij.libraries.jackson.module.kotlin" loading="embedded"/>
+
+     <!--Space plugin uses it and bundles into IntelliJ IDEA, but not bundles into DataGrip, so, or Space plugin should bundle this lib,-->
+     <!--or IJ Platform. As it is a small library and consistency is important across other coroutine libs, bundle to IJ Platform.-->
+    <module name="intellij.libraries.kotlinx.coroutines.slf4j" loading="embedded"/>
   </content>
 </idea-plugin>

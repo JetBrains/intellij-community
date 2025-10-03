@@ -24,7 +24,7 @@ jvm_library(
   resources = [":telemetry-impl_resources"],
   kotlinc_opts = ":custom_telemetry-impl",
   deps = [
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlin-stdlib",

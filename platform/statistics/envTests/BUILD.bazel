@@ -26,8 +26,8 @@ jvm_library(
     "@lib//:com-jetbrains-fus-reporting-configuration",
     "//platform/core-ui",
     "//platform/statistics/uploader",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "@lib//:com-jetbrains-fus-reporting-connection-client",
     "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
   ]

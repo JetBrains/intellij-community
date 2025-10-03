@@ -57,7 +57,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:assert_j",
     "//libraries/guava",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/polySymbols:polySymbols-testFramework",

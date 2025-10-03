@@ -72,12 +72,12 @@
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
-    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" scope="RUNTIME" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
-    <orderEntry type="library" name="jackson-jr-objects" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.jr.objects" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
@@ -104,7 +104,7 @@
     <orderEntry type="library" name="classgraph" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
-    <orderEntry type="library" name="icu4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.icu4j" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />

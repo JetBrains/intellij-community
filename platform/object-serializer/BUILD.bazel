@@ -8,7 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:ion",
+    "//libraries/ion",
     "//platform/util",
     "@lib//:kotlin-reflect",
     "//platform/util/jdom",
@@ -32,7 +32,7 @@ jvm_library(
   associates = [":object-serializer"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:ion",
+    "//libraries/ion",
     "//platform/util",
     "@lib//:kotlin-reflect",
     "//platform/util/jdom",
@@ -93,7 +93,7 @@ jvm_library(
     "//platform/object-serializer:object-serializer_test_lib",
     "//platform/util-ex",
     "//platform/object-serializer:objectSerializer-annotations",
-    "@lib//:ion",
+    "//libraries/ion",
     "@lib//:fastutil-min",
   ]
 )

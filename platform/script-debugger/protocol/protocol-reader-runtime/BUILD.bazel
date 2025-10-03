@@ -15,14 +15,13 @@ jvm_library(
   resources = [":protocol-reader-runtime_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/util",
     "//platform/platform-impl:ide-impl",
     "@lib//:netty-codec-http",
     "@lib//:fastutil-min",
     "@lib//:netty-buffer",
   ],
-  exports = ["@lib//:gson"],
   runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.platform.scriptDebugger.protocolReaderRuntime` end

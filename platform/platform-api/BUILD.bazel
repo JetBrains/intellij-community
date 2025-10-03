@@ -52,7 +52,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/util/text-matching",
     "//platform/diagnostic",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "//libraries/caffeine",
     "//platform/progress/shared:ide-progress",
     "//platform/util/diff",

@@ -354,7 +354,13 @@ libraries/guava
 libraries/hamcrest
 libraries/hamcrest-more-matchers
 libraries/hash4j
+libraries/icu4j
 libraries/io
+libraries/ion
+libraries/jackson/databind
+libraries/jackson/jackson
+libraries/jackson/jr-objects
+libraries/jackson/module-kotlin
 libraries/junit4
 libraries/junit5
 libraries/junit5-launcher
@@ -362,6 +368,7 @@ libraries/junit5-params
 libraries/junit5-pioneer
 libraries/kotlin-test
 libraries/kotlin-test-assertions-core-jvm
+libraries/kotlinx/coroutines/slf4j
 libraries/kotlinx/serialization/core
 libraries/kotlinx/serialization/json
 libraries/ktor/client

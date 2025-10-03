@@ -32,8 +32,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/statistics/uploader",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "//platform/util/jdom",
   ]
 )
@@ -65,8 +65,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/statistics/uploader",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "//platform/util/jdom",
   ]
 )

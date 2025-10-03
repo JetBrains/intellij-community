@@ -33,7 +33,7 @@
     <orderEntry type="library" name="Gradle" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
-    <orderEntry type="library" name="ion" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.ion" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="library" exported="" name="slf4j-api" level="project" />
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />

@@ -63,9 +63,9 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.performance-tests.performance-test-utils" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
-    <orderEntry type="library" scope="TEST" name="jackson" level="project" />
-    <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.shared" scope="TEST" />

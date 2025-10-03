@@ -46,7 +46,7 @@ jvm_library(
     "@lib//:gradle",
     "//libraries/gson",
     "//platform/object-serializer:objectSerializer-annotations",
-    "@lib//:ion",
+    "//libraries/ion",
     "@lib//:stream_ex",
     "//platform/statistics",
     "@lib//:fastutil-min",

@@ -130,8 +130,8 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="library" name="jackson-dataformat-yaml" level="project" />
-    <orderEntry type="library" name="jackson" level="project" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.python.community.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.python.psi" />
@@ -167,7 +167,7 @@
     <orderEntry type="library" name="kotlinx-datetime-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.remote" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
-    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
     <orderEntry type="module" module-name="intellij.python.community.impl.installer" />
     <orderEntry type="module" module-name="intellij.platform.eel" />

@@ -22,7 +22,7 @@ jvm_library(
     "@lib//:grpc-core",
     "@lib//:grpc-protobuf",
     "@lib//:grpc-stub",
-    "@lib//:jackson-jr-objects",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects",
     "//platform/core-api:core",
     "//jps/model-api:model",
     "//platform/util",

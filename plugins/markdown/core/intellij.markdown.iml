@@ -62,9 +62,9 @@
     <orderEntry type="library" name="jetbrains.markdown" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
-    <orderEntry type="library" name="jackson" level="project" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
-    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />

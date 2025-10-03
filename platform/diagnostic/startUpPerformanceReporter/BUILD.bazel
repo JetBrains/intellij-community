@@ -15,7 +15,7 @@ jvm_library(
   kotlinc_opts = ":custom_startUpPerformanceReporter",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/util-ex",

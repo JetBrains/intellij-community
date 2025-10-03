@@ -13,7 +13,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/service-container",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "//platform/statistics",
     "//platform/core-ui",
     "//platform/ide-core/plugins",

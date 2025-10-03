@@ -22,7 +22,7 @@ jvm_library(
     "@lib//:commons-text",
     "//platform/core-api:core",
     "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/databind",
     "//platform/statistics",
     "//platform/util",
     "//platform/extensions",

@@ -47,7 +47,7 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="mvstore" level="project" />
-    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module-library">
@@ -68,7 +68,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jackson-dataformat-yaml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />

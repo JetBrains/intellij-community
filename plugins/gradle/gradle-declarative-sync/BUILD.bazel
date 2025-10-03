@@ -26,8 +26,8 @@ jvm_library(
     "//android/gradle-dsl",
     "//android/gradle-dsl-flags",
     "//platform/backend/workspace",
-    "@lib//:jackson-databind",
-    "@lib//:jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/jackson",
   ]
 )
 ### auto-generated section `build intellij.gradle.declarativeSync` end

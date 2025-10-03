@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jackson` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jackson_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jackson",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jackson_resources"],
+  exports = ["@lib//:jackson"],
+  runtime_deps = ["@lib//:jackson"]
+)
+### auto-generated section `build intellij.libraries.jackson` end
