@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT

@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.debugger.impl.rpc.*

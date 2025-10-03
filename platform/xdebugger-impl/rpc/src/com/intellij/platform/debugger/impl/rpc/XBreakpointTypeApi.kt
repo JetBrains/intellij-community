@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.ui.icons.IconId
+import com.intellij.ide.rpc.util.TextRangeId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
@@ -137,7 +138,7 @@ data class XLineBreakpointInstallationRequest(
 data class XLineBreakpointVariantDto(
   val text: String,
   val icon: IconId?,
-  val highlightRange: XLineBreakpointTextRange?,
+  val highlightRange: TextRangeId?,
   val priority: Int,
   val useAsInline: Boolean,
 )
@@ -171,7 +172,7 @@ data class XInlineBreakpointVariantId(override val uid: UID) : Id
 @Serializable
 data class XInlineBreakpointVariantDto(
   val id: XInlineBreakpointVariantId,
-  val highlightRange: XLineBreakpointTextRange?,
+  val highlightRange: TextRangeId?,
   val icon: IconId,
   val tooltipDescription: String,
 )

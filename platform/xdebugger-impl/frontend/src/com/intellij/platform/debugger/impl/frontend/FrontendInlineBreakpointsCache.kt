@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.ide.ui.icons.icon
+import com.intellij.ide.rpc.util.textRange
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.platform.debugger.impl.rpc.XInlineBreakpointVariantDto
-import com.intellij.platform.debugger.impl.rpc.toTextRange
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.breakpoints.*
 import kotlinx.coroutines.CoroutineScope
@@ -206,7 +206,7 @@ private class FrontendXLineBreakpointInlineVariantProxy(
   private val cache: FrontendInlineBreakpointsCache,
 ) : XLineBreakpointInlineVariantProxy {
   override val highlightRange: TextRange?
-    get() = variant.highlightRange?.toTextRange()
+    get() = variant.highlightRange?.textRange()
   override val icon: Icon
     get() = variant.icon.icon()
   override val tooltipDescription: String

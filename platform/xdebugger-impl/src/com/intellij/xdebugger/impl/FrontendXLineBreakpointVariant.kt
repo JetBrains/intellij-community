@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl
 
 import com.intellij.ide.ui.icons.icon
+import com.intellij.ide.rpc.util.textRange
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -159,7 +160,7 @@ private suspend fun createBreakpoint(
 private class FrontendXLineBreakpointVariantImpl(private val dto: XLineBreakpointVariantDto) : FrontendXLineBreakpointVariant {
   override val text: String get() = dto.text
   override val icon: Icon? get() = dto.icon?.icon()
-  override val highlightRange: TextRange? get() = dto.highlightRange?.toTextRange()
+  override val highlightRange: TextRange? get() = dto.highlightRange?.textRange()
   override val priority: Int get() = dto.priority
   override val useAsInlineVariant: Boolean get() = dto.useAsInline
 }
