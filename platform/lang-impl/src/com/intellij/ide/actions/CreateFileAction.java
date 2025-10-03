@@ -50,14 +50,6 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     super(text, description, icon);
   }
 
-  /**
-   * @deprecated Use {@link #CreateFileAction(Supplier, Supplier, Supplier)}
-   */
-  @Deprecated(forRemoval = true)
-  public CreateFileAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, final Icon icon) {
-    super(dynamicText, dynamicDescription, icon);
-  }
-
   public CreateFileAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Supplier<? extends @Nullable Icon> icon) {
     super(dynamicText, dynamicDescription, icon);
   }

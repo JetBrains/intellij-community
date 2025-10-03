@@ -913,7 +913,6 @@ f:com.intellij.build.BuildTreeConsoleView
 - com.intellij.ide.OccurenceNavigator
 - com.intellij.openapi.actionSystem.UiDataProvider
 - <init>(com.intellij.openapi.project.Project,com.intellij.build.BuildDescriptor,com.intellij.execution.ui.ExecutionConsole):V
-- <init>(com.intellij.openapi.project.Project,com.intellij.build.BuildDescriptor,com.intellij.execution.ui.ExecutionConsole,com.intellij.build.BuildViewSettingsProvider):V
 - addFilter(java.util.function.Predicate):V
 - addMessageFilter(com.intellij.execution.filters.Filter):V
 - allowHeavyFilters():V
@@ -2308,7 +2307,6 @@ a:com.intellij.codeInsight.daemon.quickFix.AbstractCreateFileFix
 - pf:myNewFileName:java.lang.String
 - pf:mySubPath:java.lang.String[]
 - p:<init>(com.intellij.psi.PsiElement,com.intellij.codeInsight.daemon.quickFix.NewFileLocation,java.lang.String):V
-- p:apply(com.intellij.openapi.project.Project,com.intellij.psi.PsiDirectory,com.intellij.openapi.editor.Editor):V
 - p:apply(com.intellij.openapi.project.Project,java.util.function.Supplier,com.intellij.openapi.editor.Editor):V
 - a:generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - p:getDescription(javax.swing.Icon):com.intellij.openapi.util.text.HtmlChunk
@@ -3866,7 +3864,6 @@ a:com.intellij.codeInsight.hints.presentation.StaticDelegatePresentation
 f:com.intellij.codeInsight.hints.presentation.VerticalListInlayPresentation
 - com.intellij.codeInsight.hints.presentation.BasePresentation
 - <init>(java.util.List):V
-- f:calcDimensions():V
 - getHeight():I
 - f:getPresentations():java.util.List
 - getWidth():I
@@ -6896,7 +6893,6 @@ f:com.intellij.find.impl.FindInProjectUtil
 - s:initStringToFindFromDataContext(com.intellij.find.FindModel,com.intellij.openapi.actionSystem.DataContext):V
 - s:setDirectoryName(com.intellij.find.FindModel,com.intellij.openapi.actionSystem.DataContext):V
 - s:setScope(com.intellij.openapi.project.Project,com.intellij.find.FindModel,com.intellij.openapi.actionSystem.DataContext):V
-- s:setupProcessPresentation(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewPresentation):com.intellij.usages.FindUsagesProcessPresentation
 - s:setupProcessPresentation(com.intellij.openapi.project.Project,Z,com.intellij.usages.UsageViewPresentation):com.intellij.usages.FindUsagesProcessPresentation
 - s:setupProcessPresentation(com.intellij.usages.UsageViewPresentation):com.intellij.usages.FindUsagesProcessPresentation
 - s:setupProcessPresentation(Z,com.intellij.usages.UsageViewPresentation):com.intellij.usages.FindUsagesProcessPresentation
@@ -7394,7 +7390,6 @@ c:com.intellij.ide.actions.CreateFileAction
 - <init>():V
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
 - <init>(java.util.function.Supplier,java.util.function.Supplier,java.util.function.Supplier):V
-- <init>(java.util.function.Supplier,java.util.function.Supplier,javax.swing.Icon):V
 - p:create(java.lang.String,com.intellij.psi.PsiDirectory):com.intellij.psi.PsiElement[]
 - s:findOrCreateSubdirectory(com.intellij.psi.PsiDirectory,java.lang.String):com.intellij.psi.PsiDirectory
 - p:getActionName(com.intellij.psi.PsiDirectory,java.lang.String):java.lang.String
@@ -7858,7 +7853,6 @@ f:com.intellij.ide.actions.runAnything.RunAnythingPopupUI
 - s:adjustEmptyText(com.intellij.ui.components.JBTextField,java.util.function.Predicate,java.lang.String,java.lang.String):V
 - createList():com.intellij.ui.components.JBList
 - dispose():V
-- s:getExecutor():com.intellij.execution.Executor
 - getFirstContentRoot(com.intellij.openapi.module.Module):com.intellij.openapi.vfs.VirtualFile
 - s:getSearchingModel(com.intellij.ui.components.JBList):com.intellij.ide.actions.runAnything.RunAnythingSearchListModel
 - getUserInputText():java.lang.String
@@ -9863,7 +9857,6 @@ a:com.intellij.ide.projectView.impl.nodes.ModuleGroupNode
 - getRoots():java.util.Collection
 - getSortOrder(com.intellij.ide.projectView.NodeSortSettings):com.intellij.ide.projectView.NodeSortOrder
 - getTestPresentation():java.lang.String
-- getToolTip():java.lang.String
 - update(com.intellij.ide.projectView.PresentationData):V
 - validate():Z
 f:com.intellij.ide.projectView.impl.nodes.NamedLibraryElement
@@ -10117,7 +10110,6 @@ f:com.intellij.ide.scratch.ScratchFileServiceImpl$Substitutor
 - s:substituteLanguage(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.lang.Language
 c:com.intellij.ide.scratch.ScratchFileType
 - com.intellij.openapi.fileTypes.LanguageFileType
-- sf:INSTANCE:com.intellij.openapi.fileTypes.LanguageFileType
 - getDefaultExtension():java.lang.String
 - getDescription():java.lang.String
 - getIcon():javax.swing.Icon
@@ -11836,7 +11828,6 @@ f:com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 - s:getHtmlContent(com.intellij.psi.PsiFile,java.lang.CharSequence,com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator,com.intellij.openapi.editor.colors.EditorColorsScheme,I,I):java.lang.CharSequence
 - s:getHtmlContent(java.lang.CharSequence,com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder$RangeIterator,com.intellij.openapi.editor.colors.EditorColorsScheme,I):java.lang.CharSequence
 - s:getStyledSpan(com.intellij.openapi.editor.colors.TextAttributesKey,java.lang.String,F):java.lang.String
-- s:getStyledSpan(com.intellij.openapi.editor.markup.TextAttributes,java.lang.String,F):java.lang.String
 f:com.intellij.openapi.editor.richcopy.SyntaxInfoBuilder
 f:com.intellij.openapi.editor.richcopy.model.SyntaxInfo
 - getDefaultBackground():I
@@ -12809,9 +12800,7 @@ com.intellij.openapi.roots.ui.configuration.SdkLookupParameters
 - a:getTestSdkSequence():kotlin.sequences.Sequence
 - a:getVersionFilter():kotlin.jvm.functions.Function1
 f:com.intellij.openapi.roots.ui.configuration.SdkLookupUtil
-- sf:findAndSetupSdk(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.projectRoots.SdkType,kotlin.jvm.functions.Function1):V
 - sf:lookupAndSetupSdkBlocking(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.projectRoots.SdkType,java.util.function.Consumer):V
-- sf:lookupSdk(kotlin.jvm.functions.Function1):com.intellij.openapi.projectRoots.Sdk
 - sf:lookupSdkBlocking(kotlin.jvm.functions.Function1):com.intellij.openapi.projectRoots.Sdk
 com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder$SuggestedSdk
 - a:getHomePath():java.lang.String

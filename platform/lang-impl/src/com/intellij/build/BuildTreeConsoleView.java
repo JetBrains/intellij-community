@@ -142,17 +142,6 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
 
   private final boolean mySplitImplementation = Registry.is("build.toolwindow.split.tree", false);
 
-  /**
-   * @deprecated BuildViewSettingsProvider is not used anymore.
-   */
-  @Deprecated(forRemoval = true)
-  public BuildTreeConsoleView(@NotNull Project project,
-                              @NotNull BuildDescriptor buildDescriptor,
-                              @Nullable ExecutionConsole executionConsole,
-                              @NotNull BuildViewSettingsProvider buildViewSettingsProvider) {
-    this(project, buildDescriptor, executionConsole);
-  }
-
   public BuildTreeConsoleView(@NotNull Project project,
                               @NotNull BuildDescriptor buildDescriptor,
                               @Nullable ExecutionConsole executionConsole) {

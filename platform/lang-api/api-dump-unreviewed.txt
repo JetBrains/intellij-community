@@ -4655,10 +4655,6 @@ f:com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 f:com.intellij.refactoring.suggested.SuggestedChangeSignatureData$Companion
 - f:create(com.intellij.refactoring.suggested.SuggestedRefactoringState,java.lang.String):com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 a:com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
-- sf:Companion:com.intellij.refactoring.suggested.SuggestedRefactoringAvailability$Companion
-- sf:IMPLEMENTATIONS:java.lang.String
-- sf:OVERRIDES:java.lang.String
-- sf:USAGES:java.lang.String
 - <init>(com.intellij.refactoring.suggested.SuggestedRefactoringSupport):V
 - amendStateInBackground(com.intellij.refactoring.suggested.SuggestedRefactoringState):java.util.Iterator
 - a:detectAvailableRefactoring(com.intellij.refactoring.suggested.SuggestedRefactoringState):com.intellij.refactoring.suggested.SuggestedRefactoringData
@@ -4670,7 +4666,6 @@ a:com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
 - pf:nameChanges(com.intellij.refactoring.suggested.SuggestedRefactoringSupport$Signature,com.intellij.refactoring.suggested.SuggestedRefactoringSupport$Signature,com.intellij.psi.PsiElement,java.util.List):kotlin.Pair
 - refineSignaturesWithResolve(com.intellij.refactoring.suggested.SuggestedRefactoringState):com.intellij.refactoring.suggested.SuggestedRefactoringState
 - shouldSuppressRefactoringForDeclaration(com.intellij.refactoring.suggested.SuggestedRefactoringState):Z
-f:com.intellij.refactoring.suggested.SuggestedRefactoringAvailability$Companion
 c:com.intellij.refactoring.suggested.SuggestedRefactoringAvailability$RenameOnly
 - com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
 - <init>(com.intellij.refactoring.suggested.SuggestedRefactoringSupport):V
@@ -4855,7 +4850,6 @@ f:com.intellij.refactoring.suggested.TextRangeUtilsKt
 f:com.intellij.refactoring.suggested.UtilsKt
 - sf:createSmartPointer(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiElementPointer
 - sf:getEndOffset(com.intellij.psi.PsiElement):I
-- sf:getNewRange(com.intellij.openapi.editor.event.DocumentEvent):com.intellij.openapi.util.TextRange
 - sf:getOldRange(com.intellij.openapi.editor.event.DocumentEvent):com.intellij.openapi.util.TextRange
 - sf:getRange(com.intellij.openapi.editor.RangeMarker):com.intellij.openapi.util.TextRange
 - sf:getStartOffset(com.intellij.psi.PsiElement):I
