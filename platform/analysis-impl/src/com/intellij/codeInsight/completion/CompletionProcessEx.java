@@ -50,6 +50,7 @@ public interface CompletionProcessEx extends CompletionProcessBase, UserDataHold
 
   void addAdvertisement(@NotNull @NlsContexts.PopupAdvertisement String message, @Nullable Icon icon);
 
+  /** Not null after initialization is finished */
   CompletionParameters getParameters();
 
   void setParameters(@NotNull CompletionParameters parameters);
