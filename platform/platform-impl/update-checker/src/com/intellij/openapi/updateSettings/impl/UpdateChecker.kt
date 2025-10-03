@@ -143,7 +143,7 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
 }
 
 /**
- * See XML file by [com.intellij.openapi.application.ex.ApplicationInfoEx.getUpdateUrls] for reference.
+ * See XML file by [ExternalProductResourceUrls.updateMetadataUrl] for reference.
  */
 object UpdateChecker {
   private val productDataLock = ReentrantLock()

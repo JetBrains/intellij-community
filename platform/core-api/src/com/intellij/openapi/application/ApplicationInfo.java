@@ -87,20 +87,6 @@ public abstract class ApplicationInfo {
 
   public abstract String getCompanyURL();
 
-  /**
-   * @deprecated use properties from {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public abstract @Nullable String getProductUrl();
-
-  /**
-   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getYouTubeChannelUrl()} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public abstract @Nullable String getJetBrainsTvUrl();
-
   public abstract boolean hasHelp();
 
   public abstract boolean hasContextHelp();
