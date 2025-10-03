@@ -383,8 +383,8 @@ class EdtCoroutineDispatcherTest {
         }
       }
       finally {
-        assertThat(application.isReadAccessAllowed).isEqualTo(!useNonBlockingIntentLockForEdtCoroutines)
-        assertThat(application.isWriteIntentLockAcquired).isEqualTo(!useNonBlockingIntentLockForEdtCoroutines)
+        assertThat(application.isReadAccessAllowed).isEqualTo(!useNonBlockingFlushQueue)
+        assertThat(application.isWriteIntentLockAcquired).isEqualTo(!useNonBlockingFlushQueue)
         assertThat(application.isWriteAccessAllowed).isFalse
       }
     }
@@ -530,7 +530,7 @@ class EdtCoroutineDispatcherTest {
 
   @Test
   fun `UI coroutine can be executed earlier then EDT coroutine`(): Unit = timeoutRunBlocking {
-    Assumptions.assumeTrue { useNonBlockingIntentLockForEdtCoroutines }
+    Assumptions.assumeTrue { useNonBlockingFlushQueue }
     val uiExecuted = AtomicBoolean()
     val edtExecuted = AtomicBoolean()
     backgroundWriteAction {

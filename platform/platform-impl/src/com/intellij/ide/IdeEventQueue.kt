@@ -18,6 +18,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.InvocationUtil
+import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -140,6 +141,9 @@ class IdeEventQueue private constructor() : EventQueue() {
     assert(isDispatchThread()) { Thread.currentThread() }
     val systemEventQueue = Toolkit.getDefaultToolkit().systemEventQueue
     assert(systemEventQueue !is IdeEventQueue) { systemEventQueue }
+    if (useNonBlockingFlushQueue) {
+      LaterInvocator.initializeNonBlockingFlushQueue(threadingSupport)
+    }
     systemEventQueue.push(this)
     EDT.updateEdt()
     replaceDefaultKeyboardFocusManager()
@@ -325,7 +329,7 @@ class IdeEventQueue private constructor() : EventQueue() {
           try {
             runCustomProcessors(finalEvent, preProcessors)
             performActivity(finalEvent, !nakedRunnable && isPureSwingEventWilEnabled && !threadingSupport.isInsideUnlockedWriteIntentLock()) {
-              if (progressManager == null) {
+              if (progressManager == null || (runnable != null && useNonBlockingFlushQueue && InvocationUtil.isFlushNow(runnable))) {
                 _dispatchEvent(finalEvent)
               }
               else {

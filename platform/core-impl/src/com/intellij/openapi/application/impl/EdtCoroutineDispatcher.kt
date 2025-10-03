@@ -44,7 +44,7 @@ internal sealed class EdtCoroutineDispatcher(
     else {
       DispatchedRunnable(context.job, lockingAwareBlock)
     }
-    val useWeakWriteIntent = useNonBlockingIntentLockForEdtCoroutines && type.lockBehavior == EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING
+    val useWeakWriteIntent = useNonBlockingFlushQueue && type.lockBehavior == EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING
     ApplicationManagerEx.getApplicationEx().dispatchCoroutineOnEDT(runnable, state, useWeakWriteIntent)
   }
 
@@ -66,7 +66,7 @@ internal sealed class EdtCoroutineDispatcher(
         runnable
       }
       EdtDispatcherKind.LockBehavior.LOCKS_ALLOWED_MANDATORY_WRAPPING -> {
-        if (useNonBlockingIntentLockForEdtCoroutines) {
+        if (useNonBlockingFlushQueue) {
           runnable
         }
         else {
