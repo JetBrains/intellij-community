@@ -511,6 +511,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Redundant.kt");
         }
 
+        @TestMetadata("RedundantWithExpectedType.kt")
+        public void testRedundantWithExpectedType() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/RedundantWithExpectedType.kt");
+        }
+
         @TestMetadata("Unstable_explicitReceiver.kt")
         public void testUnstable_explicitReceiver() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Unstable_explicitReceiver.kt");
