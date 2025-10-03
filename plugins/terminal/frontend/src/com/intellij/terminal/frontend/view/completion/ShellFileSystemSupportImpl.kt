@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend.completion
+package com.intellij.terminal.frontend.view.completion
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor

@@ -6,8 +6,8 @@ import com.intellij.terminal.completion.spec.ShellFileInfo
 import com.intellij.terminal.completion.spec.ShellFileInfo.Type.DIRECTORY
 import com.intellij.terminal.completion.spec.ShellFileInfo.Type.FILE
 import com.intellij.terminal.completion.spec.ShellName
-import com.intellij.terminal.frontend.completion.ShellCommandExecutorReworked
-import com.intellij.terminal.frontend.completion.ShellFileSystemSupportImpl
+import com.intellij.terminal.frontend.view.completion.ShellCommandExecutorReworked
+import com.intellij.terminal.frontend.view.completion.ShellFileSystemSupportImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile

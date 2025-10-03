@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend.completion
+package com.intellij.terminal.frontend.view.completion
 
 import java.awt.Component
 import java.awt.Graphics

@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend.hyperlinks
+package com.intellij.terminal.frontend.view.hyperlinks
 
 import com.intellij.execution.impl.*
 import com.intellij.openapi.editor.ex.EditorEx

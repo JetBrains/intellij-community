@@ -8,7 +8,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
+import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*

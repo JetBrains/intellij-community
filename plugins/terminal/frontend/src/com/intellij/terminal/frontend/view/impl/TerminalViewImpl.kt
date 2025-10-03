@@ -24,12 +24,12 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.actions.TerminalActionUtil
-import com.intellij.terminal.frontend.completion.ShellDataGeneratorsExecutorReworkedImpl
-import com.intellij.terminal.frontend.completion.ShellRuntimeContextProviderReworkedImpl
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
-import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.completion.ShellDataGeneratorsExecutorReworkedImpl
+import com.intellij.terminal.frontend.view.completion.ShellRuntimeContextProviderReworkedImpl
+import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable

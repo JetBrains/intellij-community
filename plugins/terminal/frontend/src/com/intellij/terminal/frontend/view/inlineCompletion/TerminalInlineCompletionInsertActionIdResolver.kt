@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend.inlineCompletion
+package com.intellij.terminal.frontend.view.inlineCompletion
 
 import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionInsertActionIdResolver
 import com.intellij.openapi.editor.Editor
