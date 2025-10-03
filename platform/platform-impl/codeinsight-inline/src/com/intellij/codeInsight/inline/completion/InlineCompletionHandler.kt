@@ -124,22 +124,6 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     replaceWith = ReplaceWith("invokeEvent(event)"),
   )
   @ScheduledForRemoval
-  fun invoke(event: InlineCompletionEvent.LookupChange): Unit = invokeEvent(event)
-
-  @Deprecated(
-    message = "Use general invokeEvent.",
-    level = DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("invokeEvent(event)"),
-  )
-  @ScheduledForRemoval
-  fun invoke(event: InlineCompletionEvent.LookupCancelled): Unit = invokeEvent(event)
-
-  @Deprecated(
-    message = "Use general invokeEvent.",
-    level = DeprecationLevel.WARNING,
-    replaceWith = ReplaceWith("invokeEvent(event)"),
-  )
-  @ScheduledForRemoval
   fun invoke(event: InlineCompletionEvent.DirectCall): Unit = invokeEvent(event)
 
   @RequiresEdt
