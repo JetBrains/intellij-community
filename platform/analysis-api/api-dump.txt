@@ -5,6 +5,24 @@ com.intellij.codeInsight.completion.BatchConsumer
 f:com.intellij.codeInsight.completion.CompletionConfidenceEP
 - com.intellij.lang.LanguageExtensionPoint
 - <init>():V
+f:com.intellij.codeInsight.completion.CompletionParameters
+- getCompletionType():com.intellij.codeInsight.completion.CompletionType
+- getEditor():com.intellij.openapi.editor.Editor
+- getInvocationCount():I
+- getOffset():I
+- getOriginalFile():com.intellij.psi.PsiFile
+- getOriginalPosition():com.intellij.psi.PsiElement
+- getPosition():com.intellij.psi.PsiElement
+- getProcess():com.intellij.codeInsight.completion.CompletionProcess
+- isAutoPopup():Z
+- isCompleteOnlyNotImported():Z
+- isExtendedCompletion():Z
+- isTestingMode():Z
+- setCompleteOnlyNotImported(Z):V
+- setTestingMode(Z):V
+- withInvocationCount(I):com.intellij.codeInsight.completion.CompletionParameters
+- withPosition(com.intellij.psi.PsiElement,I):com.intellij.codeInsight.completion.CompletionParameters
+- withType(com.intellij.codeInsight.completion.CompletionType):com.intellij.codeInsight.completion.CompletionParameters
 com.intellij.codeInsight.completion.CompletionProcess
 - a:isAutopopupCompletion():Z
 a:com.intellij.codeInsight.completion.CompletionService
