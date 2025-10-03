@@ -9,8 +9,8 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * @deprecated Use the direct comparison.
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public interface BaseJavaJspElementType {
   ParentAwareTokenSet WHITE_SPACE_BIT_SET = ParentAwareTokenSet.orSet(
     ParentAwareTokenSet.create(TokenSet.WHITE_SPACE),

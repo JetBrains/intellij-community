@@ -28,6 +28,8 @@ object AssetsOnboardingTips {
     return Registry.`is`("doc.onboarding.tips.render")
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("The onboarding tips generated unconditionally")
   fun proposeToGenerateOnboardingTipsByDefault(): Boolean {
     return RecentProjectsManagerBase.getInstanceEx().getRecentPaths().isEmpty()
@@ -42,6 +44,8 @@ object AssetsOnboardingTips {
   }
 }
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use AssetsOnboardingTips#prepareOnboardingTips instead")
 fun AssetsNewProjectWizardStep.prepareOnboardingTips(project: Project, fileName: String, breakpointSelector: (CharSequence) -> Int?): Unit =
   AssetsOnboardingTips.prepareOnboardingTips(project, fileName, breakpointSelector)

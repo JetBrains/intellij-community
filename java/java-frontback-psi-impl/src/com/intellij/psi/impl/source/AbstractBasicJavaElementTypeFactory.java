@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class AbstractBasicJavaElementTypeFactory {
 
   public static class JavaElementTypeContainer {

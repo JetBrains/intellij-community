@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval
-@ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class AbstractBasicJavaDocElementTypeFactory {
   public static final class JavaDocElementTypeContainer {
     public final IElementType DOC_TAG;
