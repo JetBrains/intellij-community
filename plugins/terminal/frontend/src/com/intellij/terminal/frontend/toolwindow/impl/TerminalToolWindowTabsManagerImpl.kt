@@ -17,14 +17,14 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
-import com.intellij.terminal.frontend.TerminalView
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
-import com.intellij.terminal.frontend.impl.TerminalViewImpl
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
+import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager

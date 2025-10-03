@@ -3,7 +3,7 @@ package com.intellij.terminal.frontend.toolwindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.terminal.frontend.TerminalView
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt

@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend.impl
+package com.intellij.terminal.frontend.view.impl
 
 import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.inline.completion.InlineCompletion
@@ -30,6 +30,7 @@ import com.intellij.terminal.frontend.completion.ShellRuntimeContextProviderRewo
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
 import com.intellij.terminal.frontend.hyperlinks.FrontendTerminalHyperlinkFacade
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable

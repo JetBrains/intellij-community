@@ -1,4 +1,4 @@
-package com.intellij.terminal.frontend
+package com.intellij.terminal.frontend.view
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey

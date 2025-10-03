@@ -16,9 +16,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.terminal.frontend.TimedKeyEvent
-import com.intellij.terminal.frontend.activeOutputModel
 import com.intellij.terminal.frontend.completion.TerminalLookupPrefixUpdater
-import com.intellij.terminal.frontend.impl.TerminalViewImpl
+import com.intellij.terminal.frontend.view.activeOutputModel
+import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.terminal.tests.block.util.TestCommandSpecsProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import kotlinx.coroutines.cancel

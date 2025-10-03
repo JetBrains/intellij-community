@@ -11,7 +11,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.TerminalTitleListener
-import com.intellij.terminal.frontend.TerminalView
+import com.intellij.terminal.frontend.view.TerminalView
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.Nls
 import java.beans.PropertyChangeListener

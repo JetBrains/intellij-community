@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.frontend.impl;
+package com.intellij.terminal.frontend.toolwindow.impl;
 
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
@@ -7,7 +7,6 @@ import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.terminal.frontend.toolwindow.impl.TerminalInternalUtilsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.TerminalBundle;

@@ -14,7 +14,7 @@
                     serviceImplementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalToolWindowTabsManagerImpl"/>
 
     <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
-    <selectInTarget implementation="com.intellij.terminal.frontend.impl.SelectInTerminal"/>
+    <selectInTarget implementation="com.intellij.terminal.frontend.toolwindow.impl.SelectInTerminal"/>
 
     <fileEditorProvider id="terminal-view-editor"
                         implementation="com.intellij.terminal.frontend.editor.TerminalViewFileEditorProvider"/>

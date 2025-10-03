@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.frontend.TerminalOutputScrollingModel
-import com.intellij.terminal.frontend.TerminalView
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
+import com.intellij.terminal.frontend.view.TerminalView
 import com.jediterm.terminal.TerminalOutputStream
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.ui.getClipboardText

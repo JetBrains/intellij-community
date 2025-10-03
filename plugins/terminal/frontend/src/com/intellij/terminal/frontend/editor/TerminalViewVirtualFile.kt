@@ -1,6 +1,6 @@
 package com.intellij.terminal.frontend.editor
 
-import com.intellij.terminal.frontend.TerminalView
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.testFramework.LightVirtualFile
 
 internal class TerminalViewVirtualFile(

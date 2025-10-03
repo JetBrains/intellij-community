@@ -1,6 +1,6 @@
 package com.intellij.terminal.frontend.toolwindow
 
-import com.intellij.terminal.frontend.TerminalView
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
 
