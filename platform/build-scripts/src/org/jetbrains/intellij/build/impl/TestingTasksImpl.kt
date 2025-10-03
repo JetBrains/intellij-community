@@ -13,13 +13,13 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
+import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildCancellationException
 import org.jetbrains.intellij.build.BuildMessages
@@ -1210,7 +1210,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     return muslClasspathEntries
   }
 
-  private fun runJUnit5Engine(
+  private suspend fun runJUnit5Engine(
     mainModule: String,
     systemProperties: Map<String, String?>,
     jvmArgs: List<String>,
@@ -1236,9 +1236,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val useDevBuildServer = devBuildServerSettings != null && devBuildServerSettings.mainClass.isNotEmpty() && suiteName == null
     val classpathForTests = if (useDevBuildServer) {
-      runBlocking(Dispatchers.Default) {
-        context.getModuleRuntimeClasspath(context.findRequiredModule(devBuildServerSettings.mainClassModule), false)
-      }
+      context.getModuleRuntimeClasspath(context.findRequiredModule(devBuildServerSettings.mainClassModule), false)
     }
     else if (LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL) {
       prepareMuslClassPath(classpath)
@@ -1289,12 +1287,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
 
     val argFile = CommandLineWrapperUtil.createArgumentFile(args, Charset.defaultCharset())
-    val runtime = runBlocking(Dispatchers.IO) { getRuntimeExecutablePath().toString() }
+    val runtime = getRuntimeExecutablePath().toString()
+
     context.messages.info("Starting tests on runtime $runtime")
     val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
     builder.environment().putAll(envVariables)
     builder.inheritIO()
-    val exitCode = builder.start().waitFor()
+    val exitCode = builder.start().awaitExit()
     if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {
       context.messages.warning("Tests failed with exit code $exitCode")
     }
