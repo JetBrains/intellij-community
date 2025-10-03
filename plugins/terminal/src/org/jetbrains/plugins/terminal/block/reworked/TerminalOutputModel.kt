@@ -43,9 +43,9 @@ sealed interface TerminalOutputModel {
 
   fun lineByOffset(offset: TerminalOffset): TerminalLine
 
-  fun lineStartOffset(line: TerminalLine): TerminalOffset
+  fun startOffset(line: TerminalLine): TerminalOffset
 
-  fun lineEndOffset(line: TerminalLine, includeEOL: Boolean = false): TerminalOffset
+  fun endOffset(line: TerminalLine, includeEOL: Boolean = false): TerminalOffset
 
   fun getText(start: TerminalOffset, end: TerminalOffset): String
 

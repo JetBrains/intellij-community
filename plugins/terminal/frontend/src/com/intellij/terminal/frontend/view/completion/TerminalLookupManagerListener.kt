@@ -186,7 +186,7 @@ private class TerminalLookupOutputModelListener(
 
   private fun TerminalOutputModel.getTextBelowCursorLine(): String {
     val line = lineByOffset(this.cursorOffset)
-    val lineEndOffset = lineEndOffset(line)
+    val lineEndOffset = endOffset(line)
     return getText(lineEndOffset, endOffset)
   }
 }

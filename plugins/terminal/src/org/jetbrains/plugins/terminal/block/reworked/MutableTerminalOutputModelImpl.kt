@@ -51,9 +51,9 @@ sealed class AbstractTerminalOutputModelImpl(
 
   override fun lineByOffset(offset: TerminalOffset): TerminalLine = relativeLine(document.getLineNumber(offset.toRelative()))
 
-  override fun lineStartOffset(line: TerminalLine): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
+  override fun startOffset(line: TerminalLine): TerminalOffset = relativeOffset(document.getLineStartOffset(line.toRelative()))
 
-  override fun lineEndOffset(line: TerminalLine, includeEOL: Boolean): TerminalOffset {
+  override fun endOffset(line: TerminalLine, includeEOL: Boolean): TerminalOffset {
     var result = document.getLineEndOffset(line.toRelative())
     if (includeEOL && result < textLength) {
       ++result

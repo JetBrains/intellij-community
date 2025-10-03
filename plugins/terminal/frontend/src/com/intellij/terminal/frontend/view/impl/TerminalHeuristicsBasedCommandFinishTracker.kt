@@ -120,7 +120,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
 
   private fun getTextBeforeCursor(cursorOffset: TerminalOffset): String? {
     val lineNumber = outputModel.lineByOffset(cursorOffset)
-    val lineStartOffset = outputModel.lineStartOffset(lineNumber)
+    val lineStartOffset = outputModel.startOffset(lineNumber)
 
     val length = cursorOffset.toRelative() - lineStartOffset.toRelative()
     return if (length <= MAX_LINE_LENGTH) {

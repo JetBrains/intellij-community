@@ -224,7 +224,7 @@ private fun newHighlightTask(
   startLine: TerminalLine,
 ): HighlightTask {
   val endLineInclusive: TerminalLine = outputModel.relativeLine(outputModel.lineCount - 1)
-  val startOffset: TerminalOffset = outputModel.lineStartOffset(startLine)
+  val startOffset: TerminalOffset = outputModel.startOffset(startLine)
   return HighlightTask(
     startLine.toAbsolute(),
     startOffset.toAbsolute(),
@@ -494,13 +494,13 @@ private class HypertextFromFrozenTerminalOutputModelAdapter(private val model: T
   override val lineCount: Int
     get() = model.lineCount
 
-  override fun getLineStartOffset(lineIndex: Int): Int = model.lineStartOffset(model.relativeLine(lineIndex)).toRelative()
+  override fun getLineStartOffset(lineIndex: Int): Int = model.startOffset(model.relativeLine(lineIndex)).toRelative()
 
   override fun getLineText(lineIndex: Int): String = model.getLineText(model.relativeLine(lineIndex))
 }
 
 private fun TerminalOutputModelSnapshot.getLineText(line: TerminalLine): String =
-  getText(lineStartOffset(line), lineEndOffset(line, includeEOL = true))
+  getText(startOffset(line), endOffset(line, includeEOL = true))
 
 /**
  * Indicates the number of lines processed in one batch.
