@@ -27,6 +27,7 @@ import com.intellij.terminal.actions.TerminalActionUtil
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
 import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.completion.ShellDataGeneratorsExecutorReworkedImpl
 import com.intellij.terminal.frontend.view.completion.ShellRuntimeContextProviderReworkedImpl
 import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
@@ -36,6 +37,9 @@ import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -116,6 +120,9 @@ class TerminalViewImpl(
 
   private val mutableOutputModels: TerminalOutputModelsSetImpl
   override val outputModels: TerminalOutputModelsSet
+
+  private val mutableSessionState: MutableStateFlow<TerminalViewSessionState> = MutableStateFlow(TerminalViewSessionState.NotStarted)
+  override val sessionState: StateFlow<TerminalViewSessionState> = mutableSessionState.asStateFlow()
 
   init {
     val hyperlinkScope = coroutineScope.childScope("TerminalViewImpl hyperlink facades")
@@ -241,6 +248,7 @@ class TerminalViewImpl(
     outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Gen2")
 
     val terminalAliasesStorage = TerminalAliasesStorage()
+    outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)
 
     controller = TerminalSessionController(
       sessionModel,
@@ -253,7 +261,10 @@ class TerminalViewImpl(
       coroutineScope.childScope("TerminalSessionController"),
       terminalAliasesStorage
     )
-    outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)
+
+    controller.addTerminationCallback(coroutineScope.asDisposable()) {
+      mutableSessionState.value = TerminalViewSessionState.Terminated
+    }
 
     configureInlineCompletion(outputEditor, outputModel, coroutineScope.childScope("TerminalInlineCompletion"))
     configureCommandCompletion(
@@ -282,6 +293,7 @@ class TerminalViewImpl(
   fun connectToSession(session: TerminalSession) {
     sessionFuture.complete(session)
     controller.handleEvents(session)
+    mutableSessionState.value = TerminalViewSessionState.Running
   }
 
   override suspend fun hasChildProcesses(): Boolean {
@@ -293,10 +305,6 @@ class TerminalViewImpl(
 
   override fun getCurrentDirectory(): String {
     return sessionModel.terminalState.value.currentDirectory
-  }
-
-  override fun addTerminationCallback(parentDisposable: Disposable, callback: () -> Unit) {
-    controller.addTerminationCallback(callback, parentDisposable)
   }
 
   override fun sendText(text: String) {

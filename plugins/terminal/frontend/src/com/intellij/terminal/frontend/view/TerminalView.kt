@@ -1,9 +1,9 @@
 package com.intellij.terminal.frontend.view
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.terminal.TerminalTitle
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
@@ -26,7 +26,7 @@ interface TerminalView {
 
   val outputModels: TerminalOutputModelsSet
 
-  fun addTerminationCallback(parentDisposable: Disposable, callback: () -> Unit)
+  val sessionState: StateFlow<TerminalViewSessionState>
 
   suspend fun hasChildProcesses(): Boolean
 

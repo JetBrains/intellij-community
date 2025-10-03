@@ -19,11 +19,9 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.action.TerminalRenameTabAction
 import com.intellij.terminal.frontend.fus.TerminalFocusFusService
-import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabBuilder
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
+import com.intellij.terminal.frontend.toolwindow.*
 import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.ContentFactory
@@ -152,11 +150,16 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
 
     // Close the tab if the terminal session was terminated.
-    terminal.addTerminationCallback(content) {
-      coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
-        if (TerminalOptionsProvider.instance.closeSessionOnLogout) {
-          val tab = mutableTabs.find { it.content == content } ?: return@launch
-          closeTab(tab)
+    tabScope.launch {
+      terminal.sessionState.collect { state ->
+        if (state == TerminalViewSessionState.Terminated) {
+          // Execute in the manager scope, because closing of the tab may dispose the content and cancel the current coroutine.
+          coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
+            if (TerminalOptionsProvider.instance.closeSessionOnLogout) {
+              val tab = findTabByContent(content) ?: return@launch
+              closeTab(tab)
+            }
+          }
         }
       }
     }

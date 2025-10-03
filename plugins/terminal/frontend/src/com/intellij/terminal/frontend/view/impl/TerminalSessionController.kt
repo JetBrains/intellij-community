@@ -160,7 +160,7 @@ internal class TerminalSessionController(
     else outputModelController
   }
 
-  fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
+  fun addTerminationCallback(parentDisposable: Disposable, onTerminated: Runnable) {
     terminationListeners.add(onTerminated, parentDisposable)
   }
 

@@ -1,19 +1,27 @@
 package com.intellij.terminal.frontend.editor
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.TerminalTitleListener
 import com.intellij.terminal.frontend.view.TerminalView
+import com.intellij.terminal.frontend.view.TerminalViewSessionState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
@@ -25,9 +33,17 @@ internal class TerminalViewFileEditor(
     get() = file.terminalView
 
   init {
-    terminalView.addTerminationCallback(this) {
-      runInEdt(ModalityState.any()) {
-        FileEditorManager.getInstance(project).closeFile(file)
+    val coroutineScope = terminalProjectScope(project).childScope("TerminalViewFileEditor")
+    Disposer.register(this) { coroutineScope.cancel() }
+
+    coroutineScope.launch {
+      terminalView.sessionState.collect { state ->
+        if (state == TerminalViewSessionState.Terminated) {
+          // Execute in the separate scope, because closing of the file may dispose the file editor and cancel the current coroutine.
+          terminalProjectScope(project).launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            serviceAsync<FileEditorManager>().closeFile(file)
+          }
+        }
       }
     }
 
