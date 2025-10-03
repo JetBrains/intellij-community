@@ -23,7 +23,6 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Pytest runner
@@ -132,9 +131,6 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
 }
 
 class PyTestFactory(type: PythonTestConfigurationType) : PyAbstractTestFactory<PyTestConfiguration>(type) {
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Obtain instance from PythonTestConfigurationType")
-  constructor() : this(PythonTestConfigurationType.getInstance())
 
   companion object {
     const val id = "py.test"  //Do not rename: used as ID for run configurations
