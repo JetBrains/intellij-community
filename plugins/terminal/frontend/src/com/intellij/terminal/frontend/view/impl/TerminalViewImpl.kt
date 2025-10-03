@@ -49,8 +49,6 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommand
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.*
-import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
-import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.isSplitHyperlinksSupportEnabled
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
@@ -99,10 +97,10 @@ class TerminalViewImpl(
 
   @VisibleForTesting
   val outputEditor: EditorEx
-  private val outputHyperlinkFacade: FrontendTerminalHyperlinkFacade?
+  private val outputHyperlinkFacade: FrontendTerminalHyperlinkFacade
   private val alternateBufferEditor: EditorEx
 
-  private val alternateBufferHyperlinkFacade: FrontendTerminalHyperlinkFacade?
+  private val alternateBufferHyperlinkFacade: FrontendTerminalHyperlinkFacade
   private val scrollingModel: TerminalOutputScrollingModel
   private var isAlternateScreenBuffer = false
 
@@ -168,18 +166,13 @@ class TerminalViewImpl(
       fusFirstOutputListener,
       alternateBufferEventsHandler,
     )
-    alternateBufferHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
-      FrontendTerminalHyperlinkFacade(
-        isInAlternateBuffer = true,
-        editor = alternateBufferEditor,
-        outputModel = alternateBufferModel,
-        terminalInput = terminalInput,
-        coroutineScope = hyperlinkScope,
-      )
-    }
-    else {
-      null
-    }
+    alternateBufferHyperlinkFacade = FrontendTerminalHyperlinkFacade(
+      isInAlternateBuffer = true,
+      editor = alternateBufferEditor,
+      outputModel = alternateBufferModel,
+      terminalInput = terminalInput,
+      coroutineScope = hyperlinkScope,
+    )
 
     outputEditor = TerminalEditorFactory.createOutputEditor(project, settings, coroutineScope.childScope("TerminalOutputEditor"))
     outputEditor.putUserData(TerminalInput.KEY, terminalInput)
@@ -232,18 +225,13 @@ class TerminalViewImpl(
 
     terminalSearchController = TerminalSearchController(project)
 
-    outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
-      FrontendTerminalHyperlinkFacade(
-        isInAlternateBuffer = false,
-        editor = outputEditor,
-        outputModel = outputModel,
-        terminalInput = terminalInput,
-        coroutineScope = hyperlinkScope,
-      )
-    }
-    else {
-      null
-    }
+    outputHyperlinkFacade = FrontendTerminalHyperlinkFacade(
+      isInAlternateBuffer = false,
+      editor = outputEditor,
+      outputModel = outputModel,
+      terminalInput = terminalInput,
+      coroutineScope = hyperlinkScope,
+    )
 
     outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Gen2")
 
@@ -426,10 +414,6 @@ class TerminalViewImpl(
 
     editor.highlighter = TerminalTextHighlighter { model.getHighlightings() }
 
-    if (!isSplitHyperlinksSupportEnabled()) {
-      TerminalHyperlinkHighlighter.install(project, model, editor, coroutineScope)
-    }
-
     val cursorPainter = TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
     if (fusCursorPainterListener != null) {
       cursorPainter.addListener(parentDisposable, fusCursorPainterListener)
@@ -547,7 +531,7 @@ class TerminalViewImpl(
       sink[TerminalSessionId.KEY] = (sessionFuture.getNow(null) as? FrontendTerminalSession?)?.id
       sink[TerminalDataContextUtils.IS_ALTERNATE_BUFFER_DATA_KEY] = isAlternateScreenBuffer
       val hyperlinkFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
-      sink[TerminalHyperlinkId.KEY] = hyperlinkFacade?.getHoveredHyperlinkId()
+      sink[TerminalHyperlinkId.KEY] = hyperlinkFacade.getHoveredHyperlinkId()
       sink.setNull(PlatformDataKeys.COPY_PROVIDER)
     }
 

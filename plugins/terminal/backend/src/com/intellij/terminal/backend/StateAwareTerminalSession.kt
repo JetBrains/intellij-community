@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import org.jetbrains.plugins.terminal.block.reworked.*
-import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.isSplitHyperlinksSupportEnabled
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.*
 import org.jetbrains.plugins.terminal.session.*
@@ -43,9 +42,9 @@ internal class StateAwareTerminalSession(
 
   private val sessionModel: TerminalSessionModel = TerminalSessionModelImpl()
   private val outputModel: MutableTerminalOutputModel
-  private val outputHyperlinkFacade: BackendTerminalHyperlinkFacade?
+  private val outputHyperlinkFacade: BackendTerminalHyperlinkFacade
   private val alternateBufferModel: MutableTerminalOutputModel
-  private val alternateBufferHyperlinkFacade: BackendTerminalHyperlinkFacade?
+  private val alternateBufferHyperlinkFacade: BackendTerminalHyperlinkFacade
   private val blocksModel: TerminalBlocksModel
 
   private val inputChannel: SendChannel<TerminalInputEvent>
@@ -73,36 +72,20 @@ internal class StateAwareTerminalSession(
     // It is OK here to handle synchronization manually, because this document will be used only in our services.
     val outputDocument = DocumentImpl("", true)
     outputModel = MutableTerminalOutputModelImpl(outputDocument, TerminalUiUtils.getDefaultMaxOutputLength())
-    outputHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
-      BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, isInAlternateBuffer = false)
-    }
-    else {
-      null
-    }
+    outputHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, outputModel, isInAlternateBuffer = false)
 
     val alternateBufferDocument = DocumentImpl("", true)
     alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
-    alternateBufferHyperlinkFacade = if (isSplitHyperlinksSupportEnabled()) {
-      BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true)
-    }
-    else {
-      null
-    }
+    alternateBufferHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true)
 
     blocksModel = TerminalBlocksModelImpl(outputDocument)
 
     coroutineScope.launch(CoroutineName("StateAwareTerminalSession: models updating")) {
-      val originalOutputFlow = if (outputHyperlinkFacade != null && alternateBufferHyperlinkFacade != null) {
-        merge(
-          delegate.getOutputFlow(),
-          outputHyperlinkFacade.heartbeatFlow.map { listOf(it) },
-          alternateBufferHyperlinkFacade.heartbeatFlow.map { listOf(it) },
-        )
-      }
-      else {
-        delegate.getOutputFlow()
-      }
-      originalOutputFlow.collect { events ->
+      merge(
+        delegate.getOutputFlow(),
+        outputHyperlinkFacade.heartbeatFlow.map { listOf(it) },
+        alternateBufferHyperlinkFacade.heartbeatFlow.map { listOf(it) },
+      ).collect { events ->
         try {
           outputFlowProducer.handleUpdate(events)
         }
@@ -231,8 +214,8 @@ internal class StateAwareTerminalSession(
         outputModelState = outputModel.dumpState().toDto(),
         alternateBufferState = alternateBufferModel.dumpState().toDto(),
         blocksModelState = blocksModel.dumpState().toDto(),
-        outputHyperlinksState = outputHyperlinkFacade?.dumpState()?.toDto(),
-        alternateBufferHyperlinksState = alternateBufferHyperlinkFacade?.dumpState()?.toDto(),
+        outputHyperlinksState = outputHyperlinkFacade.dumpState().toDto(),
+        alternateBufferHyperlinksState = alternateBufferHyperlinkFacade.dumpState().toDto(),
       )
       return listOf(listOf(event))
     }
