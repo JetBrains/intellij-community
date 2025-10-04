@@ -68,8 +68,10 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
 
   private val treeWrapper by lazy {
     JBSplitter(false, 0.45f).apply {
+      val treeSettings = settings.getTreeSettings(textStyle, Language.ENGLISH)
+      treeSettings.description.listener(Language.ENGLISH)
       firstComponent = createScrollTreeComponent(textStyle, Language.ENGLISH)
-      secondComponent = settings.getTreeSettings(textStyle, Language.ENGLISH).description.component
+      secondComponent = treeSettings.description.component
     }
   }
 
@@ -127,8 +129,6 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
           .whenItemSelectedFromUi { textStyle ->
             if (domainComboBox.selected == TextStyleDomain.Other) {
               selectTextStyle(textStyle, langComboModel.selected!!)
-              settings.reset(GrazieConfig.get())
-              selectLanguage(textStyle, langComboModel.selected!!)
             }
           }
         settings.addTextStyle(userTextStyle, Language.ENGLISH, filterComponent)
@@ -149,10 +149,9 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
             selectTextStyle(textStyle, language)
             separator.text = GrazieBundle.message(if (language in ruleEngineLanguages) "grazie.settings.style.rules.other" else "grazie.settings.style.rules.all")
             settings.updateFilter(textStyle, language, filterComponent.text)
-            settings.getTreeSettings(textStyle, language).description.listener(language)
           }
           .component
-        selectLanguage(userTextStyle, Language.ENGLISH)
+        langCombo.selectedItem = Language.ENGLISH
         trackNewLanguageAddition()
       }
 
@@ -177,8 +176,6 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
       treeWrapper.maximumSize = Dimension(Int.MAX_VALUE, Int.MAX_VALUE)
       treeWrapper.preferredSize = JBUI.size(-1, 300)
       treeWrapper.setHonorComponentsMinimumSize(true)
-
-      settings.getTreeSettings(textStyle, Language.ENGLISH).description.listener(Language.ENGLISH)
     }.also { it.border = Borders.empty() }
   }
 
@@ -208,12 +205,7 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
     settings.addTextStyle(textStyle, language, filterComponent)
     langCombo.selectedItem = language
     repaintSettings(textStyle, language)
-  }
-
-  private fun selectLanguage(textStyle: TextStyle, language: Language) {
-    settings.addLanguage(textStyle, language, filterComponent)
-    langCombo.selectedItem = language
-    repaintSettings(textStyle, language)
+    settings.updateFilter(textStyle, language, filterComponent.text)
   }
 
   private fun repaintSettings(textStyle: TextStyle, language: Language) {
@@ -225,9 +217,11 @@ class StyleConfigurable : BoundConfigurable(GrazieBundle.message("grazie.setting
       settingWrapper.maximumSize = Dimension(Int.MAX_VALUE, settingWrapper.preferredSize.height)
       settingWrapper.repaint()
     }
+    val treeSettings = settings.getTreeSettings(textStyle, language)
+    treeSettings.description.listener(language)
     treeWrapper.removeAll()
     treeWrapper.firstComponent = createScrollTreeComponent(textStyle, language)
-    treeWrapper.secondComponent = settings.getTreeSettings(textStyle, language).description.component
+    treeWrapper.secondComponent = treeSettings.description.component
     treeWrapper.repaint()
   }
 
@@ -344,8 +338,8 @@ data class Settings(
   fun apply(originalState: GrazieConfig.State) {
     combinedSettings
       .filter { it.value.any { settings -> settings.value.isModified(originalState) } }
-      .forEach { (domainId, settingsMap) ->
-        val domain = getTextStyle(domainId).getTextDomain()
+      .forEach { (textStyleId, settingsMap) ->
+        val domain = getTextStyle(textStyleId).getTextDomain()
         val userEnabledRules = HashSet<String>()
         val userDisabledRules = HashSet<String>()
         val parameters = HashMap<Language, Map<String, String>>()
