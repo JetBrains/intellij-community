@@ -68,7 +68,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   val key = cachePrefix(context).append(name)
 
   if (mayCache) {
-    val cachedResults = cache?.get(key)
+    val cachedResults = cache.get(key)
     if (cachedResults != null) {
       return (relativeResults + cachedResults).distinct()
     }
@@ -87,15 +87,19 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
     }
   }
 
-  val results = if (relativeDirectory != null && PyUtil.isExplicitPackage(relativeDirectory)) {
+  val allResults = if (relativeDirectory != null && PyUtil.isExplicitPackage(relativeDirectory)) {
     filterTopPriorityResultsWithFallback(notSameDirectoryPython3Results, sameDirectoryPython3Results, foreignResults, name, context)
   }
   else {
     filterTopPriorityResultsWithFallback(sameDirectoryPython3Results, notSameDirectoryPython3Results, foreignResults, name, context)
   }
 
+  val results = allResults
+    .filterNot { it is PsiFileSystemItem && isInSkeletons(it) }
+    .ifEmpty { allResults }
+
   if (mayCache) {
-    cache?.put(key, results)
+    cache.put(key, results)
   }
 
   return results

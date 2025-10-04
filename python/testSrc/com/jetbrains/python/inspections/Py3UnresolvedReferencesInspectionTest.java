@@ -491,4 +491,15 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   public void testStrictUnionMemberExtendingAny() {
     doTest();
   }
+
+  // PY-83529
+  public void testPackageAttributeInPresenceOfBinarySkeleton() {
+    runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/python_stubs", () -> {
+        final PsiFile currentFile = myFixture.configureByFile(getTestDirectoryPath() + "/main.py");
+        configureInspection();
+        assertSdkRootsNotParsed(currentFile);
+      });
+    });
+  }
 }

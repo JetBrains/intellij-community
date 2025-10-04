@@ -4187,6 +4187,23 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-83529
+  public void testImportNestedBinarySubModule() {
+    String testDir = TEST_DIRECTORY + getTestName(false);
+    runWithAdditionalClassEntryInSdkRoots(testDir + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testDir + "/python_stubs", () -> {
+        doTest("imported module pkg", """
+          import pkg.subpkg
+          expr = pkg
+          """);
+        doTest("__init__.py", """
+          import pkg.subpkg
+          expr = pkg.subpkg
+          """);
+      });
+    });
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
