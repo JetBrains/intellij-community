@@ -134,6 +134,11 @@
     <openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider
       implementation="com.intellij.openapi.vcs.changes.savedPatches.CompareBeforeWithLocalForSavedPatchesAction"/>
 
+    <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.SubjectBodySeparationInspection"/>
+    <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.SubjectLimitInspection"/>
+    <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.BodyLimitInspection"/>
+    <vcs.commitMessageInspection implementation="com.intellij.vcs.commit.message.CommitMessageSpellCheckingInspection"/>
+
     <referenceProviderType key="commentsReferenceProvider"
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider"/>
     <psi.symbolReferenceProvider hostLanguage=""

@@ -263,6 +263,10 @@
                     interface="com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider"
                     dynamic="true"/>
 
+    <extensionPoint name="vcs.commitMessageInspection"
+                    interface="com.intellij.vcs.commit.message.BaseCommitMessageInspection"
+                    dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.vcs.impl.backend.treeNodeConverter"
                     interface="com.intellij.vcs.shelf.NodeToEntityConverter"
                     dynamic="true"/>
