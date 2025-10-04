@@ -123,7 +123,7 @@ suspend fun createPlatformLayout(context: BuildContext): PlatformLayout {
   )
 }
 
-internal const val LIB_MODULE_PREFIX = "intellij.libraries."
+const val LIB_MODULE_PREFIX: String = "intellij.libraries."
 
 internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
   val frontendModuleFilter = context.getFrontendModuleFilter()
