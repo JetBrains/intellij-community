@@ -7,8 +7,10 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -16,7 +18,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.EventListener;
 import java.util.List;
 import java.util.Objects;
@@ -24,6 +25,10 @@ import java.util.Objects;
 @State(name = "CommitMessageInspectionProfile", storages = @Storage("vcs.xml"))
 public class CommitMessageInspectionProfile extends InspectionProfileImpl
   implements PersistentStateComponent<CommitMessageInspectionProfile.State> {
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static final ExtensionPointName<BaseCommitMessageInspection> EP_NAME = ExtensionPointName.create("com.intellij.vcs.commitMessageInspection");
 
   public static final @NotNull Topic<ProfileListener> TOPIC = Topic.create("commit message inspection changes", ProfileListener.class);
 
@@ -131,12 +136,7 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   private static class CommitMessageInspectionToolSupplier extends InspectionToolsSupplier {
     @Override
     public @NotNull List<InspectionToolWrapper<?, ?>> createTools() {
-      return Arrays.asList(
-        new LocalInspectionToolWrapper(new SubjectBodySeparationInspection()),
-        new LocalInspectionToolWrapper(new SubjectLimitInspection()),
-        new LocalInspectionToolWrapper(new BodyLimitInspection()),
-        new LocalInspectionToolWrapper(new CommitMessageSpellCheckingInspection())
-      );
+      return ContainerUtil.map(EP_NAME.getExtensionList(), it -> new LocalInspectionToolWrapper(it));
     }
   }
 

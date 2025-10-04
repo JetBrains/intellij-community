@@ -278,5 +278,9 @@
     <extensionPoint name="vcs.fileListenerIgnoredFilesProvider"
                     interface="com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.commitMessageInspection"
+                    interface="com.intellij.vcs.commit.message.BaseCommitMessageInspection"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
