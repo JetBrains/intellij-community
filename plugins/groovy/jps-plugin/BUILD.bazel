@@ -25,7 +25,7 @@ jvm_library(
     "//java/compiler/instrumentation-util",
     "@lib//:ecj-4-25-provided",
     "//platform/util-class-loader:util-classLoader",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/util/jdom",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",

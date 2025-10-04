@@ -20,7 +20,7 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />

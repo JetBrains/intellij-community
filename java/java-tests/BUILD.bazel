@@ -140,7 +140,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/navbar/testFramework",
     "//java/unscramble",
-    "@lib//:asm",
+    "//libraries/asm",
     "//plugins/gradle",
     "//platform/todo",
     "//platform/statistics/testFramework",

@@ -33,7 +33,7 @@ jvm_library(
     "@lib//:jediterm-core",
     "@lib//:jediterm-ui",
     "//platform/execution-impl",
-    "@lib//:winp",
+    "//libraries/winp",
     "//platform/statistics",
     "//platform/analysis-impl",
     "//platform/core-ui",

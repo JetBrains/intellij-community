@@ -35,7 +35,7 @@ jvm_library(
     "//platform/service-container",
     "//platform/vcs-impl",
     "//spellchecker",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "@lib//:kotlinx-coroutines-core",
     "//libraries/kotlinx/serialization/json",
     "//platform/platform-api:ide",

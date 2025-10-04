@@ -9,7 +9,7 @@ jvm_library(
   deps = [
     "//java/debugger/openapi:java-debugger",
     "@lib//:kotlin-stdlib",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/util",
     "//java/debugger/impl",
@@ -25,7 +25,7 @@ jvm_library(
   deps = [
     "//java/debugger/openapi:java-debugger",
     "@lib//:kotlin-stdlib",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:junit4",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/util",

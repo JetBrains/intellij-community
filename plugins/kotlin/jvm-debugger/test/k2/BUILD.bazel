@@ -39,7 +39,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlin-reflect",
     "@lib//:kotlin-test",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/core-api:core",
     "//platform/lang-core",
     "//libraries/guava",

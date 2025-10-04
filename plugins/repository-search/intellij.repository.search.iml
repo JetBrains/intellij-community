@@ -56,6 +56,6 @@
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="library" exported="" name="package-search-api-client" level="project" />
     <orderEntry type="library" name="kotlinx-document-store-mvstore" level="project" />
-    <orderEntry type="library" name="mvstore" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mvstore" />
   </component>
 </module>

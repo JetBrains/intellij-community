@@ -46,7 +46,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />

@@ -36,7 +36,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.lang" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />

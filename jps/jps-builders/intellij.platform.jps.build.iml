@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil.java8" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
@@ -70,7 +70,7 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" name="mvstore" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mvstore" />
     <orderEntry type="library" scope="PROVIDED" name="netty-jps" level="project" />
     <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
     <orderEntry type="library" exported="" name="http-client" level="project" />

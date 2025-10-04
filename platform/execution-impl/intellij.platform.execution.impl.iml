@@ -50,7 +50,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.macro" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />

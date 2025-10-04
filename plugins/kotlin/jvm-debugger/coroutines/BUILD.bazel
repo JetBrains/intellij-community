@@ -31,7 +31,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:maven-resolver-provider",
     "//libraries/gson",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/core-api:core",

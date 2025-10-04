@@ -66,7 +66,7 @@ jvm_library(
     "//platform/util/jdom",
     "//libraries/gson",
     "//platform/editor-ui-ex:editor-ex",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//platform/observable",
     "@lib//:kotlinc-kotlin-scripting-common",

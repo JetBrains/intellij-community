@@ -40,7 +40,7 @@ jvm_library(
     "//java/compiler/instrumentation-util",
     "@lib//:assert_j",
     "//java/langInjection/jps",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/util/jdom",
     "//plugins/IntelliLang/backend",
     "//plugins/markdown/plugin:plugin-main",

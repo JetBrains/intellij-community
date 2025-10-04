@@ -61,7 +61,7 @@
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="library" name="swingx" level="project" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.util" />

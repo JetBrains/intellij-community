@@ -80,7 +80,6 @@ private val libsUsedInJps = setOf(
   "slf4j-api",
   "slf4j-jdk14",
   // see getBuildProcessApplicationClasspath - used in JPS
-  "lz4-java",
   "jna",
   "maven-resolver-provider",
   "OroMatcher",
@@ -93,7 +92,6 @@ private val libsUsedInJps = setOf(
   "commons-logging",
   "commons-lang3",
   "kotlin-stdlib",
-  "fastutil-min",
 )
 
 private val presignedLibNames = setOf(
@@ -112,6 +110,7 @@ private val notImportantKotlinLibs = setOf(
 const val rdJarName: String = "rd.jar"
 
 // must be sorted
+
 private val predefinedMergeRules = listOf<Pair<String, (String, FrontendModuleFilter) -> Boolean>>(
   "groovy.jar" to { it, _ -> it.startsWith("org.codehaus.groovy:") },
   "jsch-agent.jar" to { it, _ -> it.startsWith("jsch-agent") },
@@ -121,11 +120,7 @@ private val predefinedMergeRules = listOf<Pair<String, (String, FrontendModuleFi
   PRODUCT_BACKEND_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && filter.isBackendProjectLibrary(name) },
   PRODUCT_JAR to { name, filter -> (name.startsWith("License") || name.startsWith("jetbrains.codeWithMe.lobby.server.")) && !filter.isBackendProjectLibrary(name) },
   // see ClassPathUtil.getUtilClassPath
-  UTIL_8_JAR to { it, _ ->
-    libsUsedInJps.contains(it) ||
-    (it.startsWith("kotlinx-") && !notImportantKotlinLibs.contains(it)) ||
-    it == "kotlin-reflect"
-  },
+  UTIL_8_JAR to { it, _ -> libsUsedInJps.contains(it) || (it.startsWith("kotlinx-") && !notImportantKotlinLibs.contains(it)) },
 
   // used in an external process - see `ConsoleProcessListFetcher.getConsoleProcessCount`
   UTIL_JAR to { it, _ -> it == "pty4j" || it == "jvm-native-trusted-roots" },

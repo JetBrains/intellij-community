@@ -12,13 +12,13 @@ jvm_library(
     "//platform/util/base",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:pty4j",
-    "@lib//:winp",
+    "//libraries/winp",
     "//platform/util",
-    "@lib//:proxy-vole",
+    "//libraries/proxy-vole",
     "@lib//:jna",
     "//libraries/jackson/jackson",
   ],
   exports = ["//platform/platform-util-io:ide-util-io"],
-  runtime_deps = ["@lib//:rhino"]
+  runtime_deps = ["//libraries/rhino"]
 )
 ### auto-generated section `build intellij.platform.ide.util.io.impl` end

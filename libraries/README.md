@@ -60,9 +60,9 @@ File: `resources/intellij.libraries.example.lib.xml`
 
 **IMPORTANT:** `.xml` files must NOT have a trailing newline at the end of the file
 
-### 4. Register in Essential Libraries (if needed)
+### 4. Register in Essential Libraries
 
-If the library should be loaded as an essential embedded module, add it to:
+The library module must be added to essential-libs.xml.
 
 File: `community/platform/platform-resources/src/META-INF/essential-libs.xml`
 

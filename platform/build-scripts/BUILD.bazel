@@ -71,7 +71,7 @@ jvm_library(
     "@lib//:intellij-plugin-structure",
     "@lib//:tc_service_messages",
     "@lib//:jsoup",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:platform-build_scripts-spdx-tools-java",
     "//libraries/hash4j",
     "@lib//:jbr-api",

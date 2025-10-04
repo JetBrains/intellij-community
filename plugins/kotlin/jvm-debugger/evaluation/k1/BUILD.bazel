@@ -41,7 +41,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
-    "@lib//:asm",
+    "//libraries/asm",
     "//libraries/guava",
     "@lib//:kotlinc-kotlin-compiler-ir",
     "@lib//:kotlinc-analysis-api-fe10",

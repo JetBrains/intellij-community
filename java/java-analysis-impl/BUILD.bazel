@@ -39,7 +39,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/platform-api:ide",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:stream_ex",
     "@lib//:kotlin-stdlib",
     "//java/openapi:java",

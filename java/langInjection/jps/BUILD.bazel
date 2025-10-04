@@ -21,7 +21,7 @@ jvm_library(
     "//platform/util",
     "//java/compiler/instrumentation-util",
     "//jps/model-serialization",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/util/jdom",
     "@lib//:jetbrains-annotations",
   ]

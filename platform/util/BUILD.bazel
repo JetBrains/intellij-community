@@ -191,7 +191,7 @@ jvm_library(
     "//platform/diagnostic",
     "//libraries/kotlinx/serialization/core",
     "@lib//:kotlinx-serialization-protobuf",
-    "@lib//:mvstore",
+    "//libraries/mvstore",
   ]
 )
 ### auto-generated section `build intellij.platform.util.ui` end

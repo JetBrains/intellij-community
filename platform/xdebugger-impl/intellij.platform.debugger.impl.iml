@@ -62,7 +62,7 @@
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />

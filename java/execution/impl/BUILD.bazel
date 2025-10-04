@@ -42,7 +42,7 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//libraries/gson",
     "//libraries/jackson/jackson",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//platform/vcs-impl",
     "//platform/vcs-impl/lang",
     "//platform/util/nanoxml",

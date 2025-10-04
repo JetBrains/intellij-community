@@ -78,7 +78,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />

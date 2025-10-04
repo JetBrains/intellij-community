@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
     <orderEntry type="module" module-name="kotlin.base.psi" />

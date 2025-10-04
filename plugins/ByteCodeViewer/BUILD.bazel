@@ -21,7 +21,7 @@ jvm_library(
   resources = [":java-byteCodeViewer_resources"],
   kotlinc_opts = ":custom_java-byteCodeViewer",
   deps = [
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
@@ -47,7 +47,7 @@ jvm_library(
   kotlinc_opts = ":custom_java-byteCodeViewer",
   associates = [":java-byteCodeViewer"],
   deps = [
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",

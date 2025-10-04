@@ -46,7 +46,7 @@
     <orderEntry type="library" name="download-pgp-verifier" level="project" />
     <orderEntry type="library" name="bouncy-castle-pgp" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />

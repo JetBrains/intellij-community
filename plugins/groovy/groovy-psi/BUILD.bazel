@@ -41,7 +41,7 @@ jvm_library(
     "//platform/core-ui",
     "//libraries/kotlin-reflect",
     "@lib//:fastutil-min",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/util/jdom",
   ],
   exports = ["@lib//:org-codehaus-groovy-groovy"]

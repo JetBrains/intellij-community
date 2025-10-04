@@ -14,7 +14,6 @@ object PythonCommunityPluginModules {
   fun pythonCommunityPluginLayout(body: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, emptyList()) { spec ->
       body?.invoke(spec)
-      spec.withProjectLibrary("XmlRPC")
     }
   }
 

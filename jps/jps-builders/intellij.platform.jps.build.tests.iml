@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Eclipse" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" scope="TEST" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
@@ -78,7 +78,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="mvstore" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mvstore" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.testFramework" scope="TEST" />
   </component>

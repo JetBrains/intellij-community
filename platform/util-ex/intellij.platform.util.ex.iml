@@ -21,6 +21,6 @@
     <orderEntry type="module" module-name="intellij.libraries.lz4" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="library" name="mvstore" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mvstore" />
   </component>
 </module>

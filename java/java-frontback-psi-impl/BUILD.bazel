@@ -18,7 +18,7 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi",
     "//platform/core-api:core",
     "//platform/core-impl",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:stream_ex",
     "//platform/util",
     "@lib//:fastutil-min",

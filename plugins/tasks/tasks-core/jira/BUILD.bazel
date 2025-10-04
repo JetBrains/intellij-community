@@ -24,7 +24,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/tasks-platform-impl:tasks-impl",
     "//plugins/tasks/tasks-api:tasks",
-    "@lib//:xml_r_p_c",
+    "//libraries/xml-rpc",
     "//libraries/gson",
     "//platform/core-ui",
     "//platform/util/jdom",

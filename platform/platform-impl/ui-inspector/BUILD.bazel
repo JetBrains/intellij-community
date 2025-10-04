@@ -23,7 +23,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/core-ui",
     "//platform/ide-core-impl",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//libraries/guava",
     "//platform/projectModel-api:projectModel",
     "//platform/editor-ui-ex:editor-ex",

@@ -18,7 +18,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/analysis-api:analysis",
     "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",

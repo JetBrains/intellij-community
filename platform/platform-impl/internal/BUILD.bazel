@@ -43,7 +43,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/service-container",
     "//libraries/guava",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//libraries/kotlinx/serialization/json",
     "@lib//:fastutil-min",
     "//libraries/hash4j",

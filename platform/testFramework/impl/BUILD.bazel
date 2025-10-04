@@ -18,7 +18,7 @@ jvm_library(
     "//platform/core-api:core",
     "//jps/model-api:model",
     "//platform/testFramework",
-    "@lib//:asm",
+    "//libraries/asm",
   ]
 )
 ### auto-generated section `build intellij.platform.testFramework.impl` end

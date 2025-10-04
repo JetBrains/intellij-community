@@ -66,7 +66,7 @@
     <orderEntry type="library" scope="TEST" name="assertj-swing" level="project" />
     <orderEntry type="library" scope="TEST" name="snakeyaml" level="project" />
     <orderEntry type="library" scope="TEST" name="jna" level="project" />
-    <orderEntry type="library" scope="TEST" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
@@ -130,7 +130,7 @@
     <orderEntry type="library" scope="TEST" name="ktor-server-cio" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="rhino" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.rhino" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.eelHelper" scope="TEST" />

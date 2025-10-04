@@ -19,7 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" />
     <orderEntry type="module" module-name="intellij.tasks" />
-    <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.xml.rpc" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />

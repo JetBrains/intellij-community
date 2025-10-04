@@ -52,7 +52,7 @@
     <orderEntry type="library" name="jediterm-core" level="project" />
     <orderEntry type="library" name="jediterm-ui" level="project" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
-    <orderEntry type="library" name="winp" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.winp" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

@@ -67,7 +67,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="library" name="jetbrains.markdown" level="project" />
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />

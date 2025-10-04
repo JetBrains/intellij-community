@@ -66,7 +66,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" />

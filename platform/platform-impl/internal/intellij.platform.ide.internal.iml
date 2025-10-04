@@ -58,7 +58,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />

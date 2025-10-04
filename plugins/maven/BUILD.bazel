@@ -101,7 +101,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry-impl",
     "//plugins/maven/maven-server-telemetry:server-telemetry",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/eel-provider",
     "//platform/ijent",
     "//platform/eel-impl",

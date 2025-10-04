@@ -21,7 +21,7 @@ jvm_library(
     "//libraries/lz4",
     "//platform/diagnostic",
     "//platform/util/coroutines",
-    "@lib//:mvstore",
+    "//libraries/mvstore",
   ]
 )
 ### auto-generated section `build intellij.platform.util.ex` end

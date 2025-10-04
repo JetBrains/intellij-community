@@ -53,7 +53,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
-    "@lib//:asm",
+    "//libraries/asm",
     "//java/execution/impl",
     "//libraries/guava",
     "//java/idea-ui:ui",

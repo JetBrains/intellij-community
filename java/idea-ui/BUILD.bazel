@@ -62,7 +62,7 @@ jvm_library(
     "//java/java-syntax:syntax",
     "@lib//:slf4j-api",
     "//xml/xml-psi-api:psi",
-    "@lib//:asm",
+    "//libraries/asm",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
   ]

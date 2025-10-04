@@ -80,7 +80,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/core-api:core",
     "@lib//:kotlinc-analysis-api",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/ide-core-impl",
     "//platform/ide-core",
     "//platform/util",

@@ -43,10 +43,10 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" name="winp" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.winp" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
@@ -85,7 +85,7 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="library" name="fastutil-min" level="project" />

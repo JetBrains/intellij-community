@@ -19,6 +19,7 @@ fun JpsModule.isLibraryModule(): Boolean {
  */
 private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
   "intellij.libraries.aalto.xml",
+  "intellij.libraries.asm",
   "intellij.libraries.assertj.core",
   "intellij.libraries.caffeine",
   "intellij.libraries.compose.foundation.desktop",
@@ -49,7 +50,14 @@ private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
   "intellij.libraries.kotlinx.io",
   "intellij.libraries.skiko",
   "intellij.libraries.coil",
+  "intellij.libraries.miglayout.swing",
+  "intellij.libraries.proxy.vole",
+  "intellij.libraries.mvstore",
+  "intellij.libraries.rhino",
   "intellij.libraries.testng",
+  "intellij.libraries.winp",
+  "intellij.libraries.xml.rpc",
+  "intellij.libraries.xstream",
   "intellij.libraries.xz",
   "intellij.libraries.dokka",
   "intellij.libraries.guava",

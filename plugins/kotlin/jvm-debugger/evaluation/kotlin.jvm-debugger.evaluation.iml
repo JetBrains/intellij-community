@@ -9,7 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api-platform-interface" level="project" />

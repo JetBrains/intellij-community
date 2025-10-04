@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />

@@ -163,7 +163,7 @@
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="RUNTIME" />
     <orderEntry type="library" name="jsoup" level="project" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="module-library">
       <library name="spdx.tools.java" type="repository">
         <properties maven-id="org.spdx:tools-java:1.1.8">

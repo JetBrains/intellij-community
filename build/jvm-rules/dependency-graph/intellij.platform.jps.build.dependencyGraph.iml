@@ -28,7 +28,7 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="kotlin-metadata" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />

@@ -20,7 +20,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/ide-core-impl",
     "//java/compiler/openapi:java-compiler",
-    "@lib//:asm",
+    "//libraries/asm",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",

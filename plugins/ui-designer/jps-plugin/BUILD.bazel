@@ -23,7 +23,7 @@ jvm_library(
     "//java/compiler/instrumentation-util",
     "//java/compiler/forms-compiler:java-guiForms-compiler",
     "//platform/forms_rt:java-guiForms-rt",
-    "@lib//:asm",
+    "//libraries/asm",
     "//platform/util/jdom",
   ]
 )

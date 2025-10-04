@@ -49,7 +49,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:asm",
+    "//libraries/asm",
     "@lib//:org-codehaus-groovy-groovy",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/xdebugger-impl:debugger-impl",

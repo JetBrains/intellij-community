@@ -166,7 +166,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
-    "@lib//:asm",
+    "//libraries/asm",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",
     "//platform/build-scripts/downloader",

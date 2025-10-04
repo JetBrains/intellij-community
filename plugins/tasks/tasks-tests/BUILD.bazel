@@ -31,7 +31,7 @@ jvm_library(
     "//java/testFramework",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
-    "@lib//:xml_r_p_c",
+    "//libraries/xml-rpc",
     "//java/debugger/openapi:java-debugger",
     "//plugins/xslt-debugger",
     "//platform/xdebugger-impl:debugger-impl",

@@ -53,7 +53,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="library" name="jna" level="project" />

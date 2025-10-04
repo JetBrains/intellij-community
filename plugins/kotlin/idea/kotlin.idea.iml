@@ -47,7 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
-    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />

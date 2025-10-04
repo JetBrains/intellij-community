@@ -60,7 +60,7 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />

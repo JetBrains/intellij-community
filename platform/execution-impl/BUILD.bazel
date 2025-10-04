@@ -31,7 +31,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/platform-impl:ide-impl",
     "//platform/macro",
-    "@lib//:miglayout-swing",
+    "//libraries/miglayout-swing",
     "//libraries/guava",
     "//platform/refactoring",
     "//platform/ide-core-impl",
