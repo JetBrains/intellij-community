@@ -5,6 +5,7 @@ package org.jetbrains.jewel.buildlogic.metalava
 
 import javax.inject.Inject
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
@@ -16,7 +17,6 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecOperations
-import org.gradle.process.internal.ExecException
 import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
@@ -100,7 +100,7 @@ abstract class CheckMetalavaApiTask @Inject constructor(private val workerExecut
 
             try {
                 result.assertNormalExitValue()
-            } catch (e: ExecException) {
+            } catch (e: GradleException) {
                 val msg =
                     """
                     API changed! Run `./gradlew ${updateApi()}` and then commit the changes. For backwards-incompatible
