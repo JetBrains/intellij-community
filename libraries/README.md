@@ -38,6 +38,7 @@ File: `intellij.libraries.example.lib.iml`
 **Key points:**
 - The `name` attribute in `<orderEntry type="library">` must match the library name defined in `.idea/libraries/ExampleLibrary.xml`
 - If the module depends on other embedded modules, add them as additional `<orderEntry type="module">` entries (see `junit4` example)
+- **IMPORTANT:** `.iml` files must NOT have a trailing newline at the end of the file
 
 ### 3. Create Plugin Descriptor
 
@@ -56,6 +57,8 @@ File: `resources/intellij.libraries.example.lib.xml`
   </dependencies>
 </idea-plugin>
 ```
+
+**IMPORTANT:** `.xml` files must NOT have a trailing newline at the end of the file
 
 ### 4. Register in Essential Libraries (if needed)
 
@@ -174,6 +177,7 @@ node community/libraries/replace-lib-with-module.js --help
   - TEST scope: `<orderEntry type="library" scope="TEST" name="Guava" ... />` → `<orderEntry type="module" ... scope="TEST" />`
   - TEST scope with exported attribute
   - PROVIDED scope: `<orderEntry type="library" scope="PROVIDED" name="Guava" ... />` → `<orderEntry type="module" ... scope="PROVIDED" />`
+  - RUNTIME scope: `<orderEntry type="library" scope="RUNTIME" name="Guava" ... />` → `<orderEntry type="module" ... scope="RUNTIME" />`
 - Excludes specified directories (default: `fleet/`, `toolbox/`)
 - Provides detailed statistics of files modified and replacements made
 - Dry-run mode to preview changes without modifying files
@@ -202,5 +206,6 @@ Replacements by type:
   TEST scope: 122
   TEST scope (exported): 1
   PROVIDED scope: 7
-  Total: 460
+  RUNTIME scope: 3
+  Total: 463
 ```

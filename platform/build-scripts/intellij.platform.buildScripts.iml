@@ -161,7 +161,7 @@
     <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="RUNTIME" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module-library">

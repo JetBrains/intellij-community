@@ -366,6 +366,7 @@ libraries/junit5
 libraries/junit5-launcher
 libraries/junit5-params
 libraries/junit5-pioneer
+libraries/kotlin-reflect
 libraries/kotlin-test
 libraries/kotlin-test-assertions-core-jvm
 libraries/kotlinx/coroutines/slf4j
@@ -377,6 +378,7 @@ libraries/ktor/io
 libraries/ktor/network-tls
 libraries/ktor/utils
 libraries/lucene.common
+libraries/lz4
 libraries/microba
 libraries/mockito
 libraries/skiko
@@ -385,6 +387,7 @@ libraries/system-stubs-jupiter
 libraries/testcontainers
 libraries/testng
 libraries/xerces
+libraries/xz
 notebooks/notebook-ui
 notebooks/visualization
 platform/analysis-api

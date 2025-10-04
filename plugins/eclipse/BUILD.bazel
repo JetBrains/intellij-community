@@ -38,7 +38,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/workspace/storage",
     "//platform/statistics",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/backend/workspace",
     "//xml/xml-psi-impl:psi-impl",
   ]
@@ -83,7 +83,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "@lib//:junit5",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/backend/workspace",

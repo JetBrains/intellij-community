@@ -13,7 +13,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/platform-util-io:ide-util-io",
     "//platform/core-api:core",
-    "@lib//:lz4-java",
+    "//libraries/lz4",
     "//platform/util-ex",
     "//libraries/ktor/utils",
     "//libraries/ktor/io",

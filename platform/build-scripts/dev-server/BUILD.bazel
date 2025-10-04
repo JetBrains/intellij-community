@@ -31,6 +31,6 @@ jvm_library(
     "//platform/util/zip",
     "@lib//:kotlinx-serialization-protobuf",
   ],
-  runtime_deps = ["@lib//:xz"]
+  runtime_deps = ["//libraries/xz"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer` end

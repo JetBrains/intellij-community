@@ -18,7 +18,7 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/jackson/databind",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/util-rt",
     "@lib//:jetbrains-annotations",
     "@lib//:platform-eel_helper-jline-terminal",

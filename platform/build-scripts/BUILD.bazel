@@ -100,7 +100,7 @@ jvm_library(
     "@lib//:jaxb-api",
     "@lib//:jaxb-runtime",
     "@lib//:javax-activation",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:snakeyaml",
   ]

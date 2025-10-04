@@ -161,7 +161,7 @@ jvm_library(
     "//libraries/gson",
     "@lib//:classgraph",
     "@lib//:assert_j",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:vcs-github-apollographql-apollo-ast-jvm",
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",

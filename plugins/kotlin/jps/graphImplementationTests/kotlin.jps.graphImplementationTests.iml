@@ -24,7 +24,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build.tests" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
-    <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="kotlin.testsFromCompiler" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-tooling-core" level="project" />
   </component>

@@ -8,7 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/util",
     "//platform/util/jdom",
     "@lib//:jcip",
@@ -18,7 +18,7 @@ jvm_library(
     "//libraries/caffeine",
     "//platform/util/base",
     "//platform/util-class-loader:util-classLoader",
-    "@lib//:lz4-java",
+    "//libraries/lz4",
     "//platform/diagnostic",
     "//platform/util/coroutines",
     "@lib//:mvstore",

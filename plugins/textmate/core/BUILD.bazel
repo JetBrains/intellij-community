@@ -25,7 +25,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:slf4j-api",
     "@lib//:kotlinx-coroutines-core-provided",
     "@lib//:kotlinx-collections-immutable-provided",

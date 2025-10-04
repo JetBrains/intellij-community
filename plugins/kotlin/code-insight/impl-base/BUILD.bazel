@@ -39,7 +39,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/usageView",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-analysis-api",

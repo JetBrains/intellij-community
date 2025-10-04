@@ -93,7 +93,7 @@
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="library" scope="TEST" name="classgraph" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
       <library name="apollographql.apollo.ast.jvm" type="repository">
         <properties maven-id="com.apollographql.apollo:apollo-ast-jvm:4.0.0">

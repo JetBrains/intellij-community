@@ -19,7 +19,7 @@ jvm_library(
     "//plugins/kotlin/plugin/k2",
     "//java/testFramework",
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//libraries/gson",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-kotlin-compiler-tests",

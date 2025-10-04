@@ -16,7 +16,7 @@ jvm_library(
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
     "//java/testFramework",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/kotlin/base/plugin",

@@ -29,7 +29,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/guava",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/util",
     "@lib//:fastutil-min",
     "//libraries/caffeine",

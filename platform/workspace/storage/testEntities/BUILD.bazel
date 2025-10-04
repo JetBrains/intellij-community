@@ -16,7 +16,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
   ]
 )
 ### auto-generated section `build intellij.platform.workspace.storage.testEntities` end

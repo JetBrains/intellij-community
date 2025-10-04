@@ -14,7 +14,7 @@ jvm_library(
     "@lib//:vavr",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jna",
-    "@lib//:lz4-java",
+    "//libraries/lz4",
     "@lib//:jsr305",
     "//java/java-psi-impl:psi-impl",
     "//platform/core-api:core",

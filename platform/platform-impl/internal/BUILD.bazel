@@ -49,7 +49,7 @@ jvm_library(
     "//libraries/hash4j",
     "//libraries/gson",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:jna",
     "//platform/workspace/storage",
     "//platform/platform-impl/concurrency",

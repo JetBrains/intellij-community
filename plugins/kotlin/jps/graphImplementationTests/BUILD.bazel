@@ -32,7 +32,7 @@ jvm_library(
     "//jps/jps-builders:build-tests_test_lib",
     "//jps/model-api:model",
     "//platform/core-api:core",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//plugins/kotlin/tests-from-compiler:tests-from-compiler_test_lib",
     "@lib//:kotlin-tooling-core",
   ],

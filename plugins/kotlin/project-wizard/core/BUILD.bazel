@@ -15,7 +15,7 @@ jvm_library(
   resources = [":core_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinx-collections-immutable",
     "//platform/observable",
     "@lib//:velocity",
@@ -48,7 +48,7 @@ jvm_library(
   associates = [":core"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "@lib//:kotlinx-collections-immutable",
     "//platform/observable",
     "@lib//:velocity",

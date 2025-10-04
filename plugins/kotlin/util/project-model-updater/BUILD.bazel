@@ -15,7 +15,7 @@ jvm_library(
   resources = [":project-model-updater_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlin-reflect",
+    "//libraries/kotlin-reflect",
     "//platform/util/jdom",
   ]
 )
