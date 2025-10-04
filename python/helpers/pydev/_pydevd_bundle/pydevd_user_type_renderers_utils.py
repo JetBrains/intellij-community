@@ -1,4 +1,5 @@
 #  Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+import sys
 import inspect
 from _pydevd_bundle import pydevd_utils
 
@@ -8,10 +9,14 @@ try:
 except Exception:
     _pydevd_import_class = None
 
-def _resolve_type(path):
+
+def resolve_type(path):
     """Resolve 'pkg.mod.Class' -> class object, or None."""
     if not path:
         return None
+    path_parts = path.rpartition('.')
+    if path_parts[0] in ('builtins', '__builtins__', '__builtin__', '', None):
+        path = '.'.join(['builtins' if sys.version_info.major > 2 else '__builtin__', path_parts[-1]])
     # Prefer pydevd's own importer so future understandings
     # over runtime module imports may propagate seamlessly
     if _pydevd_import_class is not None:
@@ -24,13 +29,19 @@ def _resolve_type(path):
                     pass
     return None
 
+def _not_builtin(cls):
+    return getattr(cls, '__module__', None) not in ('builtins', '__builtin__')
+
 def _by_type_entities(cls, renderers_dict):
-    """Resolve names into types for entity-bound type matching criteria"""
-    for render in [render for renders in renderers_dict.values() for render in renders]:
+    """
+    Resolve names into types for entity-bound type matching criteria
+    (new option to apply renderers to subclasses/heirs of the target type)
+    """
+    for trname, render in [(trname, render) for trname, renders in renderers_dict.items() for render in renders]:
         try:
-            for name_type in ('type_canonical_import_path','type_qualified_name'):
-                target = _resolve_type(getattr(render, name_type, None))
-                if cls is target:
+            target = getattr(render, "resolved_type", None)
+            if isinstance(target, type):
+                if cls is target or (getattr(render, 'heirs', False) and _not_builtin(target) and issubclass(cls, target)):
                     return render
         except:
             pass
