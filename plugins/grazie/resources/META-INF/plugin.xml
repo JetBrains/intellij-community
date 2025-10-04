@@ -25,7 +25,6 @@
 
   <dependencies>
     <module name="intellij.libraries.lucene.common"/>
-    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
     <module name="intellij.spellchecker"/>
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.libraries.grpc"/>
@@ -38,6 +37,7 @@
     <module name="intellij.grazie.properties"/>
     <module name="intellij.grazie.xml"/>
     <module name="intellij.grazie.yaml"/>
+    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local" loading="embedded"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
