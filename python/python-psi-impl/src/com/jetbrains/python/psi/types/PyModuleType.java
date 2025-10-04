@@ -381,23 +381,21 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
    * @return a list of submodules of the specified module directory, either files or dirs, for easier naming; may contain file names
    * not suitable for import.
    */
-  private static @NotNull List<PsiFileSystemItem> getSubmodulesList(@Nullable PsiDirectory directory, @Nullable PsiElement anchor) {
+  private static @NotNull List<PsiFileSystemItem> getSubmodulesList(@NotNull PsiDirectory directory, @Nullable PsiElement anchor) {
     final List<PsiFileSystemItem> result = new ArrayList<>();
 
-    if (directory != null) { // just in case
-      // file modules
-      for (PsiFile f : directory.getFiles()) {
-        final String filename = f.getName();
-        // if we have a binary module, we'll most likely also have a stub for it in site-packages
-        if (!isExcluded(f) && (f instanceof PyFile && !filename.equals(PyNames.INIT_DOT_PY)) || isBinaryModule(filename)) {
-          result.add(f);
-        }
+    // file modules
+    for (PsiFile f : directory.getFiles()) {
+      final String filename = f.getName();
+      // if we have a binary module, we'll most likely also have a stub for it in site-packages
+      if (!isExcluded(f) && (f instanceof PyFile && !filename.equals(PyNames.INIT_DOT_PY)) || isBinaryModule(filename)) {
+        result.add(f);
       }
-      // dir modules
-      for (PsiDirectory dir : directory.getSubdirectories()) {
-        if (!isExcluded(dir) && PyUtil.isPackage(dir, anchor)) {
-          result.add(dir);
-        }
+    }
+    // dir modules
+    for (PsiDirectory dir : directory.getSubdirectories()) {
+      if (!isExcluded(dir) && PyUtil.isPackage(dir, anchor)) {
+        result.add(dir);
       }
     }
     return result;
@@ -530,8 +528,16 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public static @NotNull List<LookupElement> getSubModuleVariants(@Nullable PsiDirectory directory,
                                                                   @NotNull PsiElement location,
                                                                   @Nullable Set<? super String> namesAlready) {
+    if (directory == null) {
+      return Collections.emptyList();
+    }
     final List<LookupElement> result = new ArrayList<>();
-    for (PsiFileSystemItem item : getSubmodulesList(directory, location)) {
+    List<PsiFileSystemItem> items = getSubmodulesList(directory, location);
+    PsiDirectory skeletonsDir = ResolveImportUtil.findCorrespondingSkeletonsDir(directory);
+    if (skeletonsDir != null) {
+      items = ContainerUtil.concat(items, getSubmodulesList(skeletonsDir, location));
+    }
+    for (PsiFileSystemItem item : items) {
       if (item != location.getContainingFile().getOriginalFile()) {
         final LookupElement lookupElement = buildFileLookupElement(location.getContainingFile(), item, namesAlready);
         if (lookupElement != null) {
