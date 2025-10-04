@@ -81,6 +81,20 @@ class CheckerRunner(val text: TextContent) {
     return null
   }
 
+  /**
+   * We want for the CPU-bound checkers to all happen on the same thread
+   * because other threads are all needed by other inspections during highlighting.
+   * But we also want for external checkers to make their network requests in parallel.
+   *
+   * So we split the checkers into coroutines but dispatch them on the same thread sequentially.
+   * We schedule the external checkers to start as soon as possible
+   * to allow them to make the requests and suspend, giving up the thread to others.
+   * Then we explicitly start the non-external checkers to do their work, probably CPU-bound.
+   * We periodically yield to allow the external checkers to process their network responses (if any) and possibly suspend further.
+   *
+   * In the end, we still collect the results in the checker registration order
+   * so that problems from the first checkers can override intersecting problems from others.
+   */
   private fun doRun(checkers: List<TextChecker>): List<TextProblem> {
     return runBlockingCancellable {
       val deferred = checkers.map { checker ->
@@ -89,11 +103,9 @@ class CheckerRunner(val text: TextContent) {
           else -> async(start = CoroutineStart.LAZY) { checker.check(text) }
         }
       }
-      launch {
-        for (job in deferred) {
-          yield() // allow the main coroutine to process the available results as soon as possible
-          job.start()
-        }
+      for (job in deferred) {
+        yield() // let all pending external checker jobs complete what they're ready to do and possibly suspend further
+        job.start()
       }
       deferred.awaitAll().flatten()
     }
