@@ -4,7 +4,6 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -19,6 +18,7 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginManagerCoreKt;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -34,11 +34,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.annotations.NativePath;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
-import com.intellij.util.PathUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -340,7 +338,7 @@ public final class AsyncStacksUtils {
                                                boolean targetedPath) {
     Path agentNativePath = getAgentArtifactPath(project, disposable);
     if (agentNativePath == null) {
-      LOG.error("Capture agent not found");
+      // errors are reported by getAgentArtifactPath
       return;
     }
     String agentPath = targetedPath ? asEelPath(agentNativePath).toString() : agentNativePath.toString();
@@ -378,8 +376,7 @@ public final class AsyncStacksUtils {
       return getArtifactPathForDownloadedAgent(project, disposable);
     }
     else {
-      Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
-      return getArtifactPathForBundledAgent(classesRoot, project, disposable);
+      return getArtifactPathForBundledAgent(project, disposable);
     }
   }
 
@@ -432,14 +429,21 @@ public final class AsyncStacksUtils {
   }
 
   private static @Nullable Path getArtifactPathForBundledAgent(
-    @NotNull Path classesRoot,
     @Nullable Project project,
     @Nullable Disposable disposable
   ) {
-    Path bundledAgentPath = classesRoot.resolveSibling("rt").resolve(AGENT_JAR_NAME);
-    if (!Files.exists(bundledAgentPath)) {
+    Path pluginDistDir = PluginManagerCoreKt.getPluginDistDirByClass(AsyncStacksUtils.class);
+    if (pluginDistDir == null || !Files.isDirectory(pluginDistDir)) {
+      LOG.error("Unable to find the (java) plugin distribution directory by class AsyncStacksUtils");
       return null;
     }
+
+    Path bundledAgentPath = pluginDistDir.resolve("lib").resolve("rt").resolve(AGENT_JAR_NAME);
+    if (!Files.exists(bundledAgentPath)) {
+      LOG.error("Unable to find bundled debugger agent under the (java) plugin directory: " + bundledAgentPath);
+      return null;
+    }
+
     EelDescriptor projectEelDescriptor = project == null ? null : EelProviderUtil.getEelDescriptor(project);
     if (project == null || LocalEelDescriptor.INSTANCE.equals(projectEelDescriptor)) {
       String processedAgentPath = JavaExecutionUtil.handleSpacesInAgentPath(
