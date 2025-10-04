@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.ide.util.RunOnceUtil
 import com.intellij.idea.AppMode
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
@@ -62,7 +63,7 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
     @ApiStatus.Internal
     var minContrastRatio: Float = TerminalContrastRatio.DEFAULT_VALUE.value
 
-    var myTabName: @Nls String = TerminalBundle.message("local.terminal.default.name")
+    var myTabName: @Nls String = defaultTabName()
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
@@ -342,6 +343,13 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
     private val LOG = logger<TerminalOptionsProvider>()
 
     internal const val COMPONENT_NAME: String = "TerminalOptionsProvider"
+
+    private fun defaultTabName(): @Nls String {
+      return if (AppModeAssertions.isMonolith()) {
+        TerminalBundle.message("local.terminal.default.name")
+      }
+      else TerminalBundle.message("remote.terminal.default.name")
+    }
   }
 
   class PresentableNameGetter: com.intellij.openapi.components.State.NameGetter() {
