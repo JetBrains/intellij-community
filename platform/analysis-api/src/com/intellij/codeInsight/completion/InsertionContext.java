@@ -12,6 +12,26 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Contains useful information about the current completion session.
+ * <p>
+ * The following information is available:
+ * <ul>
+ *   <li>char which was typed to finish completion</li>
+ *   <li>list of lookup elements</li>
+ *   <li>file which was edited</li>
+ *   <li>editor which was edited</li>
+ *   <li>offset map which tracks offsets of inserted elements</li>
+ *   <li>runnable which should be executed after completing write action is finished. You can update it.</li>
+ * </ul>
+ * <p>
+ * Offset map contains the following offsets by default:
+ * <ul>
+ *   <li>{@link CompletionInitializationContext#START_OFFSET}</li>
+ *   <li>{@link CompletionInitializationContext#SELECTION_END_OFFSET}</li>
+ *   <li>{@link CompletionInitializationContext#IDENTIFIER_END_OFFSET}</li>
+ * </ul>
+ */
 @ApiStatus.NonExtendable
 public class InsertionContext {
   public static final OffsetKey TAIL_OFFSET = OffsetKey.create("tailOffset", true);
@@ -85,7 +105,7 @@ public class InsertionContext {
     return myCompletionChar;
   }
 
-  public @NotNull LookupElement @NotNull[] getElements() {
+  public @NotNull LookupElement @NotNull [] getElements() {
     return myElements;
   }
 
@@ -101,6 +121,9 @@ public class InsertionContext {
     return myLaterRunnable;
   }
 
+  /**
+   * See doc of {@link LookupElement#handleInsert}
+   */
   public void setLaterRunnable(@Nullable Runnable laterRunnable) {
     myLaterRunnable = laterRunnable;
   }
@@ -127,6 +150,7 @@ public class InsertionContext {
    * Creates a new instance of {@link InsertionContext} with the new copy of {@link OffsetMap}
    */
   public @NotNull InsertionContext forkByOffsetMap() {
-    return new InsertionContext(myOffsetMap.copyOffsets(myEditor.getDocument()), myCompletionChar, myElements, myPsiFile, myEditor, myAddCompletionChar);
+    return new InsertionContext(myOffsetMap.copyOffsets(myEditor.getDocument()), myCompletionChar, myElements, myPsiFile, myEditor,
+                                myAddCompletionChar);
   }
 }
