@@ -125,7 +125,11 @@ public final class CompletionAssertions {
     DocumentEvent killer;
     private RangeMarkerSpy spy;
 
-    WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
+    WatchingInsertionContext(@NotNull OffsetMap offsetMap,
+                             @NotNull PsiFile file,
+                             char completionChar,
+                             @NotNull List<LookupElement> items,
+                             @NotNull Editor editor) {
       super(offsetMap, completionChar, items.toArray(LookupElement.EMPTY_ARRAY),
             file, editor,
             shouldAddCompletionChar(completionChar));
