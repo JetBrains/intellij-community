@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -19,7 +19,7 @@ import java.util.Set;
 
 /**
  * An item shown in a {@link Lookup} suggestion list, most often produced by code completion or live templates.
- * A typical way to create lookup element is to use {@link LookupElementBuilder}.
+ * A typical way to create a lookup element is to use {@link LookupElementBuilder}.
  * Another way is to subclass it. Use the latter way only if you need it to implement some additional interface, to modify equals/hashCode
  * or other advanced logic.
  *
@@ -35,7 +35,7 @@ public abstract class LookupElement extends UserDataHolderBase {
   public static final Key<Long> LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS = Key.create("lookup element shown timestamp");
 
   /**
-   * @return the string which will be inserted into the editor when this lookup element is chosen
+   * @return the string, which will be inserted into the editor when this lookup element is chosen
    */
   public abstract @NotNull String getLookupString();
 
@@ -51,7 +51,7 @@ public abstract class LookupElement extends UserDataHolderBase {
 
   /**
    * @return some object that this lookup element represents, often a {@link PsiElement} or another kind of symbol.
-   * This is mostly used by extensions analyzing the lookup elements, e.g. for sorting purposes.
+   * This is mostly used by extensions analyzing the lookup elements, e.g., for sorting purposes.
    */
   public @NotNull Object getObject() {
     return this;
@@ -59,7 +59,7 @@ public abstract class LookupElement extends UserDataHolderBase {
 
   /**
    * @return a PSI element associated with this lookup element. It's used for navigation, showing quick documentation and sorting by proximity to the current location.
-   * The default implementation tries to extract PSI element from {@link #getObject()} result.
+   * The default implementation tries to extract a PSI element from {@link #getObject()} result.
    */
   public @Nullable PsiElement getPsiElement() {
     Object o = getObject();
@@ -79,8 +79,8 @@ public abstract class LookupElement extends UserDataHolderBase {
   }
 
   /**
-   * @return whether this lookup element is still valid (can be rendered, inserted, queried for {@link #getObject()}.
-   * A lookup element may become invalidated if e.g. its underlying PSI becomes invalidated.
+   * @return whether this lookup element is still valid (can be rendered, inserted, queried for {@link #getObject()}).
+   * A lookup element may become invalidated if e.g., its underlying PSI becomes invalidated.
    * @see PsiElement#isValid()
    */
   public boolean isValid() {
@@ -108,7 +108,7 @@ public abstract class LookupElement extends UserDataHolderBase {
 
   /**
    * @return whether {@link #handleInsert} expects all documents to be committed at the moment of its invocation.
-   * The default is {@code true}, overriders can change that, for example if automatic commit is too slow. 
+   * The default is {@code true}, overriders can change that, for example, if automatic commit is too slow.
    */
   public boolean requiresCommittedDocuments() {
     return true;
@@ -128,10 +128,10 @@ public abstract class LookupElement extends UserDataHolderBase {
 
   /**
    * Fill the given presentation object with details specifying how this lookup element should look when rendered.
-   * By default, just sets the item text to the lookup string.<p></p>
+   * By default, just sets the item text to the lookup string.<p>
    *
    * This method is called before the item can be shown in the suggestion list, so it should be relatively fast to ensure that
-   * list is shown as soon as possible. If there are heavy computations involved, consider making them optional and moving into
+   * the completion list is shown as soon as possible. If there are heavy computations involved, consider making them optional and moving into
    * to {@link #getExpensiveRenderer()}.
    */
   public void renderElement(@NotNull LookupElementPresentation presentation) {
@@ -156,7 +156,7 @@ public abstract class LookupElement extends UserDataHolderBase {
 
   /**
    * Return the first element of the given class in a {@link LookupElementDecorator} wrapper chain.
-   * If this object is not a decorator, return it if it's instance of the given class, otherwise null.
+   * If this object is not a decorator, return it if it's an instance of the given class, otherwise null.
    */
   public @Nullable <T> T as(@NotNull Class<T> clazz) {
     //noinspection unchecked
