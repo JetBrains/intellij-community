@@ -63,7 +63,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       }
       else {
         withCurrentThreadCoroutineScopeBlocking {
-          currentThreadCoroutineScope().launch {
+          currentThreadCoroutineScope().launch(start = CoroutineStart.UNDISPATCHED) {
             runAsyncFormat(formattingRequest)
           }
         }
@@ -203,14 +203,19 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       }
       // There is an implicit contract that a task that was already created is also started.
       // GlobalScope is used here to prevent cancellation before that can happen.
+      val taskStarted = CompletableDeferred<Unit>()
       val taskJob = GlobalScope.launch(dispatcher) {
         underProgressIfNeeded(task.isRunUnderProgress) {
           if (stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
+            taskStarted.complete(Unit)
             task.run()
           }
         }
       }
       try {
+        withContext(NonCancellable) {
+          taskStarted.await()
+        }
         val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
           result.await()
         }
