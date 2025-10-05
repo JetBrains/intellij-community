@@ -156,8 +156,9 @@ private fun PyCallExpression.getExplicitResolveResults(resolveContext: PyResolve
   val calleeType = context.getType(callee)
 
   val provided = PyTypeProvider.EP_NAME.extensionList.mapNotNull { it.prepareCalleeTypeForCall(calleeType, this, context) }
-  if (!provided.isEmpty())
+  if (!provided.isEmpty()) {
     return provided.mapNotNull { Ref.deref(it) }
+  }
 
   val result = mutableListOf<PyCallableType>()
 
