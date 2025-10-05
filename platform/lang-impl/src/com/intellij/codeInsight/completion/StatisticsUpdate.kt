@@ -25,8 +25,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
-class StatisticsUpdate
-    private constructor(private val myInfo: StatisticsInfo) : Disposable {
+class StatisticsUpdate private constructor(
+  private val myInfo: StatisticsInfo
+) : Disposable {
+
   private var mySpared: Int = 0
 
   override fun dispose() {}
