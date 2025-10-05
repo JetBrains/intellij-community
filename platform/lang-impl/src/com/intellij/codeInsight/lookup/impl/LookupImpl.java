@@ -695,19 +695,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     fireItemSelected(lookupItem, completionChar);
   }
 
-  public int getPrefixLength(LookupElement item) {
+  public int getPrefixLength(@NotNull LookupElement item) {
     return myOffsets.getPrefixLength(item, this);
   }
 
-  protected void insertLookupString(LookupElement item, int prefix) {
+  protected void insertLookupString(@NotNull LookupElement item, int prefix) {
     insertLookupString(mySession.getProject(), getTopLevelEditor(), item, itemMatcher(item), itemPattern(item), prefix);
   }
 
-  public static void insertLookupString(Project project,
-                                        Editor editor,
-                                        LookupElement item,
-                                        PrefixMatcher matcher,
-                                        String itemPattern,
+  public static void insertLookupString(@NotNull Project project,
+                                        @NotNull Editor editor,
+                                        @NotNull LookupElement item,
+                                        @NotNull PrefixMatcher matcher,
+                                        @NotNull String itemPattern,
                                         int prefixLength) {
     String lookupString = LookupUtil.getCaseCorrectedLookupString(item, matcher, itemPattern);
 
@@ -721,8 +721,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
         }
         catch (AssertionError ae) {
-          String classes = StreamEx.iterate(
-              item, Objects::nonNull, i -> i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null)
+          @SuppressWarnings("RedundantTypeArguments") // type argument is needed to suppress incorrent nullability issue
+          String classes = StreamEx
+            .<LookupElement>iterate(item, Objects::nonNull, i -> {
+              return i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null;
+            })
             .map(le -> le.getClass().getName()).joining(" -> ");
           LOG.error("When completing " + item + " (" + classes + ")", ae);
           return;

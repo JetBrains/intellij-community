@@ -171,7 +171,7 @@ public final class LookupOffsets implements DocumentListener {
     myLookupOriginalStartMarker.dispose();
   }
 
-  public int getPrefixLength(LookupElement item, LookupImpl lookup) {
+  public int getPrefixLength(@NotNull LookupElement item, @NotNull LookupImpl lookup) {
     return lookup.itemPattern(item).length() - myRemovedPrefix;
   }
 }
