@@ -113,7 +113,7 @@ public class BuilderHandler {
     return ContainerUtil.map(psiMethod.getParameterList().getParameters(), PsiParameter::getType);
   }
 
-  PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {
+  static PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {
       PsiTypeParameter[] typeParameters = classOrMethodToBuild.getTypeParameters();
@@ -554,8 +554,8 @@ public class BuilderHandler {
     return result;
   }
 
-  public List<BuilderInfo> createBuilderInfos(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
-                                              @Nullable PsiMethod psiClassMethod, @NotNull PsiClass builderClass) {
+  public static List<BuilderInfo> createBuilderInfos(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
+                                                     @Nullable PsiMethod psiClassMethod, @NotNull PsiClass builderClass) {
     final PsiSubstitutor builderSubstitutor = getBuilderSubstitutor(psiClass, builderClass);
     final String accessVisibility = getBuilderInnerAccessVisibility(psiAnnotation);
     final String setterPrefix = getSetterPrefix(psiAnnotation);

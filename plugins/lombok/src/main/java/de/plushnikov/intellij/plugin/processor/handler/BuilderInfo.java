@@ -278,6 +278,10 @@ public class BuilderInfo {
     return builderElementHandler.renderBuildCall(this);
   }
 
+  public String renderBuilderMethodName() {
+    return builderElementHandler.calcBuilderMethodName(this);
+  }
+
   public String renderSuperBuilderConstruction() {
     return builderElementHandler.renderSuperBuilderConstruction(this);
   }
