@@ -191,7 +191,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       )
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
+    @OptIn(DelicateCoroutinesApi::class) // GlobalScope
     suspend fun runAndAwaitTask() = coroutineScope {
       val task = checkNotNull(task)
       val dispatcher = if (isSync) {
