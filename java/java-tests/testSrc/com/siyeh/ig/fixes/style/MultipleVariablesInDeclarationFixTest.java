@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.MultipleVariablesInDeclarationInspection;
@@ -23,13 +24,13 @@ public class MultipleVariablesInDeclarationFixTest extends IGQuickFixesTestCase 
   public void testMultipleDeclarationsLocalWithComments() { doTest(); }
   public void testMutuallyDependentForDeclarations() { doTest(); }
   public void testOptimizedForLoop() { doTest(); }
-  public void testAnnotatedArrayField() {
-    doTest();
-  }
-  public void testAnnotatedArrayLocalVariable() {
-    doTest();
-  }
-  public void testAnnotatedVariableInForLoop() {
+  public void testAnnotatedArrayField() { doTest(); }
+  public void testAnnotatedArrayLocalVariable() { doTest(); }
+  public void testAnnotatedVariableInForLoop() { doTest(); }
+  
+  public void testForLoopInitializer() {
+    JavaCodeStyleSettings customSettings = JavaCodeStyleSettings.getInstance(getProject());
+    customSettings.GENERATE_FINAL_LOCALS = true;
     doTest();
   }
 
@@ -37,26 +38,25 @@ public class MultipleVariablesInDeclarationFixTest extends IGQuickFixesTestCase 
   protected String[] getEnvironmentClasses() {
     return new String[]{
       """
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Retention(RetentionPolicy.CLASS)
-@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
-public @interface Required {
-}""",
-
+        import java.lang.annotation.ElementType;
+        import java.lang.annotation.Retention;
+        import java.lang.annotation.RetentionPolicy;
+        import java.lang.annotation.Target;
+        
+        @Retention(RetentionPolicy.CLASS)
+        @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
+        public @interface Required {
+        }""",
       """
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Retention(RetentionPolicy.CLASS)
-@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
-public @interface Preliminary {
-}"""
+        import java.lang.annotation.ElementType;
+        import java.lang.annotation.Retention;
+        import java.lang.annotation.RetentionPolicy;
+        import java.lang.annotation.Target;
+        
+        @Retention(RetentionPolicy.CLASS)
+        @Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.TYPE_USE})
+        public @interface Preliminary {
+        }"""
     };
   }
 }
