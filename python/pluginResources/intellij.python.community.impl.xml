@@ -572,10 +572,6 @@
 
     <!-- Targets API -->
     <registryKey key="enable.conda.on.targets" defaultValue="false" description="Enables Conda configuration on targets."/>
-    <registryKey key="python.packaging.tool.use.project.location.as.working.dir" defaultValue="false"
-                 description="Use project location as a working directory for the packaging tool execution."/>
-    <registryKey key="python.packaging.tool.upload.project" defaultValue="false"
-                 description="Upload project files and use this location as a working directory for the packaging tool execution."/>
 
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle"
                        key="debug.notification.group"/>

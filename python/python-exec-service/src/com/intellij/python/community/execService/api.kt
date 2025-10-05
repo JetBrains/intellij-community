@@ -185,7 +185,7 @@ open class ZeroCodeStdoutParserTransformer<T>(val stdoutParser: (String) -> Resu
  * @property[env] Environment variables to be applied with the process run
  * @property[timeout] Process gets killed after this timeout
  * @property[processDescription] optional description to be displayed to user
- * [tty] Much like [com.intellij.platform.eel.EelExecApi.Pty]
+ * @property[tty] Much like [com.intellij.platform.eel.EelExecApi.Pty]
  */
 data class ExecOptions(
   override val env: Map<String, String> = emptyMap(),
