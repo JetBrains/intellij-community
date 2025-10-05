@@ -247,8 +247,8 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
         EntryData data = it.next().getValue();
         ZipEntry zipEntry = data.getZipEntry();
-        indexBuilder.addFile(zipEntry.getName());
         if (!zipEntry.isDirectory()) {
+          indexBuilder.addFile(zipEntry.getName());
           zos.uncompressedData(zipEntry.getName().getBytes(StandardCharsets.UTF_8), data.getContent(), myCrc);
         }
         it.remove();
