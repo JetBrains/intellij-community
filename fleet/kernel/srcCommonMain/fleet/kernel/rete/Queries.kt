@@ -1,10 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.rete.impl.*
-import fleet.kernel.rete.impl.DummyQueryScope
-import fleet.kernel.rete.impl.distinct
 import fleet.util.async.firstNotNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
@@ -114,6 +112,19 @@ fun <E : Entity> EntityType<E>.each(): SetQuery<E> = let { entityType ->
       (entity(eid.value) as? E) ?: error("entity does not exist for ${entityType.entityTypeIdent}")
     }
     .intern("each", entityType)
+}
+
+/**
+ * Provides a match for every [EntityType].
+ */
+fun EntityType.Companion.each(): SetQuery<EntityType<*>> = let { entityType ->
+  @Suppress("UNCHECKED_CAST")
+  queryOf(entityType.eid)
+    .lookupAttribute(Entity.Type.attr as Attribute<EID>)
+    .mapNotNull { // entity type might not yet be registered
+      entity(it) as EntityType<*>?
+    }
+    .intern("eachEntityType", entityType)
 }
 
 /**
