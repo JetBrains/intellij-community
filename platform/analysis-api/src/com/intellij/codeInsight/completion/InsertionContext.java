@@ -123,6 +123,9 @@ public class InsertionContext {
            completionChar != Lookup.NORMAL_SELECT_CHAR;
   }
 
+  /**
+   * Creates a new instance of {@link InsertionContext} with the new copy of {@link OffsetMap}
+   */
   public @NotNull InsertionContext forkByOffsetMap() {
     return new InsertionContext(myOffsetMap.copyOffsets(myEditor.getDocument()), myCompletionChar, myElements, myPsiFile, myEditor, myAddCompletionChar);
   }
