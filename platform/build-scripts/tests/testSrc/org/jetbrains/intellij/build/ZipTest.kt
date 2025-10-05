@@ -38,6 +38,7 @@ import java.util.zip.CRC32
 import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import kotlin.io.path.createDirectories
 import kotlin.io.path.name
 import kotlin.random.Random
 
@@ -641,6 +642,27 @@ class ZipTest {
         assertThat(entry.data.size).isEqualTo(item.size)
         assertThat(entry.data.all { it == 0xFF.toByte() }).isTrue()
       }
+    }
+  }
+
+  @Test
+  fun `ensure entries are in sorted order`(@TempDir tempDir: Path) {
+    val dir = Files.createDirectories(tempDir.resolve("dir"))
+    Files.writeString(dir.resolve("1"), "1")
+    Files.writeString(dir.resolve("2").resolve("1").createDirectories().resolve("1"), "2.1.1")
+    Files.writeString(dir.resolve("3").createDirectories().resolve("1"), "3.1")
+    Files.writeString(dir.resolve("4"), "4")
+
+    val archiveFile = tempDir.resolve("archive.zip")
+    zip(archiveFile, mapOf(dir to ""), addDirEntriesMode = AddDirEntriesMode.NONE)
+
+    HashMapZipFile.load(archiveFile).use { zipFile ->
+      assertThat(zipFile.entries.map { it.name }).containsExactly(
+        "1",
+        "2/1/1",
+        "3/1",
+        "4",
+      )
     }
   }
 }
