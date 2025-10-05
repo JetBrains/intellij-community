@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 
+import com.intellij.gradle.toolingExtension.impl.model.warmUp.GradleTaskWarmUpRequest;
 import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
@@ -26,6 +27,7 @@ public class GradleSourceSetModelProvider implements ProjectImportModelProvider 
     @NotNull Collection<? extends GradleBuild> buildModels,
     @NotNull GradleModelConsumer modelConsumer
   ) {
+    GradleModelProviderUtil.buildModels(controller, buildModels, GradleTaskWarmUpRequest.class, GradleModelConsumer.NOOP);
     GradleModelProviderUtil.buildModels(controller, buildModels, GradleSourceSetModel.class, modelConsumer);
   }
 }

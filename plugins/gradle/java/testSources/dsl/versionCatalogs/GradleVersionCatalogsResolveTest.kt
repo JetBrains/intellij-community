@@ -268,6 +268,8 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
         for_included-build-custom = { module = "org.junit.jupiter:junit-jupiter" }
         """.trimIndent()
       )
+      // Project configuration without an existing directory is not allowed
+      withDirectory("subproject")
     }
   }
 

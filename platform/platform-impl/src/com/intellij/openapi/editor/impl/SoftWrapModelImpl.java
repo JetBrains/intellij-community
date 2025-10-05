@@ -237,7 +237,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public boolean isSoftWrappingEnabled() {
-    ThreadingAssertions.assertEventDispatchThread();
+    EditorThreading.assertInteractionAllowed();
     return myUseSoftWraps && !editor.isPurePaintingMode();
   }
 

@@ -57,7 +57,7 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
       List<PsiAnnotation> annotations = getAnnotationsToAdd(owner);
       if (!annotations.isEmpty()) {
         String presentation = StreamEx.of(annotations)
-          .map(MakeInferredAnnotationExplicit::getAnnotationPresentation)
+          .map(annotation -> getAnnotationPresentation(file, annotation))
           .joining(" ");
         setText(CommonQuickFixBundle.message("fix.insert.x", presentation));
         return true;
@@ -76,8 +76,8 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     return ContainerUtil.filter(annotations, anno -> !isJetBrainsAnnotation(anno));
   }
 
-  private static @NotNull String getAnnotationPresentation(PsiAnnotation annotation) {
-    final PsiJavaCodeReferenceElement nameRef = correctAnnotation(annotation).getNameReferenceElement();
+  private static @NotNull String getAnnotationPresentation(@NotNull PsiFile file, PsiAnnotation annotation) {
+    final PsiJavaCodeReferenceElement nameRef = correctAnnotation(file, annotation).getNameReferenceElement();
     final String name = nameRef != null ? nameRef.getReferenceName() : annotation.getQualifiedName();
     return "@" + name + annotation.getParameterList().getText();
   }
@@ -160,11 +160,12 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   }
 
   private @Unmodifiable @NotNull List<PsiAnnotation> getAnnotationsToAdd(@NotNull PsiModifierListOwner owner) {
+    PsiFile file = owner.getContainingFile();
     List<PsiAnnotation> allAnnotations = StreamEx.of(InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner))
       .remove(DefaultInferredAnnotationProvider::isExperimentalInferredAnnotation)
-      .map(MakeInferredAnnotationExplicit::correctAnnotation)
+      .map(annotation -> correctAnnotation(file, annotation))
       .toList();
-    return filterAnnotations(owner.getContainingFile(), allAnnotations);
+    return filterAnnotations(file, allAnnotations);
   }
 
   private static void doMakeAnnotationExplicit(@NotNull Project project, @NotNull PsiModifierListOwner owner, @NotNull List<PsiAnnotation> annotations) {
@@ -179,15 +180,15 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     }
   }
 
-  private static @NotNull PsiAnnotation correctAnnotation(@NotNull PsiAnnotation annotation) {
+  private static @NotNull PsiAnnotation correctAnnotation(@NotNull PsiFile file, @NotNull PsiAnnotation annotation) {
     Project project = annotation.getProject();
     NullableNotNullManager nnnm = NullableNotNullManager.getInstance(project);
     PsiAnnotation corrected = null;
     if (annotation.hasQualifiedName(AnnotationUtil.NULLABLE)) {
-      corrected = createAnnotation(project, nnnm.getDefaultNullable());
+      corrected = createAnnotation(project, nnnm.getDefaultAnnotation(Nullability.NULLABLE, file));
     }
     else if (annotation.hasQualifiedName(AnnotationUtil.NOT_NULL)) {
-      corrected = createAnnotation(project, nnnm.getDefaultNotNull());
+      corrected = createAnnotation(project, nnnm.getDefaultAnnotation(Nullability.NOT_NULL, file));
     }
     return corrected != null ? corrected : annotation;
   }

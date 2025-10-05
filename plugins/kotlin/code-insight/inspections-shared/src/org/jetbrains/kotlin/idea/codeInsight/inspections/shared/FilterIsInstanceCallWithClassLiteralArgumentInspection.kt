@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
@@ -89,10 +90,10 @@ private fun KtValueArgument.isClassLiteral(): Boolean =
 private fun KtValueArgument.classLiteral(): KtClassLiteralExpression? =
     (getArgumentExpression() as? KtDotQualifiedExpression)?.receiverExpression as? KtClassLiteralExpression
 
-context(KaSession)
+context(_: KaSession)
 private fun KtElement.resolveToClassSymbol(): KaNamedClassSymbol? =
     mainReference?.resolveToSymbol() as? KaNamedClassSymbol
 
-context(KaSession)
+context(_: KaSession)
 private fun KtCallExpression.resolveToFunctionSymbol(): KaNamedFunctionSymbol? =
     calleeExpression?.mainReference?.resolveToSymbol() as? KaNamedFunctionSymbol

@@ -59,7 +59,7 @@ public final class MismatchedStringBuilderQueryUpdateInspection extends BaseInsp
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MismatchedQueryAndUpdateOfStringBuilderVisitor();
   }
 

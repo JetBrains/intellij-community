@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.ide.plugins.DependencyInformation
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -13,7 +14,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 
 internal class JavaDependencyCollector : DependencyCollector {
 
-  override suspend fun collectDependencies(project: Project): Set<String> {
+  override suspend fun collectDependencies(project: Project): Set<DependencyInformation> {
     return readAction {
       val projectLibraries = LibraryTablesRegistrar.getInstance()
         .getLibraryTable(project)
@@ -31,7 +32,7 @@ internal class JavaDependencyCollector : DependencyCollector {
         .mapNotNull { it.properties as? RepositoryLibraryProperties }
         .map { it.groupId to it.artifactId }
         .distinct()
-        .map { (g, a) -> "$g:$a" }
+        .map { (g, a) -> DependencyInformation("$g:$a") }
         .toSet()
     }
   }

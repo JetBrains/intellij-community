@@ -71,7 +71,7 @@ public final class PyNestedDecoratorsInspection extends PyInspection {
       for (int i = decos.length - 1; i >= 1; i -= 1) { // start at the innermost
         PyDecorator decoInner = decos[i];
         String decoInnerName = decoInner.getName();
-        boolean isTransforming = TRANSFORMING_DECORATORS.contains(decoInnerName) && decoInner.isBuiltin();
+        boolean isTransforming = decoInnerName != null && TRANSFORMING_DECORATORS.contains(decoInnerName) && decoInner.isBuiltin();
         if (!isTransforming) {
           continue;
         }
@@ -94,7 +94,7 @@ public final class PyNestedDecoratorsInspection extends PyInspection {
       List<@NotNull PyCallable> pyCallables = decorator.multiResolveCalleeFunction(getResolveContext());
       for (PyCallable callable : pyCallables) {
         String decoOuterName = getQualifiedName(callable);
-        if (UNAFFECTED_DECORATORS.contains(decoOuterName)) {
+        if (decoOuterName != null && UNAFFECTED_DECORATORS.contains(decoOuterName)) {
           return true;
         }
       }

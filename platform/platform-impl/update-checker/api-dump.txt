@@ -1,0 +1,25 @@
+f:com.intellij.openapi.updateSettings.impl.PluginUpdateFacadeKt
+- sf:getPendingUpdates():java.util.Collection
+- sf:installUpdates(java.util.Collection,javax.swing.JComponent,java.util.function.Consumer):V
+f:com.intellij.openapi.updateSettings.impl.UpdateChecker
+- sf:INSTANCE:com.intellij.openapi.updateSettings.impl.UpdateChecker
+- sf:NOTIFICATIONS:com.intellij.notification.NotificationGroup
+- sf:checkAndPrepareToInstall(com.intellij.openapi.updateSettings.impl.PluginDownloader,com.intellij.ide.plugins.InstalledPluginsState,java.util.Map):V
+- sf:checkAndPrepareToInstall(com.intellij.openapi.updateSettings.impl.PluginDownloader,com.intellij.ide.plugins.InstalledPluginsState,java.util.Map,com.intellij.openapi.util.BuildNumber):V
+- sf:checkAndPrepareToInstall(com.intellij.openapi.updateSettings.impl.PluginDownloader,com.intellij.ide.plugins.InstalledPluginsState,java.util.Map,com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator):V
+- bs:checkAndPrepareToInstall$default(com.intellij.openapi.updateSettings.impl.PluginDownloader,com.intellij.ide.plugins.InstalledPluginsState,java.util.Map,com.intellij.openapi.util.BuildNumber,com.intellij.openapi.progress.ProgressIndicator,I,java.lang.Object):V
+- sf:getDisabledToUpdate():java.util.Set
+- sf:getDisabledToUpdatePlugins():java.util.Set
+- f:getExcludedFromUpdateCheckPlugins():java.util.HashSet
+- sf:getNotificationGroup():com.intellij.notification.NotificationGroup
+- sf:getNotificationGroupForIdeUpdateResults():com.intellij.notification.NotificationGroup
+- sf:getNotificationGroupForPluginUpdateResults():com.intellij.notification.NotificationGroup
+- sf:getPluginUpdates():java.util.Collection
+- sf:loadProductData(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.updateSettings.impl.Product
+- sf:saveDisabledToUpdatePlugins():V
+- sf:updateAndShowResult():com.intellij.openapi.util.ActionCallback
+- sf:updateAndShowResult(com.intellij.openapi.project.Project):V
+- sf:updateAndShowResult(com.intellij.openapi.project.Project,com.intellij.openapi.updateSettings.impl.UpdateSettings):V
+- bs:updateAndShowResult$default(com.intellij.openapi.project.Project,com.intellij.openapi.updateSettings.impl.UpdateSettings,I,java.lang.Object):V
+f:com.intellij.openapi.updateSettings.impl.UpdateCheckerProjectActivityKt
+- sf:deleteOldApplicationDirectories(kotlin.coroutines.Continuation):java.lang.Object

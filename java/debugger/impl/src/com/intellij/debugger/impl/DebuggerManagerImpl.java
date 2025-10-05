@@ -12,10 +12,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -33,19 +30,21 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManagerListener;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.util.net.NetKt.localhostInetAddress;
+
 @State(name = "DebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerImpl.class);
-  public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
+  public static final String LOCALHOST_ADDRESS_FALLBACK = localhostInetAddress().getHostAddress();
   private static final int WAIT_KILL_TIMEOUT = 10000;
 
   private final Project myProject;
@@ -178,7 +177,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
     session.getContextManager().addListener(mySessionListener);
 
     // the whole method may still be called from EDT, we need to update the state immediately in this case
-    UIUtil.invokeLaterIfNeeded(() -> {
+    DebuggerUIUtil.invokeLaterIfNeeded(() -> {
       getContextManager()
         .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
                   session.getState(), DebuggerSession.Event.CONTEXT, null);
@@ -203,10 +202,10 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
           final DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
             if (Registry.is("debugger.stop.on.graceful.exit")) {
-              // it is KillableColoredProcessHandler responsibility to terminate VM
+              // it is SoftlyKillableProcessHandler responsibility to terminate VM
               debugProcess.stop(willBeDestroyed &&
-                                !(processHandler instanceof KillableColoredProcessHandler &&
-                                  ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
+                                !(processHandler instanceof SoftlyKillableProcessHandler &&
+                                  ((SoftlyKillableProcessHandler)processHandler).shouldKillProcessSoftly()));
 
               // still need to wait in tests for results stability
               if (ApplicationManager.getApplication().isUnitTestMode()) {

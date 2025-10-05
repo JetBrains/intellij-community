@@ -1,32 +1,21 @@
-@file:Suppress("UnstableApiUsage")
-
 import org.jetbrains.jewel.buildlogic.apivalidation.ApiValidationExtension
+import org.jetbrains.jewel.buildlogic.metalava.MetalavaConfigurer
 
-plugins {
-    id("org.jetbrains.kotlinx.binary-compatibility-validator")
-    kotlin("jvm")
-}
-
-apiValidation {
-    /**
-     * Set of annotations that exclude API from being public. Typically, it is all kinds of `@InternalApi` annotations
-     * that mark effectively private API that cannot be actually private for technical reasons.
-     */
-    nonPublicMarkers.add("org.jetbrains.jewel.InternalJewelApi")
-}
-
-kotlin { compilerOptions { freeCompilerArgs.add("-Xexplicit-api=strict") } }
+plugins { kotlin("jvm") }
 
 val extension = project.extensions.create("publicApiValidation", ApiValidationExtension::class.java)
 
 with(extension) { excludedClassRegexes.convention(emptySet()) }
 
+private val versionCatalog = project.extensions.getByType(VersionCatalogsExtension::class.java).named("libs")
+
+MetalavaConfigurer(project, versionCatalog).configure()
+
 tasks {
     val validatePublicApi =
         register<ValidatePublicApiTask>("validatePublicApi") {
-            include { it.file.extension == "api" }
-            source(project.fileTree("api"))
-            dependsOn(named("apiCheck"))
+            source(project.fileTree(".") { include("api-dump*.txt") })
+
             excludedClassRegexes = project.the<ApiValidationExtension>().excludedClassRegexes.get()
         }
 

@@ -5,6 +5,3 @@ open class A(x: Int) {
         m(y = false, <caret>)
     }
 }
-/*
-Text: (<disabled>[y: Boolean],</disabled><highlight></highlight> [x: Int]), Disabled: false, Strikeout: false, Green: true
-*/

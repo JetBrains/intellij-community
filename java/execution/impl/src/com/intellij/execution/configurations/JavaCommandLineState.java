@@ -8,7 +8,7 @@ import com.intellij.execution.TargetDebuggerConnectionUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
+import com.intellij.execution.target.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;

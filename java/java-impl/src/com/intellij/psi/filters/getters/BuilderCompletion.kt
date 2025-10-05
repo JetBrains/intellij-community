@@ -73,4 +73,4 @@ private fun positionCaret(context: InsertionContext) {
   context.editor.caretModel.moveToOffset(if (hasParams) (argRange.startOffset + argRange.endOffset) / 2 else argRange.endOffset)
 }
 
-fun looksLikeBuilder(clazz: PsiClass?): Boolean = clazz?.name?.contains("Builder") == true
+public fun looksLikeBuilder(clazz: PsiClass?): Boolean = clazz?.name?.contains("Builder") == true

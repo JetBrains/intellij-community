@@ -3,7 +3,9 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
+import org.jetbrains.annotations.ApiStatus
 
-internal interface ShellCacheableDataGenerator<T : Any> : ShellRuntimeDataGenerator<T> {
+@ApiStatus.Internal
+interface ShellCacheableDataGenerator<T : Any> : ShellRuntimeDataGenerator<T> {
   fun getCacheKey(context: ShellRuntimeContext): String?
 }

@@ -5,7 +5,7 @@ jvm_library(
   name = "ui",
   module_name = "intellij.platform.ide.ui",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util:util-ui",
@@ -15,8 +15,8 @@ jvm_library(
     "@lib//:jna",
     "//platform/core-api:core",
     "//platform/util",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.ui` end

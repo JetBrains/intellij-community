@@ -3,6 +3,11 @@
   module: kotlin.ml-completion
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
+- name: lib/ehcache.sizeof.jar
+  library: ehcache.sizeof
+  module: kotlin.base.fir.analysis-api-platform
+  files:
+  - name: $MAVEN_REPOSITORY$/org/ehcache/sizeof/0/sizeof-0.jar
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
   - name: kotlin.frontend.split
@@ -105,9 +110,9 @@
   - name: kotlin.base.facet
   - name: kotlin.base.project-structure
   - name: kotlin.base.external-build-system
-  - name: kotlin.base.scripting
   - name: kotlin.base.scripting.k1
   - name: kotlin.base.scripting.k2
+  - name: kotlin.base.scripting.shared
   - name: kotlin.base.analysis-api-platform
   - name: kotlin.base.analysis
   - name: kotlin.base.code-insight
@@ -275,13 +280,15 @@
   - name: kotlin.bundled-compiler-plugins-support
   - name: kotlin.jsr223
   - name: kotlin.k2.internal
+  - name: kotlin.base.serialization
   - name: kotlin-ultimate.common-native
-  - name: kotlin-ultimate.native-debugger
   - name: kotlin-ultimate.javascript.debugger
   - name: kotlin-ultimate.javascript.nodeJs
-  - name: kotlin-ultimate.ultimate-plugin
+  - name: kotlin-ultimate.native-debugger
   - name: kotlin-ultimate.ultimate-native
+  - name: kotlin-ultimate.wasm.debugger
   - name: kotlin-ultimate.profiler
+  - name: kotlin-ultimate.ultimate-plugin
   - name: kotlin.plugin
 - name: lib/kotlinc.allopen-compiler-plugin.jar
   library: kotlinc.allopen-compiler-plugin

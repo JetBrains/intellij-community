@@ -34,8 +34,15 @@ import javax.swing.UIManager
  * We have to use AWT here, as we cannot spin the EventQueue for Swing
  */
 @ApiStatus.Internal
-class NiceOverlayUi(component: Component) {
-  private val rootPane: JRootPane = SwingUtilities.getRootPane(component)
+class NiceOverlayUi(
+  val rootPane: JRootPane,
+  /**
+   * "Close" button requires making a screenshot (see [com.intellij.openapi.progress.util.ui.NiceOverlayUi.screenshot])
+   * The screenshot via Robot provokes an alert on MacOS, and it does not work nice on multi-monitor linux setup
+   * So for now we decide to not show the close button and release at least some part of the UI.
+   */
+  val showCloseButton: Boolean,
+) {
 
 
   private val mainText = DiagnosticBundle.message("freeze.popup.application.is.not.responding", ApplicationInfo.getInstance().versionName)
@@ -69,13 +76,20 @@ class NiceOverlayUi(component: Component) {
   private val currentFontMetrics: FontMetrics = GraphicsUtil.safelyGetGraphics(rootPane).getFontMetrics(font)
   private val yOffsetOfTextInPopup: Int = popupHeight / 2 + currentFontMetrics.ascent / 2 - JBUIScale.scale(1)
 
-  private val popupWidth: Int = horizontalInset + getTextLength(mainText) + getTextLength(dumpThreadsButtonText) + getTextLength(dumpThreadsButtonShortcutText) + gapBetweenText1AndText2 + gapBetweenText2AndText3 + separatorInset + 1 + separatorInset + closeIconLength + horizontalInset
+  private val popupWidth: Int = horizontalInset + getTextLength(mainText) + gapBetweenText1AndText2 + getTextLength(dumpThreadsButtonText) + gapBetweenText2AndText3 + getTextLength(dumpThreadsButtonShortcutText) +
+                                if (showCloseButton) {
+                                  separatorInset + 1 + separatorInset + closeIconLength
+                                }
+                                else {
+                                  0
+                                } +
+                                horizontalInset
 
   // offsets relative to the containing component
   private val popupOffsetX: Int = rootPane.width / 2 - popupWidth / 2
   private val popupOffsetY: Int = run {
     val frame = SwingUtilities.getAncestorOfClass(IdeFrame::class.java, rootPane) as? IdeFrame
-    frame?.statusBar?.component?.location?.y ?: (rootPane.height / 2 - popupHeight / 2)
+    frame?.statusBar?.component?.location?.y ?: (rootPane.height - 20 - popupHeight)
   }
 
   // regions of the buttons relative to the containing component
@@ -87,15 +101,17 @@ class NiceOverlayUi(component: Component) {
    * We cannot ask Swing to repaint the region, as we cannot exit the EDT event we are currently in.
    * We cannot repaint the region manually, as the underlying painting logic might try to access the read/write lock, and we would get a deadlock.
    *
-   * But we know that the UI is fronzen, hence we do a trick: we take a screenshot of the region where the freeze popup is located,
+   * But we know that the UI is frozen, hence we do a trick: we take a screenshot of the region where the freeze popup is located,
    * and draw it back when the user decides to close the popup.
    */
-  private val screenshot: MultiResolutionImage
+  private val screenshot: MultiResolutionImage?
 
   /**
-   * The location of popup including its shadow; we need it to replace it with the screehshot later
+   * The location of popup including its shadow; we need it to replace it with the screenshot later
    */
   private val popupWithShadowLocation: Rectangle = Rectangle(popupOffsetX - shadowSize, popupOffsetY - shadowSize, popupWidth + shadowSize * 2, popupHeight + shadowSize * 2)
+
+  private val initialCursor = rootPane.cursor
 
   /**
    * The "model" of the popup
@@ -105,7 +121,15 @@ class NiceOverlayUi(component: Component) {
   private var closed = false
 
   init {
-    screenshot = takeScreenshot()
+    screenshot = if (showCloseButton) {
+      takeScreenshot()
+    }
+    else {
+      // screenshot is not accessed in this case
+      null
+    }
+
+    trySetCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR))
 
     drawShadow()
 
@@ -190,7 +214,7 @@ class NiceOverlayUi(component: Component) {
    * @param point the point relative to the containing component
    */
   fun mouseMoved(point: Point) {
-    closeButtonHovered = locationOfCross.contains(point)
+    closeButtonHovered = showCloseButton && locationOfCross.contains(point)
     threadDumpButtonHovered = locationOfThreadDumpButton.contains(point)
   }
 
@@ -204,7 +228,7 @@ class NiceOverlayUi(component: Component) {
    * @param point the point relative to the containing component
    */
   fun mouseClicked(point: Point): ClickOutcome {
-    if (locationOfCross.contains(point)) {
+    if (showCloseButton && locationOfCross.contains(point)) {
       closed = true
       restoreScreenshot()
       return ClickOutcome.CLOSED
@@ -217,7 +241,21 @@ class NiceOverlayUi(component: Component) {
     }
   }
 
+  /**
+   * Closes the overlay and marks the region for repainting
+   */
+  fun close() {
+    rootPane.repaint(popupWithShadowLocation)
+    trySetCursor(initialCursor)
+  }
+
   private fun restoreScreenshot() {
+    check(showCloseButton) {
+      "Screenshot can be used only when the close button is enabled"
+    }
+    checkNotNull(screenshot) {
+      "Screenshot must be initialized for restoration"
+    }
     val innerGraphics = GraphicsUtil.safelyGetGraphics(rootPane) as Graphics2D
     try {
       val variant = screenshot.resolutionVariants.run { if (size > 1) get(1) else get(0) }
@@ -261,26 +299,43 @@ class NiceOverlayUi(component: Component) {
       accumulatingOffsetX += lengthOfText1 + gapBetweenText1AndText2
 
       if (threadDumpButtonHovered) {
+        trySetCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
         graphics.paintButtonBackground(accumulatingOffsetX, lengthOfText2 + gapBetweenText2AndText3 + lengthOfText3)
+      }
+      else {
+        trySetCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR))
       }
 
       graphics.drawMainText(accumulatingOffsetX, dumpThreadsButtonText)
       accumulatingOffsetX += lengthOfText2 + gapBetweenText2AndText3
       accumulatingOffsetX += graphics.drawShortcut(accumulatingOffsetX, dumpThreadsButtonShortcutText)
-      accumulatingOffsetX += graphics.drawSeparator(accumulatingOffsetX)
 
-      graphics.color = fgColor
+      if (showCloseButton) {
+        accumulatingOffsetX += graphics.drawSeparator(accumulatingOffsetX)
 
-      if (closeButtonHovered) {
-        graphics.paintButtonBackground(accumulatingOffsetX, closeIconLength)
+        graphics.color = fgColor
+
+        if (closeButtonHovered) {
+          graphics.paintButtonBackground(accumulatingOffsetX, closeIconLength)
+        }
+        graphics.drawCloseButton(accumulatingOffsetX)
       }
-      graphics.drawCloseButton(accumulatingOffsetX)
+
     }
     finally {
       graphics.dispose()
     }
 
     return backBuffer
+  }
+
+  private fun trySetCursor(cursor: Cursor) {
+    val point = MouseInfo.getPointerInfo()?.location ?: return
+    val window = SwingUtilities.getWindowAncestor(rootPane) ?: return
+    if (!window.isShowing || !window.bounds.contains(point)) return
+    SwingUtilities.convertPointFromScreen(point, window) // handles insets/decorations
+    val deepest = SwingUtilities.getDeepestComponentAt(window, point.x, point.y) ?: window
+    UIUtil.setCursor(deepest, cursor)
   }
 
   private fun getTextLength(text: @Nls String): Int {

@@ -726,11 +726,11 @@ class PyDBFrame:
                     # if the frame is traced after breakpoint stop,
                     # but the file should be ignored while stepping because of filters
                     if step_cmd != -1:
-                        if main_debugger.is_files_filter_enabled and main_debugger.is_ignored_by_filters(filename):
+                        if main_debugger.is_filter_enabled and main_debugger.is_ignored_by_filters(filename):
                             # ignore files matching stepping filters
                             # No need to reset frame.f_trace to keep the same trace function.
                             return self.trace_dispatch
-                        if main_debugger._is_libraries_filter_enabled and not main_debugger.in_project_scope(filename):
+                        if main_debugger.is_filter_libraries and not main_debugger.in_project_scope(filename):
                             # ignore library files while stepping
                             # No need to reset frame.f_trace to keep the same trace function.
                             return self.trace_dispatch

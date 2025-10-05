@@ -18,7 +18,6 @@ import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -104,7 +103,7 @@ public final class ParameterizedParametersStaticCollectionInspection extends Bas
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass aClass) {

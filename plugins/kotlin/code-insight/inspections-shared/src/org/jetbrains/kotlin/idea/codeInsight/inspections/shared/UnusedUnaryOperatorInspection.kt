@@ -17,6 +17,9 @@ import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.prevLeafs
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
+import org.jetbrains.kotlin.analysis.api.components.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
@@ -120,7 +123,7 @@ internal class UnusedUnaryOperatorInspection : KotlinApplicableInspectionBase<Kt
 
     override fun getApplicableRanges(element: KtExpression): List<TextRange> = ApplicabilityRange.single(element) { it.getPrefix() }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isUsedAsExpression(prefix: KtPrefixExpression, parentBinary: KtBinaryExpression?): Boolean {
         if (prefix.operationToken.isPlus()) {
             // consider the unary plus operator unused in cases like `x -+ 1`
@@ -200,7 +203,7 @@ private fun KtExpression.getPrefix(): KtPrefixExpression? {
 /**
  * Analogue for K1 `org.jetbrains.kotlin.builtins.KotlinBuiltIns#isUnderKotlinPackage`.
  */
-context(KaSession)
+context(_: KaSession)
 private fun KaSymbol.isUnderKotlinPackage(): Boolean {
     return generateSequence(this) { it.containingDeclaration }
         .any { declaration ->
@@ -208,7 +211,7 @@ private fun KaSymbol.isUnderKotlinPackage(): Boolean {
         }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KaSymbol.importableFqNameStartsWithKotlin(): Boolean {
     return this.importableFqName?.startsWith(Name.identifier("kotlin")) == true
 }

@@ -2,9 +2,11 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -25,9 +27,11 @@ import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.currentOrDefaultProject
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperDialog
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.ui.navigation.Place
@@ -36,6 +40,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
@@ -43,6 +48,7 @@ import java.awt.Component
 import java.awt.Composite
 import java.util.function.Consumer
 import java.util.function.Predicate
+import javax.swing.SwingUtilities
 
 private val LOG = logger<ShowSettingsUtilImpl>()
 
@@ -440,4 +446,30 @@ private fun useNonModalSettingsWindow(): Boolean {
     return System.getProperty("ide.ui.non.modal.settings.window").toBoolean()
   }
   return getBoolean("ide.ui.non.modal.settings.window")
+}
+
+// ShowSettingsAction in a deprecated language
+internal fun scheduleDoShowSettingsDialogWithACheckThatProjectIsInitialized(project: Project) {
+  project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+    if (project.isDefault) {
+      serviceAsync<ShowSettingsUtil>().showSettingsDialog(project, createConfigurableGroups(project))
+    }
+    else {
+      (project.serviceAsync<StartupManager>() as StartupManagerEx).waitForInitProjectActivities(IdeBundle.message("settings.modal.opening.message"))
+      serviceAsync<ShowSettingsUtil>().showSettingsDialog(project, createConfigurableGroups(project))
+    }
+
+    if (LOG.isDebugEnabled()) {
+      val startTime = System.nanoTime()
+      // SwingUtilities must be used here
+      SwingUtilities.invokeLater {
+        val endTime = System.nanoTime()
+        LOG.debug("Displaying settings dialog took ${(endTime - startTime) / 1_000_000} ms")
+      }
+    }
+  }
+}
+
+private fun createConfigurableGroups(project: Project): List<ConfigurableGroup> {
+  return listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(project, true))
 }

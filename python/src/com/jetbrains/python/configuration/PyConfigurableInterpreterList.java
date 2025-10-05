@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -10,21 +11,24 @@ import com.intellij.openapi.util.Comparing;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.run.TargetConfigurationWithLocalFsAccessExKt;
-import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.jetbrains.python.SdkUiUtilKt.*;
+import static com.jetbrains.python.sdk.PythonSdkUtil.isRemote;
+
 /**
  * Manages the SDK model shared between PythonSdkConfigurable and PyActiveSdkConfigurable.
  */
-public class PyConfigurableInterpreterList {
+@Service(Service.Level.PROJECT)
+public final class PyConfigurableInterpreterList {
   private ProjectSdksModel myModel;
 
   public static PyConfigurableInterpreterList getInstance(@Nullable Project project) {
@@ -54,14 +58,15 @@ public class PyConfigurableInterpreterList {
   /**
    * @param module if not null and module resides on certain target, returns only SDKs for this target
    */
-  public List<Sdk> getAllPythonSdks(final @Nullable Project project, @Nullable Module module) {
+  @ApiStatus.Internal
+  public @NotNull List<Sdk> getAllPythonSdks(final @Nullable Project project, @Nullable Module module, boolean allowRemoteInFreeTier) {
     var targetModuleSitsOn = (module != null)
                              ? PythonInterpreterTargetEnvironmentFactory.Companion.getTargetModuleResidesOn(module)
                              : null;
 
     List<Sdk> result = new ArrayList<>();
     for (Sdk sdk : getModel().getSdks()) {
-      if (!PythonSdkUtil.isPythonSdk(sdk)) {
+      if (!PythonSdkUtil.isPythonSdk(sdk, allowRemoteInFreeTier)) {
         continue;
       }
 
@@ -77,8 +82,8 @@ public class PyConfigurableInterpreterList {
     return result;
   }
 
-  public List<Sdk> getAllPythonSdks() {
-    return getAllPythonSdks(null, null);
+  public @NotNull List<Sdk> getAllPythonSdks() {
+    return getAllPythonSdks(null, null, false);
   }
 
   private static class PyInterpreterComparator implements Comparator<Sdk> {
@@ -89,16 +94,16 @@ public class PyConfigurableInterpreterList {
     }
 
     @Override
-    public int compare(Sdk o1, Sdk o2) {
+    public int compare(@NotNull Sdk o1, Sdk o2) {
       if (!(o1.getSdkType() instanceof PythonSdkType) ||
           !(o2.getSdkType() instanceof PythonSdkType)) {
         return -Comparing.compare(o1.getName(), o2.getName());
       }
 
-      final boolean isVEnv1 = PythonSdkUtil.isVirtualEnv(o1) || PythonSdkUtil.isCondaVirtualEnv(o1);
-      final boolean isVEnv2 = PythonSdkUtil.isVirtualEnv(o2) || PythonSdkUtil.isCondaVirtualEnv(o2);
-      final boolean isRemote1 = PythonSdkUtil.isRemote(o1);
-      final boolean isRemote2 = PythonSdkUtil.isRemote(o2);
+      final boolean isVEnv1 = isVirtualEnv(o1) || isCondaVirtualEnv(o1);
+      final boolean isVEnv2 = isVirtualEnv(o2) || isCondaVirtualEnv(o2);
+      final boolean isRemote1 = isRemote(o1);
+      final boolean isRemote2 = isRemote(o2);
 
       if (isVEnv1) {
         if (isVEnv2) {
@@ -133,7 +138,7 @@ public class PyConfigurableInterpreterList {
     }
 
 
-    private static boolean associatedWithCurrent(Sdk o1, Project project) {
+    private static boolean associatedWithCurrent(@NotNull Sdk o1, Project project) {
       final PythonSdkAdditionalData data = (PythonSdkAdditionalData)o1.getSdkAdditionalData();
       if (data != null) {
         final String path = data.getAssociatedModulePath();

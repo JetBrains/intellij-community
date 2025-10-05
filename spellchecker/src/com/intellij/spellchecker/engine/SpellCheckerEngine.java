@@ -18,9 +18,11 @@ package com.intellij.spellchecker.engine;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
+import kotlin.text.Regex;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 public interface SpellCheckerEngine {
   void loadDictionary(@NotNull Loader loader);
@@ -33,17 +35,17 @@ public interface SpellCheckerEngine {
 
   boolean isCorrect(@NotNull String word);
 
-
   @NotNull
   List<String> getSuggestions(@NotNull String word, int threshold, int quality);
 
   @NotNull
   List<String> getVariants(@NotNull String prefix);
 
-
   void reset();
 
   boolean isDictionaryLoad(@NotNull String name);
+
+  Set<String> getDictionaryNames();
 
   void removeDictionary(@NotNull String name);
 

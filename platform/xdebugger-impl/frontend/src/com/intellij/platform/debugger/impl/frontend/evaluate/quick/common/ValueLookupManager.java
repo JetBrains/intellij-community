@@ -9,6 +9,7 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick.common;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorMouseHoverPopupManager;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -20,7 +21,6 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.XQuickEvaluat
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
@@ -194,7 +194,12 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
           myHintRequest = null;
         }
         if (hint == null) {
-          ValueLookupManagerController.getInstance(myProject).showEditorInfoTooltip(event);
+          if (event != null) {
+            UIUtil.invokeLaterIfNeeded(() -> {
+              hideHint();
+              EditorMouseHoverPopupManager.getInstance().showInfoTooltip(event);
+            });
+          }
           return;
         }
         if (myCurrentHint != null && myCurrentHint.equals(hint)) {

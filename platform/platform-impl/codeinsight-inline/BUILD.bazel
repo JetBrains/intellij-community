@@ -5,7 +5,7 @@ jvm_library(
   name = "ide-codeinsight-inline",
   module_name = "intellij.platform.ide.codeinsight.inline",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -22,7 +22,7 @@ jvm_library(
     "//platform/platform-impl/ui",
     "//platform/lang-api:lang",
     "//fleet/util/core",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.codeinsight.inline` end

@@ -6,10 +6,10 @@ import com.intellij.lang.LighterASTNode
 import com.intellij.lang.LighterASTTokenNode
 
 /**
- * Visits top level key:value pairs in YAML AST.
+ * Visits a top level key:value pairs in YAML AST.
  * You should return `true` from visitor to continue processing and false otherwise.
  */
-fun visitTopLevelKeyPairs(tree: LighterAST, visitor: (key: CharSequence, pair: LighterASTNode) -> Boolean) {
+fun visitTopLevelKeyPairs(tree: LighterAST, visitor: (key: CharSequence, pair: LighterASTNode) -> Boolean) : Boolean {
   val astRoot = tree.root
   for (child in tree.getChildren(astRoot)) {
     if (child.tokenType == YAMLElementTypes.DOCUMENT) {
@@ -18,13 +18,14 @@ fun visitTopLevelKeyPairs(tree: LighterAST, visitor: (key: CharSequence, pair: L
           for (keyPair in tree.getChildren(mapping)) {
             if (keyPair.tokenType == YAMLElementTypes.KEY_VALUE_PAIR) {
               val keyName = getKeyName(tree, keyPair) ?: continue
-              if (!visitor.invoke(keyName, keyPair)) return
+              if (!visitor.invoke(keyName, keyPair)) return false
             }
           }
         }
       }
     }
   }
+  return true
 }
 
 private fun getKeyName(tree: LighterAST, keyPair: LighterASTNode): CharSequence? {

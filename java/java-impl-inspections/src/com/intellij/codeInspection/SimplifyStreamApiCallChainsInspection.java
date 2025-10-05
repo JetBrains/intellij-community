@@ -1584,12 +1584,11 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
 
     private static String getStreamClassName(@NotNull PsiMethodCallExpression call) {
       String name = MethodCallUtils.getMethodName(call);
-      if (name == null) return JAVA_UTIL_STREAM_STREAM;
       return switch (name) {
         case "mapToInt" -> JAVA_UTIL_STREAM_INT_STREAM;
         case "mapToLong" -> JAVA_UTIL_STREAM_LONG_STREAM;
         case "mapToDouble" -> JAVA_UTIL_STREAM_DOUBLE_STREAM;
-        default -> JAVA_UTIL_STREAM_STREAM;
+        case null, default -> JAVA_UTIL_STREAM_STREAM;
       };
     }
   }

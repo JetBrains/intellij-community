@@ -11,7 +11,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -36,17 +35,21 @@ public final class SslIDEConfirmingTrustStore {
   public static final String END_CERTIFICATE = "-----END CERTIFICATE-----";
 
   public static void setup() {
+    if (System.getProperty("javax.net.ssl.keyStore") != null) {
+      MavenServerGlobals.getLogger().warn("Will not delegate SSL certificate management to IDE, " +
+                                          "looks like client certificate authentication is required");
+      return;
+    }
     try {
       startMultiplexorThread();
       TrustManager delegateTM = new IdeDelegateTrustManager();
+
       SSLContext sslContext = SSLContext.getInstance("TLS");
       sslContext.init(null, new TrustManager[]{delegateTM}, null);
 
-      // You don't have to set this as the default context,
-      // it depends on the library you're using.
       SSLContext.setDefault(sslContext);
     }
-    catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
+    catch (Throwable e) {
       MavenServerGlobals.getLogger().error(e);
     }
   }
@@ -119,7 +122,7 @@ public final class SslIDEConfirmingTrustStore {
     public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
       for (X509TrustManager m : myTrustManagers) {
         try {
-          m.checkClientTrusted(chain, authType);
+          m.checkServerTrusted(chain, authType);
           return;
         }
         catch (CertificateException ignore) {

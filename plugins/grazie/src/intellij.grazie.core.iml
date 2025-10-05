@@ -9,9 +9,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
-    <orderEntry type="library" name="jackson" level="project" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="commons-logging" level="project" />
@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
@@ -30,16 +31,16 @@
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.intellij.deps.languagetool:languagetool-core" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.5.0.12">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:languagetool-core:6.6.17">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.5.0.12/languagetool-core-6.5.0.12.jar">
-              <sha256sum>e10d39ffb791e396af55a91c469103f1dd0b8c8345cae5a33597ac7d11cc3698</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.17/languagetool-core-6.6.17.jar">
+              <sha256sum>5c87aad47da082fe14f506a705516401b06c3aa3a3f5f4d01dfb4018f48544c3</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
               <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
@@ -89,25 +90,25 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.5.0.12/languagetool-core-6.5.0.12.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.17/languagetool-core-6.6.17.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.5.0.12/languagetool-core-6.5.0.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/languagetool-core/6.6.17/languagetool-core-6.6.17-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.jetbrains.intellij.deps.languagetool:language-en" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-en:6.5.0.12">
+        <properties maven-id="org.jetbrains.intellij.deps.languagetool:language-en:6.6.17">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.5.0.12/language-en-6.5.0.12.jar">
-              <sha256sum>3eae20541a836164fc33136971c8d09899b08fecf4df1ccc490b1371a4563730</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.6.17/language-en-6.6.17.jar">
+              <sha256sum>0808a47014d95001f0e438b5196d7307c43a43242ccb9e28eb667adf9649f405</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0.3/english-pos-dict-0.3.jar">
-              <sha256sum>8e33908068ae04cc9baceaa86aae5dc93d0533c4708469937147f02b6caa1b18</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0.6/english-pos-dict-0.6.jar">
+              <sha256sum>2a3e96b49854e5275f8eb7a1bb5b3b85b82f687fed272f3043882ccc0b1634b1</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -119,12 +120,12 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.5.0.12/language-en-6.5.0.12.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0.3/english-pos-dict-0.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.6.17/language-en-6.6.17.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0.6/english-pos-dict-0.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.5.0.12/language-en-6.5.0.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/languagetool/language-en/6.6.17/language-en-6.6.17-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -357,14 +358,60 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="StreamEx" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.lucene.common" />
     <orderEntry type="module" module-name="intellij.libraries.ai.grazie.spell.gec.engine.local" />
+    <orderEntry type="library" exported="" name="ai.grazie.rule.engine" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="ai.grazie.model.tree.jvm" type="repository">
+        <properties maven-id="ai.grazie.model:model-tree-jvm:0.8.63">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.63/model-tree-jvm-0.8.63.jar">
+              <sha256sum>ed6ca179c61ad44fd3a0b0401f6f25bfef680e3a3e704e83249ce5c26dc1a505</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="ai.grazie.nlp:nlp-langs-jvm" />
+            <dependency maven-id="ai.grazie.model:model-text-jvm" />
+            <dependency maven-id="ai.grazie.utils:utils-common-jvm" />
+            <dependency maven-id="ai.grazie.model:model-gec-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.63/model-tree-jvm-0.8.63.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-tree-jvm/0.8.63/model-tree-jvm-0.8.63-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="ai.grazie.model.ner.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-ner-jvm:0.8.63">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.63/model-ner-jvm-0.8.63.jar">
+              <sha256sum>f2c12ec41507a192df5740a91ef004b6587e7a3d542741d010ff099ff523246f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.63/model-ner-jvm-0.8.63.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-ner-jvm/0.8.63/model-ner-jvm-0.8.63-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-lang3" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="library" scope="RUNTIME" name="grpc-core" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="grpc-protobuf" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="grpc-stub" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.libraries.grpc" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
   </component>
 </module>

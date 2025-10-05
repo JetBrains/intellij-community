@@ -87,21 +87,21 @@ public final class CodeStyle {
   public static @NotNull CodeStyleSettings getSettings(@NotNull Project project, @NotNull VirtualFile file) {
     CodeStyleSettings localOrTempSettings = getLocalOrTemporarySettings(project);
     if (localOrTempSettings != null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("localOrTemp settings for " + file.getName());
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("localOrTemp settings for " + file.getName());
       }
       return localOrTempSettings;
     }
     return getCachedOrProjectSettings(project, file);
   }
 
-  public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
+  public static @NotNull CodeStyleSettings getSettings(@NotNull PsiFile file) {
     final Project project = file.getProject();
 
     CodeStyleSettings localOrTempSettings = getLocalOrTemporarySettings(project);
     if (localOrTempSettings != null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("localOrTemp settings for " + file.getName());
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("localOrTemp settings for " + file.getName());
       }
       return localOrTempSettings;
     }
@@ -117,7 +117,7 @@ public final class CodeStyle {
     return getCachedOrProjectSettings(project, virtualFile);
   }
 
-  private static CodeStyleSettings getCachedOrProjectSettings(@NotNull Project project, @NotNull VirtualFile file) {
+  private static @NotNull CodeStyleSettings getCachedOrProjectSettings(@NotNull Project project, @NotNull VirtualFile file) {
     CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
     if (LOG.isDebugEnabled()) {
       LOG.debug((cachedSettings != null ? "cached" : "project") + " settings for " + file.getName());
@@ -167,12 +167,12 @@ public final class CodeStyle {
     return virtualFile != null && virtualFile.isInLocalFileSystem();
   }
 
-  public static CodeStyleSettings getSettings(@NotNull Project project, @NotNull Document document) {
+  public static @NotNull CodeStyleSettings getSettings(@NotNull Project project, @NotNull Document document) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     return file != null ? getSettings(file) : getSettings(project);
   }
 
-  public static CodeStyleSettings getSettings(@NotNull Editor editor) {
+  public static @NotNull CodeStyleSettings getSettings(@NotNull Editor editor) {
     Project project = editor.getProject();
     VirtualFile file = editor.getVirtualFile();
     if (file != null && project != null) {
@@ -206,7 +206,7 @@ public final class CodeStyle {
    * @param <T> Settings class type.
    * @return The current custom settings associated with the PSI file.
    */
-  public static @NotNull <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull PsiFile file, Class<T> customSettingsClass) {
+  public static @NotNull <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull PsiFile file, @NotNull Class<T> customSettingsClass) {
     CodeStyleSettings rootSettings = getSettings(file);
     return rootSettings.getCustomSettings(customSettingsClass);
   }
@@ -250,7 +250,7 @@ public final class CodeStyle {
    * @return The resulting indent options.
    * @see FileIndentOptionsProvider
    */
-  public static CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  public static @NotNull CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     CodeStyleSettings rootSetting = getSettings(project, virtualFile);
     return rootSetting.getIndentOptionsByFile(project, virtualFile, null);
   }
@@ -469,7 +469,7 @@ public final class CodeStyle {
    * @return Test code style settings.
    */
   @TestOnly
-  public static CodeStyleSettings createTestSettings(@Nullable CodeStyleSettings baseSettings) {
+  public static @NotNull CodeStyleSettings createTestSettings(@Nullable CodeStyleSettings baseSettings) {
     return CodeStyleSettingsManager.createTestSettings(baseSettings);
   }
 
@@ -540,7 +540,7 @@ public final class CodeStyle {
    * @return Test code style settings.
    */
   @TestOnly
-  public static CodeStyleSettings createTestSettings() {
+  public static @NotNull CodeStyleSettings createTestSettings() {
     return CodeStyleSettingsManager.createTestSettings(null);
   }
 
@@ -559,7 +559,7 @@ public final class CodeStyle {
    * @param editor The current editor.
    * @param offset The offset to find the language at.
    */
-  public static CommonCodeStyleSettings getLocalLanguageSettings(Editor editor, int offset) {
+  public static @NotNull CommonCodeStyleSettings getLocalLanguageSettings(@NotNull Editor editor, int offset) {
     PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
     Language language = PsiUtilCore.getLanguageAtOffset(psiFile, offset);
     return getLanguageSettings(psiFile, language);

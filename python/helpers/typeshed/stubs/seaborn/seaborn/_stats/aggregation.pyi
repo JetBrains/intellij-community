@@ -11,7 +11,7 @@ class Agg(Stat):
 @dataclass
 class Est(Stat):
     func: str | Callable[[Vector], float] = "mean"
-    errorbar: str | tuple[str, float] = ...  # ("ci", 95) # pytype parse error
+    errorbar: str | tuple[str, float] = ("ci", 95)
     n_boot: int = 1000
     seed: int | None = None
 

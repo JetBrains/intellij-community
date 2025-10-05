@@ -19,6 +19,14 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiversOwner
+import org.jetbrains.kotlin.analysis.api.components.combinedDeclaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.components.getExpectsForActual
+import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.KaContextReceiversRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.contextReceivers.renderers.KaContextReceiverLabelRenderer
@@ -29,7 +37,6 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclaratio
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesCallArgumentsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -65,7 +72,7 @@ data class KtClassMemberInfo(
     val isProperty: Boolean,
 ) {
     companion object {
-        context(KaSession)
+        context(_: KaSession)
         fun create(
             symbol: KaCallableSymbol,
             memberText: @NlsSafe String? = null,
@@ -113,7 +120,7 @@ fun createKtClassMember(
     preferConstructorParameter: Boolean
 ): KtClassMember = KtClassMember(memberInfo, bodyType, preferConstructorParameter)
 
-context(KaSession)
+context(_: KaSession)
 @KaExperimentalApi
 @ApiStatus.Internal
 fun generateMember(
@@ -168,7 +175,7 @@ fun generateMember(
     return newMember
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun getBodyType(
     ktClassMember: KtClassMember?,
     symbol: KaCallableSymbol,
@@ -186,7 +193,7 @@ private fun getBodyType(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @KaExperimentalApi
 @ApiStatus.Internal
 fun generateClassWithMembers(
@@ -256,7 +263,7 @@ fun generateClassWithMembers(
 
 private fun KtClassOrObject.areConstructorPropertiesAllowed(): Boolean = this is KtClass && (isAnnotation() || isInline())
 
-context(KaSession)
+context(_: KaSession)
 @KaExperimentalApi
 private fun createRenderer(
     targetClass: KtClassOrObject?,
@@ -453,7 +460,7 @@ object WITHOUT_LABEL : KaContextReceiverLabelRenderer {
 /**
  * Returns true if the annotation itself is marked with @RequiresOptIn (or the old @Experimental), or if an extension wants to keep it.
  */
-context(KaSession)
+context(_: KaSession)
 private fun keepAnnotation(annotation: KaAnnotation, file: KtFile?): Boolean {
     val classId = annotation.classId ?: return false
     val symbol = findClass(classId)
@@ -463,12 +470,12 @@ private fun keepAnnotation(annotation: KaAnnotation, file: KtFile?): Boolean {
     return file?.let { OverrideImplementsAnnotationsFilter.keepAnnotationOnOverrideMember(classId.asFqNameString(), it) } == true
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KaClassSymbol.hasRequiresOptInAnnotation(): Boolean = annotations.any { annotation ->
     isRequiresOptInFqName(annotation.classId?.asSingleFqName())
 }
 
-context(KaSession)
+context(_: KaSession)
 @KaExperimentalApi
 private fun generateConstructorParameter(
     project: Project,
@@ -478,7 +485,7 @@ private fun generateConstructorParameter(
     return KtPsiFactory(project).createParameter(symbol.render(renderer))
 }
 
-context(KaSession)
+context(_: KaSession)
 @KaExperimentalApi
 private fun generateFunction(
     project: Project,
@@ -515,7 +522,7 @@ private fun generateFunction(
     return factory.createFunction(functionText)
 }
 
-context(KaSession)
+context(_: KaSession)
 @KaExperimentalApi
 private fun generateClass(
     project: Project,
@@ -610,7 +617,7 @@ private fun generateClass(
     return klass
 }
 
-context(KaSession)
+context(_: KaSession)
 @KaExperimentalApi
 private fun generateProperty(
     project: Project,
@@ -636,14 +643,14 @@ private fun generateProperty(
     return KtPsiFactory(project).createProperty(symbol.render(renderer) + body)
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun isToKeepAbstract(
     mode: MemberGenerateMode,
     symbol: KaCallableSymbol
 ): Boolean = mode != MemberGenerateMode.OVERRIDE && symbol.modality == KaSymbolModality.ABSTRACT
 
-@OptIn(KaExperimentalApi::class)
-fun <T> KaSession.generateUnsupportedOrSuperCall(
+context(_: KaSession) @OptIn(KaExperimentalApi::class)
+fun <T> generateUnsupportedOrSuperCall(
     project: Project, symbol: T, bodyType: BodyType, canBeEmpty: Boolean = true
 ): String where T : KaCallableSymbol {
     when (bodyType.effectiveBodyType(canBeEmpty)) {

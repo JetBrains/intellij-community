@@ -4,6 +4,7 @@ package com.intellij.util.indexing.testEntities
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 
 class NonIndexableKindFileSetTestContributor : WorkspaceFileIndexContributor<NonIndexableTestEntity> {
@@ -26,3 +27,14 @@ class IndexableKindFileSetTestContributor : WorkspaceFileIndexContributor<Indexi
     }
   }
 }
+
+class NonRecursiveFileSetContributor : WorkspaceFileIndexContributor<NonRecursiveTestEntity> {
+  override val entityClass: Class<NonRecursiveTestEntity>
+    get() = NonRecursiveTestEntity::class.java
+
+  override fun registerFileSets(entity: NonRecursiveTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    registrar.registerNonRecursiveFileSet(entity.root, WorkspaceFileKind.CONTENT, entity, NonRecursiveFileCustomData())
+  }
+}
+
+class NonRecursiveFileCustomData : WorkspaceFileSetData

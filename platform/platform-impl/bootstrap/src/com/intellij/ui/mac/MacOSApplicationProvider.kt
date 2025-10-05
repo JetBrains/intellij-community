@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
+import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.project.Project
@@ -61,7 +62,7 @@ fun initMacApplication(mainScope: CoroutineScope) {
   val desktop = Desktop.getDesktop()
   desktop.setAboutHandler {
     submit("About", mainScope) { ideFocusManager ->
-      val project = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      val project = withContext(Dispatchers.UiWithModelAccess) {
         val project = (ideFocusManager.lastFocusedIdeWindow as? IdeFrame)?.project
         AboutAction.perform(project)
         project
@@ -74,24 +75,22 @@ fun initMacApplication(mainScope: CoroutineScope) {
     submit("Settings", mainScope) { ideFocusManager ->
       val showSettingsUtil = serviceAsync<ShowSettingsUtil>()
       // we should not use RW to get focused frame - pure UI should be enough
-      val project = withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+      val project = withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
         (ideFocusManager.lastFocusedIdeWindow as? IdeFrame)?.project
       }
 
       if (project == null || project.isDefault) {
         LOG.debug("MacMenu: no opened project frame, use default project instead")
         val defaultProject = project ?: serviceAsync<ProjectManager>().defaultProject
-        showSettingsUtil.showSettingsDialog(defaultProject, listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(null, true)))
+        showSettingsUtil.showSettingsDialog(defaultProject, createConfigurableGroups(defaultProject))
       }
       else {
         // Execute in the project coroutine scope to ensure that,
         // if project opening is canceled or the project is closed, we cancel settings opening.
         // Still, we `.join` to ensure that mac menu actions is disabled for the entire duration of the task (contract of `submit`).
         project.serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
-          (project.serviceAsync<StartupManager>() as StartupManagerEx)
-            .waitForInitProjectActivities(IdeBundle.message("settings.modal.opening.message"))
-          val configurableGroups = listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(project, true))
-          showSettingsUtil.showSettingsDialog(project, configurableGroups)
+          (project.serviceAsync<StartupManager>() as StartupManagerEx).waitForInitProjectActivities(IdeBundle.message("settings.modal.opening.message"))
+          showSettingsUtil.showSettingsDialog(project, createConfigurableGroups(project))
         }.join()
       }
 
@@ -134,6 +133,10 @@ fun initMacApplication(mainScope: CoroutineScope) {
     Foundation.executeOnMainThread(false, false, Runnable { installAutoUpdateMenu() })
     installProtocolHandler(desktop, mainScope)
   }
+}
+
+private fun createConfigurableGroups(project: Project): List<ConfigurableGroup> {
+  return listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(project, true))
 }
 
 private suspend fun reportActionUsed(project: Project?, actionId: String) {

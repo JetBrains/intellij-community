@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
-import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.NoErrorEventsDuringImportFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.SuccessfulImportFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
@@ -16,7 +16,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testJvmOnly() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -27,7 +27,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testJvmDependsOnJvm() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -38,7 +38,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testJvmAndKapt() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -49,7 +49,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testJvmSharedResources() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -60,7 +60,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testJvmIncludeBuild() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -71,7 +71,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testSimpleMultiTargetProject() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -83,7 +83,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testMultiTargetIndependentProject() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -94,7 +94,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testKmpSharedResourcesAndroidIOS() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -105,7 +105,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testJvmMultiplatformTransitiveDependency() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -116,7 +116,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testKmpWithCinteropLib() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -128,7 +128,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testKmpIncludeBuild() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -140,7 +140,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testKmpDependsOnAndroidKMPLibrary() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -151,7 +151,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testKmpShareConfigurationViaBuildSrc() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -162,7 +162,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testKmpShareConfigurationViaIncludeBuild() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }
@@ -173,7 +173,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
     fun testKmpTestDependenciesAcrossModules() {
         doTest {
             onlyCheckers(
-                NoErrorEventsDuringImportFeature,
+                SuccessfulImportFeature,
                 HighlightingChecker
             )
         }

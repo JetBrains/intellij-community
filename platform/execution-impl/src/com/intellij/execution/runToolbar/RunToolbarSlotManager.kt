@@ -475,7 +475,7 @@ class RunToolbarSlotManager(private val project: Project, private val coroutineS
             LangBundle.message("run.toolbar.remove.active.process.slot.title", it.runnerAndConfigurationSettings?.name ?: ""),
             LangBundle.message("run.toolbar.remove.active.process.slot.ok"),
             CommonBundle.getCancelButtonText(),
-            Messages.getQuestionIcon()/*, object : DialogWrapper.DoNotAskOption.Adapter() {
+            Messages.getQuestionIcon()/*, object : DoNotAskOption.Adapter() {
               override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
 
               }

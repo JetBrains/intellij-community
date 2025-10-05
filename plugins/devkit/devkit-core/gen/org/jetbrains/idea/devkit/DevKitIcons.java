@@ -18,6 +18,7 @@ public final class DevKitIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, DevKitIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Add_sdk = load("icons/expui/addSDK.svg", "icons/add_sdk.svg", 641117830, 2);
+  /** 16x16 */ public static final @NotNull Icon ComposeToolWindow = load("icons/expui/composeToolWindow.svg", 542147654, 2);
 
   public static final class Gutter {
     /** 12x12 */ public static final @NotNull Icon DescriptionFile = load("icons/expui/gutter/descriptionFile@14x14.svg", "icons/gutter/descriptionFile.svg", 1318760137, 2);
@@ -26,7 +27,10 @@ public final class DevKitIcons {
     /** 12x12 */ public static final @NotNull Icon Properties = load("icons/expui/gutter/properties@14x14.svg", "icons/gutter/properties.svg", -818710709, 2);
   }
 
-  /** 16x16 */ public static final @NotNull Icon PluginV2 = load("icons/expui/pluginV2.svg", 1719825147, 2);
+  /** 16x16 */ public static final @NotNull Icon Items = load("icons/expui/items.svg", -1922827174, 2);
+  /** 16x16 */ public static final @NotNull Icon LegacyPluginModule = load("icons/expui/legacyPluginModule.svg", 1708808352, 2);
+  /** 16x16 */ public static final @NotNull Icon PluginModule = load("icons/expui/pluginModule.svg", 1662209782, 2);
+  /** 16x16 */ public static final @NotNull Icon PluginV2 = load("icons/expui/pluginV2.svg", -654258637, 2);
   /** 16x16 */ public static final @NotNull Icon ProjectService = load("icons/expui/projectService.svg", -1874664689, 2);
   /** 16x16 */ public static final @NotNull Icon ProjectState = load("icons/expui/projectState.svg", 329241222, 2);
   /** 16x16 */ public static final @NotNull Icon RemoteMapping = load("icons/expui/remoteMapping.svg", "icons/remoteMapping.svg", 1371307852, 2);

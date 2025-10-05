@@ -96,7 +96,7 @@ public final class IntegerMultiplicationImplicitCastToLongInspection extends Bas
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new IntegerMultiplicationImplicitlyCastToLongVisitor();
   }
 

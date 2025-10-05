@@ -9,7 +9,7 @@ import java.io.IOException;
 public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
   @Test
   public void testCustomSourceSetDependencies() throws IOException {
-    ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true);
+    ExternalProjectsManagerImpl.getInstance(getMyProject()).setStoreExternally(true);
     createProjectSubFile("src/intTest/java/DepTest.java", "class DepTest extends CommonTest {}");
     createProjectSubFile("src/test/java/CommonTest.java", "public class CommonTest {}");
     importProject("""
@@ -23,7 +23,7 @@ public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
 
   @Test
   public void testDifferentTargetCompatibilityForProjectAndModules() throws IOException {
-    ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(true);
+    ExternalProjectsManagerImpl.getInstance(getMyProject()).setStoreExternally(true);
     createProjectSubFile(
       "src/main/java/Main.java",
       """

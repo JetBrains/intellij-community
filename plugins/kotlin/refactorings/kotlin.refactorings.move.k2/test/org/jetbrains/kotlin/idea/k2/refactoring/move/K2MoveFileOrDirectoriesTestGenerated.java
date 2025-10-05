@@ -60,6 +60,76 @@ public class K2MoveFileOrDirectoriesTestGenerated extends AbstractK2MoveFileOrDi
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/externalDestructuringUsage/externalDestructuringUsage.test");
     }
 
+    @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixExactMatchTopLevel/breakPrefixExactMatchTopLevel.test")
+    public void testKotlin_implicitPackagePrefix_breakPrefixExactMatchTopLevel_BreakPrefixExactMatchTopLevel() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/breakPrefixExactMatchTopLevel/breakPrefixExactMatchTopLevel.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixMoveFromRootToSubpackage/breakPrefixMoveFromRootToSubpackage.test")
+    public void testKotlin_implicitPackagePrefix_breakPrefixMoveFromRootToSubpackage_BreakPrefixMoveFromRootToSubpackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/breakPrefixMoveFromRootToSubpackage/breakPrefixMoveFromRootToSubpackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixMoveToDifferentPackage/breakPrefixMoveToDifferentPackage.test")
+    public void testKotlin_implicitPackagePrefix_breakPrefixMoveToDifferentPackage_BreakPrefixMoveToDifferentPackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/breakPrefixMoveToDifferentPackage/breakPrefixMoveToDifferentPackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixMoveToRoot/breakPrefixMoveToRoot.test")
+    public void testKotlin_implicitPackagePrefix_breakPrefixMoveToRoot_BreakPrefixMoveToRoot() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/breakPrefixMoveToRoot/breakPrefixMoveToRoot.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/breakPrefixMoveToSubpackage/breakPrefixMoveToSubpackage.test")
+    public void testKotlin_implicitPackagePrefix_breakPrefixMoveToSubpackage_BreakPrefixMoveToSubpackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/breakPrefixMoveToSubpackage/breakPrefixMoveToSubpackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/keepPrefixChangePackage/keepPrefixChangePackage.test")
+    public void testKotlin_implicitPackagePrefix_keepPrefixChangePackage_KeepPrefixChangePackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/keepPrefixChangePackage/keepPrefixChangePackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/keepPrefixExtendPackage/keepPrefixExtendPackage.test")
+    public void testKotlin_implicitPackagePrefix_keepPrefixExtendPackage_KeepPrefixExtendPackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/keepPrefixExtendPackage/keepPrefixExtendPackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/keepPrefixMoveToRoot/keepPrefixMoveToRoot.test")
+    public void testKotlin_implicitPackagePrefix_keepPrefixMoveToRoot_KeepPrefixMoveToRoot() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/keepPrefixMoveToRoot/keepPrefixMoveToRoot.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/multipleFilesBreakPrefixSubpackageToSubpackage/multipleFilesBreakPrefixSubpackageToSubpackage.test")
+    public void testKotlin_implicitPackagePrefix_multipleFilesBreakPrefixSubpackageToSubpackage_MultipleFilesBreakPrefixSubpackageToSubpackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/multipleFilesBreakPrefixSubpackageToSubpackage/multipleFilesBreakPrefixSubpackageToSubpackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/multipleFilesBreakPrefixTopLevel/multipleFilesBreakPrefixTopLevel.test")
+    public void testKotlin_implicitPackagePrefix_multipleFilesBreakPrefixTopLevel_MultipleFilesBreakPrefixTopLevel() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/multipleFilesBreakPrefixTopLevel/multipleFilesBreakPrefixTopLevel.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/multipleFilesMakeExplicitPackage/multipleFilesMakeExplicitPackage.test")
+    public void testKotlin_implicitPackagePrefix_multipleFilesMakeExplicitPackage_MultipleFilesMakeExplicitPackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/multipleFilesMakeExplicitPackage/multipleFilesMakeExplicitPackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/multipleFilesNoExplicitPackageFromSubpackage/multipleFilesNoExplicitPackageFromSubpackage.test")
+    public void testKotlin_implicitPackagePrefix_multipleFilesNoExplicitPackageFromSubpackage_MultipleFilesNoExplicitPackageFromSubpackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/multipleFilesNoExplicitPackageFromSubpackage/multipleFilesNoExplicitPackageFromSubpackage.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/multipleFilesNoExplicitPackageWithoutTargetDir/multipleFilesNoExplicitPackageWithoutTargetDir.test")
+    public void testKotlin_implicitPackagePrefix_multipleFilesNoExplicitPackageWithoutTargetDir_MultipleFilesNoExplicitPackageWithoutTargetDir() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/multipleFilesNoExplicitPackageWithoutTargetDir/multipleFilesNoExplicitPackageWithoutTargetDir.test");
+    }
+
+    @TestMetadata("kotlin/implicitPackagePrefix/multipleFilesPreservePrefixSubpackageToSubpackage/multipleFilesPreservePrefixSubpackageToSubpackage.test")
+    public void testKotlin_implicitPackagePrefix_multipleFilesPreservePrefixSubpackageToSubpackage_MultipleFilesPreservePrefixSubpackageToSubpackage() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/implicitPackagePrefix/multipleFilesPreservePrefixSubpackageToSubpackage/multipleFilesPreservePrefixSubpackageToSubpackage.test");
+    }
+
     @TestMetadata("kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test")
     public void testKotlin_innerReferenceWithoutQualifier_InnerReferenceWithoutQualifier() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/innerReferenceWithoutQualifier/innerReferenceWithoutQualifier.test");
@@ -163,6 +233,16 @@ public class K2MoveFileOrDirectoriesTestGenerated extends AbstractK2MoveFileOrDi
     @TestMetadata("kotlin/packageWithQuotation/packageWithQuotation.test")
     public void testKotlin_packageWithQuotation_PackageWithQuotation() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/packageWithQuotation/packageWithQuotation.test");
+    }
+
+    @TestMetadata("kotlin/searchReferencesAndPackageUpdates/searchReferencesDisabled/searchReferencesDisabled.test")
+    public void testKotlin_searchReferencesAndPackageUpdates_searchReferencesDisabled_SearchReferencesDisabled() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/searchReferencesAndPackageUpdates/searchReferencesDisabled/searchReferencesDisabled.test");
+    }
+
+    @TestMetadata("kotlin/searchReferencesAndPackageUpdates/searchStringsDisabled/searchStringsDisabled.test")
+    public void testKotlin_searchReferencesAndPackageUpdates_searchStringsDisabled_SearchStringsDisabled() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/searchReferencesAndPackageUpdates/searchStringsDisabled/searchStringsDisabled.test");
     }
 
     @TestMetadata("kotlin/selfReferenceInImport/selfReferenceInImport.test")

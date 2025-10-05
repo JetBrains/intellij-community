@@ -6,14 +6,18 @@ package org.jetbrains.intellij.build.bazel
 import com.intellij.openapi.util.JDOMUtil
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 import org.jdom.Element
+import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.collections.asSequence
+import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.moveTo
 
@@ -23,71 +27,181 @@ import kotlin.io.path.moveTo
 internal class JpsModuleToBazel {
   companion object {
     const val BAZEL_BUILD_WORKSPACE_DIRECTORY_ENV = "BUILD_WORKSPACE_DIRECTORY"
+    const val RUN_WITHOUT_ULTIMATE_ROOT_ENV = "RUN_WITHOUT_ULTIMATE_ROOT"
 
     @JvmStatic
     fun main(args: Array<String>) {
-      val workspaceDir: Path? = System.getenv(BAZEL_BUILD_WORKSPACE_DIRECTORY_ENV)?.let { Path.of(it).normalize() }
-      val projectDir = searchUltimateRootUpwards(workspaceDir ?: Path.of(System.getProperty("user.dir")))
+      var workspaceDir = System.getenv(BAZEL_BUILD_WORKSPACE_DIRECTORY_ENV)
+                         ?: System.getProperty("user.dir")
+      var runWithoutUltimateRoot = System.getenv(RUN_WITHOUT_ULTIMATE_ROOT_ENV) ?: "false"
+      var defaultCustomModules = "true"
+      var m2Repo = JpsMavenSettings.getMavenRepositoryPath()
 
-      val m2Repo = Path.of(System.getProperty("user.home"), ".m2/repository")
-      val project = JpsSerializationManager.getInstance().loadProject(projectDir.toString(), mapOf("MAVEN_REPOSITORY" to m2Repo.toString()), true)
+      for (arg in args) {
+        when {
+          arg.startsWith("--run_without_ultimate_root=") ->
+            runWithoutUltimateRoot = arg.substringAfter("=")
+          arg.startsWith("--workspace_directory=") ->
+            workspaceDir = arg.substringAfter("=")
+          arg.startsWith("--default-custom-modules=") ->
+            defaultCustomModules = arg.substringAfter("=")
+          arg.startsWith("--m2-repo=") ->
+            m2Repo = arg.substringAfter("=")
+          else -> error("Unknown argument: $arg")
+        }
+      }
+
+      val communityRoot = searchCommunityRoot(Path.of(workspaceDir))
+      val ultimateRoot: Path? = if (!runWithoutUltimateRoot.toBooleanStrict() && communityRoot.parent.resolve(".ultimate.root.marker").exists()) {
+        communityRoot.parent
+      } else {
+        null
+      }
+
+      println("Community root: $communityRoot")
+      println("Ultimate root: $ultimateRoot")
+      println("M2 repo root: $m2Repo")
+
+      val projectDir = ultimateRoot ?: communityRoot
+
+      val project = JpsSerializationManager.getInstance().loadProject(projectDir.toString(), mapOf("MAVEN_REPOSITORY" to m2Repo), true)
       val jarRepositories = loadJarRepositories(projectDir)
 
-      val urlCache = UrlCache(cacheFile = projectDir.resolve("build/lib-lock.json"))
+      val modulesBazel = listOfNotNull(
+        ultimateRoot?.resolve("lib/MODULE.bazel"),
+        communityRoot.resolve("lib/MODULE.bazel"),
+      )
 
-      val generator = BazelBuildFileGenerator(projectDir = projectDir, project = project, urlCache = urlCache)
-      val moduleList = generator.computeModuleList()
+      val urlCache = UrlCache(modulesBazel, jarRepositories)
+
+      val generator = BazelBuildFileGenerator(
+        ultimateRoot = ultimateRoot,
+        communityRoot = communityRoot,
+        project = project,
+        urlCache = urlCache,
+        customModules = if (defaultCustomModules.toBooleanStrict()) DEFAULT_CUSTOM_MODULES else emptyMap(),
+      )
+      val moduleList = generator.computeModuleList(Path.of(m2Repo))
       // first, generate community to collect libs, that used by community (to separate community and ultimate libs)
       val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true)
       val ultimateResult = generator.generateModuleBuildFiles(moduleList, isCommunity = false)
       generator.save(communityResult.moduleBuildFiles)
       generator.save(ultimateResult.moduleBuildFiles)
 
+      generator.generateLibs(jarRepositories = jarRepositories, m2Repo = Path.of(m2Repo))
+
+      // Check that after all workings of generator, all checksums from urls with checksums
+      // are saved to MODULE.bazel correctly
+      verifyHttpFileTargetsGeneration(urlCache, modulesBazel, jarRepositories)
+
       deleteOldFiles(
-        projectDir = projectDir,
-        generatedFiles = (communityResult.moduleBuildFiles.keys.asSequence() + ultimateResult.moduleBuildFiles.keys.asSequence())
-          .filter { it != projectDir }
-          .sortedBy { projectDir.relativize(it).invariantSeparatorsPathString }
+        projectDir = communityRoot,
+        generatedFiles = communityResult.moduleBuildFiles.keys
+          .filter { it != communityRoot }
+          .sortedBy { communityRoot.relativize(it).invariantSeparatorsPathString }
           .toSet(),
       )
 
-      generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
+      if (ultimateRoot != null) {
+        deleteOldFiles(
+          projectDir = ultimateRoot,
+          generatedFiles = ultimateResult.moduleBuildFiles.keys
+            .filter { it != ultimateRoot }
+            .sortedBy { ultimateRoot.relativize(it).invariantSeparatorsPathString }
+            .toSet(),
+        )
+      }
 
-      val targetsFile = projectDir.resolve("build/bazel-targets.json")
-      saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList.skippedModules)
+      if (ultimateRoot != null) {
+        val targetsFile = ultimateRoot.resolve("build/bazel-targets.json")
+        saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList, generator.mavenLibraries.values + generator.localLibraries.values)
+      }
+    }
 
-      // save cache only on success. do not surround with try/finally
-      urlCache.save()
+    private fun verifyHttpFileTargetsGeneration(
+      urlCache: UrlCache,
+      modulesBazel: List<Path>,
+      jarRepositories: List<JarRepository>,
+    ) {
+      val usedEntries = urlCache.getUsedEntries()
+
+      if (usedEntries.isEmpty()) {
+        check(modulesBazel.none { it.exists() }) {
+          "No used entries -> not module bazel files generated: $modulesBazel should not exist"
+        }
+        return
+      }
+
+      val mapOnDisk = readModules(modulesBazel, jarRepositories, warningsAsErrors = true)
+
+      if (mapOnDisk != usedEntries) {
+        for (path in usedEntries.keys - mapOnDisk.keys) {
+          error("Cannot find http_file for $path in $modulesBazel, but $path was used in maven libraries")
+        }
+
+        for (path in mapOnDisk.keys - usedEntries.keys) {
+          error("There is an http_file for $path in $modulesBazel, but $path was not used in jps-to-bazel")
+        }
+
+        for (path in mapOnDisk.keys.intersect(usedEntries.keys)) {
+          val onDisk = mapOnDisk[path]
+          val usedEntry = usedEntries[path]
+          if (onDisk != usedEntry) {
+            error(
+              "Different cache entries on disk ($modulesBazel) and what was used in jps-to-bazel." +
+              "on disk $onDisk, used entry $usedEntry"
+            )
+          }
+        }
+
+        // SHOULD NOT BE REACHED
+        error(
+          "http_file entries on disk in $modulesBazel are different from maven libraries used in jps-to-bazel." +
+          "Also, there is a bug in calculating difference between them."
+        )
+      }
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, skippedModules: Collection<String>) {
+    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, moduleList: ModuleList, libs: Collection<Library>) {
       @Serializable
       data class TargetsFileModuleDescription(
         val productionTargets: List<String>,
         val productionJars: List<String>,
         val testTargets: List<String>,
         val testJars: List<String>,
+        val exports: List<String>,
       )
 
       @Serializable
       data class TargetsFile(
         val modules: Map<String, TargetsFileModuleDescription>,
+        val projectLibraries: Map<String, String>
       )
+
+      val skippedModules = moduleList.skippedModules
 
       val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
       try {
+        val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+
         Files.writeString(
-          tempFile, jsonSerializer.encodeToString(
-          TargetsFile(
+          tempFile, jsonSerializer.encodeToString<TargetsFile>(
+          serializer = jsonSerializer.serializersModule.serializer(),
+          value = TargetsFile(
             modules = targets.associate { moduleTarget ->
               moduleTarget.moduleDescriptor.module.name to TargetsFileModuleDescription(
                 productionTargets = moduleTarget.productionTargets,
                 productionJars = moduleTarget.productionJars,
                 testTargets = moduleTarget.testTargets,
                 testJars = moduleTarget.testJars,
+                exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
               )
-            } + skippedModules.associateWith { moduleName -> TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList()) }
+            } + skippedModules.associateWith { emptyModule },
+            projectLibraries = libs.asSequence().mapNotNull {
+              if (it.target.isModuleLibrary) return@mapNotNull null
+              return@mapNotNull it.target.jpsName to "${it.target.container.repoLabel}//:${it.target.targetName}"
+            }.sortedBy { it.first }.toMap()
           )))
         tempFile.moveTo(file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
       } finally {
@@ -95,14 +209,17 @@ internal class JpsModuleToBazel {
       }
     }
 
-    fun searchUltimateRootUpwards(start: Path): Path {
+    fun searchCommunityRoot(start: Path): Path {
       var current = start
       while (true) {
-        if (Files.exists(current.resolve(".ultimate.root.marker"))) {
+        if (Files.exists(current.resolve(".community.root.marker"))) {
           return current
         }
+        if (Files.exists(current.resolve("community/.community.root.marker"))) {
+          return current.resolve("community")
+        }
 
-        current = current.parent ?: throw IllegalStateException("Cannot find ultimate root starting from $start")
+        current = current.parent ?: throw IllegalStateException("Cannot find community root starting from $start")
       }
     }
 
@@ -128,6 +245,7 @@ private fun deleteOldFiles(projectDir: Path, generatedFiles: Set<Path>) {
     }
   }
 
+  fileListFile.parent.createDirectories()
   Files.writeString(fileListFile, generatedFiles.joinToString("\n") { projectDir.relativize(it).invariantSeparatorsPathString })
 }
 

@@ -50,6 +50,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.remote.ProcessControlWithMappings;
 import com.intellij.remote.RemoteSdkProperties;
+import com.intellij.remote.TargetAwarePathMappingProvider;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -63,6 +64,7 @@ import com.jetbrains.python.debugger.PyTargetPathMapper;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
+import com.jetbrains.python.packaging.PyExecutionException;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
@@ -71,6 +73,7 @@ import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvide
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.conda.CondaPythonExecKt;
+import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -364,7 +367,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
     pythonExecution.setWorkingDir(getPythonExecutionWorkingDir(targetEnvironmentRequest));
     initEnvironment(myConfig.getProject(), pythonExecution, myConfig, createRemotePathMapper(), isDebug(), helpersAwareTargetRequest, sdk);
     customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, pythonExecution.getEnvs(), myConfig.isPassParentEnvs());
-    PythonScripts.ensureProjectSdkAndModuleDirsAreOnTarget(targetEnvironmentRequest, myConfig.getProject(), myConfig.getModule());
+    PythonScripts.ensureProjectSdkAndModuleDirsAreOnTarget(targetEnvironmentRequest,
+                                                           myConfig.getProject(),
+                                                           myConfig.getModule() != null ? new Module[]{myConfig.getModule()} : Module.EMPTY_ARRAY);
     return pythonExecution;
   }
 
@@ -503,12 +508,45 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // add path mappings configured in SDK, they will be handled in second place
     PathMappingSettings sdkPathMappings = getSdkPathMappings();
     if (sdkPathMappings != null) {
-      pathMappingSettings.addAll(sdkPathMappings);
+      // filter out any deployment paths, as we want to resolve sources to their local counterparts when possible rather
+      // than the files copied from the remote end
+      var deploymentPaths = getDeploymentPaths();
+      pathMappingSettings.addAll(
+        sdkPathMappings.getPathMappings()
+          .stream()
+          .filter(mapping -> !deploymentPaths.contains(mapping.getRemoteRoot()))
+          .toList()
+      );
     }
     final boolean isMostlySilentProcess = false;
     PyTargetPathMapper consolidatedPathMappings = new PyTargetPathMapper(targetEnvironment, pathMappingSettings);
     return PyCustomProcessHandlerProvider.createProcessHandler(process, targetEnvironment, commandLineString, commandLine.getCharset(),
                                                                consolidatedPathMappings, isMostlySilentProcess, myRunWithPty);
+  }
+
+  /**
+   * Collects deployment paths from suitable mapping providers.
+   *
+   * If the current SDK additional data is not a {@code PyTargetAwareAdditionalData}, then an empty set is returned.
+   *
+   * @return a set of paths on remote file systems
+   */
+  private @NotNull Set<String> getDeploymentPaths() {
+    Sdk sdk = myConfig.getSdk();
+    Set<String> deploymentPaths = new HashSet<String>();
+    if (sdk != null) {
+      SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
+      if (sdkAdditionalData instanceof PyTargetAwareAdditionalData data) {
+        var providers = TargetAwarePathMappingProvider.Companion.getSuitableMappingProviders(data);
+        for (TargetAwarePathMappingProvider provider : providers) {
+          var pathMappings = provider.getPathMappingSettings(myConfig.getProject(), data).getPathMappings();
+          for (PathMappingSettings.PathMapping mapping : pathMappings) {
+            deploymentPaths.add(mapping.getRemoteRoot());
+          }
+        }
+      }
+    }
+    return deploymentPaths;
   }
 
   private @Nullable PathMappingSettings getSdkPathMappings() {
@@ -612,20 +650,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
    */
   protected static void initEnvironment(Project project,
                                         SdkAdditionalData data,
-                                        GeneralCommandLine commandLine,
-                                        PythonRunParams runParams,
+                                        @NotNull GeneralCommandLine commandLine,
+                                        @NotNull PythonRunParams runParams,
                                         boolean isDebug) {
-    Map<String, String> env = Maps.newHashMap();
-
+    final Map<String, String> env = prepareEnv(project, runParams, true);
     setupEncodingEnvs(env, commandLine.getCharset());
-
-    if (runParams.getEnvs() != null) {
-      env.putAll(runParams.getEnvs());
-    }
-    addCommonEnvironmentVariables(getInterpreterPath(project, runParams), env, true);
-
-    setupVirtualEnvVariables(runParams, env, runParams.getSdkHome());
-
     commandLine.getEnvironment().clear();
     commandLine.getEnvironment().putAll(env);
     commandLine.withParentEnvironmentType(runParams.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
@@ -657,19 +686,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                       boolean isDebug,
                                       @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
                                       @Nullable Sdk sdk) {
-    Map<String, String> env = Maps.newHashMap();
-    var envParameters = configureEnvsFromFiles(runParams, true);
-    env.putAll(envParameters);
-    if (runParams.getEnvs() != null) {
-      env.putAll(runParams.getEnvs());
-    }
     boolean addPyCharmHosted = true;
     if (sdk != null && !CondaPythonExecKt.getUsePythonForLocalConda()) {
       addPyCharmHosted = PySdkExtKt.getOrCreateAdditionalData(sdk).getFlavor().providePyCharmHosted();
     }
-    addCommonEnvironmentVariables(getInterpreterPath(project, runParams), env, addPyCharmHosted);
+    final Map<String, String> env = prepareEnv(project, runParams, addPyCharmHosted);
 
-    setupVirtualEnvVariables(runParams, env, runParams.getSdkHome());
+    setupEncodingEnvs(commandLine, commandLine.getCharset());
 
     // Carefully patch environment variables
     Map<String, Function<TargetEnvironment, String>> map =
@@ -677,13 +700,25 @@ public abstract class PythonCommandLineState extends CommandLineState {
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareTargetRequest.getTargetEnvironmentRequest();
     PythonScripts.extendEnvs(commandLine, map, targetEnvironmentRequest.getTargetPlatform());
 
-    setupEncodingEnvs(commandLine, commandLine.getCharset());
-
     buildPythonPath(project, commandLine, runParams, pathMapper, isDebug, targetEnvironmentRequest);
 
     for (PythonCommandLineTargetEnvironmentProvider envProvider : PythonCommandLineTargetEnvironmentProvider.EP_NAME.getExtensionList()) {
       envProvider.extendTargetEnvironment(project, helpersAwareTargetRequest, commandLine, runParams);
     }
+  }
+
+  private static Map<String, String> prepareEnv(@NotNull Project project,
+                                                @NotNull PythonRunParams runParams,
+                                                boolean addPyCharmHosted) {
+    Map<String, String> env = Maps.newHashMap();
+    env.putAll(configureEnvsFromFiles(runParams, true));
+    if (runParams.getEnvs() != null) {
+      env.putAll(runParams.getEnvs());
+    }
+    addCommonEnvironmentVariables(getInterpreterPath(project, runParams), env, addPyCharmHosted);
+
+    setupVirtualEnvVariables(runParams, env, runParams.getSdkHome());
+    return env;
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
@@ -1012,22 +1047,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return interpreterPath;
   }
 
-  private @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() {
-    return getPythonTargetInterpreter(myConfig.getProject(), getSdk());
+  private @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter() throws ExecutionException {
+    Sdk sdk = getSdk();
+    if (sdk == null) {
+      throw new PyExecutionException(PyBundle.message("runcfg.error.message.cannot.find.python.interpreter"));
+    }
+    return getPythonTargetInterpreter(myConfig.getProject(), sdk);
   }
 
-  public static @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter(@NotNull Project project, @Nullable Sdk sdk) {
-    if (sdk == null) {
-      throw new IllegalStateException("SDK is not defined for Run Configuration");
-    }
-    else {
+  public static @NotNull HelpersAwareTargetEnvironmentRequest getPythonTargetInterpreter(@NotNull Project project, @NotNull Sdk sdk) {
       HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest =
         PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project);
       if (helpersAwareTargetRequest == null) {
         throw new IllegalStateException("Cannot find execution environment for SDK " + sdk);
       }
       return helpersAwareTargetRequest;
-    }
   }
 
   /**

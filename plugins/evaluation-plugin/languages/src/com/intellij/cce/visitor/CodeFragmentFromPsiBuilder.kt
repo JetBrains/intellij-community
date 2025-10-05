@@ -6,7 +6,6 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.processor.EvaluationRootProcessor
 import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.util.text
-import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,21 +14,23 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 
-open class CodeFragmentFromPsiBuilder(private val project: Project, val language: Language) : CodeFragmentBuilder() {
+open class CodeFragmentFromPsiBuilder(private val project: Project, val language: Language?) : CodeFragmentBuilder() {
   private val dumbService: DumbService = DumbService.getInstance(project)
 
-  open fun getVisitors(): List<EvaluationVisitor> = EvaluationVisitor.EP_NAME.extensions.toList()
+  open fun getVisitors(): List<EvaluationVisitor> = EvaluationVisitor.EP_NAME.extensionList
 
-  override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment {
-    val psi = dumbService.runReadActionInSmartMode<PsiFile?> {
+  override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment? {
+    val psiFile = dumbService.runReadActionInSmartMode<PsiFile?> {
       PsiManager.getInstance(project).findFile(file)
-    } ?: throw PsiConverterException("Cannot get PSI of file ${file.path}")
+    }
+    if (psiFile == null) return null
 
+    val effectiveLanguage = language ?: file.extension?.let { Language.resolveByExtension(it) } ?: Language.ANOTHER
     val filePath = FilesHelper.getRelativeToProjectPath(project, file.path)
-    val visitors = getVisitors().filter { it.language == language && it.feature == featureName }
-    if (visitors.isEmpty()) throw IllegalStateException("No suitable visitors. language=$language, feature=$featureName")
+    val visitors = getVisitors().filter { it.language == effectiveLanguage && it.feature == featureName }
+    if (visitors.isEmpty()) return null
     if (visitors.size > 1) throw IllegalStateException("More than 1 suitable visitors. language=$language, feature=$featureName. visitors=${visitors.joinToString { it.javaClass.simpleName }}")
-    val fileTokens = getFileTokens(visitors.first(), psi)
+    val fileTokens = getFileTokens(visitors.first(), psiFile)
     fileTokens.path = filePath
     fileTokens.text = file.text()
     return findRoot(fileTokens, rootProcessor)

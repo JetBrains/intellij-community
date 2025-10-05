@@ -8,14 +8,12 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
-import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.utils.isCallingAnyOf
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
-
-private val KOTLIN_RUN = listOf(StandardKotlinNames.run)
 
 internal class ConvertOrdinaryPropertyToLazyIntention :
     KotlinApplicableModCommandAction<KtProperty, ConvertOrdinaryPropertyToLazyIntention.Context>(KtProperty::class) {
@@ -36,7 +34,7 @@ internal class ConvertOrdinaryPropertyToLazyIntention :
 
     override fun KaSession.prepareContext(element: KtProperty): Context {
         val initializer = element.initializer as? KtCallExpression
-        val isRunCall = initializer?.isCalling(KOTLIN_RUN) == true
+        val isRunCall = initializer?.isCallingAnyOf(StandardKotlinNames.run) == true
         return Context(isRunCall)
     }
 

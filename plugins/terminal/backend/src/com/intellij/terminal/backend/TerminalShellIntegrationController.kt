@@ -2,11 +2,11 @@
 package com.intellij.terminal.backend
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.terminal.session.TerminalAliasesInfo
 import com.intellij.util.EventDispatcher
 import com.jediterm.terminal.Terminal
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
+import org.jetbrains.plugins.terminal.session.TerminalAliasesInfo
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.*
 
@@ -26,10 +26,11 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
           "prompt_finished" -> dispatcher.multicaster.promptFinished()
           "aliases_received" -> {
             val aliasesString = args.getOrNull(1)
-            if (aliasesString != null) {
-              val aliases = TerminalAliasesInfo(parseAliases(aliasesString, ShellType.ZSH.name))
-              dispatcher.multicaster.aliasesReceived(aliases)
+            val aliases = if (aliasesString?.isNotEmpty() == true) {
+              parseAliases(aliasesString, ShellType.ZSH.name)
             }
+            else emptyMap()
+            dispatcher.multicaster.aliasesReceived(TerminalAliasesInfo(aliases))
           }
           else -> LOG.warn("Unknown shell integration event: $args")
         }

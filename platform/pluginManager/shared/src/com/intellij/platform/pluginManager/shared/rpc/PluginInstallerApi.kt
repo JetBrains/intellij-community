@@ -2,27 +2,34 @@
 package com.intellij.platform.pluginManager.shared.rpc
 
 import com.intellij.ide.plugins.InstallPluginRequest
-import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
-import com.intellij.ide.plugins.marketplace.CheckErrorsResult
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.ide.plugins.marketplace.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
+import com.intellij.ide.plugins.marketplace.PluginInstalledFromDiskResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
+import com.intellij.ide.plugins.newui.PluginUiModel
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 
 @Rpc
 @ApiStatus.Internal
+@IntellijInternalApi
 interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun unloadDynamicPlugin(pluginId: PluginId, isUpdate: Boolean): Boolean
-  suspend fun uninstallDynamicPlugin(sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean
   suspend fun deletePluginFiles(pluginId: PluginId)
   suspend fun performUninstall(sessionId: String, id: PluginId): Boolean
-  suspend fun performInstallOperation(installPluginRequest: InstallPluginRequest): InstallPluginResult
 
   suspend fun allowLoadUnloadWithoutRestart(pluginId: String): Boolean
   suspend fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean
@@ -32,7 +39,11 @@ interface PluginInstallerApi : RemoteApi<Unit> {
   suspend fun resetSession(sessionId: String, removeSession: Boolean): Map<PluginId, Boolean>
   suspend fun prepareToUninstall(pluginsToUninstall: List<PluginId>): PrepareToUninstallResult
   suspend fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
-  suspend fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean, ): SetEnabledStateResult
+  suspend fun setEnableStateForDependencies(sessionId: String, descriptorIds: Set<PluginId>, enable: Boolean): SetEnabledStateResult
+  suspend fun installPluginFromDisk(projectId: ProjectId?): PluginInstalledFromDiskResult
+  suspend fun installOrUpdatePlugin(sessionId: String, descriptor: PluginDto, updateDescriptor: PluginDto?, installSource: FUSEventSource?, customRepoPlugins: List<PluginDto>): InstallPluginResult
+  suspend fun continueInstallation(sessionId: String, pluginId: PluginId, enableRequiredPlugins: Boolean, allowInstallWithoutRestart: Boolean, customRepoPlugins: List<PluginDto>): InstallPluginResult
+  suspend fun isRestartRequired(sessionId: String): Boolean
 
   companion object {
     suspend fun getInstance(): PluginInstallerApi {

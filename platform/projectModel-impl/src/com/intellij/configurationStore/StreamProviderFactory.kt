@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
  * Project level extension point.
  *
  * Allows setting custom storage class using providing custom storage specs.
- * Or set custom stream provider for default storage (XmlElementStorage).
+ * Or set a custom stream provider for default storage (XmlElementStorage).
  */
 @ApiStatus.Internal
 interface StreamProviderFactory {

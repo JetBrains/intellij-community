@@ -1,25 +1,43 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl.islands
 
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
+import com.intellij.openapi.rd.paint2DLine
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
+import com.intellij.ui.tabs.impl.DefaultTabPainterAdapter
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
+import com.intellij.ui.tabs.impl.themes.DefaultTabTheme
 import com.intellij.ui.tabs.impl.themes.TabTheme
 import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.*
-import java.awt.geom.RoundRectangle2D
+import kotlin.math.floor
 
-internal class ManyIslandsTabPainterAdapter : TabPainterAdapter {
-  override val tabPainter: JBTabPainter = ManyIslandsTabPainter()
+internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, var isEnabled: Boolean) : TabPainterAdapter {
+  private val editorAdapter = if (isDefault) DefaultTabPainterAdapter(if (debugger) JBTabPainter.DEBUGGER else JBTabPainter.DEFAULT) else EditorTabPainterAdapter()
+  private val islandsAdapter = IslandsTabPainter(isDefault)
+
+  override val tabPainter: JBTabPainter
+    get() {
+      return if (isEnabled) islandsAdapter else editorAdapter.tabPainter
+    }
 
   override fun paintBackground(label: TabLabel, g: Graphics, tabs: JBTabsImpl) {
+    if (!isEnabled) {
+      tabs.setFirstTabOffset(0)
+      editorAdapter.paintBackground(label, g, tabs)
+      return
+    }
+
     val info = label.info
     val selected = info == tabs.selectedInfo
     val active = tabs.isActiveTabs(info)
@@ -31,12 +49,8 @@ internal class ManyIslandsTabPainterAdapter : TabPainterAdapter {
     try {
       GraphicsUtil.setupAAPainting(g2)
 
-      tabPainter.fillBackground(g2, rect)
-
-      val accentedRect = Rectangle(rect.x, rect.y, rect.width, rect.height)
-      JBInsets.removeFrom(accentedRect, JBInsets(5, 3, 5, 3))
-
-      (tabPainter as ManyIslandsTabPainter).paintTab(g2, accentedRect, info.tabColor, active, hovered, selected)
+      tabs.setFirstTabOffset(JBUI.scale(3))
+      (tabPainter as IslandsTabPainter).paintTab(g2, rect, info.tabColor, active, hovered, selected)
     }
     finally {
       g2.dispose()
@@ -44,12 +58,12 @@ internal class ManyIslandsTabPainterAdapter : TabPainterAdapter {
   }
 }
 
-private class ManyIslandsTabTheme : TabTheme {
+private class IslandsTabTheme : TabTheme {
   override val background: Color
     get() = JBUI.CurrentTheme.EditorTabs.background()
 
   override val borderColor: Color
-    get() = background
+    get() = JBColor.namedColor("EditorTabs.underTabsBorderColor", JBUI.CurrentTheme.EditorTabs.borderColor())
 
   override val underlineColor: Color
     get() = background
@@ -74,12 +88,12 @@ private class ManyIslandsTabTheme : TabTheme {
     get() = JBColor.namedColor("EditorTabs.underlinedTabInactiveForeground", JBColor(0x000000, 0xFFFFFF))
 }
 
-private class ManyIslandsTabPainter : JBTabPainter {
-  private val myTheme = ManyIslandsTabTheme()
+internal open class IslandsTabPainter(isDefault: Boolean) : JBTabPainter {
+  private val myTheme = if (isDefault) DefaultTabTheme() else IslandsTabTheme()
 
   override fun getTabTheme(): TabTheme = myTheme
 
-  override fun getBackgroundColor(): Color = myTheme.background
+  override fun getBackgroundColor(): Color = myTheme.background!!
 
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
     paintTab(g, rect, tabColor, active, hovered, false)
@@ -90,6 +104,7 @@ private class ManyIslandsTabPainter : JBTabPainter {
   }
 
   override fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point) {
+    g.paint2DLine(from, to, LinePainter2D.StrokeType.INSIDE, thickness.toDouble(), myTheme.borderColor)
   }
 
   override fun paintUnderline(position: JBTabsPosition, rect: Rectangle, borderThickness: Int, g: Graphics2D, active: Boolean) {
@@ -100,22 +115,32 @@ private class ManyIslandsTabPainter : JBTabPainter {
     RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble())
   }
 
-  fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
-    val arc = JBUI.CurrentTheme.MainToolbar.Button.hoverArc().float
-    val shape = RoundRectangle2D.Float(rect.x.toFloat(), rect.y.toFloat(), rect.width.toFloat(), rect.height.toFloat(), arc, arc)
+  open fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
+    val arc = JBUI.CurrentTheme.MainToolbar.Button.hoverArc().float.toDouble()
+    val compactMode = UISettings.getInstance().compactMode
+
+    val hOffset = JBUIScale.scale(if (compactMode) 2f else 4f).toDouble()
+
+    val fullHeight = JBUIScale.scale(if (compactMode) 24f else 28f).toDouble()
+    val vOffset = (rect.height - fullHeight).coerceAtLeast(JBUIScale.scale(8f).toDouble())
+
+    val x = rect.x + hOffset
+    val y = floor(rect.y + vOffset / 2.0)
+    val width = rect.width - hOffset * 2.0
+    val height = rect.height - vOffset
 
     if (tabColor != null) {
       g.color = ColorUtil.withAlpha(tabColor, 0.9)
-      g.fill(shape)
+      RectanglePainter2D.FILL.paint(g, x, y, width, height, arc)
     }
 
     val (fill, draw) = getColors(active, hovered, selected)
 
     g.color = fill
-    g.fill(shape)
+    RectanglePainter2D.FILL.paint(g, x, y, width, height, arc)
 
     g.color = draw
-    g.draw(shape)
+    RectanglePainter2D.DRAW.paint(g, x, y, width, height, arc)
   }
 
   private val hoverBackground = JBColor("EditorTabs.hoverBackground", JBColor(Color(0xE5, 0xEE, 0xFF, 0x80), Color(0x34, 0x3E, 0x51, 0x80)))

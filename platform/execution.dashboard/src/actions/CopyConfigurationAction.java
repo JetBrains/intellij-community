@@ -8,6 +8,7 @@ import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.actions.RunDashboardActionUtils;
 import com.intellij.execution.impl.RunDialog;
@@ -18,7 +19,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 
 /**
  * @author konstantin.aleev
@@ -69,12 +73,16 @@ final class CopyConfigurationAction extends DumbAwareAction implements ActionRem
       ((RunConfigurationBase<?>)configuration).onConfigurationCopied();
     }
 
-    // fixme: action touches backend state and triggers client dialog - ask Lera?
     if (RunDialog.editConfiguration(project, copiedSettings,
                                     ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"))) {
 
-      // todo rpc to backend
       runManager.addConfiguration(copiedSettings);
+    }
+
+    RunConfiguration copiedConfiguration = copiedSettings.getConfiguration();
+    RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(project);
+    if (!runDashboardManager.isShowInDashboard(copiedConfiguration)) {
+      runDashboardManager.restoreConfigurations(Collections.singletonList(copiedConfiguration));
     }
   }
 }

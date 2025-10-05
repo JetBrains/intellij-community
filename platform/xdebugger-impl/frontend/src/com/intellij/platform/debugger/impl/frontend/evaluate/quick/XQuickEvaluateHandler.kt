@@ -17,6 +17,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -68,9 +69,16 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
         RemoteValueHint(project, projectId, editor, point, type, adjustedOffset, expressionInfo)
       }
       else {
-        val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession.value ?: return@async null
-        val frontendEvaluator = currentSession.currentEvaluator ?: return@async null
-        XValueHint(project, editor, point, type, adjustedOffset, expressionInfo, frontendEvaluator, currentSession, false)
+        val currentSession = if (frontendType is FrontendType.Remote) {
+          FrontendXDebuggerManager.getInstance(project).currentSession.value
+        }
+        else {
+          // Monolith case, we do not want to break plugins e.g., IJPL-176963
+          XDebugManagerProxy.getInstance().getCurrentSessionProxy(project)
+        }
+        if (currentSession == null) return@async null
+        val evaluator = currentSession.currentEvaluator ?: return@async null
+        XValueHint(project, editor, point, type, adjustedOffset, expressionInfo, evaluator, currentSession, false)
       }
     }
     hintDeferred.invokeOnCompletion {

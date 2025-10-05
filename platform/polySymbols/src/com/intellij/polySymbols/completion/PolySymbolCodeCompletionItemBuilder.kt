@@ -13,6 +13,7 @@ interface PolySymbolCodeCompletionItemBuilder {
   val icon: Icon?
   val typeText: String?
   val tailText: String?
+  val caseSensitive: Boolean
 
   val completeAfterInsert: Boolean
   val completeAfterChars: Set<Char>
@@ -30,6 +31,7 @@ interface PolySymbolCodeCompletionItemBuilder {
   fun typeText(value: String?): PolySymbolCodeCompletionItemBuilder
   fun typeText(provider: () -> String?): PolySymbolCodeCompletionItemBuilder
   fun tailText(value: String?): PolySymbolCodeCompletionItemBuilder
+  fun caseSensitive(value: Boolean): PolySymbolCodeCompletionItemBuilder
 
   fun completeAfterInsert(value: Boolean): PolySymbolCodeCompletionItemBuilder
   fun completeAfterChars(value: Set<Char>): PolySymbolCodeCompletionItemBuilder

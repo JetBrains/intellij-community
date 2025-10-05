@@ -3,10 +3,10 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.JvmAnnotation
 
-fun annotationRequest(fqn: String, vararg parameters: AnnotationAttributeRequest): AnnotationRequest =
+public fun annotationRequest(fqn: String, vararg parameters: AnnotationAttributeRequest): AnnotationRequest =
   SimpleAnnotationRequest(fqn, parameters.asList())
 
-fun annotationRequest(annotation: JvmAnnotation): AnnotationRequest? =
+public fun annotationRequest(annotation: JvmAnnotation): AnnotationRequest? =
   annotation.qualifiedName?.let { SimpleAnnotationRequest(it, attributeRequests(annotation)) }
 
 private class SimpleAnnotationRequest(private val fqn: String,

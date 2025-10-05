@@ -15,6 +15,7 @@ import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
+import com.intellij.platform.searchEverywhere.frontend.ui.weightTextIfEnabled
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HtmlToSimpleColoredComponentConverter
 import com.intellij.ui.SimpleColoredComponent
@@ -82,6 +83,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
         text(name) {
           font = listFont
           foreground = GotoActionModel.defaultActionForeground(selected, hasFocus, presentation.isEnabled)
+          accessibleName = presentation.shortcut?.takeIf { it.isNotEmpty() }?.let { "$name $it" } ?: name
 
           // TODO: Should we handle HTML? (see: appendWithColoredMatches(nameComponent, presentation.text, pattern, fg, selected))
           speedSearchRange(name, pattern, selected)?.let {
@@ -91,8 +93,11 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
           }
         }
 
+        weightTextIfEnabled(value)
+
         if (UISettings.getInstance().showInplaceCommentsInternal && actionId != null) {
           text(actionId) {
+            accessibleName = null
             attributes = SimpleTextAttributes.GRAYED_ATTRIBUTES
           }
         }
@@ -100,6 +105,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
         presentation.shortcut?.let { shortcutText ->
           @Suppress("HardCodedStringLiteral")
           text(shortcutText) {
+            accessibleName = null
             attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER or SimpleTextAttributes.STYLE_BOLD, groupForeground)
           }
         }
@@ -131,6 +137,8 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
             }
           }
         }
+
+        weightTextIfEnabled(value)
       }
     }
 
@@ -145,6 +153,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
       groupLabel.border = eastBorder
 
       text(location) {
+        accessibleName = null
         align = LcrInitParams.Align.RIGHT
         foreground = if (selected) NamedColorUtil.getListSelectionForeground(true)
         else NamedColorUtil.getInactiveTextColor()

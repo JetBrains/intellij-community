@@ -181,6 +181,10 @@
     <action id="EditorDeleteLine">
         <keyboard-shortcut first-keystroke="shift meta k" />
     </action>
+    <action id="EditorDownWithSelection">
+        <keyboard-shortcut first-keystroke="shift down" />
+        <keyboard-shortcut first-keystroke="shift ctrl down" />
+    </action>
     <action id="EditorDeleteToLineEnd">
         <keyboard-shortcut first-keystroke="ctrl k" />
         <keyboard-shortcut first-keystroke="meta delete" />
@@ -188,7 +192,8 @@
     <action id="EditorDeleteToLineStart">
         <keyboard-shortcut first-keystroke="meta back_space" />
     </action>
-    <action id="EditorDuplicate">
+    <action id="EditorDuplicate" />
+    <action id="EditorDuplicateLines">
         <keyboard-shortcut first-keystroke="shift alt down" />
     </action>
     <action id="EditorIndentLineOrSelection">
@@ -249,9 +254,16 @@
     <action id="EditorTextEnd">
         <keyboard-shortcut first-keystroke="meta down" />
     </action>
+    <action id="EditorTextEndWithSelection">
+      <keyboard-shortcut first-keystroke="shift meta down"/>
+    </action>
     <action id="EditorTextStart">
         <keyboard-shortcut first-keystroke="meta up" />
     </action>
+    <action id="EditorTextStartWithSelection">
+      <keyboard-shortcut first-keystroke="shift meta up"/>
+    </action>
+
     <action id="EditorToggleCase" />
     <action id="EditorToggleColumnMode">
         <keyboard-shortcut first-keystroke="shift alt i" />
@@ -262,6 +274,10 @@
     <action id="EditorUnindentSelection">
         <keyboard-shortcut first-keystroke="meta open_bracket" />
         <keyboard-shortcut first-keystroke="shift tab" />
+    </action>
+    <action id="EditorUpWithSelection">
+        <keyboard-shortcut first-keystroke="shift up" />
+        <keyboard-shortcut first-keystroke="shift ctrl up" />
     </action>
     <action id="ExpandAll">
         <keyboard-shortcut first-keystroke="meta add" />
@@ -391,7 +407,6 @@
     <action id="Images.Editor.ZoomIn">
         <keyboard-shortcut first-keystroke="meta add" />
     </action>
-    <action id="Images.ShowThumbnails" />
     <action id="IntroduceConstant" />
     <action id="IntroduceField" />
     <action id="IntroduceProperty" />
@@ -731,10 +746,6 @@
     <keyboard-shortcut first-keystroke="meta a"/>
   </action>
   <action id="ToggleBookmark5" />
-  <action id="Terminal.SplitVertically">
-    <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>
-    <keyboard-shortcut first-keystroke="ctrl shift 5"/>
-  </action>
   <action id="Rerun">
     <keyboard-shortcut first-keystroke="meta SEMICOLON" second-keystroke="l" />
     <keyboard-shortcut first-keystroke="meta shift f5" />

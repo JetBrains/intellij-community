@@ -22,6 +22,9 @@ object InlayDumpUtil {
     return inlayPattern.matcher(text).replaceAll("")
   }
 
+  /**
+   * @param renderBelowLineBlockInlaysBelowTheLine if set to `true` then below-lines block inlays will be really places below the line. Otherwise, they will be places above the line
+   */
   fun dumpInlays(
     sourceText: String,
     editor: Editor,
@@ -29,6 +32,7 @@ object InlayDumpUtil {
     renderer: (EditorCustomElementRenderer, Inlay<*>) -> String = { r, _ -> r.toString() },
     // if document has multiple injected files, a proper host offset should be passed
     offsetShift: Int = 0,
+    renderBelowLineBlockInlaysBelowTheLine: Boolean = false,
     indentBlockInlays: Boolean = false,
   ): String {
     val document = editor.document
@@ -50,15 +54,27 @@ object InlayDumpUtil {
         renderer(it.renderer, it)
       )
     }
-    blockElements.mapTo(inlayData) {
-      InlayData(
-        // Here we choose the visually consistent way and so lose precise offsets in inlay dumps.
-        // This is inconsistent with after-line-end inlays (see comment above),
-        // but I keep it this way so that we don't break existing tests.
-        with(document) { getLineStartOffset(getLineNumber(it.offset)) },
-        InlayDumpPlacement.BlockAbove,
-        renderer(it.renderer, it)
-      )
+    blockElements.mapTo(inlayData) { inlay ->
+      when {
+        renderBelowLineBlockInlaysBelowTheLine && inlay.placement == Inlay.Placement.BELOW_LINE -> {
+          InlayData(
+            with(document) { getLineStartOffset(getLineNumber(inlay.offset) + 1) },
+            InlayDumpPlacement.BlockBelow,
+            renderer(inlay.renderer, inlay)
+          )
+        }
+        else -> {
+          InlayData(
+            // Here we choose the visually consistent way and so lose precise offsets in inlay dumps.
+            // This is inconsistent with after-line-end inlays (see comment above),
+            // but I keep it this way so that we don't break existing tests.
+            with(document) { getLineStartOffset(getLineNumber(inlay.offset)) },
+            InlayDumpPlacement.BlockAbove,
+            renderer(inlay.renderer, inlay)
+          )
+        }
+      }
+
     }
     inlayData.sortBy { it.anchorOffset }
     return dumpInlays(sourceText, inlayData, offsetShift, indentBlockInlays)
@@ -74,10 +90,21 @@ object InlayDumpUtil {
     for ((anchorOffset, placement, text) in inlayData) {
       val renderOffset = anchorOffset + offsetShift
       append(sourceText.subSequence(currentOffset, renderOffset))
-      if (placement == InlayDumpPlacement.BlockAbove && indentBlockInlays) {
-        val indentStartOffset = CharArrayUtil.shiftBackwardUntil(sourceText, renderOffset, "\n") + 1
-        val indentEndOffset = CharArrayUtil.shiftForward(sourceText, renderOffset, " \t")
-        append(sourceText.subSequence(indentStartOffset, indentEndOffset))
+      if (placement.isBlockInlay && indentBlockInlays) {
+        when (placement) {
+          InlayDumpPlacement.BlockAbove -> {
+            val indentStartOffset = CharArrayUtil.shiftBackwardUntil(sourceText, renderOffset, "\n") + 1
+            val indentEndOffset = CharArrayUtil.shiftForward(sourceText, renderOffset, " \t")
+            append(sourceText.subSequence(indentStartOffset, indentEndOffset))
+          }
+          InlayDumpPlacement.BlockBelow -> {
+            val indentStartOffset = CharArrayUtil.shiftForward(sourceText, renderOffset, " \t")
+            val indentEndOffset = CharArrayUtil.shiftForwardUntil(sourceText, renderOffset, "\n")
+            append(sourceText.subSequence(indentStartOffset, indentEndOffset))
+          }
+          else -> {}
+        }
+
       }
       appendInlay(text, placement)
       currentOffset = renderOffset
@@ -87,12 +114,12 @@ object InlayDumpUtil {
 
   private fun StringBuilder.appendInlay(content: String, placement: InlayDumpPlacement) {
     append("/*<# ")
-    if (placement == InlayDumpPlacement.BlockAbove) {
+    if (placement.isBlockInlay) {
       append("block ")
     }
     append(content)
     append(" #>*/")
-    if (placement == InlayDumpPlacement.BlockAbove) {
+    if (placement.isBlockInlay) {
       append('\n')
     }
   }
@@ -123,9 +150,10 @@ object InlayDumpUtil {
 
   data class InlayData(val anchorOffset: Int, val placement: InlayDumpPlacement, val content: String)
 
-  enum class InlayDumpPlacement {
+  enum class InlayDumpPlacement(val isBlockInlay: Boolean) {
     // Note that in an inlay dump, inline inlay at lineEndOffset is the same as after-line-end inlay
-    Inline,
-    BlockAbove
+    Inline(isBlockInlay = false),
+    BlockAbove(isBlockInlay = true),
+    BlockBelow(isBlockInlay = true),
   }
 }

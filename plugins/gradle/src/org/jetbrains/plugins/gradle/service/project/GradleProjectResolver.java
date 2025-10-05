@@ -59,8 +59,7 @@ import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.service.execution.*;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleModelFetchActionResultHandler;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleProjectResolverResultHandler;
+import org.jetbrains.plugins.gradle.service.syncAction.impl.GradleSyncProjectConfigurator;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -134,10 +133,8 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       GradleConnector.newCancellationTokenSource()
     );
     DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(
-      syncTaskId, projectPath, effectiveSettings, listener, gradleResolverPolicy, projectResolverIndicator, false
+      projectPath, syncTaskId, projectPath, effectiveSettings, listener, gradleResolverPolicy, projectResolverIndicator, false
     );
-    GradleProjectResolverResultHandler resolverResultHandler = new GradleProjectResolverResultHandler(resolverContext);
-
     return computeCancellable(resolverContext, () -> {
       // Create project preview model w/o request to gradle, there are two main reasons for the it:
       // * Slow project open - even the simplest project info provided by gradle can be gathered too long (mostly because of new gradle distribution download and downloading build script dependencies)
@@ -147,7 +144,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
           .resolvePreviewProjectInfo(resolverContext);
       }
 
-      resolverResultHandler.onResolveProjectInfoStarted();
+      GradleSyncProjectConfigurator.onResolveProjectInfoStarted(resolverContext);
 
       return resolveProjectInfo(resolverContext);
     });
@@ -156,11 +153,8 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
   private @Nullable DataNode<ProjectData> resolveProjectInfo(
     @NotNull DefaultProjectResolverContext resolverContext
   ) {
-    var projectPath = resolverContext.getProjectPath();
     var id = resolverContext.getExternalSystemTaskId();
     var settings = resolverContext.getSettings();
-    var listener = resolverContext.getListener();
-    var cancellationToken = resolverContext.getCancellationToken();
 
     ExternalSystemSyncActionsCollector.logSyncStarted(id.findProject(), id.getId(), settings.isParallelModelFetch());
 
@@ -169,7 +163,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       .startSpan();
     try (Scope ignore = gradleExecutionSpan.makeCurrent()) {
 
-      GradleWrapperHelper.ensureInstalledWrapper(id, projectPath, settings, listener, cancellationToken);
+      GradleWrapperHelper.ensureInstalledWrapper(resolverContext);
 
       var projectResolverChain = createProjectResolverChain(resolverContext);
 
@@ -289,7 +283,7 @@ public final class GradleProjectResolver implements ExternalSystemProjectResolve
       .spanBuilder("GradleCall")
       .startSpan();
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
-      var modelFetchActionResultHandler = new GradleModelFetchActionResultHandler(resolverContext);
+      var modelFetchActionResultHandler = GradleSyncProjectConfigurator.createModelFetchResultHandler(resolverContext);
       GradleModelFetchActionRunner.runAndTraceBuildAction(connection, resolverContext, buildAction, modelFetchActionResultHandler);
 
       var gradleVersion = resolverContext.getGradleVersion();

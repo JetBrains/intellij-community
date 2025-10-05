@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 
-class JavaLibraryDataServiceExtension : LibraryDataServiceExtension {
+public class JavaLibraryDataServiceExtension : LibraryDataServiceExtension {
 
   override fun getLibraryKind(libraryData: LibraryData): PersistentLibraryKind<*>? {
     if (libraryData.toMavenCoordinates() != null) {

@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.platform.vcs.core` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,7 +11,8 @@ jvm_library(
   name = "vcs-core",
   module_name = "intellij.platform.vcs.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-core_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/util",
@@ -21,14 +21,14 @@ jvm_library(
     "//platform/diff-api:diff",
     "//platform/util/diff",
     "@lib//:kotlin-stdlib",
-  ],
-  runtime_deps = [":vcs-core_resources"]
+    "//libraries/kotlinx/serialization/core",
+  ]
 )
 
 jvm_library(
   name = "vcs-core_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":vcs-core"],
   deps = [
     "//platform/core-api:core",
@@ -41,12 +41,16 @@ jvm_library(
     "//libraries/junit5",
     "//libraries/junit5-params",
     "//libraries/assertj-core",
-  ],
-  runtime_deps = [":vcs-core_resources"]
+    "//libraries/kotlinx/serialization/core",
+  ]
 )
+### auto-generated section `build intellij.platform.vcs.core` end
+
+### auto-generated section `test intellij.platform.vcs.core` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "vcs-core_test",
   runtime_deps = [":vcs-core_test_lib"]
 )
-### auto-generated section `build intellij.platform.vcs.core` end
+### auto-generated section `test intellij.platform.vcs.core` end

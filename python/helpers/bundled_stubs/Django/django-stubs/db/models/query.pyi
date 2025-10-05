@@ -1,6 +1,6 @@
 import datetime
 from collections.abc import AsyncIterator, Collection, Iterable, Iterator, Mapping, Sequence, Sized
-from typing import Any, Generic, NamedTuple, overload
+from typing import Any, Generic, NamedTuple, TypeAlias, overload
 
 from django.db.backends.utils import _ExecuteQuery
 from django.db.models import Manager
@@ -8,12 +8,11 @@ from django.db.models.base import Model
 from django.db.models.expressions import Combinable, OrderBy
 from django.db.models.sql.query import Query, RawQuery
 from django.utils.functional import cached_property
-from typing_extensions import Self, TypeAlias, TypeVar
+from typing_extensions import Self, TypeVar, deprecated
 
 _T = TypeVar("_T", covariant=True)
 _Model = TypeVar("_Model", bound=Model, covariant=True)
 _Row = TypeVar("_Row", covariant=True, default=_Model)  # ONLY use together with _Model
-_QS = TypeVar("_QS", bound=_QuerySet)
 _TupleT = TypeVar("_TupleT", bound=tuple[Any, ...], covariant=True)
 
 MAX_GET_RESULTS: int
@@ -60,7 +59,7 @@ class QuerySet(Generic[_Model, _Row], Iterable[_Row], Sized):
     def as_manager(cls) -> Manager[_Model]: ...
     def __len__(self) -> int: ...
     def __bool__(self) -> bool: ...
-    def __class_getitem__(cls: type[_QS], item: type[_Model]) -> type[_QS]: ...
+    def __class_getitem__(cls, item: type[_Model]) -> Self: ...
     def __getstate__(self) -> dict[str, Any]: ...
     # Technically, the other QuerySet must be of the same type _T, but _T is covariant
     def __and__(self, other: QuerySet[_Model, _Row]) -> Self: ...
@@ -123,6 +122,7 @@ class QuerySet(Generic[_Model, _Row], Iterable[_Row], Sized):
     async def ain_bulk(self, id_list: Iterable[Any] | None = None, *, field_name: str = "pk") -> dict[Any, _Model]: ...
     def delete(self) -> tuple[int, dict[str, int]]: ...
     async def adelete(self) -> tuple[int, dict[str, int]]: ...
+    def _raw_delete(self, using: str | None) -> int: ...
     def update(self, **kwargs: Any) -> int: ...
     async def aupdate(self, **kwargs: Any) -> int: ...
     def exists(self) -> bool: ...
@@ -193,14 +193,18 @@ class QuerySet(Generic[_Model, _Row], Iterable[_Row], Sized):
     def __getitem__(self, i: int) -> _Row: ...
     @overload
     def __getitem__(self, s: slice) -> Self: ...
-    def __reversed__(self) -> Iterator[_Row]: ...
 
 class RawQuerySet(Iterable[_Model], Sized):
+    raw_query: RawQuery | str
+    model: type[_Model] | None
     query: RawQuery
+    params: tuple[Any, ...] | None
+    translations: dict[str, str]
+
     def __init__(
         self,
         raw_query: RawQuery | str,
-        model: type[Model] | None = None,
+        model: type[_Model] | None = None,
         query: Query | None = None,
         params: tuple[Any, ...] = (),
         translations: dict[str, str] | None = None,
@@ -228,7 +232,7 @@ class RawQuerySet(Iterable[_Model], Sized):
     def using(self, alias: str | None) -> RawQuerySet[_Model]: ...
 
 # Deprecated alias of QuerySet, for compatibility only.
-_QuerySet: TypeAlias = QuerySet
+_QuerySet: TypeAlias = QuerySet  # noqa: PYI047
 
 class Prefetch:
     prefetch_through: str
@@ -240,6 +244,9 @@ class Prefetch:
     def add_prefix(self, prefix: str) -> None: ...
     def get_current_prefetch_to(self, level: int) -> str: ...
     def get_current_to_attr(self, level: int) -> tuple[str, str]: ...
+    @deprecated(
+        "get_current_queryset() is deprecated and will be removed in Django 6.0. Use get_current_querysets() instead."
+    )
     def get_current_queryset(self, level: int) -> QuerySet | None: ...
     def get_current_querysets(self, level: int) -> list[QuerySet] | None: ...
 

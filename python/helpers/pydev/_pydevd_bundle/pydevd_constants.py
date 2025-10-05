@@ -4,8 +4,6 @@ This module holds the constants used for specifying the states of the debugger.
 from __future__ import nested_scopes
 import platform
 import sys  # Note: the sys import must be here anyways (others depend on it)
-import weakref
-from _pydev_bundle._pydev_saved_modules import thread, threading
 
 STATE_RUN = 1
 STATE_SUSPEND = 2
@@ -27,13 +25,6 @@ class DebugInfoHolder:
     DEBUG_TRACE_LEVEL = -1
     DEBUG_TRACE_BREAKPOINTS = -1
 
-
-# Any filename that starts with these strings is not traced nor shown to the user.
-# In Python 3.7 "<frozen ..." appears multiple times during import and should be ignored for the user.
-# In PyPy "<builtin> ..." can appear and should be ignored for the user.
-# <attrs is used internally by attrs
-# <__array_function__ is used by numpy
-IGNORE_BASENAMES_STARTING_WITH = ("<frozen ", "<builtin", "<attrs", "<__array_function__")
 
 IS_CPYTHON = platform.python_implementation() == 'CPython'
 
@@ -76,10 +67,13 @@ from _pydevd_bundle import pydevd_vm_type
 IS_WINDOWS = sys.platform == 'win32'
 
 IS_JYTHON = pydevd_vm_type.get_vm_type() == pydevd_vm_type.PydevdVmType.JYTHON
+IS_JYTH_LESS25 = False
 
 if IS_JYTHON:
     import java.lang.System  # @UnresolvedImport
     IS_WINDOWS = java.lang.System.getProperty("os.name").lower().startswith("windows")
+    if sys.version_info[0] == 2 and sys.version_info[1] < 5:
+        IS_JYTH_LESS25 = True
 elif IS_IRONPYTHON:
     import System
     IS_WINDOWS = "windows" in System.Environment.OSVersion.VersionString.lower()
@@ -256,7 +250,7 @@ def protect_libraries_from_patching():
         del sys.modules[name]
 
     # import for side effects
-    import _pydev_bundle._pydev_saved_modules
+    import _pydev_imps._pydev_saved_modules
 
     for name in patched_modules:
         sys.modules[name] = patched_modules[name]
@@ -265,57 +259,7 @@ def protect_libraries_from_patching():
 if USE_LIB_COPY:
     protect_libraries_from_patching()
 
-_fork_safe_locks = []
-
-
-class ForkSafeLock(object):
-    """
-    A lock which is fork-safe (when a fork is done, `pydevd_constants.after_fork()`
-    should be called to reset the locks in the new process to avoid deadlocks
-    from a lock which was locked during the fork).
-
-    Note:
-        Unlike `threading.Lock` this class is not completely atomic, so, doing:
-
-        lock = ForkSafeLock()
-        with lock:
-            ...
-
-        is different than using `threading.Lock` directly because the tracing may
-        find an additional function call on `__enter__` and on `__exit__`, so, it's
-        not recommended to use this in all places, only where the forking may be important
-        (so, for instance, the locks on PyDB should not be changed to this lock because
-        of that -- and those should all be collected in the new process because PyDB itself
-        should be completely cleared anyways).
-
-        It's possible to overcome this limitation by using `ForkSafeLock.acquire` and
-        `ForkSafeLock.release` instead of the context manager (as acquire/release are
-        bound to the original implementation, whereas __enter__/__exit__ is not due to Python
-        limitations).
-    """
-
-    def __init__(self, rlock=False):
-        self._rlock = rlock
-        self._init()
-        _fork_safe_locks.append(weakref.ref(self))
-
-    def __enter__(self):
-        return self._lock.__enter__()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return self._lock.__exit__(exc_type, exc_val, exc_tb)
-
-    def _init(self):
-        if self._rlock:
-            self._lock = threading.RLock()
-        else:
-            self._lock = thread.allocate_lock()
-
-        self.acquire = self._lock.acquire
-        self.release = self._lock.release
-        _fork_safe_locks.append(weakref.ref(self))
-
-
+from _pydev_imps._pydev_saved_modules import thread
 _thread_id_lock = thread.allocate_lock()
 thread_get_ident = thread.get_ident
 
@@ -555,17 +499,6 @@ class Null:
 
 # Default instance
 NULL = Null()
-
-class KeyifyList(object):
-    def __init__(self, inner, key):
-        self.inner = inner
-        self.key = key
-
-    def __len__(self):
-        return len(self.inner)
-
-    def __getitem__(self, k):
-        return self.key(self.inner[k])
 
 
 def call_only_once(func):

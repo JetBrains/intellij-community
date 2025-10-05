@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
@@ -48,15 +47,17 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.EDT;
+import static com.intellij.platform.locking.impl.IntelliJLockingUtil.getGlobalThreadingSupport;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -74,20 +75,46 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   private final ContextConstraint @NotNull [] myConstraints;
   private final BooleanSupplier @NotNull [] myCancellationConditions;
   private final Set<? extends Disposable> myDisposables;
-  private final @Nullable List<?> myCoalesceEquality;
+  private final @Nullable @Unmodifiable ListWithFixedHashCode myCoalesceEquality;
   private final @Nullable ProgressIndicator myProgressIndicator;
   /** Original computation passed in */
   private final Callable<? extends T> myOriginalComputation;
   /** Computation to be executed -- possible, wrapped into some monitoring */
   private final Callable<? extends T> myActualComputation;
 
-  private static final Set<Submission<?>> ourTasks = ConcurrentCollectionFactory.createConcurrentSet();
-  private static final Map<List<?>, Submission<?>> ourTasksByEquality = new HashMap<>();
+  @TestOnly
+  private static final Set<Submission<?>> ourTasksForTestMode = ConcurrentCollectionFactory.createConcurrentSet();
+  private static final Map<ListWithFixedHashCode, Submission<?>> ourTasksByEquality = new HashMap<>();
   private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 
   /* ======================== monitoring: ================================================= */
   private static final boolean ENABLE_OTEL_MONITORING = getBooleanProperty("idea.non-blocking-action.enable-monitoring", true);
   private static final @Nullable OTelMonitor MONITOR;
+  // to protect against incorrectly written hashCode() in equality objects
+  private static class ListWithFixedHashCode {
+    private final int myHashCode;
+    private final @NotNull Object @NotNull [] myEquality;
+
+    private ListWithFixedHashCode(@NotNull Object @NotNull... equality) {
+      myHashCode = Arrays.hashCode(equality);
+      myEquality = equality;
+    }
+
+    @Override
+    public int hashCode() {
+      return myHashCode;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof ListWithFixedHashCode ol && myHashCode == ol.myHashCode && Arrays.equals(myEquality, ol.myEquality);
+    }
+
+    @Override
+    public String toString() {
+      return "ListWithFixedHashCode:"+myHashCode+":"+Arrays.toString(myEquality);
+    }
+  }
 
   static {
     LOG.info("OTel monitoring for NonBlockingReadAction is " + (ENABLE_OTEL_MONITORING ? "enabled" : "disabled"));
@@ -102,8 +129,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   /* ======================== monitoring end =============================================== */
 
+  private static final ContextConstraint[] EMPTY_CONSTRAINTS = new ContextConstraint[0];
+  private static final BooleanSupplier[] EMPTY_CONDITIONS = new BooleanSupplier[0];
   NonBlockingReadActionImpl(@NotNull Callable<? extends T> computation) {
-    this(computation, null, null, new ContextConstraint[0], new BooleanSupplier[0], Collections.emptySet(), null, null);
+    this(computation, null, null, EMPTY_CONSTRAINTS, EMPTY_CONDITIONS, Collections.emptySet(), null, null);
   }
 
   private NonBlockingReadActionImpl(@NotNull Callable<? extends T> computation,
@@ -112,7 +141,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
                                     ContextConstraint @NotNull [] constraints,
                                     BooleanSupplier @NotNull [] cancellationConditions,
                                     @NotNull Set<? extends Disposable> disposables,
-                                    @Nullable List<?> coalesceEquality,
+                                    @Unmodifiable @Nullable ListWithFixedHashCode coalesceEquality,
                                     @Nullable ProgressIndicator progressIndicator) {
     myOriginalComputation = computation;
     myActualComputation = MONITOR == null ? computation :
@@ -138,7 +167,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   private static void invokeLater(@NotNull Runnable runnable) {
     Application app = ApplicationManager.getApplication();
-    IntelliJLockingUtil.getGlobalThreadingSupport().runWhenWriteActionIsCompleted(() -> {
+    getGlobalThreadingSupport().runWhenWriteActionIsCompleted(() -> {
       SideEffectGuard.computeWithAllowedSideEffectsBlocking(EnumSet.of(SideEffectGuard.EffectType.INVOKE_LATER), () -> {
         app.invokeLaterOnWriteThread(runnable, ModalityState.any(), app.getDisposed());
         return Unit.INSTANCE;
@@ -188,16 +217,21 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   @Override
-  public @NotNull NonBlockingReadAction<T> coalesceBy(Object @NotNull ... equality) {
-    if (myCoalesceEquality != null) throw new IllegalStateException("Setting equality twice is not allowed");
-    if (equality.length == 0) throw new IllegalArgumentException("Equality should include at least one object");
+  public @NotNull NonBlockingReadAction<T> coalesceBy(@NotNull Object @NotNull ... equality) {
+    if (myCoalesceEquality != null) {
+      throw new IllegalStateException("Setting equality twice is not allowed");
+    }
+    if (equality.length == 0) {
+      throw new IllegalArgumentException("Equality should include at least one object");
+    }
     if (equality.length == 1 && isTooCommon(equality[0])) {
-      throw new IllegalArgumentException(
-        "Equality should be unique: passing " + equality[0] + " is likely to interfere with unrelated computations from different places");
+      throw new IllegalArgumentException("Equality should be unique: passing " + equality[0] + " is likely to interfere with unrelated computations from different places");
+    }
+    if (ArrayUtil.contains(null, equality)) {
+      throw new IllegalArgumentException("Equality must not contain null but got: " + Arrays.toString(equality));
     }
     return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
-                                           myDisposables,
-                                           new ArrayList<>(Arrays.asList(equality)), myProgressIndicator);
+                                           myDisposables, new ListWithFixedHashCode(equality.clone()), myProgressIndicator);
   }
 
   private static boolean isTooCommon(Object o) {
@@ -260,7 +294,18 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
     private int myUseCount;
 
-    private final AtomicBoolean myCleaned = new AtomicBoolean();
+    @SuppressWarnings("unused") private volatile boolean myCleaned;
+    private static final VarHandle cleanedHandle;
+    static {
+      try {
+        cleanedHandle = MethodHandles.privateLookupIn(NonBlockingReadActionImpl.Submission.class, MethodHandles.lookup()).findVarHandle(
+          NonBlockingReadActionImpl.Submission.class, "myCleaned", boolean.class);
+      }
+      catch (NoSuchFieldException | IllegalAccessException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
     private final List<Disposable> myExpirationDisposables = new ArrayList<>();
 
     Submission(@NotNull NonBlockingReadActionImpl<T> builder,
@@ -281,7 +326,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
       myStartTrace = hasUnboundedExecutor() ? ourUnboundedSubmissionTracker.preventTooManySubmissions() : null;
       if (shouldTrackInTests()) {
-        ourTasks.add(this);
+        ourTasksForTestMode.add(this);
       }
       if (!builder.myDisposables.isEmpty()) {
         ApplicationManager.getApplication().runReadAction(() -> expireWithDisposables(this.builder.myDisposables));
@@ -365,7 +410,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private void cleanupIfNeeded() {
-      if (myCleaned.compareAndSet(false, true)) {
+      if (cleanedHandle.compareAndSet(this, false, true)) {
         cleanup();
       }
     }
@@ -388,7 +433,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         ourUnboundedSubmissionTracker.unregisterSubmission(myStartTrace);
       }
       if (shouldTrackInTests()) {
-        ourTasks.remove(this);
+        ourTasksForTestMode.remove(this);
       }
     }
 
@@ -418,7 +463,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       }
     }
 
-    void submitOrScheduleCoalesced(@NotNull List<?> coalesceEquality) {
+    void submitOrScheduleCoalesced(@NotNull ListWithFixedHashCode coalesceEquality) {
       synchronized (ourTasksByEquality) {
         if (isDone()) return;
 
@@ -444,7 +489,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private void reportCoalescingConflict(@NotNull Submission<?> current) {
-      ourTasks.remove(this); // the next line will throw in tests and leave this submission hanging forever
+      ourTasksForTestMode.remove(this); // the next line will throw in tests and leave this submission hanging forever
       LOG.error("Same coalesceBy arguments are already used by " + current.getComputationOrigin() + " so they can cancel each other. " +
                 "Please make them more unique.");
     }
@@ -481,10 +526,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           try {
             boolean computationSuccessful;
             if (AppExecutorUtil.propagateContext()) {
-              try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
-                computationSuccessful = attemptComputation();
-              }
-            } else {
+              computationSuccessful = ThreadContext.installThreadContext(myChildContext.getContext(), true, () -> attemptComputation());
+            }
+            else {
               computationSuccessful = attemptComputation();
             }
             if (!computationSuccessful) {
@@ -507,52 +551,57 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     T executeSynchronously() {
       try {
-        while (true) {
-          // here we override the context job in case when this code is running under non-cancellable section
-          CoroutineContext context;
-          if (myChildContext.getJob() != null) {
-            context = myChildContext.getContext();
-          }
-          else if (Cancellation.isInNonCancelableSection()) {
-            context = ThreadContext.currentThreadContext().minusKey(Job.Key);
-          }
-          else {
-            context = ThreadContext.currentThreadContext();
-          }
-          try (AccessToken ignored = ThreadContext.installThreadContext(context, true)) {
-            attemptComputation();
-          }
-
-          if (isDone()) {
-            if (isCancelled()) {
-              throw new ProcessCanceledException();
+        // with the presence of background write action, it is possible that synchronous execution of NBRA will cause
+        // thread starvation of the Default dispatcher. We need to use compensation to avoid this problem
+        return NbraUtilKt.runSynchronousNonBlockingReadActionWithCompensation(() -> {
+          while (true) {
+            // here we override the context job in case when this code is running under non-cancellable section
+            CoroutineContext context;
+            if (myChildContext.getJob() != null) {
+              context = myChildContext.getContext();
             }
-            try {
-              return blockingGet(0, TimeUnit.MILLISECONDS);
+            else if (Cancellation.isInNonCancelableSection()) {
+              context = ThreadContext.currentThreadContext().minusKey(Job.Key);
             }
-            catch (TimeoutException e) {
-              throw new RuntimeException(e);
+            else {
+              context = ThreadContext.currentThreadContext();
             }
-          }
-
-          ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
-          ContextConstraint[] constraints = builder.myConstraints;
-          if (shouldFinishOnEdt() || constraints.length != 0) {
-            Semaphore semaphore = new Semaphore(1);
-            invokeLater((ContextAwareRunnable) () -> {
-              if (checkObsolete()) {
-                semaphore.up();
-              }
-              else {
-                BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
-              }
+            ThreadContext.installThreadContext(context, true, () -> {
+              attemptComputation();
+              return Unit.INSTANCE;
             });
-            ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
-            if (isCancelled()) {
-              throw new ProcessCanceledException();
+
+            if (isDone()) {
+              if (isCancelled()) {
+                throw new ProcessCanceledException();
+              }
+              try {
+                return blockingGet(0, TimeUnit.MILLISECONDS);
+              }
+              catch (TimeoutException e) {
+                throw new RuntimeException(e);
+              }
+            }
+
+            ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(myProgressIndicator);
+            ContextConstraint[] constraints = builder.myConstraints;
+            if (shouldFinishOnEdt() || constraints.length != 0) {
+              Semaphore semaphore = new Semaphore(1);
+              invokeLater((ContextAwareRunnable) () -> {
+                if (checkObsolete()) {
+                  semaphore.up();
+                }
+                else {
+                  BaseConstrainedExecution.scheduleWithinConstraints(semaphore::up, null, constraints);
+                }
+              });
+              ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
+              if (isCancelled()) {
+                throw new ProcessCanceledException();
+              }
             }
           }
-        }
+        });
       } catch (ProcessCanceledException e) {
         cancelJob(e);
         throw e;
@@ -748,9 +797,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         if (isSucceeded()) { // in case when another thread managed to cancel it just before `setResult`
           try {
             if (AppExecutorUtil.propagateContext()) {
-              try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), false)) {
+              ThreadContext.installThreadContext(myChildContext.getContext(), false, () -> {
                 builder.myUiThreadAction.accept(result);
-              }
+                return Unit.INSTANCE;
+              });
             } else {
               builder.myUiThreadAction.accept(result);
             }
@@ -780,8 +830,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   public static void waitForAsyncTaskCompletion() {
     ThreadingAssertions.assertEventDispatchThread();
     assert ApplicationManager.getApplication()==null || !ApplicationManager.getApplication().isWriteAccessAllowed();
-    for (Submission<?> task : ourTasks) {
-      waitForTask(task);
+    for (Submission<?> task : ourTasksForTestMode) {
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+        waitForTask(task);
+        return Unit.INSTANCE;
+      });
     }
   }
 
@@ -816,7 +869,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @TestOnly
   @VisibleForTesting
-  public static @NotNull Map<List<?>, Submission<?>> getTasksByEquality() {
+  public static @NotNull Object getTasksByEquality() {
     return ourTasksByEquality;
   }
 

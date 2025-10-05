@@ -267,6 +267,14 @@ public class PyRainbowHighlightingTest extends PyTestCase {
     );
   }
 
+  // PY-60057
+  public void testNoEndlessResolveLoopForNonlocalTarget() {
+    doTest("""
+            def f():
+                 nonlocal p
+             """);
+  }
+
   private void doTest(@NotNull String text) {
     myFixture.testRainbow(getTestName(true) + ".py", text, true, true);
   }

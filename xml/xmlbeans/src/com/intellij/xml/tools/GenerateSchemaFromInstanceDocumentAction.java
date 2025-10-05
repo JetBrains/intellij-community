@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.xml.XmlBundle;
 import org.apache.xmlbeans.impl.inst2xsd.Inst2Xsd;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,13 +78,13 @@ final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     final VirtualFile relativeFile = VfsUtilCore.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(url), null);
     VirtualFile relativeFileDir;
     if (relativeFile == null) {
-      Messages.showErrorDialog(project, XmlBundle.message("file.doesnt.exist", url), XmlBundle.message("error"));
+      Messages.showErrorDialog(project, XmlBeansBundle.message("file.doesnt.exist", url), XmlBeansBundle.message("error"));
       return;
     } else {
       relativeFileDir = relativeFile.getParent();
     }
     if (relativeFileDir == null) {
-      Messages.showErrorDialog(project, XmlBundle.message("file.doesnt.exist", url), XmlBundle.message("error"));
+      Messages.showErrorDialog(project, XmlBeansBundle.message("file.doesnt.exist", url), XmlBeansBundle.message("error"));
       return;
     }
 
@@ -107,7 +106,7 @@ final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     final File expectedSchemaFile = new File(dirPath + File.separator + relativeFile.getName() + "0.xsd");
     if (expectedSchemaFile.exists()) {
       if (!expectedSchemaFile.delete()) {
-        Messages.showErrorDialog(project, XmlBundle.message("cant.delete.file", expectedSchemaFile.getPath()), XmlBundle.message("error"));
+        Messages.showErrorDialog(project, XmlBeansBundle.message("cant.delete.file", expectedSchemaFile.getPath()), XmlBeansBundle.message("error"));
         return;
       }
     }
@@ -143,7 +142,7 @@ final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
       Inst2Xsd.main(ArrayUtilRt.toStringArray(parameters));
     }
     catch (Exception e) {
-      Messages.showErrorDialog(project, XmlBundle.message("xml2xsd.generator.error.message"), XmlBundle.message("xml2xsd.generator.error"));
+      Messages.showErrorDialog(project, XmlBeansBundle.message("xml2xsd.generator.error.message"), XmlBeansBundle.message("xml2xsd.generator.error"));
       return;
     }
     finally {
@@ -152,7 +151,7 @@ final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     if (expectedSchemaFile.exists()) {
       final boolean renamed = expectedSchemaFile.renameTo(xsd);
       if (! renamed) {
-        Messages.showErrorDialog(project, XmlBundle.message("cant.rename.file", expectedSchemaFile.getPath(), xsd.getPath()), XmlBundle.message("error"));
+        Messages.showErrorDialog(project, XmlBeansBundle.message("cant.rename.file", expectedSchemaFile.getPath(), xsd.getPath()), XmlBeansBundle.message("error"));
       }
     }
 
@@ -160,7 +159,7 @@ final class GenerateSchemaFromInstanceDocumentAction extends AnAction {
     if (xsdVFile != null) {
       FileEditorManager.getInstance(project).openFile(xsdVFile, true);
     } else {
-      Messages.showErrorDialog(project, XmlBundle.message("xml2xsd.generator.error.message"), XmlBundle.message("xml2xsd.generator.error"));
+      Messages.showErrorDialog(project, XmlBeansBundle.message("xml2xsd.generator.error.message"), XmlBeansBundle.message("xml2xsd.generator.error"));
     }
 
   }

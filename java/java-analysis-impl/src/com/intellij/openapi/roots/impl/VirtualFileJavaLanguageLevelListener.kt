@@ -5,12 +5,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.messages.Topic
 
-interface VirtualFileJavaLanguageLevelListener {
-  companion object {
+public interface VirtualFileJavaLanguageLevelListener {
+  public companion object {
     @JvmField
     @Topic.ProjectLevel
-    val TOPIC: Topic<VirtualFileJavaLanguageLevelListener> = Topic(VirtualFileJavaLanguageLevelListener::class.java)
+    public val TOPIC: Topic<VirtualFileJavaLanguageLevelListener> = Topic(VirtualFileJavaLanguageLevelListener::class.java)
   }
 
-  fun levelChanged(virtualFile: VirtualFile, newLevel: LanguageLevel?)
+  public fun levelChanged(virtualFile: VirtualFile, newLevel: LanguageLevel?)
 }

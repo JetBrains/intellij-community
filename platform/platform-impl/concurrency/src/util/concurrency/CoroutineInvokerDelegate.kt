@@ -5,7 +5,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -24,7 +24,7 @@ internal abstract class CoroutineInvokerDelegate(
     val job = doLaunch(CoroutineName(runnable.toString()), delay) {
       kotlin.runCatching {
         runnable.run()
-      }.getOrLogException {
+      }.getOrHandleException {
         Invoker.LOG.error("$description: Task $runnable threw an unexpected exception", it)
       }
     }

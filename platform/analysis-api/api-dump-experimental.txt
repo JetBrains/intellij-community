@@ -1,5 +1,8 @@
+a:com.intellij.codeInsight.completion.CompletionService
+- *p:getVariantsFromGroupContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer):V
 *:com.intellij.codeInsight.completion.command.CommandCompletionFactory
 - com.intellij.openapi.project.PossiblyDumbAware
+- adjustCaret(com.intellij.psi.PsiFile,I):java.lang.Integer
 - commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
 - createFile(com.intellij.psi.PsiFile,java.lang.String):com.intellij.psi.PsiFile
 - filterSuffix():java.lang.Character
@@ -7,7 +10,7 @@
 - suffix():C
 - supportFiltersWithDoublePrefix():Z
 *f:com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,Z):V
 - f:component1():com.intellij.openapi.project.Project
 - f:component2():com.intellij.openapi.editor.Editor
 - f:component3():I
@@ -16,8 +19,9 @@
 - f:component6():I
 - f:component7():com.intellij.psi.PsiFile
 - f:component8():Z
-- f:copy(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
-- bs:copy$default(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,I,java.lang.Object):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+- f:component9():Z
+- f:copy(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,Z):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+- bs:copy$default(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,Z,I,java.lang.Object):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 - equals(java.lang.Object):Z
 - f:getEditor():com.intellij.openapi.editor.Editor
 - f:getOffset():I
@@ -27,11 +31,14 @@
 - f:getProject():com.intellij.openapi.project.Project
 - f:getPsiFile():com.intellij.psi.PsiFile
 - hashCode():I
+- f:isInjected():Z
 - f:isReadOnly():Z
 *:com.intellij.codeInsight.completion.command.CommandProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - a:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
 - getId():java.lang.String
+- supportNewLineCompletion():Z
+- supportsInjected():Z
 - supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.CompletionCommand
 - com.intellij.openapi.util.UserDataHolderBase
@@ -42,13 +49,12 @@
 - getHighlightInfo():com.intellij.codeInsight.completion.command.HighlightInfoLookup
 - getIcon():javax.swing.Icon
 - a:getPresentableName():java.lang.String
+- getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - getPriority():java.lang.Integer
 - getSynonyms():java.util.List
 *f:com.intellij.codeInsight.completion.command.CompletionCommandKt
 - sf:KEY_FORCE_CARET_OFFSET:com.intellij.openapi.util.Key
 - sf:getCommandContext(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
-*:com.intellij.codeInsight.completion.command.CompletionCommandWithPreview
-- a:getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 *f:com.intellij.codeInsight.completion.command.ForceOffsetData
 - <init>(I,I):V
 - f:component1():I
@@ -78,6 +84,17 @@
 - highlightMessage():java.lang.String
 - highlightReference(com.intellij.lang.annotation.AnnotationBuilder):com.intellij.lang.annotation.AnnotationBuilder
 - highlightSeverity():com.intellij.lang.annotation.HighlightSeverity
+com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- *s:snippet(com.intellij.psi.NavigatablePsiElement):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Snippet
+*f:com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$Snippet
+- java.lang.Record
+- com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+- <init>(com.intellij.openapi.fileTypes.FileType,java.lang.String,I):V
+- f:equals(java.lang.Object):Z
+- fileType():com.intellij.openapi.fileTypes.FileType
+- f:hashCode():I
+- startLine():I
+- text():java.lang.String
 f:com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 - *s:getModCommandPreview(com.intellij.modcommand.ModCommand,com.intellij.modcommand.ActionContext):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 com.intellij.codeInsight.lookup.LookupEx
@@ -295,11 +312,6 @@ com.intellij.modcommand.ModPsiUpdater
 - getTimestamp():I
 - setState(com.intellij.openapi.command.undo.ImmutableActionChangeRange):V
 - toImmutable(Z):com.intellij.openapi.command.undo.ImmutableActionChangeRange
-a:com.intellij.openapi.command.undo.UndoManager
-- *a:getNextRedoNanoTime(com.intellij.openapi.fileEditor.FileEditor):J
-- *a:getNextUndoNanoTime(com.intellij.openapi.fileEditor.FileEditor):J
-- *a:isNextRedoAskConfirmation(com.intellij.openapi.fileEditor.FileEditor):Z
-- *a:isNextUndoAskConfirmation(com.intellij.openapi.fileEditor.FileEditor):Z
 a:com.intellij.openapi.fileEditor.FileEditorManager
 - *a:canOpenFile(com.intellij.openapi.vfs.VirtualFile):Z
 - *a:getCurrentFile():com.intellij.openapi.vfs.VirtualFile
@@ -313,6 +325,10 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 e:com.intellij.openapi.fileEditor.FileEditorPolicy
 - java.lang.Enum
 - *sf:HIDE_OTHER_EDITORS:com.intellij.openapi.fileEditor.FileEditorPolicy
+c:com.intellij.openapi.fileEditor.OpenFileDescriptor
+- com.intellij.openapi.fileEditor.FileEditorNavigatable
+- java.lang.Comparable
+- *:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext,I):V
 *f:com.intellij.openapi.vfs.newvfs.AttributeInputStream
 - java.io.DataInputStream
 - readEnumeratedString():java.lang.String
@@ -330,3 +346,7 @@ a:com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - com.intellij.openapi.vfs.VirtualFileWithId
 - *a:isOffline():Z
 - *a:setOffline(Z):V
+a:com.intellij.openapi.vfs.newvfs.RefreshQueue
+- *a:refresh(Z,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.vfs.newvfs.VfsImplUtil
+- *s:refreshAndFindFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String,java.util.function.Consumer):V

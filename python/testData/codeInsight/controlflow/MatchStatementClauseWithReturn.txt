@@ -2,11 +2,12 @@
 1(2) WRITE ACCESS: x
 2(3) element: PyMatchStatement
 3(4) READ ACCESS: x
-4(5,8) refutable pattern: 42
-5(6) ASSERTTYPE ACCESS: x
-6(7) matched pattern: 42
-7(11) element: PyReturnStatement
-8(9) ASSERTTYPE ACCESS: x
-9(10) element: PyExpressionStatement
-10(11) READ ACCESS: y
-11() element: null
+4(5,9) refutable pattern: 42
+5(6) matched pattern: 42
+6(7) ASSERTTYPE ACCESS: x
+7(8) element: PyStatementList
+8(12) element: PyReturnStatement
+9(10) ASSERTTYPE ACCESS: x
+10(11) element: PyExpressionStatement
+11(12) READ ACCESS: y
+12() element: null

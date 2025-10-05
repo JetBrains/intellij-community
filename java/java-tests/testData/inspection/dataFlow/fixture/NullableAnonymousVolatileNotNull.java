@@ -17,7 +17,7 @@ class Test {
                 }
             }
         });
-      obj = <warning descr="'null' is assigned to a variable that is annotated with @NotNull">null</warning>;
+      obj = <warning descr="'null' is assigned to a non-null variable">null</warning>;
     }
 
     @NotNull private volatile Object obj;

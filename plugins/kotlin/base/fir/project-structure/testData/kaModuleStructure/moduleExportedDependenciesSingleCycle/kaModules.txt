@@ -22,3 +22,16 @@ KaSourceModule:
     <empty>
   dependsOnDependencies:
     <empty>
+
+KaSourceModule:
+  description: Sources of A
+  targetPlatform: JVM (1.8)
+  name: A
+  sourceModuleKind: TEST
+  stableModuleName: <A>
+  regularDependencies:
+    KaSourceModule(A, production)
+  friendDependencies:
+    KaSourceModule(A, production)
+  dependsOnDependencies:
+    <empty>

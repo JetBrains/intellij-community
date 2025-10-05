@@ -2,18 +2,20 @@
 package com.intellij.ide.plugins.api
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.newui.PluginDependencyModel
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
+import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
-
 @Serializable
 @ApiStatus.Internal
+@IntellijInternalApi
 class PluginDto(
   override var name: String? = null,
   override var pluginId: PluginId,
@@ -46,6 +48,7 @@ class PluginDto(
 
   override var releaseVersion: Int = 0
   override var displayCategory: String? = null
+  override var isImplementationDetail: Boolean = false
   override var vendorDetails: PluginNodeVendorDetails? = null
   override var reviewComments: ReviewsPageContainer? = null
 
@@ -75,7 +78,10 @@ class PluginDto(
   override var description: String? = null
 
   override var sinceBuild: String? = null
+  override var isBundledUpdate: Boolean = false
   override var untilBuild: String? = null
+
+  override var isDisableAllowed: Boolean = true
 
   override fun getDescriptor(): IdeaPluginDescriptor {
     return PluginDtoDescriptorWrapper(this)
@@ -85,9 +91,22 @@ class PluginDto(
     dependencies.add(PluginDependencyModel(id, optional))
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PluginDto
+
+    return pluginId == other.pluginId
+  }
+
+  override fun hashCode(): Int {
+    return pluginId.hashCode()
+  }
+
   companion object {
     @JvmStatic
-    fun fromModel(model: PluginUiModel): PluginDto {
+    fun fromModel(model: PluginUiModel, ignoreDescriptionForNotLoadedPlugins: Boolean = false): PluginDto {
       if (model is PluginDto) {
         return model
       }
@@ -141,11 +160,16 @@ class PluginDto(
         repositoryName = model.repositoryName
         channel = model.channel
         installSource = model.installSource
-        description = model.description
+        if (!ignoreDescriptionForNotLoadedPlugins || PluginManagerCore.isLoaded(model.pluginId)) {
+          description = model.description
+        }
         category = model.category
         sinceBuild = model.sinceBuild
         untilBuild = model.untilBuild
         releaseDate = model.releaseDate
+        isBundledUpdate = model.isBundledUpdate
+        isImplementationDetail = model.isImplementationDetail
+        isDisableAllowed = model.isDisableAllowed
       }
     }
   }

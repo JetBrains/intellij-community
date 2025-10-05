@@ -1,6 +1,6 @@
-from _typeshed import Incomplete
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["random_cograph"]
 
-@_dispatch
-def random_cograph(n, seed: Incomplete | None = None): ...
+@_dispatchable
+def random_cograph(n, seed=None): ...

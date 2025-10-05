@@ -39,7 +39,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.changesComputation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.UpdateableGHPRReviewThreadCommentViewModel
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import java.util.*
 
 interface GHPRTimelineThreadViewModel

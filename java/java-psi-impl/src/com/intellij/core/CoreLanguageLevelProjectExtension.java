@@ -5,10 +5,12 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.JavaRelease;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class CoreLanguageLevelProjectExtension extends LanguageLevelProjectExtension {
   private LanguageLevel myLanguageLevel = JavaRelease.getHighest();
+  private @Nullable Boolean myDefault;
 
   @Override
   public @NotNull LanguageLevel getLanguageLevel() {
@@ -18,5 +20,15 @@ public class CoreLanguageLevelProjectExtension extends LanguageLevelProjectExten
   @Override
   public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
+  }
+
+  @Override
+  public @Nullable Boolean getDefault() {
+    return myDefault;
+  }
+
+  @Override
+  public void setDefault(@Nullable Boolean isDefault) {
+    myDefault = isDefault;
   }
 }

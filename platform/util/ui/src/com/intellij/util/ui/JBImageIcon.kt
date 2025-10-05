@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import java.awt.Component
@@ -14,6 +14,6 @@ import javax.swing.ImageIcon
 open class JBImageIcon(image: Image) : ImageIcon(image) {
   @Synchronized
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    drawImage(g = g, image = image, x = x, y = y, observer = imageObserver ?: c)
+    StartupUiUtil.drawImage(g, image, x, y, imageObserver ?: c)
   }
 }

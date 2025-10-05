@@ -1,18 +1,18 @@
 ### auto-generated section `build intellij.platform.vcs.impl.lang.actions` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "actions_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "actions",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":actions_resources"],
   runtime_deps = [
-    ":actions_resources",
     "@lib//:kotlin-stdlib",
     "//platform/vcs-impl",
   ]

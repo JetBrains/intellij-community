@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
@@ -42,20 +43,21 @@ public final class VfsTestUtil {
    * Invokes VirtualFileManager.syncRefresh() and waits until indexes are ready after VFS refresh
    */
   public static void syncRefresh() {
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      VirtualFileManager.getInstance().syncRefresh();
-      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    Application app = ApplicationManager.getApplication();
+    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+    if (app.isWriteAccessAllowed()) {
+      virtualFileManager.syncRefresh();
     }
-    else if (ApplicationManager.getApplication().isDispatchThread()) {
-      WriteAction.compute(VirtualFileManager.getInstance()::syncRefresh);
-      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    else if (app.isDispatchThread()) {
+      WriteAction.compute(virtualFileManager::syncRefresh);
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        WriteAction.compute(VirtualFileManager.getInstance()::syncRefresh);
+      app.invokeAndWait(() -> {
+        WriteAction.compute(virtualFileManager::syncRefresh);
       });
-      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
     }
+
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
   }
 
   public static @NotNull VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath) {

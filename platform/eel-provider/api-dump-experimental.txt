@@ -3,14 +3,21 @@ f:com.intellij.platform.eel.provider.EelProviderUtil
 - *sf:getEelDescriptor(java.nio.file.Path):com.intellij.platform.eel.EelDescriptor
 - *sf:getLocalEel():com.intellij.platform.eel.LocalEelApi
 - *sf:toEelApiBlocking(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
+- *sf:toEelApiBlocking(com.intellij.platform.eel.EelMachine,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
 *f:com.intellij.platform.eel.provider.LocalEelDescriptor
 - com.intellij.platform.eel.EelDescriptor
 - sf:INSTANCE:com.intellij.platform.eel.provider.LocalEelDescriptor
 - equals(java.lang.Object):Z
-- getOsFamily():com.intellij.platform.eel.EelOsFamily
-- getUserReadableDescription():java.lang.String
+- getMachine():com.intellij.platform.eel.EelMachine
 - hashCode():I
-- toEelApi(kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.provider.LocalEelMachine
+- com.intellij.platform.eel.EelMachine
+- sf:INSTANCE:com.intellij.platform.eel.provider.LocalEelMachine
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- getOsFamily():com.intellij.platform.eel.EelOsFamily
+- hashCode():I
+- toEelApi(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.provider.LocalPosixEelApi
 - com.intellij.platform.eel.EelPosixApi
 - com.intellij.platform.eel.LocalEelApi

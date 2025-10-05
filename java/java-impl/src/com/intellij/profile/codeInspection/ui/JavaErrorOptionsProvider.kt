@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.options.BeanConfigurable
 
-class JavaErrorOptionsProvider : BeanConfigurable<DaemonCodeAnalyzerSettings>(
+public class JavaErrorOptionsProvider : BeanConfigurable<DaemonCodeAnalyzerSettings>(
   DaemonCodeAnalyzerSettings.getInstance()), ErrorOptionsProvider {
 
   init {

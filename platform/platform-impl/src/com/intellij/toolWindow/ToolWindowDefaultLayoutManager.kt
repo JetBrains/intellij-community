@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
 @Service(Service.Level.APP)
-@State(name = "ToolWindowLayout", storages = [
+@State(name = "ToolWindowLayout", category = SettingsCategory.UI, storages = [
   Storage(value = "window.layouts.xml"),
   Storage(value = "window.state.xml", deprecated = true, roamingType = RoamingType.DISABLED),
 ])

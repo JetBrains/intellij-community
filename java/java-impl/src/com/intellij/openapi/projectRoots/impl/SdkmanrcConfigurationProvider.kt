@@ -1,25 +1,26 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.io.File
 import java.util.*
 
 private val LOG = logger<SdkmanrcConfigurationProvider>()
 
-data class SdkmanReleaseData(val target: String,
-                             val version: String,
-                             val flavour: String? = null,
-                             val vendor: String? = null) {
-  companion object {
-    private val regex: Regex = Regex("(\\d+(?:\\.\\d+)*)(?:\\.([^-]+))?-?(.*)?")
+public data class SdkmanReleaseData(val target: String,
+                                    val version: String,
+                                    val flavour: String? = null,
+                                    val vendor: String? = null) {
+  public companion object {
+    private val regex: Regex = Regex("(\\d+(?:\\.\\d+)*)(?:\\.([^-]+))?-?(\\S*)?")
 
-    fun parse(text: String): SdkmanReleaseData? {
-      val matchResult = regex.find(text) ?: return null
+    public fun parse(text: String): SdkmanReleaseData? {
+      val matchResult = regex.matchEntire(text) ?: return null
       return SdkmanReleaseData(
         text,
         matchResult.groups[1]?.value ?: return null,
@@ -29,7 +30,7 @@ data class SdkmanReleaseData(val target: String,
     }
   }
 
-  fun matchVersionString(versionString: @NlsSafe String): Boolean {
+  public fun matchVersionString(versionString: @NlsSafe String): Boolean {
     LOG.info("Matching '$versionString'")
     if (version !in versionString) return false
 
@@ -56,20 +57,34 @@ data class SdkmanReleaseData(val target: String,
 
     // Check vendor
     val variantName = variant.displayName
-    return variantName != null && versionString.contains(variantName)
+    return versionString.contains(variantName)
   }
 
 }
 
-class SdkmanrcConfigurationProvider: ExternalJavaConfigurationProvider<SdkmanReleaseData> {
-  override fun getConfigurationFile(project: Project): File = File(project.basePath, ".sdkmanrc")
+private const val SDKMANRC = ".sdkmanrc"
+private val JAVA_PATTERN: Regex = Regex("^java=(.*)$", RegexOption.MULTILINE)
+
+public class SdkmanrcConfigurationProvider: ExternalJavaConfigurationProvider<SdkmanReleaseData> {
+  override fun isConfigurationFile(fileName: String): Boolean = fileName == SDKMANRC
+
+  override fun getConfigurationFile(project: Project): File = File(project.basePath, SDKMANRC)
 
   override fun getReleaseData(text: String): SdkmanReleaseData? {
     val properties = Properties().apply {
       load(text.byteInputStream())
     }
     val java = properties.getProperty("java") ?: return null
-    return SdkmanReleaseData.parse(java)
+    return SdkmanReleaseData.parse(java.trim())
+  }
+
+  override fun getReleaseDataOffset(text: String): TextRange? {
+    val releaseData = getReleaseData(text) ?: return null
+    val range = JAVA_PATTERN
+      .findAll(text)
+      .firstOrNull { it.groupValues.getOrNull(1)?.contains(releaseData.target) == true }
+      ?.range ?: return null
+    return TextRange(range.first, range.last)
   }
 
   override fun matchAgainstSdk(releaseData: SdkmanReleaseData, sdk: Sdk): Boolean {
@@ -80,5 +95,9 @@ class SdkmanrcConfigurationProvider: ExternalJavaConfigurationProvider<SdkmanRel
   override fun matchAgainstPath(releaseData: SdkmanReleaseData, path: String): Boolean {
     val info = SdkVersionUtil.getJdkVersionInfo(path) ?: return false
     return releaseData.matchVersionString(info.displayVersionString())
+  }
+
+  override fun getDownloadCommandFor(releaseData: SdkmanReleaseData): String {
+    return "sdk install java ${releaseData.target}"
   }
 }

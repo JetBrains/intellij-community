@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.util.isJavaClassWithKotlinTypeAlias
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
@@ -19,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 
 internal object FirClassifierProvider {
 
-    context(KaSession)
+    context(_: KaSession)
     fun KaScopeWithKind.getAvailableClassifiers(
         positionContext: KotlinRawPositionContext,
         scopeNameFilter: (Name) -> Boolean,
@@ -29,7 +31,7 @@ internal object FirClassifierProvider {
         .filter { visibilityChecker.isVisible(it, positionContext) }
         .map { KtSymbolWithOrigin(it, kind) }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getAvailableClassifiersFromIndex(
         positionContext: KotlinRawPositionContext,
         parameters: KotlinFirCompletionParameters,
@@ -44,7 +46,7 @@ internal object FirClassifierProvider {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun completeKotlinClasses(
     symbolProvider: KtSymbolFromIndexProvider,
     scopeNameFilter: (Name) -> Boolean,
@@ -58,7 +60,7 @@ private fun completeKotlinClasses(
     }
 )
 
-context(KaSession)
+context(_: KaSession)
 private fun completeJavaClasses(
     parameters: KotlinFirCompletionParameters,
     symbolProvider: KtSymbolFromIndexProvider,
@@ -66,7 +68,11 @@ private fun completeJavaClasses(
 ): Sequence<KaNamedClassSymbol> = symbolProvider.getJavaClassesByNameFilter(scopeNameFilter) { psiClass ->
     val filterOutPossiblyPossiblyInvisibleClasses = parameters.invocationCount < 2
     if (filterOutPossiblyPossiblyInvisibleClasses) {
-        if (PsiReferenceExpressionImpl.seemsScrambled(psiClass) || JavaCompletionProcessor.seemsInternal(psiClass)) {
+        if (
+            PsiReferenceExpressionImpl.seemsScrambled(psiClass) ||
+            JavaCompletionProcessor.seemsInternal(psiClass) ||
+            psiClass.kotlinFqName?.isJavaClassWithKotlinTypeAlias() == true
+        ) {
             return@getJavaClassesByNameFilter false
         }
     }

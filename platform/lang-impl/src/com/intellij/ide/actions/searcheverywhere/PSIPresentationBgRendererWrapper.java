@@ -61,8 +61,8 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   @Override
-  public boolean isEssential() {
-    return EssentialContributor.checkEssential(myDelegate);
+  public boolean isEssentialByDefault() {
+    return EssentialContributor.checkEssentialByDefault(myDelegate);
   }
 
   @Override

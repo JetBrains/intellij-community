@@ -20,6 +20,8 @@ class MavenOutputParserTest(private val fileName: String) : BasePlatformTestCase
       "fasterxml__jackson-core-380",
       "fasterxml__jackson-dataformat-xml-544",
       "fasterxml__jackson-dataformat-xml-590",
+      "trinodb__trino-3638",
+      "trinodb__trino-3638_failed"
       )
   }
 

@@ -4,6 +4,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PatternResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +21,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessPatternVariables;
 
 public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfStatement {
   public GrIfStatementImpl(@NotNull ASTNode node) {
@@ -83,6 +89,35 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     }
 
     super.deleteChildInternal(child);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (!shouldProcessLocals(processor) || !shouldProcessPatternVariables(state)) return true;
+    GrExpression condition = getCondition();
+    if (condition != null) {
+      GrStatement thenBranch = getThenBranch();
+      GrStatement elseBranch = getElseBranch();
+      if (lastParent == null) {
+        // Scenario happens in the situations when reference is resolved for a variable that is located in the later statements
+        // but in the same scope. For example:
+        // String s = null;
+        // if (!(s instanceof Object obj)) { return }
+        // println obj.toString()
+        //
+        // Such cases are not supported by Groovy.
+        return true;
+      }
+      if (lastParent == thenBranch) {
+        condition.processDeclarations(processor, PatternResolveState.WHEN_TRUE.putInto(state), null, place);
+      } else if (lastParent == elseBranch) {
+        return true;
+      }
+    }
+    return true;
   }
 
   @Override

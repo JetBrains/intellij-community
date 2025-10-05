@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -30,6 +31,9 @@ public interface PydevConsoleRunner {
   PydevConsoleCommunication getPydevConsoleCommunication();
 
   void addConsoleListener(PydevConsoleRunnerImpl.ConsoleListener consoleListener);
+
+  @ApiStatus.Internal
+  void removeConsoleListener(PydevConsoleRunnerImpl.ConsoleListener consoleListener);
 
   PythonConsoleExecuteActionHandler getConsoleExecuteActionHandler();
 

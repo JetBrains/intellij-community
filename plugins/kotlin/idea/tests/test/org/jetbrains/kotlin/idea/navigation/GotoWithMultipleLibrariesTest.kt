@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
-import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -60,5 +60,6 @@ class GotoWithMultipleLibrariesTest : AbstractMultiModuleTest() {
         }
     }
 
-    private fun module(name: String, srcDir: File) = createModuleFromTestData(srcDir.absolutePath, name, StdModuleTypes.JAVA, true)
+    private fun module(name: String, srcDir: File) = createModuleFromTestData(srcDir.absolutePath, name,
+                                                                              JavaModuleType.getModuleType(), true)
 }

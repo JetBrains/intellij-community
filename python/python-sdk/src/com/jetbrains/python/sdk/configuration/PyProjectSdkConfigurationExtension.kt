@@ -7,7 +7,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.ToolId
+import com.jetbrains.python.errorProcessing.PyResult
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CheckReturnValue
 
 /**
  * Used on directory opening with an attempt to configure suitable Python interpreter
@@ -18,10 +21,14 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface PyProjectSdkConfigurationExtension {
+  /**
+   * Every tool (poetry, uv) has id
+   */
+  val toolId: ToolId? get() = null
 
   companion object {
     @JvmStatic
-    val EP_NAME = ExtensionPointName.create<PyProjectSdkConfigurationExtension>("Pythonid.projectSdkConfigurationExtension")
+    val EP_NAME: ExtensionPointName<PyProjectSdkConfigurationExtension> = ExtensionPointName.create<PyProjectSdkConfigurationExtension>("Pythonid.projectSdkConfigurationExtension")
 
     @JvmStatic
     @RequiresBackgroundThread
@@ -36,7 +43,8 @@ interface PyProjectSdkConfigurationExtension {
    *
    * Rule of thumb is to explicitly ask a user if sdk creation is desired and allowed.
    */
-  suspend fun createAndAddSdkForConfigurator(module: Module): Sdk?
+  @CheckReturnValue
+  suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?>
 
   /**
    * An implementation is responsible for interpreter setup and registration in IDE.
@@ -44,7 +52,8 @@ interface PyProjectSdkConfigurationExtension {
    *
    * You're free here to create sdk immediately, without any user permission since quick fix is explicitly clicked.
    */
-  suspend fun createAndAddSdkForInspection(module: Module): Sdk?
+  @CheckReturnValue
+  suspend fun createAndAddSdkForInspection(module: Module): PyResult<Sdk?>
 
   /**
    * Called by sdk configurator and interpreter inspection

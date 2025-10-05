@@ -80,6 +80,15 @@ interface NotebookIntervalPointerFactory {
         ?.let { NotebookIntervalPointerFactoryProvider.forLanguage(it) }
         ?.create(project, document)
         ?.also { key.set(document, it) }
+
+    fun compareIntervals(intervalPointer1: NotebookCellLines.Interval?, intervalPointer2: NotebookCellLines.Interval?) {
+      require(intervalPointer1?.ordinal == intervalPointer2?.ordinal)
+      require(intervalPointer1?.type == intervalPointer2?.type)
+      require(intervalPointer1?.language == intervalPointer2?.language)
+      require(intervalPointer1?.data?.get(NotebookCellLines.INTERVAL_LANGUAGE_KEY) == intervalPointer2?.data?.get(NotebookCellLines.INTERVAL_LANGUAGE_KEY))
+      //  TODO check type (but in this case we should depends on jupyter core)
+      //  require(intervalPointer1?.data?.get(NOTEBOOK_CELL_LINES_INTERVAL_JUPYTER_CELL_TYPE_PROVIDER)?.getJupyterCellType() == intervalPointer2?.data?.get(NOTEBOOK_CELL_LINES_INTERVAL_JUPYTER_CELL_TYPE_PROVIDER)?.getJupyterCellType())
+    }
   }
 
   sealed interface Change

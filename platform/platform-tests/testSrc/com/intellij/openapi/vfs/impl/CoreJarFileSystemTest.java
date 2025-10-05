@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.io.Compressor;
 import com.intellij.util.io.URLUtil;
-import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,11 +40,11 @@ public class CoreJarFileSystemTest {
     assertThat(root.getChildren()).hasSize(3);
 
     VirtualFile com = root.findFileByRelativePath("com");
-    Assertions.<VirtualFile>assertThat(com).isNotNull().matches(f -> f.isDirectory());
+    assertThat(com).isNotNull().matches(f -> f.isDirectory());
     assertThat(com.getChildren()).isEmpty();
 
     VirtualFile arrayList = root.findFileByRelativePath("java/util/ArrayList.class");
-    Assertions.<VirtualFile>assertThat(arrayList).isNotNull().matches(f -> !f.isDirectory());
+    assertThat(arrayList).isNotNull().matches(f -> !f.isDirectory());
     assertThat(arrayList.getChildren()).isEmpty();
   }
 }

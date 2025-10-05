@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) : SelfTargetingIntention<KtExpression>(
   KtExpression::class.java,
-  KotlinBundle.lazyMessage("convert.to.0", scopeFunction.functionName)
+  KotlinBundle.messagePointer("convert.to.0", scopeFunction.functionName)
 ) {
     enum class ScopeFunction(val functionName: String, val isParameterScope: Boolean) {
         ALSO(functionName = "also", isParameterScope = true),

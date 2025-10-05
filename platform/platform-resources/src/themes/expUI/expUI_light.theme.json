@@ -557,7 +557,9 @@
       "passedEndColor": "Green8",
       "failedColor": "Red5",
       "failedEndColor": "Red8",
-      "trackColor": "Gray11"
+      "trackColor": "Gray11",
+      "progressCounterBackground": "#5288f2",
+      "progressCounterForeground": "#FFFFFF"
     },
 
     "RadioButton": {
@@ -812,12 +814,20 @@
         "hoverBorderColor": "Yellow3"
       },
       "Expiring": {
-        "foreground": "Red12",
-        "background": "Red4",
+        "foreground": "Red5",
+        "background": "#DB3B4B10",
         "borderColor": "Red4",
-        "hoverForeground": "Red12",
-        "hoverBackground": "Red5",
-        "hoverBorderColor": "Red5"
+        "hoverForeground": "Red5",
+        "hoverBackground": "#DB3B4B20",
+        "hoverBorderColor": "Red4"
+      },
+      "Progress" : {
+        "foreground": "Gray6",
+        "background": "Gray2",
+        "borderColor": "Gray6",
+        "hoverForeground": "Gray6",
+        "hoverBackground": "Gray2",
+        "hoverBorderColor": "Gray6"
       }
     },
 
@@ -970,6 +980,8 @@
       "termsAndConditionsForeground": "Gray8",
       "waitingLabelForeground": "Gray8",
       "separatorColor": "Gray12",
+      "freeBadgeForeground": "Gray14",
+      "freeBadgeBackground": "Green4",
       "LicenseList": {
         "licenseDetailsForeground": "Gray6",
         "licenseIdForeground": "Gray8",

@@ -30,7 +30,6 @@
 + -ByteCodeViewer-
 + -org-jetbrains-idea-eclipse-
 + -Git4Idea-
-+ -com-jetbrains-changeReminder-
 + -com-jetbrains-plugins-ini4idea-
 + -com-intellij-configurationScript-
 + -com-intellij-plugins-watcher-

@@ -44,34 +44,40 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
   fun getTimestamp(): Long
 
+
   fun isLogMessage(): Boolean
   fun isLogStack(): Boolean
-
-  fun isConditionEnabled(): Boolean
-  fun setConditionEnabled(enabled: Boolean)
-
-  fun getLogExpressionObject(): XExpression?
-
-  fun getConditionExpression(): XExpression?
-  fun setConditionExpression(condition: XExpression?)
-
-  fun getConditionExpressionInt(): XExpression?
-
-  @NlsSafe
-  fun getGeneralDescription(): String
-  fun getTooltipDescription(): @NlsSafe String
-
-  fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean
-
   fun isLogExpressionEnabled(): Boolean
 
-  fun getLogExpression(): String?
+  /** Returns the logging expression if it is enabled. */
+  fun getLogExpressionObject(): XExpression?
+
+  /** Returns the logging expression even if it is disabled. */
   fun getLogExpressionObjectInt(): XExpression?
 
   fun setLogMessage(enabled: Boolean)
   fun setLogStack(enabled: Boolean)
   fun setLogExpressionEnabled(enabled: Boolean)
   fun setLogExpressionObject(logExpression: XExpression?)
+
+
+  fun isConditionEnabled(): Boolean
+
+  /** Returns the condition expression if it is enabled. */
+  fun getConditionExpression(): XExpression?
+
+  /** Returns the condition expression even if it is disabled. */
+  fun getConditionExpressionInt(): XExpression?
+
+  fun setConditionEnabled(enabled: Boolean)
+  fun setConditionExpression(condition: XExpression?)
+
+
+  @NlsSafe
+  fun getGeneralDescription(): String
+  fun getTooltipDescription(): @NlsSafe String
+
+  fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean
 
   fun getEditorsProvider(): XDebuggerEditorsProvider?
 
@@ -126,7 +132,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
       breakpoint.isEnabled = enabled
     }
 
-    override fun getSourcePosition(): XSourcePosition? = breakpoint.getSourcePosition()
+    override fun getSourcePosition(): XSourcePosition? = breakpoint.sourcePosition
 
     override fun getNavigatable(): Navigatable? = breakpoint.getNavigatable()
 
@@ -147,23 +153,26 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
     override fun getTimestamp(): Long = breakpoint.timeStamp
 
+
     override fun isLogMessage(): Boolean = breakpoint.isLogMessage
-
     override fun isLogStack(): Boolean = breakpoint.isLogStack
-    override fun isConditionEnabled(): Boolean = breakpoint.isConditionEnabled
-
-    override fun setConditionEnabled(enabled: Boolean) {
-      breakpoint.isConditionEnabled = enabled
-    }
-
+    override fun isLogExpressionEnabled(): Boolean = breakpoint.isLogExpressionEnabled
     override fun getLogExpressionObject(): XExpression? = breakpoint.logExpressionObject
+    override fun getLogExpressionObjectInt(): XExpression? = breakpoint.logExpressionObjectInt
 
+    override fun setLogMessage(enabled: Boolean) { breakpoint.isLogMessage = enabled }
+    override fun setLogStack(enabled: Boolean) { breakpoint.isLogStack = enabled }
+    override fun setLogExpressionEnabled(enabled: Boolean) { breakpoint.isLogExpressionEnabled = enabled }
+    override fun setLogExpressionObject(logExpression: XExpression?) { breakpoint.logExpressionObject = logExpression }
+
+
+    override fun isConditionEnabled(): Boolean = breakpoint.isConditionEnabled
     override fun getConditionExpression(): XExpression? = breakpoint.conditionExpression
-    override fun setConditionExpression(condition: XExpression?) {
-      breakpoint.conditionExpression = condition
-    }
-
     override fun getConditionExpressionInt(): XExpression? = breakpoint.conditionExpressionInt
+
+    override fun setConditionEnabled(enabled: Boolean) { breakpoint.isConditionEnabled = enabled }
+    override fun setConditionExpression(condition: XExpression?) { breakpoint.conditionExpression = condition }
+
 
     override fun getGeneralDescription(): String = XBreakpointUtil.getGeneralDescription(breakpoint)
 
@@ -173,35 +182,13 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
 
     override fun haveSameState(other: XBreakpointProxy, ignoreTimestamp: Boolean): Boolean {
       if (other is Monolith) {
-        return XBreakpointManagerImpl.statesAreDifferent(breakpoint.state, other.breakpoint.state, ignoreTimestamp)
+        return !XBreakpointManagerImpl.statesAreDifferent(breakpoint.state, other.breakpoint.state, ignoreTimestamp)
       }
       return false
     }
 
     override fun getEditorsProvider(): XDebuggerEditorsProvider? {
       return getEditorsProvider(breakpoint.type, breakpoint, project)
-    }
-
-    override fun isLogExpressionEnabled(): Boolean = breakpoint.isLogExpressionEnabled
-
-    override fun getLogExpression(): String? = breakpoint.logExpression
-
-    override fun getLogExpressionObjectInt(): XExpression? = breakpoint.logExpressionObjectInt
-
-    override fun setLogMessage(enabled: Boolean) {
-      breakpoint.isLogMessage = enabled
-    }
-
-    override fun setLogStack(enabled: Boolean) {
-      breakpoint.isLogStack = enabled
-    }
-
-    override fun setLogExpressionEnabled(enabled: Boolean) {
-      breakpoint.isLogExpressionEnabled = enabled
-    }
-
-    override fun setLogExpressionObject(logExpression: XExpression?) {
-      breakpoint.logExpressionObject = logExpression
     }
 
     override fun getCustomizedPresentation(): CustomizedBreakpointPresentation? {
@@ -213,7 +200,7 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
     }
 
     override fun isDisposed(): Boolean = breakpoint.isDisposed
-    
+
     override fun updateIcon() {
       breakpoint.updateIcon()
     }

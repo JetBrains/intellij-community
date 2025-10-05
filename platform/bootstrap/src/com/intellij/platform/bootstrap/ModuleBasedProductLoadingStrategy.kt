@@ -31,7 +31,7 @@ import kotlin.io.path.extension
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
   private val currentMode by lazy {
     val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
-    val currentMode = ProductMode.entries.find { it.id == currentModeId }
+    val currentMode = ProductMode.findById(currentModeId)
     if (currentMode == null) {
       error("Unknown mode '$currentModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
     }
@@ -39,16 +39,16 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
   
   private val productModules by lazy {
-    val rootModuleName = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
-    if (rootModuleName == null) {
+    val rootModuleId = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
+    if (rootModuleId == null) {
       error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
     }
 
-    val rootModule = moduleRepository.getModule(RuntimeModuleId.module(rootModuleName))
-    val productModulesPath = "META-INF/$rootModuleName/product-modules.xml"
+    val rootModule = moduleRepository.getModule(RuntimeModuleId.module(rootModuleId))
+    val productModulesPath = "META-INF/$rootModuleId/product-modules.xml"
     val moduleGroupStream = rootModule.readFile(productModulesPath)
     if (moduleGroupStream == null) {
-      error("$productModulesPath is not found in '$rootModuleName' module")
+      error("$productModulesPath is not found in '$rootModuleId' module")
     }
     ProductModulesSerialization.loadProductModules(moduleGroupStream, productModulesPath, currentMode, moduleRepository)
   }
@@ -86,7 +86,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     mainClassLoader: ClassLoader,
   ): Deferred<List<DiscoveredPluginsList>> {
     val platformPrefix = PlatformUtils.getPlatformPrefix()
-    val isInDevServerMode = AppMode.isDevServer()
+    val isInDevServerMode = AppMode.isRunningFromDevBuild()
     val isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode
     val classpathPathResolver = ClassPathXmlPathResolver(mainClassLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSourcesWithoutDevBuild)
     val useCoreClassLoader = platformPrefix.startsWith("CodeServer") ||
@@ -256,22 +256,26 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       val fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool)
-      val resolver = ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, fallbackResolver)
+      val resolver = ModuleBasedPluginXmlPathResolver(includedModules,
+                                                      pluginModuleGroup.optionalModuleIds,
+                                                      pluginModuleGroup.notLoadedModuleIds,
+                                                      fallbackResolver)
       loadDescriptorFromDir(mainResourceRoot, context, zipFilePool, resolver, isBundled = isBundled, pluginDir = pluginDir)
         .also { descriptor ->
           descriptor?.contentModules?.forEach { module ->
             if (module.packagePrefix == null) {
-              val moduleName = module.moduleName
-              module.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleName)).resourceRootPaths
+              val moduleId = module.moduleId
+              module.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleId.id)).resourceRootPaths
             }
           }
         }
     }
     else {
       val defaultResolver = PluginXmlPathResolver(allResourceRootsList, zipFilePool)
-      val pathResolver =
-        if (allResourceRootsList.size == 1) defaultResolver
-        else ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, defaultResolver)
+      val pathResolver = if (allResourceRootsList.size == 1 && pluginModuleGroup.notLoadedModuleIds.isEmpty())
+        defaultResolver
+      else
+        ModuleBasedPluginXmlPathResolver(includedModules, pluginModuleGroup.optionalModuleIds, pluginModuleGroup.notLoadedModuleIds, defaultResolver)
       val pluginDir = pluginDir ?: mainResourceRoot.parent.parent
       loadDescriptorFromJar(mainResourceRoot, context, zipFilePool, pathResolver, isBundled = isBundled, pluginDir = pluginDir)
     }
@@ -294,29 +298,32 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
   }
 
-  override fun isOptionalProductModule(moduleName: String): Boolean =
-    productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleName))
+  override fun isOptionalProductModule(moduleId: String): Boolean =
+    productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleId))
 
-  override fun findProductContentModuleClassesRoot(moduleName: String, moduleDir: Path): Path? {
-    val resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.module(moduleName)).resolvedModule
+  override fun findProductContentModuleClassesRoot(moduleId: PluginModuleId, moduleDir: Path): Path? {
+    val resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.module(moduleId.id)).resolvedModule
     if (resolvedModule == null) {
       // https://youtrack.jetbrains.com/issue/CPP-38280
       // we log here, as only for JetBrainsClient it is expected that some module is not resolved
-      thisLogger().debug("Skip loading product content module $moduleName because its classes root isn't present")
+      thisLogger().debug("Skip loading product content module $moduleId because its classes root isn't present")
       return null
     }
 
     val paths = resolvedModule.resourceRootPaths
     return paths.singleOrNull() 
-           ?: error("Content modules are supposed to have only one resource root, but $moduleName have multiple: $paths")
+           ?: error("Content modules are supposed to have only one resource root, but $moduleId have multiple: $paths")
   }
 }
 
-private class CustomPluginModuleGroup(moduleDescriptors: List<RuntimeModuleDescriptor>,
-                                      override val mainModule: RuntimeModuleDescriptor) : PluginModuleGroup {
-  private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, RuntimeModuleLoadingRule.REQUIRED) } 
-  override fun getIncludedModules(): List<IncludedRuntimeModule> = includedModules 
+private class CustomPluginModuleGroup(
+  moduleDescriptors: List<RuntimeModuleDescriptor>,
+  override val mainModule: RuntimeModuleDescriptor,
+) : PluginModuleGroup {
+  private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, RuntimeModuleLoadingRule.REQUIRED) }
+  override fun getIncludedModules(): List<IncludedRuntimeModule> = includedModules
   override fun getOptionalModuleIds(): Set<RuntimeModuleId> = emptySet()
+  override fun getNotLoadedModuleIds(): Map<RuntimeModuleId, List<RuntimeModuleId>> = emptyMap()
 }
 
 private const val PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module"

@@ -20,8 +20,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.api.data.pullrequest.getInEditorCommentRange
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
-import org.jetbrains.plugins.github.api.data.pullrequest.mapToRightSideLine
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -68,13 +68,13 @@ internal class GHPRReviewInEditorViewModelImpl(
   private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewEditorThreadViewModel.MappingData>> =
     threadsVm.threadMappingData.combineState(discussionsViewOption) { mappingDataMap, viewOption ->
       mappingDataMap.mapValues { (_, mappingData) ->
-        val isVisible = mappingData.threadData.isVisible(viewOption)
+        val isVisible = !mappingData.threadData.isOutdated && mappingData.threadData.isVisible(viewOption)
 
         val diffData = mappingData.diffData
                        ?: return@mapValues MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, mappingData.change, null)
-        val line = mappingData.threadData.mapToRightSideLine(diffData)
+        val commentRange = mappingData.threadData.getInEditorCommentRange(diffData)?.second
 
-        MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, mappingData.change, line)
+        MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, mappingData.change, commentRange)
       }
     }
 
@@ -139,6 +139,7 @@ internal class GHPRReviewInEditorViewModelImpl(
     : GHPRReviewFileEditorViewModelImpl =
     GHPRReviewFileEditorViewModelImpl(
       project, this, dataContext, dataProvider,
+      this@GHPRReviewInEditorViewModelImpl,
       change, diffData,
       threadsVm, mappedThreads,
       ::showDiff

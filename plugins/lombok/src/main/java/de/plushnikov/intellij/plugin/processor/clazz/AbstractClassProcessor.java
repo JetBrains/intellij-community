@@ -199,4 +199,23 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     }
     return result;
   }
+
+  protected static boolean isAnyConstructorDefined(@NotNull PsiClass psiClass) {
+    return !filterToleratedElements(PsiClassUtil.collectClassConstructorIntern(psiClass)).isEmpty();
+  }
+
+  protected static boolean shouldGenerateConstructor(@NotNull PsiClass psiClass) {
+    // create the required constructor only if there are no other constructor annotations
+    if (!hasLombokConstructorAnnotations(psiClass)) {
+      return !isAnyConstructorDefined(psiClass);
+    }
+    return false;
+  }
+
+  protected static boolean hasLombokConstructorAnnotations(@NotNull PsiClass psiClass) {
+    return PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.NO_ARGS_CONSTRUCTOR,
+                                                      LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
+                                                      LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+                                                      LombokClassNames.BUILDER);
+  }
 }

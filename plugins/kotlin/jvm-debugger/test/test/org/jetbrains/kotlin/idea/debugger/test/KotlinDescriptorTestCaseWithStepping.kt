@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -28,6 +28,7 @@ import com.intellij.xdebugger.impl.XSourcePositionImpl
 import junit.framework.AssertionFailedError
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts.loadDependency
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.areLogErrorsIgnored
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
@@ -55,7 +56,7 @@ import kotlin.io.path.absolutePathString
 abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase() {
     companion object {
         //language=RegExp
-        const val MAVEN_DEPENDENCY_REGEX = """maven\(([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+):([a-zA-Z0-9_\-.]+)\)"""
+        const val BAZEL_DEPENDENCY_LABEL_REGEX = """(classes|sources)\((@[a-zA-Z0-9_\-]+//([a-z0-9_\-]+)?:[a-z0-9._\-]+)\)"""
     }
 
     private val dp: DebugProcessImpl
@@ -77,7 +78,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private val thrownExceptions = mutableListOf<Throwable>()
 
-    protected val agentList = mutableListOf<JpsMavenRepositoryLibraryDescriptor>()
+    protected val agentList = mutableListOf<BazelDependencyLabelDescriptor>()
 
     private fun initContexts(suspendContext: SuspendContextImpl) {
         myEvaluationContext = createEvaluationContext(suspendContext)
@@ -194,14 +195,14 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             SteppingInstructionKind.Resume -> loop(instruction.arg) { resume(this) }
             SteppingInstructionKind.SmartStepTargetsExpectedNumber ->
                 doOnBreakpoint {
-                    checkNumberOfSmartStepTargets(instruction.arg)
+                    checkNumberOfSmartStepTargets(instruction.arg, this)
                     resume(this)
                 }
         }
     }
 
-    private fun checkNumberOfSmartStepTargets(expectedNumber: Int) {
-        val smartStepFilters = createSmartStepIntoFilters()
+    private fun checkNumberOfSmartStepTargets(expectedNumber: Int, suspendContext: SuspendContextImpl) {
+        val smartStepFilters = createSmartStepIntoFilters(suspendContext)
         try {
             val actualTargets = smartStepFilters.joinToString(prefix = "[", postfix = "]") {
                 if (it is NamedMethodFilter) it.methodName else it.toString()
@@ -266,7 +267,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     protected open fun extraPrintContext(context: SuspendContextImpl) {}
 
     private fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int, ignoreFilters: Boolean) {
-        val filters = createSmartStepIntoFilters()
+        val filters = createSmartStepIntoFilters(this)
         if (chooseFromList == 0) {
             if (filters.isEmpty()) {
                 throw AssertionError("Couldn't find any smart step into targets at: \n${getElementText()}")
@@ -288,9 +289,9 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         elementAt.getElementTextWithContext()
     }
 
-    private fun createSmartStepIntoFilters(): List<MethodFilter> {
+    private fun createSmartStepIntoFilters(suspendContext: SuspendContextImpl): List<MethodFilter> {
         val stepTargets = KotlinSmartStepIntoHandler()
-            .findSmartStepTargetsSync(debuggerContext.sourcePosition, debuggerSession)
+            .findSmartStepTargetsSync(debuggerContext.sourcePosition, debuggerSession, suspendContext)
 
         // the resulting order is different from the order in code when stepping some methods are filtered
         // due to de-prioritisation in JvmSmartStepIntoHandler.reorderWithSteppingFilters
@@ -367,25 +368,19 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     protected fun countBreakpointsNumber(file: KotlinBaseTest.TestFile) =
         InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.content, "//Breakpoint!").size
 
-    override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
-        addMavenDependency(compilerFacility, library, module)
-        processAgentDependencies(library, compilerFacility)
-    }
-
-    private fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String, module: Module) {
-        val regex = Regex(MAVEN_DEPENDENCY_REGEX)
-        val result = regex.matchEntire(library) ?: return
-        val (_, groupId: String, artifactId: String, version: String) = result.groupValues
-        addMavenDependency(compilerFacility, groupId, artifactId, version, module)
-    }
-
-    private fun processAgentDependencies(library: String, compilerFacility: DebuggerTestCompilerFacility) {
-        val regex = Regex(pattern = "$MAVEN_DEPENDENCY_REGEX(-javaagent)?")
-        val result = regex.matchEntire(library) ?: return
-        val (_, groupId: String, artifactId: String, version: String, agent: String) = result.groupValues
-        if ("-javaagent" == agent)
-            agentList.add(JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, false))
-        addMavenDependency(compilerFacility, groupId, artifactId, version, module)
+    override fun addDependenciesByLabels(compilerFacility: DebuggerTestCompilerFacility, libraryLabels: List<String>, agentLabels: List<String>) {
+        val dependencies = mutableListOf<OrderRoot>()
+        for (libraryLabel in libraryLabels) {
+            val bazelLabelDescriptor = BazelDependencyLabelDescriptor.fromString(libraryLabel)
+            dependencies.add(loadDependency(bazelLabelDescriptor.label, bazelLabelDescriptor.type))
+        }
+        for (agentLabel in agentLabels) {
+            val bazelLabelDescriptor = BazelDependencyLabelDescriptor.fromString(agentLabel)
+            agentList.add(bazelLabelDescriptor)
+            dependencies.add(loadDependency(bazelLabelDescriptor.label, bazelLabelDescriptor.type))
+        }
+        compilerFacility.addDependencies(dependencies.map { it.file.presentableUrl })
+        addLibraries(dependencies, module)
     }
 
     override fun createJavaParameters(mainClass: String?): JavaParameters {
@@ -393,27 +388,14 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         for (entry in classPath) {
             params.classPath.add(entry)
         }
-        for (agent in agentList) {
-            val dependencies = loadDependencies(agent)
-            for (dependency in dependencies) {
-                if (dependency.type == OrderRootType.CLASSES) {
-                    params.vmParametersList.add("-javaagent:${dependency.file.presentableUrl}")
-                }
+
+        for (dependencyDescriptor in agentList) {
+            val dependency = loadDependency(dependencyDescriptor.label, dependencyDescriptor.type)
+            if (dependency.type == OrderRootType.CLASSES) {
+                params.vmParametersList.add("-javaagent:${dependency.file.presentableUrl}")
             }
         }
         return params
-    }
-
-    protected fun addMavenDependency(
-        compilerFacility: DebuggerTestCompilerFacility,
-        groupId: String, artifactId: String,
-        version: String,
-        module: Module
-    ) {
-        val description = JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version)
-        val artifacts = loadDependencies(description)
-        compilerFacility.addDependencies(artifacts.map { it.file.presentableUrl })
-        addLibraries(artifacts, module)
     }
 
     protected fun addLibraries(compilerFacility: DebuggerTestCompilerFacility, libraries: List<Path>) {
@@ -476,6 +458,27 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
                 }
                 override fun commandCancelled() = error(message = "Test was cancelled")
             })
+        }
+    }
+
+    protected data class BazelDependencyLabelDescriptor(val type: OrderRootType, val label: String) {
+        companion object {
+            fun fromString(text: String): BazelDependencyLabelDescriptor {
+                val regex = Regex(pattern = BAZEL_DEPENDENCY_LABEL_REGEX)
+                val result = regex.matchEntire(text) ?: error("Unable to parse '$text' in // ATTACH_LABEL: specification")
+                val (_, type: String, label: String) = result.groupValues
+                return BazelDependencyLabelDescriptor(Type.valueOf(type.uppercase()).toOrderRootType(), label)
+            }
+
+            private enum class Type {
+                CLASSES,
+                SOURCES;
+
+                fun toOrderRootType() : OrderRootType = when (this) {
+                    SOURCES -> OrderRootType.SOURCES
+                    CLASSES -> OrderRootType.CLASSES
+                }
+            }
         }
     }
 }

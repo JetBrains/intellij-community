@@ -11,8 +11,10 @@ class DebugToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
   val consoleTab get() = x { and(byClass("SimpleColoredComponent"), byAccessibleName("Console")) }
   val threadsAndVariablesTab get() = x { and(byClass("SimpleColoredComponent"), byAccessibleName("Threads & Variables")) }
   val debuggerConsoleTab get() = x { and(byClass("SimpleColoredComponent"), byAccessibleName("Debugger Console")) }
+  val memoryView get() = x { and(byClass("SimpleColoredComponent"), byAccessibleName("Memory View")) }
   val consoleView get() = x { byType("com.intellij.execution.impl.ConsoleViewImpl") }
   val resumeButton get() = button { byAccessibleName("Resume Program") }
+  val stopButton get() = x("//div[@myicon='stop.svg']")
   val stepOverButton get() = button { byAccessibleName("Step Over") }
   val stepOutButton get() = button { byAccessibleName("Step Out") }
   val stepIntoButton get() = button { byAccessibleName("Step Into") }

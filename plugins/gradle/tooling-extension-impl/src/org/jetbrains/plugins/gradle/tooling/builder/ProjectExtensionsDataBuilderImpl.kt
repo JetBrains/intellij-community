@@ -2,9 +2,10 @@
 package org.jetbrains.plugins.gradle.tooling.builder
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages
+import com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil
+import com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil.getConventionPlugins
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import groovy.lang.Closure
-import org.codehaus.groovy.runtime.DefaultGroovyMethods
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
@@ -33,23 +34,20 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
     result.conventions.addAll(collectConventions(project))
 
     val extensions = project.extensions
-    extensions.extraProperties.properties.forEach { name, value ->
-      if (name == "extraModelBuilder" || name.contains(".")) return@forEach
-      val typeFqn = getType(value)
-      result.gradleProperties.add(DefaultGradleProperty(name, typeFqn))
+    extensions.extraProperties.properties.entries.forEach { entry ->
+      if (entry.key == "extraModelBuilder" || entry.key.contains(".")) return@forEach
+      val typeFqn = getType(entry.value)
+      result.gradleProperties.add(DefaultGradleProperty(entry.key, typeFqn))
     }
 
-    for (it in DefaultGroovyMethods.findAll(extensions)) {
-      val extension = it as ExtensionContainer
-      val keyList = extractKeys(extension)
+    val keyList = extractKeys(extensions)
 
-      for (name in keyList) {
-        val value = extension.findByName(name)
-        if (value == null) continue
+    for (name in keyList) {
+      val value = extensions.findByName(name)
+      if (value == null) continue
 
-        val rootTypeFqn = getType(value)
-        result.extensions.add(DefaultGradleExtension(name, rootTypeFqn))
-      }
+      val rootTypeFqn = getType(value)
+      result.extensions.add(DefaultGradleExtension(name, rootTypeFqn))
     }
     return result
   }
@@ -86,7 +84,7 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
       for (configurationName in configurations.names) {
         val configuration = configurations.getByName(configurationName)
         val description = configuration.description
-        val visible = configuration.isVisible
+        val visible = if (GradleVersionUtil.isCurrentGradleOlderThan("9.1")) { configuration.isVisible } else { true }
         val declarationAlternatives = getDeclarationAlternatives(configuration)
         result.add(DefaultGradleConfiguration(configurationName, description, visible, scriptClasspathConfiguration, declarationAlternatives))
       }
@@ -112,9 +110,10 @@ class ProjectExtensionsDataBuilderImpl : ModelBuilderService {
         return emptyList()
       }
       val result = mutableListOf<DefaultGradleConvention>()
-      @Suppress("DEPRECATION")
-      project.convention.plugins.forEach { (key, value) ->
-        result.add(DefaultGradleConvention(key, getType(value)))
+      if (GradleConventionUtil.isGradleConventionsSupported()) {
+        getConventionPlugins(project).forEach { (key, value) ->
+          result.add(DefaultGradleConvention(key, getType(value)))
+        }
       }
       return result
     }

@@ -311,6 +311,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                 ...""");
   }
 
+  // PY-78878
   public void testGenericClassCannotUseTypeVariablesFromOuterScope() {
     doTestByText("""
                    from typing import TypeVar, Generic, Iterable
@@ -321,18 +322,55 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    def a_fun(x: T) -> None:
                        a_list: list[T] = []
                    
-                       class <warning descr="Some type variables (T) are used by an outer scope">MyGeneric</warning>(Generic[T]):
+                       class <warning descr="Some type variables (T) are already in use by an outer scope">MyGeneric</warning>(Generic[T]):
+                           ...
+                   
+                   def a_fun_new_syntax1[U]() -> None:
+                       class <warning descr="Some type variables (U) are already in use by an outer scope">MyGeneric</warning>(Generic[U]):
+                           ...
+                   
+                   def a_fun_new_syntax2[U](u: U) -> None:
+                       class <warning descr="Some type variables (U) are already in use by an outer scope">MyGeneric</warning>(Generic[U]):
                            ...
                    
                    class Outer(Generic[T]):
-                       class <warning descr="Some type variables (T) are used by an outer scope">Bad</warning>(Iterable[T]):
+                       class <warning descr="Some type variables (T) are already in use by an outer scope">Bad</warning>(Iterable[T]):
                            ...
                        class AlsoBad:
                            x: list[<warning descr="Unbound type variable">T</warning>]
                    
                        class Inner(Iterable[S]):
                            ...
-                       attr: Inner[T]""");
+                       attr: Inner[T]
+                   
+                   class OuterNewSyntax[U]:
+                       class <warning descr="Some type variables (U) are already in use by an outer scope">Bad</warning>(Generic[U]):
+                           ...""");
+  }
+
+  // PY-82835
+  public void testTypeParameterIsAlreadyInUseByOuterScope() {
+    doTestByText("""
+                   from typing import Sequence, TypeAlias
+                   
+                   T = 0
+                   
+                   
+                   class ClassA[T](Sequence[T]):
+                       T = 1
+                   
+                       def method1[<warning descr="Type parameter 'T' is already in use by an outer scope">T</warning>](self):
+                           ...
+                   
+                       def method2[<warning descr="Type parameter 'T' is already in use by an outer scope">T</warning>](self, x=T):
+                           ...
+                   
+                       def method3[<warning descr="Type parameter 'T' is already in use by an outer scope">T</warning>](self, x: T):
+                           ...
+                   
+                       class Inner[<warning descr="Type parameter 'T' is already in use by an outer scope">T</warning>]:
+                           ...
+                   """);
   }
 
   // PY-28249
@@ -2901,6 +2939,235 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  public void testConcatenateNotReportedAsIllegalFirstParam() {
+    doTestByText("""
+                   from typing import Callable, Concatenate
+                   x: Callable[Concatenate[int, ...], str]
+                   """);
+  }
+
+
+  // PY-76851
+  public void testInvalidTypeAliasStatement() {
+    doTestByText("""
+               var1 = 1
+               type BadTypeAlias1 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">eval(<warning descr="Generics should be specified through square brackets">"".join(<warning descr="Generics should be specified through square brackets">map(chr, [105, 110, 116])</warning>)</warning>)</warning>
+               type BadTypeAlias2 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int, str]</warning>
+               type BadTypeAlias3 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">((int, str),)</warning>
+               type BadTypeAlias4 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int for i in <warning descr="Generics should be specified through square brackets">range(1)</warning>]</warning>
+               type BadTypeAlias5 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">{"a": "b"}</warning>
+               type BadTypeAlias6 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">(lambda: int)()</warning>
+               type BadTypeAlias7 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int][0]</warning>
+               type BadTypeAlias8 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">int if 1 < 3 else str</warning>
+               type BadTypeAlias9 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">var1</warning>
+               type BadTypeAlias10 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">True</warning>
+               type BadTypeAlias11 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">1</warning>
+               type BadTypeAlias12 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">list or set</warning>
+               type BadTypeAlias13 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">f"{'int'}"</warning>
+               """);
+  }
+
+  // PY-76851
+  public void testTypeAliasStatementScope() {
+    doTestByText("""
+               type B = int
+               class C:
+                   type D = int
+               def func():
+                   <warning descr="A 'type' statement can be used only within a module or class scope">type A = int</warning>
+               """);
+  }
+
+  // PY-76851
+  public void testTypeAliasBoundMatch() {
+    doTestByText("""
+               type TypeAlias[S: str] = list[S]
+               r: TypeAlias[str] = [""]
+               """);
+  }
+
+  // PY-76851
+  public void testTypeAliasBoundMismatch() {
+    doTestByText("""
+               type TypeAlias[S: int] = list[S]
+               r: TypeAlias[<warning descr="Expected type 'S ≤: int', got 'str' instead">str</warning>] = [""]
+               """);
+  }
+
+  // PY-76851
+  public void testTypeAliasOldStyleBoundMismatch() {
+    doTestByText("""
+               from typing import TypeAlias, TypeVar
+               T = TypeVar("T", bound=str)
+               Alias: TypeAlias = list[T]
+               x: Alias[<warning descr="Expected type 'T ≤: str', got 'int' instead">int</warning>]
+               """);
+  }
+
+  // PY-76851
+  public void testClassVariadicTypeParameters() {
+    doTestByText("""
+               from typing import Callable
+
+               class A[S1, **S2]:
+                   t: Callable[S2, S1]
+               
+               a: A[int, ...]
+               """);
+  }
+
+  // PY-76851
+  public void testClassBoundMismatch() {
+    doTestByText("""
+               class C[T: str]: ...
+               c = C[<warning descr="Expected type 'T ≤: str', got 'int' instead">int</warning>]()
+               """);
+  }
+
+  // PY-76851
+  public void testTypeAliasVariadicTypeParameters() {
+    doTestByText("""
+               from typing import Callable
+
+               type TypeAlias[S1, **S2] = Callable[S2, S1]
+               type TypeAlias2 = TypeAlias[int, ...]
+               """);
+  }
+
+
+  // PY-76851
+  public void testSimpleRecursiveTypeAliasStatement() {
+    doTestByText("""
+                   type TypeAlias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias</warning>
+                   """);
+  }
+
+  // PY-76851
+  public void testRecursiveTypeAliasStatementInUnion() {
+    doTestByText("""
+                   type TypeAlias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">int | TypeAlias</warning>
+                   type TypeAlias2 = int | str
+                   """);
+  }
+
+  // PY-76851
+  public void testUnionRecursiveTypeAliasStatement() {
+    doTestByText("""
+                   type TypeAlias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias | int</warning>
+                   """);
+  }
+
+
+  // PY-76851
+  public void testDeepRecursiveTypeAliasStatement() {
+    doTestByText("""
+                   type TypeAlias1 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias2</warning>
+                   type TypeAlias2 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias3</warning>
+                   type TypeAlias3 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias1</warning>
+                   """);
+  }
+
+  // PY-76851
+  public void testCorrectRecursiveTypeAliasStatement() {
+    doTestByText("""
+                   type TypeAlias1 = list[TypeAlias1]
+                   """);
+  }
+
+  // PY-82979
+  public void testImplicitTypeAliasUsingLiteralMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-81028
+  public void testImplicitTypeAliasUsingAnnotatedMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-83583
+  public void testImplicitTypeAliasUsingAnnotatedWithNewStyleUnion() {
+    doTestByText("""
+                   from typing import Annotated
+                   from typing_extensions import Doc
+                   
+                   class A:
+                       pass
+                   
+                   class B:
+                       pass
+                   
+                   AOrB = Annotated[
+                       A | B,
+                       Doc("An instance of either A or B"),
+                   ]
+                   
+                   a_or_b: AOrB
+                   """);
+  }
+
+  // PY-83699
+  public void testImplicitTypeAliasUsingCallableWithNewStyleUnion() {
+    doTestByText("""
+                   from typing import Awaitable, Any, Callable
+                   
+                   AsyncFunc = Callable[[int], Awaitable[Any | None]]
+                   
+                   f: AsyncFunc
+                   """);
+  }
+
+  // PY-83700
+  public void testImplicitTypeAliasAtClassLevelMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-81926
+  public void testUnionWithClassOverridingDunderOr() {
+    doTestByText("""
+                   from typing import Self
+                   
+                   class Cls:
+                       def __or__(self, other: Self) -> Self:
+                           return self
+                   
+                   def foo(arg: Cls | None) -> None:
+                       print(arg)
+                   """);
+  }
+
+  // PY-81439
+  public void testImplicitTypeAliasUsingLiteral() {
+    doTestByText("""
+                   from typing import Literal, TypeAlias, reveal_type
+                   
+                   A = Literal[1, 2]
+                   A1: TypeAlias = Literal[6, 7]
+                   type A2 = Literal[6, 7]
+                   A3 = Literal[666]
+                   B = Literal[False, True]
+                   C = Literal['A', 'B']
+                   
+                   def f(a: A, a1: A1, a2: A2, a3: A3, b: B, c: C) -> None:
+                       print(a, a1, a2, a3, b, c)
+                   """);
+  }
+
+  public void testSelfImportedFromNonExcludedTypingExtensionsMultiFile() {
+    doMultiFileTest();
+  }
+
+
+  // PY-84289
+  public void testExponentialAnalysisTimeWhenMapLookupKeyEqualsVariableName() {
+    long before = System.currentTimeMillis();
+    doMultiFileTest("main.py");
+    long after = System.currentTimeMillis();
+    long diff = after - before;
+    // junit3 doesn't support timeouts out of the box
+    if (diff > 5000) {
+      fail("Took too long to analyze main.py: " + diff + " ms");
+    }
+  }
 
   @NotNull
   @Override

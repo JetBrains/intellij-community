@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -21,6 +22,8 @@ import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllo
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.computeKotlinStackFrameInfos
+import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator.Companion.logCompilation
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
@@ -32,10 +35,6 @@ import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import java.util.concurrent.ExecutionException
-import com.intellij.openapi.progress.runBlockingCancellable
-import org.jetbrains.kotlin.idea.debugger.core.stackFrame.computeKotlinStackFrameInfos
-import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
-import kotlin.sequences.Sequence
 
 interface KotlinCodeFragmentCompiler {
     val compilerType: CompilerType
@@ -127,7 +126,8 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                         previousFrameContainingExpr,
                         context.debugProcess,
                         sourcePositionAtPreviousFrame,
-                        previousFrameContainingExprRange.first..previousFrameContainingExprRange.last
+                        previousFrameContainingExprRange.first..previousFrameContainingExprRange.last,
+                        locationAtPreviousFrame
                     )
                 val notExecuted =
                     runBlockingCancellable {
@@ -141,7 +141,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
             }
 
             override fun hasNext(): Boolean {
-                return frames.size >= rollbackFramesCount
+                return frames.size > rollbackFramesCount + 1
             }
         }
     }
@@ -170,6 +170,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                 when (val result =
                     compile(codeFragment, compilerConfiguration, compilerTarget, allowedErrorFilter)) {
                     is KaCompilationResult.Success -> {
+                        reportMutedExceptions(result, context, codeFragment)
                         logCompilation(codeFragment)
 
                         val classes: List<ClassToLoad> = result.output
@@ -184,6 +185,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                         createCompiledDataDescriptor(ideCompilationResult, result.canBeCached)
                     }
                     is KaCompilationResult.Failure -> {
+                        reportMutedExceptions(result, context, codeFragment)
                         val firstError = result.errors.first()
                         throw IncorrectCodeFragmentException(firstError.defaultMessage)
                     }
@@ -222,28 +224,44 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     private fun CodeFragmentCapturedValue.toDumbCodeFragmentParameter(): CodeFragmentParameter.Dumb? {
         return when (this) {
             is CodeFragmentCapturedValue.Local ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.ORDINARY, name, depthRelativeToCurrentFrame)
             is CodeFragmentCapturedValue.LocalDelegate ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DELEGATED, displayText, depthRelativeToCurrentFrame)
             is CodeFragmentCapturedValue.ContainingClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame, displayText)
             is CodeFragmentCapturedValue.SuperClass ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.DISPATCH_RECEIVER, "", depthRelativeToCurrentFrame,displayText)
             is CodeFragmentCapturedValue.ExtensionReceiver ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.EXTENSION_RECEIVER, name, displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.EXTENSION_RECEIVER, name, depthRelativeToCurrentFrame,displayText)
             is CodeFragmentCapturedValue.ContextReceiver -> {
                 val name = NameUtils.contextReceiverName(index).asString()
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.CONTEXT_RECEIVER, name, depthRelativeToCurrentFrame,displayText)
             }
             is CodeFragmentCapturedValue.ForeignValue -> {
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FOREIGN_VALUE, name)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FOREIGN_VALUE, name, depthRelativeToCurrentFrame)
             }
             is CodeFragmentCapturedValue.BackingField ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, displayText)
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.FIELD_VAR, name, depthRelativeToCurrentFrame,displayText)
             is CodeFragmentCapturedValue.CoroutineContext ->
-                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.COROUTINE_CONTEXT, "")
+                CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.COROUTINE_CONTEXT, "", depthRelativeToCurrentFrame)
             else -> null
         }
+    }
+}
+
+@OptIn(KaExperimentalApi::class)
+private fun reportMutedExceptions(
+    result: KaCompilationResult,
+    context: ExecutionContext,
+    codeFragment: KtCodeFragment
+) {
+    for (throwable in result.mutedExceptions) {
+        reportErrorWithAttachments(
+            context,
+            codeFragment,
+            throwable,
+            headerMessage = "Muted exception in evaluator compiler: ${throwable.message}"
+        )
     }
 }
 

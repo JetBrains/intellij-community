@@ -1,7 +1,5 @@
 ### auto-generated section `build intellij.platform.ide.impl` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -16,12 +14,13 @@ kt_javac_options(
     "java.desktop/sun.awt.datatransfer=ALL-UNNAMED",
     "java.desktop/sun.swing=ALL-UNNAMED",
     "java.base/sun.nio.fs=ALL-UNNAMED",
-  ]
+  ],
+  no_proc = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "ide-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -30,6 +29,7 @@ jvm_library(
   module_name = "intellij.platform.ide.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-impl_resources"],
   javac_opts = ":custom-javac-options",
   deps = [
     "@lib//:eawtstub-provided",
@@ -56,12 +56,12 @@ jvm_library(
     "//platform/util/diff",
     "//platform/workspace/jps",
     "@lib//:commons-imaging",
-    "@lib//:guava",
+    "//libraries/guava",
     "//jps/model-impl",
     "//platform/refactoring",
     "//platform/analysis-impl",
     "//platform/editor-ui-ex:editor-ex",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:http-client",
     "//platform/diff-api:diff",
     "@lib//:imgscalr",
@@ -71,11 +71,11 @@ jvm_library(
     "@lib//:stream_ex",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:netty-codec-http",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "@lib//:java_compatibility",
     "@lib//:kotlin-reflect",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-jr-objects",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects",
     "//platform/util:util-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/util",
@@ -94,18 +94,18 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/core-ui",
     "@lib//:zip-signer",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:classgraph",
     "//platform/util/zip",
-    "@lib//:icu4j",
+    "//libraries/icu4j",
     "//platform/util/xmlDom",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
     "//platform/platform-util-netty:ide-util-netty",
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "@lib//:jbr-api",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
     "//platform/util/jdom",
     "@lib//:jvm-native-trusted-roots",
     "@lib//:opentelemetry",
@@ -116,7 +116,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/util/text-matching",
     "//platform/platform-impl/rpc",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "//platform/util-ex",
     "//platform/backend/workspace",
     "//platform/diagnostic/startUpPerformanceReporter",
@@ -151,6 +151,10 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/locking.impl",
     "//platform/platform-impl/concurrency",
+    "//platform/pratt",
+    "//platform/eel-impl",
+    "//platform/platform-impl/recentProjects",
+    "//platform/runtime/product",
   ],
   exports = [
     "//platform/platform-api:ide",
@@ -158,7 +162,6 @@ jvm_library(
     "//platform/util:util-ui",
   ],
   runtime_deps = [
-    ":ide-impl_resources",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "//platform/object-serializer",
@@ -176,6 +179,7 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "//platform/syntax/syntax-i18n:i18n",
     "//platform/syntax/syntax-util:util",
+    "//platform/syntax/syntax-tree:tree",
     "//platform/syntax/syntax-extensions:extensions",
   ]
 )
@@ -211,12 +215,12 @@ jvm_library(
     "//platform/util/diff",
     "//platform/workspace/jps",
     "@lib//:commons-imaging",
-    "@lib//:guava",
+    "//libraries/guava",
     "//jps/model-impl",
     "//platform/refactoring",
     "//platform/analysis-impl",
     "//platform/editor-ui-ex:editor-ex",
-    "@lib//:gson",
+    "//libraries/gson",
     "@lib//:http-client",
     "//platform/diff-api:diff",
     "@lib//:imgscalr",
@@ -226,11 +230,11 @@ jvm_library(
     "@lib//:stream_ex",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:netty-codec-http",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "@lib//:java_compatibility",
     "@lib//:kotlin-reflect",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-jr-objects",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/jr-objects:libraries-jackson-jr-objects",
     "//platform/util:util-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/util",
@@ -252,18 +256,18 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-ui",
     "@lib//:zip-signer",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:classgraph",
     "//platform/util/zip",
-    "@lib//:icu4j",
+    "//libraries/icu4j",
     "//platform/util/xmlDom",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
     "//platform/platform-util-netty:ide-util-netty",
-    "@lib//:aalto-xml",
+    "//libraries/aalto-xml",
     "@lib//:jbr-api",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/json",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:assert_j",
     "//platform/util/jdom",
     "@lib//:jvm-native-trusted-roots",
@@ -276,7 +280,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/util/text-matching",
     "//platform/platform-impl/rpc",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "//platform/util-ex",
     "//platform/backend/workspace",
     "//platform/diagnostic/startUpPerformanceReporter",
@@ -313,12 +317,24 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/locking.impl",
     "//platform/platform-impl/concurrency",
+    "//platform/pratt",
+    "//platform/eel-impl",
+    "//platform/platform-impl/recentProjects",
+    "//platform/runtime/product",
   ],
-  runtime_deps = [":ide-impl_resources"]
+  exports = [
+    "//platform/platform-api:ide",
+    "@lib//:kotlin-stdlib",
+    "//platform/util:util-ui",
+  ]
 )
+### auto-generated section `build intellij.platform.ide.impl` end
+
+### auto-generated section `test intellij.platform.ide.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "ide-impl_test",
   runtime_deps = [":ide-impl_test_lib"]
 )
-### auto-generated section `build intellij.platform.ide.impl` end
+### auto-generated section `test intellij.platform.ide.impl` end

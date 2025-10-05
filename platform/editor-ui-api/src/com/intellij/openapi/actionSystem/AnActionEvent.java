@@ -114,6 +114,7 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   /** @deprecated use {@link #createEvent(DataContext, Presentation, String, ActionUiKind, InputEvent)} */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static @NotNull AnActionEvent createFromInputEvent(@NotNull AnAction action, @Nullable InputEvent event, @NotNull String place) {
     DataContext context = event == null ? DataManager.getInstance().getDataContext() :

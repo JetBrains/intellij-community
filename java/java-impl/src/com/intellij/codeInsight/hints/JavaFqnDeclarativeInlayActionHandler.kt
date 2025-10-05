@@ -11,9 +11,9 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.AppExecutorUtil
 
-class JavaFqnDeclarativeInlayActionHandler : InlayActionHandler {
-  companion object {
-    const val HANDLER_NAME: String = "java.fqn.class"
+public class JavaFqnDeclarativeInlayActionHandler : InlayActionHandler {
+  public companion object {
+    public const val HANDLER_NAME: String = "java.fqn.class"
   }
 
   override fun handleClick(editor: Editor, payload: InlayActionPayload) {

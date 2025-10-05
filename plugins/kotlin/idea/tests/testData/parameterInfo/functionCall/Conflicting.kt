@@ -20,8 +20,3 @@ interface L {
 class A {
     fun subscribe(listener: L) {}
 }
-
-/*
-Text: (<highlight>a: (Int) -> Unit</highlight>), Disabled: false, Strikeout: false, Green: true
-*/
-

@@ -20,7 +20,9 @@ public class IdentifierSplitter extends BaseSplitter {
     return INSTANCE;
   }
 
-  private static final @NonNls Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");
+  public static final int MINIMAL_TYPO_LENGTH = 4;
+
+  private static final @NonNls Pattern WORD = Pattern.compile("(?U)(\\p{L}\\p{M}*)+('?(\\p{L}\\p{M}*)+)?");
   private static final @NonNls Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");
 
   @Override
@@ -135,7 +137,7 @@ public class IdentifierSplitter extends BaseSplitter {
   }
 
   private static void add(String text, List<TextRange> result, int i, int s) {
-    if (i - s > 3) {
+    if (i - s >= MINIMAL_TYPO_LENGTH) {
       TextRange textRange = new TextRange(s, i);
       //System.out.println("textRange = " + textRange + " = "+ textRange.substring(text));
       result.add(textRange);

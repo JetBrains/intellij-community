@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.scopes"/>
+    <module name="intellij.platform.kernel.backend"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.scopes.backend.ScopesStateApiProvider"/>
+  </extensions>
+</idea-plugin>

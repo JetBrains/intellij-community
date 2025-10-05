@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.xdebugger.hotswap.*
+import com.intellij.xdebugger.impl.rpc.HotSwapVisibleStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel

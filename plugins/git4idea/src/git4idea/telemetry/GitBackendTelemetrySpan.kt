@@ -2,7 +2,7 @@
 package git4idea.telemetry
 
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan
-import com.intellij.vcs.git.shared.telemetry.GitTelemetrySpan
+import com.intellij.vcs.git.telemetry.GitTelemetrySpan
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal

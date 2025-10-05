@@ -393,23 +393,26 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
       })
 
-      IdeEventQueue.getInstance().addDispatcher({ event ->
-                                                  if (event is KeyEvent) {
-                                                    process { manager ->
-                                                      manager.dispatchKeyEvent(event)
-                                                    }
-                                                  }
+      IdeEventQueue.getInstance().addDispatcher(
+        object : IdeEventQueue.NonLockedEventDispatcher {
+          override fun dispatch(e: AWTEvent): Boolean {
+            if (e is KeyEvent) {
+              process { manager ->
+                manager.dispatchKeyEvent(e)
+              }
+            }
 
-                                                  false
-                                                }, coroutineScope)
+            return false
+          }
+        }, coroutineScope)
     }
   }
 
   private fun getDefaultToolWindowPane() = toolWindowPanes.get(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)!!
 
-  internal fun getToolWindowPane(paneId: String): ToolWindowPane = toolWindowPanes.get(paneId) ?: getDefaultToolWindowPane()
+  @ApiStatus.Internal fun getToolWindowPane(paneId: String): ToolWindowPane = toolWindowPanes.get(paneId) ?: getDefaultToolWindowPane()
 
-  internal fun getToolWindowPane(toolWindow: ToolWindow): ToolWindowPane {
+  fun getToolWindowPane(toolWindow: ToolWindow): ToolWindowPane {
     val paneId = if (toolWindow is ToolWindowImpl) {
       toolWindow.windowInfo.safeToolWindowPaneId
     }
@@ -557,7 +560,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     taskListDeferred: Deferred<List<RegisterToolWindowTaskData>>?,
   ) {
     withContext(ModalityState.any().asContextElement()) {
-      launch(Dispatchers.EDT) {
+      val defaultPaneInitialization = launch(Dispatchers.EDT) {
         this@ToolWindowManagerImpl.projectFrame = pane.frame
 
         // Make sure we haven't already created the root tool window pane.
@@ -571,6 +574,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         toolWindowPanes.put(pane.paneId, pane)
       }
       connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
+      defaultPaneInitialization.join()
       toolWindowSetInitializer.initUi(reopeningEditorJob, taskListDeferred)
     }
 
@@ -1599,7 +1603,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   override fun invokeLater(runnable: Runnable) {
     if (!toolWindowSetInitializer.addToPendingTasksIfNotInitialized(runnable)) {
-      coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+      coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.nonModal().asContextElement()) {
         runnable.run()
       }
     }

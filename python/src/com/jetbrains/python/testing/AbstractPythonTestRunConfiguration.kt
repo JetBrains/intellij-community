@@ -6,21 +6,24 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.value.*
+import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.getQName
-import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration.Companion.TEST_NAME_PARTS_SPLITTER
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -62,9 +65,11 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
     return null
   }
 
-  open fun getTestSpec(request: TargetEnvironmentRequest,
-                       location: Location<*>,
-                       failedTest: AbstractTestProxy): TargetEnvironmentFunction<String>? {
+  open fun getTestSpec(
+    request: TargetEnvironmentRequest,
+    location: Location<*>,
+    failedTest: AbstractTestProxy,
+  ): TargetEnvironmentFunction<String>? {
     val element = location.psiElement
     var pyClass = PsiTreeUtil.getParentOfType(element, PyClass::class.java, false)
     if (location is PyPsiLocationWithFixedClass) {
@@ -121,7 +126,10 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
       return false
     }
     val requiredPackage = this.requiredPackage ?: return true // Installed by default
-    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
+    val isInstalled = runBlockingMaybeCancellable {
+      PythonPackageManager.forSdk(project, sdk).hasInstalledPackage(requiredPackage)
+    }
+    return isInstalled
   }
 
 

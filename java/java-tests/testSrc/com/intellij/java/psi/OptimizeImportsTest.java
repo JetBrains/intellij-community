@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -426,11 +427,12 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.checkResult("class Foo {}");
   }
 
-  private void runOptimizeImports() throws ExecutionException, InterruptedException {
+  private void runOptimizeImports() {
     myFixture.type('A'); // make file dirty
     myFixture.type('\b');
-    IntentionAction fix = ReadAction.nonBlocking(() -> QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFixture.getFile())).submit(
-      AppExecutorUtil.getAppExecutorService()).get().asIntention();
+    IntentionAction fix = PlatformTestUtil.waitForFuture(
+      ReadAction.nonBlocking(() -> QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFixture.getFile())).submit(
+        AppExecutorUtil.getAppExecutorService())).asIntention();
     myFixture.doHighlighting(); // wait until highlighting is finished to .isAvailable() return true
     boolean old = CodeInsightWorkspaceSettings.getInstance(myFixture.getProject()).isOptimizeImportsOnTheFly();
     CodeInsightWorkspaceSettings.getInstance(myFixture.getProject()).setOptimizeImportsOnTheFly(true);

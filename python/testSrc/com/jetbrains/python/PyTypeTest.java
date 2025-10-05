@@ -298,7 +298,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIfIsInstanceOr1() {
-    doTest("Union[str, int]",
+    doTest("Union[int, str]",
            """
                def foo(a):
                    if isinstance(a, int) or isinstance(a, str):
@@ -307,7 +307,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIfIsInstanceOr2() {
-    doTest("Union[B, A, int, str]",
+    doTest("Union[str, int, A, B]",
            """
            class A:
                pass
@@ -351,7 +351,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testIfIsInstanceLogicalExpressions() {
-    doTest("Union[B, str]",
+    doTest("Union[str, B]",
            """
              class A:
                  pass
@@ -793,11 +793,11 @@ public class PyTypeTest extends PyTestCase {
       """;
     final PyExpression expr = parseExpr(text);
     assertNotNull(expr);
-    doTest("Union[Union[int, str], Any]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
+    doTest("UnsafeUnion[Union[int, str], Any]", expr, TypeEvalContext.codeCompletion(expr.getProject(), expr.getContainingFile()));
   }
 
   public void testUpperBoundGeneric() {
-    doTest("Union[Union[int, str], Any]",
+    doTest("UnsafeUnion[Union[int, str], Any]",
            """
              def foo(x):
                  '''
@@ -1637,7 +1637,7 @@ public class PyTypeTest extends PyTestCase {
 
     doTest("List[Union[str, int]]", "expr = ['1', 1, 1]");
 
-    doTest("List[Union[Union[str, int], Any]]", "expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]");
+    doTest("List[UnsafeUnion[Union[str, int], Any]]", "expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]");
   }
 
   public void testSetLiteral() {
@@ -1645,7 +1645,7 @@ public class PyTypeTest extends PyTestCase {
 
     doTest("Set[Union[str, int]]", "expr = {'1', 1, 1}");
 
-    doTest("Set[Union[Union[str, int], Any]]", "expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}");
+    doTest("Set[UnsafeUnion[Union[str, int], Any]]", "expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}");
   }
 
   public void testDictLiteral() {
@@ -1775,7 +1775,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20409
   public void testGetFromDictWithDefaultNoneValue() {
-    doTest("Optional[Any]",
+    doTest("Any",
            "d = {}\n" +
            "expr = d.get(\"abc\", None)");
   }
@@ -2769,23 +2769,23 @@ public class PyTypeTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
-        doTest("Union[int, Any]",
+        doTest("UnsafeUnion[int, Any]",
                """
                  from typing import Any
                  x: Any
                  expr = x * 2""");
 
-        doTest("Union[int, Any]",
+        doTest("UnsafeUnion[int, Any]",
                """
                  from typing import Any
                  x: Any
                  expr = 2 * x""");
 
-        doTest("Union[int, Any]",
+        doTest("UnsafeUnion[int, Any]",
                "def f(x):\n" +
                "    expr = x * 2");
 
-        doTest("Union[int, Any]",
+        doTest("UnsafeUnion[int, Any]",
                "def f(x):\n" +
                "    expr = 2 * x");
       }

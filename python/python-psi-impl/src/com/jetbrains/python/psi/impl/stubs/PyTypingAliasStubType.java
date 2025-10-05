@@ -20,21 +20,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.*;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.PyUtilCore;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType;
 import com.jetbrains.python.psi.stubs.PyTypingAliasStub;
-import org.jetbrains.annotations.ApiStatus;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +68,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
   }
 
   private static @Nullable PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target, boolean forStubCreation) {
-    if (!PyUtil.isTopLevel(target) || !looksLikeTypeAliasTarget(target)) {
+    if (!(PyUtil.isTopLevel(target) || ScopeUtil.getScopeOwner(target) instanceof PyClass) || !looksLikeTypeAliasTarget(target)) {
       return null;
     }
     final PyExpression value = target.findAssignedValue();
@@ -129,58 +127,74 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       return callee != null &&
              ("TypeVar".equals(callee.getReferencedName()) || "TypeVarTuple".equals(callee.getReferencedName()) ||
               "ParamSpec".equals(callee.getReferencedName()));
-
     }
-
-    final PyStringLiteralExpression pyString = as(expression, PyStringLiteralExpression.class);
-    if (pyString != null) {
-      if (pyString.isInterpolated()) { // f-strings are not allowed
-        return false;
-      }
-      if (pyString.getStringNodes().size() != 1 || pyString.getTextLength() > STRING_LITERAL_LENGTH_THRESHOLD) {
-        return false;
-      }
-      else {
-        if (!pyString.getStringElements().get(0).getPrefix().isEmpty()) { // prefixed strings are not allowed
-          return false;
-        }
-      }
-      final String content = pyString.getStringValue();
-      return TYPE_ANNOTATION_LIKE.matcher(content).matches();
-    }
-
-    if (expression instanceof PyReferenceExpression || expression instanceof PySubscriptionExpression) {
-      return isSyntacticallyValidAnnotation(expression);
-    }
-    if (expression instanceof PyBinaryExpression binaryExpression) {
-      if (binaryExpression.getOperator() == PyTokenTypes.OR) {
-        PyExpression leftOperand = binaryExpression.getLeftExpression();
-        PyExpression rightOperand = binaryExpression.getRightExpression();
-        return leftOperand != null && rightOperand != null &&
-               isSyntacticallyValidAnnotation(leftOperand) && isSyntacticallyValidAnnotation(rightOperand);
-      }
-    }
-
-    return false;
+    return isSyntacticallyValidAnnotation(expression);
   }
 
   private static boolean isSyntacticallyValidAnnotation(@NotNull PyExpression expression) {
-    if (expression instanceof PyBinaryExpression) {
-      return looksLikeTypeHint(expression);
-    }
-    return PsiTreeUtil.processElements(expression, element -> {
-      // Check only composite elements
-      if (element instanceof ASTDelegatePsiElement) {
-        if (!VALID_TYPE_ANNOTATION_ELEMENTS.contains(element.getNode().getElementType())) {
-          return false;
+    boolean[] illegal = {false};
+    expression.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPySubscriptionExpression(@NotNull PySubscriptionExpression node) {
+        if (node.getOperand() instanceof PyReferenceExpression refExpr &&
+            "Annotated".equals(refExpr.getName()) &&
+            node.getIndexExpression() instanceof PyTupleExpression tupleExpr) {
+          refExpr.accept(this);
+          tupleExpr.getElements()[0].accept(this);
         }
-        if (element instanceof PyReferenceExpression) {
-          // too complex reference expression, e.g. foo[bar].baz
-          return ((PyReferenceExpression)element).asQualifiedName() != null;
+        else if (node.getOperand() instanceof PyReferenceExpression refExpr &&
+                 "Literal".equals(refExpr.getName())) {
+          refExpr.accept(this);
+        }
+        else {
+          super.visitPySubscriptionExpression(node);
         }
       }
-      return true;
+
+      @Override
+      public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
+        if (node.getOperator() != PyTokenTypes.OR) {
+          illegal[0] = true;
+          return;
+        }
+        node.getLeftExpression().accept(this);
+        PyExpression rightExpression = node.getRightExpression();
+        if (rightExpression != null) {
+          rightExpression.accept(this);
+        }
+      }
+
+      @Override
+      public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression node) {
+        boolean nonTrivial = (node.isInterpolated()
+                              || node.getStringNodes().size() != 1
+                              || node.getTextLength() > STRING_LITERAL_LENGTH_THRESHOLD
+                              || !node.getStringElements().getFirst().getPrefix().isEmpty()
+                              || !TYPE_ANNOTATION_LIKE.matcher(node.getStringValue()).matches());
+        if (nonTrivial) {
+          illegal[0] = true;
+        }
+      }
+
+      @Override
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
+        if (node.asQualifiedName() == null) {
+          illegal[0] = true;
+        }
+      }
+
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof ASTDelegatePsiElement) {
+          if (!VALID_TYPE_ANNOTATION_ELEMENTS.contains(element.getNode().getElementType())) {
+            illegal[0] = true;
+            return;
+          }
+          super.visitElement(element);
+        }
+      }
     });
+    return !illegal[0];
   }
 
   @Override
@@ -199,25 +213,27 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
    * @see PyTypingAliasStub
    */
   public static @Nullable PyExpression getAssignedValueStubLike(@NotNull PyTargetExpression target) {
-    final PyTargetExpressionStub stub = target.getStub();
-    PyExpression result = null;
-    if (stub != null) {
-      final PyTypingAliasStub aliasStub = stub.getCustomStub(PyTypingAliasStub.class);
-      String aliasText = null;
-      if (aliasStub != null) {
-        aliasText = aliasStub.getText();
+    return CachedValuesManager.getCachedValue(target, () -> {
+      final PyTargetExpressionStub stub = target.getStub();
+      PyExpression result = null;
+      if (stub != null) {
+        final PyTypingAliasStub aliasStub = stub.getCustomStub(PyTypingAliasStub.class);
+        String aliasText = null;
+        if (aliasStub != null) {
+          aliasText = aliasStub.getText();
+        }
+        else if (stub.getInitializerType() == InitializerType.ReferenceExpression) {
+          aliasText = Objects.toString(stub.getInitializer(), null);
+        }
+        if (aliasText != null) {
+          result = PyUtil.createExpressionFromFragment(aliasText, target.getContainingFile());
+        }
       }
-      else if (stub.getInitializerType() == InitializerType.ReferenceExpression) {
-        aliasText = Objects.toString(stub.getInitializer(), null);
+      else {
+        // Use PSI to get the assigned value but only if the same expression would be saved in stubs
+        result = getAssignedValueIfTypeAliasLike(target, false);
       }
-      if (aliasText != null) {
-        result = PyUtil.createExpressionFromFragment(aliasText, target.getContainingFile());
-      }
-    }
-    else {
-      // Use PSI to get the assigned value but only if the same expression would be saved in stubs
-      result = getAssignedValueIfTypeAliasLike(target, false);
-    }
-    return result;
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 }

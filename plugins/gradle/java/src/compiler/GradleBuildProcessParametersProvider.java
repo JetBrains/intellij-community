@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import groovy.lang.GroovyObject;
-import org.gradle.internal.impldep.com.google.common.base.Optional;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -51,10 +50,6 @@ public final class GradleBuildProcessParametersProvider extends BuildProcessPara
       String gradleToolingApiJarPath = PathUtil.getJarPathForClass(ProjectConnection.class);
       if (!StringUtil.isEmpty(gradleToolingApiJarPath)) {
         myGradleClasspath.add(gradleToolingApiJarPath);
-      }
-      String gradleToolingApiImplDepJarPath = PathUtil.getJarPathForClass(Optional.class);
-      if (!StringUtil.isEmpty(gradleToolingApiImplDepJarPath)) {
-        myGradleClasspath.add(gradleToolingApiImplDepJarPath);
       }
     }
     classpath.addAll(myGradleClasspath);

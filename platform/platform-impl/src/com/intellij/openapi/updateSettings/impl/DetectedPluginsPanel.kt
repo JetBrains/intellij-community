@@ -3,33 +3,38 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.plugins.PluginHeaderPanel
 import com.intellij.ide.plugins.PluginManagerCore.getPlugin
-import com.intellij.ide.plugins.newui.MyPluginModel
-import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
-import com.intellij.ide.plugins.newui.PluginModelFacade
-import com.intellij.ide.plugins.newui.PluginUiModelAdapter
+import com.intellij.ide.plugins.newui.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JTable
 
-@ApiStatus.Internal
-class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownloader>(PluginDownloader::class.java) {
+internal class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownloader>(PluginDownloader::class.java) {
   private val myDetailsComponent: PluginDetailsPageComponent
   private val myHeader = PluginHeaderPanel()
   private val mySkippedPlugins = HashSet<PluginId>()
 
   init {
     val pluginModel = MyPluginModel(project)
+    pluginModel.pluginUpdatesService = object : PluginUpdatesService() {
+      override fun finishUpdate() {}
+    }
     myDetailsComponent = PluginDetailsPageComponent(PluginModelFacade(pluginModel), LinkListener { _, _ -> }, true)
     val entryTable = getEntryTable()
     entryTable.setTableHeader(null)
@@ -40,7 +45,7 @@ class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownloader>(Plu
         selected: Boolean,
         hasFocus: Boolean,
         row: Int,
-        column: Int
+        column: Int,
       ) {
         setBorder(null)
         if (value !is PluginDownloader) {
@@ -70,12 +75,14 @@ class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownloader>(Plu
       }
     })
     entryTable.getSelectionModel().addListSelectionListener {
-      val selectedRow = entryTable.selectedRow
-      if (selectedRow != -1) {
-        val plugin = getValueAt(selectedRow)!!.descriptor
-        myHeader.setPlugin(plugin)
-        myDetailsComponent.setOnlyUpdateMode()
-        myDetailsComponent.showPluginImpl(PluginUiModelAdapter(plugin), null)
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        val selectedRow = entryTable.selectedRow
+        if (selectedRow != -1) {
+          val plugin = getValueAt(selectedRow)!!.descriptor
+          myHeader.setPlugin(plugin)
+          myDetailsComponent.setOnlyUpdateMode()
+          myDetailsComponent.showPluginImpl(PluginUiModelAdapter(plugin), null)
+        }
       }
     }
     removeAll()

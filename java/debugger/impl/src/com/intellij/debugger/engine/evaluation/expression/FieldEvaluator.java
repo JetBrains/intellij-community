@@ -66,7 +66,7 @@ public class FieldEvaluator implements ModifiableEvaluator {
     if (PsiUtil.isLocalClass(psiClass)) {
       return new LocalClassFilter(psiClass.getName());
     }
-    final String name = JVMNameUtil.getNonAnonymousClassName(psiClass);
+    final String name = JVMNameUtil.getClassVMName(psiClass);
     return name != null ? new FQNameClassFilter(name) : TargetClassFilter.ALL;
   }
 

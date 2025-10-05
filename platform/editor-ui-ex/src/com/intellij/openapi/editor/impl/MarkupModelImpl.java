@@ -6,10 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.MarkupIterator;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -17,6 +14,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +35,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private final RangeHighlighterTree myHighlighterTreeForLines;  // this tree holds line range highlighters with target = HighlighterTargetArea.LINES_IN_RANGE
 
   @ApiStatus.Internal
-  public MarkupModelImpl(@NotNull DocumentEx document) {
+  protected MarkupModelImpl(@NotNull DocumentEx document) {
     myDocument = document;
     myHighlighterTree = new RangeHighlighterTree(this);
     myHighlighterTreeForLines = new RangeHighlighterTree(this);
@@ -197,8 +195,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   @Override
   public void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     myCachedHighlighters = null;
-    if (!highlighter.isValid()) return;
-
     treeFor(highlighter).removeInterval((RangeHighlighterEx)highlighter);
   }
 
@@ -221,12 +217,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public void addMarkupModelListener(@NotNull Disposable parentDisposable, final @NotNull MarkupModelListener listener) {
     List<MarkupModelListener> listeners = myListeners;
     listeners.add(listener);
-    Disposer.register(parentDisposable, () -> removeMarkupModelListener(listeners, listener));
-  }
-
-  private static void removeMarkupModelListener(@NotNull List<MarkupModelListener> listeners, @NotNull MarkupModelListener listener) {
-    boolean success = listeners.remove(listener);
-    LOG.assertTrue(success);
+    Disposer.register(parentDisposable, () -> {
+      boolean success = listeners.remove(listener);
+      LOG.assertTrue(success);
+    });
   }
 
   @Override
@@ -250,12 +244,21 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
         listener.attributesChanged(highlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
       }
     }
+    restoreDeliciousInvariants(highlighter); // after attribute change the highlighter can become error-stripe-visible, or vice versa
+  }
+
+  private static void restoreDeliciousInvariants(@NotNull RangeHighlighter highlighter) {
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = ((RangeMarkerImpl)highlighter).myNode;
+    if (node != null) {
+      node.attributesChanged();
+    }
   }
 
   private void fireAfterAdded(@NotNull RangeHighlighterEx highlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.afterAdded(highlighter);
     }
+    restoreDeliciousInvariants(highlighter);
   }
 
   void fireBeforeRemoved(@NotNull RangeHighlighterEx highlighter) {
@@ -279,17 +282,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
-    MarkupIterator<RangeHighlighterEx> iterator = overlappingIterator(start, end);
-    try {
-      while (iterator.hasNext()) {
-        if (!processor.process(iterator.next())) {
-          return false;
-        }
-      }
-      return true;
-    }
-    finally {
-      iterator.dispose();
+    try (MarkupIterator<RangeHighlighterEx> iterator = overlappingIterator(start, end)) {
+      return ContainerUtil.process(iterator, processor);
     }
   }
 
@@ -301,11 +295,26 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    startOffset = Math.max(0,startOffset);
-    endOffset = Math.max(startOffset, endOffset);
+    return overlappingIterator(startOffset, endOffset, (byte)0);
+  }
+
+  private @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset, byte tastePreference) {
+    startOffset = TextRangeScalarUtil.coerce(startOffset, 0, getDocument().getTextLength());
+    endOffset = TextRangeScalarUtil.coerce(endOffset, startOffset, getDocument().getTextLength());
     return IntervalTreeImpl
-      .mergingOverlappingIterator(myHighlighterTree, new ProperTextRange(startOffset, endOffset), myHighlighterTreeForLines,
-                                  roundToLineBoundaries(getDocument(), startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+      .mergingOverlappingIterator(myHighlighterTree, new ProperTextRange(startOffset, endOffset),
+                                  myHighlighterTreeForLines, roundToLineBoundaries(getDocument(), startOffset, endOffset),
+                                  tastePreference, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+  }
+
+  @Override
+  public @NotNull MarkupIterator<RangeHighlighterEx> overlappingErrorStripeIterator(int startOffset, int endOffset) {
+    return overlappingIterator(startOffset, endOffset, RangeHighlighterTree.ERROR_STRIPE_FLAG);
+  }
+
+  @Override
+  public @NotNull MarkupIterator<RangeHighlighterEx> overlappingGutterIterator(int startOffset, int endOffset) {
+    return overlappingIterator(startOffset, endOffset, RangeHighlighterTree.RENDER_IN_GUTTER_FLAG);
   }
 
   public static @NotNull TextRange roundToLineBoundaries(@NotNull Document document, int startOffset, int endOffset) {

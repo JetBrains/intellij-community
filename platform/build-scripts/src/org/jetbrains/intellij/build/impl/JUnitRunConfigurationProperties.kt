@@ -13,7 +13,8 @@ class JUnitRunConfigurationProperties(
   val testClassPatterns: List<String>,
   vmParameters: List<String>,
   val requiredArtifacts: List<String>,
-  envVariables: Map<String, String>
+  envVariables: Map<String, String>,
+  val buildProject: Boolean,
 ) : RunConfigurationProperties(name, moduleName, vmParameters, envVariables) {
   enum class TestSearchScope(val serialized: String) {
     WHOLE_PROJECT("wholeProject"),
@@ -58,13 +59,21 @@ class JUnitRunConfigurationProperties(
       val testSearchScope = TestSearchScope.entries.firstOrNull { it.serialized == scopeSerialized } ?: error(
         "TEST_SEARCH_SCOPE value '$scopeSerialized' must be one of ${TestSearchScope.entries.map { it.serialized }}")
 
+      val buildProject = configuration.getChild("method")
+        ?.children("option")
+        ?.any {
+          it.getAttributeValue("name") == "MakeProject" &&
+          it.getAttributeValue("enabled") == "true"
+        } == true
+
       return JUnitRunConfigurationProperties(name = configuration.getAttributeValue("name")!!,
                                              moduleName = moduleName,
                                              testSearchScope = testSearchScope,
                                              testClassPatterns = testClassPatterns,
                                              vmParameters = vmParameters,
                                              requiredArtifacts = requiredArtifacts,
-                                             envVariables = envVariables)
+                                             envVariables = envVariables,
+                                             buildProject = buildProject)
     }
   }
 }

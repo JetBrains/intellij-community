@@ -1,20 +1,18 @@
 ### auto-generated section `build intellij.libraries.kotlinTest` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-test_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "kotlin-test",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":kotlin-test_resources"],
   exports = ["@lib//:kotlin-test"],
-  runtime_deps = [
-    ":kotlin-test_resources",
-    "@lib//:kotlin-test",
-  ]
+  runtime_deps = ["@lib//:kotlin-test"]
 )
 ### auto-generated section `build intellij.libraries.kotlinTest` end

@@ -220,7 +220,7 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
     return property == null ? injectionHost.evaluateToString() : formatI18nProperty(injectionHost, property);
   }
 
-  public static @Nullable IProperty getI18nProperty(@NotNull UInjectionHost injectionHost) {
+  static @Nullable IProperty getI18nProperty(@NotNull UInjectionHost injectionHost) {
     PsiElement sourcePsi = injectionHost.getSourcePsi();
     if (sourcePsi == null) return null;
     final Property property = (Property)sourcePsi.getUserData(CACHE);
@@ -269,13 +269,7 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
     return isFoldingsOn();
   }
 
-  public static boolean isI18nProperty(@NotNull PsiLiteralExpression expr) {
-    UInjectionHost uLiteralExpression = UastContextKt.toUElement(expr, UInjectionHost.class);
-    if (uLiteralExpression == null) return false;
-    return isI18nProperty(uLiteralExpression);
-  }
-
-  public static boolean isI18nProperty(@NotNull UInjectionHost expr) {
+  static boolean isI18nProperty(@NotNull UInjectionHost expr) {
     if (!expr.isString()) return false;
     PsiElement sourcePsi = expr.getSourcePsi();
     if (sourcePsi == null) return false;

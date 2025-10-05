@@ -11,11 +11,13 @@ import com.intellij.platform.backend.observation.Observation
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
+import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT_MS
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.concurrency.asPromise
 import java.util.*
 import kotlin.time.Duration
@@ -23,8 +25,9 @@ import kotlin.time.Duration.Companion.milliseconds
 
 object TestObservation {
 
+  @Obsolete
   @JvmStatic
-  fun waitForConfiguration(project: Project, timeout: Long = DEFAULT_TEST_TIMEOUT.inWholeMilliseconds) {
+  fun waitForConfiguration(project: Project, timeout: Long = DEFAULT_TEST_TIMEOUT_MS) {
     val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
     val job = coroutineScope.launch {
       awaitConfiguration(project, timeout.milliseconds)

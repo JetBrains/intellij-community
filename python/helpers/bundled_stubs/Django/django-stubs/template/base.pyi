@@ -2,9 +2,9 @@ from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from enum import Enum
 from logging import Logger
 from re import Pattern
-from typing import Any
+from typing import Any, cast
 
-from django.template.context import Context as Context  # Django: imported for backwards compatibility
+from django.template.context import Context
 from django.template.engine import Engine
 from django.template.library import Library
 from django.template.loaders.base import Loader
@@ -26,10 +26,10 @@ tag_re: Pattern[str]
 logger: Logger
 
 class TokenType(Enum):
-    TEXT: int
-    VAR: int
-    BLOCK: int
-    COMMENT: int
+    TEXT = cast(int, ...)
+    VAR = cast(int, ...)
+    BLOCK = cast(int, ...)
+    COMMENT = cast(int, ...)
 
 class VariableDoesNotExist(Exception):
     msg: str
@@ -145,7 +145,6 @@ class Node:
     token: Token | None
     def render(self, context: Context) -> str: ...
     def render_annotated(self, context: Context) -> int | str: ...
-    def __iter__(self) -> Iterator[Node]: ...
     def get_nodes_by_type(self, nodetype: type[Node]) -> list[Node]: ...
 
 class NodeList(list[Node]):

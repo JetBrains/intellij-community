@@ -16,12 +16,19 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaBuiltinTypes
+import org.jetbrains.kotlin.analysis.api.components.analysisScope
+import org.jetbrains.kotlin.analysis.api.components.builtinTypes
+import org.jetbrains.kotlin.analysis.api.components.callableSymbol
+import org.jetbrains.kotlin.analysis.api.components.namedClassSymbol
+import org.jetbrains.kotlin.analysis.api.components.resolveExtensionScopeWithTopLevelDeclarations
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.stubindex.*
@@ -41,9 +48,8 @@ class KtSymbolFromIndexProvider(
         nameFilter(Name.identifier(name))
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun <T : PsiElement> T.isAcceptable(psiFilter: (T) -> Boolean): Boolean {
-        ProgressManager.checkCanceled()
         if (!psiFilter(this)) return false
 
         if (kotlinFqName?.isExcludedFromAutoImport(project, file) == true) return false
@@ -65,7 +71,7 @@ class KtSymbolFromIndexProvider(
         return true
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getKotlinClassesByName(
         name: Name,
@@ -85,7 +91,7 @@ class KtSymbolFromIndexProvider(
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getKotlinClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
@@ -106,7 +112,7 @@ class KtSymbolFromIndexProvider(
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getClassLikeSymbols(
         classDeclarations: Sequence<KtClassOrObject>,
         typeAliasDeclarations: Sequence<KtTypeAlias>,
@@ -121,7 +127,7 @@ class KtSymbolFromIndexProvider(
      *
      * @see KotlinSubclassObjectNameIndex
      */
-    context(KaSession)
+    context(_: KaSession)
     fun getKotlinSubclassObjectsByNameFilter(
         nameFilter: (Name) -> Boolean,
         scope: GlobalSearchScope = analysisScope,
@@ -133,7 +139,7 @@ class KtSymbolFromIndexProvider(
     ) { it.isAcceptable(psiFilter) }
         .map { it.symbol }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getKotlinEnumEntriesByNameFilter(
         nameFilter: (Name) -> Boolean,
         scope: GlobalSearchScope = analysisScope,
@@ -145,7 +151,7 @@ class KtSymbolFromIndexProvider(
     ) { it.isAcceptable(psiFilter) }
         .map { it.symbol }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getKotlinEnumEntriesByName(
         name: Name,
         scope: GlobalSearchScope = analysisScope,
@@ -157,7 +163,7 @@ class KtSymbolFromIndexProvider(
     ) { it is KtEnumEntry && it.isAcceptable(psiFilter) }
         .map { (it as KtEnumEntry).symbol }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getJavaClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
         scope: GlobalSearchScope = analysisScope,
@@ -175,7 +181,7 @@ class KtSymbolFromIndexProvider(
             .flatMap { getJavaClassesByName(it, scope, psiFilter) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getJavaClassesByName(
         name: Name,
         scope: GlobalSearchScope = analysisScope,
@@ -185,11 +191,13 @@ class KtSymbolFromIndexProvider(
 
         return getNonKotlinNamesCaches(useSiteModule.project).flatMap { cache ->
             cache.getClassesByName(nameString, scope).asSequence()
-        }.filter { it.isAcceptable(psiFilter) }
-            .mapNotNull { it.namedClassSymbol }
+        }.filter {
+            ProgressManager.checkCanceled()
+            it.isAcceptable(psiFilter)
+        }.mapNotNull { it.namedClassSymbol }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getKotlinCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
@@ -211,7 +219,7 @@ class KtSymbolFromIndexProvider(
         .filterIsInstance<KaCallableSymbol>() +
             resolveExtensionScopeWithTopLevelDeclarations.callables(nameFilter)
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getKotlinCallableSymbolsByName(
         name: Name,
@@ -239,7 +247,7 @@ class KtSymbolFromIndexProvider(
         .filterIsInstance<KaCallableSymbol>() +
             resolveExtensionScopeWithTopLevelDeclarations.callables(name)
 
-    context(KaSession)
+    context(_: KaSession)
     fun getJavaFieldsByNameFilter(
         nameFilter: (Name) -> Boolean,
         scope: GlobalSearchScope = analysisScope,
@@ -257,30 +265,34 @@ class KtSymbolFromIndexProvider(
             .flatMap { getJavaFieldsByName(it, scope, psiFilter) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getJavaMethodsByName(
         name: Name,
         scope: GlobalSearchScope = analysisScope,
         psiFilter: (PsiMethod) -> Boolean = { true },
     ): Sequence<KaCallableSymbol> = getNonKotlinNamesCaches(useSiteModule.project).flatMap {
         it.getMethodsByName(name.asString(), scope).asSequence()
-    }.filter { it.isAcceptable(psiFilter) }
-        .mapNotNull { it.callableSymbol }
+    }.filter {
+        ProgressManager.checkCanceled()
+        it.isAcceptable(psiFilter)
+    }.mapNotNull { it.callableSymbol }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getJavaFieldsByName(
         name: Name,
         scope: GlobalSearchScope = analysisScope,
         psiFilter: (PsiField) -> Boolean = { true },
     ): Sequence<KaCallableSymbol> = getNonKotlinNamesCaches(useSiteModule.project).flatMap {
         it.getFieldsByName(name.asString(), scope).asSequence()
-    }.filter { it.isAcceptable(psiFilter) }
-        .mapNotNull { it.callableSymbol }
+    }.filter {
+        ProgressManager.checkCanceled()
+        it.isAcceptable(psiFilter)
+    }.mapNotNull { it.callableSymbol }
 
     /**
      *  Returns top-level callables, excluding extensions. To obtain extensions use [getExtensionCallableSymbolsByNameFilter].
      */
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getTopLevelCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
@@ -312,7 +324,7 @@ class KtSymbolFromIndexProvider(
     /**
      * Returns top-level callables, including extensions.
      */
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getTopLevelCallableSymbolsByNameFilterIncludingExtensions(
         nameFilter: (Name) -> Boolean,
@@ -339,7 +351,7 @@ class KtSymbolFromIndexProvider(
         .filterIsInstance<KaCallableSymbol>() +
             resolveExtensionScopeWithTopLevelDeclarations.callables(nameFilter)
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getExtensionCallableSymbolsByName(
         name: Name,
@@ -376,7 +388,7 @@ class KtSymbolFromIndexProvider(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getExtensionCallableSymbolsByNameFilter(
         nameFilter: (Name) -> Boolean,
@@ -414,9 +426,9 @@ class KtSymbolFromIndexProvider(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun Sequence<KaCallableSymbol>.filterExtensionsByReceiverTypes(receiverTypes: List<KaType>): Sequence<KaCallableSymbol> {
-        val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(KaTypeNullability.NON_NULLABLE) }
+        val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(false) }
 
         return filter { symbol ->
             if (!symbol.isExtension) return@filter false
@@ -549,7 +561,7 @@ private fun KaModule.canHaveExpectDeclarations(): Boolean {
  * We ignore expect declarations within completion in leaf modules because they will already be filled by their (more relevant)
  * actual counterpart.
  */
-context(KaSession)
+context(_: KaSession)
 @ApiStatus.Internal
 fun KaDeclarationSymbol.isIgnoredExpectDeclaration(): Boolean {
     if (!isExpect) return false
@@ -560,7 +572,7 @@ fun KaDeclarationSymbol.isIgnoredExpectDeclaration(): Boolean {
 /**
  * See [KaDeclarationSymbol.isIgnoredExpectDeclaration].
  */
-context(KaSession)
+context(_: KaSession)
 @ApiStatus.Internal
 fun KtDeclaration.isIgnoredExpectDeclaration(): Boolean {
     if (!isExpectDeclaration()) return false

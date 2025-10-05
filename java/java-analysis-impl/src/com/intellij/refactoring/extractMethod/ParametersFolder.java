@@ -109,8 +109,7 @@ public class ParametersFolder {
 
     int currentRank = 0;
     PsiExpression mostRanked = null;
-    for (int i = mentionedInExpressions.size() - 1; i >= 0; i--) {
-      PsiExpression expression = mentionedInExpressions.get(i);
+    for (PsiExpression expression : mentionedInExpressions.reversed()) {
       final int r = findUsedVariables(data, inputVariables, expression).size();
       if (currentRank < r || expression instanceof PsiArrayAccessExpression && myFoldingSelectedByDefault && currentRank == r) {
         currentRank = r;

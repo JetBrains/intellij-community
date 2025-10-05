@@ -53,6 +53,7 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.InvalidRequestStateException;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,7 +144,7 @@ public class BreakpointManager {
   }
 
   public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
-    DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
+    DebuggerInvocationUtil.invokeLaterAnyModality(myProject, () -> {
       XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
       if (xBreakpoint instanceof XLineBreakpointImpl<?> xLineBreakpoint) {
         RangeHighlighter highlighter = xLineBreakpoint.getHighlighter();
@@ -253,6 +254,7 @@ public class BreakpointManager {
   /**
    * @deprecated use {@link #addExceptionBreakpoint(String)}
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public @Nullable ExceptionBreakpoint addExceptionBreakpoint(final @NotNull String exceptionClassName, final String packageName) {
     return addExceptionBreakpoint(exceptionClassName);

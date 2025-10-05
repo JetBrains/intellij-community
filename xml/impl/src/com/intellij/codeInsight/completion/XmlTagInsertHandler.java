@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,9 +10,7 @@ import com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInsight.template.macro.CompleteSmartMacro;
@@ -237,7 +235,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           if (!notRequiredAttributes.contains(attributeName)) {
             if (!extension.isIndirectSyntax(attributeDecl)) {
               template.addTextSegment(" " + attributeName + "=" + presenter.getPrefix());
-              template.addVariable(presenter.showAutoPopup() ? new MacroCallNode(new CompleteMacro()) : new EmptyExpression(), true);
+              template.addVariable(getAttributeValueExpression(presenter), true);
               template.addTextSegment(presenter.getPostfix());
             }
             else {
@@ -253,6 +251,18 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
     return indirectRequiredAttrs;
+  }
+
+  private static @NotNull Expression getAttributeValueExpression(AttributeValuePresentation presenter) {
+    if (presenter.showAutoPopup()) {
+      Macro completeMacro = switch (presenter.getAutoPopupCompletionType()) {
+        case BASIC -> new CompleteMacro();
+        case SMART -> new CompleteSmartMacro();
+        default -> throw new IllegalArgumentException("Unsupported completion type: " + presenter.getAutoPopupCompletionType());
+      };
+      return new MacroCallNode(completeMacro);
+    }
+    return new EmptyExpression();
   }
 
   protected static boolean addTail(char completionChar,

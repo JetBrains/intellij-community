@@ -20,8 +20,10 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -66,7 +68,9 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -216,13 +220,24 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun addListeners() {
-    UIThemeProvider.EP_NAME.addExtensionPointListener(service<LafDynamicPluginManager>().createUiThemeEpListener(manager = this))
+    UIThemeProvider.EP_NAME.addExtensionPointListener(coroutineScope, service<LafDynamicPluginManager>().createUiThemeEpListener(manager = this))
     @Suppress("ObjectLiteralToLambda")
     ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, object : UISettingsListener {
       override fun uiSettingsChanged(uiSettings: UISettings) {
-        val newValues = computeValuesOfUsedUiOptions()
-        if (newValues != usedValuesOfUiOptions) {
-          updateUI()
+        val task = {
+          val newValues = computeValuesOfUsedUiOptions()
+          if (newValues != usedValuesOfUiOptions) {
+            updateUI()
+          }
+        }
+
+        if (EDT.isCurrentThreadEdt()) {
+          task()
+        }
+        else {
+          coroutineScope.launch(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.RELAX)) {
+            task()
+          }
         }
       }
     })
@@ -238,7 +253,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   private fun syncThemeAndEditorScheme(systemIsDark: Boolean, async: Boolean?) {
-    syncTheme(systemIsDark, async ?: true)
+    syncTheme(systemIsDark = systemIsDark, async = async ?: true)
     syncEditorScheme(systemIsDark)
   }
 
@@ -498,7 +513,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> {
+    val themeManager = UiThemeProviderListManager.getInstance()
+    val islandThemes = themeManager.getBundledThemeListForTargetUI(TargetUIType.ISLANDS)
     val welcomeMode = WelcomeFrame.getInstance() != null
+
     return listCellRenderer {
       toolTipText = null
       text(value.name)
@@ -519,6 +537,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
             else if (!welcomeMode && value.themeId != currentTheme?.id && currentTheme?.isRestartRequired() == true) {
               icon(getDisabledIcon(AllIcons.Actions.Restart, null))
               toolTipText = IdeBundle.message("ide.restart.required.comment")
+            }
+            else if (islandThemes.contains(theme)) {
+              icon(AllIcons.General.Beta)
             }
             break
           }
@@ -782,7 +803,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       val fontFace = if (overrideLafFonts) uiSettings.fontFace else defaultFont.family
       val fontSize = (if (overrideLafFonts) uiSettings.fontSize2D else defaultFont.size2D) * currentScale
       LOG.debug { "patchLafFonts: using font '$fontFace' with size $fontSize" }
-      initFontDefaults(uiDefaults, getFontWithFallback(fontFace, Font.PLAIN, fontSize))
+      initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(fontFace, Font.PLAIN, fontSize))
       val userScaleFactor = if (useInterFont) fontSize / INTER_SIZE else getFontScale(fontSize)
       LOG.debug { "patchLafFonts: computed user scale factor $userScaleFactor from font size $fontSize" }
       setUserScaleFactor(userScaleFactor)
@@ -810,7 +831,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private val defaultInterFont: FontUIResource
     get() {
       val userScaleFactor = defaultUserScaleFactor
-      return getFontWithFallback(INTER_NAME, Font.PLAIN, scaleFontSize(INTER_SIZE.toFloat(), userScaleFactor).toFloat())
+      return StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, scaleFontSize(INTER_SIZE.toFloat(), userScaleFactor).toFloat())
     }
 
   private val storedLafFont: Font?

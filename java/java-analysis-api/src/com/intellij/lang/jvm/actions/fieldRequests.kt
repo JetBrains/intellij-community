@@ -24,7 +24,7 @@ internal class SimpleFieldRequest(
   override fun isConstant(): Boolean = isConstant
 }
 
-fun fieldRequest(
+public fun fieldRequest(
   fieldName: String,
   annotations: Collection<AnnotationRequest>,
   modifiers: Collection<JvmModifier>,

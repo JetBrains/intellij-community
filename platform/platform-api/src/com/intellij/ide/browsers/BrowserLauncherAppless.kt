@@ -4,6 +4,7 @@ package com.intellij.ide.browsers
 import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.BrowserUtil
@@ -17,11 +18,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.system.OS
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Desktop
@@ -36,7 +37,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
     @JvmStatic
     fun canUseSystemDefaultBrowserPolicy(): Boolean =
-      isDesktopActionSupported(Desktop.Action.BROWSE) || SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.hasXdgOpen()
+      isDesktopActionSupported(Desktop.Action.BROWSE) || OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || PathEnvironmentVariableUtil.isOnPath("xdg-open")
 
     private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
       Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
@@ -77,13 +78,13 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   @Suppress("UsagesOfObsoleteApi")
   override fun browse(file: java.io.File) {
     val path = file.absolutePath
-    val absPath = if (SystemInfo.isWindows && path[0] != '/') "/${path}" else path
+    val absPath = if (OS.CURRENT == OS.Windows && path[0] != '/') "/${path}" else path
     browse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}${absPath}", browser = null, project = null)
   }
 
   override fun browse(file: Path) {
     val path = file.toAbsolutePath().toString()
-    val absPath = if (SystemInfo.isWindows && path[0] != '/') "/${path}" else path
+    val absPath = if (OS.CURRENT == OS.Windows && path[0] != '/') "/${path}" else path
     browse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}${absPath}", browser = null, project = null)
   }
 
@@ -189,7 +190,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       }
       catch (e: Exception) {
         LOG.warn("[${uri}]", e)
-        if (SystemInfo.isMac && e.message!!.contains("Error code: -10814")) {
+        if (OS.CURRENT == OS.macOS && e.message!!.contains("Error code: -10814")) {
           // if "No application knows how to open" the URL, there is no sense in retrying with the 'open' command
           return@launch
         }
@@ -260,9 +261,9 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   private val defaultBrowserCommand: List<String>?
     get() = when {
-      SystemInfo.isWindows -> listOf(CommandLineUtil.getWinShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
-      SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
-      SystemInfo.hasXdgOpen() -> listOf("xdg-open")
+      OS.CURRENT == OS.Windows -> listOf(CommandLineUtil.getWinShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
+      OS.CURRENT == OS.macOS -> listOf(ExecUtil.openCommandPath)
+      PathEnvironmentVariableUtil.isOnPath("xdg-open") -> listOf("xdg-open")
       else -> null
     }
 

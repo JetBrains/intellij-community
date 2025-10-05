@@ -110,7 +110,7 @@ public final class CoroutinesDebugHelper {
     Object current = continuation;
     while(current != null && coroutineStackFrame.isInstance(current) && !isCoroutineOwner(current)) {
 
-      StackTraceElement stackTraceElement = (StackTraceElement)getStackTraceElement.invoke(current);
+      StackTraceElement stackTraceElement = (StackTraceElement)invoke(current, getStackTraceElement);
       continuationStackElements.add(stackTraceElement);
 
       if (baseContinuation.isInstance(current)) {
@@ -122,8 +122,8 @@ public final class CoroutinesDebugHelper {
         variableNames.add(names);
         fieldNames.add(fields);
       } else {
-        variableNames.add(Collections.<String>emptyList());
-        fieldNames.add(Collections.<String>emptyList());
+        variableNames.add(Collections.emptyList());
+        fieldNames.add(Collections.emptyList());
       }
 
       continuationStack.add(current);

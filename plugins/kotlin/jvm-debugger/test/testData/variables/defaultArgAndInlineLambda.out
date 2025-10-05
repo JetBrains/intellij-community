@@ -1,0 +1,13 @@
+LineBreakpoint created at defaultArgAndInlineLambda.kt:9
+LineBreakpoint created at defaultArgAndInlineLambda.kt:13
+Run Java
+Connected to the target VM
+defaultArgAndInlineLambda.kt:13
+InlineStackFrame inlineXU (defaultArgAndInlineLambda.kt:13)
+    JavaValue[local] p: java.lang.Object = abc (defaultArgAndInlineLambda.kt:7)
+defaultArgAndInlineLambda.kt:9
+InlineStackFrame lambda 'inlineXU' in 'inlineXU' (defaultArgAndInlineLambda.kt:9)
+    JavaValue[local] it: java.lang.Object = abc (defaultArgAndInlineLambda.kt:7)
+Disconnected from the target VM
+
+Process finished with exit code 0

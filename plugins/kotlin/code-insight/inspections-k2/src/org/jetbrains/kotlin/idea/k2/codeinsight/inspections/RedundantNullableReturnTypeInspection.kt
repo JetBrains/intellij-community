@@ -75,7 +75,7 @@ internal class RedundantNullableReturnTypeInspection :
             else -> return null
         }
 
-        if (actualReturnTypes.isEmpty() || actualReturnTypes.any { it.canBeNull }) return null
+        if (actualReturnTypes.isEmpty() || actualReturnTypes.any { it.isNullable }) return null
 
         return Unit
     }
@@ -111,7 +111,7 @@ private fun KaSession.actualReturnTypes(
         it.returnedExpression?.expressionType
     }
 
-    return if (this is KtBlockExpression) {
+    return if (expression is KtBlockExpression) {
         returnTypes
     } else {
         returnTypes + expression.expressionType

@@ -142,9 +142,8 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       for (PsiStatement statement : emptyElseBranches) {
         final List<PsiComment> comments = new ArrayList<>(PsiTreeUtil.collectElementsOfType(statement, PsiComment.class));
         final PsiParserFacade parserFacade = PsiParserFacade.getInstance(statement.getProject());
-        for (int i = comments.size() - 1; i >= 0; i--) {
-          final PsiElement parent = statement.getParent();
-          final PsiComment comment = comments.get(i);
+        final PsiElement parent = statement.getParent();
+        for (PsiComment comment : comments.reversed()) {
           parent.addAfter(comment, statement);
           // newline followed by space convinces formatter to indent line
           parent.addAfter(parserFacade.createWhiteSpaceFromText(isAtStartOfLine(comment) ? "\n" : "\n "), statement);
@@ -440,7 +439,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new TailRecursionVisitor();
   }
 

@@ -21,12 +21,13 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 public interface TreeCopyHandler {
   ExtensionPointName<TreeCopyHandler> EP_NAME = ExtensionPointName.create("com.intellij.treeCopyHandler");
 
-  void encodeInformation(TreeElement element, ASTNode original, Map<Object, Object> encodingState);
-  TreeElement decodeInformation(TreeElement element, Map<Object, Object> decodingState);
+  void encodeInformation(@NotNull TreeElement element, @NotNull ASTNode original, @NotNull Map<Object, Object> encodingState);
+  TreeElement decodeInformation(@NotNull TreeElement element, @NotNull Map<Object, Object> decodingState);
 }

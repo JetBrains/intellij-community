@@ -17,7 +17,9 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveTopLevelMember
+import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import java.util.Locale
@@ -102,20 +104,20 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       ) as? PyTypedElement ?: return false
       val osPathLikeType = typeEvalContext.getType(osPathLike) ?: return false
 
-      return callExpr.multiResolveCallee(PyResolveContext.defaultContext(typeEvalContext))
+      val argumentTypes = callExpr.multiResolveCallee(PyResolveContext.defaultContext(typeEvalContext))
         .asSequence()
         .mapNotNull {
-          val mapping = callExpr.mapArguments( it, typeEvalContext)
+          val mapping = callExpr.mapArguments(it, typeEvalContext)
           mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
         }
-        .mapNotNull(PyUnionType::toNonWeakType)
-        .toList()
-        .let(PyUnionType::union)
-        .let {
-          it != null &&
-          PyTypeChecker.match(bytesOrUnicodeType, it, typeEvalContext) &&
-          PyTypeChecker.match(osPathLikeType, it, typeEvalContext)
-        }
+      
+      // We can't use PyTypeChecker.match directly because the type `str | PathLike` is considered incompatible 
+      // with neither str nor PathLike (strict union semantics).
+      fun PyType.allowsValuesCompatibleWith(superType: PyType): Boolean = 
+        PyTypeUtil.toStream(this).anyMatch { it != null && PyTypeChecker.match(superType, it, typeEvalContext) }
+      
+      return argumentTypes.any { it.allowsValuesCompatibleWith(bytesOrUnicodeType) } &&
+             argumentTypes.any { it.allowsValuesCompatibleWith(osPathLikeType) }
     }
   }
 

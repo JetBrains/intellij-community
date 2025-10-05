@@ -126,6 +126,38 @@ sealed interface DataPlacement<In, Out> {
     }
   }
 
+  data class AdditionalCodeCommentRanges(val propertyKey: String) : DataPlacement<List<CodeCommentRange>, List<CodeCommentRange>> {
+    override val serialName: String = "code_comment_range"
+
+    override fun dump(lookup: Lookup, t: List<CodeCommentRange>): Lookup {
+      return lookup.copy(
+        additionalInfo = lookup.additionalInfo + Pair(propertyKey, gson.toJsonTree(t))
+      )
+    }
+
+    override fun restore(props: DataProps): List<List<CodeCommentRange>> {
+      val namedRanges = props.lookup.additionalInfo[propertyKey] ?: return emptyList()
+      val ranges = namedRanges as? JsonElement ?: gson.toJsonTree(namedRanges)
+      return listOf(gson.fromJson(ranges, Array<CodeCommentRange>::class.java).toList())
+    }
+  }
+
+  data class ColoredInsightsPlacement(val propertyKey: String) : DataPlacement<List<ColoredInsightsData>, ColoredInsightsData> {
+    override val serialName: String = "colored_insights_placement"
+
+    override fun dump(lookup: Lookup, t: List<ColoredInsightsData>): Lookup {
+      return lookup.copy(
+        additionalInfo = lookup.additionalInfo + Pair(propertyKey, gson.toJsonTree(t))
+      )
+    }
+
+    override fun restore(props: DataProps): List<ColoredInsightsData> {
+      val insights = props.lookup.additionalInfo[propertyKey] ?: return emptyList()
+      val insightsJson = insights as? JsonElement ?: gson.toJsonTree(insights)
+      return gson.fromJson(insightsJson, Array<ColoredInsightsData>::class.java).toList()
+    }
+  }
+
   class Serializer : JsonSerializer<DataPlacement<*, *>>, JsonDeserializer<DataPlacement<*, *>> {
     override fun serialize(src: DataPlacement<*, *>?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement? {
       val serialized = context?.serialize(src)
@@ -141,11 +173,13 @@ sealed interface DataPlacement<In, Out> {
         "additional_boolean" -> context?.deserialize(json, AdditionalBoolean::class.java)
         "additional_double" -> context?.deserialize(json, AdditionalDouble::class.java)
         "additional_int" -> context?.deserialize(json, AdditionalInt::class.java)
+        "code_comment_range" -> context?.deserialize(json, AdditionalCodeCommentRanges::class.java)
         "additional_concatenated_lines" -> context?.deserialize(json, AdditionalConcatenatedLines::class.java)
         "additional_concatenated_snippets" -> context?.deserialize(json, AdditionalJsonSerializedStrings::class.java)
         "latency" -> Latency
         "current_file_update" -> CurrentFileUpdate
         "file_updates" -> context?.deserialize(json, FileUpdates::class.java)
+        "colored_insights_placement" -> context?.deserialize(json, ColoredInsightsPlacement::class.java)
         else -> throw IllegalArgumentException("Unknown type: $type")
       }
     }

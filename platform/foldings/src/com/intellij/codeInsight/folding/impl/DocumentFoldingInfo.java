@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_BITTEN_KEY;
 import static com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY;
 
 final class DocumentFoldingInfo implements CodeFoldingState {
@@ -73,7 +72,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       boolean expanded = region.isExpanded();
       String signature = region.getUserData(UpdateFoldRegionsOperation.SIGNATURE);
       if (Strings.areSameInstance(signature, UpdateFoldRegionsOperation.NO_SIGNATURE)) continue;
-      Boolean storedCollapseByDefault = region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
+      Boolean storedCollapseByDefault = CodeFoldingManagerImpl.getCollapsedByDef(region);
       boolean collapseByDefault = storedCollapseByDefault != null && storedCollapseByDefault &&
                                   !FoldingUtil.caretInsideRange(editor, region.getTextRange());
       if (collapseByDefault == expanded || isManuallyCreated(region, signature)) {
@@ -120,9 +119,7 @@ final class DocumentFoldingInfo implements CodeFoldingState {
 
       TextRange range = descriptor.getRange();
       FoldRegion region = FoldingUtil.findFoldRegion(editor, range.getStartOffset(), range.getEndOffset());
-      if (region != null && region.getUserData(ZOMBIE_BITTEN_KEY) == null) {
-        region.setExpanded(info.expanded);
-      }
+      expandRegionBlessForNewLife(editor, region, info.expanded);
     }
     for (RangeMarker marker : myRangeMarkers) {
       if (!marker.isValid() || marker.getStartOffset() == marker.getEndOffset()) {
@@ -140,9 +137,21 @@ final class DocumentFoldingInfo implements CodeFoldingState {
       }
 
       boolean state = info != null && info.expanded;
-      if (region.getUserData(ZOMBIE_BITTEN_KEY) == null && region.getUserData(ZOMBIE_REGION_KEY) == null) {
-        region.setExpanded(state);
+      expandRegionBlessForNewLife(editor, region, state);
+    }
+  }
+  
+  private static void expandRegionBlessForNewLife(@NotNull Editor editor, @Nullable FoldRegion region, boolean expanded) {
+    if (region != null) {
+      if (!CodeFoldingManagerImpl.isFoldingsInitializedInEditor(editor)) {
+        int offset = editor.getCaretModel().getOffset();
+        if (offset > region.getStartOffset() && offset < region.getEndOffset()) {
+          // the editor is not initialized, but the caret is already moved into the fold region.
+          expanded = true;
+        }
       }
+      ZOMBIE_REGION_KEY.set(region, null);
+      region.setExpanded(expanded);
     }
   }
 

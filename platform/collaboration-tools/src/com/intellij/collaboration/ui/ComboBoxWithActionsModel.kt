@@ -15,7 +15,7 @@ import kotlin.properties.Delegates
 internal fun <T : Any> MutableCollectionComboBoxModel<T>.setItems(value: List<T>) {
   val delta = CollectionDelta(items, value)
   delta.removedItems.forEach { removeElement(it) }
-  delta.newItems.forEach { addElement(it) }
+  add(delta.newItems.toList())
 }
 
 internal class ComboBoxWithActionsModel<T>

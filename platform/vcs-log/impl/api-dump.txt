@@ -186,57 +186,42 @@ c:com.intellij.vcs.log.data.TopCommitsCache
 - storeDetails(java.util.List):V
 com.intellij.vcs.log.data.VcsCommitExternalStatus
 f:com.intellij.vcs.log.data.VcsLogData
-- com.intellij.openapi.Disposable
 - com.intellij.vcs.log.VcsLogDataProvider
-- sf:DATA_PACK_REFRESH:com.intellij.vcs.log.data.VcsLogProgress$ProgressKey
-- <init>(com.intellij.openapi.project.Project,java.util.Map,com.intellij.vcs.log.impl.VcsLogErrorHandler,Z,com.intellij.openapi.Disposable):V
-- addDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
-- dispose():V
-- getAllUsers():java.util.Set
-- getCommitDetailsGetter():com.intellij.vcs.log.data.CommitDetailsGetter
+- sf:Companion:com.intellij.vcs.log.data.VcsLogData$Companion
+- f:addDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
+- f:getAllUsers():java.util.Set
+- f:getCommitDetailsGetter():com.intellij.vcs.log.data.CommitDetailsGetter
 - getCommitId(I):com.intellij.vcs.log.CommitId
 - getCommitIndex(com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile):I
 - getCommitMetadataCache():com.intellij.vcs.log.VcsLogCommitDataCache
-- getContainingBranchesGetter():com.intellij.vcs.log.data.ContainingBranchesGetter
-- getCurrentUser():java.util.Map
-- getDataPack():com.intellij.vcs.log.data.DataPack
+- f:getContainingBranchesGetter():com.intellij.vcs.log.data.ContainingBranchesGetter
+- f:getCurrentUser():java.util.Map
+- f:getDataPack():com.intellij.vcs.log.data.DataPack
 - getFullCommitDetailsCache():com.intellij.vcs.log.VcsLogCommitDataCache
-- getIndex():com.intellij.vcs.log.data.index.VcsLogIndex
-- s:getIndexingRegistryValue():com.intellij.openapi.util.registry.RegistryValue
-- getLogProvider(com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsLogProvider
-- getLogProviders():java.util.Map
-- getMiniDetailsGetter():com.intellij.vcs.log.data.MiniDetailsGetter
-- getProgress():com.intellij.vcs.log.data.VcsLogProgress
-- getProject():com.intellij.openapi.project.Project
-- s:getRecentCommitsCount():I
-- getRoots():java.util.Collection
-- getStorage():com.intellij.vcs.log.data.VcsLogStorage
-- getTopCommitsCache():com.intellij.vcs.log.data.TopCommitsCache
-- getUserNameResolver():com.intellij.vcs.log.data.VcsLogUserResolver
-- initialize():V
-- s:isIndexSwitchedOnInRegistry():Z
-- refresh(java.util.Collection):V
-- refresh(java.util.Collection,Z):V
-- removeDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
-c:com.intellij.vcs.log.data.VcsLogProgress
-- com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.Disposable):V
-- addProgressIndicatorListener(com.intellij.vcs.log.data.VcsLogProgress$ProgressListener,com.intellij.openapi.Disposable):V
-- createProgressIndicator(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):com.intellij.openapi.progress.ProgressIndicator
-- createProgressIndicator(Z,com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):com.intellij.openapi.progress.ProgressIndicator
-- dispose():V
-- getRunningKeys():java.util.Set
-- isRunning():Z
-- removeProgressIndicatorListener(com.intellij.vcs.log.data.VcsLogProgress$ProgressListener):V
-- s:updateCurrentKey(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey):V
-c:com.intellij.vcs.log.data.VcsLogProgress$ProgressKey
-- <init>(java.lang.String):V
-- equals(java.lang.Object):Z
-- hashCode():I
-com.intellij.vcs.log.data.VcsLogProgress$ProgressListener
-- a:progressChanged(java.util.Collection):V
-- a:progressStarted(java.util.Collection):V
-- a:progressStopped():V
+- f:getIndex():com.intellij.vcs.log.data.index.VcsLogIndex
+- sf:getIndexingRegistryValue():com.intellij.openapi.util.registry.RegistryValue
+- f:getLogProviders():java.util.Map
+- f:getMiniDetailsGetter():com.intellij.vcs.log.data.MiniDetailsGetter
+- f:getProject():com.intellij.openapi.project.Project
+- sf:getRecentCommitsCount():I
+- f:getStorage():com.intellij.vcs.log.data.VcsLogStorage
+- f:getTopCommitsCache():com.intellij.vcs.log.data.TopCommitsCache
+- f:getUserNameResolver():com.intellij.vcs.log.data.VcsLogUserResolver
+- f:isDisposed():Z
+- sf:isIndexSwitchedOnInRegistry():Z
+- f:isRefreshInProgress():kotlinx.coroutines.flow.StateFlow
+- f:isSingleUser():Z
+- f:refresh(java.util.Collection):V
+- f:refresh(java.util.Collection,Z):V
+- bs:refresh$default(com.intellij.vcs.log.data.VcsLogData,java.util.Collection,Z,I,java.lang.Object):V
+- f:removeDataPackChangeListener(com.intellij.vcs.log.data.DataPackChangeListener):V
+f:com.intellij.vcs.log.data.VcsLogData$Companion
+- f:getIndexingRegistryValue():com.intellij.openapi.util.registry.RegistryValue
+- f:getRecentCommitsCount():I
+- f:isIndexSwitchedOnInRegistry():Z
+f:com.intellij.vcs.log.data.VcsLogDataKt
+- sf:getLogProvider(com.intellij.vcs.log.data.VcsLogData,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsLogProvider
+- sf:getRoots(com.intellij.vcs.log.data.VcsLogData):java.util.Collection
 f:com.intellij.vcs.log.data.VcsLogSorter
 - <init>():V
 - s:sortByDateTopoOrder(java.util.Collection):java.util.List
@@ -354,15 +339,6 @@ f:com.intellij.vcs.log.impl.CommonUiProperties
 - sf:SHOW_ROOT_NAMES:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:SHOW_TAG_NAMES:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - <init>():V
-f:com.intellij.vcs.log.impl.HashImpl
-- com.intellij.vcs.log.Hash
-- asString():java.lang.String
-- s:build(java.lang.String):com.intellij.vcs.log.Hash
-- equals(java.lang.Object):Z
-- hashCode():I
-- s:read(java.io.DataInput):com.intellij.vcs.log.Hash
-- toShortString():java.lang.String
-- write(java.io.DataOutput):V
 c:com.intellij.vcs.log.impl.LogDataImpl
 - com.intellij.vcs.log.VcsLogProvider$DetailedLogData
 - com.intellij.vcs.log.VcsLogProvider$LogData
@@ -529,11 +505,13 @@ f:com.intellij.vcs.log.impl.VcsLogManagerKt
 - sf:waitForRefresh(com.intellij.vcs.log.impl.VcsLogManager,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.vcs.log.impl.VcsLogNavigationUtil
 - sf:INSTANCE:com.intellij.vcs.log.impl.VcsLogNavigationUtil
+- sf:jumpToBranch(com.intellij.vcs.log.ui.VcsLogUiEx,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,Z):V
 - sf:jumpToBranch(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):V
 - sf:jumpToCommit(com.intellij.vcs.log.ui.VcsLogUiEx,I,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToCommit(com.intellij.vcs.log.ui.VcsLogUiEx,com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToGraphRow(com.intellij.vcs.log.ui.VcsLogUiEx,I,Z,Z):V
 - sf:jumpToHash(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):com.google.common.util.concurrent.ListenableFuture
+- sf:jumpToRefOrHash(com.intellij.vcs.log.ui.VcsLogUiEx,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToRefOrHash(com.intellij.vcs.log.ui.VcsLogUiEx,java.lang.String,Z,Z):com.google.common.util.concurrent.ListenableFuture
 - sf:jumpToRevisionAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath):java.util.concurrent.CompletableFuture
 - bs:jumpToRevisionAsync$default(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath,I,java.lang.Object):java.util.concurrent.CompletableFuture
@@ -661,7 +639,6 @@ a:com.intellij.vcs.log.ui.AbstractVcsLogUi
 - setVisiblePack(com.intellij.vcs.log.visible.VisiblePack):V
 - tryJumpTo(java.lang.Object,java.util.function.BiFunction,com.google.common.util.concurrent.SettableFuture,Z):V
 com.intellij.vcs.log.ui.VcsLogColorManager
-- sf:DEFAULT_COLOR_MODE:java.lang.String
 - getLongName(com.intellij.openapi.vcs.FilePath):java.lang.String
 - getPathColor(com.intellij.openapi.vcs.FilePath):java.awt.Color
 - a:getPathColor(com.intellij.openapi.vcs.FilePath,java.lang.String):java.awt.Color
@@ -924,7 +901,7 @@ c:com.intellij.vcs.log.ui.frame.MainFrame
 - <init>(com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.ui.AbstractVcsLogUi,com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx,com.intellij.vcs.log.ui.VcsLogColorManager,Z,com.intellij.openapi.Disposable):V
 - p:createActionsToolbar():javax.swing.JComponent
 - dispose():V
-- getChangesBrowser():com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
+- getChangesBrowser():com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 - getFilterUi():com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 - getGraphTable():com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - getToolbar():javax.swing.JComponent
@@ -943,32 +920,6 @@ com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation$Clickable
 - com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 - clickEnabled(java.awt.event.InputEvent):Z
 - a:onClick(java.awt.event.InputEvent):Z
-f:com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
-- com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
-- com.intellij.openapi.Disposable
-- sf:Companion:com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser$Companion
-- sf:HAS_AFFECTED_FILES:com.intellij.openapi.actionSystem.DataKey
-- f:addListener(com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser$Listener,com.intellij.openapi.Disposable):V
-- f:createChangeProcessor(Z):com.intellij.diff.impl.DiffEditorViewer
-- dispose():V
-- getDiffRequestProducer(java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
-- f:getDiffRequestProducer(java.lang.Object,Z):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
-- f:getDirectChanges():java.util.List
-- f:getSelectedChanges():java.util.List
-- f:getTag(com.intellij.openapi.vcs.changes.Change):com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
-- f:selectChange(java.lang.Object,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag):V
-- f:selectFile(com.intellij.openapi.vcs.FilePath):V
-- f:setAffectedPaths(java.util.Collection):V
-- f:setEmpty():V
-- f:setEmptyWithText(java.util.function.Consumer):V
-- f:setSelectedDetails(java.util.List):V
-- f:setToolbarHeightReferent(javax.swing.JComponent):V
-- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
-f:com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser$Companion
-- f:createDiffRequestProducer(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.Change,java.util.Map):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
-com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser$Listener
-- java.util.EventListener
-- a:onModelUpdated():V
 c:com.intellij.vcs.log.ui.frame.WrappedFlowLayout
 - java.awt.FlowLayout
 - <init>(I,I):V
@@ -1340,7 +1291,6 @@ c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 - addVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
 - dispose():V
 - isValid():Z
-- s:isVisibleKeyFor(com.intellij.vcs.log.data.VcsLogProgress$ProgressKey,java.lang.String):Z
 - moreCommitsNeeded(java.lang.Runnable):V
 - onFiltersChange(com.intellij.vcs.log.VcsLogFilterCollection):V
 - onGraphOptionsChange(com.intellij.vcs.log.graph.PermanentGraph$Options):V
@@ -1348,13 +1298,6 @@ c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 - removeVisiblePackChangeListener(com.intellij.vcs.log.visible.VisiblePackChangeListener):V
 - setDataPack(Z,com.intellij.vcs.log.data.DataPack):V
 - setValid(Z,Z):V
-c:com.intellij.vcs.log.visible.VisiblePackRefresherImpl$VisiblePackProgressKey
-- com.intellij.vcs.log.data.VcsLogProgress$ProgressKey
-- <init>(java.lang.String,Z):V
-- equals(java.lang.Object):Z
-- getLogId():java.lang.String
-- hashCode():I
-- isVisible():Z
 f:com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 - sf:EMPTY_COLLECTION:com.intellij.vcs.log.VcsLogFilterCollection
 - sf:INSTANCE:com.intellij.vcs.log.visible.filters.VcsLogFilterObject

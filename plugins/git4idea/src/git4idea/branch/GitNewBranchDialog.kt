@@ -31,7 +31,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor
 import com.intellij.util.textCompletion.TextCompletionProviderBase
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
-import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
+import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
 import git4idea.GitBranchesUsageCollector.branchDialogRepositoryManuallySelected
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
@@ -187,7 +187,8 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
   }
 
   private fun createRepositoriesCombobox(): ComboBox<GitRepository?> {
-    val items = listOf<GitRepository?>(ALL_REPOSITORIES, *allRepositories.toTypedArray())
+    val items = listOf(ALL_REPOSITORIES, *allRepositories.toTypedArray())
+
     return ComboBox(CollectionComboBoxModel(items)).apply {
       renderer = listCellRenderer<GitRepository?>(GitBundle.message("new.branch.dialog.branch.root.all.name")) {
         val repo = value

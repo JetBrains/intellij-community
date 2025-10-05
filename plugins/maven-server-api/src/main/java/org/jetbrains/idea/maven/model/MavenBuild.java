@@ -15,18 +15,11 @@
  */
 package org.jetbrains.idea.maven.model;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MavenBuild extends MavenBuildBase implements Serializable {
   private String myOutputDirectory;
   private String myTestOutputDirectory;
-  private @NotNull List<@NotNull String> mySources = new CopyOnWriteArrayList<>();
-  private @NotNull List<@NotNull String> myTestSources = new CopyOnWriteArrayList<>();
 
   public String getOutputDirectory() {
     return myOutputDirectory;
@@ -42,21 +35,5 @@ public class MavenBuild extends MavenBuildBase implements Serializable {
 
   public void setTestOutputDirectory(String testOutputDirectory) {
     myTestOutputDirectory = testOutputDirectory;
-  }
-
-  public @NotNull List<@NotNull String> getSources() {
-    return Collections.unmodifiableList(mySources);
-  }
-
-  public void setSources(@NotNull List<@NotNull String> sources) {
-    mySources = new CopyOnWriteArrayList<>(sources);
-  }
-
-  public @NotNull List<@NotNull String> getTestSources() {
-    return Collections.unmodifiableList(myTestSources);
-  }
-
-  public void setTestSources(@NotNull List<@NotNull String> testSources) {
-    myTestSources = new CopyOnWriteArrayList<>(testSources);
   }
 }

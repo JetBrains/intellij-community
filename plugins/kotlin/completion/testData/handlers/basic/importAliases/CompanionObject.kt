@@ -4,5 +4,4 @@ fun foo() {
     val v: Int = MinI<caret>
 }
 
-// IGNORE_K2
 // ELEMENT: "MinInt"

@@ -1,11 +1,12 @@
 import threading
 from collections.abc import Iterator
 from types import TracebackType
-from typing import Literal, Protocol
+from typing import Literal, Protocol, type_check_only
 from typing_extensions import Self
 
 __version__: str
 
+@type_check_only
 class _Stream(Protocol):
     def isatty(self) -> bool: ...
     def flush(self) -> None: ...

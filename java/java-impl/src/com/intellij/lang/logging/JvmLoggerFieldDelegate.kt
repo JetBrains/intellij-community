@@ -19,7 +19,7 @@ import com.intellij.ui.logging.JvmLoggingSettingsStorage
  * @property loggerTypeName The fully qualified name of the logger's type.
  * @property priority The priority of the logger, used for ordering in the settings.
  */
-class JvmLoggerFieldDelegate(
+public class JvmLoggerFieldDelegate(
   private val factoryName: String,
   private val methodName: String,
   private val classNamePattern: String,
@@ -67,7 +67,7 @@ class JvmLoggerFieldDelegate(
     return settings.loggerName
   }
 
-  companion object {
-    const val LOGGER_IDENTIFIER = "log"
+  public companion object {
+    public const val LOGGER_IDENTIFIER: String = "log"
   }
 }

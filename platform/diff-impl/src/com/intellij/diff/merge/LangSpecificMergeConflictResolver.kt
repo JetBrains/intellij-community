@@ -2,11 +2,10 @@
 package com.intellij.diff.merge
 
 import com.intellij.diff.contents.DocumentContent
-import com.intellij.diff.lang.LangDiffIgnoredRangeProvider
+import com.intellij.diff.lang.DiffLanguage
 import com.intellij.diff.util.ThreeSide
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 
 /**
  * An interface for resolving merge conflicts in a way that requires semantic of some language.
@@ -31,10 +30,10 @@ interface LangSpecificMergeConflictResolver {
     val EP_NAME: ExtensionPointName<LangSpecificMergeConflictResolver> = ExtensionPointName.create("com.intellij.diff.merge.conflict.semantic.resolver")
 
     @JvmStatic
-    fun findApplicable(project: Project?, contentList: List<DocumentContent>): LangSpecificMergeConflictResolver? {
-      if (project == null || contentList.size != ThreeSide.entries.size) return null
+    fun findApplicable(contentList: List<DocumentContent>): LangSpecificMergeConflictResolver? {
+      if (contentList.size != ThreeSide.entries.size) return null
 
-      val languageList = contentList.mapNotNull { LangDiffIgnoredRangeProvider.getLanguage(project, it) }
+      val languageList = contentList.mapNotNull { DiffLanguage.getLanguage(it) }
       
       if (languageList.size != ThreeSide.entries.size || languageList.distinct().size != 1) return null
 

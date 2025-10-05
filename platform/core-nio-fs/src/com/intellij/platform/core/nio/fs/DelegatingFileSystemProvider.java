@@ -38,7 +38,7 @@ public abstract class DelegatingFileSystemProvider<
   /**
    * @return A delegating file system which is bound to this provider.
    */
-  protected abstract @NotNull F wrapDelegateFileSystem(@NotNull FileSystem delegateFs);
+  public abstract @NotNull F wrapDelegateFileSystem(@NotNull FileSystem delegateFs);
 
   /**
    * @param path1 A path passed to some method of {@link FileSystemProvider}.
@@ -145,37 +145,41 @@ public abstract class DelegatingFileSystemProvider<
     return getDelegate(path, null).newByteChannel(toDelegatePath(path), options, attrs);
   }
 
+  private class WrappingDirectoryStream implements DirectoryStream<Path> {
+    final DirectoryStream<Path> myStream;
+
+    WrappingDirectoryStream(DirectoryStream<Path> stream) { myStream = stream; }
+
+    @Override
+    public Iterator<Path> iterator() {
+      return new Iterator<Path>() {
+        final Iterator<Path> myIterator = myStream.iterator();
+
+        @Override
+        public boolean hasNext() {
+          return myIterator.hasNext();
+        }
+
+        @Override
+        public Path next() {
+          return wrapDelegatePath(myIterator.next());
+        }
+      };
+    }
+
+    @Override
+    public void close() throws IOException {
+      myStream.close();
+    }
+  }
+
+  final protected DirectoryStream<Path> delegateNewDirectoryStream(FileSystemProvider delegate, Path dir, @Nullable DirectoryStream.Filter<? super Path> filter) throws IOException {
+    return new WrappingDirectoryStream(delegate.newDirectoryStream(toDelegatePath(dir), craftFilter(filter)));
+  }
+
   @Override
   public DirectoryStream<Path> newDirectoryStream(Path dir, @Nullable DirectoryStream.Filter<? super Path> filter) throws IOException {
-    return new DirectoryStream<Path>() {
-      final DirectoryStream<Path> myStream = getDelegate(dir, null)
-        .newDirectoryStream(
-          toDelegatePath(dir),
-          craftFilter(filter)
-        );
-
-      @Override
-      public Iterator<Path> iterator() {
-        return new Iterator<Path>() {
-          final Iterator<Path> myIterator = myStream.iterator();
-
-          @Override
-          public boolean hasNext() {
-            return myIterator.hasNext();
-          }
-
-          @Override
-          public Path next() {
-            return wrapDelegatePath(myIterator.next());
-          }
-        };
-      }
-
-      @Override
-      public void close() throws IOException {
-        myStream.close();
-      }
-    };
+    return delegateNewDirectoryStream(getDelegate(dir, null), dir, filter);
   }
 
   @Contract("null -> null; !null -> !null")

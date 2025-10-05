@@ -2,6 +2,8 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -20,6 +22,9 @@ import java.util.concurrent.ConcurrentMap;
  */
 final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
   private final @NotNull CachedValue<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> myCachedMapStorage;
+  private final @NotNull CachedValue<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> myLibrariesCachedMapStorage;
+  private final LowMemoryWatcher myLowMemoryWatcher;
+  private final SimpleModificationTracker myLowMemoryModificationTracker = new SimpleModificationTracker();
 
   TypeEvalContextCacheImpl(@NotNull Project project) {
     myCachedMapStorage = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<>() {
@@ -28,17 +33,32 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
         // This method is called if cache is empty. Create new map for it.
         // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
         final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentSoftValueMap();
-        return new CachedValueProvider.Result<>(map, PsiModificationTracker.MODIFICATION_COUNT);
+        return new CachedValueProvider.Result<>(map, PsiModificationTracker.MODIFICATION_COUNT, myLowMemoryModificationTracker);
       }
+    });
+
+    myLibrariesCachedMapStorage = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<>() {
+      @Override
+      public @NotNull CachedValueProvider.Result<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> compute() {
+        // This method is called if cache is empty. Create new map for it.
+        // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
+        final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = ContainerUtil.createConcurrentSoftValueMap();
+        return new CachedValueProvider.Result<>(map, PyLibraryModificationTracker.Companion.getInstance(project), myLowMemoryModificationTracker);
+      }
+    });
+
+    myLowMemoryWatcher = LowMemoryWatcher.register(() -> {
+      myLowMemoryModificationTracker.incModificationCount();
+      myCachedMapStorage.getValue();
     });
   }
 
-  @Override
-  public @NotNull TypeEvalContext getContext(@NotNull TypeEvalContext standard) {
+  private static TypeEvalContext retrieveFromStorage(@NotNull TypeEvalContext standard,
+                                                     CachedValue<ConcurrentMap<TypeEvalConstraints, TypeEvalContext>> storage) {
     // map is thread safe but not atomic nor getValue() is, so in worst case several threads may produce same result
     // both explicit locking and computeIfAbsent leads to deadlock
-    final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = myCachedMapStorage.getValue();
     final TypeEvalConstraints key = standard.getConstraints();
+    final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = storage.getValue();
     final TypeEvalContext cachedContext = map.get(key);
     if (cachedContext != null) {
       return cachedContext;
@@ -46,5 +66,19 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
     TypeEvalContext oldValue =
       map.putIfAbsent(key, standard);// ConcurrentMap guarantees happens-before so from this moment get() should work in other threads
     return oldValue == null ? standard : oldValue;
+  }
+
+  @Override
+  public @NotNull TypeEvalContext getContext(@NotNull TypeEvalContext standard) {
+    return retrieveFromStorage(standard, myCachedMapStorage);
+  }
+
+  @Override
+  public @NotNull TypeEvalContext getLibraryContext(@NotNull TypeEvalContext standard) {
+    return retrieveFromStorage(standard, myLibrariesCachedMapStorage);
+  }
+
+  public void dispose() {
+    myLowMemoryWatcher.stop();
   }
 }

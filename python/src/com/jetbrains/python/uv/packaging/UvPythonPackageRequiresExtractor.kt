@@ -4,7 +4,7 @@ package com.jetbrains.python.uv.packaging
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementExtractor
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequiresExtractorProvider
@@ -15,7 +15,7 @@ import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import java.nio.file.Path
 
 internal class UvPackageRequirementExtractor(private val uvWorkingDirectory: Path?) : PythonPackageRequirementExtractor {
-  override suspend fun extract(pkg: PythonPackage, module: Module): List<NormalizedPythonPackageName> {
+  override suspend fun extract(pkg: PythonPackage, module: Module): List<PyPackageName> {
     val uvWorkingDirectory = uvWorkingDirectory ?: Path.of(module.basePath!!)
     val uv = createUvLowLevel(uvWorkingDirectory, createUvCli())
     return uv.listPackageRequirements(pkg).getOr {

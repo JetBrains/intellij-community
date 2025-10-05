@@ -56,8 +56,7 @@ import javax.swing.table.DefaultTableCellRenderer
 private const val ID = "reference.settings.ide.settings.file-colors"
 @PropertyKey(resourceBundle = "messages.IdeBundle") private const val DISPLAY_NAME_KEY = "configurable.file.colors"
 
-internal class FileColorsConfigurable(private val project: Project) : BoundSearchableConfigurable(message(DISPLAY_NAME_KEY), ID), NoScroll {
-
+private class FileColorsConfigurable(private val project: Project) : BoundSearchableConfigurable(message(DISPLAY_NAME_KEY), ID), NoScroll {
   private val colorsTableModel = FileColorsTableModel(FileColorManager.getInstance(project) as FileColorManagerImpl)
 
   override fun createPanel(): DialogPanel {
@@ -90,7 +89,7 @@ internal class FileColorsConfigurable(private val project: Project) : BoundSearc
               // try to select related configurable in the current Settings dialog
               if (!it.select(it.find(PROJECT_SCOPES)).isRejected) return@link
             }
-            catch (ignored: IllegalStateException) {
+            catch (_: IllegalStateException) {
               // see ScopeColorsPageFactory.java:74
             }
           }
@@ -149,7 +148,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     val name = value as? String ?: return null
     if (null != manager.getColor(name)) return name
     val parent = table ?: return null
-    return ColorChooserService.instance.showDialog(null, parent, message("settings.file.colors.dialog.choose.color"), null)?.let { toHex(it) }
+    return ColorChooserService.getInstance().showDialog(null, parent, message("settings.file.colors.dialog.choose.color"), null)?.let { toHex(it) }
   }
 
   private fun resolveDuplicate(scopeName: String, colorName: String, toSharedList: Boolean): Boolean {

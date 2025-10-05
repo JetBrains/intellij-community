@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.Java11Shim;
+import com.intellij.util.containers.Java11Shim;
 import com.intellij.util.KeyedLazyInstance;
 import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.*;
@@ -150,7 +150,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   final @NotNull @Unmodifiable List<T> buildExtensionsFromExtensionPoint(@NotNull Predicate<? super KeyedLazyInstance<T>> isMyBean,
-                                                           @NotNull List<? extends KeyedLazyInstance<T>> extensions) {
+                                                                         @NotNull List<? extends KeyedLazyInstance<T>> extensions) {
     List<T> result = null;
     T r1 = null;
     T r2 = null;

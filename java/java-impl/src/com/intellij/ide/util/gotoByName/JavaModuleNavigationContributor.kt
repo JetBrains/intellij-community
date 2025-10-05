@@ -27,7 +27,7 @@ import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 
-class JavaModuleNavigationContributor : ChooseByNameContributorEx, PossiblyDumbAware {
+public class JavaModuleNavigationContributor : ChooseByNameContributorEx, PossiblyDumbAware {
   override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
     DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode {
       StubIndex.getInstance().processAllKeys(JavaStubIndexKeys.MODULE_NAMES, processor, scope, filter)

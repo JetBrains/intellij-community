@@ -504,7 +504,7 @@
         "foreground": "#00E61F",
         "background": "#000000",
         "borderColor": "#00E61F",
-        "hoverForeground": "#FFFFFF",
+        "hoverForeground": "#000000",
         "hoverBackground": "#00E61F",
         "hoverBorderColor": "#00E61F"
       },
@@ -517,12 +517,20 @@
         "hoverBorderColor": "#F58231"
       },
       "Expiring": {
-        "foreground": "#FFFFFF",
-        "background": "#E6194B",
-        "borderColor": "#E6194B",
+        "foreground": "#FF0F4A",
+        "background": "#000000",
+        "borderColor": "#FF0F4A",
         "hoverForeground": "#FFFFFF",
-        "hoverBackground": "#800002",
-        "hoverBorderColor": "#800002"
+        "hoverBackground": "#FF0F4A",
+        "hoverBorderColor": "#FF0F4A"
+      },
+      "Progress" : {
+        "foreground": "#7F7F7F",
+        "background": "#000000",
+        "borderColor": "#7F7F7F",
+        "hoverForeground": "#7F7F7F",
+        "hoverBackground": "#000000",
+        "hoverBorderColor": "#7F7F7F"
       }
     },
 

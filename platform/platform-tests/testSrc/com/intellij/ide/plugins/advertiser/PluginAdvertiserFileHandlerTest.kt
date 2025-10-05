@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.advertiser
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.features.AnsiHighlighterDetector
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -48,7 +49,7 @@ class PluginAdvertiserFileHandlerTest {
 
   private suspend fun makeAnsiFile(name: String): VirtualFile {
     val logBytes = byteArrayOf(27, 91, 51, 49, 109, 72, 101, 108, 108, 111)
-    return backgroundWriteAction {
+    return edtWriteAction {
       val file = sourceRoot.get().createFile(name).virtualFile
       file.getOutputStream(file).use {
         it.write(logBytes)

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -38,7 +38,7 @@ public final class JUnitUtil {
   public static final String RULE_ANNOTATION = "org.junit.Rule";
   public static final String TEST5_PACKAGE_FQN = "org.junit.jupiter.api";
   public static final String TEST5_ANNOTATION = "org.junit.jupiter.api.Test";
-  
+
   public static final String CUSTOM_TESTABLE_ANNOTATION = "org.junit.platform.commons.annotation.Testable";
   public static final Set<String> CUSTOM_TESTABLE_ANNOTATION_LIST = Collections.singleton(CUSTOM_TESTABLE_ANNOTATION);
   
@@ -303,7 +303,6 @@ public final class JUnitUtil {
     }
     return true;
   }
-
 
   public static boolean isJUnit5TestClass(final @NotNull PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();

@@ -12,6 +12,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.TextLayoutResult
 import java.util.TreeMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.util.myLogger
 import org.jetbrains.jewel.markdown.MarkdownBlock
@@ -81,6 +82,7 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
  * @see [LocatableMarkdownBlock]
  * @see [PerLine]
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public abstract class ScrollingSynchronizer {
     /** Scroll the preview to the position that match the given [sourceLine] the best. */
@@ -166,7 +168,7 @@ public abstract class ScrollingSynchronizer {
         private val blocks2Top = mutableMapOf<MarkdownBlock, Int>()
         private val previousPositions = mutableMapOf<MarkdownBlock, Int>()
 
-        private var lastBlocks = listOf<LocatableMarkdownBlock>()
+        private var lastBlocks = emptyList<LocatableMarkdownBlock>()
         private val currentBlocks = mutableListOf<LocatableMarkdownBlock>()
 
         // It'd be a bit more performant if there were a map mapping lines to offsets,
@@ -191,7 +193,7 @@ public abstract class ScrollingSynchronizer {
             val textOffsets = blocks2TextOffsets[block]
             // The line may be empty and represent no block,
             // in this case scroll to the first line of the first block positioned after the line
-            val lineIndexInBlock = maxOf(0, sourceLine - lineRange.start)
+            val lineIndexInBlock = maxOf(0, sourceLine - lineRange.first)
             val lineOffset = textOffsets?.get(lineIndexInBlock) ?: 0
             scrollState.animateScrollTo(y + lineOffset, animationSpec)
         }
@@ -270,7 +272,7 @@ public abstract class ScrollingSynchronizer {
             if (
                 this is LocatableMarkdownBlock &&
                     other is LocatableMarkdownBlock &&
-                    lines.endInclusive - lines.start != other.lines.endInclusive - other.lines.start
+                    lines.last - lines.first != other.lines.last - other.lines.first
             ) {
                 return false
             }
@@ -295,13 +297,13 @@ public abstract class ScrollingSynchronizer {
         }
 
         override fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange): MarkdownBlock {
-            val block = LocatableMarkdownBlock(block, sourceRange)
+            val locatableMarkdownBlock = LocatableMarkdownBlock(block, sourceRange)
             for (line in sourceRange) {
                 // DFS -- keep the innermost block for the given line
-                lines2Blocks.putIfAbsent(line, block)
+                lines2Blocks.putIfAbsent(line, locatableMarkdownBlock)
             }
-            currentBlocks += block
-            return block
+            currentBlocks += locatableMarkdownBlock
+            return locatableMarkdownBlock
         }
 
         override fun acceptGlobalPosition(block: MarkdownBlock, coordinates: LayoutCoordinates) {

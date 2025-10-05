@@ -1,3 +1,5 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.settingsSync.core.plugins
 
 import com.intellij.ide.plugins.*
@@ -5,8 +7,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IntellijInternalApi
 
-class CorePluginManagerProxy : AbstractPluginManagerProxy() {
+internal class CorePluginManagerProxy : AbstractPluginManagerProxy() {
 
   override val pluginEnabler: PluginEnabler
     get() = PluginEnabler.getInstance()

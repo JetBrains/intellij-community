@@ -45,6 +45,10 @@ object EnvironmentYmlModifier {
     val dependenciesText = "dependencies:"
     val dependenciesIndex = text.indexOf(dependenciesText)
 
+    if (dependenciesIndex < 0) {
+      modifiedContent.append("\ndependencies:\n  - $packageName")
+    }
+
     if (dependenciesIndex >= 0) {
       // Find the indentation level by looking at existing entries
       val indentPattern = INDENT_PATTERN

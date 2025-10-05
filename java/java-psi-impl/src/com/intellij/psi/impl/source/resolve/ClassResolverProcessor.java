@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiAnonymousClassImpl;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
@@ -21,7 +20,6 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, ElementClassHint {
@@ -68,10 +66,7 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
     if (myResult != null) return myResult;
     if (myCandidates == null) return myResult = JavaResolveResult.EMPTY_ARRAY;
     if (myHasAccessibleCandidate && myHasInaccessibleCandidate) {
-      for (Iterator<ClassCandidateInfo> iterator = myCandidates.iterator(); iterator.hasNext();) {
-        CandidateInfo info = iterator.next();
-        if (!info.isAccessible()) iterator.remove();
-      }
+      myCandidates.removeIf(info -> !info.isAccessible());
       myHasInaccessibleCandidate = false;
     }
 
@@ -139,11 +134,9 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
     //A class may inherit two or more type declarations with the same name, either from two interfaces or from its superclass and an interface. 
     //It is a compile-time error to attempt to refer to any ambiguously inherited class or interface by its simple name.
     if (containingClass1 != null && containingClass2 != null && containingClass2.isInheritor(containingClass1, true) &&
-        !isImported(myCurrentFileContext)) {
-      if (!isAmbiguousInherited(containingClass1)) {
-        // shadowing
-        return Domination.DOMINATED_BY;
-      }
+        !isImported(myCurrentFileContext) && !isAmbiguousInherited(containingClass1, containingClass2)) {
+      // shadowing
+      return Domination.DOMINATED_BY;
     }
 
     boolean infoAccessible = info.isAccessible() && isAccessible(otherClass);
@@ -208,7 +201,8 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
     return true;
   }
 
-  private boolean isAmbiguousInherited(PsiClass containingClass1) {
+  private boolean isAmbiguousInherited(PsiClass containingClass1, PsiClass containingClass2) {
+    if (!containingClass1.isInterface() && !containingClass2.isInterface()) return false; // definite shadowing because of single inheritance
     PsiClass psiClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class);
     if (psiClass instanceof PsiAnonymousClassImpl && ((PsiAnonymousClassImpl)psiClass).isBaseClassReference(myPlace)) {
       psiClass = PsiTreeUtil.getContextOfType(psiClass, PsiClass.class);

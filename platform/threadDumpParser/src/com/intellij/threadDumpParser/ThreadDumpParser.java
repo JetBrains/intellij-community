@@ -19,7 +19,7 @@ import static com.intellij.diagnostic.CoroutineDumperKt.isCoroutineDumpHeader;
 
 @ApiStatus.Internal
 public final class ThreadDumpParser {
-  private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?.*tid=[^\\s]+(?: nid=[^\\s]+)?|[Ii][Dd]=\\d+) ([^\\[]+)");
+  private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+((?:prio=\\d+ )?(?:os_prio=[^\\s]+ )?.*tid=[^\\s]+(?: nid=[^\\s]+)?|[Ii][Dd]=\\d+) ([^\\[]+)");
   private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^Thread (\\d+): \\(state = (.+)\\)");
   private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([A-Z_, ]*)]");
   private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) (?:State:)? (.+) CPU usage on sample: .+");
@@ -310,6 +310,9 @@ public final class ThreadDumpParser {
       final ThreadState state = new ThreadState(m.group(1), m.group(3));
       if (line.contains(" daemon ")) {
         state.setDaemon(true);
+      }
+      if (line.contains(" virtual ")) {
+        state.setVirtual(true);
       }
       return state;
     }

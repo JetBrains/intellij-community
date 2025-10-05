@@ -1,6 +1,6 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.fe10.projectStructure">
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.base.fe10.projectStructure.Fe10OrderedWorkspaceModelChangeListener"
+    <listener class="org.jetbrains.kotlin.idea.base.fe10.projectStructure.Fe10WorkspaceModelChangeListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
 

@@ -14,31 +14,30 @@ import com.intellij.util.IconUtil
 import java.awt.Rectangle
 import javax.swing.Icon
 
-class MLRankingConfigurable(private val availableProviders: List<RankingModelProvider>) :
+internal val UP_DOWN_ICON = createUpDownIcon()
+internal val RELEVANT_ICON = cropIcon(CompletionMlRankingIcons.RelevantProposal)
+
+private fun createUpDownIcon(): Icon {
+  val icon = IconManager.getInstance().createRowIcon(2, RowIcon.Alignment.CENTER)
+  icon.setIcon(cropIcon(CompletionMlRankingIcons.ProposalUp), 0)
+  icon.setIcon(cropIcon(CompletionMlRankingIcons.ProposalDown), 1)
+  return icon
+}
+
+private fun cropIcon(icon: Icon): Icon = IconUtil.cropIcon(icon, Rectangle(4, 0, 8, 16))
+
+internal class MLRankingConfigurable(private val availableProviders: List<RankingModelProvider>) :
   UiDslUnnamedConfigurable.Simple(), Configurable {
 
   private val settings = CompletionMLRankingSettings.getInstance()
 
-  companion object {
-    val UP_DOWN_ICON = createUpDownIcon()
-    val RELEVANT_ICON = cropIcon(CompletionMlRankingIcons.RelevantProposal)
-
-    private fun createUpDownIcon(): Icon {
-      val icon = IconManager.getInstance().createRowIcon(2, RowIcon.Alignment.CENTER)
-      icon.setIcon(cropIcon(CompletionMlRankingIcons.ProposalUp), 0)
-      icon.setIcon(cropIcon(CompletionMlRankingIcons.ProposalDown), 1)
-      return icon
-    }
-
-    private fun cropIcon(icon: Icon): Icon = IconUtil.cropIcon(icon, Rectangle(4, 0, 8, 16))
-  }
-
-  override fun getDisplayName(): String {
-    return MLCompletionBundle.message("ml.completion.settings.group")
-  }
+  override fun getDisplayName(): String = MLCompletionBundle.message("ml.completion.settings.group")
 
   override fun Panel.createContent() {
-    val providers = availableProviders.distinctBy { it.displayNameInSettings }.sortedBy { it.displayNameInSettings }
+    val providers = availableProviders
+      .distinctBy { it.displayNameInSettings }
+      .sortedBy { it.displayNameInSettings }
+
     lateinit var enableRankingCheckbox: Cell<JBCheckBox>
     row {
       enableRankingCheckbox = checkBox(MLCompletionBundle.message("ml.completion.enable"))

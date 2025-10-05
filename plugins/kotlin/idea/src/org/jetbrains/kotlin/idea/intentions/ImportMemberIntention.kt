@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ImportMemberIntention : SelfTargetingOffsetIndependentIntention<KtNameReferenceExpression>(
     KtNameReferenceExpression::class.java,
-    KotlinBundle.lazyMessage("add.import.for.member")
+    KotlinBundle.messagePointer("add.import.for.member")
 ), HighPriorityAction {
     override fun isApplicableTo(element: KtNameReferenceExpression): Boolean {
         if (element.getQualifiedElement() == element) return false //Ignore simple name expressions
@@ -41,7 +41,7 @@ class ImportMemberIntention : SelfTargetingOffsetIndependentIntention<KtNameRefe
         val helper = ImportInsertHelper.getInstance(project)
         if (helper.importDescriptor(dummyFile, target) == ImportDescriptorResult.FAIL) return false
 
-        setTextGetter(KotlinBundle.lazyMessage("add.import.for.0", fqName.asString()))
+        setTextGetter(KotlinBundle.messagePointer("add.import.for.0", fqName.asString()))
         return true
     }
 

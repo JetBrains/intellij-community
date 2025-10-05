@@ -28,7 +28,7 @@ class ExampleClassWithNoTypos<T> {
     /**
      * Adds a [member] to this group.
      *
-     * @param cancellable Whether the progress can be cancelled.
+     * @param cancellable Whether the progress can be <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.VARIANT_LEXICAL_DIFFERENCES">cancelled</STYLE_SUGGESTION>.
      * @param member member to add
      * @return the new size of the group. And another sentence.
      */
@@ -93,13 +93,14 @@ class ExampleClassWithTypos<T> {
  * А <GRAMMAR_ERROR descr="grammar_vse_li_noun">все ли ошибка</GRAMMAR_ERROR> найдены?
  * Это случилось <GRAMMAR_ERROR descr="INVALID_DATE">31 ноября</GRAMMAR_ERROR> 2014 г.
  * За весь вечер она <GRAMMAR_ERROR descr="ne_proronila_ni">не проронила и слово</GRAMMAR_ERROR>.
- * Собрание состоится в <GRAMMAR_ERROR descr="RU_COMPOUNDS">конференц зале</GRAMMAR_ERROR>.
+ * Собрание состоится в <GRAMMAR_ERROR descr="Grazie.RuleEngine.Ru.Spelling.MULTI_WORD">конференц зале</GRAMMAR_ERROR>.
  * <GRAMMAR_ERROR descr="WORD_REPEAT_RULE">Он он</GRAMMAR_ERROR> ошибка.
  */
+// noinspection SqlDialectInspection das daert geschätzt fünf Mannstunden! А еще в коробке лежало пять карандаша
 class ForMultiLanguageSupport {
-    // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
+    // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
     // das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
-    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.
+    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <STYLE_SUGGESTION descr="MANNSTUNDE">Mannstunden</STYLE_SUGGESTION>.
 
   /**
    * @throws Exception wenn ein Fehler auftritt

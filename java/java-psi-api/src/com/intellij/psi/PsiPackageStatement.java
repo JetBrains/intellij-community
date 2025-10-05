@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Represents a {@code package} Java statement.
  */
@@ -27,16 +29,16 @@ public interface PsiPackageStatement extends PsiElement {
   PsiJavaCodeReferenceElement getPackageReference();
 
   /**
-   * Returns the declared name of the package.
+   * Returns the declared name of the package; empty string for missing or malformed declaration
    *
    * @return the declared name of the package.
    */
-  String getPackageName();
+  @NotNull String getPackageName();
 
   /**
    * Returns the list of annotations for the package.
    *
    * @return the modifier list containing the annotations applied to the package statement.
    */
-  PsiModifierList getAnnotationList();
+  @NotNull PsiModifierList getAnnotationList();
 }

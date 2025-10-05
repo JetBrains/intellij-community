@@ -19,6 +19,7 @@ internal fun AccessibleContext.isInteractive(): Boolean {
                                         AccessibleRole.PASSWORD_TEXT,
                                         AccessibleRole.HYPERLINK,
                                         AccessibleRole.POPUP_MENU,
+                                        AccessibleRole.COMBO_BOX,
                                         AccessibleRole.SLIDER)
 }
 

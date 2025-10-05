@@ -31,7 +31,7 @@ import javax.swing.JTextArea
 /**
  * @author gregsh
  */
-internal class ShowUpdateInfoDialogAction : DumbAwareAction() {
+private class ShowUpdateInfoDialogAction : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

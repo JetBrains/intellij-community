@@ -15,6 +15,7 @@ fun Collection<SyntaxElementType>.asSyntaxElementTypeSet(): SyntaxElementTypeSet
   if (this.isEmpty()) return emptySet
 
   val distinctElementTypes = this as? Set ?: this.toSet()
+  ensureNoTransientTypes(distinctElementTypes)
 
   val indexes = IntArrayList(distinctElementTypes.size)
   for (type in distinctElementTypes) {
@@ -87,4 +88,20 @@ class SyntaxElementTypeSet internal constructor(
   }
 }
 
-fun flattenSyntaxElementTypeSets(vararg sets: SyntaxElementTypeSet) = sets.asList().flatten().asSyntaxElementTypeSet()
+private fun ensureNoTransientTypes(types: Set<SyntaxElementType>) {
+  var transientTypes: MutableList<SyntaxElementType>? = null
+  for (type in types) {
+    if (type.index < 0) {
+      if (transientTypes == null) {
+        transientTypes = mutableListOf()
+      }
+      transientTypes.add(type)
+    }
+  }
+
+  if (transientTypes != null) {
+    throw IllegalArgumentException("Transient $transientTypes are not allowed to be stored in SyntaxElementTypeSet")
+  }
+}
+
+fun flattenSyntaxElementTypeSets(vararg sets: SyntaxElementTypeSet): SyntaxElementTypeSet = sets.asList().flatten().asSyntaxElementTypeSet()

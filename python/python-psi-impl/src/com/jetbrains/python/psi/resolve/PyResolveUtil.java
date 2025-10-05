@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.google.common.collect.Iterables;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,10 +35,7 @@ import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
@@ -117,7 +115,10 @@ public final class PyResolveUtil {
       else {
         namedElements = scope.getNamedElements();
       }
-      for (PsiElement element : ContainerUtil.concat(namedElements, scope.getImportedNameDefiners())) {
+      Iterable<PsiElement> elements = Iterables.concat(Iterables.filter(namedElements, t -> !(t instanceof PyTypeParameter)),
+                                                       scope.getImportedNameDefiners(),
+                                                       Iterables.filter(namedElements, PyTypeParameter.class));
+      for (PsiElement element : elements) {
         if (isClassLevelDefinitionInvisibleToReference(element, scopeOwner, originalScopeOwner)) continue;
         if (!processor.execute(element, ResolveState.initial())) {
           return;
@@ -241,8 +242,8 @@ public final class PyResolveUtil {
    * @return all possible candidates that can be found by the given qualified name
    */
   public static @NotNull List<PsiElement> resolveQualifiedNameInScope(@NotNull QualifiedName qualifiedName,
-                                                             @NotNull ScopeOwner scopeOwner,
-                                                             @NotNull TypeEvalContext context) {
+                                                                      @NotNull ScopeOwner scopeOwner,
+                                                                      @NotNull TypeEvalContext context) {
     return PyUtil.getParameterizedCachedValue(scopeOwner, Pair.create(qualifiedName, context), (param) -> {
       return doResolveQualifiedNameInScope(param.getFirst(), scopeOwner, param.getSecond());
     });
@@ -281,19 +282,24 @@ public final class PyResolveUtil {
 
     final List<String> remainingNames = qualifiedName.removeHead(1).getComponents();
     final List<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(StreamEx.of(unqualifiedResults), (prev, name) ->
-      prev
-        .map(RatedResolveResult::getElement)
-        .select(PyTypedElement.class)
-        .map(context::getType)
-        .nonNull()
-        .flatMap(type -> {
-          // An instance type has access to instance attributes defined in __init__, a class type does not.
-          final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
-          final List<? extends RatedResolveResult> results = instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
-          return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
-        }))
-      .toList();
+        prev
+          .map(RatedResolveResult::getElement)
+          .select(PyTypedElement.class)
+          .map(context::getType)
+          .nonNull()
+          .flatMap(type -> {
+            assert type != null; // see filter nonNull()
+            // An instance type has access to instance attributes defined in __init__, a class type does not.
+            final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
+            final List<? extends RatedResolveResult> results = instanceType instanceof PyModuleType moduleType
+                                                               ? moduleType.resolveModuleMember(name, scopeOwner, AccessDirection.READ,
+                                                                                                resolveContext)
+                                                               : instanceType.resolveMember(name, null, AccessDirection.READ,
+                                                                                            resolveContext);
 
+            return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
+          }))
+      .toList();
     return PyUtil.filterTopPriorityElements(result);
   }
 
@@ -418,13 +424,12 @@ public final class PyResolveUtil {
     // Forward references are allowed in annotations according to PEP 563
     PsiFile file = element.getContainingFile();
     if (file instanceof PyFile pyFile) {
-      boolean isAnnotation = pyFile.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON37) &&
-                             pyFile.hasImportFromFuture(FutureFeature.ANNOTATIONS) &&
-                             PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null;
-      if (isAnnotation) return true;
+      boolean nonEagerEvaluationEnabled = pyFile.hasImportFromFuture(FutureFeature.ANNOTATIONS) ||
+                                          pyFile.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON314);
+      boolean insideAnnotation = PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null;
+      if (insideAnnotation && nonEagerEvaluationEnabled) return true;
 
-      boolean isReferenceFromTypeParameterList = pyFile.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON312) &&
-                                                 PsiTreeUtil.getParentOfType(element, PyTypeParameter.class, true) != null;
+      boolean isReferenceFromTypeParameterList = PsiTreeUtil.getParentOfType(element, PyTypeParameter.class, true) != null;
       if (isReferenceFromTypeParameterList) return true;
     }
     return false;
@@ -515,7 +520,7 @@ public final class PyResolveUtil {
     return rate;
   }
 
-  public static @Nullable List<PsiElement> multiResolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
+  public static @NotNull List<@NotNull PsiElement> multiResolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
     final PsiElement element = reference.getElement();
 
     final var context = resolveContext.getTypeEvalContext();
@@ -528,7 +533,7 @@ public final class PyResolveUtil {
 
         final var constructor = ContainerUtil.find(
           PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(type, call, resolveContext)),
-          it -> it instanceof PyPossibleClassMember && ((PyPossibleClassMember)it).getContainingClass() == cls
+          it -> it instanceof PyPossibleClassMember possibleClassMember && possibleClassMember.getContainingClass() == cls
         );
 
         if (constructor != null) {
@@ -538,16 +543,16 @@ public final class PyResolveUtil {
     }
 
     if (reference instanceof PsiPolyVariantReference multiReference) {
-      return Stream.of(multiReference.multiResolve(false)).map(result -> result.getElement()).toList();
+      return PyUtil.multiResolveTopPriority(multiReference);
     }
     final var result = reference.resolve();
-    if (result == null) return null;
+    if (result == null) return List.of();
     return List.of(result);
   }
 
   public static @Nullable PsiElement resolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
     final var result = multiResolveDeclaration(reference, resolveContext);
-    if (result == null || result.isEmpty()) return null;
+    if (result.isEmpty()) return null;
     return result.get(0);
   }
 

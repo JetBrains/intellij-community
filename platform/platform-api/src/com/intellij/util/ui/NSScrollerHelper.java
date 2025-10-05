@@ -116,8 +116,8 @@ public final class NSScrollerHelper {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Style getScrollerStyle() {
-    if (!isOverlayScrollbarSupported()) return null;
+  public static @NotNull Style getScrollerStyle() {
+    if (!isOverlayScrollbarSupported()) return Style.Overlay;
 
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     try {

@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.BiDirectionalEnumerator;
+import com.intellij.util.io.BiDirectionalEnumerator;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;

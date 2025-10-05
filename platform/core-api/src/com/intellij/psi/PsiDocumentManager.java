@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ public abstract class PsiDocumentManager {
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile getPsiFile(@NotNull Document document);
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context);
 
@@ -61,11 +62,7 @@ public abstract class PsiDocumentManager {
    */
   public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document) ;
 
-  /**
-   * @deprecated please don't use at the moment
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document, @NotNull CodeInsightContext context);
 
   /**
@@ -91,6 +88,7 @@ public abstract class PsiDocumentManager {
    * <p>
    * Should be called on EDT in a write-safe context (see {@link com.intellij.openapi.application.TransactionGuard})
    */
+  @RequiresEdt
   public abstract void commitAllDocuments();
 
   /**

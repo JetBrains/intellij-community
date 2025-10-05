@@ -18,6 +18,7 @@ import org.commonmark.node.SourceSpan
 import org.commonmark.node.ThematicBreak
 import org.commonmark.parser.Parser
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
@@ -59,6 +60,7 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
  *   and convert them into a [MimeType]. By default, this uses [MimeType.Known.fromMarkdownLanguageName], but you can
  *   provide your own implementation to, for example, support languages that Jewel doesn't recognize yet.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public class MarkdownProcessor(
     public val extensions: List<MarkdownProcessorExtension> = emptyList(),
@@ -67,6 +69,13 @@ public class MarkdownProcessor(
         MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
     private val languageRecognizer: (String) -> MimeType? = { MimeType.Known.fromMarkdownLanguageName(it) },
 ) {
+    public constructor(
+        extensions: List<MarkdownProcessorExtension> = emptyList(),
+        markdownMode: MarkdownMode = MarkdownMode.Standalone,
+        commonMarkParser: Parser =
+            MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
+    ) : this(extensions, markdownMode, commonMarkParser, { MimeType.Known.fromMarkdownLanguageName(it) })
+
     /** The [block-level processor extensions][MarkdownBlockProcessorExtension]s used by this processor. */
     public val blockExtensions: List<MarkdownBlockProcessorExtension> =
         extensions.mapNotNull { it.blockProcessorExtension }
@@ -302,14 +311,28 @@ public class MarkdownProcessor(
     private fun CMListBlock.processListItems() = buildList {
         forEachChild { child ->
             if (child !is ListItem) return@forEachChild
-            add(MarkdownBlock.ListItem(processChildren(child)))
+            val listItem = MarkdownBlock.ListItem(children = processChildren(child), level = calculateLevel(child))
+            add(listItem)
         }
+    }
+
+    private fun calculateLevel(startNode: Node): Int {
+        var currentNode: Node? = startNode
+        var level = 0
+        while (currentNode != null && currentNode !is Document) {
+            if (currentNode is ListItem) {
+                level++
+            }
+            currentNode = currentNode.parent
+        }
+        return level - 1
     }
 
     /**
      * Processes the children of a CommonMark [Node]. This function is public so that it can be accessed from
      * [MarkdownProcessorExtension]s, but should not be used in other scenarios.
      */
+    @ApiStatus.Internal
     @InternalJewelApi
     public fun processChildren(node: Node): List<MarkdownBlock> = buildList {
         node.forEachChild { child ->
@@ -340,6 +363,7 @@ public class MarkdownProcessor(
     }
 
     /** Creates a copy of this [MarkdownProcessor] with the same properties, plus the provided [extension]. */
+    @ApiStatus.Experimental
     @ExperimentalJewelApi
     public operator fun plus(extension: MarkdownProcessorExtension): MarkdownProcessor = withExtension(extension)
 

@@ -1,5 +1,6 @@
 <idea-plugin package="com.intellij.settingsSync.core">
   <dependencies>
+    <module name="intellij.platform.vcs.log"/>
     <plugin id="Git4Idea"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
@@ -46,7 +47,10 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.settingsSyncMigration" interface="com.intellij.settingsSync.core.SettingsSyncMigration" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.settingsSync.settingsProvider" interface="com.intellij.settingsSync.core.SettingsProvider" dynamic="true" />
-    <extensionPoint qualifiedName="com.intellij.settingsSync.communicatorProvider" interface="com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.settingsSync.communicatorProvider"
+                    beanClass="com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorBean" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <actions resource-bundle="messages.SettingsSyncBundle">

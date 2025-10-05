@@ -31,7 +31,6 @@
     <orderEntry type="module" module-name="intellij.xml.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
-    <orderEntry type="module" module-name="intellij.xml.langInjection" />
     <orderEntry type="module" module-name="intellij.xml.dom" exported="" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" exported="" />
     <orderEntry type="module" module-name="intellij.properties.backend" />
@@ -43,9 +42,9 @@
     <orderEntry type="module" module-name="intellij.java.ui" exported="" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" exported="" scope="PROVIDED" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.groovy" />
-    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.maven.jps" />

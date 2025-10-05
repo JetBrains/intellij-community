@@ -1,5 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 
+import java.util.*;
+
 class AssignmentInsideLamda {
 
   private final List<Comparator<String>> comparators = new ArrayList<>();
@@ -8,7 +10,7 @@ class AssignmentInsideLamda {
     Arrays.sort(args, newMethod());
   }
 
-    private @NotNull Object newMethod() {
+    private @NotNull Comparator<String> newMethod() {
         return (o1, o2) -> {
             int result = compareForNull(o1, o2);
             if (result == 0) {

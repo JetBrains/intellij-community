@@ -44,7 +44,7 @@
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
-                      stubVersion="18"/>
+                      stubVersion="20"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -61,6 +61,9 @@
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionPointImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extensions"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
+    <xml.xmlExtension implementation="org.jetbrains.idea.devkit.dom.xml.PluginXmlExtension"/>
+    <completion.contributor language="XML" implementationClass="org.jetbrains.idea.devkit.dom.xml.PluginXmlCompletionContributor"
+                            order="before xmlNonFirst"/>
 
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex"/>
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex"/>
@@ -73,6 +76,8 @@
     <searchScopesProvider
       order="last"
       implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorDomFileSearchScopeProvider"/>
+    <referencesSearch implementation="org.jetbrains.idea.devkit.references.PluginModuleReferencesQueryExecutor"/>
+    <usageTypeProvider implementation="org.jetbrains.idea.devkit.findUsages.PluginModuleUsageTypeProvider" order="first"/>
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesDomFileDescription"
                       rootTagName="product-modules"/>
@@ -178,12 +183,6 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"
                      key="inspection.inspection.description.not.found.inspection.display.name"/>
-    <localInspection language="JVM" shortName="checkReturnValue"
-                     key="inspections.check.return.value"
-                     groupKey="inspections.group.code"
-                     enabledByDefault="true"
-                     level="ERROR"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.CheckReturnValueInspection"/>
     <localInspection language="UAST" shortName="InspectionUsingGrayColors"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -247,6 +246,12 @@
                      enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseJBColorInspection"
                      key="inspection.use.JB.color.display.name"/>
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UseIntelliJVirtualThreadsInspection"
+                     key="inspection.use.intellij.virtual.threads.display.name"/>
     <localInspection language="UAST" shortName="UseDPIAwareInsets"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -523,6 +528,14 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.MissingFrontendOrBackendRuntimeDependencyInspection"
                      key="inspection.remote.dev.missing.runtime.dependency.name"/>
 
+    <localInspection isInternal="true"
+                     language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ModuleNotRegisteredAsPluginContentInspection"
+                     key="inspection.module.not.registered.as.plugin.content.name"/>
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 
@@ -666,8 +679,8 @@
     <registryKey key="tmh.generate.line.numbers" defaultValue="true"
                  description="Generate line numbers when instrumenting @RequiresEdt and similar annotations.
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
-    <registryKey key="kotlin.commit.message.validation.enabled" defaultValue="true"
-                 description="Enables commit messages validation for kotlin plugin"/>
+    <registryKey key="kotlin.notebook.commit.message.validation.enabled" defaultValue="true"
+                 description="Enables commit messages validation for Kotlin Notebook plugin"/>
     <registryKey key="kotlin.build.tools.code.ownership.commit.message.enabled" defaultValue="true"
                  description="Enables commit messages validation for Kotlin Build Tools code ownership"/>
     <codeInsight.declarativeInlayProvider
@@ -682,8 +695,10 @@
     <registryKey key="devkit.inlay.threading" defaultValue="false"
                  description="Experimental inlays for Threading Annotations"/>
 
-    <registryKey key="intellij.commit.message.validation.enabled" defaultValue="false"
-                 description="Enables commit messages validation for intellij project"/>
+    <registryKey key="intellij.monorepo.commit.message.validation.enabled" defaultValue="true"
+                 description="Enables commit messages validation for IntelliJ Monorepo"/>
+    <registryKey key="aia.commit.message.validation.enabled" defaultValue="true"
+                 description="Enables commit messages validation for AI Assistant project"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.contentReport.ContentReportGeneratedSourcesFilter"/>
 
@@ -694,6 +709,10 @@
     <properties.spellcheckerMnemonicsTokenizer implementation="org.jetbrains.idea.devkit.spellchecker.DevKitMnemonicsTokenizer"/>
 
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.references.DomTargetUseScopeEnlarger"/>
+
+    <registryKey key="devkit.compose.hot.reload.enabled" defaultValue="false" description="Enable 'Compose Hot Reload' agent for run configurations"/>
+    <registryKey key="devkit.compose.hot.reload.agent.version" defaultValue="" description="'Compose Hot Reload' agent version override"/>
+    <runConfigurationExtension implementation="org.jetbrains.idea.devkit.composeHotReload.ComposeHotReloadCommandLinePatcher" />
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
@@ -725,6 +744,10 @@
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAddServiceAnnotationProvider"/>
   </extensions>
+  <applicationListeners>
+    <listener class="org.jetbrains.idea.devkit.composeHotReload.ComposeHotReloadCommandLinePatcher$ComposeHotReloadRegistryListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener" />
+  </applicationListeners>
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.inspections.metaInformation.MetaInformationJsonSchemaProviderFactory"/>

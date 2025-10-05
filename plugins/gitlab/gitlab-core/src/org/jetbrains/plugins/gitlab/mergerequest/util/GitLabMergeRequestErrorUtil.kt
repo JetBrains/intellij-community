@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.data.GitLabHttpStatusError.HttpStatusErrorType
 import org.jetbrains.plugins.gitlab.api.data.asGitLabStatusError
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.net.ConnectException
@@ -16,6 +17,7 @@ object GitLabMergeRequestErrorUtil {
   internal fun createErrorStatusPresenter(
     accountVm: GitLabAccountViewModel,
     reloadAction: Action?,
+    loginSource: GitLabLoginSource,
   ): ErrorStatusPresenter.Text<Throwable> = ErrorStatusPresenter.simple(
     GitLabBundle.message("merge.request.list.error"),
     descriptionProvider = descriptionProvider@{ error ->
@@ -36,7 +38,7 @@ object GitLabMergeRequestErrorUtil {
         is HttpStatusErrorException -> {
           val actualError = error.asGitLabStatusError() ?: return@actionProvider null
           when (actualError.statusErrorType) {
-            HttpStatusErrorType.INVALID_TOKEN -> accountVm.loginAction()
+            HttpStatusErrorType.INVALID_TOKEN -> accountVm.loginAction(loginSource)
             HttpStatusErrorType.UNKNOWN -> null
           }
         }

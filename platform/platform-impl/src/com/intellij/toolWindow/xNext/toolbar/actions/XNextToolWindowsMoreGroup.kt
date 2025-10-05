@@ -21,7 +21,7 @@ internal class XNextToolWindowsMoreGroup : ActionGroup(), DumbAware {
     templatePresentation.text = UIBundle.message("more.button.accessible.name")
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
     val toolWindowActions = ToolWindowsGroup.getToolWindowActions(project, false)
 

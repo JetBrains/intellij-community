@@ -10,7 +10,7 @@ import java.util.*
  * The implementers are expected to manage states on their own.
  */
 @ApiStatus.Internal
-interface LockAcquisitionListener : EventListener {
-  fun beforeWriteLockAcquired()
-  fun afterWriteLockAcquired()
+interface LockAcquisitionListener<T> : EventListener {
+  fun beforeWriteLockAcquired(): T
+  fun afterWriteLockAcquired(beforeResult: T)
 }

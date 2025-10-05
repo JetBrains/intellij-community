@@ -72,12 +72,14 @@ internal interface ComposeResourcesBase {
     val module = element.module ?: return null
     val project = element.project
     val composeResourcePath = element.containingFile.virtualFile.toNioPathOrNull() ?: return null
-    val composeResourcesDir = project.getAllComposeResourcesDirs().firstOrNull { composeResourcePath.startsWith(it.directoryPath) } ?: return null
+    val composeResourcesDir = project.findComposeResourcesDirFor(composeResourcePath) ?: return null
     // custom compose resources dirs can be anywhere, so we search in the whole project
     val searchScope = if (composeResourcesDir.isCustom) GlobalSearchScope.projectScope(project) else GlobalSearchScope.moduleScope(module)
+    val typeReferenceText = ResourceType.fromPath(composeResourcePath).resourceName
     return KotlinPropertyShortNameIndex[name, project, searchScope]
       .filterIsInstance<KtProperty>() // even though it's called KotlinPropertyShortNameIndex it returns KtNamedDeclaration
-      .firstOrNull { it.isTopLevel } // todo[alexandru.resiga] from 1.8.1 there will be only one declaration with that name
+      .filter { it.isTopLevel } // todo[alexandru.resiga] from 1.8.1 there will be only one declaration with that name
+      .firstOrNull { it.typeReference?.getTypeText() == typeReferenceText }
   }
 }
 

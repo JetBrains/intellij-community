@@ -303,7 +303,7 @@ open class CodeVisionHost(val project: Project) {
           for (editor in EditorFactory.getInstance().allEditors) {
             ModificationStampUtil.clearModificationStamp(editor)
           }
-          DaemonCodeAnalyzer.getInstance(project).restart()
+          DaemonCodeAnalyzer.getInstance(project).restart("CodeVisionHost.providerAvailabilityChanged $id")
           invalidateProviderSignal.fire(LensInvalidateSignal(null))
         }
       })

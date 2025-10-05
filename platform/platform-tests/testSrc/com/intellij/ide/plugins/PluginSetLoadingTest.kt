@@ -15,6 +15,8 @@ import org.intellij.lang.annotations.Language
 import org.junit.Rule
 import org.junit.Test
 import java.util.function.Function
+import kotlin.math.absoluteValue
+import kotlin.random.Random
 
 class PluginSetLoadingTest {
   init {
@@ -166,23 +168,31 @@ class PluginSetLoadingTest {
   fun `until build is honored only if it targets 251 and earlier`() {
     if (UntilBuildDeprecation.forceHonorUntilBuild) return
 
-    fun addDescriptor(build: String) = writeDescriptor("p$build", """
+    fun addDescriptor(branch: String) = writeDescriptor("p$branch", """
     <idea-plugin>
-      <id>p$build</id>
+      <id>p$branch</id>
       <version>1.0</version>
-      <idea-version since-build="$build" until-build="$build.100"/>
+      <idea-version since-build="$branch" until-build="$branch.100"/>
+    </idea-plugin>
+    """.trimIndent())
+    fun addDescriptorX(branch: String) = writeDescriptor("p$branch.x", """
+    <idea-plugin>
+      <id>p$branch.x</id>
+      <version>1.0</version>
+      <idea-version since-build="$branch" until-build="$branch.*"/>
     </idea-plugin>
     """.trimIndent())
 
     addDescriptor("251")
+    addDescriptorX("251")
     addDescriptor("252")
     addDescriptor("253")
     addDescriptor("261")
 
     assertEnabledPluginsSetEquals(listOf("p251")) { buildNumber = "251.10" }
-    assertEnabledPluginsSetEquals(listOf("p252")) { buildNumber = "252.10" }
-    assertEnabledPluginsSetEquals(listOf("p252", "p253")) { buildNumber = "253.200" }
-    assertEnabledPluginsSetEquals(listOf("p252", "p253", "p261")) { buildNumber = "261.200" }
+    assertEnabledPluginsSetEquals(listOf("p252", "p252.x")) { buildNumber = "252.10" }
+    assertEnabledPluginsSetEquals(listOf("p252.x", "p253")) { buildNumber = "253.200" }
+    assertEnabledPluginsSetEquals(listOf("p252.x", "p253", "p261")) { buildNumber = "261.200" }
   }
 
   @Test
@@ -193,7 +203,7 @@ class PluginSetLoadingTest {
       <idea-plugin>
       <id>p252</id>
       <version>1.0</version>
-      <idea-version since-build="252" until-build="252.100"/>
+      <idea-version since-build="252" until-build="252.*"/>
       </idea-plugin>
     """.trimIndent())
     writeDescriptor("p253", """
@@ -435,6 +445,93 @@ class PluginSetLoadingTest {
   }
 
   @Test
+  fun `test a module graph take into account aliases and sort them correctly`() {
+    val aPath = pluginsDirPath.resolve("a")
+    val bPath = pluginsDirPath.resolve("b")
+    val dPath = pluginsDirPath.resolve("d")
+    plugin("d") {
+      content {
+        module("d.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(dPath)
+
+    plugin("a") {
+      content {
+        module("a.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(aPath)
+
+    plugin("b") {
+      content {
+        module("b1", loadingRule = ModuleLoadingRule.REQUIRED) {}
+        module("b2", loadingRule = ModuleLoadingRule.REQUIRED) {
+          pluginAlias("BBB")
+          dependencies {
+            module("b1")
+          }
+        }
+      }
+    }.buildDir(bPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("a", "b", "d")
+  }
+
+  @Test
+  fun `test a fail of one required module leads to not loading of all plugins`() {
+    val aPath = pluginsDirPath.resolve("a")
+    val bPath = pluginsDirPath.resolve("b")
+    val dPath = pluginsDirPath.resolve("d")
+    plugin("d") {
+      content {
+        module("d.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(dPath)
+
+    plugin("a") {
+      content {
+        module("a.a", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            plugin("BBB")
+          }
+        }
+      }
+    }.buildDir(aPath)
+
+    plugin("b") {
+      content {
+        module("b1", loadingRule = ModuleLoadingRule.REQUIRED) {}
+        module("b2", loadingRule = ModuleLoadingRule.REQUIRED) {
+          pluginAlias("BBB")
+          dependencies {
+            module("b1")
+          }
+        }
+        module("b0", loadingRule = ModuleLoadingRule.REQUIRED) {
+          dependencies {
+            module("unresolved")
+          }
+        }
+      }
+    }.buildDir(bPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins()
+  }
+
+  @Test
   fun testLoadDisabledPlugin() {
     plugin("disabled") { }.buildDir(pluginsDirPath.resolve("disabled"))
     val pluginSet = buildPluginSet {
@@ -443,6 +540,35 @@ class PluginSetLoadingTest {
     val descriptor = pluginSet.getPlugin("disabled")
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
     assertThat(descriptor).isNotMarkedEnabled()
+  }
+
+  @Test
+  fun `dependency on a plugin alias in core content module from a plugin required content module is allowed`() {
+    // note: result can be order-dependent
+    val rnd = Random(239)
+    val ids = (1..20).map { rnd.nextInt().absoluteValue.toString(36) }.distinct()
+    for (id in ids) {
+      plugin("intellij.textmate.$id") {
+        content {
+          module("intellij.textmate.impl.$id", loadingRule = ModuleLoadingRule.REQUIRED) {
+            dependencies {
+              plugin("com.intellij.modules.spellchecker")
+            }
+          }
+        }
+      }.buildDir(pluginsDirPath.resolve("foo.$id"))
+    }
+    plugin(PluginManagerCore.CORE_PLUGIN_ID) {
+      content {
+        module("intellij.spellchecker") {
+          isSeparateJar = true
+          pluginAlias("com.intellij.modules.spellchecker")
+        }
+        module("intellij.required", loadingRule = ModuleLoadingRule.REQUIRED) {}
+      }
+    }.buildDir(pluginsDirPath.resolve("core"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, *ids.map { "intellij.textmate.$it" }.toTypedArray())
   }
 
   private fun writeDescriptor(id: String, @Language("xml") data: String) {

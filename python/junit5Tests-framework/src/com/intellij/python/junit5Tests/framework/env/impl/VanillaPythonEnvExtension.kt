@@ -11,7 +11,7 @@ import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.junit5Tests.framework.resolvePythonTool
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.resolvePythonHome
+import com.jetbrains.python.sdk.impl.resolvePythonHome
 import java.nio.file.Path
 
 /**

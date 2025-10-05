@@ -9,9 +9,9 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 
 interface GradleNewProjectWizardData : MavenizedNewProjectWizardData<ProjectData> {
 
-  val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent?>
+  val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent>
 
-  var jdkIntent: ProjectWizardJdkIntent?
+  var jdkIntent: ProjectWizardJdkIntent
 
   val gradleDslProperty: GraphProperty<GradleDsl>
 

@@ -2,8 +2,8 @@
 package com.intellij.json.json5.highlighting;
 
 import com.intellij.json.highlighting.JsonSyntaxHighlighterFactory;
-import com.intellij.json.json5.Json5Lexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.json.json5.Json5Lexer;
 import org.jetbrains.annotations.NotNull;
 
 public final class Json5SyntaxHighlightingFactory extends JsonSyntaxHighlighterFactory {

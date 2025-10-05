@@ -152,7 +152,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
       "        <self>self</self>.sense = <param>whatever</param>\n" +
       "\n" +
       "x = <builtin>len</builtin>('abc')\n" +
-      "type my_int< = <builtin>int</builtin>\n" +
+      "type my_int = <builtin>int</builtin>\n" +
       "print(f.<predefinedUsage>__doc__</predefinedUsage>)"
     ;
   }

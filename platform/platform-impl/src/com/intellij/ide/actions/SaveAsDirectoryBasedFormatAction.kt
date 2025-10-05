@@ -6,7 +6,7 @@ import com.intellij.ide.impl.OpenProjectTask.Companion.build
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -81,7 +81,7 @@ suspend fun convertToDirectoryBasedFormat(project: Project, store: IProjectStore
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ideaDir)
   }
   else {
-    backgroundWriteAction { VfsUtil.createDirectoryIfMissing(ideaDir.toString()) }
+    edtWriteAction { VfsUtil.createDirectoryIfMissing(ideaDir.toString()) }
   }
 
   store.clearStorages()

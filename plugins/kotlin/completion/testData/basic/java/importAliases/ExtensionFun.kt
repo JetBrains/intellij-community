@@ -5,5 +5,4 @@ fun foo() {
     listOf(1, 2).aa<caret>
 }
 
-// IGNORE_K2
 // EXIST: { lookupString: "aaa", itemText: "aaa", tailText: "() for List<T> (kotlin.collections.firstOrNull)", icon: "Function"}

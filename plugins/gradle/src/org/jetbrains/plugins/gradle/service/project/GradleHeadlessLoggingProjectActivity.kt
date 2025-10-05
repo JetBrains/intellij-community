@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -128,8 +129,8 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
       gradleLogWriterPath
     }
 
-    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-      val gradleText = (if (stdOut) "" else "STDERR: ") + text
+    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
+      val gradleText = (if (processOutputType.isStderr) "STDERR: " else "") + text
       logPath.appendText(gradleText)
       val croppedMessage = processMessage(gradleText)
       if (croppedMessage != null) {

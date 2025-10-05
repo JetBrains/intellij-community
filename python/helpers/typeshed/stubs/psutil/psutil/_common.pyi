@@ -1,5 +1,5 @@
 import enum
-from _typeshed import Incomplete, StrOrBytesPath, SupportsWrite
+from _typeshed import StrOrBytesPath, SupportsWrite
 from collections.abc import Callable
 from socket import AF_INET6 as AF_INET6, AddressFamily, SocketKind
 from typing import Any, Literal, NamedTuple, TypeVar, overload
@@ -219,7 +219,7 @@ class NoSuchProcess(Error):
     pid: Any
     name: Any
     msg: Any
-    def __init__(self, pid, name: Incomplete | None = None, msg: Incomplete | None = None) -> None: ...
+    def __init__(self, pid, name=None, msg=None) -> None: ...
 
 class ZombieProcess(NoSuchProcess):
     __module__: str
@@ -227,23 +227,21 @@ class ZombieProcess(NoSuchProcess):
     ppid: Any
     name: Any
     msg: Any
-    def __init__(
-        self, pid, name: Incomplete | None = None, ppid: Incomplete | None = None, msg: Incomplete | None = None
-    ) -> None: ...
+    def __init__(self, pid, name=None, ppid=None, msg=None) -> None: ...
 
 class AccessDenied(Error):
     __module__: str
     pid: Any
     name: Any
     msg: Any
-    def __init__(self, pid: Incomplete | None = None, name: Incomplete | None = None, msg: Incomplete | None = None) -> None: ...
+    def __init__(self, pid=None, name=None, msg=None) -> None: ...
 
 class TimeoutExpired(Error):
     __module__: str
     seconds: Any
     pid: Any
     name: Any
-    def __init__(self, seconds, pid: Incomplete | None = None, name: Incomplete | None = None) -> None: ...
+    def __init__(self, seconds, pid=None, name=None) -> None: ...
 
 _Func = TypeVar("_Func", bound=Callable[..., Any])
 
@@ -269,7 +267,7 @@ class _WrapNumbers:
     reminder_keys: Any
     def __init__(self) -> None: ...
     def run(self, input_dict, name): ...
-    def cache_clear(self, name: Incomplete | None = None) -> None: ...
+    def cache_clear(self, name=None) -> None: ...
     def cache_info(self): ...
 
 def wrap_numbers(input_dict, name: str): ...
@@ -283,3 +281,96 @@ def term_supports_colors(file: SupportsWrite[str] = ...) -> bool: ...
 def hilite(s: str, color: str | None = None, bold: bool = False) -> str: ...
 def print_color(s: str, color: str | None = None, bold: bool = False, file: SupportsWrite[str] = ...) -> None: ...
 def debug(msg) -> None: ...
+
+__all__ = [
+    # OS constants
+    "FREEBSD",
+    "BSD",
+    "LINUX",
+    "NETBSD",
+    "OPENBSD",
+    "MACOS",
+    "OSX",
+    "POSIX",
+    "SUNOS",
+    "WINDOWS",
+    # connection constants
+    "CONN_CLOSE",
+    "CONN_CLOSE_WAIT",
+    "CONN_CLOSING",
+    "CONN_ESTABLISHED",
+    "CONN_FIN_WAIT1",
+    "CONN_FIN_WAIT2",
+    "CONN_LAST_ACK",
+    "CONN_LISTEN",
+    "CONN_NONE",
+    "CONN_SYN_RECV",
+    "CONN_SYN_SENT",
+    "CONN_TIME_WAIT",
+    # net constants
+    "NIC_DUPLEX_FULL",
+    "NIC_DUPLEX_HALF",
+    "NIC_DUPLEX_UNKNOWN",
+    # process status constants
+    "STATUS_DEAD",
+    "STATUS_DISK_SLEEP",
+    "STATUS_IDLE",
+    "STATUS_LOCKED",
+    "STATUS_RUNNING",
+    "STATUS_SLEEPING",
+    "STATUS_STOPPED",
+    "STATUS_SUSPENDED",
+    "STATUS_TRACING_STOP",
+    "STATUS_WAITING",
+    "STATUS_WAKE_KILL",
+    "STATUS_WAKING",
+    "STATUS_ZOMBIE",
+    "STATUS_PARKED",
+    # other constants
+    "ENCODING",
+    "ENCODING_ERRS",
+    "AF_INET6",
+    # named tuples
+    "pconn",
+    "pcputimes",
+    "pctxsw",
+    "pgids",
+    "pio",
+    "pionice",
+    "popenfile",
+    "pthread",
+    "puids",
+    "sconn",
+    "scpustats",
+    "sdiskio",
+    "sdiskpart",
+    "sdiskusage",
+    "snetio",
+    "snicaddr",
+    "snicstats",
+    "sswap",
+    "suser",
+    # utility functions
+    "conn_tmap",
+    "deprecated_method",
+    "isfile_strict",
+    "memoize",
+    "parse_environ_block",
+    "path_exists_strict",
+    "usage_percent",
+    "supports_ipv6",
+    "sockfam_to_enum",
+    "socktype_to_enum",
+    "wrap_numbers",
+    "open_text",
+    "open_binary",
+    "cat",
+    "bcat",
+    "bytes2human",
+    "conn_to_ntuple",
+    "debug",
+    # shell utils
+    "hilite",
+    "term_supports_colors",
+    "print_color",
+]

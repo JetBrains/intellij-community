@@ -52,6 +52,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -59,7 +60,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointActionsPanel;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
@@ -213,10 +213,20 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   public abstract Icon getIcon();
 
+  /**
+   * Updates the breakpoint configuration from the underlying XBreakpoint.
+   * <p>
+   * This method should either be synchronous or trigger {@code XBreakpointBase.emitBreakpointChanged} upon completion,
+   * to ensure the latest breakpoint configuration is reflected in the UI.
+   */
   public abstract void reload();
 
   void scheduleReload() {
-    ReadAction.nonBlocking(this::reload)
+    ReadAction.nonBlocking(() -> {
+        reload();
+        XBreakpointBase<?, ?, ?> breakpoint = (XBreakpointBase<?, ?, ?>)getXBreakpoint();
+        breakpoint.emitBreakpointChanged();
+      })
       .coalesceBy(myProject, this)
       .expireWith(myProject)
       .submit(RELOAD_EXECUTOR);

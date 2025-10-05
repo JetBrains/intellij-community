@@ -61,10 +61,10 @@ public final class ScopeUtil {
   }
 
   /**
-   * Return the scope owner for the element.
-   *
+   * Return the scope owner for the element. This also applies for elements of instance {@code AstScopeOwner}.
+   * <br/>
    * Scope owner is not always the first ScopeOwner parent of the element. Some elements are resolved in outer scopes.
-   *
+   * <br/>
    * This method does not access AST if underlying PSI is stub based.
    */
   public static @Nullable ScopeOwner getScopeOwner(final @Nullable PsiElement element) {

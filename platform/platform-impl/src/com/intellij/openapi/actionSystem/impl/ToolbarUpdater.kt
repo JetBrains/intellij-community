@@ -65,7 +65,7 @@ abstract class ToolbarUpdater
 
   fun updateActions(now: Boolean, forced: Boolean, includeInvisible: Boolean) {
     if (myInUpdate) return
-    val updateRunnable: Runnable = MyUpdateRunnable(this, forced, includeInvisible)
+    val updateRunnable = MyUpdateRunnable(this, forced, includeInvisible)
     val application = ApplicationManager.getApplication()
     if (now || application.isUnitTestMode() && application.isDispatchThread()) {
       updateRunnable.run()

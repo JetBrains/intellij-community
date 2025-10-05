@@ -15,15 +15,58 @@
  */
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.build.SyncViewManager
+import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildIssueEvent
+import com.intellij.build.events.MessageEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
 class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
+
+
+  @Test
+  fun testSubprojectsWithOldModel() = runBlocking {
+    runWithoutStaticSync()
+    assumeMaven4()
+    assumeModel_4_0_0("we test convertion from 4.0.0 to 4.1.0 here")
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """.trimIndent())
+
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <subprojects>
+                           <subproject>m1</subproject>
+                       </subprojects>
+                       """.trimIndent())
+    val events = ArrayList<BuildEvent>()
+    val myTestSyncViewManager = object : SyncViewManager(project) {
+      override fun onEvent(buildId: Any, event: BuildEvent) {
+        events.add(event)
+      }
+    }
+
+    project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
+    importProjectAsync()
+
+    val issues = events.filterIsInstance<BuildIssueEvent>().filter { it.kind == MessageEvent.Kind.WARNING }
+    assertSize(1, issues)
+    assertEquals(SyncBundle.message("maven.sync.incorrect.model.version"), issues[0].issue.title)
+
+  }
 
   @Test
   fun testSystemDependencyWithoutPath() = runBlocking {
@@ -51,8 +94,8 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
     forMaven4 {
       val expected = arrayOf(
-        "'dependencies.dependency.systemPath' for junit:junit:jar is missing.",
-        "'dependencies.dependency.scope' for junit:junit:jar declares usage of deprecated 'system' scope ",
+        "'dependencies.dependency.systemPath' for groupId='junit', artifactId='junit', type='jar' is missing.",
+        "'dependencies.dependency.scope' for groupId='junit', artifactId='junit', type='jar' declares usage of deprecated 'system' scope",
       )
       assertProblems(projectsManager.findProject(projectPom)!!, *expected)
     }
@@ -60,7 +103,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testResetDependenciesWhenProjectContainsErrors() = runBlocking {
-    //Registry.get("maven.server.debug").setValue(true);
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -193,14 +235,19 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
     assertModules("project")
     val root = rootProjects[0]
-    val problems = if (isMaven4)
+    val expectedProblems = if (isModel410())
       arrayOf(
-        "'artifactId' with value '\${undefined}' does not match a valid coordinate id pattern.",
         "'artifactId' contains an expression but should be a constant.",
+        "1 problem was     - [FATAL] 'artifactId' contains an expression but should be a constant. @ line 7, column 1"
+      )
+    else if (isMaven4)
+      arrayOf(
+        "Invalid Collect Request: null -> [] < [central-mirror (https://cache-redirector.jetbrains.com/repo1.maven.org/maven2, default, releases)]",
       )
     else
       arrayOf("'artifactId' with value '\${undefined}' does not match a valid id pattern.")
-    assertProblems(root, *problems)
+
+    assertProblems(root, *expectedProblems)
   }
 
   @Test
@@ -223,7 +270,9 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     val root = rootProjects[0]
     val problems = root.problems
     assertFalse(problems.isEmpty())
-    assertModuleLibDeps("project", "Maven: group:artifact:1")
+    forMaven3 {
+      assertModuleLibDeps("project", "Maven: group:artifact:1")
+    }
   }
 
   @Test
@@ -244,7 +293,11 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     val root = rootProjects[0]
     val problems = root.problems
     UsefulTestCase.assertSize(1, problems)
-    assertTrue(problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
+    val description = if (mavenVersionIsOrMoreThan("3.9.0"))
+      "Could not find artifact test:parent:pom:1"
+    else
+      "Non-resolvable parent POM for test:project:1"
+    assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
   }
 
   @Test
@@ -268,7 +321,11 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     val problems = root.problems
     forMaven3 {
       UsefulTestCase.assertSize(2, problems)
-      assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains("Could not find artifact test:parent:pom:1"))
+      val description = if (mavenVersionIsOrMoreThan("3.9.0"))
+        "Could not find artifact test:parent:pom:1"
+      else
+        "Non-resolvable parent POM for test:project:1"
+      assertTrue(problems[0]!!.description, problems[0]!!.description!!.contains(description))
       assertTrue(problems[1]!!.description, problems[1]!!.description == "Module 'foo' not found")
     }
     forMaven4 {
@@ -295,17 +352,45 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertNotNull("Expected: Module 'foo' not found", problem)
   }
 
+
+  @Test
+  fun testOldModuleTagWithNewModel() = runBlocking {
+    // invalid packaging
+    assumeModel_4_1_0("applicable only for new 4.1.0 model")
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>foo</module>
+                       </modules>
+                       """.trimIndent())
+
+    createModulePom("foo", """
+      <groupId>test</groupId>
+      <artifactId>foo</artifactId>
+      <version>1</version>
+      """.trimIndent())
+    importProjectAsync()
+    assertModules("project", "foo")
+
+    val root = rootProjects[0]
+    assertProblems(root, "'modules' deprecated modules element, use subprojects instead")
+  }
+
+
   @Test
   fun testInvalidProjectModel() = runBlocking {
-    // invalid packaging
+    assumeModel_4_0_0("IDEA-379706")
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>jar</packaging>
-                       <modules>
-                         <module>foo</module>
-                       </modules>
+                       <$modulesTag>
+                         <$moduleTag>foo</$moduleTag>
+                       </$modulesTag>
                        """.trimIndent())
 
     createModulePom("foo", """
@@ -327,9 +412,9 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
-                       <modules>
-                         <module>foo</module>
-                       </modules>
+                       <$modulesTag>
+                         <$moduleTag>foo</$moduleTag>
+                       </$modulesTag>
                        """.trimIndent())
 
     createModulePom("foo", """
@@ -491,10 +576,10 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
                        <version>1</version>
-                       <modules>
-                         <module>m1</module>
-                         <module>m2</module>
-                       </modules>
+                       <$modulesTag>
+                         <$moduleTag>m1</$moduleTag>
+                         <$moduleTag>m2</$moduleTag>
+                       </$modulesTag>
                        """.trimIndent())
 
     createModulePom("m1", """
@@ -571,10 +656,10 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
                        <version>1</version>
-                       <modules>
-                         <module>m1</module>
-                         <module>m2</module>
-                       </modules>
+                       <$modulesTag>
+                         <$moduleTag>m1</$moduleTag>
+                         <$moduleTag>m2</$moduleTag>
+                       </$modulesTag>
                        """.trimIndent())
 
     createModulePom("m1", """
@@ -611,11 +696,11 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
                        <version>1</version>
-                       <modules>
-                         <module>m1</module>
-                         <module>m2</module>
-                         <module>m3</module>
-                       </modules>
+                       <$modulesTag>
+                         <$moduleTag>m1</$moduleTag>
+                         <$moduleTag>m2</$moduleTag>
+                         <$moduleTag>m3</$moduleTag>
+                       </$modulesTag>
                        """.trimIndent())
 
     createModulePom("m1", """
@@ -737,10 +822,10 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
                        <version>1</version>
-                       <modules>
-                         <module>m1</module>
-                         <module>m2</module>
-                       </modules>
+                       <$modulesTag>
+                         <$moduleTag>m1</$moduleTag>
+                         <$moduleTag>m2</$moduleTag>
+                       </$modulesTag>
                        """.trimIndent())
 
     createModulePom("m1",
@@ -934,7 +1019,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   private fun assertProblems(project: MavenProject, vararg expectedProblems: String) {
     val actualProblems: MutableList<String?> = ArrayList()
     for (each in project.problems) {
-      actualProblems.add(each.description)
+      actualProblems.add(each.description?.trim()?.lines()?.joinToString(""))
     }
     assertOrderedElementsAreEqual(actualProblems, *expectedProblems)
   }

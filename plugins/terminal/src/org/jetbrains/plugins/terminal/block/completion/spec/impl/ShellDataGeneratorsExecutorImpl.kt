@@ -6,16 +6,17 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Scheduler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Key
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import java.time.Duration
 
-internal class ShellDataGeneratorsExecutorImpl(session: BlockTerminalSession) : ShellDataGeneratorsExecutor {
+@ApiStatus.Internal
+class ShellDataGeneratorsExecutorImpl(session: BlockTerminalSession) : ShellDataGeneratorsExecutor {
   private val cache: Cache<String, Any> = Caffeine.newBuilder()
     .maximumSize(10)
     .expireAfterAccess(Duration.ofMinutes(5))
@@ -61,7 +62,5 @@ internal class ShellDataGeneratorsExecutorImpl(session: BlockTerminalSession) : 
 
   companion object {
     private val LOG: Logger = logger<ShellDataGeneratorsExecutorImpl>()
-
-    val KEY: Key<ShellDataGeneratorsExecutorImpl> = Key.create("IJShellGeneratorsExecutor")
   }
 }

@@ -1,31 +1,37 @@
 ### auto-generated section `build intellij.platform.jewel.detektPlugin` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "detekt-plugin_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
+)
+
+resourcegroup(
+  name = "detekt-plugin_test_resources",
+  srcs = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
 )
 
 jvm_library(
   name = "detekt-plugin",
   module_name = "intellij.platform.jewel.detektPlugin",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/kotlin/**/*.form"], allow_empty = True),
+  resources = [":detekt-plugin_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",
-  ],
-  runtime_deps = [":detekt-plugin_resources"]
+  ]
 )
 
 jvm_library(
   name = "detekt-plugin_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java", "src/test/kotlin/**/*.form"], allow_empty = True),
+  resources = [":detekt-plugin_test_resources"],
   associates = [":detekt-plugin"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -35,12 +41,16 @@ jvm_library(
     "//libraries/junit5",
     "@lib//:assert_j",
     "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-test",
-  ],
-  runtime_deps = [":detekt-plugin_resources"]
+    "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-core",
+  ]
 )
+### auto-generated section `build intellij.platform.jewel.detektPlugin` end
+
+### auto-generated section `test intellij.platform.jewel.detektPlugin` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "detekt-plugin_test",
   runtime_deps = [":detekt-plugin_test_lib"]
 )
-### auto-generated section `build intellij.platform.jewel.detektPlugin` end
+### auto-generated section `test intellij.platform.jewel.detektPlugin` end

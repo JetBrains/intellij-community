@@ -3,17 +3,15 @@ package org.jetbrains.jps.builders.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.ModuleBasedBuildTargetType;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<ModuleBuildTarget> {
   public static final JavaModuleBuildTargetType PRODUCTION = new JavaModuleBuildTargetType("java-production", false);
@@ -51,21 +49,15 @@ public final class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<
   }
 
   private final class Loader extends BuildTargetLoader<ModuleBuildTarget> {
-    private final @Unmodifiable Map<String, JpsModule> modules;
+    private final @NotNull JpsProject myProject;
 
     Loader(JpsModel model) {
-      List<JpsModule> moduleList = model.getProject().getModules();
-      Map<String, JpsModule> modules = new HashMap<>(moduleList.size());
-      for (JpsModule module : moduleList) {
-        modules.put(module.getName(), module);
-      }
-
-      this.modules = modules;
+      myProject = model.getProject();
     }
 
     @Override
     public @Nullable ModuleBuildTarget createTarget(@NotNull String targetId) {
-      JpsModule module = modules.get(targetId);
+      JpsModule module = myProject.findModuleByName(targetId);
       return module == null ? null : new ModuleBuildTarget(module, JavaModuleBuildTargetType.this);
     }
   }

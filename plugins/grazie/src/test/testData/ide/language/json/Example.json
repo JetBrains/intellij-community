@@ -1,7 +1,9 @@
 {
+  "escape": "\uAcad<TYPO descr="Typo: In word 'demically'">demically</TYPO>, \t<TYPO descr="Typo: In word 'asteful'">asteful</TYPO>, \b<TYPO descr="Typo: In word 'rawn'">rawn</TYPO>, Wo\n<TYPO descr="Typo: In word 'derful'">derful</TYPO>",
   "menu": {
     "id": "file",
     "value": "File",
+    "knownPhrases": "Apache APISIX or Apache Gobblin",
     "popup": {
       "menu_item": [
         {

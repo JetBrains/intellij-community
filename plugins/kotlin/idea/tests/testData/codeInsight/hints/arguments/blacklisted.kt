@@ -15,4 +15,6 @@ fun foo() {
         add("a")
     }
     println("Kodee")
+    Pair("one", 2)
+    Triple(1, 2, 3)
 }

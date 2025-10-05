@@ -9,6 +9,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import java.io.File
+import java.nio.file.Files
 
 class ValidationRulesStorageUpdateTest : UsefulTestCase() {
   private var myFixture: CodeInsightTestFixture? = null
@@ -36,13 +37,19 @@ class ValidationRulesStorageUpdateTest : UsefulTestCase() {
 
   private fun getTestDataRoot() = PlatformTestUtil.getPlatformTestDataPath() + "fus/metadata/storage"
 
+  private fun getDictionaryTestDataRoot() = PlatformTestUtil.getPlatformTestDataPath() + "fus/metadata/dictionaries"
+
   private fun getTestDataFileOrDefault(withDefaultFiles: Boolean, extension: String): File {
-    return if (withDefaultFiles) getDefaultTestDataFile(extension) else getTestDataFile(extension)
+    return if (withDefaultFiles) getDefaultTestDataFile(extension) else getTestDataFile(getTestDataRoot(), extension)
   }
 
-  private fun getTestDataFile(extension: String): File {
+  private fun getDictionaryTestDataFile(extension: String): File {
+    return getTestDataFile(getDictionaryTestDataRoot(), extension)
+  }
+
+  private fun getTestDataFile(testDataRoot: String, extension: String): File {
     val testName = getTestName(false).trimStart('_')
-    return File(getTestDataRoot() + "/" + testName + "." + extension)
+    return File("$testDataRoot/$testName.$extension")
   }
 
   private fun getDefaultTestDataFile(extension: String): File {
@@ -59,6 +66,16 @@ class ValidationRulesStorageUpdateTest : UsefulTestCase() {
     val server = getTestDataFileOrDefault(withDefaultFiles, "server.json")
     if (server.exists()) {
       builder.withServerContent(FileUtil.loadFile(server))
+    }
+
+    val cachedDictionaryFile = getDictionaryTestDataFile("cached.ndjson")
+    if (cachedDictionaryFile.exists()) {
+      builder.withCachedDictionary(cachedDictionaryFile)
+    }
+
+    val serverDictionaryFile = getDictionaryTestDataFile("server.ndjson")
+    if (serverDictionaryFile.exists()) {
+      builder.withServerDictionary(Files.readString(serverDictionaryFile.toPath()))
     }
     return builder
   }
@@ -137,5 +154,25 @@ class ValidationRulesStorageUpdateTest : UsefulTestCase() {
       withServerLastModified(1583852318336).
       build()
     doTest(storage, "cached.test.group")
+  }
+
+  fun test_cached_dictionary_is_newer_than_server() {
+    val storage = newBuilder(false).
+      withCachedLastModified(1583852308336).
+      withServerLastModified(1).
+      build()
+    doTest(storage)
+    val dictionary = storage.dictionaryStorage?.getDictionaryByName("cached_dictionary_is_newer_than_server.cached.ndjson")
+    assertTrue(dictionary?.contains("value5") ?: false)
+  }
+
+  fun test_cached_dictionary_is_older_than_server() {
+    val storage = newBuilder(false).
+      withCachedLastModified(1).
+      withServerLastModified(1583852308336).
+      build()
+    doTest(storage)
+    val dictionary = storage.dictionaryStorage?.getDictionaryByName("cached_dictionary_is_older_than_server.cached.ndjson")
+    assertFalse(dictionary?.contains("value5") ?: true)
   }
 }

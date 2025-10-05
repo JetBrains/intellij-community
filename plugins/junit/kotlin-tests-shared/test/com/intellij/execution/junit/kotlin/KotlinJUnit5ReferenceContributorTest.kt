@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin
 
 import com.intellij.junit.testFramework.JUnit5ReferenceContributorTestBase
@@ -51,6 +51,28 @@ abstract class KotlinJUnit5ReferenceContributorTest : JUnit5ReferenceContributor
           names = ["AAA", "B<caret>BB"]
         )
         fun valid() {}
+      }
+    """.trimIndent())
+  }
+
+  fun `test resolve to source field`() {
+    myFixture.assertResolvableReference(JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.params.ParameterizedTest
+      import org.junit.jupiter.params.provider.FieldSource
+
+      class ParameterizedFieldSourceTestsDemo {
+
+        @ParameterizedTest
+        @FieldSource("aaa", "bbb<caret>2")
+        fun testWithProvider(abc: String) {}
+
+        companion object {
+          @JvmField
+          val aaa: List<String> = listOf("something1", "something2")
+
+          @JvmField
+          val bbb2: List<String> = listOf("something1", "something2")
+        }
       }
     """.trimIndent())
   }

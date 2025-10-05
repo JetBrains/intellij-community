@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -95,6 +96,9 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
 
   @Override
   protected @Nullable PsiFile getPsiInner(@NotNull Language target) {
+    // todo fix tests and uncomment this assertion
+    //ThreadingAssertions.assertReadAccess();
+
     if (target != getBaseLanguage()) {
       return null;
     }
@@ -102,6 +106,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (file == null) {
       file = createFile();
       if (file == null) {
+        ThreadingAssertions.assertReadAccess();
         file = PsiUtilCore.NULL_PSI_FILE;
       }
       boolean set = myPsiFileUpdater.compareAndSet(this, null, file);
@@ -143,6 +148,9 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   private PsiFile createFile() {
+    // todo fix tests and uncomment this
+    //ThreadingAssertions.assertReadAccess();
+
     try {
       return shouldCreatePsi() ? createFile(getManager().getProject(), getVirtualFile(), getFileType()) : null;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -180,18 +180,18 @@ public abstract class PatchAction {
   }
 
   protected ValidationResult doValidateNotChanged(File toFile, ValidationResult.Action action) throws IOException {
-    if (toFile.exists()) {
-      if (isModified(toFile)) {
+    if (!isOptional()) {
+      if (!toFile.exists()) {
+        ValidationResult.Option[] options = calculateOptions();
+        ValidationResult.Kind kind = isCritical() ? ValidationResult.Kind.CONFLICT : ValidationResult.Kind.ERROR;
+        return new ValidationResult(kind, getReportPath(), action, UpdaterUI.message("file.absent"), options);
+      }
+      else if (isModified(toFile)) {
         ValidationResult.Option[] options = calculateOptions();
         String details = "expected 0x" + Long.toHexString(myChecksum) + ", actual 0x" + Long.toHexString(myPatch.digestFile(toFile));
         ValidationResult.Kind kind = isCritical() ? ValidationResult.Kind.CONFLICT : ValidationResult.Kind.ERROR;
         return new ValidationResult(kind, getReportPath(), action, UpdaterUI.message("file.modified"), details, options);
       }
-    }
-    else if (!isOptional()) {
-      ValidationResult.Option[] options = calculateOptions();
-      ValidationResult.Kind kind = isCritical() ? ValidationResult.Kind.CONFLICT : ValidationResult.Kind.ERROR;
-      return new ValidationResult(kind, getReportPath(), action, UpdaterUI.message("file.absent"), options);
     }
 
     return null;
@@ -253,11 +253,7 @@ public abstract class PatchAction {
     if (o == null || getClass() != o.getClass()) return false;
 
     PatchAction that = (PatchAction)o;
-
-    if (myChecksum != that.myChecksum) return false;
-    if (!Objects.equals(myPath, that.myPath)) return false;
-
-    return true;
+    return myChecksum == that.myChecksum && Objects.equals(myPath, that.myPath);
   }
 
   @Override

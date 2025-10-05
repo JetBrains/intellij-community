@@ -1,9 +1,15 @@
 ### auto-generated section `build intellij.java.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+create_kotlinc_options(
+  name = "custom_impl",
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,6 +18,8 @@ jvm_library(
   module_name = "intellij.java.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":impl_resources"],
+  kotlinc_opts = ":custom_impl",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -55,12 +63,12 @@ jvm_library(
     "//jps/model-impl",
     "//java/java-analysis-impl:analysis-impl",
     "//platform/external-system-api:externalSystem",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:velocity",
     "//java/java-structure-view:structureView",
     "//spellchecker",
     "//platform/built-in-server:builtInServer-impl",
-    "@lib//:gson",
+    "//libraries/gson",
     "//java/compiler/openapi:java-compiler",
     "//platform/object-serializer:objectSerializer-annotations",
     "//platform/external-system-impl:externalSystem-impl",
@@ -70,7 +78,6 @@ jvm_library(
     "//plugins/copyright",
     "@lib//:stream_ex",
     "//platform/statistics",
-    "//platform/inspect",
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
@@ -81,7 +88,7 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/platform-impl/internal",
     "//platform/backend/workspace",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/platform-impl:ide-impl",
     "//platform/markdown-utils",
     "@lib//:jetbrains-markdown",
@@ -103,9 +110,6 @@ jvm_library(
     "//java/java-structure-view:structureView",
     "//platform/statistics",
   ],
-  runtime_deps = [
-    ":impl_resources",
-    "@lib//:jaxb-runtime",
-  ]
+  runtime_deps = ["@lib//:jaxb-runtime"]
 )
 ### auto-generated section `build intellij.java.impl` end

@@ -111,7 +111,6 @@ public class ValidationFunctionsTest {
       {ARTIFACT_SIMPLE_VALIDATOR, "EXAMPLE", true, SHOULD_BE_VALID},
       {ARTIFACT_SIMPLE_VALIDATOR, "_example", true, SHOULD_BE_VALID},
       {ARTIFACT_SIMPLE_VALIDATOR, "azAZ09-_", true, "all allowed symbols"},
-      {ARTIFACT_SIMPLE_VALIDATOR, "1example", false, "digit at start"},
       {ARTIFACT_SIMPLE_VALIDATOR, "example.", false, "dot at end"},
       {ARTIFACT_SIMPLE_VALIDATOR, "example.example", false, "dot at center"},
       {ARTIFACT_SIMPLE_VALIDATOR, ".example", false, "dot at start"},

@@ -147,7 +147,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new RedundantMethodOverrideVisitor();
   }
 

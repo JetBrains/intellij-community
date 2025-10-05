@@ -5,7 +5,7 @@ jvm_library(
   name = "ide-util-io-impl",
   module_name = "intellij.platform.ide.util.io.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -16,7 +16,7 @@ jvm_library(
     "//platform/util",
     "@lib//:proxy-vole",
     "@lib//:jna",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
   ],
   exports = ["//platform/platform-util-io:ide-util-io"],
   runtime_deps = ["@lib//:rhino"]

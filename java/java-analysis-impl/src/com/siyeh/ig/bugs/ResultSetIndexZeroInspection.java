@@ -44,7 +44,7 @@ public final class ResultSetIndexZeroInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ResultSetIndexZeroVisitor();
   }
 

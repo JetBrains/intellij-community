@@ -70,6 +70,6 @@ fun shellStartupOptions(workingDirectory: String?, modifier: ((ShellStartupOptio
 }
 
 @JvmOverloads
-fun createEnvVariablesMap(content: Map<String, String> = emptyMap()): Map<String, String> {
+fun createEnvVariablesMap(content: Map<String, String> = emptyMap()): MutableMap<String, String> {
   return if (SystemInfo.isWindows) CollectionFactory.createCaseInsensitiveStringMap(content) else HashMap(content)
 }

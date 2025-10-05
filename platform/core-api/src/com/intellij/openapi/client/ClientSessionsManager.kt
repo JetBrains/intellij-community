@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -140,8 +141,11 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
         // it may happen that a new session of a client is handled earlier than its previous session is disposed and removed.
         // It happens because `disposable` of the prev session is disposed with some delay in WireStorage.terminateWire (it's scheduled with launch {}).
         LOG.warn("Session $oldSession with such clientId $clientId is already registered and will be replaced with $session")
-        scope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          writeIntentReadAction {
+        if (EDT.isCurrentThreadEdt()) {
+          Disposer.dispose(oldSession)
+        }
+        else {
+          scope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             Disposer.dispose(oldSession)
           }
         }
@@ -168,10 +172,4 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "Use `!session.isDisposed` instead or better run coroutine from per-client scope that will be cancelled when a client has gone",
-              level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("!session.isDisposed"))
-  fun isValid(clientId: ClientId): Boolean {
-    return getSession(clientId)?.isDisposed == false
-  }
 }

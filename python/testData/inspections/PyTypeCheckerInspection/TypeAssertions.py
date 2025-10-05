@@ -37,8 +37,8 @@ def test():
         :type x: int or str
         """
     x_1 = f_1()
-    print_int(x_1)  # Weaker union types
-    print_int_or_str(x_1)  # Weaker union types
+    print_int(<warning descr="Expected type 'int', got 'Union[int, str, None]' instead">x_1</warning>)
+    print_int_or_str(<warning descr="Expected type 'Union[int, str]', got 'Union[int, str, None]' instead">x_1</warning>)
     if isinstance(x_1, int):
         print_int(x_1)
     if isinstance(x_1, str):

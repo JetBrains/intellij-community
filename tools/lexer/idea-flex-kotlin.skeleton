@@ -3,7 +3,7 @@ companion object {
   private const val YYEOF = -1 
 
   /** initial size of the lookahead buffer */
---- private static final int ZZ_BUFFERSIZE = ...; L1
+--- private const val ZZ_BUFFERSIZE = ... L1
 
   /** lexical states */
 ---  lexical states, charmap L2
@@ -201,6 +201,17 @@ companion object {
 
   private fun charCount(codePoint: Int): Int = if (codePoint < 0x10000) 1 else 2
 
+  private fun Char.Companion.codePointBefore(seq: CharSequence, index: Int): Int {
+    var i = index - 1
+    val c2 = seq[i];
+    if (c2.isLowSurrogate() && index > 0) {
+      val c1 = seq[i - 1];
+      if (c1.isHighSurrogate()) {
+        return Char.toCodePoint(c1, c2);
+      }
+    }
+    return c2.code
+  }
 
   /**
    * Reports an error that occurred while scanning.
@@ -294,7 +305,6 @@ companion object {
         }
       }
     }
-    return null
   }
 
 --- main L20

@@ -1,0 +1,8 @@
+pluginManagement {
+  repositories {
+    maven {
+      url = uri('https://packages.jetbrains.team/maven/p/py/public-maven')
+    }
+    gradlePluginPortal()
+  }
+}

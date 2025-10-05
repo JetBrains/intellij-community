@@ -57,30 +57,6 @@ Compiling files:
 End of files
 Exit code: OK
 ------------------------------------------
-
-================ Step #6 =================
-
-Cleaning output files:
-  out/production/module/META-INF/module.kotlin_module
-  out/production/module/test/ConstKt.class
-End of files
-Compiling files:
-  src/const.kt
-End of files
-Exit code: OK
-------------------------------------------
-
-================ Step #7 =================
-
-Cleaning output files:
-  out/production/module/META-INF/module.kotlin_module
-  out/production/module/test/ConstKt.class
-End of files
-Compiling files:
-  src/const.kt
-End of files
-Exit code: OK
-------------------------------------------
 Cleaning output files:
   out/production/module/META-INF/module.kotlin_module
   out/production/module/test/Usage.class

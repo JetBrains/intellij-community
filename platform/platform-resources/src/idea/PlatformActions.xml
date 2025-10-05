@@ -129,13 +129,17 @@
       <action id="SwitcherFallback" class="com.intellij.ide.actions.Switcher" use-shortcut-of="Switcher"/>
       <action id="SwitcherForwardFallback" class="com.intellij.ide.actions.ShowSwitcherForwardAction" use-shortcut-of="SwitcherForward"/>
       <action id="SwitcherBackwardFallback" class="com.intellij.ide.actions.ShowSwitcherBackwardAction" use-shortcut-of="SwitcherBackward"/>
-      <action id="SwitcherRecentEditedChangedToggleCheckBoxFallback" class="com.intellij.ide.actions.SwitcherToggleOnlyEditedFilesAction" use-shortcut-of="SwitcherRecentEditedChangedToggleCheckBox"/>
-      <action id="SwitcherIterateItemsFallback" class="com.intellij.ide.actions.SwitcherIterateThroughItemsAction" use-shortcut-of="SwitcherIterateItems"/>
+      <action id="SwitcherRecentEditedChangedToggleCheckBoxFallback" class="com.intellij.ide.actions.SwitcherToggleOnlyEditedFilesAction"
+              use-shortcut-of="SwitcherRecentEditedChangedToggleCheckBox"/>
+      <action id="SwitcherIterateItemsFallback" class="com.intellij.ide.actions.SwitcherIterateThroughItemsAction"
+              use-shortcut-of="SwitcherIterateItems"/>
       <action id="SwitcherNextProblemFallback" use-shortcut-of="GotoNextError" class="com.intellij.ide.actions.SwitcherNextProblemAction"/>
-      <action id="SwitcherPreviousProblemFallback" use-shortcut-of="GotoPreviousError" class="com.intellij.ide.actions.SwitcherPreviousProblemAction"/>
+      <action id="SwitcherPreviousProblemFallback" use-shortcut-of="GotoPreviousError"
+              class="com.intellij.ide.actions.SwitcherPreviousProblemAction"/>
       <action id="DeleteRecentFilesFallback" use-shortcut-of="$Delete" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="RecentFilesFallback" class="com.intellij.ide.actions.ShowRecentFilesAction" use-shortcut-of="RecentFiles"/>
-      <action id="RecentChangedFilesFallback" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction" use-shortcut-of="RecentChangedFiles"/>
+      <action id="RecentChangedFilesFallback" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction"
+              use-shortcut-of="RecentChangedFiles"/>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
@@ -303,6 +307,7 @@
 
       <action id="EditorFocusGutter" class="com.intellij.openapi.editor.actions.FocusGutterAction"/>
       <action id="EditorShowGutterIconTooltip" class="com.intellij.openapi.editor.actions.ShowGutterIconTooltipAction"/>
+      <action id="EditorCenterView" class="com.intellij.openapi.editor.impl.EditorCenterViewToggleAction"/>
     </group>
 
     <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="AllIcons.Actions.Expandall"/>
@@ -427,6 +432,8 @@
       <override-text place="EditorTabPopup"/>
     </action>
 
+    <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
+    <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
     <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
     <action id="PinActiveTabToggle" class="com.intellij.ide.actions.PinActiveTabAction$Toggle"/>
 
@@ -553,7 +560,8 @@
           <reference ref="SelectNextOccurrence"/>
           <action id="UnselectPreviousOccurrence" class="com.intellij.openapi.editor.actions.UnselectPreviousOccurrenceAction"/>
           <reference ref="ToggleFindInSelection"/>
-          <action id="ToggleScrollToResultsDuringTypingAction" class="com.intellij.find.editorHeaderActions.ToggleScrollToResultsDuringTypingAction"/>
+          <action id="ToggleScrollToResultsDuringTypingAction"
+                  class="com.intellij.find.editorHeaderActions.ToggleScrollToResultsDuringTypingAction"/>
           <separator/>
           <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
           <action id="FindPrevWordAtCaret" class="com.intellij.openapi.editor.actions.FindPrevWordAtCaretAction"/>
@@ -780,10 +788,33 @@
           <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.tabInEditor.ToolWindowTabInEditorAction"
                   icon="AllIcons.Actions.OpenNewTab"/>
           <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction" use-shortcut-of="PinActiveTab"/>
-          <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
           <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
           <action id="MaximizeToolWindow" class="com.intellij.openapi.wm.impl.MaximizeToolWindowAction"/>
           <action id="DockToolWindow" class="com.intellij.openapi.wm.impl.DockToolWindowAction"/>
+          <separator/>
+          <reference ref="NextTab"/>
+          <reference ref="PreviousTab"/>
+          <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
+          <action id="TW.CloseOtherTabs" class="com.intellij.ide.actions.ToolWindowCloseOtherTabsAction"
+                  use-shortcut-of="CloseAllEditorsButActive"/>
+          <action id="TW.CloseAllTabs" class="com.intellij.ide.actions.ToolWindowCloseAllTabsAction" use-shortcut-of="CloseAllEditors"/>
+          <separator/>
+          <action id="TW.SplitRight" class="com.intellij.ide.actions.ToolWindowSplitRightAction" use-shortcut-of="SplitVertically"
+                  icon="AllIcons.Actions.SplitVertically">
+            <synonym key="action.SplitVertically.synonym"/>
+          </action>
+          <action id="TW.SplitAndMoveRight" class="com.intellij.ide.actions.ToolWindowSplitAndMoveRightAction"
+                  use-shortcut-of="MoveTabRight"/>
+          <action id="TW.SplitDown" class="com.intellij.ide.actions.ToolWindowSplitDownAction" use-shortcut-of="SplitHorizontally"
+                  icon="AllIcons.Actions.SplitHorizontally">
+            <synonym key="action.SplitHorizontally.synonym"/>
+          </action>
+          <action id="TW.SplitAndMoveDown" class="com.intellij.ide.actions.ToolWindowSplitAndMoveDownAction" use-shortcut-of="MoveTabDown"/>
+          <action id="TW.Unsplit" class="com.intellij.ide.actions.ToolWindowUnsplitAction" use-shortcut-of="Unsplit"/>
+          <action id="TW.MoveToNextSplitter" class="com.intellij.ide.actions.ToolWindowMoveToNextSplitterAction"
+                  use-shortcut-of="NextSplitter"/>
+          <action id="TW.MoveToPreviousSplitter" class="com.intellij.ide.actions.ToolWindowMoveToPreviousSplitterAction"
+                  use-shortcut-of="PrevSplitter"/>
           <separator/>
           <group id="TW.ViewModeGroup" class="com.intellij.ide.actions.ToolWindowViewModeAction$Group" popup="true"/>
           <group id="TW.MoveToGroup" class="com.intellij.ide.actions.ToolWindowMoveAction$Group"/>
@@ -798,8 +829,8 @@
         </group>
 
         <group id="EditorTabsGroup" popup="true">
-          <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
-          <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
+          <reference ref="NextTab"/>
+          <reference ref="PreviousTab"/>
           <action id="PinActiveEditorTab" class="com.intellij.ide.actions.PinActiveTabAction$EW" use-shortcut-of="PinActiveTab"/>
           <action id="KeepTabOpen" class="com.intellij.ide.actions.KeepTabOpenAction"/>
           <action id="TabList" class="com.intellij.ide.actions.TabListAction"/>
@@ -894,7 +925,9 @@
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
         <separator/>
-        <action id="OpenLog" internal="true" class="com.intellij.internal.OpenLogAction"/>
+        <action id="OpenLog" internal="true" class="com.intellij.internal.OpenLogAction">
+          <synonym key="action.OpenLog.Show.text"/>
+        </action>
         <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction">
           <synonym key="action.ShowLog.Finder.text"/>
           <synonym key="action.ShowLog.Explorer.text"/>
@@ -908,7 +941,7 @@
           <action id="Performance.MemTester" class="com.intellij.ide.actions.MemTestAction"/>
           <separator/>
           <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
-          <action id="BrowseSpecialPaths" class="com.intellij.diagnostic.specialPaths.BrowseSpecialPathsAction" />
+          <action id="BrowseSpecialPaths" class="com.intellij.diagnostic.specialPaths.BrowseSpecialPathsAction"/>
           <action id="CollectTroubleshootingInformation" class="com.intellij.troubleshooting.ui.CollectTroubleshootingInformationAction"
                   internal="true"/>
         </group>
@@ -1285,6 +1318,7 @@
 
     <group id="Internal" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true">
+        <action class="com.intellij.internal.ExceptionShowCaseAction" internal="true" description="Show exception" text="Show Exception"/>
         <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"
                 text="Drop an Error" description="Hold down SHIFT for a sequence of exceptions"/>
         <action id="DropAnErrorWithAttachments" internal="true" class="com.intellij.diagnostic.DropAnErrorWithAttachmentsAction"
@@ -1300,6 +1334,16 @@
         <action id="PrintModulesAndEntitySources" internal="true"
                 class="com.intellij.internal.PrintModulesAndEntitySources"
                 text="Print Modules and Entity Sources to Log"/>
+        <action id="WorkspaceEntitiesJsonClipboard" internal="true"
+                class="com.intellij.workspaceModel.ide.impl.jsonDump.DumpWorkspaceEntitiesToClipboardAction"
+                text="Dump Workspace Entities to Clipboard as Json"/>
+        <action id="WorkspaceEntitiesJsonLog" internal="true"
+                class="com.intellij.workspaceModel.ide.impl.jsonDump.DumpWorkspaceEntitiesToLogAction"
+                text="Dump Workspace Entities to Log as Json"/>
+        <action id="WorkspaceEntitiesJsonLogFile" internal="true"
+                class="com.intellij.workspaceModel.ide.impl.jsonDump.DumpWorkspaceEntitiesToLogFileAction"
+                text="Dump Workspace Entities to a File as Json"/>
+
       </group>
       <action id="ShowEdtUtilizationChart" internal="true" class="com.intellij.internal.ShowEdtUtilizationChartAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
@@ -1554,7 +1598,8 @@
       <synonym key="action.SelectOpenedFileInProjectView.text"/>
     </action>
 
-    <action id="ClearAllNotifications" class="com.intellij.notification.impl.actions.ClearAllNotificationsAction" icon="AllIcons.Actions.GC"/>
+    <action id="ClearAllNotifications" class="com.intellij.notification.impl.actions.ClearAllNotificationsAction"
+            icon="AllIcons.Actions.GC"/>
 
     <group id="ProjectViewToolbar">
       <separator/>
@@ -1699,7 +1744,6 @@
     </group>
 
     <action class="com.intellij.diagnostic.ResetWindowsDefenderNotification" id="ResetWindowsDefenderNotification"/>
-    <action class="com.intellij.diagnostic.FixWSLFirewallAction" id="FixWSLFirewall"/>
 
     <group id="UpdateEntryPointGroup"/>
     <group id="SettingsEntryPointGroup" class="com.intellij.ide.actions.SettingsEntryPointGroup">
@@ -1734,7 +1778,7 @@
     </group>
 
     <group id="MainToolbarQuickActions" searchable="false" popup="true">
-      <reference ref = "MainToolbarQuickActionsRaw"/>
+      <reference ref="MainToolbarQuickActionsRaw"/>
     </group>
 
     <group id="ChangeProjectColorActionGroup"
@@ -1777,6 +1821,7 @@
       <action id="DumpVfsInfoForExcludedFiles" internal="true" class="com.intellij.internal.DumpVfsInfoForExcludedFilesAction"/>
       <action id="DumpVfsInfoForFsRoot" internal="true" class="com.intellij.internal.DumpVfsInfoForFsRootAction"/>
       <action id="DumpWatchedRoots" internal="true" class="com.intellij.openapi.roots.impl.DumpWatchedRootsAction"/>
+      <action id="CountVfsFileChildrenAction" internal="true" class="com.intellij.internal.CountVfsFileChildrenAction"/>
       <separator/>
       <action internal="true" id="PruneEmptyDirectories" class="com.intellij.ide.actions.PruneEmptyDirectoriesAction"/>
       <action internal="true" id="FixLineSeparators" class="com.intellij.ide.actions.FixLineSeparatorsAction"/>
@@ -1785,21 +1830,23 @@
     </group>
     <action internal="true" id="ShowUsageFeatures" class="com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction"/>
 
-    <action text="Show Workspace File State" id="ShowWorkspaceFileState" class="com.intellij.workspaceModel.ide.ShowWorkspaceFileStateAction" internal="true"/>
+    <action text="Show Workspace File State" id="ShowWorkspaceFileState"
+            class="com.intellij.workspaceModel.ide.ShowWorkspaceFileStateAction" internal="true"/>
 
     <!-- copy of CheckVfsSanityInMenu: !internal so could be invoked via 'search everywhere' -->
     <action id="CheckVfsSanity" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>
-    <action id="PaintEditorLineStripeComponentAction" class="com.intellij.codeInsight.editorLineStripeHint.PaintEditorLineStripeHintComponentAction" internal="true"/>
+    <action id="PaintEditorLineStripeComponentAction"
+            class="com.intellij.codeInsight.editorLineStripeHint.PaintEditorLineStripeHintComponentAction" internal="true"/>
     <action id="ShowInlineCompletionStatistics" internal="true"
             class="com.intellij.codeInsight.inline.completion.statistics.ShowCompletionLocalStatisticsAction"/>
-    
+
     <group id="CustomizeMainToolbarGroup" popup="true" searchable="false">
       <action id="CustomizeMainToolbarAction" class="com.intellij.ide.actions.CustomizeMainToolbarAction"/>
       <separator key="group.MainToolbarQuickActions.text"/>
       <reference ref="MainToolbarQuickActionsRaw"/>
     </group>
 
-    <action id="UndoDumpAction" internal="true" class="com.intellij.ide.actions.UndoDumpAction" />
+    <action id="UndoDumpAction" internal="true" class="com.intellij.ide.actions.UndoDumpAction"/>
 
     <action id="DisableMinimap" class="com.intellij.ide.minimap.actions.DisableMinimapAction"/>
     <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>
@@ -1815,9 +1862,14 @@
       <add-to-group group-id="RevealGroup" anchor="last"/>
       <override-text place="RevealInPopup"/>
     </group>
+    <group id="OpenInBrowserEditorContextBarGroup" />
     <group id="OpenInBrowserEditorContextBarGroupAction"
            class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction">
-      <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
+      <add-to-group group-id="OpenInBrowserEditorContextBarGroup" anchor="last"/>
     </group>
   </actions>
+  <applicationListeners>
+    <listener class="com.intellij.ide.projectView.impl.ProjectViewVfsInfoListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
 </idea-plugin>

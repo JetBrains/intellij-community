@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.xdebugger.hotswap.*
+import com.intellij.xdebugger.impl.rpc.HotSwapVisibleStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -97,11 +98,6 @@ class HotSwapSessionManagerImpl private constructor(private val project: Project
 
 @ApiStatus.Internal
 data class CurrentSessionState(val session: HotSwapSessionImpl<*>, val status: HotSwapVisibleStatus)
-
-@ApiStatus.Internal
-enum class HotSwapVisibleStatus {
-  NO_CHANGES, CHANGES_READY, IN_PROGRESS, SUCCESS, HIDDEN
-}
 
 private val logger = logger<HotSwapSession<*>>()
 

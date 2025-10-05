@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.mcpserver">
+<idea-plugin package="com.intellij.mcpserver" allow-bundled-update="true">
   <name>MCP Server</name>
   <id>com.intellij.mcpServer</id>
   <category>AI-Powered</category>
@@ -19,6 +19,14 @@
   <depends config-file="mcpServer-terminal.xml" optional="true">org.jetbrains.plugins.terminal</depends>
   <depends config-file="mcpServer-vcs.xml" optional="true">Git4Idea</depends>
 
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.io"/>
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.ktor.io"/>
+    <module name="intellij.libraries.ktor.network.tls"/>
+    <module name="intellij.libraries.ktor.client.cio"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint name="mcpToolsProvider" interface="com.intellij.mcpserver.McpToolsProvider" dynamic="true" />
     <extensionPoint name="mcpToolset" interface="com.intellij.mcpserver.McpToolset" dynamic="true" />
@@ -31,21 +39,25 @@
 
     <postStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
     <postStartupActivity implementation="com.intellij.mcpserver.impl.McpClientDetectionActivity" />
-    <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"/>
+    <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"
+      notificationIds="mcp.client.detected;mcp.client.autoconfigured;mcp.client.error.autoconfigured;mcp.client.wrong.port.detected"/>
 
     <mcpServer.mcpToolsProvider implementation="com.intellij.mcpserver.impl.ReflectionToolsProvider" />
 
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.debugger.DebuggerToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.BuiltinGeneralToolset" />
-    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ErrorToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ExecutionToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.AnalysisToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FileToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FormattingToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.TextToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.CodeInsightToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.RefactoringToolset" />
 
-    <registryKey defaultValue="true"
+    <registryKey defaultValue="false"
                  description="Detect MCP clients to suggest enable MCP server on project startup"
                  key="mcp.server.detect.mcp.clients"/>
+    <registryKey defaultValue="true"
+                 description="Whether to return output schema and structured output from tools"
+                 key="mcp.server.structured.tool.output"/>
 
     <applicationConfigurable
       instance="com.intellij.mcpserver.settings.McpServerSettingsConfigurable"

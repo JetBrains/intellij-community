@@ -1,17 +1,17 @@
 ### auto-generated section `build intellij.tasks.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.tasks.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -21,6 +21,7 @@ jvm_library(
     "//plugins/tasks/tasks-core:core",
     "//plugins/tasks/tasks-java:java",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//plugins/tasks/tasks-compatibility:compatibility",
     "//platform/vcs-api:vcs",
     "@lib//:junit4",
@@ -35,7 +36,7 @@ jvm_library(
     "//plugins/xslt-debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
-    "@lib//:gson",
+    "//libraries/gson",
     "//plugins/tasks/tasks-core/jira",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -59,9 +60,13 @@ jvm_library(
   ],
   runtime_deps = ["//spellchecker"]
 )
+### auto-generated section `build intellij.tasks.tests` end
+
+### auto-generated section `test intellij.tasks.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.tasks.tests` end
+### auto-generated section `test intellij.tasks.tests` end

@@ -9,7 +9,6 @@ import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.ScalableIcon
@@ -213,11 +212,8 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
     return arrayOf(text.substring(0, index), text.substring(index + 1))
   }
 
-  private val customizer = InternalUICustomization.getInstance()
-
-  override fun paintButtonLook(_g: Graphics) {
+  override fun paintButtonLook(g: Graphics) {
     val look = buttonLook
-    val g = customizer?.configureButtonLook(look, _g) ?: _g
     if (!myShowName) {
       super.paintButtonLook(g)
       return

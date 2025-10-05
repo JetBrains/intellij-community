@@ -1,5 +1,5 @@
 {
-  "name": "Many Islands Light",
+  "name": "Islands Light",
   "dark": false,
   "author": "JetBrains",
   "parentTheme": "ExperimentalLightWithLightHeader",
@@ -34,16 +34,30 @@
     "Islands": 1,
     "Island": {
       "arc": 20,
-      "border1.insets": "6,6,6,6"
+      "borderWidth": 4,
+      "inactiveAlpha": 0.44,
+      "inactiveAlphaInStatusBar": {
+        "os.mac": 0.2,
+        "os.windows": 0.2,
+        "os.linux": 0.15
+      }
     },
 
     "MainWindow.background": "BackgroundDark",
     "Borders.color": "BorderDark",
     "Borders.ContrastBorderColor": "BorderDark",
 
+    "MainWindow.Tab": {
+      "selectedBackground": "BackgroundMid",
+      "hoverBackground": "#0000000D",
+      "separatorColor": "#00000012",
+      "foreground": "#818594"
+    },
+
     "MainToolbar": {
       "background": "BackgroundDark",
-      "borderColor": "BorderTransparent"
+      "borderColor": "BorderTransparent",
+      "Button.arc.compact": 8
     },
 
     "StatusBar": {
@@ -79,6 +93,7 @@
       "hoverBackground": "#0000000C",
 
       "tabInsets": "-6,8,-6,8",
+      "tabInsets.compact": "-2,6,-2,4",
       "tabContentActionsRightInsets": "0,2,0,2"
     },
 
@@ -131,6 +146,25 @@
       "borderColor": "Blue6"
     },
 
+    "ScrollBar": {
+      "hoverThumbBorderColor": "#00000080",
+      "hoverThumbColor": "#00000080",
+      "hoverTrackColor": "#80808000",
+      "thumbBorderColor": "#00000033",
+      "thumbColor": "#00000033",
+      "trackColor": "#80808000",
+      "Transparent": {
+        "hoverThumbBorderColor": "#00000080",
+        "hoverThumbColor": "#00000080",
+        "hoverTrackColor": "#8080801A",
+        "thumbBorderColor": "#00000000",
+        "thumbColor": "#00000033",
+        "trackColor": "#80808000"
+      }
+    },
+
+    "SearchEverywhere.Header.insets": "2,4,0,9",
+
     "HelpBrowser.UserMessage.background": "#DFE1E5CC",
 
     "RecentProject.Color1.MainToolbarGradientStart": "#f7d7cb",
@@ -144,6 +178,39 @@
     "RecentProject.Color9.MainToolbarGradientStart": "#ceedd4",
 
     "RecentProject.MainToolbarGradient.width": 600,
-    "RecentProject.MainToolbarGradient.height": 300
+    "RecentProject.MainToolbarGradient.height": 300,
+
+    "ProjectGradients": {
+      "Group1": {
+        "DiagonalGradient": {
+          "Color1": "#FF0000",
+          "Color2": "#4800FF",
+          "Color3": "#1FB6D4",
+          "Color4": "#FF0000",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "#E500FFFF",
+          "Color2": "#E500FF00"
+        },
+        "HorizontalGradient": {
+          "Color1": "#2B2D301A",
+          "Color2": "#2B2D3033"
+        },
+        "VerticalGradient": {
+          "Color1": "#2B2D301A",
+          "Color2": "#2B2D309A"
+        }
+      }
+    },
+
+    "ProgressBar": {
+      "progressCounterBackground": "#5288f2",
+      "progressCounterForeground": "#FFFFFF"
+    }
   }
 }

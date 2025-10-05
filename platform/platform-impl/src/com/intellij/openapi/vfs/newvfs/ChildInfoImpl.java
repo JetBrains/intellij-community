@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
@@ -93,8 +92,8 @@ public final class ChildInfoImpl implements ChildInfo {
     var isSpecial = attributes.isSpecial();
     var isHidden = attributes.isHidden();
     var sensitivity = attributes.areChildrenCaseSensitive();
-    var isCaseSensitive = sensitivity == CaseSensitivity.SENSITIVE;
-    var isCaseSensitivityKnown = sensitivity != CaseSensitivity.UNKNOWN;
+    var isCaseSensitive = sensitivity.isSensitive();
+    var isCaseSensitivityKnown = sensitivity.isKnown();
     return PersistentFSImpl.fileAttributesToFlags(isDirectory, isWritable, isSymLink, isSpecial, isHidden, isCaseSensitivityKnown, isCaseSensitive);
   }
 

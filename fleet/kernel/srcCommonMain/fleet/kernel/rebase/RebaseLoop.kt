@@ -298,7 +298,7 @@ data class ClientClock(
 
 internal data class RemoteKernelConnectionEntity(override val eid: EID) : Entity {
   companion object : EntityType<RemoteKernelConnectionEntity>(RemoteKernelConnectionEntity::class, ::RemoteKernelConnectionEntity) {
-    val current: RemoteKernelConnectionEntity? get() = RemoteKernelConnectionEntity.singleOrNull()
+    val current: RemoteKernelConnectionEntity? get() = singleOrNull()
     val ClientClockAttr = requiredTransient<ClientClock>("clientClock")
     val SpeculationDataAttr = requiredTransient<SpeculationData>("speculationData")
     val SharedPartitionTimestampAttr = requiredValue("sharedPartitionTimestamp", Long.serializer())
@@ -314,17 +314,67 @@ val DB.clientClock: ClientClock?
     WorkspaceClockEntity.singleOrNull()?.clock ?: RemoteKernelConnectionEntity.singleOrNull()?.clientClock
   }
 
-private fun ChangeScope.newRemoteKernelConnection(clientId: UID): RemoteKernelConnectionEntity {
-  val current = RemoteKernelConnectionEntity.singleOrNull()
-  val sharedPartitionTimestamp = current?.sharedPartitionTimestamp ?: 0L
-  current?.delete()
-  return RemoteKernelConnectionEntity.new {
-    it[RemoteKernelConnectionEntity.ClientClockAttr] = ClientClock(vectorClock = VectorClock.Zero,
-                                                                   clientId = clientId)
-    it[RemoteKernelConnectionEntity.SpeculationDataAttr] = SpeculationData.empty()
-    it[RemoteKernelConnectionEntity.SharedPartitionTimestampAttr] = sharedPartitionTimestamp + 1
+private suspend fun <T> subscribe(transactor: Transactor, clientId: UID, body: Subscriber<T>): T =
+  coroutineScope {
+    val sharedPartitionTimestamp = change {
+      val current = RemoteKernelConnectionEntity.singleOrNull()
+      (current?.sharedPartitionTimestamp ?: 0L).also { current?.delete() }
+    }
+
+    val (send, receive) = channels<Change>(Channel.UNLIMITED)
+    // trick: use channel in place of deferred, cause the latter one would hold the firstDB for the lifetime of the entire subscription
+    val firstDB = Channel<DB>(1)
+    val barrier = Job()
+    val job = launch(start = CoroutineStart.UNDISPATCHED,
+                     context = Dispatchers.Unconfined) {
+      var bootstraped = false
+      transactor.log.collect { e ->
+        when (e) {
+          is SubscriptionEvent.First -> {
+            barrier.complete()
+          }
+          is SubscriptionEvent.Next -> {
+            if (bootstraped) {
+              send.send(e.change)
+            }
+            else {
+              if (asOf(e.db) { RemoteKernelConnectionEntity.singleOrNull() != null }) {
+                bootstraped = true
+                firstDB.send(e.db)
+              }
+            }
+          }
+          is SubscriptionEvent.Reset -> {
+            firstDB.close(RpcClientDisconnectedException("Consumer is too slow or buffer is too small", null))
+            send.close(RpcClientDisconnectedException("Consumer is too slow or buffer is too small", null))
+          }
+        }
+      }
+    }
+    barrier.join()
+    change {
+      RemoteKernelConnectionEntity.new {
+        it[RemoteKernelConnectionEntity.ClientClockAttr] = ClientClock(vectorClock = VectorClock.Zero,
+                                                                       clientId = clientId)
+        it[RemoteKernelConnectionEntity.SpeculationDataAttr] = SpeculationData.empty()
+        it[RemoteKernelConnectionEntity.SharedPartitionTimestampAttr] = sharedPartitionTimestamp + 1
+      }
+    }
+
+    try {
+      coroutineScope {
+        body.run { subscribed(firstDB.receive(), receive) }
+      }
+    }
+    finally {
+      withContext(NonCancellable) {
+        job.cancelAndJoin()
+      }
+      val e = RuntimeException("subscription terminated, is subscription being consumed out of scope?")
+      firstDB.close(e)
+      send.close(e)
+    }
   }
-}
 
 private suspend fun remoteKernelConnection(
   connected: CompletableDeferred<Unit>,
@@ -333,12 +383,9 @@ private suspend fun remoteKernelConnection(
 ) {
   spannedScope("remoteKernelConnection") {
     val clientId = UID.random()
-    val kernel = transactor()
-    logger.info { "[$kernel] connects to workspace as $clientId" }
-    change {
-      newRemoteKernelConnection(clientId)
-    }
-    kernel.subscribe(Channel.UNLIMITED) { dbSnapshot, changesReceiver ->
+    val transactor = transactor()
+    logger.info { "[$transactor] connects to workspace as $clientId" }
+    subscribe(transactor, clientId) { dbSnapshot, changesReceiver ->
       connected.complete(Unit)
       val subscription = spannedScope("RemoteKernel.subscribe") {
         durable { withoutCausality { remoteKernel.subscribe(clientId) } }
@@ -346,8 +393,8 @@ private suspend fun remoteKernelConnection(
       val snapshot = spannedScope("fetch snapshot") {
         DurableSnapshot(subscription.snapshot.toFlow().toList())
       }
-      logger.info { "[$kernel] received snapshot with VectorClock: ${subscription.vectorClock}" }
-      logger.trace { "[$kernel] received snapshot $subscription" }
+      logger.info { "[$transactor] received snapshot with VectorClock: ${subscription.vectorClock}" }
+      logger.trace { "[$transactor] received snapshot $subscription" }
       val snapshotSharedDB = span("build db from snapshot") {
         dbSnapshot.selectPartitions(emptySet()).change {
           context.impl.mutableDb.initPartition(SharedPart)
@@ -363,7 +410,7 @@ private suspend fun remoteKernelConnection(
           val (frontendTxsSender, frontendTxsReceiver) = channels<Transaction>()
           try {
             withoutCausality { remoteKernel.transact(frontendTxsReceiver) }
-            logger.trace { "[$kernel] launching rebase loop" }
+            logger.trace { "[$transactor] launching rebase loop" }
             val initialRebaseState = run {
               val baseClock = VectorClock(subscription.vectorClock.toPersistentHashMap())
               val timestamp = asOf(dbSnapshot) { RemoteKernelConnectionEntity.current!!.sharedPartitionTimestamp }
@@ -376,7 +423,7 @@ private suspend fun remoteKernelConnection(
                               committedEffectsAndNovelty = committedEffectsAndNovelty,
                               baseClock = baseClock)
             }
-            rebaseLoop(transactor = kernel,
+            rebaseLoop(transactor = transactor,
                        initial = initialRebaseState,
                        remoteKernelBroadcastReceiver = workspaceBroadcastReceiver,
                        changesReceiver = changesReceiver,

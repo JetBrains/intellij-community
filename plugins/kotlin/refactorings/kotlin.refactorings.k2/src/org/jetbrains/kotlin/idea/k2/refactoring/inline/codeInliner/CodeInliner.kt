@@ -7,6 +7,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.isBooleanType
+import org.jetbrains.kotlin.analysis.api.components.isByteType
+import org.jetbrains.kotlin.analysis.api.components.isCharType
+import org.jetbrains.kotlin.analysis.api.components.isDoubleType
+import org.jetbrains.kotlin.analysis.api.components.isFloatType
+import org.jetbrains.kotlin.analysis.api.components.isIntType
+import org.jetbrains.kotlin.analysis.api.components.isLongType
+import org.jetbrains.kotlin.analysis.api.components.isShortType
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -19,6 +28,7 @@ import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
+import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementForContextArgument
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.*
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.NEW_DECLARATION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.RECEIVER_VALUE_KEY
@@ -26,6 +36,8 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.U
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_CONVERTED_TO_FUNCTION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_FUNCTION_LITERAL_ARGUMENT_KEY
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -43,6 +55,13 @@ class CodeInliner(
 ) : AbstractCodeInliner<KtElement, KtParameter, KaType, KtDeclaration>(call, replacement) {
     private val mapping: Map<KtExpression, Name>? = analyze(call) {
         treeUpToCall().resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    private val contextArguments: List<String?>? = analyze(call) {
+        treeUpToCall().resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.contextArguments?.map {
+            createReplacementForContextArgument(it)
+        }
     }
 
     private fun treeUpToCall(): KtElement {
@@ -182,7 +201,7 @@ class CodeInliner(
             },
             renderType = {
                 analyze(call) {
-                    (it.approximateToSubPublicDenotable(true) ?: it).render(position = Variance.INVARIANT)
+                    it.approximateToDenotableSubtypeOrSelf().render(position = Variance.INVARIANT)
                 }
             },
             isArrayType = {
@@ -293,7 +312,7 @@ class CodeInliner(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun arrayOfFunctionName(elementType: KaType): String {
         return when {
@@ -318,6 +337,15 @@ class CodeInliner(
             return argumentForPropertySetter()
         }
 
+        if (parameter.isContextParameter) {
+            val exprText = contextArguments?.getOrNull(parameter.parameterIndex()) ?: return null
+            val resultExpression = KtPsiFactory(call.project).createExpressionCodeFragment(exprText, call).getContentElement() ?: return null
+            val expressionType = analyze(resultExpression) {
+                createTypeDescription(resultExpression.expressionType)
+            }
+            return Argument(resultExpression, expressionType, isNamed = false, isDefaultValue = false)
+        }
+
         val argumentExpressionsForParameter = mapping?.entries?.filter { (_, value) ->
             value == parameter.name()
         }?.map { it.key } ?: return null
@@ -332,7 +360,7 @@ class CodeInliner(
     private fun argumentForRegularParameter(
         argumentExpressionsForParameter: List<KtExpression>, parameter: KtParameter, callableDeclaration: KtDeclaration
     ): Argument? {
-        val expression = argumentExpressionsForParameter.firstOrNull() ?: parameter.defaultValue ?: return null
+        val expression = argumentExpressionsForParameter.firstOrNull() ?: getDefaultValue(parameter) ?: return null
         val parent = expression.parent
         val isNamed = (parent as? KtValueArgument)?.isNamed() == true
         var resultExpression = run {
@@ -364,7 +392,7 @@ class CodeInliner(
 
         markAsUserCode(resultExpression)
 
-        val expressionType = analyze(call) { createTypeDescription(resultExpression.expressionType) }
+        val expressionType = analyze(resultExpression) { createTypeDescription(resultExpression.expressionType) }
         if (argumentExpressionsForParameter.isEmpty() && callableDeclaration is KtFunction) {
             //encode default value
             val allParameters = callableDeclaration.valueParameters()
@@ -381,8 +409,19 @@ class CodeInliner(
         return Argument(resultExpression, expressionType, isNamed = isNamed, argumentExpressionsForParameter.isEmpty())
     }
 
+    private fun getDefaultValue(parameter: KtParameter): KtExpression? {
+        val ownerFunction = parameter.ownerFunction
+        val defaultValueFromExpect = ownerFunction
+            ?.expectDeclarationIfAny()
+            ?.takeIf { it != ownerFunction }
+            ?.valueParameters()
+            ?.get(parameter.parameterIndex())
+            ?.defaultValue
+        return defaultValueFromExpect ?: parameter.defaultValue
+    }
+
     @OptIn(KaExperimentalApi::class)
-    context(KaSession)
+    context(_: KaSession)
     private fun createTypeDescription(type: KaType?): TypeDescription? {
         if (type == null) return null
         return TypeDescription(
@@ -451,7 +490,9 @@ class CodeInliner(
         lambdaArgumentExpression.accept(NonLocalJumpVisitor(lambdaArgumentExpression))
     }
 
-    override fun KtDeclaration.valueParameters(): List<KtParameter> = (this as? KtDeclarationWithBody)?.valueParameters ?: emptyList()
+    override fun KtDeclaration.valueParameters(): List<KtParameter> =
+        (this as? KtModifierListOwner)?.modifierList?.contextReceiverList?.contextParameters().orEmpty() +
+                (this as? KtDeclarationWithBody)?.valueParameters.orEmpty()
 
     override fun KtParameter.name(): Name = nameAsSafeName
 

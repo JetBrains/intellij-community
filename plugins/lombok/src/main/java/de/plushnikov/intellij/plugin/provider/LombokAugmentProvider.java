@@ -154,7 +154,9 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
       return emptyResult;
     }
     if (psiClass.isAnnotationType() && type == PsiMethod.class) {
-      return (List<Psi>)LombokAnnotationProcessor.process(psiClass, nameHint);
+      @SuppressWarnings("unchecked")
+      final List<Psi> result = (List<Psi>)LombokAnnotationProcessor.process(psiClass, nameHint);
+      return result;
     }
     // Skip processing of other Annotations and Interfaces
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
@@ -164,7 +166,7 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
       return emptyResult;
     }
 
-    // All invoker of AugmentProvider already make caching,
+    // All invokers of AugmentProvider already make caching,
     // and we want to try to skip recursive calls completely
     DumbService dumbService = DumbService.getInstance(psiClass.getProject());
     if (DumbService.isDumb(psiClass.getProject()) && !dumbService.isAlternativeResolveEnabled()) {
@@ -178,7 +180,9 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
     for (Processor processor : LombokProcessorManager.getProcessors(type)) {
       final List<? super PsiElement> generatedElements = processor.process(psiClass, nameHint);
       for (Object psiElement : generatedElements) {
-        result.add((Psi)psiElement);
+        @SuppressWarnings("unchecked")
+        final Psi element = (Psi)psiElement;
+        result.add(element);
       }
     }
     return result;

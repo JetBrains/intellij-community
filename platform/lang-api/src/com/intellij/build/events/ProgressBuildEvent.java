@@ -15,6 +15,8 @@
  */
 package com.intellij.build.events;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -38,5 +40,5 @@ public interface ProgressBuildEvent extends BuildEvent {
    *
    * @return The measure used to express the amount of work.
    */
-  String getUnit();
+  @NotNull String getUnit();
 }

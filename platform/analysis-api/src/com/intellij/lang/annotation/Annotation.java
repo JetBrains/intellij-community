@@ -188,6 +188,7 @@ public final class Annotation implements Segment {
     registerBatchFix(fix, fix, range, key);
   }
 
+  @ApiStatus.Internal
   @Deprecated
   public void registerBatchFix(@NotNull IntentionAction action, @NotNull LocalQuickFix fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
     range = notNullize(range);
@@ -211,7 +212,7 @@ public final class Annotation implements Segment {
   /**
    * @deprecated do not use, does nothing
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setNeedsUpdateOnTyping(boolean __) {
   }
 
@@ -436,6 +437,7 @@ public final class Annotation implements Segment {
    *
    * @param problemGroup the problem group
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
     myProblemGroup = problemGroup;

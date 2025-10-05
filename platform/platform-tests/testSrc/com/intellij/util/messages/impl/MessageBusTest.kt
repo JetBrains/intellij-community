@@ -8,12 +8,15 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.LoggedErrorProcessorEnabler
-import com.intellij.testFramework.createSimpleMessageBusOwner
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.Topic
+import io.kotest.common.runBlocking
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Fail
 import org.junit.jupiter.api.AfterEach
@@ -22,12 +25,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
-import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 
 private val TOPIC1 = Topic("T1", MessageBusTest.T1Listener::class.java, Topic.BroadcastDirection.TO_CHILDREN)
 private val TOPIC2 = Topic("T2", MessageBusTest.T2Listener::class.java, Topic.BroadcastDirection.TO_CHILDREN)
@@ -379,14 +381,16 @@ class MessageBusTest : MessageBusOwner {
     Benchmark.newBenchmark("Child bus creation/deletion") {
       val children = ArrayList<MessageBus>()
       val count = 10000
-      for (i in 0 until count) {
+      repeat(count) {
         children.add(MessageBusFactoryImpl().createMessageBus(this, bus))
       }
       // reverse iteration to avoid O(n^2) while deleting from list's beginning
       for (i in count - 1 downTo 0) {
         Disposer.dispose(children[i])
       }
-    }.start()
+    }
+      .runAsStressTest()
+      .start()
   }
 
   @Test
@@ -398,7 +402,7 @@ class MessageBusTest : MessageBusOwner {
     Disposer.register(parentDisposable!!, parentBus)
     val threads = ArrayList<Future<*>>()
     val iterationsNumber = 100
-    for (i in 0 until threadsNumber) {
+    repeat(threadsNumber) {
       val thread = AppExecutorUtil.getAppScheduledExecutorService().submit {
         try {
           var remains = iterationsNumber
@@ -460,8 +464,8 @@ class MessageBusTest : MessageBusOwner {
   }
 
   @Test
-  fun scheduleEmptyConnectionRemoval() {
-    // this counter serves as a proxy to number of iterations inside the compaction task loop in root bus:
+  fun scheduleEmptyConnectionRemoval() = runBlocking<Unit> {
+    // this counter serves as a proxy to a number of iterations inside the compaction task loop in root bus:
     var compactionIterationCount = 0
     object : MessageBusImpl(this@MessageBusTest, bus) {
       override fun removeEmptyConnectionsRecursively() {
@@ -469,19 +473,16 @@ class MessageBusTest : MessageBusOwner {
       }
     }
 
-    // this child bus will block removal so that we can run asserts
-    val slowRemovalStarted = Semaphore(1)
+    // this child bus will block removal so that we can run assertions
+    val slowRemovalStarted = kotlinx.coroutines.sync.Semaphore(1)
     slowRemovalStarted.acquire()
     val slowRemovalCanFinish = CountDownLatch(1)
     object : MessageBusImpl(this@MessageBusTest, bus) {
       override fun removeEmptyConnectionsRecursively() {
-        slowRemovalStarted.release() // signal that slow removal has started
-        try {
-          slowRemovalCanFinish.await() // block until the test allows us to finish
-        }
-        catch (e: InterruptedException) {
-          throw RuntimeException(e)
-        }
+        // signal that slow removal has started
+        slowRemovalStarted.release()
+        // block until the test allows us to finish
+        slowRemovalCanFinish.await()
       }
     }
 
@@ -496,8 +497,8 @@ class MessageBusTest : MessageBusOwner {
     }
     assertThat(compactionIterationCount).isEqualTo(1)
 
-    // now compaction task is blocked in slow remove, schedule more compaction requests:
-    for (i in 0 until 10 * callCountToTriggerRemoval) {
+    // now the compaction task is blocked in slow remove, schedule more compaction requests:
+    repeat(10 * callCountToTriggerRemoval) {
       bus.scheduleEmptyConnectionRemoving()
     }
 
@@ -507,13 +508,21 @@ class MessageBusTest : MessageBusOwner {
     // allow slow removal to finish:
     slowRemovalCanFinish.countDown()
 
-    // wait until slow removal will finish one more time: we requested removal several times,
+    // wait until slow removal finishes one more time: we requested removal several times,
     // so we need one more loop iteration to handle pending removal requests
-    if (!slowRemovalStarted.tryAcquire(30, TimeUnit.SECONDS)) {
-      Fail.fail<Any>("Compaction requests were not served in 30 seconds")
+    try {
+      withTimeout(30.seconds) {
+        slowRemovalStarted.acquire()
+      }
     }
-    Thread.sleep(50) // give compaction task a chance to do more iterations
-    assertThat(compactionIterationCount).isEqualTo(2) // only one additional iteration is needed to handle pending removal requests
+    catch (e: TimeoutCancellationException) {
+      throw AssertionError("Compaction requests were not served in 30 seconds", e)
+    }
+
+    // give compaction task a chance to do more iterations
+    delay(50)
+    // only one additional iteration is needed to handle pending removal requests
+    assertThat(compactionIterationCount).isEqualTo(2)
   }
 
   @Test
@@ -546,7 +555,7 @@ class MessageBusTest : MessageBusOwner {
   @Test
   fun twoHandlersBothDisconnecting() {
     val disposable = Disposer.newCheckedDisposable()
-    for (i in 0..1) {
+    repeat(2) {
       bus.connect(disposable).subscribe(RUNNABLE_TOPIC, Runnable { Disposer.dispose(disposable) })
     }
     bus.syncPublisher(RUNNABLE_TOPIC).run()
@@ -641,7 +650,7 @@ class MessageBusTest : MessageBusOwner {
     val latch = CountDownLatch(threadsNumber)
     val threads = ArrayList<Future<*>>()
     val eventCounter = AtomicInteger()
-    for (i in 0 until threadsNumber) {
+    repeat(threadsNumber) {
       val thread = AppExecutorUtil.getAppScheduledExecutorService().submit {
         try {
           val connection = bus.connect()
@@ -687,7 +696,7 @@ class MessageBusTest : MessageBusOwner {
   }
 }
 
-private class DoNoRethrowMessageBusErrors : LoggedErrorProcessorEnabler() {
+private class DoNoRethrowMessageBusErrors : LoggedErrorProcessorEnabler {
   override fun createErrorProcessor(): LoggedErrorProcessor {
     return object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
@@ -697,5 +706,15 @@ private class DoNoRethrowMessageBusErrors : LoggedErrorProcessorEnabler() {
         return super.processError(category, message, details, t)
       }
     }
+  }
+}
+
+private fun createSimpleMessageBusOwner(owner: String): MessageBusOwner {
+  return object : MessageBusOwner {
+    override fun createListener(descriptor: PluginListenerDescriptor) = throw UnsupportedOperationException()
+
+    override fun isDisposed() = false
+
+    override fun toString() = owner
   }
 }

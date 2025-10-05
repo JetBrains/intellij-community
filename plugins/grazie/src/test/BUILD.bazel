@@ -1,23 +1,24 @@
 ### auto-generated section `build intellij.grazie.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "grazie-tests_test_resources",
-  files = glob(["testResources/**/*"]),
+  srcs = glob(["testResources/**/*"]),
   strip_prefix = "testResources"
 )
 
-java_library(
+jvm_library(
   name = "grazie-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "grazie-tests_test_lib",
+  module_name = "intellij.grazie.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["kotlin/**/*.kt", "kotlin/**/*.java"], allow_empty = True),
+  srcs = glob(["kotlin/**/*.kt", "kotlin/**/*.java", "kotlin/**/*.form"], allow_empty = True),
+  resources = [":grazie-tests_test_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -29,6 +30,9 @@ jvm_library(
     "//plugins/grazie",
     "@lib//:kotlin-test",
     "//java/testFramework",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-ru",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-uk",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-languagetool-core",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-ru",
     "@lib//:grazie-tests-org-jetbrains-intellij-deps-languagetool-language-de",
@@ -57,13 +61,21 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//images/backend.svg",
   ],
-  runtime_deps = [":grazie-tests_test_resources"]
+  exports = [
+    "//plugins/grazie",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-ru",
+    "@lib//:grazie-tests-ai-grazie-spell-hunspell-uk",
+  ]
 )
+### auto-generated section `build intellij.grazie.tests` end
+
+### auto-generated section `test intellij.grazie.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "grazie-tests_test",
   runtime_deps = [":grazie-tests_test_lib"]
 )
-### auto-generated section `build intellij.grazie.tests` end
+### auto-generated section `test intellij.grazie.tests` end

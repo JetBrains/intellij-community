@@ -8,7 +8,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vcs.impl.VcsInitialization
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopup
+import com.intellij.vcs.git.branch.popup.GitBranchesPopup
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import git4idea.repo.GitRepository

@@ -37,9 +37,9 @@ open class GradleExecutionContextImpl(
     get() = GradleVersion.version(buildEnvironment.gradle.gradleVersion)
 
   constructor(
+    context: GradleExecutionContext,
     projectPath: String,
     settings: GradleExecutionSettings,
-    context: GradleExecutionContext,
   ) : this(
     projectPath, context.taskId, settings, context.listener, context.cancellationToken
   )

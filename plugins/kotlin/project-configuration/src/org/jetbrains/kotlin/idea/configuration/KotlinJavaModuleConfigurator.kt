@@ -18,12 +18,12 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJvmStdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.platforms.StdlibDetectorFacility
+import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
-import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -64,7 +64,7 @@ open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<Reposito
     override val targetPlatform: TargetPlatform
         get() = JvmPlatforms.unspecifiedJvmPlatform
 
-    override val libraryJarDescriptor get() = LibraryJarDescriptor.RUNTIME_JDK8_JAR
+    override val libraryJarDescriptor: LibraryJarDescriptor get() = LibraryJarDescriptor.RUNTIME_JDK8_JAR
 
     override fun configureKotlinSettings(modules: List<Module>) {
         val project = modules.firstOrNull()?.project ?: return
@@ -122,7 +122,7 @@ open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<Reposito
     }
 
     companion object {
-        const val NAME = "java"
+        const val NAME: String = "java"
 
         val instance: KotlinJavaModuleConfigurator
             get() {

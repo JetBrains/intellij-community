@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.stubs;
 
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex;
 import org.jetbrains.kotlin.idea.test.AstAccessControl;
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndMultiplatformStdlibDescriptor;
+import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub;
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
@@ -42,7 +43,7 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
         List<KtDeclaration> declarations = ((KtFile) psiFile).getDeclarations();
         KtClass ktClass = (KtClass) declarations.get(0);
         KotlinClassStub stub = KtStubElementTypes.CLASS.createStub(
-                ktClass, new KotlinFileStubImpl(null, "", false, null, null, null));
+                ktClass, KotlinFileStubImpl.Companion.forFile(FqName.ROOT));
         List<String> names = stub.getSuperNames();
         assertSameElements(names, "ArrayList", "alist");
     }
@@ -52,7 +53,7 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
         List<KtDeclaration> declarations = ((KtFile) psiFile).getDeclarations();
         KtClass ktClass = (KtClass) declarations.get(0);
         KotlinClassStub stub = KtStubElementTypes.CLASS.createStub(
-                ktClass, new KotlinFileStubImpl(null, "", false, null, null, null));
+                ktClass, KotlinFileStubImpl.Companion.forFile(FqName.ROOT));
         assertEquals(true, stub.isInterface());
     }
 

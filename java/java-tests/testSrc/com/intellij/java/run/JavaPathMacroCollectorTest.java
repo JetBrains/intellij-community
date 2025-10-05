@@ -44,6 +44,6 @@ public class JavaPathMacroCollectorTest extends LightJavaCodeInsightFixtureTestC
           </recent_temporary>
         </component>
       """;
-    assertTrue(PathMacrosCollector.getMacroNames(JDOMUtil.load(text)).isEmpty());
+    assertTrue(PathMacrosCollector.Companion.getMacroNames(JDOMUtil.load(text)).isEmpty());
   }
 }

@@ -12,19 +12,17 @@ import org.junit.runner.RunWith
 import org.junit.runners.BlockJUnit4ClassRunner
 
 /**
- * This is a base test case for test cases that highlight all the use of API
- * that were introduced in later language levels comparing to the current language level
+ * This is a base test case for test cases that highlight all the use of APIs
+ * that were introduced in later language levels compared to the current language level.
  *
- * In order to add a new test case:
- * <ol>
- * <li>Go to "community/jvm/jvm-analysis-java-tests/testData/codeInspection/apiUsage"</li>
- * <li>Add a new file(s) to "./src" that contains new API. It's better to define the new API as native methods.</li>
- * <li>Set <code>JAVA_HOME</code> to jdk 1.8. In this case it's possible to redefine JDK's own classes like <code>String</code> or <code>Class</code></li>
- * <li>Invoke "./compile.sh". The new class(es) will appear in "./classes"</li>
- * </ol>
+ * To add a new test case:
+ * - Go to `community/jvm/jvm-analysis-java-tests/testData/codeInspection/apiUsage`
+ * - Add a new file(s) to `./src` that contains the new API. It's better to define the new API as native methods
+ * - Set `JAVA_HOME` to JDK 1.8. In this case it's possible to redefine JDK's own classes like `String` or `Class`
+ * - Invoke `./compile.sh`. The new class(es) will appear in `./classes`
  */
 @Ignore
-@RunWith(BlockJUnit4ClassRunner::class) // disabled because there are currently no test for a JDK higher than the highest mock JDK
+@RunWith(BlockJUnit4ClassRunner::class) // disabled because there are currently no tests for a JDK higher than the highest mock JDK
 class JavaJavaApiUsageInspectionWithCustomMockJdkTest : JavaApiUsageInspectionTestBase() {
   override fun getBasePath(): String = JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH
 

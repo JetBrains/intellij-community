@@ -57,7 +57,7 @@ public final class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalIn
           BinaryOperator<LongRangeSet> reductionOp = andChain ? LongRangeSet::meet : LongRangeSet::join;
           LongRangeSet set = run.stream().map(c -> c.myConstraint).reduce(reductionOp).orElse(LongRangeSet.empty());
           if (set.isEmpty()) continue;
-          RangeConstraint constraint = run.get(0);
+          RangeConstraint constraint = run.getFirst();
           if (!andChain) {
             set = constraint.getFullRange().subtract(set);
           }
@@ -73,7 +73,7 @@ public final class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalIn
             String replacement = text + ' ' + (andChain ? "==" : "!=") + ' ' + valueRepresentation;
             String message = InspectionGadgetsBundle.message("inspection.excessive.range.check.message", replacement);
             holder.registerProblem(expression,
-                                   new TextRange(constraint.myRange.getStartOffset(), run.get(run.size() - 1).myRange.getEndOffset()),
+                                   new TextRange(constraint.myRange.getStartOffset(), run.getLast().myRange.getEndOffset()),
                                    message, new ExcessiveRangeCheckFix(replacement));
           }
         }
@@ -168,12 +168,11 @@ public final class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalIn
     }
 
     @NonNls String getExpressionSuffix() {
-      if (myField == null) return "";
       return switch (myField) {
         case ARRAY_LENGTH -> ".length";
         case STRING_LENGTH -> ".length()";
         case COLLECTION_SIZE -> ".size()";
-        default -> "";
+        case null, default -> "";
       };
     }
 
@@ -225,8 +224,8 @@ public final class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalIn
       PsiExpression[] allOperands = expression.getOperands();
       List<PsiExpression> operands = ContainerUtil.filter(allOperands, op -> range.contains(op.getTextRangeInParent()));
       if (operands.size() < 2) return;
-      PsiExpression firstOperand = operands.get(0);
-      PsiExpression lastOperand = operands.get(operands.size() - 1);
+      PsiExpression firstOperand = operands.getFirst();
+      PsiExpression lastOperand = operands.getLast();
       RangeConstraint constraint = extractConstraint(firstOperand);
       if (constraint == null) return;
       CommentTracker ct = new CommentTracker();

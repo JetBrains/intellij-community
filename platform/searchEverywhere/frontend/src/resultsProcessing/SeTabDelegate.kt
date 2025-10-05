@@ -8,17 +8,19 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
+import com.intellij.platform.scopes.SearchScopesInfo
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendItemDataProvidersFacade
+import com.intellij.platform.searchEverywhere.frontend.SeFrontendOnlyItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.SeFrontendService
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLocalItemDataProvider
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.ITEM_EMIT
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
+import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
 import com.intellij.platform.searchEverywhere.utils.initAsync
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -29,33 +31,72 @@ import org.jetbrains.annotations.Nls
 @Internal
 class SeTabDelegate(
   val project: Project?,
-  private val sessionRef: DurableRef<SeSessionEntity>,
+  private val session: SeSession,
   private val logLabel: String,
   private val providerIds: List<SeProviderId>,
   private val initEvent: AnActionEvent,
   val scope: CoroutineScope,
 ) : Disposable {
   private val providers = initAsync(scope) {
-    initializeProviders(project, providerIds, initEvent, sessionRef)
+    initializeProviders(project, providerIds, initEvent, session, logLabel)
   }
-  private val providersAndLimits = providerIds.associateWith { Int.MAX_VALUE }
 
   suspend fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = providers.getValue().getProvidersIdToName()
 
   fun getItems(params: SeParams, disabledProviders: List<SeProviderId>? = null): Flow<SeResultEvent> {
-    val accumulator = SeResultsAccumulator(providersAndLimits)
+    val disabledProviders = fixDisabledProviders(disabledProviders)
 
     return flow {
-      providers.getValue().getItems(params, disabledProviders ?: emptyList()) {
-        SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} emits: ${it.uuid} - ${it.presentation.text}" }
-        accumulator.add(it)
+      val initializedProviders = providers.getValue()
+
+      val allEssentialProviders = initializedProviders.essentialProviderIds
+      val remoteEssentialProviders = initializedProviders.getRemoteProviderIds().toSet().intersect(allEssentialProviders)
+      val localProviders = initializedProviders.getLocalProviderIds().toSet()
+      val localEssentialProviders = allEssentialProviders.intersect(localProviders)
+      val localNonEssentialProviders = localProviders.subtract(allEssentialProviders)
+
+      // We shouldn't block remoteProviderIds because they may miss some results after equality check on the Backend
+      val balancer = SeResultsCountBalancer("FE",
+                                            nonBlockedProviderIds = remoteEssentialProviders,
+                                            highPriorityProviderIds = localEssentialProviders,
+                                            lowPriorityProviderIds = localNonEssentialProviders)
+
+      val accumulator = SeResultsAccumulator()
+
+      disabledProviders?.forEach {
+        balancer.end(it)
+        emit(SeResultEndEvent(it))
+      }
+
+      providers.getValue().getItems(params, disabledProviders ?: emptyList()) { equalityChecker, transferEvent ->
+        when (transferEvent) {
+          is SeTransferEnd -> {
+            SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} ends: ${transferEvent.providerId.value}" }
+            balancer.end(transferEvent.providerId)
+            SeResultEndEvent(transferEvent.providerId)
+          }
+          is SeTransferItem -> {
+            val itemData = transferEvent.itemData
+            balancer.add(itemData)
+
+            val checkedItemData = if (equalityChecker != null) {
+              equalityChecker.checkAndUpdateIfNeeded(itemData)
+            }
+            else itemData
+
+            checkedItemData?.let {
+              SeLog.log(ITEM_EMIT) { "Tab delegate for ${logLabel} emits: ${checkedItemData.uuid} - ${checkedItemData.presentation.text}" }
+              accumulator.add(checkedItemData)
+            }
+          }
+        }
       }.collect {
         emit(it)
       }
     }
   }
 
-  suspend fun getSearchScopesInfos(): List<SeSearchScopesInfo> {
+  suspend fun getSearchScopesInfos(): List<SearchScopesInfo> {
     return providers.getValue().getSearchScopesInfos()
   }
 
@@ -69,6 +110,8 @@ class SeTabDelegate(
 
   fun getProvidersIds(): List<SeProviderId> = providerIds
 
+  suspend fun essentialProviderIds(): Set<SeProviderId> = providers.getValue().essentialProviderIds
+
   /**
    * Defines if results can be shown in <i>Find</i> toolwindow.
    */
@@ -76,12 +119,16 @@ class SeTabDelegate(
     return providers.getValue().canBeShownInFindResults()
   }
 
+  suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    return providers.getValue().getUpdatedPresentation(item)
+  }
+
   suspend fun openInFindToolWindow(
-    sessionRef: DurableRef<SeSessionEntity>,
+    session: SeSession,
     params: SeParams,
     initEvent: AnActionEvent,
     isAllTab: Boolean,
-    disabledProviders: List<SeProviderId>? = null
+    disabledProviders: List<SeProviderId>? = null,
   ): Boolean {
     if (project == null) return false
 
@@ -89,11 +136,31 @@ class SeTabDelegate(
       initEvent.dataContext.rpcId()
     }
     return SeRemoteApi.getInstance().openInFindToolWindow(project.projectId(),
-                                                          sessionRef,
+                                                          session,
                                                           dataContextId,
                                                           providers.getValue().getProviderIds(disabledProviders ?: emptyList()),
                                                           params,
                                                           isAllTab)
+  }
+
+  /**
+   * @return true if the popup should be closed, false otherwise
+   */
+  suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return providers.getValue().performExtendedAction(item)
+  }
+
+  suspend fun getPreviewInfo(itemData: SeItemData, isAllTab: Boolean): SePreviewInfo? {
+    if (project == null) return null
+
+    return SeRemoteApi.getInstance().getPreviewInfo(project.projectId(),
+                                                    session,
+                                                    itemData,
+                                                    isAllTab)
+  }
+
+  suspend fun isPreviewEnabled(): Boolean {
+    return providers.getValue().isPreviewEnabled()
   }
 
   override fun dispose() {}
@@ -101,12 +168,12 @@ class SeTabDelegate(
   private class Providers(
     private val localProviders: Map<SeProviderId, SeLocalItemDataProvider>,
     private val frontendProvidersFacade: SeFrontendItemDataProvidersFacade?,
+    val essentialProviderIds: Set<SeProviderId>,
   ) {
-
     fun getProvidersIdToName(): Map<SeProviderId, @Nls String> = localProviders.mapValues { it.value.displayName } +
                                                                  (frontendProvidersFacade?.idsWithDisplayNames ?: emptyMap())
 
-    suspend fun getSearchScopesInfos(): List<SeSearchScopesInfo> {
+    suspend fun getSearchScopesInfos(): List<SearchScopesInfo> {
       return localProviders.values.mapNotNull { it.getSearchScopesInfo() } +
              (frontendProvidersFacade?.getSearchScopesInfos()?.values ?: emptyList())
     }
@@ -120,17 +187,23 @@ class SeTabDelegate(
              (frontendProvidersFacade?.getTypeVisibilityStates(index) ?: emptyList())
     }
 
-    fun getItems(params: SeParams, disabledProviders: List<SeProviderId>, mapToResultEvent: suspend (SeItemData) -> SeResultEvent?): Flow<SeResultEvent> {
+    fun getLocalProviderIds(): List<SeProviderId> = localProviders.keys.toList()
+    fun getRemoteProviderIds(): List<SeProviderId> = frontendProvidersFacade?.providerIds ?: emptyList()
+
+    fun getItems(params: SeParams, disabledProviders: List<SeProviderId>, mapToResultEvent: suspend (SeEqualityChecker?, SeTransferEvent) -> SeResultEvent?): Flow<SeResultEvent> {
       return channelFlow {
         launch {
           val equalityChecker = SeEqualityChecker()
           val localProviders = localProviders.filterKeys { !disabledProviders.contains(it) }.values
 
           localProviders.asFlow().flatMapMerge { provider ->
-            provider.getItems(params)
-          }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).mapNotNull {
-            val checkedItemData = equalityChecker.checkAndUpdateIfNeeded(it) ?: return@mapNotNull null
-            mapToResultEvent(checkedItemData)
+            provider.getItems(params).map {
+              SeTransferItem(it) as SeTransferEvent
+            }.onCompletion {
+              emit(SeTransferEnd(provider.id))
+            }
+          }.buffer(0, onBufferOverflow = BufferOverflow.SUSPEND).mapNotNull { transferEvent ->
+            mapToResultEvent(equalityChecker, transferEvent)
           }.collect {
             send(it)
           }
@@ -139,7 +212,7 @@ class SeTabDelegate(
         if (frontendProvidersFacade != null) {
           launch {
             frontendProvidersFacade.getItems(params, disabledProviders).mapNotNull {
-              mapToResultEvent(it)
+              mapToResultEvent(null, it)
             }.collect {
               send(it)
             }
@@ -173,6 +246,40 @@ class SeTabDelegate(
                              ?: emptyList()
       return localProviders.toList() + frontedProviders
     }
+
+    suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+      val localItem = item.fetchItemIfExists()
+      return if (localItem != null) {
+        localItem.presentation()
+      }
+      else {
+        frontendProvidersFacade?.getUpdatedPresentation(item)
+      }
+    }
+
+    suspend fun performExtendedAction(item: SeItemData): Boolean {
+      return localProviders[item.providerId]?.performExtendedAction(item) ?: run {
+        frontendProvidersFacade?.performExtendedAction(item) ?: false
+      }
+    }
+
+    suspend fun isPreviewEnabled(): Boolean {
+      return localProviders.values.any { it.isPreviewEnabled() } || frontendProvidersFacade?.isPreviewEnabled() == true
+    }
+  }
+
+  // Workaround for: IJPL-188383 Search Everywhere, All tab: 'Top Hit' filter is duplicated
+  // Add/remove Top Hit (On Client) according to the presence of Top Hit provider
+  private fun fixDisabledProviders(disabledProviders: List<SeProviderId>?): List<SeProviderId>? {
+    val all = disabledProviders?.toMutableSet() ?: return null
+
+    val topHitClientId = SeProviderIdUtils.TOP_HIT_ID.toProviderId()
+    if (all.contains(SeProviderIdUtils.TOP_HIT_HOST_ID.toProviderId())) {
+      all.add(topHitClientId)
+    }
+    else all.remove(topHitClientId)
+
+    return all.toList()
   }
 
   companion object {
@@ -180,24 +287,55 @@ class SeTabDelegate(
       project: Project,
       providerId: SeProviderId,
       initEvent: AnActionEvent,
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
     ): Boolean {
       val dataContextId = readAction {
         initEvent.dataContext.rpcId()
       }
       return SeFrontendService.getInstance(project).localProvidersHolder?.getLegacyContributor(providerId, false)?.isShownInSeparateTab == true ||
-             SeRemoteApi.getInstance().isShownInSeparateTab(project.projectId(), sessionRef, dataContextId, providerId)
+             SeRemoteApi.getInstance().isShownInSeparateTab(project.projectId(), session, dataContextId, providerId)
     }
 
     private suspend fun initializeProviders(
       project: Project?,
       providerIds: List<SeProviderId>,
       initEvent: AnActionEvent,
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
+      logLabel: String,
     ): Providers {
+      val projectId = project?.projectId()
+      val dataContextId = readAction {
+        initEvent.dataContext.rpcId()
+      }
+
       val hasWildcard = providerIds.any { it.isWildcard }
-      val remoteProviderIds = SeRemoteApi.getInstance().getAvailableProviderIds().filter { hasWildcard || providerIds.contains(it) }.toSet()
+      val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder
+                                 ?: error("Local providers holder is not initialized")
+
       val localFactories = SeItemsProviderFactory.EP_NAME.extensionList.associateBy { SeProviderId(it.id) }
+      val frontendOnlyIds = localFactories.filter { it.value is SeFrontendOnlyItemsProviderFactory }.map { it.key }.toSet()
+
+      val availableRemoteProviders = if (projectId != null) SeRemoteApi.getInstance().getAvailableProviderIds(projectId, session, dataContextId) else null
+      val adaptedRemoteProviderItemsAreFetchable = availableRemoteProviders?.isFetchable == true
+
+      val essentialRemoteProviderIds = availableRemoteProviders?.essential?.filter {
+        !frontendOnlyIds.contains(it)
+      }?.toSet() ?: emptySet()
+
+      val nonEssentialNonAdaptedRemoteProviderIds = availableRemoteProviders?.nonEssentialNonAdapted?.filter {
+        !frontendOnlyIds.contains(it)
+      }?.toSet() ?: emptySet()
+
+      val adaptedAndAvailableToRenderRemoteProviderIds = if (adaptedRemoteProviderItemsAreFetchable) {
+        availableRemoteProviders.adapted.filter {
+          !frontendOnlyIds.contains(it) && localProvidersHolder.legacyAllTabContributors.containsKey(it)
+        }
+      }
+      else emptySet()
+
+      val nonEssentialRemoteProviderIds = nonEssentialNonAdaptedRemoteProviderIds + adaptedAndAvailableToRenderRemoteProviderIds
+
+      val remoteProviderIds = essentialRemoteProviderIds.union(nonEssentialRemoteProviderIds).filter { hasWildcard || providerIds.contains(it) }.toSet()
 
       // If we have it on BE, we use the BE provider.
       // This is needed because extensions are available on both sides in the monolith (BE and FE)
@@ -206,28 +344,31 @@ class SeTabDelegate(
       val localProviderIds =
         (if (hasWildcard) localFactories.keys else providerIds) - remoteProviderIds
 
-      val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder
-                                 ?: error("Local providers holder is not initialized")
       val localProviders = localProviderIds.mapNotNull { providerId ->
         localProvidersHolder.get(providerId, hasWildcard)?.let {
           providerId to it
         }
       }.toMap()
 
-      val dataContextId = readAction {
-        initEvent.dataContext.rpcId()
-      }
-
       val frontendProvidersFacade = if (project != null) {
         val remoteProviderIdToName =
-          SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), sessionRef, dataContextId, remoteProviderIds.toList())
+          SeRemoteApi.getInstance().getDisplayNameForProviders(project.projectId(), session, dataContextId, remoteProviderIds.toList())
 
         if (remoteProviderIdToName.isEmpty()) null
-        else SeFrontendItemDataProvidersFacade(project.projectId(), remoteProviderIdToName, sessionRef, dataContextId, hasWildcard)
+        else SeFrontendItemDataProvidersFacade(project.projectId(),
+                                               remoteProviderIdToName,
+                                               session,
+                                               dataContextId,
+                                               hasWildcard,
+                                               essentialRemoteProviderIds.filter { remoteProviderIdToName.containsKey(it) }.toSet())
       }
       else null
 
-      return Providers(localProviders, frontendProvidersFacade)
+      val allEssentials = localProvidersHolder.getEssentialAllTabProviderIds().filter { localProviders[it] != null }.toSet() +
+                          (frontendProvidersFacade?.essentialProviderIds ?: emptySet())
+
+      SeLog.log(SeLog.THROTTLING) { "Essential contributors for $logLabel tab : " + allEssentials.joinToString(", ") { it.value } }
+      return Providers(localProviders, frontendProvidersFacade, allEssentials)
     }
   }
 }

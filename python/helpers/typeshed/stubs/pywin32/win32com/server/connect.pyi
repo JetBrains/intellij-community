@@ -1,8 +1,5 @@
 from _typeshed import Incomplete
 
-from win32com import olectl as olectl
-from win32com.server.exception import Exception as Exception
-
 IConnectionPointContainer_methods: Incomplete
 IConnectionPoint_methods: Incomplete
 

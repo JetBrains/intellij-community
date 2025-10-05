@@ -7,12 +7,12 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
@@ -121,8 +121,7 @@ public class IdentifierHighlightingTest extends LightDaemonAnalyzerTestCase {
     DaemonCodeAnalyzerEx.processHighlights(markupModel, getProject(), null, 0, getEditor().getDocument().getTextLength(),
                                            Processors.cancelableCollectProcessor(infos));
     List<HighlightInfo> identInfos = ContainerUtil.filter(infos, info -> info.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY);
-    IdentifierHighlightingComputer computer = new IdentifierHighlightingComputer(getFile(), getEditor(), new ProperTextRange(getFile().getTextRange()), offset);
-    IdentifierHighlightingResult result = computer.computeRanges();
+    IdentifierHighlightingResult result = CodeInsightTestUtil.runIdentifierHighlighterPass(getFile(), getEditor());
     Collection<IdentifierOccurrence> occurrences = result.occurrences();
     if (IdentifierHighlighterUpdater.Companion.shouldShowIdentifierHighlightingResult(result, getEditor())) {
       assertEqualOccurrences(occurrences, identInfos, "offset:" + offset + "; infos:" + identInfos + "; result:" + result + "; text:\n----\n" +

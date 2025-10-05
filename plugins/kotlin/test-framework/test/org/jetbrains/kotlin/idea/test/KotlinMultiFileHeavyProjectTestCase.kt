@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
@@ -15,7 +15,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.directoryContent
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import java.nio.file.Path
 import kotlin.io.path.*
 
@@ -31,7 +31,7 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase(),
 
     override fun getTestProjectJdk(): Sdk? = IdeaTestUtil.getMockJdk11()
 
-    override fun getModuleType(): ModuleType<*> = StdModuleTypes.JAVA
+    override fun getModuleType(): ModuleType<*> = JavaModuleType.getModuleType()
 
     private var mockLibraryFacility: MockLibraryFacility? = null
 

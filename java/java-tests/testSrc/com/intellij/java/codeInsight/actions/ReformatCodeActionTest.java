@@ -6,9 +6,9 @@ import com.intellij.codeInsight.actions.ReformatFilesOptions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -144,14 +144,22 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     return createTestFiles(parentDirectory.getVirtualFile(), fileNames);
   }
 
+  private static void checkReformatActionAvailableAndPerform(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    action.update(event);
+    assertTrue("Reformat code action is not enabled", event.getPresentation().isEnabled());
+    action.actionPerformed(event);
+  }
+
   protected void performReformatActionOnSelectedFiles(List<PsiFile> files) {
     final AnAction action = getReformatCodeAction();
-    action.actionPerformed(createEventFor(action, getVirtualFileArrayFrom(files), getProject()));
+    final AnActionEvent event = createEventFor(action, getVirtualFileArrayFrom(files), getProject());
+    checkReformatActionAvailableAndPerform(action, event);
   }
 
   protected void performReformatActionOnModule(Module module, List<VirtualFile> files) {
     final AnAction action = getReformatCodeAction();
-    action.actionPerformed(createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module)));
+    AnActionEvent event = createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module));
+    checkReformatActionAvailableAndPerform(action, event);
   }
 
   protected void checkFormationAndImportsOptimizationFor(List<PsiFile> @NotNull ... fileCollection) {
@@ -217,7 +225,7 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     String path = dir.getVirtualFile().getPath() + "/" + newModuleName + ".iml";
 
     Module module = WriteAction
-      .compute(() -> ModuleManager.getInstance(getProject()).newModule(path, StdModuleTypes.JAVA.getId()));
+      .compute(() -> ModuleManager.getInstance(getProject()).newModule(path, JavaModuleType.getModuleType().getId()));
     PsiDirectory src = createDirectory(dir.getVirtualFile(), "src");
 
     PsiTestUtil.addSourceRoot(module, src.getVirtualFile());

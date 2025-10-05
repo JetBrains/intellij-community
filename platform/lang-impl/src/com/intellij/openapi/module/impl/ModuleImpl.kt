@@ -18,7 +18,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.serviceContainer.getComponentManagerImpl
+import com.intellij.serviceContainer.getComponentManagerEx
 import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.annotations.MapAnnotation
@@ -50,7 +50,7 @@ open class ModuleImpl(
     this.name = name
   }
 
-  internal fun getModuleComponentManager(): ModuleComponentManager = componentManager.getComponentManagerImpl() as ModuleComponentManager
+  internal fun getModuleComponentManager(): ModuleComponentManager = componentManager.getComponentManagerEx() as ModuleComponentManager
 
   override fun initNewlyAddedModule() {
     // do not measure (activityNamePrefix method not overridden by this class)

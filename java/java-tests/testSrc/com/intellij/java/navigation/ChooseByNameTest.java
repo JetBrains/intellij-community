@@ -3,7 +3,6 @@ package com.intellij.java.navigation;
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.ide.actions.searcheverywhere.*;
-import com.intellij.ide.util.gotoByName.FuzzyFileSearchExperimentOption;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.java.JavaLanguage;
@@ -35,11 +34,8 @@ import java.util.*;
 @SuppressWarnings("NewClassNamingConvention")
 public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
-  private static final RegistryValue enabledFuzzySearchRegistryValue = Registry.get("search.everywhere.fuzzy.file.search.ab.experiment.enabled");
-  private static final boolean initialEnabledFuzzySearchRegistryValue = enabledFuzzySearchRegistryValue.asBoolean();
-
-  private static final String abExperimentValue = System.getProperty("platform.experiment.ab.manual.option", "");
-  private static final String fuzzyFileSearchExperimentOptionId = FuzzyFileSearchExperimentOption.FUZZY_FILE_SEARCH_EXPERIMENT_OPTION_ID;
+  private static final RegistryValue fuzzySearchRegistryValue = Registry.get("search.everywhere.fuzzy.file.search.enabled");
+  private static final boolean isFuzzySearchEnabled = fuzzySearchRegistryValue.asBoolean();
 
   public static Test suite() {
     TestSuite suite = new TestSuite();
@@ -237,11 +233,11 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue((objects.get(0)).getVirtualFile().getPath().contains("mockJDK"));
 
     // Fuzzy search finds some results for the query `mockJDK/Object.java`, so let's ensure the test runs with fuzzy search disabled.
-    enabledFuzzySearchRegistryValue.setValue(false);
+    fuzzySearchRegistryValue.setValue(false);
 
     assertEmpty(gotoFile("mockJDK/Object.java", true));
 
-    enabledFuzzySearchRegistryValue.setValue(initialEnabledFuzzySearchRegistryValue);
+    fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
 
   public void test_goto_file_can_go_to_dir() {
@@ -253,7 +249,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiDirectory fooDir = fooIndex.getContainingDirectory();
     PsiDirectory barDir = barIndex.getContainingDirectory();
 
-    enabledFuzzySearchRegistryValue.setValue(false);
+    fuzzySearchRegistryValue.setValue(false);
 
     assertOrderedEquals(calcContributorElements(contributor, "foo/"), List.of(fooDir));
     assertOrderedEquals(calcContributorElements(contributor, "foo\\"), List.of(fooDir));
@@ -271,7 +267,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(calcContributorElements(contributor, "bar.txt"), List.of(barIndex, barDir));
     assertOrderedEquals(calcContributorElements(contributor, "bar"), List.of(barIndex, barDir));
 
-    enabledFuzzySearchRegistryValue.setValue(initialEnabledFuzzySearchRegistryValue);
+    fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
 
   public void test_goto_file_can_go_to_dir_with_fuzzy() {
@@ -284,7 +280,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiDirectory barDir = barIndex.getContainingDirectory();
 
     // With fuzzy search enabled, the search also shows files inside the directory.
-    System.setProperty("platform.experiment.ab.manual.option", fuzzyFileSearchExperimentOptionId);
+    fuzzySearchRegistryValue.setValue(true);
 
     assertOrderedEquals(calcContributorElements(contributor, "foo/"), List.of(fooDir, fooIndex));
     assertOrderedEquals(calcContributorElements(contributor, "foo\\"), List.of(fooDir, fooIndex));
@@ -302,21 +298,21 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(calcContributorElements(contributor, "bar.txt"), List.of(barIndex, barDir));
     assertOrderedEquals(calcContributorElements(contributor, "bar"), List.of(barIndex, barDir));
 
-    System.setProperty("platform.experiment.ab.manual.option", abExperimentValue);
+    fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
 
   public void test_prefer_files_to_directories_even_if_longer() {
     PsiFile fooFile = addEmptyFile("dir/fooFile.txt");
     PsiDirectory fooDir = addEmptyFile("foo/barFile.txt").getContainingDirectory();
 
-    enabledFuzzySearchRegistryValue.setValue(false);
+    fuzzySearchRegistryValue.setValue(false);
 
     SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable());
     List<?> popupElements = calcContributorElements(contributor, "foo");
 
     assertOrderedEquals(popupElements, List.of(fooFile, fooDir));
 
-    enabledFuzzySearchRegistryValue.setValue(initialEnabledFuzzySearchRegistryValue);
+    fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
 
   public void test_prefer_files_to_directories_even_if_longer_with_fuzzy() {
@@ -325,14 +321,14 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiDirectory fooDir = barFile.getContainingDirectory();
 
     // With fuzzy search enabled, the search also shows files inside the directory.
-    System.setProperty("platform.experiment.ab.manual.option", fuzzyFileSearchExperimentOptionId);
+    fuzzySearchRegistryValue.setValue(true);
 
     SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable());
     List<?> popupElements = calcContributorElements(contributor, "foo");
 
     assertOrderedEquals(popupElements, List.of(fooFile, fooDir, barFile));
 
-    System.setProperty("platform.experiment.ab.manual.option", abExperimentValue);
+    fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
 
   public void test_find_method_by_qualified_name() {

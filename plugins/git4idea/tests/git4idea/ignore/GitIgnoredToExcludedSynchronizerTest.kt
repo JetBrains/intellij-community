@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
+import kotlinx.coroutines.runBlocking
 
 const val GEN = "gen"
 
@@ -44,7 +45,7 @@ class GitIgnoredToExcludedSynchronizerTest : GitSingleRepoTest() {
     }
   }
 
-  fun `test mark ignored directories as excluded notification`() {
+  fun `test mark ignored directories as excluded notification`() = runBlocking {
     assertEmpty(module.excludes())
 
     createGitignoreAndWait("""
@@ -55,7 +56,7 @@ class GitIgnoredToExcludedSynchronizerTest : GitSingleRepoTest() {
     assertNotificationByContent(VcsBundle.message("ignore.to.exclude.notification.message"))
   }
 
-  fun `test mark ignored directories as excluded`() {
+  fun `test mark ignored directories as excluded`() = runBlocking {
     VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED = true
 
     assertEmpty(module.excludes())
@@ -68,7 +69,7 @@ class GitIgnoredToExcludedSynchronizerTest : GitSingleRepoTest() {
     assertExcludedDirs(out, excluded)
   }
 
-  fun `test do not mark ignored source root directory as excluded`() {
+  fun `test do not mark ignored source root directory as excluded`() = runBlocking {
     VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED = true
 
     assertSourceDirs(gen)
@@ -83,13 +84,11 @@ class GitIgnoredToExcludedSynchronizerTest : GitSingleRepoTest() {
     assertSourceDirs(gen)
   }
 
-  private fun createGitignoreAndWait(gitignoreContent: String) {
-    val ignoredHolderWaiter = repo.untrackedFilesHolder.createWaiter()
-
+  private suspend fun createGitignoreAndWait(gitignoreContent: String) {
     val gitIgnore = file(GITIGNORE).create(gitignoreContent)
     VfsUtil.findFileByIoFile(gitIgnore.file, true) //trigger VFS create event explicitly
 
-    ignoredHolderWaiter.waitFor()
+    repo.untrackedFilesHolder.awaitNotBusy()
   }
 
   private fun assertNotificationByContent(notificationContent: String) {

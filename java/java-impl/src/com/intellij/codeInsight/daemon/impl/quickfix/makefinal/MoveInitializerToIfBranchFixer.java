@@ -198,10 +198,10 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
     @Override
     public @NotNull InitMode join(@NotNull InitMode nextMode) {
       if (nextMode == ExactMode.NOT_INITIALIZED) return this;
-      if (!(nextMode instanceof Branched branched)) return ExactMode.BOTTOM;
-      if (ifStatement() != branched.ifStatement()) return ExactMode.BOTTOM;
-      InitMode newThen = thenBranch().join(branched.thenBranch());
-      InitMode newElse = elseBranch().join(branched.elseBranch());
+      if (!(nextMode instanceof Branched(PsiIfStatement nextIf, InitMode nextThen, InitMode nextElse))) return ExactMode.BOTTOM;
+      if (ifStatement() != nextIf) return ExactMode.BOTTOM;
+      InitMode newThen = thenBranch().join(nextThen);
+      InitMode newElse = elseBranch().join(nextElse);
       if (newThen == ExactMode.BOTTOM || newElse == ExactMode.BOTTOM) return ExactMode.BOTTOM;
       if (newThen == newElse) return newThen;
       return new Branched(ifStatement(), newThen, newElse);

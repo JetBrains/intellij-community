@@ -560,6 +560,7 @@ a:com.intellij.dvcs.ui.DvcsCloneDialogComponent
 - com.intellij.openapi.vcs.ui.VcsCloneComponent$WithSettableUrl
 - p:errorComponent:com.intellij.util.ui.components.BorderLayoutPanel
 - <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.dvcs.DvcsRememberedInputs,com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener):V
+- checkDirectory(java.lang.String,javax.swing.JComponent,com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener):com.intellij.openapi.ui.ValidationInfo
 - dispose():V
 - a:doClone(com.intellij.openapi.vcs.CheckoutProvider$Listener):V
 - doValidateAll():java.util.List

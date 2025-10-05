@@ -1,1 +1,0 @@
-Not yet a product module as XML has not yet been extracted from the core.

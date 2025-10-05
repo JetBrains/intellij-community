@@ -34,7 +34,7 @@ public final class SimpleDateFormatWithoutLocaleInspection extends BaseInspectio
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SimpleDateFormatWithoutLocaleVisitor();
   }
 

@@ -1,15 +1,18 @@
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.impl` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"]
+  name = "custom_telemetry-impl",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "kotlinx.serialization.ExperimentalSerializationApi",
+  ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "telemetry-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -17,10 +20,11 @@ jvm_library(
   name = "telemetry-impl",
   module_name = "intellij.platform.diagnostic.telemetry.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":telemetry-impl_resources"],
+  kotlinc_opts = ":custom_telemetry-impl",
   deps = [
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:kotlin-stdlib",
@@ -34,17 +38,16 @@ jvm_library(
     "//platform/core-impl",
     "//platform/util/http",
     "@lib//:kotlinx-serialization-protobuf",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/diagnostic",
     "//platform/diagnostic/telemetry.exporters",
     "//platform/util/coroutines",
     "//platform/diagnostic/telemetry/rt",
-    "@lib//:guava",
+    "//libraries/guava",
   ],
   exports = [
     "//platform/diagnostic/telemetry.exporters",
     "//platform/diagnostic/telemetry/rt",
-  ],
-  runtime_deps = [":telemetry-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.impl` end

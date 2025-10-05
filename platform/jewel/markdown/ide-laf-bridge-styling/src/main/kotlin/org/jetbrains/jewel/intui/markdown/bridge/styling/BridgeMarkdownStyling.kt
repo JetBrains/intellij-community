@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.bridge.theme.retrieveDefaultTextStyle
@@ -38,10 +39,12 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.HtmlBlock
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Image
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun MarkdownStyling.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -59,10 +62,12 @@ public fun MarkdownStyling.Companion.create(
 ): MarkdownStyling =
     MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Paragraph.Companion.create(inlinesStyling: InlinesStyling = InlinesStyling.create()): Paragraph =
     Paragraph(inlinesStyling)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -117,6 +122,7 @@ public fun Heading.Companion.create(
         ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H1.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -134,6 +140,7 @@ public fun Heading.H1.Companion.create(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H1 = Heading.H1(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H2.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -152,6 +159,7 @@ public fun Heading.H2.Companion.create(
 ): Heading.H2 = Heading.H2(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H3.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -170,6 +178,7 @@ public fun Heading.H3.Companion.create(
 ): Heading.H3 = Heading.H3(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H4.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -188,6 +197,7 @@ public fun Heading.H4.Companion.create(
 ): Heading.H4 = Heading.H4(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H5.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -206,6 +216,7 @@ public fun Heading.H5.Companion.create(
 ): Heading.H5 = Heading.H5(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Heading.H6.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -224,6 +235,7 @@ public fun Heading.H6.Companion.create(
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H6 = Heading.H6(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun BlockQuote.Companion.create(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -234,6 +246,7 @@ public fun BlockQuote.Companion.create(
     textColor: Color = Color(0xFF656d76),
 ): BlockQuote = BlockQuote(padding, lineWidth, lineColor, pathEffect, strokeCap, textColor)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun List.Companion.create(
     baseTextStyle: TextStyle = defaultTextStyle,
@@ -241,15 +254,17 @@ public fun List.Companion.create(
     unordered: Unordered = Unordered.create(bulletStyle = baseTextStyle.copy(fontWeight = FontWeight.Black)),
 ): List = List(ordered, unordered)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
+@Deprecated("Please, use the overload with [Ordered.NumberFormatStyles].")
 public fun Ordered.Companion.create(
     numberStyle: TextStyle = defaultTextStyle,
-    numberContentGap: Dp = 8.dp,
+    numberContentGap: Dp = 4.dp,
     numberMinWidth: Dp = 16.dp,
     numberTextAlign: TextAlign = TextAlign.End,
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
-    padding: PaddingValues = PaddingValues(start = 16.dp),
+    padding: PaddingValues = PaddingValues(start = 6.dp),
 ): Ordered =
     Ordered(
         numberStyle,
@@ -259,18 +274,89 @@ public fun Ordered.Companion.create(
         itemVerticalSpacing,
         itemVerticalSpacingTight,
         padding,
+        Ordered.NumberFormatStyles(
+            firstLevel = NumberFormatStyle.Decimal,
+            secondLevel = NumberFormatStyle.Roman,
+            thirdLevel = NumberFormatStyle.Alphabetical,
+        ),
     )
 
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+public fun Ordered.Companion.create(
+    numberStyle: TextStyle = defaultTextStyle,
+    numberContentGap: Dp = 4.dp,
+    numberMinWidth: Dp = 16.dp,
+    numberTextAlign: TextAlign = TextAlign.End,
+    itemVerticalSpacing: Dp = 16.dp,
+    itemVerticalSpacingTight: Dp = 4.dp,
+    padding: PaddingValues = PaddingValues(start = 6.dp),
+    numberFormatStyles: Ordered.NumberFormatStyles =
+        Ordered.NumberFormatStyles(
+            firstLevel = NumberFormatStyle.Decimal,
+            secondLevel = NumberFormatStyle.Roman,
+            thirdLevel = NumberFormatStyle.Alphabetical,
+        ),
+): Ordered =
+    Ordered(
+        numberStyle,
+        numberContentGap,
+        numberMinWidth,
+        numberTextAlign,
+        itemVerticalSpacing,
+        itemVerticalSpacingTight,
+        padding,
+        numberFormatStyles,
+    )
+
+@ApiStatus.Experimental
+@ExperimentalJewelApi
+@Deprecated("Please, use the overload with [Unordered.BulletCharStyles].")
+public fun Unordered.Companion.create(
+    bullet: Char? = '•',
+    bulletStyle: TextStyle = defaultTextStyle.copy(fontWeight = FontWeight.Black),
+    bulletContentGap: Dp = 4.dp,
+    itemVerticalSpacing: Dp = 16.dp,
+    itemVerticalSpacingTight: Dp = 4.dp,
+    padding: PaddingValues = PaddingValues(start = 6.dp),
+    markerMinWidth: Dp = 16.dp,
+): Unordered =
+    Unordered(
+        bullet,
+        bulletStyle,
+        bulletContentGap,
+        itemVerticalSpacing,
+        itemVerticalSpacingTight,
+        padding,
+        markerMinWidth,
+        Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
+    )
+
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Unordered.Companion.create(
     bullet: Char? = '•',
     bulletStyle: TextStyle = defaultTextStyle.copy(fontWeight = FontWeight.Black),
-    bulletContentGap: Dp = 16.dp,
+    bulletContentGap: Dp = 4.dp,
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
-    padding: PaddingValues = PaddingValues(start = 16.dp),
-): Unordered = Unordered(bullet, bulletStyle, bulletContentGap, itemVerticalSpacing, itemVerticalSpacingTight, padding)
+    padding: PaddingValues = PaddingValues(start = 6.dp),
+    markerMinWidth: Dp = 16.dp,
+    bulletCharStyles: Unordered.BulletCharStyles? =
+        Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
+): Unordered =
+    Unordered(
+        bullet,
+        bulletStyle,
+        bulletContentGap,
+        itemVerticalSpacing,
+        itemVerticalSpacingTight,
+        padding,
+        markerMinWidth,
+        bulletCharStyles,
+    )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Code.Companion.create(
     editorTextStyle: TextStyle = defaultEditorTextStyle,
@@ -278,6 +364,7 @@ public fun Code.Companion.create(
     fenced: Fenced = Fenced.create(editorTextStyle),
 ): Code = Code(indented, fenced)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Indented.Companion.create(
     textStyle: TextStyle = defaultEditorTextStyle,
@@ -290,6 +377,7 @@ public fun Indented.Companion.create(
     scrollsHorizontally: Boolean = true,
 ): Indented = Indented(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth, scrollsHorizontally)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Fenced.Companion.create(
     textStyle: TextStyle = defaultEditorTextStyle,
@@ -318,6 +406,7 @@ public fun Fenced.Companion.create(
         infoPosition,
     )
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Image.Companion.default(
     alignment: Alignment = Alignment.Center,
@@ -329,6 +418,7 @@ public fun Image.Companion.default(
     borderColor: Color = Color.Unspecified,
 ): Image = Image(alignment, contentScale, padding, shape, background, borderWidth, borderColor)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun ThematicBreak.Companion.create(
     padding: PaddingValues = PaddingValues(),
@@ -336,6 +426,7 @@ public fun ThematicBreak.Companion.create(
     lineColor: Color = dividerColor,
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun HtmlBlock.Companion.create(
     textStyle: TextStyle = defaultEditorTextStyle,
@@ -347,6 +438,7 @@ public fun HtmlBlock.Companion.create(
     fillWidth: Boolean = true,
 ): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
 
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun InlinesStyling.Companion.create(
     textStyle: TextStyle = defaultTextStyle,
@@ -401,6 +493,7 @@ public fun InlinesStyling.Companion.create(
     )
 
 @Deprecated("Use the variant without renderInlineHtml instead", level = DeprecationLevel.HIDDEN)
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun InlinesStyling.Companion.create(
     textStyle: TextStyle = defaultTextStyle,

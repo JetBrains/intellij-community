@@ -5,17 +5,24 @@ import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.psi.*
+import com.intellij.util.SlowOperations
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.Locale.getDefault
 import javax.swing.Icon
@@ -38,8 +45,8 @@ open class ActionCommandProvider(
   val icon: Icon? = null,
   val priority: Int? = null,
   val previewText: @Nls String?,
-  val synonyms: List<String> = emptyList()
-) : CommandProvider, DumbAware {
+  val synonyms: List<String> = emptyList(),
+) : CommandProvider {
 
   /**
    * Creates and returns a list of completion commands based on the provided context.
@@ -55,7 +62,7 @@ open class ActionCommandProvider(
     return listOf(element)
   }
 
-  
+
   /**
    * Creates a new action completion command based on the provided context.
    * This method instantiates an [ActionCompletionCommand] with the provider's configuration
@@ -115,6 +122,39 @@ open class ActionCommandProvider(
     return true
   }
 
+  /**
+   * Creates an action completion command based on a provided context, where the name identifier
+   * or relevant PSI element and its range are adjusted appropriately after calling the command.
+   *
+   * @param context Provides the necessary information about the environment, such as the PSI file,
+   *                editor, offset, and other relevant metadata required for command creation.
+   * @return An instance of [ActionCompletionCommand] if the required conditions are met and the command can be created,
+   *         or null if it cannot be constructed due to incompatible context or missing elements.
+   */
+  @ApiStatus.Experimental
+  protected fun createCommandWithNameIdentifierAndLastAdjusted(context: CommandCompletionProviderContext): ActionCompletionCommand? {
+    var element = getCommandContext(context.offset, context.psiFile) ?: return null
+    if (element is PsiNameIdentifierOwner) {
+      element = element.nameIdentifier ?: return null
+    }
+    val range = element.textRange ?: return null
+    return object : ActionCompletionCommand(actionId = actionId,
+                                            synonyms = synonyms,
+                                            presentableActionName = presentableName,
+                                            icon = icon,
+                                            priority = priority,
+                                            previewText = previewText,
+                                            highlightInfo = HighlightInfoLookup(getOffsetAwareInjection(element, range), EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)) {
+      override fun customizeEvent(event: AnActionEvent) {
+        super.customizeEvent(event)
+        val dataContext = event.dataContext
+        if (dataContext is UserDataHolder) {
+          dataContext.putUserData(ADJUST_LAST, true)
+        }
+      }
+    }
+  }
+
   protected fun createCommandWithNameIdentifier(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     var element = getCommandContext(context.offset, context.psiFile) ?: return null
     if (element is PsiNameIdentifierOwner) {
@@ -127,7 +167,14 @@ open class ActionCommandProvider(
                                    icon = icon,
                                    priority = priority,
                                    previewText = previewText,
-                                   highlightInfo = HighlightInfoLookup(range, EditorColors.SEARCH_RESULT_ATTRIBUTES, 0))
+                                   highlightInfo = HighlightInfoLookup(getOffsetAwareInjection(element, range), EditorColors.SEARCH_RESULT_ATTRIBUTES, 0))
+  }
+
+  protected fun getOffsetAwareInjection(element: PsiElement, offset: TextRange): TextRange {
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(element.project)
+    val injectedFile = element.containingFile
+    if (injectedFile == null || !injectedLanguageManager.isInjectedFragment(injectedFile)) return offset
+    return injectedLanguageManager.injectedToHost(injectedFile, offset)
   }
 }
 
@@ -145,16 +192,18 @@ open class ActionCompletionCommand(
   override val icon: Icon? = null,
   override val priority: Int? = null,
   override val highlightInfo: HighlightInfoLookup? = null,
-  override val synonyms: List<String> = emptyList()
-) : CompletionCommand(), DumbAware, CompletionCommandWithPreview {
+  override val synonyms: List<String> = emptyList(),
+) : CompletionCommand(), DumbAware {
 
   override val presentableName: @Nls String = presentableActionName
     .replaceFirst("_", "")
     .lowercase()
     .replaceFirstChar {
-    if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
+      if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString()
+    }
 
-  private val action: AnAction? = ActionManager.getInstance().getAction(actionId)
+  @ApiStatus.Internal
+  protected open val action: AnAction? = ActionManager.getInstance().getAction(actionId)
 
   override val additionalInfo: String?
     get() {
@@ -165,6 +214,10 @@ open class ActionCompletionCommand(
       return null
     }
 
+  @ApiStatus.Internal
+  protected open fun customizeEvent(event: AnActionEvent) {
+  }
+
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val action = action ?: return
     if (editor == null) return
@@ -174,11 +227,46 @@ open class ActionCompletionCommand(
     val presentation: Presentation = action.templatePresentation.clone()
     val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION,
                                           ActionUiKind.NONE, null)
+    customizeEvent(event)
+    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) {
+      SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
+        ActionUtil.performAction(action, event)
+      }
+      return
+    }
     ActionUtil.performAction(action, event)
   }
 
-  override fun getPreview(): IntentionPreviewInfo? {
-    if (previewText == null) return null
+  override fun getPreview(): IntentionPreviewInfo {
+    if (previewText == null) return IntentionPreviewInfo.EMPTY
     return IntentionPreviewInfo.Html(previewText)
+  }
+}
+
+private val ADJUST_LAST = Key.create<Boolean>("CommandCompletion.AdjustLast")
+
+@ApiStatus.Experimental
+private class ActionsAdjustLastListener : AnActionListener {
+  override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
+    super.afterActionPerformed(action, event, result)
+    val dataContext = event.dataContext
+    if (dataContext is UserDataHolder) {
+      val data = dataContext.getUserData(ADJUST_LAST)
+      if (data != true) return
+      val project = event.project ?: return
+      val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
+      moveCaretToEnd(editor)
+    }
+  }
+
+  private fun moveCaretToEnd(editor: Editor) {
+    val project = editor.project ?: return
+    val commandCompletionService = project.serviceOrNull<CommandCompletionService>() ?: return
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
+    val factory = commandCompletionService.getFactory(psiFile.language) ?: return
+    val newOffset: Int? = factory.adjustCaret(psiFile, editor.caretModel.offset)
+    if (newOffset != null && newOffset <= editor.document.textLength) {
+      editor.caretModel.moveToOffset(newOffset)
+    }
   }
 }

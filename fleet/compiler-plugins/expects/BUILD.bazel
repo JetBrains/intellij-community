@@ -1,0 +1,19 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+jvm_resources(
+  name = "expects-compiler-plugin_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+kt_jvm_library(
+  name = "expects-compiler-plugin",
+  srcs = glob(["src/main/kotlin/**/*.kt"], exclude = ["src/main/kotlin/fleet/multiplatform/expects/gradle/ExpectsGradlePlugin.kt"]),
+  kotlinc_opts = "@rules_jvm//:rules_jvm_bootstrap_kotlinc_options",
+  visibility = ["//visibility:public"],
+  deps = [
+    "@rules_jvm//jvm-inc-builder:patched-kotlin-compiler-for-bazel",
+  ],
+  runtime_deps = [":expects-compiler-plugin_resources"]
+)

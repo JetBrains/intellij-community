@@ -1,18 +1,17 @@
 ### auto-generated section `build intellij.xml.dom.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "dom-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "dom-tests_test_lib",
+  module_name = "intellij.xml.dom.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
-  associates = ["//xml/dom-impl"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -20,6 +19,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
+    "//xml/dom-impl",
     "//xml/impl",
     "//java/testFramework",
     "//java/java-psi-impl:psi-impl",
@@ -34,9 +34,13 @@ jvm_library(
     "//platform/libraries/cglib",
   ]
 )
+### auto-generated section `build intellij.xml.dom.tests` end
+
+### auto-generated section `test intellij.xml.dom.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "dom-tests_test",
   runtime_deps = [":dom-tests_test_lib"]
 )
-### auto-generated section `build intellij.xml.dom.tests` end
+### auto-generated section `test intellij.xml.dom.tests` end

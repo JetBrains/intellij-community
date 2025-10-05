@@ -38,7 +38,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.jar.Manifest
 
-const val IDEA_DECOMPILER_BANNER: String = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by FernFlower decompiler)\n//\n\n"
+const val IDEA_DECOMPILER_BANNER: String = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by Fernflower decompiler)\n//\n\n"
 
 private const val LEGAL_NOTICE_ACCEPTED_KEY = "decompiler.legal.notice.accepted"
 private const val POSTPONE_EXIT_CODE = DialogWrapper.CANCEL_EXIT_CODE

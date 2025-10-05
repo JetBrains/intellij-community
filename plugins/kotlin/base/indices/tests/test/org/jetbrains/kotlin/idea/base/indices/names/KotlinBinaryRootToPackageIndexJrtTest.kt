@@ -32,7 +32,6 @@ import java.nio.file.Path
  */
 @RunWith(JUnit4::class)
 class KotlinBinaryRootToPackageIndexJrtTest : AbstractMultiModuleTest() {
-
     private val testDataPath = KotlinRoot.DIR.resolve("base/indices/tests/testData/kotlinBinaryRootToPackageIndex/jrt").toPath()
 
     lateinit var jrtPath: Path
@@ -53,7 +52,7 @@ class KotlinBinaryRootToPackageIndexJrtTest : AbstractMultiModuleTest() {
     }
 
     @Test
-    fun testAbc() {
+    fun testCustomRuntime() {
         val module = createMainModule()
         module.addLibrary(jrtRoot, "JRT-based library")
 

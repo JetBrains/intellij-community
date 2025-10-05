@@ -18,16 +18,15 @@ import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.util.exceptionOrNull
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.SingleComponentCenteringLayout
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -189,56 +188,65 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   private fun CoroutineScope.createDiffPanel(project: Project, diffVm: GitLabDiscussionDiffViewModel): JComponent =
     Wrapper(LoadingLabel()).apply {
-      bindContentIn(this@createDiffPanel, diffVm.patchHunk) { hunkState ->
+      bindContentIn(this@createDiffPanel, diffVm.patchHunk) { hunkResult ->
         val loadedDiffCs = this
-        when (hunkState) {
-          is GitLabDiscussionDiffViewModel.PatchHunkResult.Loaded -> {
-            TimelineDiffComponentFactory.createDiffComponentIn(loadedDiffCs, project, EditorFactory.getInstance(), hunkState.hunk,
-                                                               hunkState.anchor, null)
-          }
-          is GitLabDiscussionDiffViewModel.PatchHunkResult.Error,
-          GitLabDiscussionDiffViewModel.PatchHunkResult.NotLoaded -> {
-            JPanel(SingleComponentCenteringLayout()).apply {
-              isOpaque = false
-              border = JBUI.Borders.empty(16)
 
-              bindChildIn(loadedDiffCs, diffVm.showDiffHandler.asActionHandler()) { clickListener ->
-                if (clickListener != null) {
-                  val text = buildCantLoadHunkText(hunkState)
-                    .append(HtmlChunk.p().child(
-                      HtmlChunk.link(OPEN_DIFF_LINK_HREF, GitLabBundle.message("merge.request.timeline.discussion.open.full.diff"))))
-                    .wrapWith(HtmlChunk.div("text-align: center"))
-                    .toString()
+        if (hunkResult.isInProgress) {
+          return@bindContentIn LoadingLabel()
+        }
 
-                  SimpleHtmlPane(addBrowserListener = false).apply {
-                    setHtmlBody(text)
-                  }.also {
-                    it.addHyperlinkListener(object : HyperlinkAdapter() {
-                      override fun hyperlinkActivated(e: HyperlinkEvent) {
-                        if (e.description == OPEN_DIFF_LINK_HREF) {
-                          clickListener.actionPerformed(ActionEvent(it, ActionEvent.ACTION_PERFORMED, "execute"))
-                        }
-                      }
-                    })
-                  }
-                }
-                else {
-                  val text = buildCantLoadHunkText(hunkState).toString()
-                  SimpleHtmlPane(text)
-                }
-              }
-            }
-          }
+        val hunk = hunkResult.getOrNull()
+        if (hunk != null) {
+          TimelineDiffComponentFactory.createDiffComponentIn(loadedDiffCs, project, EditorFactory.getInstance(), hunk.hunk, hunk.anchor, null)
+        }
+        else {
+          createMissingHunkComponent(diffVm, hunkResult.exceptionOrNull())
         }
       }
     }
 
-  private fun buildCantLoadHunkText(hunkState: GitLabDiscussionDiffViewModel.PatchHunkResult) =
+  private fun createMissingHunkComponent(
+    diffVm: GitLabDiscussionDiffViewModel,
+    error: Throwable?,
+  ): JPanel = JPanel(SingleComponentCenteringLayout()).apply {
+    isOpaque = false
+    border = JBUI.Borders.empty(16)
+
+    launchOnShow("Hunk text") {
+      bindChildIn(this, diffVm.showDiffHandler.asActionHandler()) { clickListener ->
+        if (clickListener != null) {
+          val text = buildCantLoadHunkText(error)
+            .append(HtmlChunk.p().child(
+              HtmlChunk.link(OPEN_DIFF_LINK_HREF, GitLabBundle.message("merge.request.timeline.discussion.open.full.diff"))))
+            .wrapWith(HtmlChunk.div("text-align: center"))
+            .toString()
+
+          SimpleHtmlPane(addBrowserListener = false).apply {
+            setHtmlBody(text)
+          }.also {
+            it.addHyperlinkListener(object : HyperlinkAdapter() {
+              override fun hyperlinkActivated(e: HyperlinkEvent) {
+                if (e.description == OPEN_DIFF_LINK_HREF) {
+                  clickListener.actionPerformed(ActionEvent(it, ActionEvent.ACTION_PERFORMED, "execute"))
+                }
+              }
+            })
+          }
+        }
+        else {
+          val text = buildCantLoadHunkText(error).toString()
+          SimpleHtmlPane(text)
+        }
+      }
+    }
+  }
+
+  private fun buildCantLoadHunkText(error: Throwable?) =
     HtmlBuilder()
       .append(HtmlChunk.p().addText(GitLabBundle.message("merge.request.timeline.discussion.cant.load.diff")))
       .apply {
-        if (hunkState is GitLabDiscussionDiffViewModel.PatchHunkResult.Error) {
-          append(HtmlChunk.p().addText(hunkState.error.localizedMessageOrClassName()))
+        if (error != null) {
+          append(HtmlChunk.p().addText(error.localizedMessageOrClassName()))
         }
       }
 

@@ -46,7 +46,7 @@ final class LightEditRecentFileActionGroup extends ActionGroup implements DumbAw
     List<VirtualFile> recentFiles = getRecentFiles(project);
     final List<AnAction> actions = new ArrayList<>();
     actions.addAll(ContainerUtil.map(recentFiles, file -> new OpenFileAction(file)));
-    List<AnAction> recentProjectsActions = RecentProjectListActionProvider.getInstance().getActions(false);
+    List<AnAction> recentProjectsActions = RecentProjectListActionProvider.getInstance().getActionsWithoutGroups(false);
     if (!recentProjectsActions.isEmpty()) {
       if (!actions.isEmpty()) {
         actions.add(Separator.create());

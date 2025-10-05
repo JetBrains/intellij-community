@@ -4,8 +4,6 @@ import ctypes
 import os
 import signal
 import traceback
-from importlib import import_module
-
 import pydevd_file_utils
 
 try:
@@ -632,6 +630,12 @@ def should_evaluate_shape():
     return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
 
 
+def has_attribute_safe(obj, attr_name):
+    """Evaluates the existence of attribute without accessing it."""
+    attr = inspect.getattr_static(obj, attr_name, None)
+    return attr is not None
+
+
 def is_safe_to_access(obj, attr_name):
     """Evaluates the safety of attribute accessibility via `obj.attr_name`.
 
@@ -641,11 +645,18 @@ def is_safe_to_access(obj, attr_name):
     of attribute access in the most risk-free manner. As an example, it leverages the
     `inspect` module, facilitating attribute retrieval without triggering any
     descriptor functionality.
+
+    Note
+    ----
+    This function performs a strict check for potential side-effects, the access can be safe even if `False` is returned.
+    This might need to be checked more precisely for some special types.
     """
-    if "__getattr__" in dir(obj):
-        return False
 
     attr = inspect.getattr_static(obj, attr_name, None)
+
+    # Filter out objects that don't contain the given attribute
+    if attr is None:
+        return False
 
     # Should we check for other descriptor types here?
     if inspect.isgetsetdescriptor(attr) or isinstance(attr, property):
@@ -697,30 +708,6 @@ def kill_thread(thread):
                         % thread_id)
     pydev_log.debug("Thread with ID '%s' is stopped" % thread_id)
 
-def import_attr_from_module(import_with_attr_access):
-    if "." not in import_with_attr_access:
-        # We need at least one '.' (we don't support just the module import, we need the attribute access too).
-        raise ImportError("Unable to import module with attr access: %s" % (import_with_attr_access,))
-
-    module_name, attr_name = import_with_attr_access.rsplit(".", 1)
-
-    while True:
-        try:
-            mod = import_module(module_name)
-        except ImportError:
-            if "." not in module_name:
-                raise ImportError("Unable to import module with attr access: %s" % (import_with_attr_access,))
-
-            module_name, new_attr_part = module_name.rsplit(".", 1)
-            attr_name = new_attr_part + "." + attr_name
-        else:
-            # Ok, we got the base module, now, get the attribute we need.
-            try:
-                for attr in attr_name.split("."):
-                    mod = getattr(mod, attr)
-                return mod
-            except:
-                raise ImportError("Unable to import module with attr access: %s" % (import_with_attr_access,))
 
 def interrupt_main_thread(main_thread=None):
     """

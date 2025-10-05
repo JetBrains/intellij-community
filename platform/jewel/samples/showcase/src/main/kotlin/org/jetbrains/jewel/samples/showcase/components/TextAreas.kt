@@ -34,8 +34,8 @@ private const val LOREM_IPSUM =
         "Sed nec sapien nec dui rhoncus bibendum. Sed blandit bibendum libero."
 
 @Composable
-public fun TextAreas() {
-    VerticallyScrollableContainer(Modifier.fillMaxSize()) {
+public fun TextAreas(modifier: Modifier = Modifier) {
+    VerticallyScrollableContainer(modifier.fillMaxSize()) {
         Column(Modifier.padding(vertical = 4.dp)) {
             Row(
                 Modifier.padding(horizontal = 16.dp).height(200.dp),
@@ -62,6 +62,13 @@ public fun TextAreas() {
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     outline = Outline.Warning,
                     placeholder = { Text("Text area with warning") },
+                )
+
+                TextArea(
+                    state = rememberTextFieldState(""),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    placeholder = { Text("Text area without decoration") },
+                    undecorated = true,
                 )
             }
 
@@ -103,6 +110,13 @@ public fun TextAreas() {
                     outline = Outline.Warning,
                     placeholder = { Text("Text area with warning") },
                     readOnly = true,
+                )
+
+                TextArea(
+                    state = rememberTextFieldState(""),
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    placeholder = { Text("Text area without decoration") },
+                    undecorated = true,
                 )
             }
         }

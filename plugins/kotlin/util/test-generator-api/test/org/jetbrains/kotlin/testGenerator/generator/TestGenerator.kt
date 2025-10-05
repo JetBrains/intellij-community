@@ -1,15 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.testGenerator.generator
 
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.TestIndexingModeSupporter
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import junit.framework.ComparisonFailure
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
@@ -25,32 +23,8 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.nio.file.Files
 import java.util.*
-import kotlin.io.path.Path
-import kotlin.io.path.exists
 
 object TestGenerator {
-    fun writeLibrariesVersion(isUpToDateCheck: Boolean = false) {
-        val kotlincKotlinCompilerCliVersion = getLibraryVersion("kotlinc_kotlin_compiler_cli.xml")
-        val kotlincKotlinJpsPluginTests = getLibraryVersion("kotlinc_kotlin_jps_plugin_tests.xml")
-        write(File(PathManager.getCommunityHomePath())
-                  .resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinCompilerCliVersion.txt"),
-              kotlincKotlinCompilerCliVersion, isUpToDateCheck)
-        write(File(PathManager.getCommunityHomePath())
-                  .resolve("plugins/kotlin/base/plugin/testResources/kotlincKotlinJpsPluginTests.txt"),
-              kotlincKotlinJpsPluginTests, isUpToDateCheck)
-    }
-
-    private fun getLibraryVersion(fileName: String): String {
-        val libraryPath = Path(PathManager.getCommunityHomePath()).resolve(".idea/libraries/$fileName")
-        if (!libraryPath.exists()) {
-            error("$fileName is not found in .idea/libraries")
-        }
-        val document = JDOMUtil.load(libraryPath)
-        val libraryElement = document.getChildren("library")?.single() ?: error("Invalid $fileName")
-        val propertiesElement = libraryElement.getChildren("properties")?.single() ?: error("Invalid $fileName")
-        return propertiesElement.getAttributeValue("maven-id")?.substringAfterLast(":") ?: error("Invalid $fileName")
-    }
-
     fun write(workspace: TWorkspace, isUpToDateCheck: Boolean = false) {
         for (group in workspace.groups) {
             for (suite in group.suites) {

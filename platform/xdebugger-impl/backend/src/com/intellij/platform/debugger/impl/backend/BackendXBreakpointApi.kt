@@ -1,14 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
-import com.intellij.ide.rpc.BackendDocumentId
+import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.FrontendDocumentId
-import com.intellij.ide.rpc.bindToFrontend
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.vfs.findDocument
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
+import com.intellij.platform.rpc.backend.impl.DocumentSync
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.evaluation.EvaluationMode
@@ -16,10 +17,9 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy.Monolith.Companion.getEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
+import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import com.intellij.xdebugger.impl.rpc.models.findValue
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 internal class BackendXBreakpointApi : XBreakpointApi {
   override suspend fun setEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {
@@ -44,6 +44,16 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     }
   }
 
+  override suspend fun getDefaultGroup(project: ProjectId): String? {
+    val project = project.findProject()
+    return (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).defaultGroup
+  }
+
+  override suspend fun setDefaultGroup(project: ProjectId, group: String?) {
+    val project = project.findProject()
+    (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).defaultGroup = group
+  }
+
   override suspend fun setConditionEnabled(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {
     val breakpoint = breakpointId.findValue() ?: return
     edtWriteAction {
@@ -66,18 +76,24 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     }
   }
 
-  override suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int) {
-    val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
+  override suspend fun setLine(breakpointId: XBreakpointId, requestId: Long, line: Int, documentPatchVersion: DocumentPatchVersion?): Boolean {
+    val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return true
+    DocumentSync.awaitDocumentSync()
+    if (!breakpoint.documentVersionMatches(documentPatchVersion)) return false
     edtWriteAction {
       breakpoint.setLine(requestId, line)
     }
+    return true
   }
 
-  override suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long) {
-    val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return
+  override suspend fun updatePosition(breakpointId: XBreakpointId, requestId: Long, documentPatchVersion: DocumentPatchVersion?): Boolean {
+    val breakpoint = breakpointId.findValue() as? XLineBreakpointImpl<*> ?: return true
+    DocumentSync.awaitDocumentSync()
+    if (!breakpoint.documentVersionMatches(documentPatchVersion)) return false
     edtWriteAction {
       breakpoint.resetSourcePosition(requestId)
     }
+    return true
   }
 
   override suspend fun setLogMessage(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean) {
@@ -123,13 +139,22 @@ internal class BackendXBreakpointApi : XBreakpointApi {
     }
   }
 
-  override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): BackendDocumentId? {
+  override suspend fun setGroup(breakpointId: XBreakpointId, requestId: Long, group: String?) {
+    val breakpoint = breakpointId.findValue() ?: return
+    edtWriteAction {
+      breakpoint.setGroup(requestId, group)
+    }
+  }
+
+  override suspend fun createDocument(frontendDocumentId: FrontendDocumentId, breakpointId: XBreakpointId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto? {
     val breakpoint = breakpointId.findValue() ?: return null
     val project = breakpoint.project
     val editorsProvider = getEditorsProvider(breakpoint.type, breakpoint, breakpoint.project) ?: return null
-    return withContext(Dispatchers.EDT) {
-      val backendDocument = editorsProvider.createDocument(project, expression.xExpression(), sourcePosition?.sourcePosition(), evaluationMode)
-      backendDocument.bindToFrontend(frontendDocumentId, project)
-    }
+    return createBackendDocument(project, frontendDocumentId, editorsProvider, expression, sourcePosition, evaluationMode)
   }
+}
+
+private suspend fun XLineBreakpointImpl<*>.documentVersionMatches(version: DocumentPatchVersion?): Boolean {
+  val document = readAction { file?.findDocument() } ?: return true
+  return document.documentVersionMatches(project, version)
 }

@@ -7,4 +7,6 @@ interface TelemetryManager {
   fun getInstance(): TelemetryManager
 
   fun forceFlushMetricsBlocking()
+
+  fun shutdownExportersBlocking()
 }

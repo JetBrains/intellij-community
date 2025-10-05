@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="com.jetbrains.fus.reporting.configuration" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:configuration:134">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:configuration:171">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/configuration/134/configuration-134.jar">
-          <sha256sum>c58ea5f79ebfd97700782b1fcd9023d3a875f3aff4ac9f08004a3b455369d35e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/configuration/171/configuration-171.jar">
+          <sha256sum>f138ed43c55cb90192518293a5b46a135221c898b2b05d6c0648645b3d0fac64</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/configuration/134/configuration-134.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/configuration/171/configuration-171.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/configuration/134/configuration-134-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/configuration/171/configuration-171-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

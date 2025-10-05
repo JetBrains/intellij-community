@@ -45,6 +45,7 @@ private fun getMIMEType(extension: String): String {
     "svg" -> "image/svg+xml"
     "mp4" -> "video/mp4"
     "webm" -> "video/webm"
+    "webp" -> "image/webp"
     else -> "".also { logger.warn("Unknown file extension: '$extension' for MIME type. Falling back to '$it'.") }
   }
 }

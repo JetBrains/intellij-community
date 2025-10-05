@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
@@ -75,10 +77,10 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
             })
         }
 
-    context(KaSession)
+    context(_: KaSession)
     protected abstract fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createQuickFix(callExpression: KtCallExpression, symbol: KaFunctionSymbol): LocalQuickFix? {
         val enumClassSymbol = symbol.containingDeclaration as? KaClassSymbol
         val enumClassQualifiedName = enumClassSymbol?.classId?.asFqNameString() ?: return null
@@ -89,7 +91,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return ReplaceFix(fixType, enumClassQualifiedName)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getReplaceFixType(callExpression: KtCallExpression): ReplaceFixType {
         val qualifiedOrSimpleCall = callExpression.qualifiedOrSimpleValuesCall()
         val parent = qualifiedOrSimpleCall.parent
@@ -128,7 +130,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return ReplaceFixType.WITH_CAST
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getCallableMethodIdString(expression: KtElement?): String? {
         val resolvedCall = expression?.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
         return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableId?.toString()

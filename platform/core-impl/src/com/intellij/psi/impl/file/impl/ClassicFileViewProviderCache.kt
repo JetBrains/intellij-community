@@ -12,6 +12,11 @@ import com.intellij.util.containers.CollectionFactory
 import java.util.concurrent.ConcurrentMap
 import java.util.function.Consumer
 
+/**
+ * Stores mapping (file -> Weak(FileViewProvider)).
+ * Thread-safe.
+ * Does not take [CodeInsightContext] into account.
+ */
 internal class ClassicFileViewProviderCache : FileViewProviderCache {
 
   private val cache = AtomicMapCache<VirtualFile, FileViewProvider, ConcurrentMap<VirtualFile, FileViewProvider>> {

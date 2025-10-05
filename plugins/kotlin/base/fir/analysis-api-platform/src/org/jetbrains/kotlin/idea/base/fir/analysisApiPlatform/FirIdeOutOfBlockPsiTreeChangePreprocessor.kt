@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 
@@ -11,6 +11,7 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalSourceOutOfBlockModificationEvent
@@ -21,7 +22,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
-internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
+@ApiStatus.Internal
+class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         if (project.isDefault) {
             return

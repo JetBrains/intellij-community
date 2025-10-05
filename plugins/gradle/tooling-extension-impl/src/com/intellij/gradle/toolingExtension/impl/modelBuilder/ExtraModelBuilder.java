@@ -3,7 +3,7 @@ package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
 import org.gradle.api.Project;
 import org.gradle.api.invocation.Gradle;
-import org.gradle.internal.impldep.com.google.common.collect.Lists;
+import com.google.common.collect.Lists;
 import org.gradle.tooling.provider.model.ParameterizedToolingModelBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

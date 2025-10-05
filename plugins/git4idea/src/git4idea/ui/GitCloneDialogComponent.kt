@@ -8,11 +8,13 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.Alarm
@@ -24,7 +26,9 @@ import git4idea.checkout.GitCloneUtils
 import git4idea.config.*
 import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
+import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.JComponent
 
 class GitCloneDialogComponent(project: Project,
                               private val modalityState: ModalityState,
@@ -43,6 +47,7 @@ class GitCloneDialogComponent(project: Project,
   private val executableProblemHandler = findGitExecutableProblemHandler(project)
   private val checkVersionAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
   private var versionCheckState: VersionCheckState = VersionCheckState.NOT_CHECKED // accessed only on EDT
+  private var lastVersionCheckForDirectory: Path? = null // accessed only on EDT
 
   override fun doClone(listener: CheckoutProvider.Listener) {
     val sourceRepositoryURL = getUrl()
@@ -83,13 +88,24 @@ class GitCloneDialogComponent(project: Project,
     }
   }
 
+  override fun checkDirectory(directoryPath: String, component: JComponent, dialogStateListener: VcsCloneDialogComponentStateListener): ValidationInfo? {
+    val directory = runCatching { Paths.get(getDirectory()).toAbsolutePath() }.getOrNull()
+    if (directory?.getEelDescriptor() != lastVersionCheckForDirectory?.getEelDescriptor()) {
+      versionCheckState = VersionCheckState.IN_PROGRESS
+      scheduleCheckVersion(dialogStateListener)
+    }
+    return super.checkDirectory(directoryPath, component, dialogStateListener)
+  }
+
   private fun checkGitVersion(dialogStateListener: VcsCloneDialogComponentStateListener) {
     invokeAndWaitIfNeeded(modalityState) {
       inlineComponent.showProgress(GitBundle.message("clone.dialog.checking.git.version"))
     }
 
+    val directory = runCatching { Paths.get(getDirectory()).toAbsolutePath() }.getOrNull()
+    lastVersionCheckForDirectory = directory
     try {
-      val executable = executableManager.getExecutable(null)
+      val executable = executableManager.getExecutable(null, directory)
       val gitVersion = executableManager.identifyVersion(project, executable)
 
       invokeAndWaitIfNeeded(modalityState) {

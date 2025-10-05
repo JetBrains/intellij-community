@@ -18,7 +18,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -78,7 +78,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxyKt.asProxy;
-import static org.jetbrains.concurrency.Promises.*;
+import static org.jetbrains.concurrency.Promises.asPromise;
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 @ApiStatus.Internal
 public class XDebuggerUtilImpl extends XDebuggerUtil {
@@ -319,10 +320,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final boolean temporary,
     final @Nullable Editor editor,
     boolean canRemove,
-    boolean isConditional,
-    @Nullable String condition
+    boolean isLogging,
+    @Nullable String logExpression
   ) {
-    var breakpointInfo = new XLineBreakpointInstallationInfo(types, position, temporary, isConditional, condition, canRemove);
+    var breakpointInfo = new XLineBreakpointInstallationInfo(types, position, temporary, isLogging, logExpression, canRemove);
     return toggleAndReturnLineBreakpointProxy(project, editor, breakpointInfo, selectVariantByPositionColumn);
   }
 
@@ -655,7 +656,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                       CommonBundle.message("button.remove"),
                                       Messages.getCancelButton(),
                                       Messages.getQuestionIcon(),
-                                      new DialogWrapper.DoNotAskOption.Adapter() {
+                                      new DoNotAskOption.Adapter() {
                                         @Override
                                         public void rememberChoice(boolean isSelected, int exitCode) {
                                           if (isSelected) {
@@ -667,12 +668,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         return false;
       }
     }
-    if (breakpoint instanceof XBreakpointProxy.Monolith monolith) {
-      // TODO IJPL-185322 support last removed breakpoint persistance
-      ((XBreakpointManagerImpl)XDebuggerManager.getInstance(project).getBreakpointManager())
-        .rememberRemovedBreakpoint(monolith.getBreakpoint());
-    }
-    XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).removeBreakpoint(breakpoint);
+    XBreakpointManagerProxy breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project);
+    breakpointManager.rememberRemovedBreakpoint(breakpoint);
+    breakpointManager.removeBreakpoint(breakpoint);
     return true;
   }
 

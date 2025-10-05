@@ -97,7 +97,7 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
               coroutineScope.launch {
                 readAction {
                   ProjectUtil.getOpenProjects().forEach { project ->
-                    DaemonCodeAnalyzer.getInstance(project).restart()
+                    DaemonCodeAnalyzer.getInstance(project).restart("MarkdownSmartKeysConfigurable.create")
                   }
                 }
               }

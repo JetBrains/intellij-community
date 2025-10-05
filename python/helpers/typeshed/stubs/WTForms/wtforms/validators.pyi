@@ -6,7 +6,43 @@ from typing import Any, TypeVar, overload
 from wtforms.fields import Field, StringField
 from wtforms.form import BaseForm
 
-_ValuesT = TypeVar("_ValuesT", bound=Collection[Any], contravariant=True)
+__all__ = (
+    "DataRequired",
+    "data_required",
+    "Email",
+    "email",
+    "EqualTo",
+    "equal_to",
+    "IPAddress",
+    "ip_address",
+    "InputRequired",
+    "input_required",
+    "Length",
+    "length",
+    "NumberRange",
+    "number_range",
+    "Optional",
+    "optional",
+    "Regexp",
+    "regexp",
+    "URL",
+    "url",
+    "AnyOf",
+    "any_of",
+    "NoneOf",
+    "none_of",
+    "MacAddress",
+    "mac_address",
+    "UUID",
+    "ValidationError",
+    "StopValidation",
+    "readonly",
+    "ReadOnly",
+    "disabled",
+    "Disabled",
+)
+
+_ValuesT_contra = TypeVar("_ValuesT_contra", bound=Collection[Any], contravariant=True)
 
 class ValidationError(ValueError):
     def __init__(self, message: str = "", *args: object) -> None: ...
@@ -114,9 +150,13 @@ class AnyOf:
     @overload
     def __init__(self, values: Collection[Any], message: str | None = None, values_formatter: None = None) -> None: ...
     @overload
-    def __init__(self, values: _ValuesT, message: str | None, values_formatter: Callable[[_ValuesT], str]) -> None: ...
+    def __init__(
+        self, values: _ValuesT_contra, message: str | None, values_formatter: Callable[[_ValuesT_contra], str]
+    ) -> None: ...
     @overload
-    def __init__(self, values: _ValuesT, message: str | None = None, *, values_formatter: Callable[[_ValuesT], str]) -> None: ...
+    def __init__(
+        self, values: _ValuesT_contra, message: str | None = None, *, values_formatter: Callable[[_ValuesT_contra], str]
+    ) -> None: ...
     def __call__(self, form: BaseForm, field: Field) -> None: ...
     @staticmethod
     def default_values_formatter(values: Iterable[object]) -> str: ...
@@ -128,9 +168,13 @@ class NoneOf:
     @overload
     def __init__(self, values: Collection[Any], message: str | None = None, values_formatter: None = None) -> None: ...
     @overload
-    def __init__(self, values: _ValuesT, message: str | None, values_formatter: Callable[[_ValuesT], str]) -> None: ...
+    def __init__(
+        self, values: _ValuesT_contra, message: str | None, values_formatter: Callable[[_ValuesT_contra], str]
+    ) -> None: ...
     @overload
-    def __init__(self, values: _ValuesT, message: str | None = None, *, values_formatter: Callable[[_ValuesT], str]) -> None: ...
+    def __init__(
+        self, values: _ValuesT_contra, message: str | None = None, *, values_formatter: Callable[[_ValuesT_contra], str]
+    ) -> None: ...
     def __call__(self, form: BaseForm, field: Field) -> None: ...
     @staticmethod
     def default_values_formatter(v: Iterable[object]) -> str: ...

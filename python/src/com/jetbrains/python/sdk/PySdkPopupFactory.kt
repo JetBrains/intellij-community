@@ -56,7 +56,7 @@ class PySdkPopupFactory(val module: Module) {
 
     val interpreterList = PyConfigurableInterpreterList.getInstance(module.project)
     val moduleSdksByTypes = SlowOperations.knownIssue("PY-76167").use {
-      groupModuleSdksByTypes(interpreterList.getAllPythonSdks(module.project, module), module) {
+      groupModuleSdksByTypes(interpreterList.getAllPythonSdks(module.project, module, false), module) {
         !it.sdkSeemsValid ||
         PythonSdkType.hasInvalidRemoteCredentials(it) ||
         PythonSdkType.isIncompleteRemote(it) ||

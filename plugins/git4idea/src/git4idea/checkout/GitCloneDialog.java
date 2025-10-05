@@ -4,7 +4,7 @@ package git4idea.checkout;
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.ui.CloneDvcsDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.vcs.git.shared.GitDisplayName;
+import com.intellij.vcs.git.GitDisplayName;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;

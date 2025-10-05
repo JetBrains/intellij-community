@@ -47,7 +47,6 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
@@ -206,17 +205,6 @@ public class ShelvedChangesViewManager implements Disposable {
     AbstractVcs singleVcs = ProjectLevelVcsManager.getInstance(project).getSingleVCS();
     if (singleVcs == null) return false;
     return singleVcs.isWithCustomShelves();
-  }
-
-  protected void removeContent(Content content) {
-    ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
-    contentManager.removeContent(content);
-    contentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES);
-  }
-
-  protected void addContent(Content content) {
-    ChangesViewContentI contentManager = ChangesViewContentManager.getInstance(myProject);
-    contentManager.addContent(content);
   }
 
   protected void activateContent() {
@@ -480,7 +468,6 @@ public class ShelvedChangesViewManager implements Disposable {
       super(project, false, false, false);
       myAsyncTreeModel = new ShelfTreeAsyncModel(project, getScope());
 
-      TreeSpeedSearch.installOn(this, true, ChangesBrowserNode.TO_TEXT_CONVERTER);
       setKeepTreeState(true);
     }
 
@@ -710,6 +697,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myTree.setEditable(true);
       myTree.setDragEnabled(!ApplicationManager.getApplication().isHeadlessEnvironment());
       myTree.setCellEditor(new ShelveRenameTreeCellEditor());
+      myTree.getAccessibleContext().setAccessibleName(VcsBundle.message("shelve.tree.accessible.name"));
 
       final AnAction showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
       showDiffAction.registerCustomShortcutSet(showDiffAction.getShortcutSet(), myTree);

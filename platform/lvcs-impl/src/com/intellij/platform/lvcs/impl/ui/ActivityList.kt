@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
+import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.platform.lvcs.impl.ActivityData
 import com.intellij.platform.lvcs.impl.ActivityItem
@@ -36,6 +37,7 @@ class ActivityList(presentationFunction: (item: ActivityItem) -> ActivityPresent
     }
     addKeyListener(MyEnterListener())
     MyDoubleClickListener().installOn(this)
+    getAccessibleContext().accessibleName = LocalHistoryBundle.message("activity.list.accessible.name")
   }
 
   fun setData(data: ActivityData) {

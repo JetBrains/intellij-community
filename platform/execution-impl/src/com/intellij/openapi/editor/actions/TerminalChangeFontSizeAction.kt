@@ -5,10 +5,10 @@ import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.TerminalFontSizeProvider
+import com.intellij.terminal.actions.TerminalActionUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -33,7 +33,7 @@ sealed class TerminalChangeFontSizeAction(private val myStep: Float) : DumbAware
       if (terminalWidget != null) {
         return ClassicTerminalChangeFontHandler(terminalWidget)
       }
-      val editor = e.getData(CommonDataKeys.EDITOR)
+      val editor = e.getData(TerminalActionUtil.EDITOR_KEY)
       if (editor != null) {
         val strategy = editor.getUserData(TerminalFontSizeProvider.KEY)
         if (strategy != null) {

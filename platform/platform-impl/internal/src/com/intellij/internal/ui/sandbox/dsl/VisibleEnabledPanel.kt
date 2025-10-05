@@ -36,6 +36,7 @@ internal class VisibleEnabledPanel : UISandboxPanel {
             entities["Row 2"] = row("Row 2") {
               entities["textField2"] = textField()
                 .text("textField2")
+                .commentRight("Right comment with a <a>link</a>")
                 .comment("Comment with a <a>link</a>")
             }
 
@@ -84,23 +85,39 @@ internal class VisibleEnabledPanel : UISandboxPanel {
         }.align(AlignX.RIGHT)
       }
 
-      group("Control visibility by visibleIf") {
-        lateinit var checkBoxText: Cell<JBCheckBox>
-        lateinit var checkBoxRow: Cell<JBCheckBox>
+      group("Control visibleIf and enableIf") {
+        lateinit var chRowVisible: Cell<JBCheckBox>
+        lateinit var chRowEnabled: Cell<JBCheckBox>
+        lateinit var chTextFieldVisible: Cell<JBCheckBox>
+        lateinit var chTextFieldEnabled: Cell<JBCheckBox>
 
-        row {
-          checkBoxRow = checkBox("Row")
-            .selected(true)
-          checkBoxText = checkBox("textField")
-            .selected(true)
+        buttonsGroup("Row") {
+          row {
+            chRowVisible = checkBox("Visible")
+              .selected(true)
+            chRowEnabled = checkBox("Enabled")
+              .selected(true)
+          }
+        }
+        buttonsGroup("Text field") {
+          row {
+            chTextFieldVisible = checkBox("Visible")
+              .selected(true)
+            chTextFieldEnabled = checkBox("Enabled")
+              .selected(true)
+          }
         }
 
         row("visibleIf test row") {
           textField()
             .text("textField")
-            .visibleIf(checkBoxText.selected)
+            .commentRight("Right comment with a <a>link</a>")
+            .comment("Comment with a <a>link</a>")
+            .visibleIf(chTextFieldVisible.selected)
+            .enabledIf(chTextFieldEnabled.selected)
           label("some label")
-        }.visibleIf(checkBoxRow.selected)
+        }.visibleIf(chRowVisible.selected)
+          .enabledIf(chRowEnabled.selected)
       }
     }
   }

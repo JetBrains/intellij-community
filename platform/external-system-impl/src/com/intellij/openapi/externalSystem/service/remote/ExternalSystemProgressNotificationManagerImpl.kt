@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.remote
 
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.rmi.RemoteObject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
@@ -48,8 +49,8 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     forEachListener { it.onStatusChange(event) }
   }
 
-  override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-    forEachListener { it.onTaskOutput(id, text, stdOut) }
+  override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
+    forEachListener { it.onTaskOutput(id, text, processOutputType) }
   }
 
   override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
@@ -114,9 +115,9 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
       delegate.onFailure(projectPath, id, exception)
     }
 
-    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onTaskOutput(id, text, stdOut)
+      delegate.onTaskOutput(id, text, processOutputType)
     }
 
     override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {

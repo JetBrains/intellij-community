@@ -25,8 +25,9 @@ public final class SuspendManagerUtil {
    * Returns suspend context that suspends the thread specified (may be currently evaluating)
    */
   public static @Nullable SuspendContextImpl findContextByThread(@NotNull SuspendManager suspendManager, @Nullable ThreadReferenceProxyImpl thread) {
+    SuspendManagerImpl suspendManagerImpl = (SuspendManagerImpl)suspendManager;
     if (thread == null) {
-      return ContainerUtil.find(suspendManager.getEventContexts(), c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
+      return ContainerUtil.getFirstItem(suspendManagerImpl.getSuspendAllContexts());
     }
 
     for (SuspendContextImpl context : suspendManager.getEventContexts()) {

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.build.BuildViewManager;
 import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.events.impl.OutputBuildEventImpl;
 import com.intellij.execution.Platform;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
@@ -87,7 +88,14 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements
     if (detectUnwantedEmptyLine(s)) return;
     super.print(s, contentType);
     if (myBuildViewManager != null && myTaskId != null) {
-      OutputBuildEventImpl outputBuildEvent = new OutputBuildEventImpl(myTaskId, s, contentType != ConsoleViewContentType.ERROR_OUTPUT); //NON-NLS
+
+      ProcessOutputType outputType;
+      if (contentType == ConsoleViewContentType.ERROR_OUTPUT) outputType = ProcessOutputType.STDERR;
+      else if (contentType == ConsoleViewContentType.NORMAL_OUTPUT) outputType = ProcessOutputType.STDOUT;
+      else if (contentType == ConsoleViewContentType.SYSTEM_OUTPUT) outputType = ProcessOutputType.SYSTEM;
+      else outputType = ProcessOutputType.STDOUT;
+
+      OutputBuildEventImpl outputBuildEvent = new OutputBuildEventImpl(myTaskId, s, outputType); //NON-NLS
       myBuildViewManager.onEvent(myTaskId, outputBuildEvent);
     }
   }

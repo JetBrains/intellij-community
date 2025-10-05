@@ -31,7 +31,6 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URLConnection
-import java.util.*
 
 private const val PORTS_COUNT = 20
 private const val PROPERTY_RPC_PORT = "rpc.port"
@@ -77,7 +76,7 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
         return false
       }
 
-      val host = authority.substring(0, portIndex)
+      val host = authority.take(portIndex)
       if (NetUtils.isLocalhost(host)) {
         return true
       }
@@ -130,7 +129,7 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
       server = BuiltInServer.start(firstPort = getDefaultPort(), portsCount = PORTS_COUNT, tryAnyPort = true)
       bindCustomPorts(server!!)
     }
-    catch (_: CancellationException) {
+    catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
       return
     }
     catch (e: Throwable) {
@@ -145,15 +144,12 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     Disposer.register(ApplicationManager.getApplication(), server!!)
   }
 
-  override fun isOnBuiltInWebServer(url: Url?): Boolean {
-    return url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
-  }
+  override fun isOnBuiltInWebServer(url: Url?): Boolean =
+    url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
 
-  override fun addAuthToken(url: Url): Url {
-    return when {
-      url.parameters != null -> url  // the built-in server URL contains a query only if a token is specified
-      else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, service<BuiltInWebServerAuth>().acquireToken()))
-    }
+  override fun addAuthToken(url: Url): Url = when {
+    url.parameters != null -> url  // the built-in server URL contains a query only if a token is specified
+    else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, mapOf(TOKEN_PARAM_NAME to service<BuiltInWebServerAuth>().acquireToken()))
   }
 
   override fun overridePort(port: Int?) {
@@ -167,10 +163,9 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
   }
 
   // the default port will be occupied by the main IDE instance - define the custom default to avoid searching for a free port
-  private fun getDefaultPort(): Int {
-    return System.getProperty(PROPERTY_RPC_PORT)?.toIntOrNull()
-           ?: if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT
-  }
+  private fun getDefaultPort(): Int =
+    System.getProperty(PROPERTY_RPC_PORT)?.toIntOrNull()
+    ?: if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT
 
   private fun bindCustomPorts(server: BuiltInServer) {
     if (ApplicationManager.getApplication().isUnitTestMode) {

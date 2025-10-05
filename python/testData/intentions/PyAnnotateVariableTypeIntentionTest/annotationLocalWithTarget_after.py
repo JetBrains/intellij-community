@@ -1,8 +1,7 @@
 from io import TextIOWrapper, _WrappedBuffer
-from typing import Union, Any
 
 
 def func():
-    var: [TextIOWrapper[Union[_WrappedBuffer, Any]]]
+    var: [TextIOWrapper[_WrappedBuffer]]
     with open('file.txt') as var:
         var

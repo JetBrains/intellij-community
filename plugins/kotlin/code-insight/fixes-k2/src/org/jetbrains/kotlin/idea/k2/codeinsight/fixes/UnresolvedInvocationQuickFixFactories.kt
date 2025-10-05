@@ -19,8 +19,15 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal object UnresolvedInvocationQuickFixFactories {
 
-    val changeToPropertyAccessQuickFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.FunctionExpected ->
+    val functionExpectedChangeToPropertyAccessQuickFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.FunctionExpected ->
         val expression = UnresolvedInvocationQuickFix.findAcceptableParentCallExpression(diagnostic.psi)
+            ?: return@ModCommandBased emptyList()
+
+        listOf(UnresolvedInvocationQuickFix.ChangeToPropertyAccessQuickFix(expression))
+    }
+
+    val wrongReceiverChangeToPropertyAccessQuickFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnresolvedReferenceWrongReceiver ->
+        val expression = UnresolvedInvocationQuickFix.findAcceptableCallExpression(diagnostic.psi)
             ?: return@ModCommandBased emptyList()
 
         listOf(UnresolvedInvocationQuickFix.ChangeToPropertyAccessQuickFix(expression))

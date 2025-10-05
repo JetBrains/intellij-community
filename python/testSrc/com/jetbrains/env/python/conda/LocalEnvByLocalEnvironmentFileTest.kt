@@ -22,6 +22,6 @@ internal class LocalEnvByLocalEnvironmentFileTest {
   fun parseYaml() {
     val file = yamlRule.yamlFilePath
     Assert.assertEquals("Wrong name parsed out of yaml file", yamlRule.envName,
-                        NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(file).envName)
+                        NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(file, emptyList()).envName)
   }
 }

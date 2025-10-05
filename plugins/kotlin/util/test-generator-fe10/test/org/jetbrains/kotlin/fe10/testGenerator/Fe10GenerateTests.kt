@@ -13,13 +13,14 @@ import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.findUsages.*
 import org.jetbrains.kotlin.formatter.AbstractEnterHandlerTest
 import org.jetbrains.kotlin.formatter.AbstractFormatterTest
+import org.jetbrains.kotlin.gradle.scripting.k1.AbstractK1GradleBuildFileHighlightingTest
 import org.jetbrains.kotlin.idea.AbstractExpressionSelectionTest
 import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.actions.AbstractK1AddImportActionTest
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiPlatformHighlightingTest
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiplatformAnalysisTest
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionT
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
-import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractK1GradleBuildFileHighlightingTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.*
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1InspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1LocalInspectionTest
@@ -73,10 +73,7 @@ import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractK1AutoImportTest
 import org.jetbrains.kotlin.idea.imports.AbstractK1FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
-import org.jetbrains.kotlin.idea.inspections.AbstractInspectionTest
-import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
-import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
-import org.jetbrains.kotlin.idea.inspections.AbstractViewOfflineInspectionTest
+import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.intentions.AbstractConcatenatedStringGeneratorTest
 import org.jetbrains.kotlin.idea.intentions.AbstractK1IntentionTest
 import org.jetbrains.kotlin.idea.intentions.AbstractK1IntentionTest2
@@ -119,6 +116,7 @@ import org.jetbrains.kotlin.idea.refactoring.safeDelete.AbstractSafeDeleteTest
 import org.jetbrains.kotlin.idea.repl.AbstractIdeReplCompletionTest
 import org.jetbrains.kotlin.idea.resolve.*
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchLineMarkersTest
+import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest
 import org.jetbrains.kotlin.idea.script.*
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexTest
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractKotlinCompilerReferenceByReferenceTest
@@ -164,26 +162,25 @@ fun assembleK1Workspace(): TWorkspace = assembleWorkspace()
 
 fun generateK1Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
-    TestGenerator.writeLibrariesVersion(isUpToDateCheck)
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
 }
 
 private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     val excludedFirPrecondition = fun(name: String) = !name.endsWith(".fir.kt") && !name.endsWith(".fir.kts")
 
-    testGroup("gradle/gradle-java/k1", category = GRADLE, testDataPath = "../../../idea/tests/testData") {
+    testGroup("gradle/scripting/kotlin.gradle.scripting.k1", category = GRADLE, testDataPath = "../../../idea/tests/testData") {
         testClass<AbstractK1GradleBuildFileHighlightingTest> {
             model(
                 "gradle/highlighting/gradle8",
                 pattern = DIRECTORY,
                 isRecursive = false,
-                setUpStatements = listOf("gradleVersion = \"8.6\";")
+                setUpStatements = listOf("setGradleVersion(\"8.6\");")
             )
             model(
                 "gradle/highlighting/gradle7",
                 pattern = DIRECTORY,
                 isRecursive = false,
-                setUpStatements = listOf("gradleVersion = \"7.6.4\";")
+                setUpStatements = listOf("setGradleVersion(\"7.6.4\");")
             )
         }
     }
@@ -212,7 +209,14 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             AbstractInlineScopesAndK1IdeK2CodeEvaluateExpressionTest::class,
         ).forEach {
             testClass(it) {
-                model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+                model(
+                    "evaluation/singleBreakpoint",
+                    testMethodName = "doSingleBreakpointTest",
+                    targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                    excludedDirectories = listOf(
+                        "contextParameters",
+                    ),
+                )
                 model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
                 model("evaluation/jvmMultiModule", testMethodName = "doJvmMultiModuleTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             }
@@ -228,13 +232,27 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractIrKotlinEvaluateExpressionInMppTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model(
+                "evaluation/singleBreakpoint",
+                testMethodName = "doSingleBreakpointTest",
+                targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                excludedDirectories = listOf(
+                    "contextParameters",
+                ),
+            )
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
 
         testClass<AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model(
+                "evaluation/singleBreakpoint",
+                testMethodName = "doSingleBreakpointTest",
+                targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR,
+                excludedDirectories = listOf(
+                    "contextParameters",
+                ),
+            )
             model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
             model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
@@ -453,6 +471,9 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "redundantInterpolationPrefix", // K2-only multi-dollar interpolation
                     "addInterpolationPrefixUnresolvedReference", // K2-only multi-dollar interpolation
                     "unsupportedFeature", // K2-related features only
+                    "namedLambdaContextParameter",
+                    "useWithIndex", // Intention-based inspection in K1, covered by the intention tests
+                    "receiverShadowedByContextParameter",
                 )
             )
         }
@@ -1206,16 +1227,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("scripting-support", category = SCRIPTS) {
-        // See KTIJ-31408 for the reasoning why these tests are not generated
-        //testClass<AbstractScratchRunActionTest> {
-        //    model("scratch", pattern = KTS, testMethodName = "doScratchCompilingTest", testClassName = "ScratchCompiling", isRecursive = false)
-        //    model("scratch", pattern = KTS, testMethodName = "doScratchReplTest", testClassName = "ScratchRepl", isRecursive = false)
-        //    model("scratch/multiFile", pattern = DIRECTORY, testMethodName = "doScratchMultiFileTest", testClassName = "ScratchMultiFile", isRecursive = false)
-        //    model("worksheet", pattern = WS_KTS, testMethodName = "doWorksheetCompilingTest", testClassName = "WorksheetCompiling", isRecursive = false)
-        //    model("worksheet", pattern = WS_KTS, testMethodName = "doWorksheetReplTest", testClassName = "WorksheetRepl", isRecursive = false)
-        //    model("worksheet/multiFile", pattern = DIRECTORY, testMethodName = "doWorksheetMultiFileTest", testClassName = "WorksheetMultiFile", isRecursive = false)
-        //    model("scratch/rightPanelOutput", pattern = KTS, testMethodName = "doRightPreviewPanelOutputTest", testClassName = "ScratchRightPanelOutput", isRecursive = false)
-        //}
+        testClass<AbstractScratchRunActionTest> {
+            model("scratch", pattern = KTS, testMethodName = "doScratchCompilingTest", testClassName = "ScratchCompiling", isRecursive = false)
+            model("scratch", pattern = KTS, testMethodName = "doScratchReplTest", testClassName = "ScratchRepl", isRecursive = false)
+            model("scratch/multiFile", pattern = DIRECTORY, testMethodName = "doScratchMultiFileTest", testClassName = "ScratchMultiFile", isRecursive = false)
+            model("scratch/rightPanelOutput", pattern = KTS, testMethodName = "doRightPreviewPanelOutputTest", testClassName = "ScratchRightPanelOutput", isRecursive = false)
+        }
 
         testClass<AbstractScratchLineMarkersTest> {
             model("scratch/lineMarker", testMethodName = "doScratchTest", pattern = KT_OR_KTS)
@@ -1647,6 +1664,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
         testClass<AbstractSharedK1QuickFixTest> {
             model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
+        }
+
+        testClass<AbstractCoroutineNonBlockingContextDetectionTest>(
+            generatedClassName = "org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SharedK1CoroutineNonBlockingContextDetectionTestGenerated"
+        ) {
+            model("inspections/blockingCallsDetection", pattern = KT)
         }
     }
 }

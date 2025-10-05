@@ -3,9 +3,6 @@ package org.jetbrains.plugins.textmate.plist
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.IOException
-import java.lang.Boolean
-import kotlin.text.toDouble
-import kotlin.text.toInt
 
 class XmlPlistReader : PlistReaderCore {
   override fun read(bytes: ByteArray): Plist {
@@ -74,10 +71,10 @@ class XmlPlistReader : PlistReaderCore {
           PListValue.value(content.orEmpty(), PlistValueType.STRING)
         }
         "true" -> {
-          PListValue.value(Boolean.TRUE, PlistValueType.BOOLEAN)
+          PListValue.value(true, PlistValueType.BOOLEAN)
         }
         "false" -> {
-          PListValue.value(Boolean.FALSE, PlistValueType.BOOLEAN)
+          PListValue.value(false, PlistValueType.BOOLEAN)
         }
         "integer" -> {
           PListValue.value(content?.toIntOrNull() ?: 0, PlistValueType.INTEGER)

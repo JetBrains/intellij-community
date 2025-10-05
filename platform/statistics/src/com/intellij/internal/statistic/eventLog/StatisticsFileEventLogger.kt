@@ -93,7 +93,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
       lastEventFlushFuture?.cancel(false)
       // call flush() instead of logLastEvent() directly so that logLastEvent is executed on the logExecutor thread and not on scheduled executor pool thread
-      resetThreadContext().use {
+      resetThreadContext {
         lastEventFlushFuture = AppExecutorUtil.getAppScheduledExecutorService().schedule(this::flush, eventMergeTimeoutMs, TimeUnit.MILLISECONDS)
       }
     }

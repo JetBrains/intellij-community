@@ -1,9 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -18,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -25,25 +25,10 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.File;
 import java.util.*;
 
-import static java.util.Objects.hash;
-
 public final class ChangesUtil {
   private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.create("internal vcs operation");
 
-  public static final HashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new HashingStrategy<>() {
-    @Override
-    public int hashCode(@Nullable FilePath path) {
-      return path != null ? hash(path.getPath(), path.isDirectory()) : 0;
-    }
-
-    @Override
-    public boolean equals(@Nullable FilePath path1, @Nullable FilePath path2) {
-      if (path1 == path2) return true;
-      if (path1 == null || path2 == null) return false;
-
-      return path1.isDirectory() == path2.isDirectory() && path1.getPath().equals(path2.getPath());
-    }
-  };
+  public static final HashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = com.intellij.platform.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
 
   public static final Comparator<LocalChangeList> CHANGELIST_COMPARATOR =
     Comparator.<LocalChangeList>comparingInt(list -> list.isDefault() ? -1 : 0)
@@ -52,23 +37,15 @@ public final class ChangesUtil {
   private ChangesUtil() { }
 
   public static @NotNull FilePath getFilePath(@NotNull Change change) {
-    ContentRevision revision = change.getAfterRevision();
-    if (revision == null) {
-      revision = change.getBeforeRevision();
-      assert revision != null;
-    }
-
-    return revision.getFile();
+    return com.intellij.platform.vcs.changes.ChangesUtil.getFilePath(change);
   }
 
   public static @Nullable FilePath getBeforePath(@NotNull Change change) {
-    ContentRevision revision = change.getBeforeRevision();
-    return revision == null ? null : revision.getFile();
+    return com.intellij.platform.vcs.changes.ChangesUtil.getBeforePath(change);
   }
 
   public static @Nullable FilePath getAfterPath(@NotNull Change change) {
-    ContentRevision revision = change.getAfterRevision();
-    return revision == null ? null : revision.getFile();
+    return com.intellij.platform.vcs.changes.ChangesUtil.getAfterPath(change);
   }
 
   public static @Nullable AbstractVcs getVcsForChange(@NotNull Change change, @NotNull Project project) {
@@ -110,6 +87,7 @@ public final class ChangesUtil {
    * @deprecated This method will detect {@link FilePath#isDirectory()} using NIO.
    * Avoid using the method, if {@code isDirectory} is known from context or not important.
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static @Nullable AbstractVcs getVcsForFile(@NotNull File file, @NotNull Project project) {
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(VcsUtil.getFilePath(file));
@@ -127,23 +105,11 @@ public final class ChangesUtil {
   }
 
   public static @NotNull JBIterable<FilePath> iteratePaths(@NotNull Iterable<? extends Change> changes) {
-    return JBIterable.from(changes).flatMap(ChangesUtil::iteratePathsCaseSensitive);
+    return JBIterable.from(changes).flatMap(com.intellij.platform.vcs.changes.ChangesUtil::iteratePathsCaseSensitive);
   }
 
   public static boolean equalsCaseSensitive(@Nullable FilePath path1, @Nullable FilePath path2) {
-    return CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(path1, path2);
-  }
-
-  public static @NotNull JBIterable<FilePath> iteratePathsCaseSensitive(@NotNull Change change) {
-    FilePath beforePath = getBeforePath(change);
-    FilePath afterPath = getAfterPath(change);
-
-    if (equalsCaseSensitive(beforePath, afterPath)) {
-      return JBIterable.of(beforePath);
-    }
-    else {
-      return JBIterable.of(beforePath, afterPath).filterNotNull();
-    }
+    return com.intellij.platform.vcs.changes.ChangesUtil.equalsCaseSensitive(path1, path2);
   }
 
   public static @NotNull JBIterable<VirtualFile> iterateFiles(@NotNull Iterable<? extends Change> changes) {
@@ -165,11 +131,7 @@ public final class ChangesUtil {
   }
 
   public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, @NotNull Iterable<? extends VirtualFile> files) {
-    return JBIterable.from(files)
-      .filter(file -> !file.isDirectory())
-      .map(file -> new OpenFileDescriptor(project, file))
-      .toList()
-      .toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    return com.intellij.platform.vcs.changes.ChangesUtil.getNavigatableArray(project, files);
   }
 
   public static @Nullable LocalChangeList getChangeListIfOnlyOne(@NotNull Project project, Change @Nullable [] changes) {
@@ -213,6 +175,7 @@ public final class ChangesUtil {
   /**
    * @deprecated Prefer using {@link com.intellij.vcsUtil.VcsImplUtil#findValidParentAccurately(FilePath)}
    */
+  @ApiStatus.Internal
   @Deprecated
   public static @Nullable VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
     VirtualFile result = filePath.getVirtualFile();
@@ -228,7 +191,7 @@ public final class ChangesUtil {
   }
 
   /**
-   * @deprecated Prefer using {@link com.intellij.openapi.vfs.newvfs.VfsImplUtil#findCachedFileByPath(NewVirtualFileSystem, String)}
+   * @deprecated Prefer using {@link NewVirtualFileSystem#findCachedFileByPath(NewVirtualFileSystem, String)}
    */
   @Deprecated
   private static @Nullable VirtualFile getValidParentUnderReadAction(@NotNull FilePath filePath) {

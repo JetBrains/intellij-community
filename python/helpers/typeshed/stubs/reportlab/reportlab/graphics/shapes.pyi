@@ -1,7 +1,7 @@
 from _typeshed import Incomplete, SupportsItems
 from abc import abstractmethod
 from collections.abc import Iterable, Sequence
-from typing import Any, Final, Literal, NoReturn, TypedDict
+from typing import Any, Final, Literal, NoReturn, TypedDict, type_check_only
 from typing_extensions import Self, TypeAlias, Unpack
 
 from reportlab.lib.colors import Color
@@ -25,6 +25,7 @@ _PathOp: TypeAlias = (
 
 # NOTE: These are derived from _attrMap and can optionally be
 #       verified at runtime
+@type_check_only
 class _GroupKwArgs(TypedDict, total=False):
     transform: tuple[float, float, float, float, float, float] | list[float] | list[int]
     # NOTE: This should be used with care, since it will replace elements
@@ -35,6 +36,7 @@ class _GroupKwArgs(TypedDict, total=False):
     fillOverprint: _BoolLike
     overprintMask: _BoolLike
 
+@type_check_only
 class _DrawingKwArgs(_GroupKwArgs, total=False):
     # TODO: Restrict to supported formats?
     formats: list[str] | tuple[str, ...]
@@ -50,6 +52,7 @@ class _DrawingKwArgs(_GroupKwArgs, total=False):
     initialFontName: str | None
     initialFontSize: float | None
 
+@type_check_only
 class _LineShapeKwArgs(TypedDict, total=False):
     strokeColor: Color | None
     strokeWidth: float
@@ -61,11 +64,13 @@ class _LineShapeKwArgs(TypedDict, total=False):
     strokeOverprint: _BoolLike
     overprintMask: _BoolLike
 
+@type_check_only
 class _PathKwArgs(_LineShapeKwArgs, total=False):
     fillColor: Color | None
     fillOpacity: float
     fillOverprint: _BoolLike
 
+@type_check_only
 class _AllPathKwArgs(_PathKwArgs, total=False):
     points: list[float] | None
     operators: list[float] | None
@@ -73,17 +78,21 @@ class _AllPathKwArgs(_PathKwArgs, total=False):
     autoclose: Literal["svg", "pdf"] | None
     fillMode: Literal[0, 1]
 
+@type_check_only
 class _SolidShapeKwArgs(_PathKwArgs, total=False):
     fillMode: Literal[0, 1]
 
+@type_check_only
 class _DefinePathKwArgs(_SolidShapeKwArgs, total=False):
     autoclose: Literal["svg", "pdf"] | None
     bbox: tuple[float, float, float, float] | None
 
+@type_check_only
 class _WedgeKwArgs(_SolidShapeKwArgs, total=False):
     radius1: float | None
     yradius1: float | None
 
+@type_check_only
 class _StringKwArgs(TypedDict, total=False):
     fontName: str
     fontSize: float
@@ -125,11 +134,11 @@ class Group(Shape):
     def insert(self, i: int, n: Shape | UserNode, name: str | None = None) -> None: ...
     def expandUserNodes(self) -> Group: ...
     def copy(self) -> Self: ...
-    def rotate(self, theta: float) -> None: ...
-    def translate(self, dx: float, dy: float) -> None: ...
-    def scale(self, sx: float, sy: float) -> None: ...
-    def skew(self, kx: float, ky: float) -> None: ...
-    def shift(self, x: float, y: float) -> None: ...
+    def rotate(self, theta: float, cx: float = 0, cy: float = 0) -> None: ...
+    def translate(self, dx: float, dy: float = 0) -> None: ...
+    def scale(self, sx: float, sy: float = 1) -> None: ...
+    def skew(self, kx: float, ky: float = 0) -> None: ...
+    def shift(self, x: float, y: float = 0) -> None: ...
     # NOTE: This changes the object to a Drawing, rather than returning
     #       a new one, which is not ideal...
     def asDrawing(self, width: float, height: float) -> None: ...
@@ -161,6 +170,7 @@ class Drawing(Group, Flowable):
 
 class _DrawingEditorMixin: ...
 
+@type_check_only
 class _isStrokeDashArray(Validator):
     def test(self, x): ...
 

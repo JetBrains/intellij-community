@@ -6,6 +6,7 @@ import com.intellij.dvcs.push.PushTarget
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
 import com.intellij.util.ui.UIUtil
@@ -79,7 +80,7 @@ private class ForcePushAction : PushActionBase() {
 }
 
 private class MyDoNotAskOptionForPush(private val pushSupport: PushSupport<*, *, PushTarget>,
-                                      private val commonTarget: PushTarget) : DialogWrapper.DoNotAskOption.Adapter() {
+                                      private val commonTarget: PushTarget) : DoNotAskOption.Adapter() {
   override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
     if (exitCode == Messages.OK && isSelected) {
       pushSupport.saveSilentForcePushTarget(commonTarget)

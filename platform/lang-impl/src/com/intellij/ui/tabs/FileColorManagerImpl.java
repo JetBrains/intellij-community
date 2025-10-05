@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
@@ -51,6 +52,11 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @Override
   public boolean isEnabled() {
+    if (WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject(myProject) &&
+        WelcomeScreenProjectProvider.Companion.isForceDisabledFileColors()) {
+      return false;
+    }
+
     return _isEnabled();
   }
 
@@ -183,11 +189,11 @@ public final class FileColorManagerImpl extends FileColorManager {
     return myProject;
   }
 
-  public @NotNull List<FileColorConfiguration> getApplicationLevelConfigurations() {
+  @NotNull List<FileColorConfiguration> getApplicationLevelConfigurations() {
     return myInitializedModel.getValue().getLocalConfigurations();
   }
 
-  public List<FileColorConfiguration> getProjectLevelConfigurations() {
+  List<FileColorConfiguration> getProjectLevelConfigurations() {
     return myInitializedModel.getValue().getProjectLevelConfigurations();
   }
 

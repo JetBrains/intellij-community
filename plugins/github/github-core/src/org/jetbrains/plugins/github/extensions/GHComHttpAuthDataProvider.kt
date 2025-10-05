@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubServerPath.DEFAULT_SERVER
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 
 private class GHComHttpAuthDataProvider : GitHttpAuthDataProvider {
@@ -48,8 +49,8 @@ private suspend fun getAuthDataOrCancel(project: Project, url: String, login: St
 
   return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     when (accountsWithTokens.size) {
-      0 -> GHAccountsUtil.requestNewAccount(DEFAULT_SERVER, login, project)
-      1 -> GHAccountsUtil.requestReLogin(accountsWithTokens.keys.first(), project = project)
+      0 -> GHAccountsUtil.requestNewAccount(DEFAULT_SERVER, login, project, loginSource = GHLoginSource.GIT)
+      1 -> GHAccountsUtil.requestReLogin(accountsWithTokens.keys.first(), project = project, loginSource = GHLoginSource.GIT)
       else -> GHSelectAccountHttpAuthDataProvider(project, accountsWithTokens).getAuthData(null)
     }
   } ?: throw ProcessCanceledException()

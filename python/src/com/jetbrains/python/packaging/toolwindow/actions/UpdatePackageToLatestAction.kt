@@ -1,19 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow.actions
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.DumbAwareAction
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
+import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 
-internal class UpdatePackageToLatestAction : DumbAwareAction() {
+internal class UpdatePackageToLatestAction : ModifyPackagesActionBase() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
@@ -22,9 +22,11 @@ internal class UpdatePackageToLatestAction : DumbAwareAction() {
       return
     }
 
-    PyPackageCoroutine.getIoScope(project).launch {
+    PyPackageCoroutine.launch(project, Dispatchers.IO) {
       val pyPackages = packages.mapNotNull { pkg ->
-        pkg.repository?.findPackageSpecification(pkg.name, pkg.nextVersion?.presentableText)
+        val versionString = pkg.nextVersion?.presentableText
+        val requirement = pyRequirement(pkg.name, versionString?.let { pyRequirementVersionSpec(it) })
+        pkg.repository?.findPackageSpecification(requirement)
       }
       val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(pyPackages)
       project.service<PyPackagingToolWindowService>().installPackage(installRequest)
@@ -32,6 +34,10 @@ internal class UpdatePackageToLatestAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
+    super.update(e)
+    if (!e.presentation.isEnabledAndVisible) {
+      return
+    }
     val packages = getPackagesForUpdate(e)
 
     e.presentation.apply {
@@ -44,7 +50,6 @@ internal class UpdatePackageToLatestAction : DumbAwareAction() {
     }
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   private fun getPackagesForUpdate(e: AnActionEvent) =
     e.selectedPackages.filterIsInstance<InstalledPackage>().filter {

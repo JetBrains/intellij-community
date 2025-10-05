@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.intmultimaps;
 
 import com.intellij.openapi.util.IntRef;
@@ -15,7 +15,16 @@ import java.io.UncheckedIOException;
  */
 @ApiStatus.Internal
 public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntToMultiIntMap {
-  private final Int2IntMultimap multimap = new Int2IntMultimap();
+  private final Int2IntMultimap multimap;
+
+  public NonDurableNonParallelIntToMultiIntMap() {
+    multimap = new Int2IntMultimap();
+  }
+
+  public NonDurableNonParallelIntToMultiIntMap(int capacity,
+                                               float loadFactor) {
+    multimap = new Int2IntMultimap(capacity, loadFactor);
+  }
 
   @Override
   public synchronized boolean put(int key,
@@ -107,6 +116,11 @@ public final class NonDurableNonParallelIntToMultiIntMap implements DurableIntTo
         throw new UncheckedIOException(e);
       }
     });
+  }
+
+  @Override
+  public synchronized void clear() throws IOException {
+    multimap.clear();
   }
 
   @Override

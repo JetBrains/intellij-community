@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 
 internal class RedundantAsSequenceInspection : KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, Unit>() {
 
@@ -45,9 +47,12 @@ internal class RedundantAsSequenceInspection : KotlinApplicableInspectionBase.Si
         return callee.text == "asSequence"
     }
 
+    override fun getApplicableRanges(element: KtQualifiedExpression): List<TextRange> =
+        ApplicabilityRange.single(element) { it.callExpression?.calleeExpression }
+
     override fun KaSession.prepareContext(element: KtQualifiedExpression): Unit? {
         val call = element.callExpression ?: return null
-        if (!call.isCalling(allowedSequenceFunctionFqNames)) return null
+        if (!call.isCallingAnyOf(*allowedSequenceFunctionFqNames)) return null
         val functionSymbol = resolveToFunctionSymbol(call) ?: return null
         val receiverType = functionSymbol.receiverType ?: return null
 
@@ -233,7 +238,7 @@ private val collectionTransformationFunctionNames: List<String> = listOf(
     "zipWithNext",
 )
 
-private val allowedSequenceFunctionFqNames = listOf(
+private val allowedSequenceFunctionFqNames = arrayOf(
     StandardKotlinNames.Sequences.asSequence,
     StandardKotlinNames.Collections.asSequence,
 )

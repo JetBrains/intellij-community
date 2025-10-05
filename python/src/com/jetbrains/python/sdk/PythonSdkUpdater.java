@@ -44,9 +44,9 @@ import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.PythonPackageManager;
+import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
 import com.jetbrains.python.sdk.headless.PythonActivityKey;
@@ -63,6 +63,8 @@ import java.time.Instant;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+
+import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE;
 
 /**
  * Refreshes all project's Python SDKs.
@@ -301,7 +303,7 @@ public final class PythonSdkUpdater {
         ApplicationManager.getApplication().invokeLater(() -> {
           Disposer.dispose(indicatorDisposable);
           // restart code analysis
-          DaemonCodeAnalyzer.getInstance(myProject).restart();
+          DaemonCodeAnalyzer.getInstance(myProject).restart(this);
         }, myProject.getDisposed());
       }
     }
@@ -360,17 +362,11 @@ public final class PythonSdkUpdater {
         if (Disposer.isDisposed((Disposable)sdk)) {
           return;
         }
-        PyPackageManager instance = PyPackageManager.getInstance(sdk);
-        instance.refreshAndGetPackages(true);
+        PythonPackageManager manager = PythonPackageManager.Companion.forSdk(myProject, sdk);
+        PythonPackageManagerExt.reloadPackagesBlocking(manager);
       }
-      catch (ExecutionException e) {
-        if (LOG.isDebugEnabled()) {
-          e.initCause(myRequestData.myTraceback);
-          LOG.debug(e);
-        }
-        else {
-          LOG.warn(e.getMessage());
-        }
+      catch (Throwable e) {
+        LOG.warn(e.getMessage());
       }
     }
 
@@ -403,6 +399,7 @@ public final class PythonSdkUpdater {
           .createNotification(PyBundle.message("sdk.gen.failed.notification.title"),
                               PyBundle.message("remote.interpreter.support.is.not.available", sdk.getName()),
                               NotificationType.WARNING)
+          .setDisplayId(REMOTE_INTERPRETER_SUPPORT_IS_NOT_AVAILABLE)
           .notify(myProject);
       }
       else if (exception instanceof InvalidSdkException) {

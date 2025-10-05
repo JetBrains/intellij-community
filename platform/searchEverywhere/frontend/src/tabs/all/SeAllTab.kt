@@ -11,23 +11,14 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeParams
-import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
-import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
-import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
-import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
-import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilter
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import com.intellij.ui.IdeUICustomization
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -35,16 +26,16 @@ import java.util.function.Function
 
 @ApiStatus.Internal
 class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
-  override val name: String
-    get() = IdeBundle.message("searcheverywhere.all.elements.tab.name")
+  override val name: String get() = NAME
 
-  override val shortName: String
-    get() = name
+  override val isIndexingDependent: Boolean get() = true
 
   override val id: String get() = ID
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
     SeAllFilterEditor(delegate.getProvidersIdToName())
   }
+
+  override suspend fun essentialProviderIds(): Set<SeProviderId> = delegate.essentialProviderIds()
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> {
     val allTabFilter = SeEverywhereFilter.from(params.filter)
@@ -67,9 +58,23 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.canBeShownInFindResults()
   }
 
-  override suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean {
+  override suspend fun openInFindToolWindow(session: SeSession, params: SeParams, initEvent: AnActionEvent): Boolean {
     val allTabFilter = SeEverywhereFilter.from(params.filter)
-    return delegate.openInFindToolWindow(sessionRef, params, initEvent, true,allTabFilter.disabledProviderIds)
+    return delegate.openInFindToolWindow(session, params, initEvent, true, allTabFilter.disabledProviderIds)
+  }
+
+  override suspend fun getUpdatedPresentation(item: SeItemData): SeItemPresentation? {
+    return delegate.getUpdatedPresentation(item)
+  }
+
+  override suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return delegate.performExtendedAction(item)
+  }
+
+  override suspend fun isPreviewEnabled(): Boolean = true
+
+  override suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? {
+    return delegate.getPreviewInfo(itemData, true)
   }
 
   override fun dispose() {
@@ -79,12 +84,14 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @ApiStatus.Internal
     const val ID: String = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+    @ApiStatus.Internal
+    val NAME: String = IdeBundle.message("searcheverywhere.all.elements.tab.name")
   }
 }
 
 private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String>) : SeFilterEditorBase<SeEverywhereFilter>(SeEverywhereFilter(false, disabledProviders)) {
   private val actions = listOf(getEverywhereToggleAction(), getFilterTypesAction(providersIdToName))
-  override fun getActions(): List<AnAction> = actions
+  override fun getHeaderActions(): List<AnAction> = actions
 
   private fun getEverywhereToggleAction() = object : CheckBoxSearchEverywhereToggleAction(IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items")), AutoToggleAction {
     private var isAutoToggleEnabled: Boolean = true
@@ -107,7 +114,13 @@ private class SeAllFilterEditor(providersIdToName: Map<SeProviderId, @Nls String
   }
 
   private fun getFilterTypesAction(providersIdToName: Map<SeProviderId, @Nls String>): AnAction {
-    val namesMap = providersIdToName.map { it.key.value to it.value }.toMap()
+    val namesMap = providersIdToName.mapNotNull {
+      // Workaround for: IJPL-188383 Search Everywhere, All tab: 'Top Hit' filter is duplicated
+      // Don't add 'Top Hit (On Client)' to the list of providers
+      if (it.key.value == SeProviderIdUtils.TOP_HIT_ID) return@mapNotNull null
+
+      it.key.value to it.value
+    }.toMap()
 
     val configuration = SearchEverywhereConfiguration.getInstance()
     val persistentFilter =

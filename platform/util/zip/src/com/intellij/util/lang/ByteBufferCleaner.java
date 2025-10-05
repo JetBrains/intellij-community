@@ -13,21 +13,21 @@ import java.nio.ByteBuffer;
 // will fail with AccessDeniedException
 @Internal
 public final class ByteBufferCleaner {
-  private static volatile MethodHandle cleaner;
+  private static final MethodHandle cleanerHandle;
+  private static final MethodHandle cleanerCleanHandle;
 
   public static void unmapBuffer(@NotNull ByteBuffer buffer) throws Exception {
     if (!buffer.isDirect()) {
       return;
     }
-
-    MethodHandle cleaner = ByteBufferCleaner.cleaner;
     try {
-      if (cleaner == null) {
-        cleaner = getByteBufferCleaner();
+      //noinspection JavaLangInvokeHandleSignature
+      Object cleaner = cleanerHandle.invoke(buffer);
+      if (cleaner != null) {
+        cleanerCleanHandle.invoke(cleaner);
       }
-      cleaner.invokeExact(buffer);
     }
-    catch (Exception e) {
+    catch (Error | Exception e) {
       throw e;
     }
     catch (Throwable e) {
@@ -35,17 +35,19 @@ public final class ByteBufferCleaner {
     }
   }
 
-  private static synchronized @NotNull MethodHandle getByteBufferCleaner() throws Throwable {
-    MethodHandle cleaner = ByteBufferCleaner.cleaner;
-    if (cleaner != null) {
-      return cleaner;
+  static  {
+    try {
+      MethodHandles.Lookup lookup = MethodHandles.lookup();
+      Class<?> directBufferClass = Class.forName("sun.nio.ch.DirectBuffer");
+      Class<?> cleanerClass = directBufferClass.getDeclaredMethod("cleaner").getReturnType();
+      cleanerHandle = lookup.findVirtual(directBufferClass, "cleaner", MethodType.methodType(cleanerClass));
+      cleanerCleanHandle = lookup.findVirtual(cleanerClass, "clean", MethodType.methodType(Void.TYPE));
     }
-
-    Class<?> unsafeClass = ClassLoader.getPlatformClassLoader().loadClass("sun.misc.Unsafe");
-    MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(unsafeClass, MethodHandles.lookup());
-    Object unsafe = lookup.findStaticGetter(unsafeClass, "theUnsafe", unsafeClass).invoke();
-    cleaner = lookup.findVirtual(unsafeClass, "invokeCleaner", MethodType.methodType(Void.TYPE, ByteBuffer.class)).bindTo(unsafe);
-    ByteBufferCleaner.cleaner = cleaner;
-    return cleaner;
+    catch (Error | RuntimeException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      throw new IllegalStateException(e);
+    }
   }
 }

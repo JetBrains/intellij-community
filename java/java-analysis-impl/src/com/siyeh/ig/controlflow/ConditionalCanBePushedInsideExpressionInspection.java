@@ -77,7 +77,7 @@ public final class ConditionalCanBePushedInsideExpressionInspection extends Base
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ConditionalCanBePushedInsideExpressionVisitor();
   }
 

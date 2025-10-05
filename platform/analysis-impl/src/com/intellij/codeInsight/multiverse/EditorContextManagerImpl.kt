@@ -3,6 +3,7 @@ package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -14,11 +15,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 
 internal class EditorContextManagerImpl(
   private val project: Project,
-  private val cs: CoroutineScope,
+  cs: CoroutineScope,
 ) : EditorContextManager, Disposable.Default {
 
   // todo IJPL-339 don't drop current contexts entirely on invalidating contexts. try to restore them on the next request
@@ -27,13 +27,12 @@ internal class EditorContextManagerImpl(
   private val _eventFlow = MutableSharedFlow<EditorContextManager.ChangeEvent>(extraBufferCapacity = Int.MAX_VALUE)
 
   init {
-    cs.launch {
-      project.messageBus.connect(this).subscribe(CodeInsightContextManager.topic, object : CodeInsightContextChangeListener {
-        override fun contextsChanged() {
-          currentContextCache.invalidate()
-        }
-      })
-    }
+    project.messageBus.connect(cs).subscribe(CodeInsightContextManager.topic, object : CodeInsightContextChangeListener {
+      override fun contextsChanged() {
+        log.info("Dropping all editor contexts")
+        currentContextCache.invalidate()
+      }
+    })
   }
 
   override fun getCachedEditorContexts(editor: Editor): EditorSelectedContexts? {
@@ -49,17 +48,22 @@ internal class EditorContextManagerImpl(
   @RequiresReadLock
   @RequiresBackgroundThread
   private fun getCurrentContextStateWithPreferredDefault(editor: Editor): EditorSelectedContexts {
-    if (!isSharedSourceSupportEnabled(project)) return SingleEditorContext(defaultContext())
+    if (!isSharedSourceSupportEnabled(project)) {
+      return SingleEditorContext(defaultContext())
+    }
 
     return currentContextCache.computeIfAbsent(editor) {
       val file = FileDocumentManager.getInstance().getFile(editor.document)
       if (file == null) {
+        log.trace { "editor context for $editor is set to default" }
         return@computeIfAbsent SingleEditorContext(defaultContext())
       }
       val preferredContext = CodeInsightContextManager.getInstance(project).getPreferredContext(file)
       val contexts = SingleEditorContext(preferredContext)
 
       fireEvent(editor, contexts)
+
+      log.trace { "editor context for $editor is set to $contexts" }
 
       contexts
     }
@@ -69,6 +73,8 @@ internal class EditorContextManagerImpl(
   override fun setEditorContext(editor: Editor, contexts: EditorSelectedContexts) {
     //ThreadingAssertions.assertWriteAccess()
     currentContextCache[editor] = contexts
+
+    log.trace { "Editor context for $editor is set to $contexts" }
 
     fireEvent(editor, contexts)
   }

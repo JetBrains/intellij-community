@@ -18,12 +18,7 @@ class InlineCompletionInsertEnvironment @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   val request: InlineCompletionRequest?,
-) : UserDataHolderBase() {
-
-  @Deprecated("Do not create this class manually.")
-  @ApiStatus.ScheduledForRemoval
-  constructor(editor: Editor, file: PsiFile, insertedRange: TextRange) : this(editor, file, insertedRange, null)
-}
+) : UserDataHolderBase()
 
 interface InlineCompletionInsertHandler {
   @RequiresEdt

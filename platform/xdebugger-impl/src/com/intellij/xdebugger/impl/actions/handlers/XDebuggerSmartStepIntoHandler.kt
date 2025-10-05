@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.codeInsight.highlighting.HighlightManager
@@ -13,12 +13,19 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
+import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -28,6 +35,9 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
+import com.intellij.platform.debugger.impl.rpc.XSmartStepIntoTargetDto
+import com.intellij.platform.debugger.impl.rpc.XSmartStepIntoTargetId
 import com.intellij.ui.Hint
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.ListActions
@@ -43,13 +53,11 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
-import com.intellij.xdebugger.impl.rpc.XSmartStepIntoTargetDto
-import com.intellij.xdebugger.impl.rpc.XSmartStepIntoTargetId
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import com.intellij.xdebugger.ui.DebuggerColors
 import fleet.util.indexOfOrNull
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -97,7 +105,7 @@ internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActio
           return@performDebuggerActionAsync
         }
       }
-      XDebugSessionApi.getInstance().stepInto(session.id)
+      session.stepInto(ignoreBreakpoints = false)
     }
   }
 
@@ -119,8 +127,11 @@ internal open class XDebuggerSmartStepIntoHandler : XDebuggerProxySuspendedActio
           }
         }
       }
+      catch (ce: CancellationException) {
+        throw ce
+      }
       catch (_: Throwable) {
-        XDebugSessionApi.getInstance().stepInto(session.id)
+        session.stepInto(ignoreBreakpoints = false)
       }
     }
   }
@@ -155,6 +166,10 @@ class SmartStepData(
 ) {
   enum class Direction {
     UP, DOWN, LEFT, RIGHT
+  }
+
+  init {
+    setSyntheticHighlighterIfNeeded()
   }
 
   internal val myVariants: List<VariantInfo> = targets
@@ -239,6 +254,39 @@ class SmartStepData(
     editor.putUserData(SMART_STEP_HINT_DATA, null)
     val highlightManager = HighlightManager.getInstance(session.project) as HighlightManagerImpl
     highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE or HighlightManager.HIDE_BY_TEXT_CHANGE)
+    clearSyntheticHighlighter()
+  }
+
+  // for the LUX remote development scenario we have to add a fake invisible highlighter on the whole document with extra payload
+  // that will be restored on the client and used to alternate actions availability
+  // see com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt.addActionAvailabilityHint
+  // It can be removed when we migrate to split debugger mode
+  private var myActionHintSyntheticHighlighter: RangeHighlighter? = null
+
+  private fun clearSyntheticHighlighter() {
+    val highlighter = myActionHintSyntheticHighlighter ?: return
+    // since we don't use HighlightManagerImpl to mark the highlighting with the hide flags it can't be used to remove it as well
+    // just remove it manually
+    editor.getMarkupModel().removeHighlighter(highlighter)
+  }
+
+  private fun setSyntheticHighlighterIfNeeded() {
+    if (!AppMode.isRemoteDevHost()) return
+    myActionHintSyntheticHighlighter = (editor.getMarkupModel() as MarkupModelEx)
+      .addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0,
+                                              editor.getDocument().textLength,
+                                              HighlighterLayer.LAST,
+                                              HighlighterTargetArea.EXACT_RANGE, false) { h ->
+        // this hints should be added in this lambda in order to be serialized by RD markup machinery
+        h.addActionAvailabilityHint(
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+          EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside))
+      }
   }
 
   internal inner class VariantInfo(val target: XSmartStepIntoTarget) {

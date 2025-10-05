@@ -1,26 +1,27 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.debugger.impl.backend
 
-import com.intellij.debugger.actions.ThreadDumpAction
-import com.intellij.debugger.engine.AsyncStacksUtils
-import com.intellij.debugger.engine.JavaDebugProcess
-import com.intellij.debugger.engine.executeOnDMT
+import com.intellij.debugger.actions.*
+import com.intellij.debugger.engine.*
+import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.execution.filters.ExceptionFilters
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.java.debugger.impl.shared.rpc.*
+import com.intellij.openapi.application.EDT
 import com.intellij.platform.debugger.impl.rpc.toRpc
 import com.intellij.unscramble.CompoundDumpItem
 import com.intellij.unscramble.DumpItem
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
+import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.util.channels.use
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.launch
 
 internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -57,6 +58,82 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
   override suspend fun setAsyncStacksEnabled(sessionId: XDebugSessionId, state: Boolean) {
     val session = sessionId.findValue() ?: return
     AsyncStacksUtils.setAsyncStacksEnabled(session, state)
+  }
+
+  override suspend fun stepOutOfCodeBlock(sessionId: XDebugSessionId) {
+    val xSession = sessionId.findValue() ?: return
+    withContext(Dispatchers.EDT) {
+      StepOutOfBlockActionUtils.stepOutOfBlock(xSession)
+    }
+  }
+
+  override suspend fun setRenderer(rendererId: NodeRendererId?, xValueIds: List<XValueId>) {
+    val xValueModels = xValueIds.mapNotNull { BackendXValueModel.findById(it) }
+    val javaValues = xValueModels.mapNotNull { it.xValue as? JavaValue }
+    if (javaValues.isEmpty()) return
+    val renderer = if (rendererId != null) {
+      javaValues[0].evaluationContext.debugProcess.getRendererById(rendererId) ?: return
+    }
+    else {
+      null
+    }
+
+    for (javaValue in javaValues) {
+      withDebugContext(javaValue.evaluationContext.suspendContext) {
+        javaValue.setRenderer(renderer, null)
+      }
+    }
+    for (xValueModel in xValueModels) {
+      xValueModel.computeValuePresentation()
+    }
+  }
+
+  override suspend fun muteRenderers(sessionId: XDebugSessionId, state: Boolean) {
+    val xSession = sessionId.findValue() ?: return
+    val renderersFlow = MuteRendererUtils.getFlow(xSession.sessionData)
+    renderersFlow.value = state
+    NodeRendererSettings.getInstance().fireRenderersChanged()
+  }
+
+  override suspend fun resumeThread(executionStackId: XExecutionStackId) {
+    invokeThreadCommand(executionStackId, ThreadCommand.RESUME)
+  }
+
+  override suspend fun freezeThread(executionStackId: XExecutionStackId) {
+    invokeThreadCommand(executionStackId, ThreadCommand.FREEZE)
+  }
+
+  override suspend fun interruptThread(executionStackId: XExecutionStackId) {
+    invokeThreadCommand(executionStackId, ThreadCommand.INTERRUPT)
+  }
+
+  private fun invokeThreadCommand(executionStackId: XExecutionStackId, command: ThreadCommand) {
+    val executionStackModel = executionStackId.findValue() ?: return
+    val xSession = executionStackModel.session
+    val javaDebugProcess = xSession.debugProcess as JavaDebugProcess
+    val session = javaDebugProcess.debuggerSession
+    val context = session.contextManager.context
+    val debugProcess = context.debugProcess!!
+    if (session == null || !session.isAttached) return
+
+    val executionStack = (executionStackModel.executionStack as? JavaExecutionStack) ?: return
+    val threadProxy = executionStack.threadProxy
+    val managerThread = context.managerThread ?: return
+    when(command) {
+      ThreadCommand.RESUME -> {
+        ResumeThreadAction.resumeThread(threadProxy, debugProcess, managerThread)
+      }
+      ThreadCommand.FREEZE -> {
+        FreezeThreadAction.freezeThread(threadProxy, debugProcess, managerThread)
+      }
+      ThreadCommand.INTERRUPT -> {
+        InterruptThreadAction.interruptThread(threadProxy, debugProcess, managerThread)
+      }
+    }
+  }
+
+  companion object {
+    private enum class ThreadCommand { FREEZE, RESUME, INTERRUPT }
   }
 }
 

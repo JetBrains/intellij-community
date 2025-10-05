@@ -5,13 +5,13 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.util.findParentInFile
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.controlflow.isUnreachableForInspection
-import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyStatement
+import com.jetbrains.python.psi.PyStatementList
 
 /**
- * Detects unreachable code using control flow graph
+ * Detects unreachable code using the control flow graph
  */
 class PyUnreachableCodeInspection : PyInspection() {
   override fun buildVisitor(
@@ -20,13 +20,17 @@ class PyUnreachableCodeInspection : PyInspection() {
     session: LocalInspectionToolSession
   ): PsiElementVisitor {
     return object : PyInspectionVisitor(holder, getContext(session)) {
-      override fun visitPyElement(node: PyElement) {
+      override fun visitPyStatementList(node: PyStatementList) {
+        if (node.parent.isUnreachableForInspection(myTypeEvalContext)) return
         if (node.isUnreachableForInspection(myTypeEvalContext)) {
-          if (node.findParentInFile { it.isUnreachableForInspection(myTypeEvalContext) } != null) {
-            // We only want to highlight top level unreachable code
-            return
-          }
-          registerProblem(node, PyPsiBundle.message("INSP.unreachable.code"), ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+          registerProblem(node, PyPsiBundle.message("INSP.unreachable.code"))
+        }
+      }
+
+      override fun visitPyStatement(node: PyStatement) {
+        if (node.parent.isUnreachableForInspection(myTypeEvalContext)) return
+        if (node.isUnreachableForInspection(myTypeEvalContext)) {
+          registerProblem(node, PyPsiBundle.message("INSP.unreachable.code"))
         }
       }
     }

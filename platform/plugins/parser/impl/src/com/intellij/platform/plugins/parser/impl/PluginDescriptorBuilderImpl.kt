@@ -2,7 +2,7 @@
 package com.intellij.platform.plugins.parser.impl
 
 import com.intellij.platform.plugins.parser.impl.elements.*
-import com.intellij.util.Java11Shim
+import com.intellij.util.containers.Java11Shim
 import java.time.LocalDate
 
 internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
@@ -21,6 +21,9 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
 
   override var `package`: String? = null
   override var isSeparateJar: Boolean = false
+
+  override var visibility: ModuleVisibility = ModuleVisibility.PRIVATE
+  override var namespace: String? = null
 
   override var url: String? = null
   override var vendor: String? = null
@@ -96,14 +99,14 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
   override val extensions: Map<String, List<ExtensionElement>>
     get() = _extensions ?: Java11Shim.INSTANCE.mapOf()
 
-  private var _contentModules: MutableList<ContentElement>? = null
-  override fun addContentModule(contentModule: ContentElement) {
+  private var _contentModules: MutableList<ContentModuleElement>? = null
+  override fun addContentModule(contentModule: ContentModuleElement) {
     if (_contentModules == null) {
       _contentModules = ArrayList()
     }
     _contentModules!!.add(contentModule)
   }
-  override val contentModules: List<ContentElement>
+  override val contentModules: List<ContentModuleElement>
     get() = _contentModules ?: Java11Shim.INSTANCE.listOf()
 
   private var _dependencies: MutableList<DependenciesElement>? = null
@@ -149,7 +152,9 @@ internal class PluginDescriptorBuilderImpl : PluginDescriptorBuilder {
     projectElementsContainer = projectContainerBuilder.build(),
     moduleElementsContainer = moduleContainerBuilder.build(),
     extensions = extensions,
+    namespace = namespace,
     contentModules = contentModules,
+    moduleVisibility = visibility,
     dependencies = dependencies,
   )
 }

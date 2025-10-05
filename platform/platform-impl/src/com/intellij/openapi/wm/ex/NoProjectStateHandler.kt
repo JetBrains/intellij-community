@@ -2,16 +2,31 @@
 package com.intellij.openapi.wm.ex
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus.Internal
 
-@ApiStatus.Internal
-interface NoProjectStateHandler {
-  companion object {
-    val EP_NAME: ExtensionPointName<NoProjectStateHandler> = ExtensionPointName("com.intellij.noProjectStateHandler")
+private val EP_NAME: ExtensionPointName<NoProjectStateHandler> = ExtensionPointName("com.intellij.noProjectStateHandler")
+
+@Internal
+fun findNoProjectStateHandler(): (suspend () -> Project?)? {
+  return EP_NAME.extensionList.firstNotNullOfOrNull { it.createHandler() }
+}
+
+@Internal
+suspend fun executeNoProjectStateHandlerExpectingNonWelcomeScreenImplementation(): Project {
+  val handler = requireNotNull(findNoProjectStateHandler()) {
+    "`NoProjectStateHandler` not found, but it must be registered"
   }
+  val project = requireNotNull(handler()) {
+    "Handler returned `null`, but it must return a project"
+  }
+  require(!project.isDefault) {
+    "Handler returned a default project, but it must return a non-default project"
+  }
+  return project
+}
 
-  fun canHandle(): Boolean
-
-  @RequiresEdt fun handle()
+@Internal
+interface NoProjectStateHandler {
+  fun createHandler(): (suspend () -> Project?)?
 }

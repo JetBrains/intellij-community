@@ -9,14 +9,14 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
@@ -394,9 +394,9 @@ public final class ExternalSystemUtil {
         }
 
         @Override
-        public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-          processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
-          eventDispatcher.setStdOut(stdOut);
+        public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
+          processHandler.notifyTextAvailable(text, processOutputType);
+          eventDispatcher.setStdOut(processOutputType.isStdout());
           eventDispatcher.append(text);
         }
 

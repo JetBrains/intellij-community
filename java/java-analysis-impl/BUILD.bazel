@@ -1,9 +1,15 @@
 ### auto-generated section `build intellij.java.analysis.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+create_kotlinc_options(
+  name = "custom_analysis-impl",
+  x_explicit_api_mode = "strict"
+)
+
+resourcegroup(
   name = "analysis-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +17,9 @@ jvm_library(
   name = "analysis-impl",
   module_name = "intellij.java.analysis.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":analysis-impl_resources"],
+  kotlinc_opts = ":custom_analysis-impl",
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
@@ -38,7 +46,7 @@ jvm_library(
     "//platform/util:util-ui",
     "@lib//:fastutil-min",
     "//platform/workspace/storage",
-    "@lib//:icu4j",
+    "//libraries/icu4j",
     "//platform/util/jdom",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
@@ -47,6 +55,7 @@ jvm_library(
     "//java/codeserver/highlighting",
     "//java/codeserver/core",
     "//platform/refactoring",
+    "//xml/xml-analysis-api:analysis",
   ],
   exports = [
     "//platform/analysis-impl",
@@ -55,7 +64,6 @@ jvm_library(
     "//platform/projectModel-impl",
     "//java/java-analysis-api:analysis",
     "//java/java-frontback-impl:frontback-impl",
-  ],
-  runtime_deps = [":analysis-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.analysis.impl` end

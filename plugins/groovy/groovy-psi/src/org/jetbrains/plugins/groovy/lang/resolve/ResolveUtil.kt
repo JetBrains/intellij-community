@@ -33,6 +33,9 @@ val log: Logger = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve
 val NON_CODE: Key<Boolean?> = Key.create("groovy.process.non.code.members")
 
 @JvmField
+val PATTERN_VARIABLE: Key<Boolean?> = Key.create("groovy.process.pattern.variables")
+
+@JvmField
 val sorryCannotKnowElementKind: Key<Boolean> = Key.create("groovy.skip.kind.check.please")
 
 private val IGNORE_IMPORTS : Key<Unit> = Key.create("groovy.defer.imports")
@@ -40,6 +43,8 @@ private val IGNORE_IMPORTS : Key<Unit> = Key.create("groovy.defer.imports")
 fun initialState(processNonCodeMembers: Boolean): ResolveState = ResolveState.initial().put(NON_CODE, processNonCodeMembers)
 
 fun ResolveState.processNonCodeMembers(): Boolean = get(NON_CODE).let { it == null || it }
+
+fun ResolveState.shouldProcessPatternVariables(): Boolean = get(PATTERN_VARIABLE).let { it == null || it }
 
 fun ResolveState.ignoreImports() : ResolveState = put(IGNORE_IMPORTS, Unit)
 
@@ -59,9 +64,12 @@ fun GrStatementOwner.processStatements(lastParent: PsiElement?, processor: (GrSt
 }
 
 fun GrStatementOwner.processLocals(processor: PsiScopeProcessor, state: ResolveState, lastParent: PsiElement?, place: PsiElement): Boolean {
-  return !processor.shouldProcessLocals() || processStatements(lastParent) {
-    it.processDeclarations(processor, state, null, place)
+  if (!processor.shouldProcessLocals()) return true
+  val newState = state.put(PATTERN_VARIABLE, false)
+  val result = processStatements(lastParent) {
+    it.processDeclarations(processor, newState, null, place)
   }
+  return result
 }
 
 fun PsiScopeProcessor.checkName(name: String, state: ResolveState): Boolean {

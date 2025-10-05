@@ -71,6 +71,11 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
       field = value
       invalidate()
     }
+  var preferredWidth: Int? = null
+    set(value) {
+      field = value
+      invalidate()
+    }
 
   @ApiStatus.Experimental
   var accessibleContextProvider: Component? = null
@@ -89,9 +94,15 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
   }
 
   override fun getPreferredSize(): Dimension {
-    val result = super.getPreferredSize()
+    val preferredWidth = preferredWidth
+    val preferredHeight = preferredHeight
 
-    return if (preferredHeight == null) result else Dimension(result.width, preferredHeight!!)
+    if (preferredWidth != null && preferredHeight != null) {
+      return Dimension(preferredWidth, preferredHeight)
+    }
+
+    val preferredSize = super.getPreferredSize()
+    return Dimension(preferredWidth ?: preferredSize.width, preferredHeight ?: preferredSize.height)
   }
 
   override fun paintComponent(g: Graphics) {

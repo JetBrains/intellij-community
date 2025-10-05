@@ -2,7 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.service

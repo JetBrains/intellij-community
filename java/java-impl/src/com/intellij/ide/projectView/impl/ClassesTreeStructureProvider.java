@@ -74,8 +74,10 @@ public final class ClassesTreeStructureProvider implements SelectableTreeStructu
                                                                       : Collections.emptyList();
           if (classes.length == 1 && isClassForTreeNode(file, classes[0])) {
             result.add(new ClassTreeNode(myProject, classes[0], settings1, nestedFileNodes));
-          } else {
-            result.add(new PsiClassOwnerTreeNode(classOwner, settings1, nestedFileNodes));
+          }
+          else {
+            boolean isImplicitClass = classes.length == 1 && classes[0] instanceof PsiImplicitClass;
+            result.add(new PsiClassOwnerTreeNode(classOwner, settings1, nestedFileNodes, isImplicitClass));
           }
           continue;
         }
@@ -148,13 +150,21 @@ public final class ClassesTreeStructureProvider implements SelectableTreeStructu
 
   private static class PsiClassOwnerTreeNode extends PsiFileNode implements FileNodeWithNestedFileNodes {
     private final @NotNull Collection<? extends AbstractTreeNode<?>> myNestedFileNodes;
+    private final boolean myIsImplicitClass;
 
     PsiClassOwnerTreeNode(@NotNull PsiClassOwner classOwner,
                           ViewSettings settings,
-                          @NotNull Collection<? extends AbstractTreeNode<?>> nestedFileNodes) {
+                          @NotNull Collection<? extends AbstractTreeNode<?>> nestedFileNodes,
+                          boolean isImplicitClass) {
       super(classOwner.getProject(), classOwner, settings);
-
+      myIsImplicitClass = isImplicitClass;
       myNestedFileNodes = nestedFileNodes;
+    }
+
+    @Override
+    public boolean expandOnDoubleClick() {
+      if (myIsImplicitClass) return false;
+      return super.expandOnDoubleClick();
     }
 
     @Override

@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.impl.shared.ui.RepositoryColors;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,30 +15,30 @@ import java.util.Collection;
  * Managers colors used for paths in the vcs log.
  *
  * @author Kirill Likhodedov
+ * @see VcsLogColorManagerFactory
  */
 public interface VcsLogColorManager {
-  String DEFAULT_COLOR_MODE = "default";
 
   /**
    * Returns the color assigned to the given repository root.
    */
   default @NotNull Color getRootColor(@NotNull VirtualFile root) {
-    return getRootColor(root, DEFAULT_COLOR_MODE);
+    return getRootColor(root, RepositoryColors.DEFAULT_COLOR_SPACE);
   }
 
-  default @NotNull Color getRootColor(@NotNull VirtualFile root, @NotNull String colorMode) {
-    return getPathColor(VcsUtil.getFilePath(root), colorMode);
+  default @NotNull Color getRootColor(@NotNull VirtualFile root, @NotNull String colorSpace) {
+    return getPathColor(VcsUtil.getFilePath(root), colorSpace);
   }
 
   /**
    * Returns the color assigned to the given file path.
    */
   default @NotNull Color getPathColor(@NotNull FilePath path) {
-    return getPathColor(path, DEFAULT_COLOR_MODE);
+    return getPathColor(path, RepositoryColors.DEFAULT_COLOR_SPACE);
   }
 
   @NotNull
-  Color getPathColor(@NotNull FilePath path, @NotNull String colorMode);
+  Color getPathColor(@NotNull FilePath path, @NotNull String colorSpace);
 
   /**
    * Tells if there are several paths currently shown in the log.

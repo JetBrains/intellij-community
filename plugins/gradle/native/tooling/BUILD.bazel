@@ -1,16 +1,19 @@
 ### auto-generated section `build intellij.gradle.native.tooling` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  jvm_target = 8,
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  name = "custom_tooling",
+  jvm_target = "8",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "tooling_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -18,28 +21,26 @@ jvm_library(
   name = "tooling",
   module_name = "intellij.gradle.native.tooling",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tooling_resources"],
+  kotlinc_opts = ":custom_tooling",
   deps = [
     "@lib//:jetbrains-annotations",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "@lib//:gradle",
     "//platform/object-serializer:objectSerializer-annotations",
-  ],
-  runtime_deps = [":tooling_resources"]
+    "@lib//:commons-lang3",
+  ]
 )
 ### auto-generated section `build intellij.gradle.native.tooling` end
 
 ### auto-generated section `build intellij.gradle.native.tooling.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "gradle-native-tooling-tests_test_lib",
+  module_name = "intellij.gradle.native.tooling.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",
@@ -50,9 +51,13 @@ jvm_library(
     "//plugins/gradle/tooling-extension-api:toolingExtension",
   ]
 )
+### auto-generated section `build intellij.gradle.native.tooling.tests` end
+
+### auto-generated section `test intellij.gradle.native.tooling.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "gradle-native-tooling-tests_test",
   runtime_deps = [":gradle-native-tooling-tests_test_lib"]
 )
-### auto-generated section `build intellij.gradle.native.tooling.tests` end
+### auto-generated section `test intellij.gradle.native.tooling.tests` end

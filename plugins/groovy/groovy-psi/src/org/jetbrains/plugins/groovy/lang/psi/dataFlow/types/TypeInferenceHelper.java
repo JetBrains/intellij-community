@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrPatternVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -125,7 +126,7 @@ public final class TypeInferenceHelper {
     final VariableDescriptor descriptor = createDescriptor(variable);
     int descriptorIndex = cache.getGroovyFlow().getIndex(descriptor);
     if (descriptorIndex == 0) {
-      if (variable instanceof GrField) {
+      if (variable instanceof GrField || variable instanceof GrPatternVariable) {
         // variable is not used anywhere in the scope, therefore it is enough to return its declared type
         return variable.getDeclaredType();
       } else {

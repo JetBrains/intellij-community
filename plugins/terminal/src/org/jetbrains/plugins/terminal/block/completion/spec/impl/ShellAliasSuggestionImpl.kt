@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
 import javax.swing.Icon
 
-class ShellAliasSuggestionImpl(
+internal class ShellAliasSuggestionImpl(
   override val name: String,
   override val aliasValue: String,
   override val type: ShellSuggestionType = ShellSuggestionType.COMMAND,

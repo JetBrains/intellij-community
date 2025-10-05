@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.deprecationStatus
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
@@ -18,24 +21,24 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
 internal sealed interface ImportCandidate {
     val symbol: KaDeclarationSymbol
 
-    context(KaSession)
+    context(_: KaSession)
     fun createPointer(): ImportCandidatePointer
 }
 
 internal interface ImportCandidatePointer {
-    context(KaSession)
+    context(_: KaSession)
     fun restore(): ImportCandidate?
 }
 
 
 internal data class ClassLikeImportCandidate(override val symbol: KaClassLikeSymbol) : ImportCandidate {
-    context(KaSession)
+    context(_: KaSession)
     override fun createPointer(): ImportCandidatePointer = Pointer(symbol.createPointer())
 
     private class Pointer(private val symbolPointer: KaSymbolPointer<KaClassLikeSymbol>) : ImportCandidatePointer {
-        context(KaSession)
+        context(session: KaSession)
         override fun restore(): ImportCandidate? {
-            val symbol = symbolPointer.restoreSymbol() ?: return null
+            val symbol = with(session) { symbolPointer.restoreSymbol() } ?: return null
             return ClassLikeImportCandidate(symbol)
         }
     }
@@ -47,7 +50,7 @@ internal data class CallableImportCandidate private constructor(
     val dispatcherObject: KaClassSymbol?,
 ) : ImportCandidate {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun createPointer(): ImportCandidatePointer = Pointer(symbol.createPointer(), dispatcherObject?.createPointer())
 
     private class Pointer(
@@ -55,19 +58,19 @@ internal data class CallableImportCandidate private constructor(
         val dispatcherObjectPointer: KaSymbolPointer<KaClassSymbol>?,
     ) : ImportCandidatePointer {
 
-        context(KaSession)
+        context(session: KaSession)
         override fun restore(): ImportCandidate? {
-            val symbol = symbolPointer.restoreSymbol() ?: return null
+            val symbol = with(session) { symbolPointer.restoreSymbol() } ?: return null
 
             if (dispatcherObjectPointer == null) return create(symbol)
 
-            val dispatcherObject = dispatcherObjectPointer.restoreSymbol() ?: return null
+            val dispatcherObject = with(session) { dispatcherObjectPointer.restoreSymbol() } ?: return null
             return create(symbol, dispatcherObject)
         }
     }
 
     companion object {
-        context(KaSession)
+        context(_: KaSession)
         fun create(
             symbol: KaCallableSymbol,
             dispatcherObject: KaClassSymbol? = null,
@@ -83,7 +86,7 @@ internal data class CallableImportCandidate private constructor(
 internal val ImportCandidate.name: Name
     get() = (symbol as KaNamedSymbol).name
 
-context(KaSession)
+context(_: KaSession)
 internal val ImportCandidate.fqName: FqName?
     get() = when (this) {
         is CallableImportCandidate -> callableId?.asSingleFqName()
@@ -123,16 +126,16 @@ internal val ImportCandidate.psi: PsiElement?
         is ClassLikeImportCandidate -> symbol.psi
     }
 
-context(KaSession)
+context(_: KaSession)
 @KaExperimentalApi
 internal val ImportCandidate.deprecationStatus: DeprecationInfo?
     get() = symbol.deprecationStatus
 
-context(KaSession)
+context(_: KaSession)
 internal val CallableImportCandidate.receiverType: KaType?
     get() = symbol.receiverType
 
-context(KaSession)
+context(_: KaSession)
 internal val CallableImportCandidate.containingClass: KaClassSymbol?
     get() = dispatcherObject
         ?: symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol

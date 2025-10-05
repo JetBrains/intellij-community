@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.project-configuration` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "project-configuration_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +11,8 @@ jvm_library(
   name = "project-configuration",
   module_name = "kotlin.project-configuration",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":project-configuration_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -22,14 +23,14 @@ jvm_library(
     "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//platform/observable",
-    "@lib//:gson",
+    "//libraries/gson",
     "//platform/ide-core-impl",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
@@ -59,8 +60,7 @@ jvm_library(
     "@lib//:maven-resolver-provider",
     "//platform/util",
     "//platform/workspace/storage",
-    "//plugins/kotlin/base/scripting",
-  ],
-  runtime_deps = [":project-configuration_resources"]
+    "//platform/vcs-impl/shared",
+  ]
 )
 ### auto-generated section `build kotlin.project-configuration` end

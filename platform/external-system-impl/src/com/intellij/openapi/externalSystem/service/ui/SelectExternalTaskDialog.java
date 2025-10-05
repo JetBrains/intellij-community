@@ -19,13 +19,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 
-/**
- * @author Vladislav.Soroka
- */
 @ApiStatus.Internal
-public class SelectExternalTaskDialog extends SelectExternalSystemNodeDialog {
-
-  private static final Class<? extends ExternalSystemNode>[] NODE_CLASSES = ContainerUtil.ar(
+public final class SelectExternalTaskDialog extends SelectExternalSystemNodeDialog {
+  private static final Class<? extends ExternalSystemNode<?>>[] NODE_CLASSES = ContainerUtil.ar(
     ProjectNode.class,
     ModuleNode.class,
     TaskNode.class

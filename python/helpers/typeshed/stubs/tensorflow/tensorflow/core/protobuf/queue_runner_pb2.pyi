@@ -36,7 +36,9 @@ class QueueRunnerDef(google.protobuf.message.Message):
         """A list of enqueue operations."""
 
     @property
-    def queue_closed_exception_types(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[tensorflow.tsl.protobuf.error_codes_pb2.Code.ValueType]:
+    def queue_closed_exception_types(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[tensorflow.tsl.protobuf.error_codes_pb2.Code.ValueType]:
         """A list of exception types considered to signal a safely closed queue
         if raised during enqueue operations.
         """
@@ -48,8 +50,24 @@ class QueueRunnerDef(google.protobuf.message.Message):
         enqueue_op_name: collections.abc.Iterable[builtins.str] | None = ...,
         close_op_name: builtins.str | None = ...,
         cancel_op_name: builtins.str | None = ...,
-        queue_closed_exception_types: collections.abc.Iterable[tensorflow.tsl.protobuf.error_codes_pb2.Code.ValueType] | None = ...,
+        queue_closed_exception_types: (
+            collections.abc.Iterable[tensorflow.tsl.protobuf.error_codes_pb2.Code.ValueType] | None
+        ) = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["cancel_op_name", b"cancel_op_name", "close_op_name", b"close_op_name", "enqueue_op_name", b"enqueue_op_name", "queue_closed_exception_types", b"queue_closed_exception_types", "queue_name", b"queue_name"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "cancel_op_name",
+            b"cancel_op_name",
+            "close_op_name",
+            b"close_op_name",
+            "enqueue_op_name",
+            b"enqueue_op_name",
+            "queue_closed_exception_types",
+            b"queue_closed_exception_types",
+            "queue_name",
+            b"queue_name",
+        ],
+    ) -> None: ...
 
 global___QueueRunnerDef = QueueRunnerDef

@@ -3,22 +3,25 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  name = "custom_core-fe10",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ],
+  x_context_parameters = True
 )
 
 jvm_library(
   name = "core-fe10",
   module_name = "kotlin.jvm-debugger.core-fe10",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_core-fe10",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:asm",
     "@lib//:stream_ex",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "//java/debugger/openapi:java-debugger",
@@ -44,7 +47,6 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/eval4j",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/lang-impl",
-    "//platform/script-debugger/debugger-ui:scriptDebugger-ui",
     "//java/openapi:java",
     "//java/java-psi-impl:psi-impl",
     "//java/debugger/impl",

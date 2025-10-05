@@ -14,7 +14,6 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 
 open class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?, rootElement : StructureViewTreeElement) :
@@ -25,14 +24,7 @@ open class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?, rootElement
         withSorters(KotlinVisibilitySorter, Sorter.ALPHA_SORTER)
     }
 
-    override fun isSuitable(element: PsiElement?): Boolean =
-        element is KtDeclaration &&
-            element !is KtPropertyAccessor &&
-            element !is KtFunctionLiteral &&
-            !((element is KtProperty || element is KtFunction) && !element.topLevelDeclaration && element.containingClassOrObject !is KtNamedDeclaration)
-
-    private val KtDeclaration.topLevelDeclaration: Boolean
-        get() = parent is KtFile || parent is KtBlockExpression && parent.parent is KtScript
+    override fun isSuitable(element: PsiElement?): Boolean = isStructureViewNode(element)
 
     override fun getFilters(): Array<Filter> = FILTERS
 

@@ -15,13 +15,16 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.net.ConnectException
 
 @Internal
-class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
+class OtlpSpanExporter(
+  private val traceUrl: String,
+  private val authorizationHeader: String? = null
+) : AsyncSpanExporter {
   override suspend fun export(spans: Collection<SpanData>) {
     try {
       val item = TraceRequestMarshaler.create(spans)
-      httpPost(traceUrl, contentLength = item.binarySerializedSize.toLong(), contentType = ContentType.XProtobuf) {
+      httpPost(traceUrl, contentLength = item.binarySerializedSize.toLong(), contentType = ContentType.XProtobuf, body = {
         item.writeBinaryTo(this)
-      }
+      }, authorizationHeader)
     }
     catch (e: CancellationException) {
       throw e
@@ -35,9 +38,9 @@ class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
   }
 
   companion object {
-    suspend fun exportBackendData(traceUrl: String, receivedBytes: ByteArray) {
+    suspend fun exportBackendData(traceUrl: String, receivedBytes: ByteArray, authorizationHeader: String? = null) {
       runCatching {
-        httpPost(url = traceUrl, contentType = ContentType.XProtobuf, body = receivedBytes)
+        httpPost(url = traceUrl, contentType = ContentType.XProtobuf, body = receivedBytes, authorizationHeader)
       }.getOrLogException(thisLogger())
     }
   }

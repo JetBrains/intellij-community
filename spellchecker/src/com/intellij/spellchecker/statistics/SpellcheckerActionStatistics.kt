@@ -14,7 +14,7 @@ import com.intellij.spellchecker.util.SpellCheckerBundle
 object SpellcheckerActionStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("spellchecker.events", 3)
+  private val GROUP = EventLogGroup("spellchecker.events", 4)
 
   private val DOMAIN_FIELD = EventFields.String("domain", listOf("code", "comment", "literal", "commit"))
   private val DICTIONARY_LAYER_FIELD = EventFields.String(
@@ -24,8 +24,8 @@ object SpellcheckerActionStatistics : CounterUsagesCollector() {
       SpellCheckerBundle.message("dictionary.name.application.level")
     )
   )
-  private val INDEX_FIELD = EventFields.Int("index")
-  private val TOTAL_FIELD = EventFields.Int("total")
+  private val SUGGESTION_INDEX_FIELD = EventFields.Int("suggestion_index")
+  private val TOTAL_SUGGESTIONS_FIELD = EventFields.Int("total_suggestions")
 
   private val removeFromAcceptedWords: EventId = GROUP.registerEvent("remove.from.accepted.words.ui")
   private val addToAcceptedWords: EventId = GROUP.registerEvent("add.to.accepted.words.ui")
@@ -37,14 +37,14 @@ object SpellcheckerActionStatistics : CounterUsagesCollector() {
 
   private val changeToInvokedEvent = GROUP.registerVarargEvent("change.to.invoked",
                                                                DOMAIN_FIELD,
-                                                               INDEX_FIELD,
-                                                               TOTAL_FIELD,
+                                                               SUGGESTION_INDEX_FIELD,
+                                                               TOTAL_SUGGESTIONS_FIELD,
                                                                EventFields.Language,
                                                                EventFields.PluginInfo)
 
   private val renameToInvokedEvent = GROUP.registerVarargEvent("rename.to.invoked",
                                                                DOMAIN_FIELD,
-                                                               TOTAL_FIELD,
+                                                               TOTAL_SUGGESTIONS_FIELD,
                                                                EventFields.Language,
                                                                EventFields.PluginInfo)
 
@@ -73,15 +73,17 @@ object SpellcheckerActionStatistics : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun renameToPerformed(tracker: SpellcheckerRateTracker) {
+  fun renameToPerformed(tracker: SpellcheckerRateTracker, total: Int) {
+    val events = buildCommonEvents(tracker)
+    events.add(TOTAL_SUGGESTIONS_FIELD.with(total))
     renameToInvokedEvent.log(tracker.project, buildCommonEvents(tracker))
   }
 
   @JvmStatic
   fun changeToPerformed(tracker: SpellcheckerRateTracker, index: Int, total: Int) {
     val events = buildCommonEvents(tracker)
-    events.add(INDEX_FIELD.with(index))
-    events.add(TOTAL_FIELD.with(total))
+    events.add(SUGGESTION_INDEX_FIELD.with(index))
+    events.add(TOTAL_SUGGESTIONS_FIELD.with(total))
     changeToInvokedEvent.log(tracker.project, events)
   }
 

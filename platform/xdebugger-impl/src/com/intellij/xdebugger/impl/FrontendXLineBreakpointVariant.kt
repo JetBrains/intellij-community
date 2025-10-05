@@ -7,12 +7,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.rpc.*
+import com.intellij.xdebugger.impl.rpc.XBreakpointId
+import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import fleet.util.channels.use
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -37,8 +39,8 @@ data class XLineBreakpointInstallationInfo(
   val types: List<XLineBreakpointTypeProxy>,
   val position: XSourcePosition,
   val isTemporary: Boolean,
-  val isConditional: Boolean,
-  val condition: String?,
+  val isLogging: Boolean,
+  val logExpression: String?,
   private val canRemove: Boolean,
 ) {
   fun canRemoveBreakpoint(): Boolean = canRemove && !isTemporary
@@ -49,8 +51,8 @@ fun XLineBreakpointInstallationInfo.toRequest(hasBreakpoints: Boolean): XLineBre
   types.map { XBreakpointTypeId(it.id) },
   position.toRpc(),
   isTemporary,
-  isConditional,
-  condition,
+  isLogging,
+  logExpression,
   hasBreakpoints,
 )
 
@@ -98,7 +100,7 @@ internal fun computeBreakpointProxy(
             result.complete(null)
           }
           is XLineBreakpointInstalledResponse -> {
-            result.complete(createBreakpoint(project, response.breakpoint))
+            result.complete(createBreakpoint(project, response.breakpointId))
           }
           is XLineBreakpointMultipleVariantResponse -> {
             result.handle { _, _ ->
@@ -131,13 +133,13 @@ private fun responseWithVariantChoice(
 ) {
   project.service<FrontendXLineBreakpointVariantService>().cs.launch {
     result.compute {
-      val breakpointCallback = Channel<XBreakpointDto>()
+      val breakpointCallback = Channel<XBreakpointId>()
       selectionCallback.use {
         it.send(VariantSelectedResponse(selectedIndex, breakpointCallback))
       }
       try {
-        val breakpointDto = breakpointCallback.receive()
-        createBreakpoint(project, breakpointDto)
+        val breakpointId = breakpointCallback.receive()
+        createBreakpoint(project, breakpointId)
       }
       catch (_: ClosedReceiveChannelException) {
         null
@@ -148,14 +150,13 @@ private fun responseWithVariantChoice(
 
 private suspend fun createBreakpoint(
   project: Project,
-  breakpointDto: XBreakpointDto,
+  breakpointId: XBreakpointId,
 ): XLineBreakpointProxy? {
   val breakpointManagerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-  return breakpointManagerProxy.awaitBreakpointCreation(breakpointDto) as? XLineBreakpointProxy
+  return breakpointManagerProxy.awaitBreakpointCreation(breakpointId) as? XLineBreakpointProxy
 }
 
-@ApiStatus.Internal
-class FrontendXLineBreakpointVariantImpl(private val dto: XLineBreakpointVariantDto) : FrontendXLineBreakpointVariant {
+private class FrontendXLineBreakpointVariantImpl(private val dto: XLineBreakpointVariantDto) : FrontendXLineBreakpointVariant {
   override val text: String get() = dto.text
   override val icon: Icon? get() = dto.icon?.icon()
   override val highlightRange: TextRange? get() = dto.highlightRange?.toTextRange()

@@ -1,5 +1,4 @@
 import abc
-from _typeshed import Incomplete
 
 from pika.adapters.utils.nbio_interface import AbstractIOReference, AbstractStreamTransport
 
@@ -10,9 +9,7 @@ class SocketConnectionMixin:
     def connect_socket(self, sock, resolved_addr, on_done): ...
 
 class StreamingConnectionMixin:
-    def create_streaming_connection(
-        self, protocol_factory, sock, on_done, ssl_context: Incomplete | None = None, server_hostname: Incomplete | None = None
-    ): ...
+    def create_streaming_connection(self, protocol_factory, sock, on_done, ssl_context=None, server_hostname=None): ...
 
 class _AsyncServiceAsyncHandle(AbstractIOReference):
     def __init__(self, subject) -> None: ...

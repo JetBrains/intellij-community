@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
 
@@ -26,7 +27,11 @@ public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFix
     ConstantValueInspection cvInspection = new ConstantValueInspection();
     inspectionMutator.accept(inspection, cvInspection);
     myFixture.enableInspections(inspection, cvInspection);
-    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+    myFixture.testHighlighting(true, false, true, getTestFileName());
+  }
+
+  protected @NotNull String getTestFileName() {
+    return getTestName(false) + ".java";
   }
 
   static void addCheckerAnnotations(JavaCodeInsightTestFixture fixture) {
@@ -43,24 +48,21 @@ public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFix
                      "}");
   }
 
-  static void addJetBrainsNotNullByDefault(JavaCodeInsightTestFixture fixture) {
-    fixture.addClass("""
-                         package org.jetbrains.annotations;
-                         
-                         import java.lang.annotation.*;
-                         
-                         @Target({ElementType.TYPE, ElementType.PACKAGE})\s
-                         public @interface NotNullByDefault {}""");
-  }
-
   static void addJSpecifyNullMarked(JavaCodeInsightTestFixture fixture) {
     @Language("JAVA") String nullMarked =
       """
         package org.jspecify.annotations;
         import java.lang.annotation.*;
-        @Target({ElementType.TYPE, ElementType.MODULE})
+        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
         public @interface NullMarked {}""";
     fixture.addClass(nullMarked);
+    @Language("JAVA") String nullUnmarked =
+      """
+        package org.jspecify.annotations;
+        import java.lang.annotation.*;
+        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
+        public @interface NullUnmarked {}""";
+    fixture.addClass(nullUnmarked);
   }
 
   public static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {

@@ -13,5 +13,11 @@ public interface EventLogMetadataLoader {
   @NotNull
   String loadMetadataFromServer() throws EventLogMetadataLoadException;
 
+  @NotNull
+  Map<String, Long> getDictionariesLastModifiedOnServer(String recorderId) throws EventLogMetadataLoadException;
+
+  @NotNull
+  String loadDictionaryFromServer(String recorderId, String dictionaryName) throws EventLogMetadataLoadException;
+
   @NotNull Map<String, String> getOptionValues();
 }

@@ -4,6 +4,7 @@ package com.intellij.openapi.command.impl;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +21,8 @@ final class UndoProblemReport {
     this.isUndo = isUndo;
   }
 
-  void reportNonUndoable(@NotNull Collection<? extends DocumentReference> problemFiles) {
-    doWithReportHandler(handler -> handler.reportNonUndoable(project, problemFiles, isUndo));
+  void reportNonUndoable(@Nls @NotNull String operationName, @NotNull Collection<? extends DocumentReference> problemFiles) {
+    doWithReportHandler(handler -> handler.reportNonUndoable(project, operationName, problemFiles, isUndo));
   }
 
   void reportClashingDocuments(@NotNull Collection<? extends DocumentReference> problemFiles) {

@@ -725,7 +725,7 @@ public final class AsyncTreeModelTest {
     }
 
     @Override
-    public Promise<? extends List<?>> getChildrenAsync(Object parent) {
+    public @NotNull Promise<? extends List<?>> getChildrenAsync(Object parent) {
       return Promises.resolvedPromise(getChildren(parent));
     }
   }
@@ -738,7 +738,7 @@ public final class AsyncTreeModelTest {
     }
 
     @Override
-    public Promise<? extends List<?>> getChildrenAsync(Object parent) {
+    public @NotNull Promise<? extends List<?>> getChildrenAsync(Object parent) {
       AsyncPromise<List<Object>> res = new AsyncPromise<>();
       AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
         try {

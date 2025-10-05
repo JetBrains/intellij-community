@@ -13,7 +13,7 @@ import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import lombok.experimental.UtilityClass;
 
-<error descr="@Getter is only supported on a class, enum or field type">@Getter</error>
+<error descr="@Getter is only supported on a class, enum, or field type">@Getter</error>
 <error descr="@Setter is only supported on a class or field type">@Setter</error>
 <error descr="@Data is only supported on a class type">@Data</error>
 <error descr="@Value is only supported on a class type">@Value</error>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.sh.plugin" />
+    <orderEntry type="module" module-name="intellij.sh.core" />
+    <orderEntry type="module" module-name="intellij.sh.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.sh.terminal" />
+    <orderEntry type="module" module-name="intellij.sh.copyright" />
+    <orderEntry type="module" module-name="intellij.sh.markdown" />
+    <orderEntry type="module" module-name="intellij.sh.python" />
+  </component>
+</module>

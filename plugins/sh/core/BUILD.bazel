@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.sh.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,25 +12,18 @@ jvm_library(
   module_name = "intellij.sh.core",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":core_resources"],
   deps = [
-    "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
-    "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/execution-impl",
-    "//platform/projectModel-api:projectModel",
     "//platform/usageView",
-    "@lib//:pty4j",
-    "@lib//:gson",
-    "//spellchecker",
-    "//platform/indexing-impl",
     "//platform/refactoring",
     "//platform/statistics",
-    "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
     "@lib//:fastutil-min",
     "//platform/code-style-impl:codeStyle-impl",
@@ -39,28 +32,18 @@ jvm_library(
     "//platform/eel",
     "//platform/eel-provider",
     "//platform/eel-impl",
-  ],
-  runtime_deps = [
-    ":core_resources",
-    "//platform/backend",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 ### auto-generated section `build intellij.sh.core` end
 
 ### auto-generated section `build intellij.sh.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
-java_library(
-  name = "tests",
-  visibility = ["//visibility:public"]
-)
-
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.sh.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -68,20 +51,29 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//plugins/sh/core",
+    "//plugins/sh/backend",
+    "//plugins/sh/plugin:plugin-main",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/analysis-impl",
     "//platform/lang-impl",
     "//platform/eel",
     "//platform/eel-provider",
-  ],
-  runtime_deps = ["//plugins/sh"]
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+  ]
 )
+### auto-generated section `build intellij.sh.tests` end
+
+### auto-generated section `test intellij.sh.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.sh.tests` end
+### auto-generated section `test intellij.sh.tests` end

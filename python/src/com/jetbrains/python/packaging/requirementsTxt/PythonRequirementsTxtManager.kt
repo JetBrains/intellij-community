@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.requirementsTxt
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
@@ -24,7 +25,7 @@ class PythonRequirementsTxtManager private constructor(project: Project, val sdk
   }
 
   override fun parseRequirements(requirementsFile: VirtualFile): List<PyRequirement> {
-    return PyRequirementParser.fromFile(requirementsFile)
+    return runReadAction { PyRequirementParser.fromFile(requirementsFile) }
   }
 
   override fun addDependency(packageName: String): Boolean {

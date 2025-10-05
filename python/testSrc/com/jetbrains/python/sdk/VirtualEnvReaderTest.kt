@@ -5,8 +5,12 @@ import com.intellij.grazie.grammar.assertIsEmpty
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testFramework.utils.io.deleteRecursively
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import com.jetbrains.python.venvReader.tryResolvePath
 import org.junit.Assert
 import org.junit.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
@@ -151,5 +155,83 @@ class VirtualEnvReaderTest {
 
     Files.createFile(target)
     Assert.assertTrue(bootstrap.virtualEnvReader.isPyenvSdk(link))
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("getVenvRootPathTestCases")
+  fun getVenvRootPathTests(name: String, isWindows: Boolean, path: Path, expectedReturnValue: Path?) {
+    val result = VirtualEnvReader(isWindows = isWindows).getVenvRootPath(path)
+
+    Assert.assertEquals(expectedReturnValue, result)
+  }
+
+  companion object {
+    @JvmStatic
+    fun getVenvRootPathTestCases(): List<Arguments> = listOf(
+      GetVenvRootPathTestCase(
+        "returns null when no parent is found",
+        false,
+        "python",
+        null
+      ),
+
+      GetVenvRootPathTestCase(
+        "returns null when bin dir is named Scripts on non-windows",
+        false,
+        "root/.venv/Scripts/python",
+        null
+      ),
+
+      GetVenvRootPathTestCase(
+        "returns null when bin dir is named bin on windows",
+        true,
+        "root/.venv/bin/python.exe",
+        null
+      ),
+
+      GetVenvRootPathTestCase(
+        "returns root when bin dir is named Scripts on windows",
+        true,
+        "root/.venv/Scripts/python.exe",
+        "root"
+      ),
+
+      GetVenvRootPathTestCase(
+        "returns root when bin dir is named bin on non-windows",
+        false,
+        "root/.venv/bin/python.exe",
+        "root"
+      ),
+
+      GetVenvRootPathTestCase(
+        "returns null when bin dir has no parent",
+        false,
+        "bin/python.exe",
+        null
+      ),
+
+      GetVenvRootPathTestCase(
+        "returns null when .venv dir has no parent",
+        false,
+        ".venv/bin/python.exe",
+        null
+      ),
+
+      GetVenvRootPathTestCase(
+        "returns root with a custom .venv dir name",
+        false,
+        "root/.venv_custom/bin/python.exe",
+        "root"
+      ),
+    ).map {
+      Arguments.of(it.name, it.isWindows, Path.of(it.path), tryResolvePath(it.expectedReturnValue))
+    }
+
+    data class GetVenvRootPathTestCase(
+      val name: String,
+      val isWindows: Boolean,
+      val path: String,
+      val expectedReturnValue: String?
+    )
   }
 }

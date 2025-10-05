@@ -166,7 +166,7 @@ public final class InnerClassMayBeStaticInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new InnerClassMayBeStaticVisitor();
   }
 

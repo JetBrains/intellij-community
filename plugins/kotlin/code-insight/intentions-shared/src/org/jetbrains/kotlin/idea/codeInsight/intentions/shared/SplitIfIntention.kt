@@ -6,7 +6,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -19,10 +18,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
 
 internal class SplitIfIntention :
-    KotlinApplicableModCommandAction<KtExpression, Unit>(KtExpression::class) {
-
-    override fun KaSession.prepareContext(element: KtExpression) {
-    }
+    KotlinApplicableModCommandAction.Simple<KtExpression>(KtExpression::class) {
 
     override fun invoke(
         actionContext: ActionContext,

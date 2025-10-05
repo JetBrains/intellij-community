@@ -1,28 +1,30 @@
 ### auto-generated section `build kotlin.fir.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
+  name = "custom_tests",
   opt_in = [
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-  ]
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ],
+  x_context_parameters = True
 )
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "kotlin.fir.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_tests",
   deps = [
     "@lib//:kotlinc-analysis-api",
     "//java/java-indexing-api:indexing",
@@ -56,8 +58,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/debugger/openapi:java-debugger",
     "//java/debugger/impl",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
+    "//java/debugger/impl:impl_test_lib",
     "//platform/editor-ui-ex:editor-ex",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
@@ -89,11 +90,22 @@ jvm_library(
     "//java/execution/impl",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2",
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2_test_lib",
+    "//plugins/kotlin/completion/api",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
+    "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl-k2",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//java/java-runtime:rt",
   ]
 )
+### auto-generated section `build kotlin.fir.tests` end
+
+### auto-generated section `test kotlin.fir.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build kotlin.fir.tests` end
+### auto-generated section `test kotlin.fir.tests` end

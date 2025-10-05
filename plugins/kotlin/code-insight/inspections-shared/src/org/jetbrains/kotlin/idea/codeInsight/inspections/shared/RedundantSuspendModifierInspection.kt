@@ -59,7 +59,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     private val coroutineContextFqName = StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("coroutineContext"))
     private val todoFqName = FqName("kotlin.TODO")
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaCallableSymbol.isSuspendSymbol(): Boolean {
         // Currently, Kotlin does not support suspending properties except for accessing the coroutineContext
         if (this is KaKotlinPropertySymbol && getFqNameIfPackageOrNonLocal() == coroutineContextFqName) {
@@ -68,11 +68,11 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
         return this is KaNamedFunctionSymbol && isSuspend
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaCallableSymbol.isTodoSymbol(): Boolean =
         this is KaNamedFunctionSymbol && callableId?.asSingleFqName() == todoFqName
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtNamedFunction.isSuspendModifierRedundant(): Boolean {
         var isSuspendModifierRedundant = true
         val containingFunction = this
@@ -131,7 +131,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
      * For example, it includes the expressions from the lambdas if they happen to be inline,
      * but it does not return the expressions from the local classes' or local functions' bodies.
      */
-    context(KaSession)
+    context(session: KaSession)
     private fun KtNamedFunction.locallyExecutedExpressions(): Sequence<KtExpression> {
         val functionBody = bodyExpression ?: return emptySequence()
 
@@ -139,7 +139,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
             .descendants { element ->
                 when (element) {
                     is KtClassLikeDeclaration -> false
-                    is KtFunction -> isInlinedArgument(element)
+                    is KtFunction -> session.isInlinedArgument(element)
                     else -> true
                 }
             }

@@ -3,6 +3,8 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,27 @@ public final class DocumentReferenceByDocument implements DocumentReference {
 
   @Override
   public String toString() {
-    return myDocument.toString();
+    if (myDocument instanceof DocumentImpl) {
+      return myDocument.toString();
+    }
+    // myDocument.toString() is not allowed here because of StackOverflowError, see IJPL-198678
+    // DocumentReferenceByDocument.toString()
+    //   BasicUndoableAction.toString()
+    //   UndoRedoList.toString()
+    //   UserDataHolderBase.toString() [STACK_IN_DOCUMENT_KEY]
+    //   DiagramDocumentAdapter.toString()
+    //   DocumentReferenceByDocument.toString()
+    //   BasicUndoableAction.toString()
+    //   UndoRedoList.toString()
+    //   UserDataHolderBase.toString() [STACK_IN_DOCUMENT_KEY]
+    //   DiagramDocumentAdapter.toString()
+    //   ...
+    //   UndoRedoList.toString()
+    //   UndoableGroup.dumpState()
+    //   ...
+    String className = myDocument.getClass().getSimpleName();
+    String instanceId = Integer.toHexString(System.identityHashCode(myDocument));
+    VirtualFile file = FileDocumentManager.getInstance().getFile(myDocument);
+    return className + "@" + instanceId + "{file=" + file + "}";
   }
 }

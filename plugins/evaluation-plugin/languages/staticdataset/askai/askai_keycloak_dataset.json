@@ -1,0 +1,319 @@
+[
+  {
+    "path": "README.md",
+    "sessionsCount": 11,
+    "actions": [
+      {
+        "sessionId": "d13b10ad-d85b-4a59-9831-b83ff23c17d1",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "restart the ide"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "bd299abe-594d-4940-b350-51c53bb22670",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "enable zoom with ctrl mouse wheel"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "fb082793-6bf9-4a8b-974e-9edcfdd5eccc",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Open root pom.xml"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "2094d624-485a-4dfb-b6e5-d85a2ddc7536",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Run the project"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "086fc855-fdcd-4387-b319-e8cf023f6fe6",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Debug the project"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "69618797-eb42-46c6-8691-1b757f42a446",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Open git log"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "a4a3fd6a-ef0d-45c9-9f27-f72e73b112b7",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Drop last 3 commits"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "a405d4c0-eab2-4e52-b0b1-1bbcd0518ea3",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "What is detached head"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "62f3b350-27ab-4426-847a-3a5093e10e19",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "How exportRealm is typically used?"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "95b8f14d-bf81-4f43-aa35-72aa6913ac42",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "reset all to the previous commit and build project"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "308c49d9-a4f4-4dfa-b7d3-68fc2fc22275",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "My eyes are hurting looking at the IDE"
+          }
+        },
+        "type": "CALL_FEATURE"
+      }
+    ]
+  },
+  {
+    "path": "misc/keycloak-test-helper/src/main/java/org/keycloak/test/FluentTestsHelper.java",
+    "sessionsCount": 1,
+    "actions": [
+      {
+        "sessionId": "1fcd6539-e40f-48a6-96b7-739f84f80969",
+        "offset": 6621,
+        "type": "MOVE_CARET"
+      },
+      {
+        "sessionId": "1fcd6539-e40f-48a6-96b7-739f84f80969",
+        "text": "   ",
+        "completable": false,
+        "type": "PRINT_TEXT"
+      },
+      {
+        "sessionId": "1fcd6539-e40f-48a6-96b7-739f84f80969",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Reformat changed code"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "1fcd6539-e40f-48a6-96b7-739f84f80969",
+        "type": "ROLLBACK"
+      }
+    ]
+  },
+  {
+    "path": "services/src/main/java/org/keycloak/social/twitter/TwitterIdentityProvider.java",
+    "sessionsCount": 4,
+    "actions": [
+      {
+        "sessionId": "70bbebc6-d639-4768-b04e-ecd7d9551199",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "find all usages of `WebApplicationException`"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "5308ad49-89d7-4b78-99ff-b267969f77fc",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "find all usages of `WebApplicationException` without usages in imports"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "6ca479e7-b84d-49a7-899e-837dea292373",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "where is the main authorization code"
+          }
+        },
+        "type": "CALL_FEATURE"
+      },
+      {
+        "sessionId": "d065ce0b-a56e-4ffd-9671-7253f1d6f48f",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "find tests for auth API"
+          }
+        },
+        "type": "CALL_FEATURE"
+      }
+    ]
+  },
+  {
+    "path": "misc/keycloak-test-helper/src/main/java/org/keycloak/test/builders/ClientBuilder.java",
+    "sessionsCount": 1,
+    "actions": [
+      {
+        "sessionId": "93928147-17df-4a05-b6c5-4ee6bd0259a5",
+        "offset": 0,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "rename ExportUtils to ExportUtil"
+          }
+        },
+        "type": "CALL_FEATURE"
+      }
+    ]
+  },
+  {
+    "path": "core/src/main/java/org/keycloak/representations/info/ServerInfoRepresentation.java",
+    "sessionsCount": 1,
+    "actions": [
+      {
+        "sessionId": "daebaff2-820e-4b26-85c6-c02c857d62c8",
+        "offset": 1150,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "does this have any tests"
+          }
+        },
+        "type": "CALL_FEATURE"
+      }
+    ]
+  },
+  {
+    "path": "misc/keycloak-test-helper/src/main/java/org/keycloak/test/builders/UserBuilder.java",
+    "sessionsCount": 1,
+    "actions": [
+      {
+        "sessionId": "15aa6552-8564-45b9-bb0f-2c7022220e78",
+        "offset": 1150,
+        "expectedText": "",
+        "nodeProperties": {
+          "tokenType": "NONE",
+          "location": "PROJECT",
+          "features": [],
+          "additional": {
+            "prompt": "Add a breakpoint at every place where `rep` is changed"
+          }
+        },
+        "type": "CALL_FEATURE"
+      }
+    ]
+  }
+]

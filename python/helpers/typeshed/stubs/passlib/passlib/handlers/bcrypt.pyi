@@ -1,5 +1,5 @@
-from _typeshed import Incomplete
 from typing import Any, ClassVar
+from typing_extensions import Self
 
 import passlib.utils.handlers as uh
 
@@ -20,9 +20,9 @@ class _BcryptCommon(uh.SubclassBackendMixin, uh.TruncateMixin, uh.HasManyIdents,
     rounds_cost: ClassVar[str]
     truncate_size: ClassVar[int | None]
     @classmethod
-    def from_string(cls, hash): ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
     @classmethod
-    def needs_update(cls, hash, **kwds): ...
+    def needs_update(cls, hash, **kwds): ...  # type: ignore[override]
     @classmethod
     def normhash(cls, hash): ...
 
@@ -46,10 +46,12 @@ class bcrypt_sha256(_wrapped_bcrypt):
     default_ident: ClassVar[str]
     version: ClassVar[int]
     @classmethod
-    def using(cls, version: Incomplete | None = None, **kwds): ...  # type: ignore[override]
+    def using(cls, version=None, **kwds): ...  # type: ignore[override]
     prefix: Any
     @classmethod
     def identify(cls, hash): ...
     @classmethod
-    def from_string(cls, hash): ...
-    def __init__(self, version: Incomplete | None = None, **kwds) -> None: ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]
+    def __init__(self, version=None, **kwds) -> None: ...
+
+__all__ = ["bcrypt"]

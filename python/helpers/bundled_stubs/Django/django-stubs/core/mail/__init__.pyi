@@ -5,11 +5,14 @@ from django.utils.functional import _StrOrPromise
 
 from .message import DEFAULT_ATTACHMENT_MIME_TYPE as DEFAULT_ATTACHMENT_MIME_TYPE
 from .message import BadHeaderError as BadHeaderError
+from .message import EmailAlternative as EmailAlternative
+from .message import EmailAttachment as EmailAttachment
 from .message import EmailMessage as EmailMessage
 from .message import EmailMultiAlternatives as EmailMultiAlternatives
 from .message import SafeMIMEMultipart as SafeMIMEMultipart
 from .message import SafeMIMEText as SafeMIMEText
 from .message import forbid_multi_line_headers as forbid_multi_line_headers
+from .message import make_msgid as make_msgid
 from .utils import DNS_NAME as DNS_NAME
 from .utils import CachedDnsName as CachedDnsName
 
@@ -48,3 +51,23 @@ def mail_managers(
 ) -> None: ...
 
 outbox: list[EmailMessage]
+
+__all__ = [
+    "CachedDnsName",
+    "DNS_NAME",
+    "EmailMessage",
+    "EmailMultiAlternatives",
+    "SafeMIMEText",
+    "SafeMIMEMultipart",
+    "DEFAULT_ATTACHMENT_MIME_TYPE",
+    "make_msgid",
+    "BadHeaderError",
+    "forbid_multi_line_headers",
+    "get_connection",
+    "send_mail",
+    "send_mass_mail",
+    "mail_admins",
+    "mail_managers",
+    "EmailAlternative",
+    "EmailAttachment",
+]

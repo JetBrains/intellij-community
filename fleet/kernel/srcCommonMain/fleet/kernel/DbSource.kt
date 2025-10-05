@@ -11,6 +11,8 @@ import fleet.kernel.rete.UnsatisfiedMatchException
 import kotlinx.coroutines.ThreadContextElement
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.yield
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -117,3 +119,21 @@ val CoroutineContext.transactor: Transactor
 
 val CoroutineContext.dbSource: DbSource
   get() = requireNotNull(this[DbSource.ContextElement]) { "no DbSource on coroutineContext" }.dbSource
+
+
+suspend fun DbSource.catchUp(timestamp: Long) {
+  let { dbSource ->
+    val dbContext = DbContext.threadBound
+    if (dbContext.poison == null) {
+      if (dbContext.impl.timestamp < timestamp || dbSource.latest.timestamp < timestamp) {
+        val dbAfterTimestamp = dbSource.flow.first { db ->
+          db.timestamp >= timestamp
+        }
+        yield()
+        if (DbContext.threadBound.poison == null) {
+          DbContext.threadBound.set(dbAfterTimestamp)
+        }
+      }
+    }
+  }
+}

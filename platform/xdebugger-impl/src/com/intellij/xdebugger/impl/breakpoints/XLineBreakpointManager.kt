@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.DiffUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -51,7 +53,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -147,14 +148,14 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       updateBreakpointNow(breakpoint)
     }
     val fileUrl = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
-    log.info("Register line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}: $fileUrl")
+    log.debug { "Register line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}: $fileUrl" }
     myBreakpoints.putValue(fileUrl, breakpoint)
   }
 
   fun unregisterBreakpoint(breakpoint: XLineBreakpointProxy) {
     val fileUrl = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
     val removed = myBreakpoints.remove(fileUrl, breakpoint)
-    log.info("Unregister line breakpoint ${breakpoint.id} [removed=$removed] ${breakpoint.javaClass.simpleName}: $fileUrl")
+    log.debug { "Unregister line breakpoint ${breakpoint.id} [removed=$removed] ${breakpoint.javaClass.simpleName}: $fileUrl" }
   }
 
   fun getDocumentBreakpointProxies(document: Document): Collection<XLineBreakpointProxy> {
@@ -184,7 +185,11 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     SlowOperations.knownIssue("IJPL-162343").use {
       breakpoints.forEach { it.updatePosition() }
     }
+    cleanUpBreakpoints(document)
+  }
 
+  private fun cleanUpBreakpoints(document: Document) {
+    val breakpoints = getDocumentBreakpointProxies(document)
     // Check if two or more breakpoints occurred at the same position and remove duplicates.
     val (valid, invalid) = breakpoints.partition {
       val highlighter = it.getHighlighter()
@@ -201,7 +206,7 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
             val startOffset = when (val range = b.getHighlightRange()) {
               is XLineBreakpointHighlighterRange.Available -> range.range?.startOffset
               is XLineBreakpointHighlighterRange.Unavailable -> {
-                scheduleDocumentUpdate(document)
+                scheduleBreakpointsCleanUp(document)
                 return
               }
             }
@@ -304,6 +309,8 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
       val document = e.document
       val breakpoints = getDocumentBreakpointProxies(document)
       if (!breakpoints.isEmpty()) {
+        // Update position immediately to avoid races with doUpdateUI
+        breakpoints.forEach { it.fastUpdatePosition() }
         scheduleDocumentUpdate(document)
 
         InlineBreakpointInlayManager.getInstance(project).redrawDocument(e)
@@ -312,10 +319,20 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
   }
 
   private fun scheduleDocumentUpdate(document: Document) {
-    breakpointUpdateQueue.queue(object : Update(document) {
+    breakpointUpdateQueue.queue(object : Update("update" to document) {
       override fun run() {
         ApplicationManager.getApplication().invokeLater {
           updateBreakpoints(document)
+        }
+      }
+    })
+  }
+
+  private fun scheduleBreakpointsCleanUp(document: Document) {
+    breakpointUpdateQueue.queue(object : Update("clean up" to document) {
+      override fun run() {
+        ApplicationManager.getApplication().invokeLater {
+          cleanUpBreakpoints(document)
         }
       }
     })

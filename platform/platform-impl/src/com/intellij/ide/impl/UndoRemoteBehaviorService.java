@@ -24,13 +24,6 @@ public class UndoRemoteBehaviorService {
     return service.isSpeculativeUndoAvailable();
   }
 
-  public static boolean isBackendFallbackEnabled() {
-    if (!isSpeculativeUndoEnabled()) {
-      throw new IllegalStateException("speculative undo is disabled");
-    }
-    return Registry.is("ide.undo.backend.fallback.if.broken", true);
-  }
-
   public static boolean debugExperimentalFrontendUndo() {
     if (!isSpeculativeUndoEnabled()) {
       throw new IllegalStateException("speculative undo is disabled");

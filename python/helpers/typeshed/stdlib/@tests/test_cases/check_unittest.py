@@ -5,9 +5,9 @@ from collections.abc import Iterator, Mapping
 from datetime import datetime, timedelta
 from decimal import Decimal
 from fractions import Fraction
-from typing import TypedDict
+from typing import TypedDict, Union
 from typing_extensions import assert_type
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 case = unittest.TestCase()
 
@@ -154,10 +154,17 @@ def f_explicit_new(i: int) -> str:
     return "asdf"
 
 
+@patch("sys.exit", new_callable=lambda: 42)
+def f_explicit_new_callable(i: int, new_callable_ret: int) -> str:
+    return "asdf"
+
+
 assert_type(f_default_new(1), str)
 f_default_new("a")  # Not an error due to ParamSpec limitations
 assert_type(f_explicit_new(1), str)
 f_explicit_new("a")  # type: ignore[arg-type]
+assert_type(f_explicit_new_callable(1), str)
+f_explicit_new_callable("a")  # Same as default new
 
 
 @patch("sys.exit", new=Mock())
@@ -171,3 +178,51 @@ class TestXYZ(unittest.TestCase):
 
 assert_type(TestXYZ.attr, int)
 assert_type(TestXYZ.method(), int)
+
+
+with patch("sys.exit") as default_new_enter:
+    assert_type(default_new_enter, Union[MagicMock, AsyncMock])
+
+with patch("sys.exit", new=42) as explicit_new_enter:
+    assert_type(explicit_new_enter, int)
+
+with patch("sys.exit", new_callable=lambda: 42) as explicit_new_callable_enter:
+    assert_type(explicit_new_callable_enter, int)
+
+
+###
+# Tests for mock.patch.object
+###
+
+
+@patch.object(Decimal, "exp")
+def obj_f_default_new(i: int, mock: MagicMock) -> str:
+    return "asdf"
+
+
+@patch.object(Decimal, "exp", new=42)
+def obj_f_explicit_new(i: int) -> str:
+    return "asdf"
+
+
+@patch.object(Decimal, "exp", new_callable=lambda: 42)
+def obj_f_explicit_new_callable(i: int, new_callable_ret: int) -> str:
+    return "asdf"
+
+
+assert_type(obj_f_default_new(1), str)
+obj_f_default_new("a")  # Not an error due to ParamSpec limitations
+assert_type(obj_f_explicit_new(1), str)
+obj_f_explicit_new("a")  # type: ignore[arg-type]
+assert_type(obj_f_explicit_new_callable(1), str)
+obj_f_explicit_new_callable("a")  # Same as default new
+
+
+with patch.object(Decimal, "exp") as obj_default_new_enter:
+    assert_type(obj_default_new_enter, Union[MagicMock, AsyncMock])
+
+with patch.object(Decimal, "exp", new=42) as obj_explicit_new_enter:
+    assert_type(obj_explicit_new_enter, int)
+
+with patch.object(Decimal, "exp", new_callable=lambda: 42) as obj_explicit_new_callable_enter:
+    assert_type(obj_explicit_new_callable_enter, int)

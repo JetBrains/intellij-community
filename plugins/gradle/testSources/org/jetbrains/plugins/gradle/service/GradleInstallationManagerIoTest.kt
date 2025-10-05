@@ -21,7 +21,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
         .withJavaPlugin()
         .generate()
     )
-    val actualGradleHome = GradleInstallationManager.getInstance().getGradleHomePath(project, projectPath)
+    val actualGradleHome = GradleInstallationManager.getInstance().getGradleHomePath(myProject, projectPath)
     assertThat(calculateGradleDistributionRoot()).contains(actualGradleHome)
   }
 
@@ -32,7 +32,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
         .withJavaPlugin()
         .generate()
     )
-    val gradleJvmPath = GradleInstallationManager.getInstance().getGradleJvmPath(project, projectPath)
+    val gradleJvmPath = GradleInstallationManager.getInstance().getGradleJvmPath(myProject, projectPath)
     assertEquals(Paths.get(gradleJdkHome!!), Paths.get(gradleJvmPath!!))
   }
 

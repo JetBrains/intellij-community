@@ -2,7 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
@@ -109,7 +112,7 @@ object ReplaceCallFixFactories {
         return expectedType.nullability == KaTypeNullability.NON_NULLABLE && !expectedType.isUnitType
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaType.isMap(): Boolean {
         val symbol = this.expandedSymbol ?: return false
         if (symbol.name?.asString()?.endsWith("Map") != true) return false

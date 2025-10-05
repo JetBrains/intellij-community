@@ -14,19 +14,19 @@ import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleDeclarativeEntitySource
 import java.nio.file.Path
 
 /**
  * Adds library roots that can be found in GRADLE_USER_HOME cache to the workspace model
  * it works only with direct library dependencies for now
  */
-class GradleLibrariesResolver {
+internal class GradleLibrariesResolver {
 
   data class LibDepData(val group: String, val name: String, val version: String) {
     constructor(artifact: ArtifactDependencyModel): this(
@@ -43,7 +43,7 @@ class GradleLibrariesResolver {
     project: Project,
     storage: MutableEntityStorage,
     context: ProjectResolverContext,
-    entitySource: GradleDeclarativeEntitySource,
+    entitySource: EntitySource,
     projectBuildModel: ProjectBuildModelImpl,
   ): Map<LibDepData, List<LibDepData>> {
     val originalDependencies = projectBuildModel.allIncludedBuildModels.flatMap { it.javaApplication().dependencies().artifacts() }
@@ -69,7 +69,7 @@ class GradleLibrariesResolver {
   private fun addLibraryRoot(
     project: Project,
     pair: Pair<LibDepData, VirtualFile?>,
-    entitySource: GradleDeclarativeEntitySource,
+    entitySource: EntitySource,
     storage: MutableEntityStorage,
   ) {
     val libRoot = findLibraryRootJar(pair.second!!, project.workspaceModel.getVirtualFileUrlManager())

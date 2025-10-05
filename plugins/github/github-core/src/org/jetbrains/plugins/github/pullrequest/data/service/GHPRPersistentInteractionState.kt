@@ -28,7 +28,7 @@ internal class GHPRPersistentInteractionState : SerializablePersistentStateCompo
   )
 
   @Serializable
-  data class State(val prStates: List<PRState>)
+  data class State(val prStates: List<PRState> = listOf())
 
   private val stateFlow = MutableStateFlow(state)
   val updateSignal: Flow<Unit> = stateFlow.map { }

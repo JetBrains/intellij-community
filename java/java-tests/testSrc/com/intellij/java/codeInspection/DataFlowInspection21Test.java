@@ -73,6 +73,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testInstanceof() {
     doTest();
   }
+  
+  public void testTakeWhileUpdate() { doTest(); }
 
   public void testNewStringWrongEquals() { doTest(); }
 
@@ -140,7 +142,6 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testSwitchBooleanWhen() { doTest(); }
 
   public void testJetBrainsNotNullByDefault() {
-    addJetBrainsNotNullByDefault(myFixture);
     doTest();
   }
   
@@ -198,11 +199,42 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
   }
+
+  public void testJSpecifyListOfNullable() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyIntersectionBound() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
   
+  public void testGuavaIterablesProblems() {
+    doTest();
+  }
+  
+  public void testGenericVarargNullability() {
+    doTest();
+  }
+
   public void testPassthroughGenericParameter() {
     doTestWith((dfi, cvi) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
   }
 
   public void testMutabilityJdk21() { doTest(); }
+  
+  public void testJSpecifyLambdaTernary() {
+    addJSpecifyNullMarked(myFixture);
+    doTest();
+  }
+  
+  public void testJSpecifyNullUnmarkedOverNullMarked() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
 
 }

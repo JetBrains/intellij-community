@@ -14,9 +14,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -25,16 +25,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PlatformUtils
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.data.index.PhmVcsLogStorageBackend
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
-import com.intellij.vcs.log.util.StorageId
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,13 +39,9 @@ import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration.Companion.seconds
 
 private val LOG: Logger
   get() = logger<VcsProjectLogBase<*>>()
-
-private val CLOSE_LOG_TIMEOUT = 10.seconds
 
 @Internal
 abstract class VcsProjectLogBase<M : VcsLogManager>(
@@ -60,9 +52,6 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   override val logManagerState: StateFlow<M?> = _logManagerState.asStateFlow()
   private val errorCountBySource = EnumMultiset.create(VcsLogErrorHandler.Source::class.java)
 
-  private val shutDownStarted = AtomicBoolean(false)
-  val isDisposing: Boolean get() = shutDownStarted.get()
-
   // not-reentrant - invoking [lock] even from the same thread/coroutine that currently holds the lock still suspends the invoker
   private val mutex = Mutex()
 
@@ -70,70 +59,54 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
 
   final override val dataManager: VcsLogData? get() = logManager?.dataManager
 
-  private val listenersDisposable = Disposer.newDisposable()
-
   init {
-    val busConnection = project.messageBus.connect(listenersDisposable)
-    busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
-      LOG.debug("Recreating Vcs Log after roots changed")
-      reinitAsync()
-    })
-    busConnection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
-    VcsLogData.getIndexingRegistryValue().addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        LOG.debug("Recreating Vcs Log after indexing registry value changed")
-        reinitAsync()
+    coroutineScope.launch(CoroutineName("Disposer"), start = CoroutineStart.UNDISPATCHED) {
+      try {
+        awaitCancellation()
       }
-    }, listenersDisposable)
-    project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
-      LOG.debug("Recreating Vcs Log after settings changed")
-      reinitAsync()
-    }, listenersDisposable)
-    PhmVcsLogStorageBackend.durableEnumeratorRegistryProperty.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        LOG.debug("Recreating Vcs Log after durable enumerator registry value changed")
-        reinitAsync(invalidateCaches = true)
-      }
-    }, listenersDisposable)
-
-    @Suppress("SSBasedInspection")
-    val shutdownTask = object : Runnable {
-      override fun run() {
-        if (shutDownStarted.get()) {
-          LOG.warn("unregisterShutdownTask should be called")
-          return
-        }
-
-        runBlocking {
-          shutDown(useRawSwingDispatcher = true)
+      finally {
+        mutex.withLock {
+          _logManagerState.value = null
         }
       }
-    }
-
-    ShutDownTracker.getInstance().registerShutdownTask(shutdownTask)
-    coroutineScope.awaitCancellationAndInvoke(CoroutineName("Close VCS log")) {
-      ShutDownTracker.getInstance().unregisterShutdownTask(shutdownTask)
-      shutDown(useRawSwingDispatcher = false)
     }
   }
 
-  private suspend fun shutDown(useRawSwingDispatcher: Boolean) {
-    if (!shutDownStarted.compareAndSet(false, true)) return
+  protected fun initListeners() {
+    coroutineScope.launch(CoroutineName("Listeners")) {
+      val listenersCs = this
+      val busConnection = project.messageBus.connect(listenersCs)
+      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsMappingListener {
+        LOG.debug("Recreating Vcs Log after roots changed")
+        reinitAsync()
+      })
+      busConnection.subscribe(DynamicPluginListener.TOPIC, MyDynamicPluginUnloader())
 
-    Disposer.dispose(listenersDisposable)
+      val listenersDisposable = Disposer.newDisposable()
 
-    try {
-      withTimeout(CLOSE_LOG_TIMEOUT) {
-        mutex.withLock {
-          _logManagerState.getAndUpdate { null }?.let {
-            LOG.debug { "Disposing ${it.name}" }
-            it.dispose(useRawSwingDispatcher = useRawSwingDispatcher)
-          }
+      VcsLogData.getIndexingRegistryValue().addListener(object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          LOG.debug("Recreating Vcs Log after indexing registry value changed")
+          reinitAsync()
         }
+      }, listenersDisposable)
+      project.service<VcsLogSharedSettings>().addListener(VcsLogSharedSettings.Listener {
+        LOG.debug("Recreating Vcs Log after settings changed")
+        reinitAsync()
+      }, listenersDisposable)
+      PhmVcsLogStorageBackend.durableEnumeratorRegistryProperty.addListener(object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          LOG.debug("Recreating Vcs Log after durable enumerator registry value changed")
+          reinitAsync(invalidateCaches = true)
+        }
+      }, listenersDisposable)
+
+      try {
+        awaitCancellation()
       }
-    }
-    catch (e: TimeoutCancellationException) {
-      LOG.error("Cannot close VCS log in ${CLOSE_LOG_TIMEOUT.inWholeSeconds} seconds")
+      finally {
+        Disposer.dispose(listenersDisposable)
+      }
     }
   }
 
@@ -175,8 +148,8 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
       }
     }
 
-  final override suspend fun reinit(invalidateCaches: Boolean) {
-    reinitAsync(invalidateCaches).await()
+  final override suspend fun invalidateCaches() {
+    reinitAsync(invalidateCaches = true).await()
   }
 
   private fun reinitAsync(invalidateCaches: Boolean = false) =
@@ -198,14 +171,18 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     withContext(Dispatchers.EDT) {
       notifyLogDisposed(manager)
     }
-    manager.dispose(clearStorage = invalidateCaches)
+    manager.dispose()
+    if (invalidateCaches) {
+      manager.clearPersistentStorage()
+    }
   }
 
   private suspend fun getOrCreateLogManager(forceInit: Boolean): M? {
-    if (isDisposing || PlatformUtils.isQodana()) return null
+    checkCanceled()
+    if (PlatformUtils.isQodana()) return null
 
     val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>()
-    val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.allVcsRoots.toList(), project)
+    val logProviders = VcsLogManager.findLogProviders(projectLevelVcsManager.getAllVcsRoots().toList(), project)
     if (logProviders.isEmpty()) return null
 
     return project.trackActivity(VcsActivityKey) {
@@ -221,20 +198,30 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
     }
 
     LOG.debug { "Creating ${getProjectLogName(logProviders)}" }
-    return createLogManager(logProviders).also { manager ->
-      _logManagerState.value = manager
-      withContext(Dispatchers.EDT) {
-        notifyLogCreated(manager)
-      }
+    val logManager = try {
+      createLogManager(logProviders)
     }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      LOG.error("Failed to initialize log manager", e)
+      throw e
+    }
+    checkCanceled()
+    _logManagerState.value = logManager
+    withContext(Dispatchers.EDT) {
+      notifyLogCreated(logManager)
+    }
+    return logManager
   }
 
   protected abstract suspend fun createLogManager(logProviders: Map<VirtualFile, VcsLogProvider>): M
 
   private suspend fun reinitOnError(source: VcsLogErrorHandler.Source, error: Throwable) {
-    if (isDisposing) return
+    checkCanceled()
     mutex.withLock {
-      if (isDisposing) return
+      checkCanceled()
       val logManager = logManagerState.value ?: return
 
       errorCountBySource.add(source)
@@ -264,7 +251,6 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
   }
 
   protected fun reinitOnErrorAsync(source: VcsLogErrorHandler.Source, error: Throwable) {
-    if (isDisposing) return
     coroutineScope.asyncWithAnyModality {
       reinitOnError(source, error)
     }
@@ -325,12 +311,6 @@ abstract class VcsProjectLogBase<M : VcsLogManager>(
 
 private const val INVALIDATE_CACHES_COUNT = 5
 private const val DISABLE_INDEX_COUNT = 2 * INVALIDATE_CACHES_COUNT
-
-internal fun VcsLogManager.storageIds(): List<StorageId> {
-  return linkedSetOf((dataManager.index as? VcsLogPersistentIndex)?.indexStorageId,
-                     (dataManager.storage as? VcsLogStorageImpl)?.refsStorageId,
-                     (dataManager.storage as? VcsLogStorageImpl)?.hashesStorageId).filterNotNull()
-}
 
 /**
  * @param force run the initialization ignoring the invalid caches and the possible init delay in the manager

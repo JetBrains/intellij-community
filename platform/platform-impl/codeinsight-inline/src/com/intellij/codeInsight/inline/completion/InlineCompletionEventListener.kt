@@ -130,17 +130,6 @@ Please use other methods of the listener to determine whether completion is or w
     val lengthChange: Int,
   ) : PerVariantEventType() {
 
-    @Deprecated(
-      message = "Use lengthChange, because now a variant can be updated not only due typings.",
-      replaceWith = ReplaceWith("lengthChange")
-    )
-    val overtypedLength: Int
-      @ScheduledForRemoval
-      @Deprecated(
-        "Use lengthChange, because now a variant can be updated not only due typings.",
-        replaceWith = ReplaceWith("lengthChange"),
-      )
-      get() = lengthChange
   }
 
   /**

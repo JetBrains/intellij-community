@@ -117,6 +117,11 @@ public abstract class XmlTagDelegate {
   }
 
   PsiReference @NotNull [] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
+    //todo can it be moved to reference provider?
+    if (PlatformUtils.isJetBrainsClient()) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+
     ProgressManager.checkCanceled();
     if (hints == PsiReferenceService.Hints.NO_HINTS) {
       return CachedValuesManager

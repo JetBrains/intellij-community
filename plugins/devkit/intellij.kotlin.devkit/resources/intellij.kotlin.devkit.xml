@@ -95,7 +95,8 @@
 
     <iconProvider implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteIconProvider" order="first"/>
 
-    <annotator language="kotlin" implementationClass="org.jetbrains.idea.devkit.kotlin.compose.ComposeColorAnnotator"/>
+    <registryKey key="devkit.inspections.forbidden.method.in.suspend.context" defaultValue="false"
+                 description="Enables checks for RequiresBlockingContext in suspend contexts"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">

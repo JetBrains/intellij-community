@@ -1,13 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
+import com.intellij.platform.eel.fs.WalkDirectoryEntryResult
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentPosixApi
@@ -15,6 +17,7 @@ import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -38,15 +41,15 @@ import java.util.concurrent.atomic.AtomicReference
 @Suppress("FunctionName")
 fun IjentFailSafeFileSystemPosixApi(
   coroutineScope: CoroutineScope,
-  delegateFactory: suspend () -> IjentPosixApi,
+  descriptor: EelDescriptor,
 ): IjentFileSystemApi {
-  val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(coroutineScope, delegateFactory)
-  return IjentFailSafeFileSystemPosixApiImpl(holder)
+  val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(coroutineScope, descriptor)
+  return IjentFailSafeFileSystemPosixApiImpl(holder, descriptor)
 }
 
 private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
   private val coroutineScope: CoroutineScope,
-  private val delegateFactory: suspend () -> I,
+  private val descriptor: EelDescriptor
 ) {
   private val delegate = AtomicReference<Deferred<I>?>(null)
 
@@ -63,7 +66,8 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
         oldDelegate
       else
         coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-          delegateFactory()
+          @Suppress("UNCHECKED_CAST")
+          descriptor.toEelApi() as I
         }
     }!!
 
@@ -100,6 +104,7 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
  */
 private class IjentFailSafeFileSystemPosixApiImpl(
   private val holder: DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>,
+  override val descriptor: EelDescriptor
 ) : IjentFileSystemPosixApi {
   // TODO Make user suspendable again?
   override val user: EelUserPosixInfo by lazy {
@@ -108,12 +113,9 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
   }
 
-  override val descriptor: EelDescriptor by lazy {
-    runBlocking {
-      holder.withDelegateRetrying { descriptor }
-    }
+  override suspend fun walkDirectory(options: EelFileSystemApi.WalkDirectoryOptions): Flow<WalkDirectoryEntryResult> {
+    return holder.withDelegateRetrying { walkDirectory(options) }
   }
-
 
   override suspend fun listDirectory(
     path: EelPath,
@@ -163,15 +165,18 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     }
 
   override suspend fun openForReading(
-    path: EelPath,
+    args: EelFileSystemApi.OpenForReadingArgs,
   ): EelResult<EelOpenedFile.Reader, EelFileSystemApi.FileReaderError> =
     holder.withDelegateRetrying {
-      openForReading(path)
+      openForReading(args)
     }
 
-  override suspend fun readFully(path: EelPath, limit: ULong, overflowPolicy: EelFileSystemApi.OverflowPolicy): EelResult<EelFileSystemApi.FullReadResult, EelFileSystemApi.FullReadError> = holder.withDelegateRetrying {
-    readFully(path, limit, overflowPolicy)
-  }
+  override suspend fun readFile(
+    args: EelFileSystemApi.ReadFileArgs,
+  ): EelResult<EelFileSystemApi.ReadFileResult, EelFileSystemApi.FileReaderError> =
+    holder.withDelegateRetrying {
+      readFile(args)
+    }
 
   override suspend fun openForWriting(
     options: EelFileSystemApi.WriteOptions,

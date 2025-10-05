@@ -20,6 +20,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.IndexingTestUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -113,6 +114,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
         }
       }
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
@@ -124,10 +126,10 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
     val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
     assertEquals("""
                     <?xml version="1.0"?>
-                    <project xmlns="http://maven.apache.org/POM/4.0.0"
+                    <project xmlns="http://maven.apache.org/POM/$modelVersion"
                              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-                      <modelVersion>4.0.0</modelVersion>
+                             xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
+                      <modelVersion>$modelVersion</modelVersion>
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -184,10 +186,10 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
     val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
     assertEquals("""
                    <?xml version="1.0"?>
-                   <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   <project xmlns="http://maven.apache.org/POM/$modelVersion"
                             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                            xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-                     <modelVersion>4.0.0</modelVersion>
+                            xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
+                     <modelVersion>$modelVersion</modelVersion>
                    <groupId>test</groupId><artifactId>project</artifactId><version>1</version>
                    <dependencies>
                      <dependency>

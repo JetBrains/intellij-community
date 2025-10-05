@@ -43,7 +43,8 @@ import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.*
-import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -54,6 +55,7 @@ import com.jetbrains.python.reflection.Properties
 import com.jetbrains.python.reflection.Property
 import com.jetbrains.python.reflection.getProperties
 import com.jetbrains.python.run.*
+import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
@@ -100,7 +102,7 @@ fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEv
   is PsiDirectory -> isTestFolder(element, testCaseClassRequired, typeEvalContext)
   is PyFunction -> PythonUnitTestDetectorsBasedOnSettings.isTestFunction(element,
                                                                          testCaseClassRequired, typeEvalContext)
-  is com.jetbrains.python.psi.PyClass -> {
+  is PyClass -> {
     PythonUnitTestDetectorsBasedOnSettings.isTestClass(element, testCaseClassRequired, typeEvalContext)
   }
   else -> false
@@ -481,7 +483,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   fun isTestClassRequired(): ThreeState {
     val sdk = sdk ?: return ThreeState.UNSURE
-    return if (testFactory.onlyClassesAreSupported(sdk)) {
+    return if (testFactory.onlyClassesAreSupported(project, sdk)) {
       ThreeState.YES
     }
     else {
@@ -501,9 +503,8 @@ abstract class PyAbstractTestConfiguration(project: Project,
   }
 
   override fun getWorkingDirectorySafe(): String {
-    val dirProvidedByUser = super.getWorkingDirectory()
-    if (!dirProvidedByUser.isNullOrEmpty()) {
-      return dirProvidedByUser
+    workingDirectory?.takeIf { it.isNotEmpty() }?.let {
+      return getExpandedWorkingDir(this)
     }
 
     return ApplicationManager.getApplication().runReadAction<String> {
@@ -738,16 +739,17 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
   /**
    * Only UnitTest inheritors are supported
    */
-  abstract fun onlyClassesAreSupported(sdk: Sdk): Boolean
+  abstract fun onlyClassesAreSupported(project: Project, sdk: Sdk): Boolean
 
   /**
    * Test framework needs package to be installed
    */
   open val packageRequired: String? = null
 
-  open fun isFrameworkInstalled(sdk: Sdk): Boolean {
+  open fun isFrameworkInstalled(project: Project, sdk: Sdk): Boolean {
     val requiredPackage = packageRequired ?: return true // No package required
-    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
+    val isInstalled = PythonPackageManager.forSdk(project, sdk).hasInstalledPackageSnapshot(requiredPackage)
+    return isInstalled
   }
 }
 

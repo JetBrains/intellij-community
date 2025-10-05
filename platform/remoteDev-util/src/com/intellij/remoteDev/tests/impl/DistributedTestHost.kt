@@ -11,6 +11,7 @@ import com.intellij.diagnostic.logs.LogCategory
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
@@ -26,6 +27,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
+import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.modelGenerated.*
 import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
@@ -35,7 +37,6 @@ import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.viewNotNull
-import com.jetbrains.rd.util.threading.coroutines.waitFor
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -54,7 +55,6 @@ import kotlin.reflect.full.createInstance
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 @Suppress("NonDefaultConstructor")
 @TestOnly
@@ -160,13 +160,13 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
 
           // Create test class
-          val testPluginId = System.getProperty("distributed.test.module", TEST_PLUGIN_ID)
-          val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(testPluginId)
-                           ?: error("Test plugin '$testPluginId' is not found")
+          val testModuleId = System.getProperty("distributed.test.module", "intellij.rdct.tests.distributed._test")
+          val testModule = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId))
+                           ?: error("Test module '$testModuleId' is not found")
 
-          LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
+          LOG.info("Test class will be loaded from '${testModule.pluginId}' plugin")
 
-          val testClass = Class.forName(testQualifiedClassName, true, testPlugin.pluginClassLoader)
+          val testClass = Class.forName(testQualifiedClassName, true, testModule.pluginClassLoader)
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
           val testMethod = testClass.declaredMethods.filter { it.name == testMethodNonParameterizedName }
                              .singleOrNull { it.annotations.isNotEmpty() }
@@ -195,7 +195,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               return withContext(providedCoroutineContext) {
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
                 if (!app.isHeadlessEnvironment && isNotRdHost && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
-                  requestFocus(silent = false)
+                  requestFocus()
                 }
 
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
@@ -265,35 +265,33 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        suspend fun leaveAllModals(throwErrorIfModal: Boolean) {
+        suspend fun makeSureNoModals(): Boolean =
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
             repeat(10) {
               if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
+                return@withContext true
               }
               delay(1.seconds)
             }
-            if (throwErrorIfModal) {
-              LOG.error("Unexpected modality: " + ModalityState.current())
-            }
+            LOG.warn("Unexpected modality: " + ModalityState.current())
             LaterInvocator.forceLeaveAllModals("DistributedTestHost - leaveAllModals")
             repeat(10) {
               if (ModalityState.current() == ModalityState.nonModal()) {
-                return@withContext
+                return@withContext true
               }
               delay(1.seconds)
             }
             LOG.error("Failed to close modal dialog: " + ModalityState.current())
+            return@withContext false
           }
-        }
 
-        session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, throwErrorIfModal ->
-          leaveAllModals(throwErrorIfModal)
+        session.forceLeaveAllModals.setSuspend(sessionBgtDispatcher) { _, _ ->
+          makeSureNoModals()
         }
 
         session.closeAllOpenedProjects.setSuspend(sessionBgtDispatcher) { _, _ ->
           try {
-            leaveAllModals(throwErrorIfModal = true)
+            makeSureNoModals()
 
             ProjectManagerEx.getOpenProjects().forEach { waitProjectInitialisedOrDisposed(it) }
             withContext(Dispatchers.EDT + NonCancellable) {
@@ -317,8 +315,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
         }
 
-        session.requestFocus.setSuspend(Dispatchers.EDT + ModalityState.any().asContextElement()) { _, silent ->
-          requestFocus(silent)
+        session.requestFocus.setSuspend(Dispatchers.EDT + ModalityState.any().asContextElement()) { _, reportFailures ->
+          requestFocus(reportFailures)
+        }
+
+        session.isFocused.setSuspend(Dispatchers.IO) { _, _ ->
+          Window.getWindows().filter { it.isShowing }.any {
+            it.isFocused || it.isFocusAncestor()
+          }
         }
 
         session.makeScreenshot.setSuspend(sessionBgtDispatcher) { _, fileName ->
@@ -349,7 +353,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
   }
 
 
-  private suspend fun requestFocus(silent: Boolean): Boolean {
+  private suspend fun requestFocus(reportFailures: Boolean = true): Boolean {
     LOG.info("Requesting focus")
 
     val projects = ProjectManagerEx.getOpenProjects()
@@ -361,55 +365,57 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
     val currentProject = projects.singleOrNull()
     return if (currentProject == null) {
-      requestFocusNoProject(silent)
+      requestFocusNoProject(reportFailures)
     }
     else {
-      requestFocusWithProjectIfNeeded(currentProject, silent)
+      requestFocusWithProjectIfNeeded(currentProject, reportFailures)
     }
   }
 
-  private suspend fun requestFocusWithProjectIfNeeded(project: Project, silent: Boolean): Boolean {
+  private suspend fun requestFocusWithProjectIfNeeded(project: Project, reportFailures: Boolean): Boolean {
     val projectIdeFrame = WindowManager.getInstance().getFrame(project)
-    if (projectIdeFrame == null) {
-      LOG.info("No frame yet, nothing to focus")
+    if (projectIdeFrame == null || !projectIdeFrame.isVisible) { // it really does happen that only one is true
+      LOG.info("No visible frame yet, nothing to focus")
       return false
     }
     else {
       val frameName = "frame '${projectIdeFrame.name}'"
 
-      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused)) {
+      return if ((projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused)) { // it really does happen that only one is true
         LOG.info("Frame '$frameName' is already focused")
         true
       }
       else {
-        requestFocusWithProject(projectIdeFrame, project, frameName, silent)
+        requestFocusWithProject(projectIdeFrame, project, frameName, reportFailures)
       }
     }
   }
 
-  private suspend fun requestFocusWithProject(projectIdeFrame: JFrame, project: Project, frameName: String, silent: Boolean): Boolean {
+  private suspend fun requestFocusWithProject(projectIdeFrame: JFrame, project: Project, frameName: String, reportFailures: Boolean): Boolean {
     val logPrefix = "Requesting project focus for '$frameName'"
     LOG.info(logPrefix)
 
     AppIcon.getInstance().requestFocus(projectIdeFrame)
     ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
 
-    return waitFor(timeout = 5.seconds.toJavaDuration()) {
-      projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
-    }.also {
-      if (!it && !silent) {
-        LOG.error("$logPrefix: Couldn't wait for focus," +
-                  "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
-                  "\n" + getFocusStateDescription()
-        )
-      }
-      else {
-        LOG.info("$logPrefix is successful: $it")
+    return withContext(Dispatchers.IO) {
+      waitSuspending(logPrefix, timeout = 10.seconds, onFailure = {
+        val message = "Couldn't wait for focus of '$frameName'," +
+                      "\n" + "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
+                      "\n" + getFocusStateDescription()
+        if (reportFailures) {
+          LOG.error(message)
+        }
+        else {
+          LOG.info(message)
+        }
+      }) {
+        projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused // it really does happen that only one is true
       }
     }
   }
 
-  private suspend fun requestFocusNoProject(silent: Boolean): Boolean {
+  private suspend fun requestFocusNoProject(reportFailures: Boolean): Boolean {
     val logPrefix = "Request for focus (no opened project case)"
     LOG.info(logPrefix)
 
@@ -420,15 +426,17 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     visibleWindows.forEach {
       AppIcon.getInstance().requestFocus(it)
     }
-    return waitFor(timeout = 5.seconds.toJavaDuration()) {
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
-    }.also {
-      if (!it && !silent) {
-        LOG.error("$logPrefix: Couldn't wait for focus" +
-                  "\n" + getFocusStateDescription())
-      }
-      else {
-        LOG.info("$logPrefix is successful: $it")
+    return withContext(Dispatchers.IO) {
+      waitSuspending(logPrefix, timeout = 10.seconds, onFailure = {
+        val message = "Couldn't wait for focus" + "\n" + getFocusStateDescription()
+        if (reportFailures) {
+          LOG.error(message)
+        }
+        else {
+          LOG.info(message)
+        }
+      }) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
       }
     }
   }

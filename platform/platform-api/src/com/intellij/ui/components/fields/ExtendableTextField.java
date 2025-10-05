@@ -119,11 +119,16 @@ public class ExtendableTextField extends JBTextField implements ExtendableTextCo
 
   @ApiStatus.Experimental
   public ExtendableTextField addBrowseExtension(@NotNull Runnable action, @Nullable Disposable parentDisposable) {
+    return addBrowseExtension(action, parentDisposable, true);
+  }
+
+  @ApiStatus.Experimental
+  public ExtendableTextField addBrowseExtension(@NotNull Runnable action, @Nullable Disposable parentDisposable, boolean focusable) {
     KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
     String tooltip = UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (" + KeymapUtil.getKeystrokeText(keyStroke) + ")";
 
     ExtendableTextComponent.Extension browseExtension =
-      ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover, tooltip, action);
+      ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover, tooltip, focusable, action);
 
     new DumbAwareAction() {
       @Override

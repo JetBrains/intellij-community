@@ -67,7 +67,7 @@ abstract class DvcsCloneDialogComponent @ApiStatus.Internal constructor(
       }
       row(VcsBundle.message("vcs.common.labels.directory")) {
         cell(directoryField).align(AlignX.FILL).validationOnApply {
-          CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
+          checkDirectory(it.text, it.textField, dialogStateListener)
         }
       }.bottomGap(BottomGap.SMALL)
       mainPanelCustomizer?.configure(this)
@@ -88,6 +88,10 @@ abstract class DvcsCloneDialogComponent @ApiStatus.Internal constructor(
         updateOkActionState(dialogStateListener)
       }
     })
+  }
+
+  open fun checkDirectory(directoryPath: String, component: JComponent, dialogStateListener: VcsCloneDialogComponentStateListener): ValidationInfo? {
+    return CloneDvcsValidationUtils.checkDirectory(directoryPath, component)
   }
 
   override fun getPreferredFocusedComponent(): JComponent = urlEditor

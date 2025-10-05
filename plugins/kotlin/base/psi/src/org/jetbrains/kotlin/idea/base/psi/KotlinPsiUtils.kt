@@ -14,6 +14,7 @@ import com.intellij.psi.util.parents
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.asSafely
 import com.intellij.util.text.CharArrayUtil
+import org.jetbrains.kotlin.idea.base.psi.extensions.ImplementationDetailClassNameCheckerProvider
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -33,6 +34,39 @@ val KtClassOrObject.classIdIfNonLocal: ClassId?
         val classesNames = parentsOfType<KtDeclaration>().map { it.name }.toList().asReversed()
         if (classesNames.any { it == null }) return null
         return ClassId(packageName, FqName(classesNames.joinToString(separator = ".")), /*local=*/false)
+    }
+
+/**
+ * Same as [classIdIfNonLocal] but omits implementation detail classes (such as Line_X_jupyter in notebooks)
+ * in names.
+ *
+ * It should be legitimate to omit implementation detail class names in all contexts
+ * where we generate a user-visible ClassId.
+ * However, this property shouldn't be used to get a unique identifier of the class
+ * (something that will be used as an argument of `equals`).
+ * So, it should be safe to change the usage of [classIdIfNonLocal] to the usage of this property,
+ * but be cautious not to use it to generate a unique identifier.
+ */
+val KtClassOrObject.presentableClassId: ClassId?
+    get() {
+        if (KtPsiUtil.isLocal(this)) return null
+        val packageName = containingKtFile.packageFqName
+        val checker = ImplementationDetailClassNameCheckerProvider.get(this)
+        val classNames = buildList {
+            for (clazz in parentsOfType<KtDeclaration>()) {
+                val className = clazz.name
+                when {
+                    className == null -> return null
+                    checker.isImplementationDetail(className) -> continue
+                    else -> add(className)
+                }
+            }
+        }
+        return ClassId(
+            packageFqName = packageName,
+            relativeClassName = FqName(classNames.asReversed().joinToString(separator = ".")),
+            isLocal = false
+        )
     }
 
 val KtCallableDeclaration.callableIdIfNotLocal: CallableId?

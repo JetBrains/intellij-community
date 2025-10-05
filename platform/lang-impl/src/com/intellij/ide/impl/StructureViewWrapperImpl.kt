@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager.Companion.getInstance
@@ -54,7 +54,6 @@ import com.intellij.ui.content.ContentManagerEvent.ContentOperation
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.PlatformUtils
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBUI
@@ -115,9 +114,7 @@ class StructureViewWrapperImpl(
         val state = ModalityState.stateForComponent(component)
         if (!ModalityState.current().accepts(state)) return@withExplicitClientId
 
-        val successful = WriteIntentReadAction.compute<Boolean, Throwable> {
-          loggedRun("check if update needed") { checkUpdate() }
-        }
+        val successful = loggedRun("check if update needed") { checkUpdate() }
         if (successful) myActivityCount = count // to check on the next turn
       }
     }
@@ -165,9 +162,13 @@ class StructureViewWrapperImpl(
             }
           }
         }
-        if (ExperimentalUI.isNewUI() && myStructureView is StructureViewComponent) {
-          val additional = (myStructureView as StructureViewComponent).dotsActions
-          myToolWindow.setAdditionalGearActions(additional)
+        if (ExperimentalUI.isNewUI()) {
+          (myStructureView as? StructureViewComponent)?.let {
+            myToolWindow.setAdditionalGearActions(it.dotsActions)
+          }
+          (myStructureView as? StructureViewComposite)?.structureViews?.forEach {
+            (it.structureView as? StructureViewComponent)?.let { sv -> myToolWindow.setAdditionalGearActions(sv.dotsActions) }
+          }
         }
       }
     })
@@ -219,7 +220,7 @@ class StructureViewWrapperImpl(
             runCatching {
               rebuildImpl()
               LOG.debug("finished rebuild request processing successfully")
-            }.getOrLogException { e ->
+            }.getOrHandleException { e ->
               // catch and hope the next request will succeed, instead of just crashing the whole thing
               LOG.error("failed rebuild request processing", e)
             }
@@ -258,8 +259,8 @@ class StructureViewWrapperImpl(
     }
     else {
       val asyncDataContext = Utils.createAsyncDataContext(dataContext)
-      ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext, owner) }
-        .coalesceBy(this, owner)
+      ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext) }
+        .coalesceBy(*if (owner != null) arrayOf(this, owner) else arrayOf(this))
         .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->
           val firstRun = myFirstRun
           myFirstRun = false
@@ -275,7 +276,7 @@ class StructureViewWrapperImpl(
               setFileFromSelectionHistory()
             }
             else {
-              setFile(null)
+              setFile(project.serviceAsync<FileEditorManager>().selectedFiles.firstOrNull())
             }
           }
         }
@@ -552,6 +553,11 @@ class StructureViewWrapperImpl(
     }
   }
 
+  @ApiStatus.Internal
+  fun getStructureView(): StructureView? {
+    return myStructureView
+  }
+
   private suspend fun updateHeaderActions(structureView: StructureView?) {
     myActionGroup.removeAll()
     val titleActions: List<AnAction> = if (structureView is StructureViewComponent) {
@@ -631,7 +637,7 @@ class StructureViewWrapperImpl(
     private const val REFRESH_TIME = 100 // time to check if a context file selection is changed or not
     private const val REBUILD_TIME = 100L // time to wait and merge requests to rebuild a tree model
 
-    private fun getTargetVirtualFile(asyncDataContext: DataContext, focusOwner: Component?): VirtualFile? {
+    private fun getTargetVirtualFile(asyncDataContext: DataContext): VirtualFile? {
       val explicitlySpecifiedFile = STRUCTURE_VIEW_TARGET_FILE_KEY.getData(asyncDataContext)
       // explicitlySpecifiedFile == null           means no value was specified for this key
       // explicitlySpecifiedFile.isEmpty() == true means target virtual file (and structure view itself) is explicitly suppressed
@@ -641,13 +647,13 @@ class StructureViewWrapperImpl(
       val commonFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(asyncDataContext)
       val project = CommonDataKeys.PROJECT.getData(asyncDataContext)
       return when {
-        commonFiles != null && commonFiles.size == 1 -> commonFiles[0]
-        AppMode.isRemoteDevHost() && project != null -> {
+        AppMode.isRemoteDevHost() && project != null && FileEditorManager.getInstance(project).selectedFiles.isNotEmpty() -> {
           // In RD, when focus is set to a frontend-component (e.g., tabs, editors, notification tool window),
           // on the backend it can be set to anything, unfortunately.
           // So we fall back to the active editor, or else the structure view may stop updating completely.
           FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
         }
+        commonFiles != null && commonFiles.size == 1 -> commonFiles[0]
         else -> null
       }
     }

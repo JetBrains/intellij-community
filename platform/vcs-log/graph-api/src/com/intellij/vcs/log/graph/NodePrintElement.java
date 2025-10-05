@@ -12,6 +12,6 @@ public interface NodePrintElement extends PrintElement {
 
   @ApiStatus.Experimental
   enum Type {
-    FILL, OUTLINE
+    FILL, OUTLINE, OUTLINE_AND_FILL
   }
 }

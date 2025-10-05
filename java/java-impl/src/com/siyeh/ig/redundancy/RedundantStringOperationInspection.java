@@ -37,7 +37,6 @@ import java.util.function.Function;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.psi.CommonClassNames.*;
-import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.HardcodedMethodConstants.EQUALS_IGNORE_CASE;
 import static com.siyeh.HardcodedMethodConstants.TO_STRING;
 import static com.siyeh.InspectionGadgetsBundle.BUNDLE;
@@ -352,8 +351,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
                                             @Nullable PsiExpression constant) {
       if (constant == null) return false;
       if (!CHANGE_CASE.test(qualifierCall)) return false;
-      String constValue = tryCast(ExpressionUtils.computeConstantExpression(constant), String.class);
-      if (constValue == null) return false;
+      if (!(ExpressionUtils.computeConstantExpression(constant) instanceof String constValue)) return false;
       // Do not suggest incorrect fix for "HELLO".equals(s.toLowerCase())
       String methodName = qualifierCall.getMethodExpression().getReferenceName();
       String normalized = "toUpperCase".equals(methodName) ? constValue.toUpperCase(Locale.ROOT) : constValue.toLowerCase(Locale.ROOT);
@@ -453,11 +451,9 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     private boolean lengthMatches(PsiExpression equalTo, PsiExpression from, PsiExpression to) {
       if (!ExpressionUtils.hasStringType(equalTo)) return false;
-      String str = tryCast(ExpressionUtils.computeConstantExpression(equalTo), String.class);
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(myHolder.getProject());
-      if (str != null) {
-        PsiExpression lengthExpression =
-          factory.createExpressionFromText(String.valueOf(str.length()), equalTo);
+      if (ExpressionUtils.computeConstantExpression(equalTo) instanceof String str) {
+        PsiExpression lengthExpression = factory.createExpressionFromText(String.valueOf(str.length()), equalTo);
         if (ExpressionUtils.isDifference(from, to, lengthExpression)) return true;
       }
       PsiExpression lengthExpression = getLengthExpression(equalTo, factory);
@@ -465,8 +461,8 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
     }
 
     private static PsiExpression getLengthExpression(PsiExpression string, PsiElementFactory factory) {
-      return factory
-            .createExpressionFromText(ParenthesesUtils.getText(string, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".length()", string);
+      String text = ParenthesesUtils.getText(string, ParenthesesUtils.METHOD_CALL_PRECEDENCE);
+      return factory.createExpressionFromText(text + ".length()", string);
     }
 
     private @Nullable ProblemDescriptor getRedundantCaseChangeProblem(PsiMethodCallExpression call) {
@@ -668,8 +664,8 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
     }
 
     private static boolean isLengthOf(PsiExpression stringLengthCandidate, PsiExpression stringExpression) {
-      PsiMethodCallExpression argCall = tryCast(PsiUtil.skipParenthesizedExprDown(stringLengthCandidate), PsiMethodCallExpression.class);
-      return STRING_LENGTH.test(argCall) &&
+      return PsiUtil.skipParenthesizedExprDown(stringLengthCandidate) instanceof PsiMethodCallExpression argCall &&
+             STRING_LENGTH.test(argCall) &&
              EquivalenceChecker.getCanonicalPsiEquivalence()
                .expressionsAreEquivalent(stringExpression, argCall.getMethodExpression().getQualifierExpression());
     }
@@ -725,8 +721,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
           applyEqualityFix(element);
         }
         else {
-          PsiMethodCallExpression call = tryCast(element.getParent().getParent(), PsiMethodCallExpression.class);
-          if (call == null) return;
+          if (!(element.getParent().getParent() instanceof PsiMethodCallExpression call)) return;
           PsiExpression[] args = call.getArgumentList().getExpressions();
           if (args.length != 2) return;
           ExpressionUtils.bindCallTo(call, "charAt");
@@ -950,8 +945,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
           }
         }
         case REPLACE_WITH_ARGUMENTS -> {
-          PsiExpressionList list = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiExpressionList.class);
-          if (list == null) return;
+          if (!(PsiUtil.skipParenthesizedExprUp(call.getParent()) instanceof PsiExpressionList list)) return;
           PsiExpression[] expressions = call.getArgumentList().getExpressions();
           for (PsiExpression arg : expressions) {
             list.add(ct.markUnchanged(arg));
@@ -1000,8 +994,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiNewExpression expression = tryCast(element.getParent(), PsiNewExpression.class);
-      if (expression == null) return;
+      if (!(element.getParent() instanceof PsiNewExpression expression)) return;
       final PsiExpressionList argList = expression.getArgumentList();
       if (argList == null) return;
       final PsiExpression[] args = argList.getExpressions();
@@ -1014,7 +1007,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
   private static @Nullable PsiMethodCallExpression getMethodCallExpression(PsiExpression expression) {
     PsiExpression resolvedExpression = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.resolveExpression(expression));
-    return tryCast(resolvedExpression, PsiMethodCallExpression.class);
+    return resolvedExpression instanceof PsiMethodCallExpression result ? result : null;
   }
 
   private static final class ByteArrayOutputStreamToStringFix extends PsiUpdateModCommandQuickFix {
@@ -1036,8 +1029,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiNewExpression expression = tryCast(element.getParent(), PsiNewExpression.class);
-      if (expression == null) return;
+      if (!(element.getParent() instanceof PsiNewExpression expression)) return;
 
       final PsiExpressionList args = expression.getArgumentList();
       if (args == null) return;
@@ -1054,8 +1046,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
       CommentTracker ct = new CommentTracker();
       String newText = ct.text(qualifier) + ".toString(" + (params.length == 2 ? ct.text(params[1]) : "") + ")";
 
-      PsiElement parent = tryCast(PsiUtil.skipParenthesizedExprUp(resolvedExpression.getParent()), PsiLocalVariable.class);
-      if (parent != null) ct.delete(parent);
+      if (PsiUtil.skipParenthesizedExprUp(resolvedExpression.getParent()) instanceof PsiLocalVariable var) ct.delete(var);
 
       ct.replaceAndRestoreComments(expression, newText);
     }
@@ -1075,8 +1066,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiMethodCallExpression expression = tryCast(element.getParent().getParent(), PsiMethodCallExpression.class);
-      if (expression == null) return;
+      if (!(element.getParent().getParent() instanceof PsiMethodCallExpression expression)) return;
       new CommentTracker().replaceAndRestoreComments(expression, "\"\"");
     }
   }
@@ -1095,8 +1085,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiNewExpression expression = tryCast(element.getParent(), PsiNewExpression.class);
-      if (expression == null) return;
+      if (!(element.getParent() instanceof PsiNewExpression expression)) return;
       final CharArrayCreationArgument charArrayCreationArgument = CharArrayCreationArgument.from(expression.getArgumentList());
       if (charArrayCreationArgument == null) return;
       CommentTracker ct = new CommentTracker();
@@ -1124,10 +1113,9 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiNewExpression expression = tryCast(element, PsiNewExpression.class);
-      if (expression == null) return;
+      if (!(element instanceof PsiNewExpression expression)) return;
       final PsiArrayInitializerExpression initializer = expression.getArrayInitializer();
-      if (initializer == null || initializer.getInitializers().length != 1) return;
+      if (initializer == null || initializer.getInitializerCount() != 1) return;
       PsiReplacementUtil.replaceExpression(expression, initializer.getInitializers()[0].getText(), new CommentTracker());
     }
   }
@@ -1148,8 +1136,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
     private static @Nullable CharArrayCreationArgument from(@Nullable PsiExpressionList argList) {
       if (argList == null || argList.getExpressionCount() != 1) return null;
       final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(argList.getExpressions()[0]);
-      final PsiNewExpression newExpression = tryCast(arg, PsiNewExpression.class);
-      if (newExpression == null) return null;
+      if (!(arg instanceof PsiNewExpression newExpression)) return null;
       final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
       if (arrayInitializer == null || !TypeUtils.typeEquals("char[]", newExpression.getType())) return null;
       final PsiExpression[] initializers = arrayInitializer.getInitializers();
@@ -1178,7 +1165,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       new CommentTracker().delete(startElement, endElement);
     }
   }

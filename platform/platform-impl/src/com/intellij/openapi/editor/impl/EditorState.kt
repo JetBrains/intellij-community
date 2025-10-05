@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.state.ObservableState
+import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.border.Border

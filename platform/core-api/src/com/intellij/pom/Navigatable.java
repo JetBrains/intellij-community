@@ -42,7 +42,8 @@ public interface Navigatable {
   default void navigate(boolean requestFocus) {
     throw new IncorrectOperationException(
       "Must not call `navigate(boolean)` if `canNavigate()` returns `false`, " +
-      "or `navigate(boolean)` should be overridden if `canNavigate()` can return `true`."
+      "or `navigate(boolean)` should be overridden if `canNavigate()` can return `true`. " +
+      "Class name: " + getClass().getName() + "."
     );
   }
 

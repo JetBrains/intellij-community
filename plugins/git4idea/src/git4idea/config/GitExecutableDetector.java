@@ -130,9 +130,11 @@ public class GitExecutableDetector {
         DetectionResult detectionResult = detector.getPath();
         if (detectionResult == null) {
           detector.runDetection();
-          fireEvent = true;
 
           detectionResult = detector.getPath();
+          if (detectionResult != null) {
+            fireEvent = true;
+          }
         }
 
         if (detectionResult != null && detectionResult.detectedPath != null) {

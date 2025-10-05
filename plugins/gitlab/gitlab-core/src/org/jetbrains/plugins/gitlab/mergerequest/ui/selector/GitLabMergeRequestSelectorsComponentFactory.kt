@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.asSafely
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
@@ -17,8 +18,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
@@ -32,8 +35,8 @@ import javax.swing.JComponent
 
 @ApiStatus.Internal
 object GitLabMergeRequestSelectorsComponentFactory {
-  fun createSelectorsComponent(cs: CoroutineScope, selectorVm: GitLabRepositoryAndAccountSelectorViewModel): JComponent {
-
+  fun createSelectorsComponent(cs: CoroutineScope, project: Project, selectorVm: GitLabRepositoryAndAccountSelectorViewModel, loginSource: GitLabLoginSource): JComponent {
+    val defaultAccountHolder = project.service<GitLabProjectDefaultAccountHolder>()
     val accountsDetailsProvider = GitLabAccountsDetailsProvider(cs, selectorVm.accountManager) { account ->
       // TODO: separate loader
       selectorVm.accountManager.findCredentials(account)?.let { token ->
@@ -43,6 +46,7 @@ object GitLabMergeRequestSelectorsComponentFactory {
 
     val selectors = RepositoryAndAccountSelectorComponentFactory(selectorVm).create(
       scope = cs,
+      defaultAccountHolder = defaultAccountHolder,
       repoNamer = { mapping ->
         val allProjects = selectorVm.repositoriesState.value.map { it.repository }
         getProjectDisplayName(allProjects, mapping.repository)
@@ -51,7 +55,7 @@ object GitLabMergeRequestSelectorsComponentFactory {
       accountsPopupActionsSupplier = { createPopupLoginActions(selectorVm, it) },
       submitActionText = GitLabBundle.message("view.merge.requests.button"),
       loginButtons = createLoginButtons(cs, selectorVm),
-      errorPresenter = GitLabSelectorErrorStatusPresenter(selectorVm.project, cs, selectorVm.accountManager) {
+      errorPresenter = GitLabSelectorErrorStatusPresenter(selectorVm.project, cs, selectorVm.accountManager, loginSource = loginSource) {
         selectorVm.submitSelection()
       }
     )
@@ -60,13 +64,13 @@ object GitLabMergeRequestSelectorsComponentFactory {
       selectorVm.loginRequestsFlow.collect { req ->
         val account = req.account
         if (account == null) {
-          val (newAccount, token) = GitLabLoginUtil.logInViaToken(selectorVm.project, selectors, req.repo.repository.serverPath) { server, name ->
+          val (newAccount, token) = GitLabLoginUtil.logInViaToken(selectorVm.project, selectors, req.repo.repository.serverPath, loginSource = loginSource) { server, name ->
             GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           }.asSafely<LoginResult.Success>() ?: return@collect
           req.login(newAccount, token)
         }
         else {
-          val loginResult = GitLabLoginUtil.updateToken(selectorVm.project, selectors, account) { server, name ->
+          val loginResult = GitLabLoginUtil.updateToken(selectorVm.project, selectors, account, loginSource = loginSource, ) { server, name ->
             GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
           }.asSafely<LoginResult.Success>() ?: return@collect
           req.login(account, loginResult.token)

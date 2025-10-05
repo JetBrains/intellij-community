@@ -11,9 +11,10 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.intui.standalone.styling.default
 import org.jetbrains.jewel.intui.standalone.styling.defaults
-import org.jetbrains.jewel.samples.showcase.components.ShowcaseIcons
+import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 import org.jetbrains.jewel.samples.showcase.views.ComponentsView
 import org.jetbrains.jewel.samples.showcase.views.ComponentsViewModel
 import org.jetbrains.jewel.samples.showcase.views.KeyBinding
@@ -45,6 +46,8 @@ public object MainViewModel {
     public var theme: IntUiThemes by mutableStateOf(IntUiThemes.Light)
 
     public var swingCompat: Boolean by mutableStateOf(false)
+
+    public var useCustomPopupRenderer: Boolean by mutableStateOf(JewelFlags.useCustomPopupRenderer)
 
     public val projectColor: Color
         get() =

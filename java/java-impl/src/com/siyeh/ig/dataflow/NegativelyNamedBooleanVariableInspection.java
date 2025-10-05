@@ -40,7 +40,7 @@ public final class NegativelyNamedBooleanVariableInspection extends BaseInspecti
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NegativelyNamedBooleanVariableVisitor();
   }
 

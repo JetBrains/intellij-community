@@ -46,8 +46,7 @@ public abstract class JavaDirectoryService {
    *
    * @return the array of classes.
    */
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public abstract PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir, @NotNull GlobalSearchScope scope);
 
   /**

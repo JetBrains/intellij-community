@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import kotlinx.coroutines.runBlocking
@@ -385,7 +384,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testPluginConfigurationWithStandardVariable() = runBlocking {
-    importProjectAsync("""
+    importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -396,15 +395,15 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                           <artifactId>id</artifactId>
                           <version>1</version>
                           <configuration>
-                            <one>${'$'}{project.build.directory}</one>
+                            <one>${project.build.directory}</one>
                           </configuration>
                         </plugin>
                       </plugins>
                     </build>
                     """.trimIndent())
 
-    assertEquals("$projectPath/target",
-                 FileUtil.toSystemIndependentName(findPluginConfig("group", "id", "one")!!))
+    assertPathsAreEqual("$projectPath/target",
+                        findPluginConfig("group", "id", "one")!!)
   }
 
   @Test
@@ -684,10 +683,12 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     val repositories = projectsManager.getRemoteRepositories()
     val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
-    val repoIds = mavenEmbedderWrappers.use {
+    val repos = mavenEmbedderWrappers.use {
       val mavenEmbedderWrapper = mavenEmbedderWrappers.getEmbedder(MavenUtil.getBaseDir(projectPom).toString())
-      mavenEmbedderWrapper.resolveRepositories(repositories).map { it.id }.toSet()
+      mavenEmbedderWrapper.resolveRepositories(repositories).toSet()
     }
+
+    val repoIds = repos.map { it.id }
 
     val project = MavenProjectsManager.getInstance(project).findProject(projectPom)
     assertNotNull(project)
@@ -700,7 +701,9 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
     //    assertTrue(repoIds.contains("maven-default-http-blocker"));
     assertFalse(repoIds.contains("repo-pom"))
     assertFalse(repoIds.contains("repo"))
-    assertFalse(repoIds.contains("repo-http"))
+    if (mavenVersionIsOrMoreThan("3.8.1")) {
+      assertFalse(repoIds.contains("repo-http"))
+    }
   }
 
   @Test
@@ -934,7 +937,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals("4.0", projectsTree.findProject(p)!!.findManagedDependency("junit", "junit")!!.version)
+    assertEquals("4.0", projectsTree.findProject(p)!!.findManagedDependencyVersion("junit", "junit")!!)
   }
 
   @Test
@@ -970,7 +973,7 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependency("junit", "junit")!!.version)
+    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependencyVersion("junit", "junit")!!)
   }
 
   @Test
@@ -1015,8 +1018,8 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
 
     importProjectAsync()
 
-    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependency("junit", "junit")!!.version)
-    assertEquals("1.0", projectsTree.findProject(m1)!!.findManagedDependency("another", "dep")!!.version)
+    assertEquals("4.0", projectsTree.findProject(m1)!!.findManagedDependencyVersion("junit", "junit")!!)
+    assertEquals("1.0", projectsTree.findProject(m1)!!.findManagedDependencyVersion("another", "dep")!!)
   }
 
   protected fun assertDependenciesNodes(nodes: List<MavenArtifactNode?>?, expected: String?) {

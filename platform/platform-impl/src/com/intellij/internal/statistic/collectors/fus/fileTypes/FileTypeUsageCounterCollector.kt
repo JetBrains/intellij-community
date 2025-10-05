@@ -62,10 +62,9 @@ object FileTypeUsageCounterCollector : CounterUsagesCollector() {
   private val FILE_TEMPLATE_FIELD: EventField<String?> = StringValidatedByCustomRule(FILE_TEMPLATE_NAME,
                                                                                      BundledFileTemplateValidationRule::class.java)
 
-  private fun registerFileTypeEvent(eventId: String, vararg extraFields: EventField<*>?): VarargEventId {
-    val baseFields = arrayOf<EventField<*>?>(EventFields.PluginInfoFromInstance, EventFields.FileType, EventFields.AnonymizedPath,
-                                             SCHEMA, FILE_EXTENSION)
-    return GROUP.registerVarargEvent(eventId, *ArrayUtil.mergeArrays<EventField<*>?>(baseFields, extraFields))
+  private fun registerFileTypeEvent(eventId: String, vararg extraFields: EventField<*>): VarargEventId {
+    val baseFields = arrayOf(EventFields.PluginInfoFromInstance, EventFields.FileType, EventFields.AnonymizedPath, SCHEMA, FILE_EXTENSION)
+    return GROUP.registerVarargEvent(eventId, *ArrayUtil.mergeArrays(baseFields, extraFields))
   }
 
   private val SELECT: VarargEventId = registerFileTypeEvent("select")

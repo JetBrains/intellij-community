@@ -22,7 +22,7 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
   internal lateinit var commitState: ChangeListCommitState
 
   init {
-    updateVcses(vcsManager.allActiveVcss.toSet())
+    updateVcses(vcsManager.getAllActiveVcss().toSet())
   }
 
   internal fun getAffectedChangeList(changes: Collection<Change>): LocalChangeList =

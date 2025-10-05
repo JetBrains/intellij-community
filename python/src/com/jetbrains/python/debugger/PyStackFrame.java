@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.messages.Topic;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -24,7 +23,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.icons.PythonIcons;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,9 +46,6 @@ public class PyStackFrame extends XStackFrame {
   private volatile boolean isExternal = true;
 
   private @Nullable Map<String, PyDebugValueDescriptor> myChildrenDescriptors;
-
-  @Topic.AppLevel
-  public static final Topic<PyStackFrameRefreshedListener> TOPIC = new Topic<>(PyStackFrameRefreshedListener.class);
 
   public PyStackFrame(@NotNull Project project,
                       final @NotNull PyFrameAccessor debugProcess,
@@ -177,9 +172,8 @@ public class PyStackFrame extends XStackFrame {
     }
     if (!isSpecialEmpty) {
       addGroupValues(PyBundle.message("debugger.stack.frame.special.variables"),
-                     PythonIcons.Python.Debug.SpecialVar, node, null, myDebugProcess, ProcessDebugger.GROUP_TYPE.SPECIAL, null);
+                     AllIcons.Debugger.SpecialVar, node, null, myDebugProcess, ProcessDebugger.GROUP_TYPE.SPECIAL, null);
     }
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).stackFrameRefreshed();
   }
 
   public String getThreadId() {
@@ -226,9 +220,5 @@ public class PyStackFrame extends XStackFrame {
       }
       value.setDescriptor(descriptor);
     }
-  }
-
-  public interface PyStackFrameRefreshedListener {
-    void stackFrameRefreshed();
   }
 }

@@ -10,11 +10,13 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.supervisorScope
+import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 
@@ -35,6 +37,9 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
     init()
   }
 
+  override fun getHelpId(): @NonNls String {
+    return "create.python.interpreter"
+  }
 
   @RequiresEdt
   override fun doOKAction() {
@@ -60,7 +65,7 @@ internal class PythonAddLocalInterpreterDialog(private val dialogPresenter: Pyth
       mainPanel.setupUI(this, WHEN_PROPERTY_CHANGED(AtomicProperty(basePath)))
     }
 
-    rootPanel.launchOnShow("PythonAddLocalInterpreterDialog launchOnShow") {
+    rootPanel.launchOnShow("PythonAddLocalInterpreterDialog launchOnShow", TraceContext(PyBundle.message("tracecontext.add.local.python.sdk.dialog"), null)) {
       supervisorScope {
         model.initialize(this@supervisorScope)
         mainPanel.onShown(this@supervisorScope)

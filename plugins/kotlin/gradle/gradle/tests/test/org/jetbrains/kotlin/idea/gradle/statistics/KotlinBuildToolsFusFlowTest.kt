@@ -11,6 +11,7 @@ import java.util.stream.Stream
 import kotlin.io.path.Path
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 
 class KotlinBuildToolsFusFlowTest {
     @ParameterizedTest(name = "{0}")
@@ -18,7 +19,12 @@ class KotlinBuildToolsFusFlowTest {
     fun testFusFlowProcessor(fusProfileFile: List<Path>, buildId: String, expectedFusMetrics: Set<String>, checkExactMatch: Boolean) {
         val aggregatedFusMetric = KotlinBuildToolFusFlowProcessor.aggregateMetricsForBuildId(buildId, fusProfileFile)
 
-        val actualFusMetric = aggregatedFusMetric.map { "${it.metric.metricRawName}=${it.value}" }.toSet()
+        val actualFusMetric = aggregatedFusMetric?.map { "${it.metric.metricRawName}=${it.value}" }?.toSet()
+        if (actualFusMetric == null) {
+            assertFails { "aggregatedFusMetric should not be null" }
+            return
+        }
+
         if (checkExactMatch) {
             assertEquals(
                 expectedFusMetrics, actualFusMetric
@@ -68,19 +74,12 @@ class KotlinBuildToolsFusFlowTest {
             ).toArguments("testEmptyFiles"),
 
             TestData(
-                emptyList(),
-                "build_id",
-                emptySet(),
-                true
-            ).toArguments("testEmptyListFusFiles"),
-
-            TestData(
                 listOf(
                     Path("resources/kotlin-profile/build_id-invalid_metrics.plugin-profile"),
                     Path("resources/kotlin-profile/build_id.finish-profile"),
                 ),
                 "build_id",
-                setOf("BUILD_FAILED=false", "BUILD_FINISH_TIME=10000000", "BUILD_SRC_EXISTS=false", "CONFIGURATION_API_COUNT=1"),
+                setOf("PROJECT_PATH=line with special symbols !^&*()_+{\\n}[@#\$%]", "BUILD_FAILED=false", "BUILD_FINISH_TIME=10000000", "BUILD_SRC_EXISTS=false", "CONFIGURATION_API_COUNT=1"),
                 true
             ).toArguments("testMetricValidation"),
         )

@@ -26,6 +26,7 @@ public class CoreLocalVirtualFile extends VirtualFile {
   private VirtualFile[] myChildren;
 
   /** @deprecated please use {@link #CoreLocalVirtualFile(CoreLocalFileSystem, Path)} instead */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile) {

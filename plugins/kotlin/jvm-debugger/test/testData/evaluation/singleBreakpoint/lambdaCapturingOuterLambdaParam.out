@@ -1,0 +1,8 @@
+LineBreakpoint created at lambdaCapturingOuterLambdaParam.kt:3
+Run Java
+Connected to the target VM
+lambdaCapturingOuterLambdaParam.kt:3
+Compile bytecode for 1.let { p -> run { p + 41 } }
+Disconnected from the target VM
+
+Process finished with exit code 0

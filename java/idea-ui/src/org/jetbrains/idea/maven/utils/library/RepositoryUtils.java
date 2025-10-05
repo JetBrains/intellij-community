@@ -33,7 +33,14 @@ import org.jetbrains.concurrency.Promise;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
@@ -107,6 +114,20 @@ public final class RepositoryUtils {
         var canonicalLocalRepositoryPath = localRepositoryPath.getCanonicalPath();
         if (FileUtil.startsWith(canonicalFirstPath, canonicalLocalRepositoryPath)) {
           return null;
+        }
+
+        // let's try to support Windows too
+        // https://bugs.openjdk.org/browse/JDK-8003887
+        // File.getCanonicalFile() does not resolve symlinks on MS Windows
+        var existingNioFirstPath = Path.of(canonicalFirstPath);
+        while (existingNioFirstPath != null && !Files.exists(existingNioFirstPath)) {
+          existingNioFirstPath = existingNioFirstPath.getParent();
+        }
+        if (existingNioFirstPath != null) {
+          var existingNioCanonicalFirstPath = existingNioFirstPath.toRealPath().toString();
+          if (FileUtil.startsWith(existingNioCanonicalFirstPath, canonicalLocalRepositoryPath)) {
+            return null;
+          }
         }
       }
       catch (IOException ignored) {

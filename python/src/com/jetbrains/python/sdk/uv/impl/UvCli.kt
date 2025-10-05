@@ -41,7 +41,8 @@ private fun validateUvExecutable(uvPath: Path?): ValidationInfo? {
 }
 
 private suspend fun runUv(uv: Path, workingDir: Path, vararg args: String): PyResult<String> {
-  return runExecutableWithProgress(uv, workingDir, 10.minutes, args = args)
+  return runExecutableWithProgress(uv, workingDir,
+                                   env = mapOf("VIRTUAL_ENV" to ".venv"), timeout = 10.minutes, args = args)
 }
 
 private class UvCliImpl(val dispatcher: CoroutineDispatcher, uvPath: Path?) : UvCli {

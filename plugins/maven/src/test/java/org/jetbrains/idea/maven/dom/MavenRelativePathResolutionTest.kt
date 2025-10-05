@@ -2,12 +2,10 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.impl.source.xml.XmlFileImpl
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import java.io.File
 
 class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
   override fun setUp() = runBlocking {
@@ -23,9 +21,8 @@ class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
   fun testParentRelativePathOutsideProjectRoot() = runBlocking {
     val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/example-1.0.pom")
 
-
-    val relativePathUnixSeparator =
-      FileUtil.getRelativePath(projectRoot.getPath(), file.toString(), File.separatorChar)!!.replace("\\\\".toRegex(), "/")
+    val relativePath = projectRoot.toNioPath().relativize(file).toString()
+    val relativePathUnixSeparator = relativePath.replace("\\\\".toRegex(), "/")
 
     val pom = createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -57,11 +54,8 @@ $relativePathUnixSeparator<caret></relativePath>
 
     val parentFile = file.parent
 
-    val relativePathUnixSeparator = FileUtil.getRelativePath(
-      projectRoot.getPath(),
-      parentFile.toString(),
-      File.separatorChar
-    )!!.replace("\\\\".toRegex(), "/")
+    val relativePath = projectRoot.toNioPath().relativize(parentFile).toString()
+    val relativePathUnixSeparator = relativePath.replace("\\\\".toRegex(), "/")
 
     val pom = createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>

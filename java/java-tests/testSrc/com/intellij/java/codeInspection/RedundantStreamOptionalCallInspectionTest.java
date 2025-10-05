@@ -17,6 +17,10 @@ public class RedundantStreamOptionalCallInspectionTest extends LightJavaInspecti
     doTest();
   }
 
+  public void testExplicitNullabilityAnnotation() {
+    doTest();
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new RedundantStreamOptionalCallInspection();

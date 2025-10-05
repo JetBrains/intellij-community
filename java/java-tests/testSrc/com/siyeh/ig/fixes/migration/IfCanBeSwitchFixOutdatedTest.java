@@ -9,9 +9,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.IfCanBeSwitchInspection;
 
-/**
- * @author Bas Leijdekkers
- */
 public class IfCanBeSwitchFixOutdatedTest extends IGQuickFixesTestCase {
   @Override
   public void setUp() throws Exception {

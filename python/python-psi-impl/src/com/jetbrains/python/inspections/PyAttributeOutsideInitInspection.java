@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -36,7 +37,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User: ktisha
@@ -73,12 +77,12 @@ public final class PyAttributeOutsideInitInspection extends PyInspection {
       }
 
       final Map<String, Property> localProperties = containingClass.getProperties();
-      final Map<String, PyTargetExpression> declaredAttributes = new HashMap<>();
+      final MultiMap<String, PyTargetExpression > declaredAttributes = new MultiMap<>();
       final Set<String> inheritedProperties = new HashSet<>();
 
       StreamEx.of(containingClass.getClassAttributes())
               .filter(attribute -> !localProperties.containsKey(attribute.getName()))
-              .forEach(attribute -> declaredAttributes.put(attribute.getName(), attribute));
+              .forEach(attribute -> declaredAttributes.putValue(attribute.getName(), attribute));
 
       final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, false, myTypeEvalContext);
       if (initMethod != null) {
@@ -91,13 +95,13 @@ public final class PyAttributeOutsideInitInspection extends PyInspection {
         }
 
         for (PyTargetExpression classAttr : superClass.getClassAttributes()) {
-          declaredAttributes.put(classAttr.getName(), classAttr);
+          declaredAttributes.putValue(classAttr.getName(), classAttr);
         }
 
         inheritedProperties.addAll(superClass.getProperties().keySet());
       }
 
-      final Map<String, PyTargetExpression> attributes = new HashMap<>();
+      final MultiMap<String, PyTargetExpression> attributes = new MultiMap<>();
       PyClassImpl.collectInstanceAttributes(node, attributes);
 
       for (PyTargetExpression attribute : attributes.values()) {
@@ -138,7 +142,7 @@ public final class PyAttributeOutsideInitInspection extends PyInspection {
 
   private static boolean isDefinedByProperty(@NotNull PyTargetExpression attribute,
                                              @NotNull Collection<Property> properties,
-                                             @NotNull Map<String, PyTargetExpression> attributesInInit) {
+                                             @NotNull MultiMap<String, PyTargetExpression> attributesInInit) {
     return StreamEx.of(properties)
                    .filter(it -> isSetBy(attribute, it))
                    .anyMatch(it -> attributesInInit.containsKey(it.getName()));

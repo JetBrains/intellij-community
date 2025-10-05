@@ -7,10 +7,9 @@ import com.intellij.ide.SystemDock
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.application.UiDispatcherKind
-import com.intellij.openapi.application.ui
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
@@ -20,7 +19,7 @@ import java.awt.*
 
 internal suspend fun createMacDelegate(): SystemDock {
   // todo get rid of UI dispatcher here
-  val recentProjectsMenu = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+  val recentProjectsMenu = withContext(Dispatchers.UiWithModelAccess) {
     val dockMenu = PopupMenu("DockMenu")
     val recentProjectsMenu = Menu("Recent Projects")
     runCatching {
@@ -33,7 +32,7 @@ internal suspend fun createMacDelegate(): SystemDock {
       if (Taskbar.isTaskbarSupported() /* not supported in CWM/Projector environment */) {
         Taskbar.getTaskbar().menu = dockMenu
       }
-    }.getOrLogException { logger<MacDockDelegate>() }
+    }.getOrHandleException { logger<MacDockDelegate>() }
     recentProjectsMenu
   }
   return MacDockDelegate(recentProjectsMenu)
@@ -43,9 +42,9 @@ private class MacDockDelegate(private val recentProjectsMenu: Menu) : SystemDock
   override suspend fun updateRecentProjectsMenu() {
     val projectListActionProvider = serviceAsync<RecentProjectListActionProvider>()
     // todo get rid of UI dispatcher here
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       recentProjectsMenu.removeAll()
-      for (action in projectListActionProvider.getActions()) {
+      for (action in projectListActionProvider.getActionsWithoutGroups()) {
         if (action !is ProjectToolbarWidgetPresentable) {
           continue
         }

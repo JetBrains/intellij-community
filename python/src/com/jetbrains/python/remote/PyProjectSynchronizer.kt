@@ -9,7 +9,6 @@ import com.intellij.remote.CredentialsType
 import com.intellij.util.PathMappingSettings
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.io.File
 import java.util.function.Consumer
 
 typealias PathMappings = List<PathMappingSettings.PathMapping>
@@ -17,7 +16,7 @@ typealias PathMappings = List<PathMappingSettings.PathMapping>
 /**
  * ProjectSynchronizer is an engine that synchronize code between local and remote system or between java (which is local)
  * and python (which may be remote).
- * This engine is sdk-specific and used by [com.jetbrains.python.newProject.DeprecatedUtils] (and friends).
+ * This engine is sdk-specific.
  *
  * When generator creates remote project, it may use python helpers (with aid of tasks) and it may need some way
  * to pull remote files, patch them and push 'em back. The way it does it is skd-specific and this interface encapsulates it.
@@ -121,7 +120,7 @@ sealed interface PySyncCheckStrategy
  *
  * No remote project creation would be allowed if this strategy returns "false".
  */
-class PySyncCheckOnly(val projectBaseDir: File) : PySyncCheckStrategy
+class PySyncCheckOnly() : PySyncCheckStrategy
 
 /**
  * Checks if project with specific module could be synced with remote server.

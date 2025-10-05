@@ -283,6 +283,7 @@ public final class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeS
       );
       consumer.renameStandardOption("SPACE_AROUND_RELATIONAL_OPERATORS", GroovyBundle.message("code.style.option.relational.operators"));
       consumer.renameStandardOption("SPACE_AROUND_UNARY_OPERATOR", GroovyBundle.message("code.style.option.unary.operators"));
+      consumer.renameStandardOption("SPACE_AROUND_LOGICAL_OPERATORS", GroovyBundle.message("code.style.option.logical.operators"));
 
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT_BEFORE_COLON",
                                 GroovyBundle.message("code.style.option.in.named.argument.before.colon"),

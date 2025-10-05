@@ -11,6 +11,8 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * Exposes {@link LineWrapPositionStrategy} implementations to their clients.
  * <p>
@@ -53,6 +55,6 @@ public final class LanguageLineWrapPositionStrategy extends LanguageExtension<Li
 
   @Override
   public @NotNull LineWrapPositionStrategy getDefaultImplementation() {
-    return super.getDefaultImplementation();
+    return Objects.requireNonNull(super.getDefaultImplementation(), "com.intellij.openapi.editor.DefaultLineWrapPositionStrategy must be registered");
   }
 }

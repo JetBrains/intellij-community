@@ -4,8 +4,6 @@ package com.intellij.modcommand;
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +80,7 @@ public record Presentation(
 
   public @NotNull Presentation withHighlighting(@NotNull TextRange @NotNull ... ranges) {
     List<HighlightRange> highlightRanges =
-      ContainerUtil.map(ranges, r -> new HighlightRange(r, EditorColors.SEARCH_RESULT_ATTRIBUTES));
+      ContainerUtil.map(ranges, r -> new HighlightRange(r, HighlightingKind.AFFECTED_RANGE));
     return new Presentation(name, priority, highlightRanges, icon, fixAllOption);
   }
 
@@ -103,10 +101,28 @@ public record Presentation(
    * Represents a tuple of a TextRange and TextAttributesKey used for highlighting a specific range of text.
    *
    * @param range The TextRange to be highlighted.
-   * @param highlightKey The TextAttributesKey to be used for highlighting the range.
+   * @param highlightingKind The kind of highlighting. It is used to determine TextAttributesKey or special ranges used for highlighting.
    */
   public record HighlightRange(
     @NotNull TextRange range,
-    @NotNull TextAttributesKey highlightKey
+    @NotNull HighlightingKind highlightingKind
   ) {}
+
+  /**
+   * Kind of highlighting to display in the editor when the action is selected but not invoked yet.
+   */
+  public enum HighlightingKind {
+    /**
+     * Highlighting to emphasize the text range which will be affected by the action.
+     */
+    AFFECTED_RANGE,
+    /**
+     * Highlighting to show the text range which will be deleted by the action.
+     */
+    DELETED_RANGE,
+    /**
+     * Highlighting to designate the range where the action is applicable. It might be ignored in some contexts.
+     */
+    APPLICABLE_TO_RANGE,
+  }
 }

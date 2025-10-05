@@ -1,4 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvm.shared">
+  <dependencies>
+    <module name="kotlin.base.scripting.shared"/>
+  </dependencies>
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.jvm.shared.bytecode.compilationConfigurationEnricher"
@@ -7,12 +10,6 @@
   </extensionPoints>
 
   <actions>
-    <!-- Kotlin Console REPL-->
-    <action id="KotlinConsoleREPL" class="org.jetbrains.kotlin.console.actions.RunKotlinConsoleAction"
-            icon="org.jetbrains.kotlin.idea.KotlinIcons.LAUNCH">
-      <add-to-group group-id="KotlinToolsGroup" anchor="last"/>
-    </action>
-
     <action id="CreateIncrementalCompilationBackup"
             class="org.jetbrains.kotlin.idea.jvm.shared.internal.makeBackup.CreateIncrementalCompilationBackup" internal="true">
       <add-to-group group-id="KotlinInternalGroup"/>
@@ -110,8 +107,6 @@
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
   <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileModuleInfoProvider"
-              topic="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileListener"/>
     <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
     <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"

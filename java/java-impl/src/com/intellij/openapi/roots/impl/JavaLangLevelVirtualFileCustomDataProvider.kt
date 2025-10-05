@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.impl
 
 import com.intellij.java.frontback.psi.impl.NullableLanguageLevelHolder
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,9 +16,9 @@ import kotlinx.coroutines.flow.map
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-class JavaLangLevelVirtualFileCustomDataProvider : VirtualFileCustomDataProvider<NullableLanguageLevelHolder> {
-  companion object {
-    val LOG = logger<JavaLangLevelVirtualFileCustomDataProvider>()
+public class JavaLangLevelVirtualFileCustomDataProvider : VirtualFileCustomDataProvider<NullableLanguageLevelHolder> {
+  public companion object {
+    public val LOG: Logger = logger<JavaLangLevelVirtualFileCustomDataProvider>()
   }
 
   override val id: String = "virtualFileJavaLangLevel"

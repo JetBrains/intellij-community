@@ -230,6 +230,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/dataClassPropertyWithJava/dataClassPropertyWithJava.test");
     }
 
+    @TestMetadata("dataClassValuePropertyWithJava/dataClassPropertyWithJava.test")
+    public void testDataClassValuePropertyWithJava_DataClassPropertyWithJava() throws Exception {
+        runTest("testData/refactoring/rename/dataClassValuePropertyWithJava/dataClassPropertyWithJava.test");
+    }
+
     @TestMetadata("enumGetEntriesFromJava/enumValueOf.test")
     public void testEnumGetEntriesFromJava_EnumValueOf() throws Exception {
         runTest("testData/refactoring/rename/enumGetEntriesFromJava/enumValueOf.test");
@@ -943,6 +948,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
     @TestMetadata("renameKotlinFile/renameFile.test")
     public void testRenameKotlinFile_RenameFile() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinFile/renameFile.test");
+    }
+
+    @TestMetadata("renameKotlinFunWithJvmExposeBoxedByJavaRef/renameKotlinFunWithJvmExposeBoxedByJavaRef.test")
+    public void testRenameKotlinFunWithJvmExposeBoxedByJavaRef_RenameKotlinFunWithJvmExposeBoxedByJavaRef() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinFunWithJvmExposeBoxedByJavaRef/renameKotlinFunWithJvmExposeBoxedByJavaRef.test");
     }
 
     @TestMetadata("renameKotlinFunWithJvmNameByJavaRef/renameKotlinFunWithJvmNameByJavaRef.test")

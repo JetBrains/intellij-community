@@ -1,4 +1,4 @@
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
 
 public class Infer {
     static public boolean a(@NotNull String s) {

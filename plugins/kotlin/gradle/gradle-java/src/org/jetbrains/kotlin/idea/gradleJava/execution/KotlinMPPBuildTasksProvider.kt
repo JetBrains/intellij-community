@@ -47,7 +47,8 @@ class KotlinMPPBuildTasksProvider : GradleBuildTasksProvider {
         val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return
         val taskDataList = gradleModuleData.findAll(ProjectKeys.TASK).filter { !it.isInherited }
         if (taskDataList.isEmpty()) return
-        val taskPathPrefix = gradleModuleData.fullGradlePath.trimEnd(':') + ":"
+        val gradleIdentityPath = gradleModuleData.gradleIdentityPathOrNull ?: return
+        val taskPathPrefix = gradleIdentityPath.trimEnd(':') + ":"
         val gradleModuleTasks = taskDataList.map { it.name.removePrefix(taskPathPrefix) }
 
         fun Consumer<ExternalTaskPojo>.send(name: String) = this.consume(ExternalTaskPojo(name, rootProjectPath, null))

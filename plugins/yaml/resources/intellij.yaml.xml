@@ -32,6 +32,8 @@
     <renameInputValidator implementation="org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator" order="first"/>
     <applicationService serviceImplementation="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
     <applicationSettings service="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
+    <applicationService serviceImplementation="org.jetbrains.yaml.folding.YAMLFoldingSettings"/>
+    <codeFoldingOptionsProvider instance="org.jetbrains.yaml.folding.YAMLFoldingOptionsProvider"/>
     <rdct.remoteSettingProvider implementation="org.jetbrains.yaml.smart.YAMLRemoteSettingInfoProvider"/>
     <editorSmartKeysConfigurable instance="org.jetbrains.yaml.smart.YAMLSmartOptionsProvider"
                                  id="editor.preferences.yamlOptions"

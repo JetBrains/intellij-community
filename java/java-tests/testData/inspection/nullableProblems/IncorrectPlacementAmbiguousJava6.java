@@ -5,7 +5,7 @@ public class IncorrectPlacementAmbiguousJava6 extends <error descr="Type annotat
   
   <warning descr="Nullability annotation is not applicable to constructors">@Nullable</warning> IncorrectPlacementAmbiguousJava6() {}
   
-  void test(<error descr="Receiver parameters are not supported at language level '6'"><warning descr="Receiver parameter is inherently not-null">@Nullable</warning> IncorrectPlacementAmbiguousJava6 this</error>) {
+  void test(<error descr="Receiver parameters are not supported at language level '6'"><warning descr="Receiver parameter is inherently non-null">@Nullable</warning> IncorrectPlacementAmbiguousJava6 this</error>) {
     @Nullable IncorrectPlacementAmbiguousJava6.Inner a1;
     IncorrectPlacementAmbiguousJava6.<error descr="Type annotations are not supported at language level '6'">@Nullable</error> Inner a2;
   }

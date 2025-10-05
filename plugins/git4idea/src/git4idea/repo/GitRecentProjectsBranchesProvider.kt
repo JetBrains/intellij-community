@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.AsyncCacheLoader
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.vcs.RecentProjectsBranchesProvider
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -13,6 +12,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.application
 import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
@@ -34,9 +35,10 @@ import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readText
 
-internal class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvider {
-  override fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? =
-    application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath, nameIsDistinct)
+private class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvider {
+  override fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
+    return application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath, nameIsDistinct)
+  }
 }
 
 internal enum class RecentProjectsShowBranchMode {
@@ -57,12 +59,8 @@ internal enum class RecentProjectsShowBranchMode {
 }
 
 @Service
-internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineScope) : Disposable {
-  private val recentProjectsTopic = application.messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC)
-  private val appMessageBusConnection = application.messageBus.simpleConnect()
-
-  private val updateRecentProjectsSignal =
-    MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+internal class GitRecentProjectsBranchesService(private val coroutineScope: CoroutineScope) {
+  private val updateRecentProjectsSignal = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val cache: AsyncLoadingCache<String, GitRecentProjectCachedBranch> = CaffeineUtil.withIoExecutor()
     .refreshAfterWrite(REFRESH_IN)
@@ -70,7 +68,7 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
     .buildAsync(BranchesLoader())
 
   init {
-    appMessageBusConnection.subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
+    application.messageBus.connect(coroutineScope).subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
       override fun applicationActivated(ideFrame: IdeFrame) {
         if (ideFrame.project?.isDefault == true) {
           cache.synchronous().refreshAll(cache.asMap().keys)
@@ -79,6 +77,7 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
     })
 
     coroutineScope.launch {
+      val recentProjectsTopic = application.messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC)
       @OptIn(FlowPreview::class)
       updateRecentProjectsSignal.debounce(50).collectLatest {
         withContext(Dispatchers.EDT) {
@@ -93,13 +92,16 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
     if (!showBranchMode.shouldShow(nameIsDistinct)) {
       return null
     }
+
+    // IJPL-194035
+    // Avoid greedy I/O under non-local projects. For example, in the case of WSL:
+    //	1.	it may trigger Ijent initialization for each recent project
+    //	2.	with Ijent disabled, performance may degrade further — 9P is very slow and could lead to UI freezes
+    if (Path(projectPath).getEelDescriptor() != LocalEelDescriptor) {
+      return null
+    }
     val branchFuture = cache.get(projectPath)
     return (branchFuture.getNow(GitRecentProjectCachedBranch.Unknown) as? GitRecentProjectCachedBranch.KnownBranch)?.branchName
-  }
-
-  override fun dispose() {
-    appMessageBusConnection.disconnect()
-    cache.synchronous().invalidateAll()
   }
 
   private inner class BranchesLoader : AsyncCacheLoader<String, GitRecentProjectCachedBranch> {

@@ -43,7 +43,7 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   @Override
   public @Nullable PyType getReturnType(final @NotNull TypeEvalContext context) {
     if (isDefinition()) {
-      return new PyCollectionTypeImpl(getPyClass(), false, myElementTypes);
+      return withUserDataCopy(new PyCollectionTypeImpl(getPyClass(), false, myElementTypes));
     }
     return null;
   }

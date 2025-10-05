@@ -16,6 +16,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.indexing.IndexingIteratorsProvider
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import com.intellij.util.indexing.roots.origin.IndexingUrlSourceRootHolder
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
@@ -74,6 +75,11 @@ object IndexableEntityProviderMethods {
     val roots = urlRoots.toSourceRootHolder()
     if (roots.isEmpty()) return emptyList()
     return listOf(ExternalEntityIndexableIteratorImpl(pointer, roots))
+  }
+
+  fun createExternalEntityIterators(pointer: EntityPointer<*>,
+                                    roots: IndexingSourceRootHolder): IndexableFilesIterator {
+    return ExternalEntityIndexableIteratorImpl(pointer, roots)
   }
 
   fun createCustomKindEntityIterators(pointer: EntityPointer<*>,

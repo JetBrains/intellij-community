@@ -3,20 +3,16 @@ package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.java.JavaBundle
 import com.intellij.lang.refactoring.InlineActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiIdentifier
-import com.intellij.psi.PsiJavaCodeReferenceElement
-import com.intellij.psi.PsiVariable
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
 internal class JavaInlineVariableCompletionCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
@@ -26,6 +22,8 @@ internal class JavaInlineVariableCompletionCommandProvider : CommandProvider {
     val javaRef = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement::class.java) ?: return emptyList()
     val psiElement = javaRef.resolve() ?: return emptyList()
     if (psiElement !is PsiVariable) return emptyList()
+    if (psiElement is PsiField && psiElement.initializer == null) return emptyList()
+    if (psiElement is PsiParameter) return emptyList()
     // Check if any inline handler can handle this element
     val editor = context.editor
     val extensionList = InlineActionHandler.EP_NAME.extensionList
@@ -49,16 +47,22 @@ internal class JavaInlineVariableCompletionCommandProvider : CommandProvider {
 
 private class JavaInlineVariableCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
-) : CompletionCommand(), DumbAware, CompletionCommandWithPreview {
+) : CompletionCommand(), DumbAware {
+
+  override val additionalInfo: String?
+    get() {
+      val shortcutText = KeymapUtil.getFirstKeyboardShortcutText("Inline")
+      if (shortcutText.isNotEmpty()) {
+        return shortcutText
+      }
+      return null
+    }
+
   override val synonyms: List<String>
     get() = listOf("inline", "insert")
 
   override val presentableName: @Nls String
     get() = JavaBundle.message("command.completion.inline.text")
-
-
-  override val icon: Icon
-    get() = AllIcons.Actions.RefactoringBulb // Use an appropriate icon from IntelliJ's icon set
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return

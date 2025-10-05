@@ -4,11 +4,13 @@ package com.intellij.ui;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -203,6 +205,25 @@ public final class SimpleTextAttributes {
     return BitUtil.isSet(myStyle, STYLE_FADED);
   }
 
+  /**
+   * Adapts {@link MarkupText.Kind} to {@code SimpleTextAttributes}.
+   * 
+   * @param kind kind of {@link MarkupText}
+   * @return the corresponding {@code SimpleTextAttributes} object
+   */
+  @ApiStatus.Experimental
+  public static @NotNull SimpleTextAttributes fromMarkupTextKind(MarkupText.@NotNull Kind kind) {
+    return switch (kind) {
+      case NORMAL -> REGULAR_ATTRIBUTES;
+      case EMPHASIZED -> REGULAR_ITALIC_ATTRIBUTES;
+      case STRONG -> REGULAR_BOLD_ATTRIBUTES;
+      case UNDERLINED -> new SimpleTextAttributes(STYLE_UNDERLINE, null);
+      case ERROR -> ERROR_ATTRIBUTES;
+      case STRIKEOUT -> new SimpleTextAttributes(STYLE_STRIKEOUT, null);
+      case GRAYED -> GRAYED_ATTRIBUTES;
+    };
+  }
+  
   public static @NotNull SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
     if (attributes == null) return REGULAR_ATTRIBUTES;
 

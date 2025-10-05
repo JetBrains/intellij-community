@@ -4,8 +4,10 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 
-final class CurrentUserMacro extends SimpleMacro {
+@ApiStatus.Internal
+public final class CurrentUserMacro extends SimpleMacro {
   CurrentUserMacro() {
     super("user");
   }

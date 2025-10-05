@@ -15,8 +15,8 @@ abstract class AbstractCombinedSourceAndClassRootsScopeStructureTest : AbstractC
       combinedLibrarySourcesScope: CombinedSourceAndClassRootsScope?,
       combinedScope: CombinedSourceAndClassRootsScope?,
     ) {
-        val modulesWithProductionRoots = includedTestModulesWithProductionRoots.toModuleSet()
-        val modulesWithTestRoots = includedTestModulesWithTestRoots.toModuleSet()
+        val modulesWithProductionRoots = includedTestModules.toModuleSet()
+        val modulesWithTestRoots = includedTestModules.toModuleSet()
 
         val productionRoots = includedTestModules.flatMap { it.contentRootVirtualFilesByKind(TestContentRootKind.PRODUCTION) }
         if (combinedProductionScope != null) {

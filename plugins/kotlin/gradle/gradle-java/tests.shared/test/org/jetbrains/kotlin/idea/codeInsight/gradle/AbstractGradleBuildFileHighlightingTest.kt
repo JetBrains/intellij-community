@@ -73,7 +73,7 @@ abstract class AbstractGradleBuildFileHighlightingTest : KotlinGradleImportingTe
 
 
     private fun Path.relativeToProjectRoot(): String =
-        relativeTo(projectRoot.toNioPath()).pathString
+        relativeTo(myProjectRoot.toNioPath()).pathString
 
     protected fun VirtualFile.relativeToProjectRoot(): String =
         toNioPath().relativeToProjectRoot()

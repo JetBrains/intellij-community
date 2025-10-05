@@ -23,7 +23,6 @@ import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.AnnotationBuilder;
-import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -31,58 +30,62 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 
-public class UnsupportedFeatures extends CompatibilityVisitor {
-
-  public UnsupportedFeatures() {
-    super(new ArrayList<>());
+public class UnsupportedFeatures extends PyAnnotatorBase {
+  @Override
+  protected void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
+    element.accept(new MyVisitor(holder, List.of(LanguageLevel.forElement(element))));
   }
 
-  @Override
-  public synchronized void annotateElement(PsiElement psiElement, AnnotationHolder holder) {
-    setVersionsToProcess(Collections.singletonList(LanguageLevel.forElement(psiElement)));
-    super.annotateElement(psiElement, holder);
-  }
+  private static class MyVisitor extends PyCompatibilityVisitor {
+    private final @NotNull PyAnnotationHolder myHolder;
 
-  @Override
-  protected void registerProblem(@NotNull PsiElement node,
-                                 @NotNull TextRange range,
-                                 @NotNull String message,
-                                 boolean asError,
-                                 LocalQuickFix @NotNull ... fixes) {
-    if (range.isEmpty()) {
-      return;
+    private MyVisitor(@NotNull PyAnnotationHolder holder, @NotNull List<LanguageLevel> versionsToProcess) {
+      super(versionsToProcess);
+      myHolder = holder;
     }
 
-    HighlightSeverity severity = asError ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
-    if (fixes.length > 0) {
-      AnnotationBuilder annotationBuilder = getHolder().newAnnotation(severity, message).range(range);
-      for (LocalQuickFix fix: fixes) {
-        if (fix != null) {
-          annotationBuilder = annotationBuilder.withFix(createIntention(node, message, fix));
-        }
+    @Override
+    protected void registerProblem(@NotNull PsiElement node,
+                                   @NotNull TextRange range,
+                                   @NotNull String message,
+                                   boolean asError,
+                                   LocalQuickFix @NotNull ... fixes) {
+      if (range.isEmpty()) {
+        return;
       }
-      annotationBuilder.create();
+
+      HighlightSeverity severity = asError ? HighlightSeverity.ERROR : HighlightSeverity.WARNING;
+      if (fixes.length > 0) {
+        AnnotationBuilder annotationBuilder = myHolder.newAnnotation(severity, message).range(range);
+        for (LocalQuickFix fix : fixes) {
+          if (fix != null) {
+            annotationBuilder = annotationBuilder.withFix(createIntention(node, message, fix));
+          }
+        }
+        annotationBuilder.create();
+      }
+      else {
+        myHolder.newAnnotation(severity, message).range(range).create();
+      }
     }
-    else {
-      getHolder().newAnnotation(severity, message).range(range).create();
+
+    private static @NotNull IntentionAction createIntention(@NotNull PsiElement node,
+                                                            @NotNull @InspectionMessage String message,
+                                                            @NotNull LocalQuickFix localQuickFix) {
+      return createIntention(node, null, message, localQuickFix);
     }
-  }
 
-  private static @NotNull IntentionAction createIntention(@NotNull PsiElement node, @NotNull @InspectionMessage String message, @NotNull LocalQuickFix localQuickFix) {
-    return createIntention(node, null, message, localQuickFix);
-  }
+    private static @NotNull IntentionAction createIntention(@NotNull PsiElement node,
+                                                            @Nullable TextRange range,
+                                                            @NotNull @InspectionMessage String message,
+                                                            @NotNull LocalQuickFix localQuickFix) {
+      final LocalQuickFix[] quickFixes = {localQuickFix};
+      ProblemDescriptor descr =
+        new ProblemDescriptorImpl(node, node, message, quickFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, range, true);
 
-  private static @NotNull IntentionAction createIntention(@NotNull PsiElement node,
-                                                          @Nullable TextRange range,
-                                                          @NotNull @InspectionMessage String message,
-                                                          @NotNull LocalQuickFix localQuickFix) {
-    final LocalQuickFix[] quickFixes = {localQuickFix};
-    ProblemDescriptor descr =
-      new ProblemDescriptorImpl(node, node, message, quickFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, range, true);
-
-    return QuickFixWrapper.wrap(descr, 0);
+      return QuickFixWrapper.wrap(descr, 0);
+    }
   }
 }

@@ -60,6 +60,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/annotations/ArrayOf2.kt");
             }
 
+            @TestMetadata("BeforeLambda.kt")
+            public void testBeforeLambda() throws Exception {
+                runTest("../testData/basic/common/annotations/BeforeLambda.kt");
+            }
+
             @TestMetadata("ClassReference.kt")
             public void testClassReference() throws Exception {
                 runTest("../testData/basic/common/annotations/ClassReference.kt");
@@ -742,6 +747,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("SingleConstructor.kt")
             public void testSingleConstructor() throws Exception {
                 runTest("../testData/basic/common/constructor/SingleConstructor.kt");
+            }
+
+            @TestMetadata("SubclassConstructor.kt")
+            public void testSubclassConstructor() throws Exception {
+                runTest("../testData/basic/common/constructor/SubclassConstructor.kt");
             }
         }
 
@@ -3177,6 +3187,21 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/AfterIntSeparatedWithComments.kt");
             }
 
+            @TestMetadata("AlwaysCompleteNonSubPackages.kt")
+            public void testAlwaysCompleteNonSubPackages() throws Exception {
+                runTest("../testData/basic/common/AlwaysCompleteNonSubPackages.kt");
+            }
+
+            @TestMetadata("AlwaysCompleteTopLevelPackagesInImport.kt")
+            public void testAlwaysCompleteTopLevelPackagesInImport() throws Exception {
+                runTest("../testData/basic/common/AlwaysCompleteTopLevelPackagesInImport.kt");
+            }
+
+            @TestMetadata("AlwaysCompleteTopLevelPackagesInPackageStatement.kt")
+            public void testAlwaysCompleteTopLevelPackagesInPackageStatement() throws Exception {
+                runTest("../testData/basic/common/AlwaysCompleteTopLevelPackagesInPackageStatement.kt");
+            }
+
             @TestMetadata("ambiguousSuperMethod.kt")
             public void testAmbiguousSuperMethod() throws Exception {
                 runTest("../testData/basic/common/ambiguousSuperMethod.kt");
@@ -3257,6 +3282,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/ConsiderExtensionType.kt");
             }
 
+            @TestMetadata("ContextParameter.kt")
+            public void testContextParameter() throws Exception {
+                runTest("../testData/basic/common/ContextParameter.kt");
+            }
+
             @TestMetadata("CoroutineContextReleaseCoroutines.kt")
             public void testCoroutineContextReleaseCoroutines() throws Exception {
                 runTest("../testData/basic/common/CoroutineContextReleaseCoroutines.kt");
@@ -3275,6 +3305,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("DoWhile.kt")
             public void testDoWhile() throws Exception {
                 runTest("../testData/basic/common/DoWhile.kt");
+            }
+
+            @TestMetadata("DontIncreaseInvocationCountIfSomethingFound.kt")
+            public void testDontIncreaseInvocationCountIfSomethingFound() throws Exception {
+                runTest("../testData/basic/common/DontIncreaseInvocationCountIfSomethingFound.kt");
             }
 
             @TestMetadata("DontPreferNothingType.kt")
@@ -3582,6 +3617,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/InTypeAnnotation.kt");
             }
 
+            @TestMetadata("IncreaseInvocationCountIfNothingFound.kt")
+            public void testIncreaseInvocationCountIfNothingFound() throws Exception {
+                runTest("../testData/basic/common/IncreaseInvocationCountIfNothingFound.kt");
+            }
+
             @TestMetadata("InfixCall.kt")
             public void testInfixCall() throws Exception {
                 runTest("../testData/basic/common/InfixCall.kt");
@@ -3797,6 +3837,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/NestedClassesOnDefaultObjectLiteral.kt");
             }
 
+            @TestMetadata("NoClassMembersHighInvocationCount.kt")
+            public void testNoClassMembersHighInvocationCount() throws Exception {
+                runTest("../testData/basic/common/NoClassMembersHighInvocationCount.kt");
+            }
+
             @TestMetadata("NoClassNameDuplication.kt")
             public void testNoClassNameDuplication() throws Exception {
                 runTest("../testData/basic/common/NoClassNameDuplication.kt");
@@ -3867,6 +3912,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/NoTopLevelCompletionInQualifiedUserTypes.kt");
             }
 
+            @TestMetadata("NoTopLevelPackagesIfDisabled.kt")
+            public void testNoTopLevelPackagesIfDisabled() throws Exception {
+                runTest("../testData/basic/common/NoTopLevelPackagesIfDisabled.kt");
+            }
+
             @TestMetadata("ObjectInTypePosition.kt")
             public void testObjectInTypePosition() throws Exception {
                 runTest("../testData/basic/common/ObjectInTypePosition.kt");
@@ -3895,6 +3945,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("parameterDefaultValueInFunction.kt")
             public void testParameterDefaultValueInFunction() throws Exception {
                 runTest("../testData/basic/common/parameterDefaultValueInFunction.kt");
+            }
+
+            @TestMetadata("PreferExceptionsInCatch.kt")
+            public void testPreferExceptionsInCatch() throws Exception {
+                runTest("../testData/basic/common/PreferExceptionsInCatch.kt");
             }
 
             @TestMetadata("PreferLessParameters.kt")
@@ -4459,6 +4514,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/java/importAliases/KDocExtension.kt");
             }
 
+            @TestMetadata("MultipleInScope.kt")
+            public void testMultipleInScope() throws Exception {
+                runTest("../testData/basic/java/importAliases/MultipleInScope.kt");
+            }
+
             @TestMetadata("PrefixUsed.kt")
             public void testPrefixUsed() throws Exception {
                 runTest("../testData/basic/java/importAliases/PrefixUsed.kt");
@@ -4619,6 +4679,16 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AliasedJavaClassFirstInvocation.kt")
+            public void testAliasedJavaClassFirstInvocation() throws Exception {
+                runTest("../testData/basic/java/AliasedJavaClassFirstInvocation.kt");
+            }
+
+            @TestMetadata("AliasedJavaClassSecondInvocation.kt")
+            public void testAliasedJavaClassSecondInvocation() throws Exception {
+                runTest("../testData/basic/java/AliasedJavaClassSecondInvocation.kt");
             }
 
             @TestMetadata("AutoForceCompletion.kt")

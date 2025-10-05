@@ -444,7 +444,7 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
       }
     })
     messageBus.subscribe(PolyContextChangeListener.TOPIC, PolyContextChangeListener {
-      DaemonCodeAnalyzer.getInstance(project).restart()
+      DaemonCodeAnalyzer.getInstance(project).restart("PolyContextDiscoveryInfo.PolyContextChangeListener")
     })
     messageBus.subscribe(VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {

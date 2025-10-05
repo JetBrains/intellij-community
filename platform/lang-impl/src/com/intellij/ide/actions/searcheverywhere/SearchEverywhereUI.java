@@ -5,7 +5,6 @@ import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.SearchEverywhereItem;
-import com.intellij.find.impl.TextSearchRightActionAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -30,14 +29,12 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -55,6 +52,7 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -67,7 +65,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
-import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -81,7 +78,6 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -157,7 +153,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
   private UsagePreviewPanel myUsagePreviewPanel;
   private UsageViewPresentation myUsageViewPresentation;
-  private static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
+  @ApiStatus.Internal
+  public static final String SPLITTER_SERVICE_KEY = "search.everywhere.splitter";
 
   private static final Logger LOG = Logger.getInstance(SearchEverywhereUI.class);
 
@@ -264,6 +261,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   @Override
   public void addSearchListener(@NotNull SearchListener listener) {
     myExternalSearchListeners.add(listener);
+  }
+
+  @Override
+  @ApiStatus.Experimental
+  public void addSplitSearchListener(@NotNull SplitSearchListener listener) {
+    addSearchListener(listener.toSearchListener());
   }
 
   public void removeSearchListener(SearchListener listener) {
@@ -379,15 +382,15 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (mySearchField == null) return;
 
     List<SearchEverywhereContributor<?>> contributors = myHeader.getSelectedTab().getContributors();
-    String advertisementText = ReadAction.compute(() -> getWarning(contributors));
-    if (advertisementText != null) {
-      myHintHelper.setWarning(advertisementText);
+    Pair<@Nls String, @Nls String> advertisementTextAndTooltip = ReadAction.compute(() -> getLoadingTextAndTooltip(contributors));
+    if (advertisementTextAndTooltip != null) {
+      myHintHelper.setLoadingText(advertisementTextAndTooltip.first, advertisementTextAndTooltip.second);
       updateRightActions(contributors);
       return;
     }
 
-    advertisementText = getAdvertisement(contributors);
-    myHintHelper.setHint(advertisementText);
+    String hint = getAdvertisement(contributors);
+    myHintHelper.setHint(hint);
 
     updateRightActions(contributors);
   }
@@ -424,7 +427,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   }
 
   @RequiresReadLock
-  private @Nls @Nullable String getWarning(List<SearchEverywhereContributor<?>> contributors) {
+  private @Nullable Pair<@Nls String, @Nls String> getLoadingTextAndTooltip(List<SearchEverywhereContributor<?>> contributors) {
     if (myProject == null) return null;
 
     boolean isDumb = DumbService.isDumb(myProject);
@@ -436,8 +439,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (!containsPSIContributors) return null;
 
     return isDumb
-           ? IdeBundle.message("dumb.mode.results.might.be.incomplete")
-           : IdeBundle.message("incomplete.mode.results.might.be.incomplete");
+           ? new Pair<>(IdeBundle.message("dumb.mode.results.might.be.incomplete"), IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"))
+           : new Pair<>(IdeBundle.message("incomplete.mode.results.might.be.incomplete"), null);
   }
 
   @Override
@@ -820,9 +823,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
                          ? myHeader.getSelectedTab().getContributors().get(0).filterControlSymbols(rawPattern)
                          : rawPattern;
 
-    MinusculeMatcher matcher =
-      NameUtil.buildMatcherWithFallback("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
-    MatcherHolder.associateMatcher(myResultsList, matcher);
+    associateMatcherToResultsList(myResultsList, rawPattern, namePattern);
 
     Map<SearchEverywhereContributor<?>, Integer> contributorsMap = new HashMap<>();
 
@@ -835,15 +836,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       if (contributors.isEmpty() && DumbService.isDumb(myProject)) {
         DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.SearchEverywhere);
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported",
-                                                     myHeader.getSelectedTab().getName(),
-                                                     ApplicationNamesInfo.getInstance().getFullProductName()));
+                                                     myHeader.getSelectedTab().getName()));
         myListModel.clear();
         return;
       }
       if (contributors.size() != contributorsMap.size()) {
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.incomplete.results",
-                                                     myHeader.getSelectedTab().getName(),
-                                                     ApplicationNamesInfo.getInstance().getFullProductName()));
+                                                     myHeader.getSelectedTab().getName()));
       }
     }
 
@@ -887,6 +886,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     myHintHelper.setSearchInProgress(StringUtil.isNotEmpty(getSearchPattern()));
     mySearchProgressIndicator = mySearcher.search(contributorsMap, rawPattern);
+  }
+
+  @ApiStatus.Internal
+  public static void associateMatcherToResultsList(JComponent resultsList, String rawPattern, String namePattern) {
+    MinusculeMatcher matcher =
+      NameUtil.buildMatcherWithFallback("*" + rawPattern, "*" + namePattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MatcherHolder.associateMatcher(resultsList, matcher);
   }
 
   private void initSearchActions() {
@@ -1066,8 +1072,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     return Registry.is("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal();
   }
 
-  static boolean isPreviewEnabled() {
-    return PreviewExperiment.isExperimentEnabled() && !PlatformUtils.isJetBrainsClient();
+  private boolean isPreviewEnabled() {
+    return SearchEverywhereManager.getInstance(myProject).isPreviewEnabled();
   }
 
   private static boolean isPreviewActive() {
@@ -1472,6 +1478,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       presentation.setTargetsNodeText(IdeBundle.message("searcheverywhere.found.targets.title", searchText, contributorsString));
       presentation.setTabName(tabCaptionText);
       presentation.setTabText(tabCaptionText);
+      presentation.setSearchString(searchText);
 
       Collection<Usage> usages = new LinkedHashSet<>();
       Collection<PsiElement> targets = new LinkedHashSet<>();
@@ -1906,129 +1913,4 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     }
   };
 
-  private static final class HintHelper {
-
-    private final ExtendableTextField myTextField;
-
-    private final TextIcon myHintTextIcon = new TextIcon("", JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(), Gray.TRANSPARENT, 0);
-    private final RowIcon myWarnIcon = new RowIcon(2, com.intellij.ui.icons.RowIcon.Alignment.BOTTOM);
-    private final ExtendableTextComponent.Extension myHintExtension = createExtension(myHintTextIcon);
-    private final ExtendableTextComponent.Extension mySearchProcessExtension = createExtension(AnimatedIcon.Default.INSTANCE);
-    private final ExtendableTextComponent.Extension myWarningExtension;
-    private final List<ExtendableTextComponent.Extension> myRightExtensions = new ArrayList<>();
-
-    private HintHelper(ExtendableTextField field) {
-      myTextField = field;
-      myHintTextIcon.setFont(myTextField.getFont());
-      myHintTextIcon.setFontTransform(FontInfo.getFontRenderContext(myTextField).getTransform());
-      // Try aligning hint by baseline with the text field
-      myHintTextIcon.setInsets(JBUIScale.scale(3), 0, 0, 0);
-
-      myWarnIcon.setIcon(AllIcons.General.Warning, 0);
-      myWarnIcon.setIcon(myHintTextIcon, 1);
-      myWarningExtension = createExtension(myWarnIcon);
-    }
-
-    public void setHint(String hintText) {
-      myTextField.removeExtension(myHintExtension);
-      myTextField.removeExtension(myWarningExtension);
-      if (StringUtil.isNotEmpty(hintText)) {
-        myHintTextIcon.setText(hintText);
-        addExtensionAsLast(myHintExtension);
-      }
-    }
-
-    public void setWarning(String warnText) {
-      myTextField.removeExtension(myHintExtension);
-      myTextField.removeExtension(myWarningExtension);
-      if (StringUtil.isNotEmpty(warnText)) {
-        myHintTextIcon.setText(warnText);
-        myWarnIcon.setIcon(myHintTextIcon, 1);
-        addExtensionAsLast(myWarningExtension);
-      }
-    }
-
-    public void setSearchInProgress(boolean inProgress) {
-      myTextField.removeExtension(mySearchProcessExtension);
-      if (inProgress) myTextField.addExtension(mySearchProcessExtension);
-    }
-
-    //set extension which should be shown last
-    private void addExtensionAsLast(ExtendableTextComponent.Extension ext) {
-      ArrayList<ExtendableTextComponent.Extension> extensions = new ArrayList<>(myTextField.getExtensions());
-      extensions.add(0, ext);
-      myTextField.setExtensions(extensions);
-    }
-
-    private static @NotNull ExtendableTextComponent.Extension createExtension(Icon icon) {
-      return new ExtendableTextComponent.Extension() {
-        @Override
-        public Icon getIcon(boolean hovered) {
-          return icon;
-        }
-      };
-    }
-
-    private void setRightExtensions(@NotNull List<? extends AnAction> actions) {
-      myTextField.removeExtension(myHintExtension);
-      myTextField.removeExtension(myWarningExtension);
-      actions.stream().map(HintHelper::createRightActionExtension).forEach(it -> {
-        addExtensionAsLast(it);
-        myRightExtensions.add(it);
-      });
-    }
-
-    private void removeRightExtensions() {
-      myRightExtensions.forEach(myTextField::removeExtension);
-    }
-
-    private static @NotNull ExtendableTextComponent.Extension createRightActionExtension(@NotNull AnAction action) {
-      return new ExtendableTextComponent.Extension() {
-        @Override
-        public Icon getIcon(boolean hovered) {
-          Presentation presentation = action.getTemplatePresentation();
-          if (!(action instanceof TextSearchRightActionAction)) return presentation.getIcon();
-
-          if (((TextSearchRightActionAction)action).isSelected()) {
-            return presentation.getSelectedIcon();
-          }
-          else if (hovered) {
-            return presentation.getHoveredIcon();
-          }
-          else {
-            return presentation.getIcon();
-          }
-        }
-
-        @Override
-        public String getTooltip() {
-          return action instanceof TextSearchRightActionAction
-                 ? ((TextSearchRightActionAction)action).getTooltip()
-                 : action.getTemplatePresentation().getDescription();
-        }
-
-        @Override
-        public boolean isSelected() {
-          return action instanceof ToggleAction toggleAction && toggleAction.isSelected(createActionEvent());
-        }
-
-        @Override
-        public Dimension getButtonSize() {
-          return ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE;
-        }
-
-        @Override
-        public Runnable getActionOnClick() {
-          return () -> {
-            action.actionPerformed(createActionEvent());
-          };
-        }
-
-        private AnActionEvent createActionEvent() {
-          return AnActionEvent.createFromDataContext(ActionPlaces.POPUP, action.getTemplatePresentation().clone(),
-                                                     DataContext.EMPTY_CONTEXT);
-        }
-      };
-    }
-  }
 }

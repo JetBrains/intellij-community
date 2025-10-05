@@ -1,8 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
-  <xi:include href="/META-INF/RegExpPlugin.xml">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/structuralsearch.xml">
     <xi:fallback/>
   </xi:include>

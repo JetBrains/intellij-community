@@ -208,7 +208,7 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     }
     jitWatcher.checkJitState()
     LOG.trace("Scheduling EDT sample")
-    val latencyMs = withContext(Dispatchers.ui(UiDispatcherKind.STRICT) + ModalityState.any().asContextElement()) {
+    val latencyMs = withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT) + ModalityState.any().asContextElement()) {
       LOG.trace("Processing EDT sample")
       TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - current)
     }

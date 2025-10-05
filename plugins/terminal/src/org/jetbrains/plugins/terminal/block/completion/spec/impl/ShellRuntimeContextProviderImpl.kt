@@ -2,33 +2,37 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
+import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.util.PathUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionScope
-import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
-import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
-import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
+import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
+import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 
-internal class ShellRuntimeContextProviderImpl(
+@ApiStatus.Internal
+class ShellRuntimeContextProviderImpl(
   private val project: Project,
-  private val session: BlockTerminalSession
+  private val session: BlockTerminalSession,
 ) : ShellRuntimeContextProvider {
 
-  val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
+  private val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
-  private val realGeneratorRunner: ShellCommandExecutor = ShellCommandExecutor { command ->
-    tracer.spanBuilder("terminal-completion-run-generator-command")
-      .setAttribute("terminal.command", command)
-      .useWithScope {
-      session.commandExecutionManager.runGeneratorAsync(command).await()
+  private val realGeneratorRunner: ShellCommandExecutor = object : ShellCommandExecutor {
+    override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
+      return tracer.spanBuilder("terminal-completion-run-generator-command")
+        .setAttribute("terminal.command", command)
+        .useWithScope {
+          session.commandExecutionManager.runGeneratorAsync(command).await()
+        }
     }
   }
 
@@ -58,9 +62,5 @@ internal class ShellRuntimeContextProviderImpl(
     ).apply {
       putUserData(PROJECT_KEY, project)
     }
-  }
-
-  companion object {
-    val KEY: Key<ShellRuntimeContextProviderImpl> = Key.create("IJShellRuntimeContextProvider")
   }
 }

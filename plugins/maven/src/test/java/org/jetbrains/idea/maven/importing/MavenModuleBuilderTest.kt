@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.WaitFor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -110,7 +109,6 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     val id = MavenId("org.foo", "module", "1.0")
     createNewModule(id)
 
-    waitForArchetypeGenerated("org.foo")
     val projects = MavenProjectsManager.getInstance(project).projects
     assertEquals(1, projects.size)
     val project = projects[0]
@@ -120,16 +118,6 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
     assertSources("module", "src/main/java")
     assertTestSources("module", "src/test/java")
-  }
-
-  private fun waitForArchetypeGenerated(groupId: String) {
-    object : WaitFor(10000) {
-      override fun condition(): Boolean {
-        val p = groupId.split('.').joinToString("/")
-        return java.nio.file.Files.exists(projectRoot.toNioPath().resolve("src/main/java/$p/App.java"))
-               && java.nio.file.Files.exists(projectRoot.toNioPath().resolve("src/test/java/$p/AppTest.java"))
-      }
-    }
   }
 
   @Test
@@ -147,17 +135,17 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
     assertEquals("""
       <?xml version="1.0"?>
-      <project xmlns="http://maven.apache.org/POM/4.0.0"
+      <project xmlns="http://maven.apache.org/POM/$modelVersion"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <modelVersion>4.0.0</modelVersion>
+               xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
+        <modelVersion>$modelVersion</modelVersion>
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
           <packaging>pom</packaging>
-          <modules>
-              <module>module</module>
-          </modules>
+          <$modulesTag>
+              <$moduleTag>module</$moduleTag>
+          </$modulesTag>
       </project>
     """.trimIndent(),
                  StringUtil.convertLineSeparators(VfsUtil.loadText(projectPom)))
@@ -297,7 +285,6 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     setInheritedOptions(true, true)
     setArchetype(MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null))
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    waitForArchetypeGenerated("org.foo")
 
     val expectedModulePom = """
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

@@ -1,3 +1,5 @@
+f:com.intellij.ui.ColorUtil
+- *s:editorFaded(java.awt.Color,Z):java.awt.Color
 f:com.intellij.ui.ComponentUtil
 - *s:isShowing(java.awt.Component,Z):Z
 f:com.intellij.ui.render.RenderingUtil

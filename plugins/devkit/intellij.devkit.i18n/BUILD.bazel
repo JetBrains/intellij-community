@@ -1,16 +1,15 @@
 ### auto-generated section `build intellij.devkit.i18n` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "i18n_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "i18n_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -18,7 +17,8 @@ jvm_library(
   name = "i18n",
   module_name = "intellij.devkit.i18n",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":i18n_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-indexing-api:indexing",
@@ -37,14 +37,14 @@ jvm_library(
     "//xml/xml-psi-impl:psi-impl",
     "//plugins/devkit/devkit-core:core",
     "//platform/core-ui",
-  ],
-  runtime_deps = [":i18n_resources"]
+  ]
 )
 
 jvm_library(
   name = "i18n_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":i18n_test_resources"],
   associates = [":i18n"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -70,16 +70,17 @@ jvm_library(
     "//java/testFramework",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "//platform/core-ui",
-  ],
-  runtime_deps = [
-    ":i18n_resources",
-    ":i18n_test_resources",
   ]
 )
+### auto-generated section `build intellij.devkit.i18n` end
+
+### auto-generated section `test intellij.devkit.i18n` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "i18n_test",
   runtime_deps = [":i18n_test_lib"]
 )
-### auto-generated section `build intellij.devkit.i18n` end
+### auto-generated section `test intellij.devkit.i18n` end

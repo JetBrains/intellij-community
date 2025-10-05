@@ -3,6 +3,8 @@ package org.jetbrains.jewel.foundation.lazy
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,23 +12,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.referentialEqualityPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.focused
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -37,6 +42,39 @@ import org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnEvent
 import org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnKeyActions
 import org.jetbrains.jewel.foundation.lazy.tree.KeyActions
 import org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
+
+@Composable
+@Deprecated("Use SelectableLazyColumn with 'interactionSource' parameter instead")
+public fun SelectableLazyColumn(
+    modifier: Modifier = Modifier,
+    selectionMode: SelectionMode = SelectionMode.Multiple,
+    state: SelectableLazyListState = rememberSelectableLazyListState(),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    reverseLayout: Boolean = false,
+    onSelectedIndexesChange: (List<Int>) -> Unit = {},
+    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
+    keyActions: KeyActions = DefaultSelectableLazyColumnKeyActions,
+    pointerEventActions: PointerEventActions = DefaultSelectableLazyColumnEventAction(),
+    content: SelectableLazyListScope.() -> Unit,
+) {
+    SelectableLazyColumn(
+        modifier = modifier,
+        selectionMode = selectionMode,
+        state = state,
+        contentPadding = contentPadding,
+        reverseLayout = reverseLayout,
+        onSelectedIndexesChange = onSelectedIndexesChange,
+        verticalArrangement = verticalArrangement,
+        horizontalAlignment = horizontalAlignment,
+        flingBehavior = flingBehavior,
+        keyActions = keyActions,
+        pointerEventActions = pointerEventActions,
+        interactionSource = null,
+        content = content,
+    )
+}
 
 /** A composable that displays a scrollable and selectable list of items in a column arrangement. */
 @Composable
@@ -52,13 +90,20 @@ public fun SelectableLazyColumn(
     flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
     keyActions: KeyActions = DefaultSelectableLazyColumnKeyActions,
     pointerEventActions: PointerEventActions = DefaultSelectableLazyColumnEventAction(),
+    interactionSource: MutableInteractionSource? = null,
     content: SelectableLazyListScope.() -> Unit,
 ) {
+    val intSource = interactionSource ?: remember { MutableInteractionSource() }
+
     val scope = rememberCoroutineScope()
-    val container = remember(content) { SelectableLazyListScopeContainer().apply(content) }
+    val latestContent = rememberUpdatedState(content)
+    val containerState by remember {
+        derivedStateOf(referentialEqualityPolicy()) { SelectableLazyListScopeContainer().apply(latestContent.value) }
+    }
+    val container = containerState
 
     val keys = remember(container) { container.getKeys() }
-    var isFocused by remember { mutableStateOf(false) }
+    val isFocused by intSource.collectIsFocusedAsState()
 
     var lastSelectedKeys by remember { mutableStateOf(state.selectedKeys) }
     LaunchedEffect(state.selectedKeys, onSelectedIndexesChange, container) {
@@ -69,21 +114,21 @@ public fun SelectableLazyColumn(
         onSelectedIndexesChange(indices)
     }
 
+    LaunchedEffect(isFocused) {
+        with(state) {
+            if (isFocused && lastActiveItemIndex == null && selectedKeys.isEmpty()) {
+                keyActions.actions.onSelectFirstItem(keys, this)
+            }
+        }
+    }
+
     val focusRequester = remember { FocusRequester() }
     LazyColumn(
         modifier =
             modifier
-                .onFocusChanged {
-                    isFocused = it.hasFocus
-                    with(state) {
-                        if (isFocused && lastActiveItemIndex == null && selectedKeys.isEmpty()) {
-                            keyActions.actions.onSelectFirstItem(keys, this)
-                        }
-                    }
-                }
                 .focusProperties { canFocus = true }
                 .focusRequester(focusRequester)
-                .focusable(enabled = true)
+                .focusable(enabled = true, intSource)
                 .onPreviewKeyEvent { event ->
                     if (event.key == Key.Tab) {
                         return@onPreviewKeyEvent false
@@ -225,6 +270,7 @@ private fun Modifier.selectable(
             selected = itemKey in selectableState.selectedKeys
             focused = selectableState.lastActiveItemIndex == allKeys.indexOfFirst { it.key == itemKey }
             stateDescription = ""
+            isTraversalGroup = false
         }
         // Handle pointer input but ensure Tab keys aren't intercepted
         .pointerInput(allKeys, itemKey) {
@@ -233,7 +279,6 @@ private fun Modifier.selectable(
                     val event = awaitPointerEvent()
                     when (event.type) {
                         PointerEventType.Press -> {
-                            requester?.requestFocus()
                             actionHandler.handlePointerEventPress(
                                 pointerEvent = event,
                                 keybindings = keybindings,
@@ -242,6 +287,7 @@ private fun Modifier.selectable(
                                 allKeys = allKeys,
                                 key = itemKey,
                             )
+                            requester?.requestFocus()
                         }
                     }
                 }

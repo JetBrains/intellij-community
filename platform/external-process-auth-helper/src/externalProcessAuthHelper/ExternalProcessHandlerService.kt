@@ -61,7 +61,7 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
   private val coroutineScope: CoroutineScope?
 ) {
 
-  @Deprecated("Use constructor with scriptMainInstance")
+  @Deprecated("Use constructor with scriptBody")
   constructor(scriptNamePrefix: String, scriptMainClass: Class<out ExternalApp>) :
     this(scriptNamePrefix, scriptMainClass, null, emptyList(), null)
 

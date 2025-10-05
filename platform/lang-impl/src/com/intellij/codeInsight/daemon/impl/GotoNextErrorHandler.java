@@ -16,7 +16,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -47,7 +49,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     int caretOffset = editor.getCaretModel().getOffset();
-    gotoNextError(project, editor, psiFile, caretOffset);
+    gotoNextError(project, psiFile, editor, caretOffset);
   }
 
   @Override
@@ -55,7 +57,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  private void gotoNextError(Project project, Editor editor, PsiFile psiFile, int caretOffset) {
+  private void gotoNextError(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull Editor editor, int caretOffset) {
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int maxSeverity = settings.isNextErrorActionGoesToErrorsFirst() ? severityRegistrar.getSeveritiesCount() - 1
@@ -89,7 +91,8 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     HighlightInfo[][] infoToGo = new HighlightInfo[2][2]; //HighlightInfo[luck-noluck][skip-noskip]
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     int caretOffsetIfNoLuck = myGoForward ? -1 : document.getTextLength();
-    DaemonCodeAnalyzerEx.processHighlights(document, project, minSeverity, 0, document.getTextLength(), context, info -> {
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
+    DaemonCodeAnalyzerEx.processHighlights(model, project, minSeverity, 0, document.getTextLength(), context, info -> {
       if (mySeverity != null && info.getSeverity() != mySeverity) return true;
       int startOffset = getNavigationPositionFor(info, document);
       if (SeverityRegistrar.isGotoBySeverityEnabled(info.getSeverity())) {
@@ -106,7 +109,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     return infoToGo[0][0];
   }
 
-  private HighlightInfo getBetterInfoThan(HighlightInfo infoToGo, int caretOffset, int startOffset, HighlightInfo info) {
+  private HighlightInfo getBetterInfoThan(HighlightInfo infoToGo, int caretOffset, int startOffset, @NotNull HighlightInfo info) {
     if (isBetterThan(infoToGo, caretOffset, startOffset)) {
       infoToGo = info;
     }
@@ -124,7 +127,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     }
   }
 
-  private void showMessageWhenNoHighlights(Project project, PsiFile psiFile, Editor editor, int caretOffset) {
+  private void showMessageWhenNoHighlights(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull Editor editor, int caretOffset) {
     DaemonCodeAnalyzerImpl codeHighlighter = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     if (codeHighlighter.isErrorAnalyzingFinished(psiFile)) {
@@ -139,16 +142,14 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
 
     Disposable hintDisposable = Disposer.newDisposable("GotoNextErrorHandler.showMessageWhenNoHighlights");
     Disposer.register(project, hintDisposable);
-    hint.addHintListener((eventObject) -> {
-      Disposer.dispose(hintDisposable);
-    });
+    hint.addHintListener(__ -> Disposer.dispose(hintDisposable));
 
     MessageBusConnection busConnection = project.getMessageBus().connect(hintDisposable);
     busConnection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
       @Override
       public void daemonFinished() {
         hint.hide();
-        gotoNextError(project, editor, psiFile, caretOffset);
+        gotoNextError(project, psiFile, editor, caretOffset);
       }
     });
 
@@ -182,7 +183,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
         scrollingModel.scrollTo(editor.offsetToLogicalPosition(Math.min(maxOffset, offset)), ScrollType.MAKE_VISIBLE);
 
         if (postNavigateRunnable != null) {
-          postNavigateRunnable.run();
+          scrollingModel.runActionOnScrollingFinished(postNavigateRunnable);
         }
       }
     );
@@ -192,7 +193,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     if (highlighter != null) ProblemsView.selectHighlighterIfVisible(project, highlighter);
   }
 
-  private static int getNavigationPositionFor(HighlightInfo info, Document document) {
+  private static int getNavigationPositionFor(@NotNull HighlightInfo info, @NotNull Document document) {
     int start = info.getActualStartOffset();
     int textLength = document.getTextLength();
     if (start >= textLength) return textLength;

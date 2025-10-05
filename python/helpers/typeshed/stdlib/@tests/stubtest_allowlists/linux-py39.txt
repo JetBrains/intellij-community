@@ -1,6 +1,19 @@
+# ========
+# 3.9 only
+# ========
+
 # `eventmask` argument exists at runtime, but is not correctly recognized
 # while being inspected by stubtest. Fixed in Python 3.10.
 select.epoll.register
 
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.12
+# =============================================================
+
 # doesn't exist on linux
+_msi
 msilib(.[a-z]+)?
+
+# doesn't exist in all installations
+(nis)?

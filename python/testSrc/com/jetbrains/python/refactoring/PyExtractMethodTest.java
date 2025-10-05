@@ -3,21 +3,39 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
 
 public class PyExtractMethodTest extends LightMarkedTestCase {
 
   private void doTest(String newName) {
     final String testName = getTestName(false);
-    final String beforeName = testName + ".before.py";
-    final String afterName = testName + ".after.py";
     final String dir = "refactoring/extractmethod/";
+    final String beforeName = dir + testName + ".before.py";
+    final String afterName = dir + testName + ".after.py";
+    final String afterWithTypesName = dir + testName + ".after.withTypes.py";
+    final boolean withTypeExists = new File(myFixture.getTestDataPath(), afterWithTypesName).isFile();
 
-    myFixture.configureByFile(dir + beforeName);
+    // perform without type annotations
+    PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), false);
+    performExtractMethod(newName, beforeName, afterName);
+
+    // perform with type annotations
+    FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()), myFixture.getProject());
+    PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), true);
+    performExtractMethod(newName, beforeName, withTypeExists ? afterWithTypesName : afterName);
+    PyExtractMethodUtil.setAddTypeAnnotations(myFixture.getProject(), false);
+  }
+
+  private void performExtractMethod(@NotNull String newName, @NotNull String beforeName, @NotNull String afterName) {
+    myFixture.configureByFile(beforeName);
     final RefactoringSupportProvider provider = LanguageRefactoringSupport.getInstance().forLanguage(PythonLanguage.getInstance());
     assertNotNull(provider);
     final RefactoringActionHandler handler = provider.getExtractMethodHandler();
@@ -29,7 +47,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     finally {
       System.clearProperty(PyExtractMethodUtil.NAME);
     }
-    myFixture.checkResultByFile(dir + afterName);
+    myFixture.checkResultByFile(afterName);
   }
 
   private void doFail(String newName, String message) {
@@ -116,6 +134,10 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   public void testNameCollisionSuperClass() {
     doFail("hello", "The method name clashes with an already existing name");
+  }
+
+  public void testNameCollisionOuterFunction() {
+    doFail("bar", "The method name clashes with an already existing name");
   }
 
   public void testOutNotEmptyStatements() {
@@ -324,5 +346,84 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   // PY-28972
   public void testInterruptedOuterLoop() {
     doFail("foo", "Cannot perform refactoring when execution flow is interrupted");
+  }
+
+  // PY-83001
+  public void testExtractCompleteBody() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport1() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport2() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport3() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport4() {
+    doTest("body");
+  }
+
+  // PY-83066
+  public void testExtractAddsImport5() {
+    doTest("body");
+  }
+
+  // PY-35287
+  public void testTypedStatements() {
+    doTest("greeting");
+  }
+
+  public void testPreserveWhitespaceBetweenStatements() {
+    doTest("extracted");
+  }
+
+  // PY-61591
+  public void testMethodNameCanShadowModuleFunction() {
+    doTest("_require_instance");
+  }
+
+  // PY-61591
+  public void testInnerFunctionWithSameNameAsOuterMethod() {
+    doTest("foo");
+  }
+
+  // PY-54512
+  public void testLineBreakOutsideBraces() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testLineBreakOutsideBraces2() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testLineBreakInsideBraces() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testExplicitLineJoining() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testGeneratorNoParens() {
+    doTest("bar");
+  }
+
+  // PY-54512
+  public void testGeneratorParenthesized() {
+    doTest("bar");
   }
 }

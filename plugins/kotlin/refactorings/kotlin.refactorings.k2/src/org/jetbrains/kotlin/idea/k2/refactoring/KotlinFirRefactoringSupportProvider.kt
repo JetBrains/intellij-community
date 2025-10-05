@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduceConstant.KotlinIntroduc
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceLambdaParameterHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinFirIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.KotlinIntroducePropertyHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractInterfaceHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperclassHandler
 import org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHandler
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownHandler
 
@@ -45,4 +47,8 @@ class KotlinFirRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun getPushDownHandler(): RefactoringActionHandler = KotlinPushDownHandler()
 
     override fun getPullUpHandler(): RefactoringActionHandler = KotlinPullUpHandler()
+
+    override fun getExtractInterfaceHandler(): RefactoringActionHandler = KotlinExtractInterfaceHandler
+
+    override fun getExtractSuperClassHandler(): RefactoringActionHandler = KotlinExtractSuperclassHandler
 }

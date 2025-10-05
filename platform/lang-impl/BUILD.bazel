@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.platform.lang.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "kt_javac_options", "resourcegroup")
 
 kt_javac_options(
   name = "custom-javac-options",
@@ -9,12 +8,13 @@ kt_javac_options(
   add_exports = [
     "java.desktop/sun.awt.image=ALL-UNNAMED",
     "java.desktop/sun.awt=ALL-UNNAMED",
-  ]
+  ],
+  no_proc = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "lang-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -23,6 +23,7 @@ jvm_library(
   module_name = "intellij.platform.lang.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":lang-impl_resources"],
   javac_opts = ":custom-javac-options",
   deps = [
     "//platform/boot",
@@ -49,15 +50,15 @@ jvm_library(
     "//platform/util/diff",
     "//platform/workspace/jps",
     "@lib//:swingx",
-    "@lib//:guava",
-    "@lib//:gson",
+    "//libraries/guava",
+    "//libraries/gson",
     "//jps/model-impl",
     "//platform/analysis-impl",
     "//platform/structure-view-impl:structureView-impl",
+    "@lib//:commons-lang3",
     "@lib//:commons-logging",
     "//platform/diff-impl",
     "//platform/built-in-server-api:builtInServer",
-    "@lib//:org-codehaus-groovy-groovy",
     "@lib//:x_stream",
     "@lib//:miglayout-swing",
     "//platform/ide-core/plugins",
@@ -66,9 +67,9 @@ jvm_library(
     "//platform/util",
     "//platform/service-container",
     "//platform/execution-impl",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:xz",
     "//platform/util/progress",
     "//platform/observable",
@@ -81,7 +82,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/tracing:tracing-rt",
     "//platform/rd-platform-community:rd-community",
@@ -101,11 +102,11 @@ jvm_library(
     "@lib//:jsoup",
     "//platform/backend/workspace",
     "//platform/diagnostic",
-    "@lib//:hash4j",
+    "//libraries/hash4j",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:kotlinx-serialization-protobuf",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/configuration-store-impl:configurationStore-impl",
     "//platform/util/coroutines",
     "//platform/analysis-api:analysis",
@@ -125,31 +126,29 @@ jvm_library(
     "//platform/experiment",
     "//platform/platform-impl/concurrency",
     "//platform/project/shared:project",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl/rpc",
   ],
   exports = [
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//platform/util",
-  ],
-  runtime_deps = [":lang-impl_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.lang.impl` end
 
 ### auto-generated section `build intellij.platform.lang.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
-java_library(
+jvm_library(
   name = "lang-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "lang-tests_test_lib",
+  module_name = "intellij.platform.lang.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
-  associates = ["//platform/lang-impl"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java", "testSources/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/boot",
@@ -171,6 +170,7 @@ jvm_library(
     "@lib//:junit4",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl",
     "//platform/usageView",
     "@lib//:cli-parser",
     "//platform/indexing-api:indexing",
@@ -179,9 +179,9 @@ jvm_library(
     "@lib//:assert_j",
     "//platform/projectModel-impl",
     "//platform/ide-core-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/editor-ui-ex:editor-ex",
-    "@lib//:gson",
+    "//libraries/gson",
     "//jps/model-impl",
     "//platform/analysis-impl",
     "//platform/structure-view-impl:structureView-impl",
@@ -192,9 +192,9 @@ jvm_library(
     "@lib//:jmock-legacy",
     "@lib//:jmock-junit4",
     "//platform/testFramework/extensions:testExtensions",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:xz",
     "@lib//:stream_ex",
     "@lib//:kotlinx-coroutines-core",
@@ -217,19 +217,40 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "@lib//:kotlinx-collections-immutable",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/testFramework/junit5/eel",
     "//platform/testFramework/junit5/eel:eel_test_lib",
     "//platform/eel-provider",
     "//platform/statistics/testFramework",
     "//platform/testFramework/junit5/projectStructure",
     "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
+    "@lib//:kotlinx-coroutines-test",
+    "//platform/util/coroutines",
+    "@lib//:mockito-kotlin",
+    "@lib//:mockito-junit-jupiter",
+    "@lib//:mockito",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+  ],
+  exports = [
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/indexing-impl",
+    "//platform/projectModel-impl",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/structure-view-impl:structureView-impl",
   ]
 )
+### auto-generated section `build intellij.platform.lang.tests` end
+
+### auto-generated section `test intellij.platform.lang.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "lang-tests_test",
   runtime_deps = [":lang-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.lang.tests` end
+### auto-generated section `test intellij.platform.lang.tests` end

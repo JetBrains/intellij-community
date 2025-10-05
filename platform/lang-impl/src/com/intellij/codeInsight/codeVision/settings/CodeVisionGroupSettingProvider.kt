@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.BundleBase
-import com.intellij.codeInsight.codeVision.CodeVisionBundle
+import com.intellij.codeInsight.codeVision.CodeVisionMessageBundle
 import com.intellij.codeInsight.codeVision.CodeVisionProvider
 import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.lang.IdeLanguageCustomization
@@ -23,7 +23,7 @@ interface CodeVisionGroupSettingProvider {
    */
   @get:Nls
   val groupName: String
-    get() = CodeVisionBundle.message("codeLens.${groupId}.name")
+    get() = CodeVisionMessageBundle.message("codeLens.${groupId}.name")
 
   @get:Nls
   val description: String
@@ -37,7 +37,7 @@ interface CodeVisionGroupSettingProvider {
   }
 
   private val defaultDescription: @Nls String
-    get() = CodeVisionBundle.message("codeLens.${groupId}.description")
+    get() = CodeVisionMessageBundle.message("codeLens.${groupId}.description")
 
   private val previewLanguage: Language?
     get() {

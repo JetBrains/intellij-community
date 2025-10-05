@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
-import com.intellij.execution.actions.ChooseRunConfigurationPopup
+import com.intellij.execution.actions.ChooseRunConfigurationManager
 import com.intellij.execution.actions.ExecutorProvider
 import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.impl.RunConfigurableNodeKind.*
@@ -245,7 +245,7 @@ internal class RunConfigurableTest {
 
     val executorProvider = ExecutorProvider { throw UnsupportedOperationException() }
     val dataContext = DataManager.getInstance().getDataContext(configurable.tree)
-    assertThat(ChooseRunConfigurationPopup.createSettingsList(runManager, executorProvider, false, false, dataContext).joinToString("\n") {
+    assertThat(ChooseRunConfigurationManager.createSettingsList(runManager, executorProvider, false, false, dataContext).joinToString("\n") {
       val value = it.value
       if (value is String) {
         "[$value]"
@@ -262,7 +262,7 @@ internal class RunConfigurableTest {
       [5]
       JUnit: All in titled5 (level: TEMPORARY)
     """.trimIndent())
-    assertThat(ChooseRunConfigurationPopup.createSettingsList(runManager, executorProvider, false, true, dataContext).joinToString("\n") {
+    assertThat(ChooseRunConfigurationManager.createSettingsList(runManager, executorProvider, false, true, dataContext).joinToString("\n") {
       val value = it.value
       if (value is String) {
         "[$value]"

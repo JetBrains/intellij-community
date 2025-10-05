@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.MathUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +132,7 @@ public final class CaretPositionKeeper {
   private int getCaretOffset() {
     int caretOffset = myCaretModel.getOffset();
     int upperBound = Math.max(myDocument.getTextLength() - 1, 0);
-    caretOffset = MathUtil.clamp(caretOffset, 0, upperBound);
+    caretOffset = Math.clamp(caretOffset, 0, upperBound);
     return caretOffset;
   }
 

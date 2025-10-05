@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.maven
 
 import com.intellij.util.io.Compressor
@@ -37,6 +37,7 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
+import kotlin.io.path.extension
 import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -57,15 +58,15 @@ import kotlin.time.Duration.Companion.minutes
  * See https://youtrack.jetbrains.com/articles/IJPL-A-611 internal article for more details
  */
 @ApiStatus.Internal
+@Suppress("IO_FILE_USAGE")
 @OptIn(ExperimentalPathApi::class)
 class MavenCentralPublication(
   private val context: BuildContext,
   private val workDir: Path,
-  private val type: PublishingType = PublishingType.AUTOMATIC,
   private val userName: String? = null,
   private val token: String? = null,
-  private val dryRun: Boolean = context.options.isInDevelopmentMode,
-  private val sign: Boolean = !dryRun,
+  private val dryRun: Boolean = context.options.isInDevelopmentMode || TeamCityHelper.isPersonalBuild,
+  private val type: PublishingType = if (dryRun) PublishingType.USER_MANAGED else PublishingType.AUTOMATIC,
 ) {
   companion object {
     /**
@@ -75,39 +76,40 @@ class MavenCentralPublication(
     private const val UPLOADING_URI_BASE = "$URI_BASE/upload"
     private const val STATUS_URI_BASE = "$URI_BASE/status"
     private val JSON = Json { ignoreUnknownKeys = true }
+    private val SUPPORTED_CHECKSUMS = setOf("md5", "sha1", "sha256", "sha512")
+  }
 
-    /**
-     * See https://central.sonatype.org/publish/requirements/#required-pom-metadata
-     */
-    fun loadAndValidatePomXml(pom: Path): MavenCoordinates {
-      val pomModel = pom.inputStream().bufferedReader().use {
-        MavenXpp3Reader().read(it, true)
-      }
-      val coordinates = MavenCoordinates(
-        groupId = pomModel.groupId ?: error("$pom doesn't contain <groupId>"),
-        artifactId = pomModel.artifactId ?: error("$pom doesn't contain <artifactId>"),
-        version = pomModel.version ?: error("$pom doesn't contain <version>"),
-      )
-      check(!pomModel.name.isNullOrBlank()) {
-        "$pom doesn't contain <name>"
-      }
-      check(!pomModel.description.isNullOrBlank()) {
-        "$pom doesn't contain <description>"
-      }
-      check(!pomModel.url.isNullOrBlank()) {
-        "$pom doesn't contain <url>"
-      }
-      check(pomModel.licenses.any()) {
-        "$pom doesn't contain <licenses>"
-      }
-      check(pomModel.developers.any()) {
-        "$pom doesn't contain <developers>"
-      }
-      check(pomModel.scm != null) {
-        "$pom doesn't contain <scm>"
-      }
-      return coordinates
+  /**
+   * See https://central.sonatype.org/publish/requirements/#required-pom-metadata
+   */
+  private fun loadAndValidatePomXml(pom: Path): MavenCoordinates {
+    val pomModel = pom.inputStream().bufferedReader().use {
+      MavenXpp3Reader().read(it, true)
     }
+    val coordinates = MavenCoordinates(
+      groupId = pomModel.groupId ?: error("$pom doesn't contain <groupId>"),
+      artifactId = pomModel.artifactId ?: error("$pom doesn't contain <artifactId>"),
+      version = pomModel.version ?: error("$pom doesn't contain <version>"),
+    )
+    check(!pomModel.name.isNullOrBlank()) {
+      "$pom doesn't contain <name>"
+    }
+    check(!pomModel.description.isNullOrBlank()) {
+      "$pom doesn't contain <description>"
+    }
+    check(!pomModel.url.isNullOrBlank()) {
+      "$pom doesn't contain <url>"
+    }
+    check(pomModel.licenses.any()) {
+      "$pom doesn't contain <licenses>"
+    }
+    check(pomModel.developers.any()) {
+      "$pom doesn't contain <developers>"
+    }
+    check(pomModel.scm != null) {
+      "$pom doesn't contain <scm>"
+    }
+    return coordinates
   }
 
   enum class PublishingType {
@@ -115,98 +117,93 @@ class MavenCentralPublication(
     AUTOMATIC,
   }
 
-  private inner class MavenArtifacts(
-    val pom: Path,
+  class MavenArtifacts(
     val coordinates: MavenCoordinates,
-    val jar: Path,
-    val sources: Path,
-    val javadoc: Path,
+    val distributionFiles: Collection<Path>,
   ) {
-    val distributionFiles: List<Path> = listOf(jar, pom, javadoc, sources)
+    /**
+     * From https://central.sonatype.org/publish/requirements/#sign-files-with-gpgpgp:
+     * > Notice that .asc files don't need checksum files, nor do checksum files need .asc signature files
+     */
+    val signatures: Collection<Path> = distributionFiles.mapNotNull {
+      if (it.extension in SUPPORTED_CHECKSUMS) {
+        null
+      }
+      else {
+        it.resolveSibling("${it.name}.asc")
+      }
+    }
 
-    val signatures: List<Path>
-      get() = distributionFiles.asSequence()
-        .map { it.resolveSibling("${it.fileName}.asc") }
-        .onEach {
-          check(sign || dryRun || it.exists()) {
-            "Signature file $it is expected to present"
-          }
-        }.filter {
-          it.exists()
-        }.toList()
-
-    val checksums: List<Path>
-      get() = distributionFiles.asSequence().flatMap {
-        sequenceOf(
-          it.resolveSibling("${it.fileName}.md5"),
-          it.resolveSibling("${it.fileName}.sha1"),
-          it.resolveSibling("${it.fileName}.sha256"),
-          it.resolveSibling("${it.fileName}.sha512"),
-        )
-      }.onEach {
-        check(it.exists()) {
-          "Checksum file $it is expected to present"
+    val checksums: Collection<Path> = distributionFiles.asSequence().flatMap { file ->
+      if (file.extension in SUPPORTED_CHECKSUMS) {
+        sequenceOf(file)
+      }
+      else {
+        SUPPORTED_CHECKSUMS.asSequence().map {
+          file.resolveSibling("${file.name}.$it")
         }
-      }.toList()
+      }
+    }.toSet()
   }
 
-  private fun Path.listDirectoryEntriesRecursively(glob: String): List<Path> {
-    val matchingFiles = walk(PathWalkOption.INCLUDE_DIRECTORIES)
+  private fun files(glob: String): List<Path> {
+    val matchingFiles = workDir.walk(PathWalkOption.INCLUDE_DIRECTORIES)
       .filter { it.isDirectory() }
       .flatMap { it.listDirectoryEntries(glob = glob) }
       .toList()
-    check(matchingFiles.size == matchingFiles.distinctBy { it.name }.size) {
-      matchingFiles.joinToString(prefix = "Duplicate files found in $this:\n", separator = "\n") {
-        it.relativeTo(this).toString()
+    require(matchingFiles.any()) {
+      "No $glob files in $workDir"
+    }
+    require(matchingFiles.size == matchingFiles.distinctBy { it.name }.size) {
+      matchingFiles.joinToString(prefix = "Duplicate files found in $workDir:\n", separator = "\n") {
+        it.relativeTo(workDir).toString()
       }
     }
     return matchingFiles
   }
 
-  private fun file(name: String): Path {
-    val matchingFiles = workDir.listDirectoryEntriesRecursively(glob = name)
-    return requireNotNull(matchingFiles.singleOrNull()) {
-      "A single $name file is expected to be present in $workDir but found: $matchingFiles"
-    }
-  }
-
-  private fun files(extension: String): List<Path> {
-    val matchingFiles = workDir.listDirectoryEntriesRecursively(glob = "*.$extension")
-    require(matchingFiles.any()) {
-      "No *.$extension files in $workDir"
-    }
-    return matchingFiles
-  }
-
-  private val artifacts: List<MavenArtifacts> by lazy {
-    files(extension = "pom").map { pom ->
+  val artifacts: List<MavenArtifacts> by lazy {
+    files(glob = "*.pom").map { pom ->
       val coordinates = loadAndValidatePomXml(pom)
-      val jar = file(coordinates.getFileName(packaging = "jar"))
-      val sources = file(coordinates.getFileName(classifier = "sources", packaging = "jar"))
-      val javadoc = file(coordinates.getFileName(classifier = "javadoc", packaging = "jar"))
-      MavenArtifacts(pom = pom, coordinates = coordinates, jar = jar, sources = sources, javadoc = javadoc)
+      val distributionFiles = files(glob = "${coordinates.filesPrefix}*")
+      check(distributionFiles.any { it.name == pom.name }) {
+        "$pom is expected to be present in the list:\n" + distributionFiles.joinToString(separator = "\n")
+      }
+      context.messages.info("Maven artifacts found:")
+      distributionFiles.forEach { context.messages.info("$it") }
+      val signatures = distributionFiles.filter { it.extension == "asc" }
+      if (signatures.any()) {
+        throw SuppliedSignatures("Supplied signatures verification is not implemented yet: $signatures")
+      }
+      MavenArtifacts(coordinates, distributionFiles)
     }
   }
 
   suspend fun execute() {
     sign()
-    generateOrVerifyChecksums()
     val deploymentId = publish(bundle())
     if (deploymentId != null) wait(deploymentId)
   }
 
   private suspend fun sign() {
-    if (sign) {
-      context.proprietaryBuildTools.signTool.signFilesWithGpg(
-        artifacts.flatMap { it.distributionFiles }, context
-      )
+    context.proprietaryBuildTools.signTool.signFilesWithGpg(
+      artifacts.flatMap {
+        it.distributionFiles - it.checksums.toSet()
+      }, context
+    )
+    val missing = artifacts.asSequence()
+      .flatMap { it.signatures }
+      .filterNot { it.exists() }
+      .toList()
+    assert(missing.none()) {
+      "Signature files are missing: $missing"
     }
   }
 
   private suspend fun generateOrVerifyChecksums() {
     coroutineScope {
       for (artifact in artifacts) {
-        for (file in artifact.distributionFiles.asSequence() + artifact.signatures) {
+        for (file in artifact.distributionFiles.minus(artifact.checksums.toSet())) {
           launch(CoroutineName("checksums for $file")) {
             val checksums = Checksums(file, sha1(), sha256(), sha512(), md5())
             generateOrVerifyChecksum(file, extension = "sha1", checksums.sha1sum)
@@ -217,15 +214,25 @@ class MavenCentralPublication(
         }
       }
     }
+    val missing = artifacts.asSequence()
+      .flatMap { it.checksums }
+      .filterNot { it.exists() }
+      .toList()
+    assert(missing.none()) {
+      "Checksum files are missing: $missing"
+    }
   }
 
   @VisibleForTesting
   class ChecksumMismatch(message: String) : RuntimeException(message)
 
+  @VisibleForTesting
+  class SuppliedSignatures(message: String) : RuntimeException(message)
+
   private fun CoroutineScope.generateOrVerifyChecksum(file: Path, extension: String, value: String) {
     launch(CoroutineName("checksum $extension for $file")) {
       spanBuilder("checksum").setAttribute("file", "$file").setAttribute("extension", extension).use {
-        val checksumFile = file.resolveSibling("${file.fileName}.$extension")
+        val checksumFile = file.resolveSibling("${file.name}.$extension")
         if (checksumFile.exists()) {
           val suppliedValue = checksumFile.readLines().asSequence()
             // sha256sum command output is a line with checksum,
@@ -246,15 +253,22 @@ class MavenCentralPublication(
   /**
    * https://central.sonatype.org/publish/publish-portal-upload/
    */
-  private suspend fun bundle(): Path {
+  suspend fun bundle(): Path {
+    generateOrVerifyChecksums()
     return spanBuilder("creating a bundle").use {
       val bundle = workDir.resolve("bundle.zip")
       bundle.deleteIfExists()
       Compressor.Zip(bundle).use { zip ->
         for (artifact in artifacts) {
+          val signatures = artifact.signatures.asSequence().onEach {
+            check(it.exists() || dryRun) {
+              "Signature file $it doesn't exist"
+            }
+          }.filter { it.exists() }
           artifact.distributionFiles.asSequence()
-            .plus(artifact.signatures)
+            .plus(signatures)
             .plus(artifact.checksums)
+            .distinct()
             .forEach {
               zip.addFile("${artifact.coordinates.directoryPath}/${it.name}", it)
             }
@@ -295,11 +309,15 @@ class MavenCentralPublication(
 
   private suspend fun publish(bundle: Path): String? {
     return spanBuilder("publishing").setAttribute("bundle", "$bundle").use { span ->
-      if (dryRun) {
+      if (dryRun && userName == null && token == null) {
         span.addEvent("skipped in the dryRun mode")
         return@use null
       }
-      val deploymentName = "teamcity.build.id=${TeamCityHelper.allProperties.getValue("teamcity.build.id")}"
+      check(!dryRun || type == PublishingType.USER_MANAGED) {
+        "Automatic publishing is not supported in the dryRun mode"
+      }
+      val deploymentName = "teamcity.buildType.id=${System.getProperty("teamcity.buildType.id")}," +
+                           "teamcity.build.id=${TeamCityHelper.allProperties.getValue("teamcity.build.id")}"
       val uri = "$UPLOADING_URI_BASE?name=$deploymentName&publishingType=$type"
       callSonatype(uri, builder = {
         it.post(
@@ -334,10 +352,10 @@ class MavenCentralPublication(
             span.addEvent(response)
             parseDeploymentState(response)
           })
-          when {
-            deploymentState == DeploymentState.FAILED -> context.messages.error("$deploymentId status is $deploymentState")
-            deploymentState == DeploymentState.VALIDATED && type == PublishingType.USER_MANAGED -> break
-            deploymentState == DeploymentState.PUBLISHED && type == PublishingType.AUTOMATIC -> {
+          when (deploymentState) {
+            DeploymentState.FAILED -> context.messages.logErrorAndThrow("$deploymentId status is $deploymentState")
+            DeploymentState.VALIDATED if type == PublishingType.USER_MANAGED -> break
+            DeploymentState.PUBLISHED if type == PublishingType.AUTOMATIC -> {
               artifacts.forEach {
                 context.messages.info("Expected to be available in https://repo1.maven.org/maven2/${it.coordinates.directoryPath} shortly")
               }

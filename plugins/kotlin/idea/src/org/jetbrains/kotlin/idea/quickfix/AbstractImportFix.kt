@@ -163,20 +163,24 @@ abstract class ImportFixBase<T : KtExpression> protected constructor(
                 descriptor is FunctionDescriptor && descriptor.isExtension -> ImportFixHelper.ImportKind.EXTENSION_FUNCTION
                 descriptor is FunctionDescriptor -> ImportFixHelper.ImportKind.FUNCTION
                 DescriptorUtils.isObject(descriptor) -> ImportFixHelper.ImportKind.OBJECT
+                descriptor is ClassDescriptor && descriptor.kind == ClassKind.ENUM_ENTRY -> ImportFixHelper.ImportKind.ENUM_ENTRY
                 descriptor is ClassDescriptor -> ImportFixHelper.ImportKind.CLASS
                 descriptor is TypeAliasDescriptor -> ImportFixHelper.ImportKind.TYPE_ALIAS
                 else -> null
             } ?: return@mapNotNull null
 
             val name = buildString {
-                descriptor.safeAs<CallableDescriptor>()?.let { callableDescriptor ->
-                    val extensionReceiverParameter = callableDescriptor.extensionReceiverParameter
+                if (
+                    descriptor is CallableDescriptor ||
+                    descriptor is ClassDescriptor && descriptor.kind == ClassKind.ENUM_ENTRY
+                ) {
+                    val extensionReceiverParameter = (descriptor as? CallableDescriptor)?.extensionReceiverParameter
                     if (extensionReceiverParameter != null) {
                         extensionReceiverParameter.type.constructor.declarationDescriptor.safeAs<ClassDescriptor>()?.name?.let {
                             append(it.asString())
                         }
                     } else {
-                        callableDescriptor.containingDeclaration.safeAs<ClassifierDescriptor>()?.name?.let {
+                        descriptor.containingDeclaration.safeAs<ClassifierDescriptor>()?.name?.let {
                             append(it.asString())
                         }
                     }

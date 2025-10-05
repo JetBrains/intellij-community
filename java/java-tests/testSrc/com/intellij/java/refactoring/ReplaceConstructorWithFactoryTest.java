@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -83,9 +83,9 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testConstructorTypeParameters() { runTest("08", null); }
 
   public void testInnerClass2() { runTest("InnerClass2", "SimpleClass"); }
-  
-  public void testIncompleteClass() { 
-    assertNotAvailable("IncompleteClass"); 
+
+  public void testIncompleteClass() {
+    assertNotAvailable("IncompleteClass");
   }
 
   public void testInjection() {
@@ -121,6 +121,18 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
 
   public void testRedCode() {
     assertNotAvailable("RedCode");
+  }
+
+  public void testImplicitClassNotAvailable() {
+    assertNotAvailable("ImplicitClassAfterName");
+  }
+
+  public void testRedCodeFromIDEA376351() {
+    assertNotAvailable("RedCodeFromIDEA376351");
+  }
+
+  public void testArrayCreation() {
+    runTest("ArrayCreation", null);
   }
 
   private void assertNotAvailable(String name) {

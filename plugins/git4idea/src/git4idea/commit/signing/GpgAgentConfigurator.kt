@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
@@ -46,9 +47,9 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -65,7 +66,7 @@ import kotlin.time.Duration.Companion.milliseconds
 private val LOG = logger<GpgAgentConfigurator>()
 
 @Service(Service.Level.PROJECT)
-internal class GpgAgentConfigurator(private val project: Project, private val cs: CoroutineScope): Disposable {
+internal class GpgAgentConfigurator(private val project: Project, private val cs: CoroutineScope) : Disposable {
   private val configurationLock = Mutex()
 
   companion object {
@@ -92,27 +93,32 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     fun getInstance(project: Project): GpgAgentConfigurator = project.service()
   }
 
-  private val updateLauncherFlow = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
+  suspend fun init() {
+    ProjectLevelVcsManager.getInstance(project).awaitInitialization()
 
-  fun init() {
+    val notificator = project.serviceAsync<GpgAgentConfigurationNotificator>()
+
     cs.launch {
-      updateLauncherFlow.consumeAsFlow().debounceBatch(100.milliseconds).collect {
+      callbackFlow {
+        application.messageBus.connect(this).subscribe(GitExecutableManager.TOPIC, GitExecutableListener {
+          trySend(Unit)
+        })
+
+        project.messageBus.connect(this).subscribe(GitConfigListener.TOPIC, object : GitConfigListener {
+          override fun notifyConfigChanged(repository: GitRepository) {
+            trySend(Unit)
+          }
+        })
+        awaitClose()
+      }.onEach {
+        notificator.proposeCustomPinentryAgentConfiguration()
+      }.debounceBatch(100.milliseconds).collect {
         updateExistingPinentryLauncher()
       }
     }
 
-    application.messageBus.connect(this).subscribe(GitExecutableManager.TOPIC, GitExecutableListener {
-      project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
-      updateLauncherFlow.trySend(Unit)
-    })
-    project.messageBus.connect(this).subscribe(GitConfigListener.TOPIC, object: GitConfigListener {
-      override fun notifyConfigChanged(repository: GitRepository) {
-        project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
-        updateLauncherFlow.trySend(Unit)
-      }
-    })
-
-    updateLauncherFlow.trySend(Unit)
+    notificator.proposeCustomPinentryAgentConfiguration()
+    updateExistingPinentryLauncher()
   }
 
   @RequiresBackgroundThread
@@ -202,16 +208,18 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
 
   @VisibleForTesting
   internal suspend fun updateExistingPinentryLauncher() = configurationLock.withLock {
-    val executable = GitExecutableManager.getInstance().getExecutable(project)
-    if (isEnabled(project, executable)) {
-      val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: return
-      val config = readConfig(gpgAgentPaths.gpgAgentConf) ?: return
-      if (isPinentryConfigured(gpgAgentPaths, config)) {
-        val pinentryFallback = readConfig(gpgAgentPaths.gpgAgentConfBackup)?.pinentryProgram
-          ?: readDefaultPinentryPathFromGpgConf(executable)
+    withContext(Dispatchers.IO) {
+      val executable = GitExecutableManager.getInstance().getExecutable(project)
+      if (isEnabled(project, executable)) {
+        val gpgAgentPaths = resolveGpgAgentPaths(executable) ?: return@withContext
+        val config = readConfig(gpgAgentPaths.gpgAgentConf) ?: return@withContext
+        if (isPinentryConfigured(gpgAgentPaths, config)) {
+          val pinentryFallback = readConfig(gpgAgentPaths.gpgAgentConfBackup)?.pinentryProgram
+                                 ?: readDefaultPinentryPathFromGpgConf(executable)
 
-        //always regenerate the launcher to be up to date (e.g., java.home could be changed between versions)
-        generatePinentryLauncher(executable, gpgAgentPaths, pinentryFallback)
+          //always regenerate the launcher to be up to date (e.g., java.home could be changed between versions)
+          generatePinentryLauncher(executable, gpgAgentPaths, pinentryFallback)
+        }
       }
     }
   }
@@ -325,8 +333,10 @@ private class LocalGpgAgentCommandExecutor : GpgAgentCommandExecutor {
   }
 }
 
-private class WslGpgAgentCommandExecutor(private val project: Project,
-                                         private val executable: GitExecutable.Wsl) : GpgAgentCommandExecutor {
+private class WslGpgAgentCommandExecutor(
+  private val project: Project,
+  private val executable: GitExecutable.Wsl,
+) : GpgAgentCommandExecutor {
   override fun execute(command: String, vararg params: String): List<String> {
     val commandLine = executable.createBundledCommandLine(project, command).withParameters(*params)
     val processOutput = CapturingProcessHandler
@@ -410,9 +420,6 @@ internal data class GpgAgentPaths(
 
 private class GpgAgentConfiguratorStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-      GpgAgentConfigurator.getInstance(project).init()
-      project.service<GpgAgentConfigurationNotificator>().proposeCustomPinentryAgentConfiguration(isSuggestion = true)
-    }
+    project.serviceAsync<GpgAgentConfigurator>().init()
   }
 }

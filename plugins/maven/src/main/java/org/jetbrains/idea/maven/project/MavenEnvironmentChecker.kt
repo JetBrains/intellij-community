@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.buildtool.quickfix.ChooseAnotherJdkQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenImportingSettingsQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.server.MavenDistribution
@@ -52,14 +53,17 @@ class MavenEnvironmentChecker(val console: MavenSyncConsole, val project: Projec
 
 private class WrongJdkVersion(val mavenVer: String, val expectedJdkVersion: JavaSdkVersion) : BuildIssue {
   override val title: @BuildEventsNls.Title String = SyncBundle.message("maven.sync.jdk.title")
-  override val description: @BuildEventsNls.Description String = SyncBundle.message("maven.sync.jdk.description",
-                                                                                    mavenVer,
-                                                                                    expectedJdkVersion.description,
-                                                                                    OpenMavenImportingSettingsQuickFix.ID
+  override val description: @BuildEventsNls.Description String = SyncBundle.message(
+    "maven.sync.jdk.description",
+    mavenVer,
+    expectedJdkVersion.description,
+    ChooseAnotherJdkQuickFix.ID,
+    OpenMavenImportingSettingsQuickFix.ID,
   )
 
   override val quickFixes = listOf(
-    OpenMavenImportingSettingsQuickFix()
+    OpenMavenImportingSettingsQuickFix(),
+    ChooseAnotherJdkQuickFix()
   )
 
   override fun getNavigatable(project: Project): Navigatable? = null

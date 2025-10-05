@@ -10,9 +10,9 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.CoroutineScope

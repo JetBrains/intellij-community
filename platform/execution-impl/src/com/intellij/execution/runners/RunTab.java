@@ -91,6 +91,7 @@ public abstract class RunTab implements Disposable {
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create(runnerType, runnerTitle, sessionName, this);
     myUi.getContentManager().addUiDataProvider(sink -> {
+      sink.set(CommonDataKeys.PROJECT,  myProject);
       sink.set(KEY, RunTab.this);
       sink.set(LangDataKeys.RUN_CONTENT_DESCRIPTOR, myRunContentDescriptor);
       sink.set(SingleContentSupplier.KEY, getSupplier());

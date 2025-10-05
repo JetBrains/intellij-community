@@ -7,6 +7,7 @@ import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +46,17 @@ public interface JBAccountInfoService {
 
   @Nullable JBAccountInfoService.JBAData getUserData();
 
+  /**
+   * This method may return a cached invalid token issued by an OAuth server other than the current one.
+   * It is possible after switching to a regional JBA deployment, or between staging and production environments.
+   * The call may involve network calls, so it should be performed in a background thread.
+   */
   default @Nullable String getIdToken() {
     return null;
+  }
+
+  default @NotNull CompletableFuture<@Nullable String> getJbaIdToken() {
+    return CompletableFuture.supplyAsync(() -> getIdToken(), AppExecutorUtil.getAppExecutorService());
   }
 
   default @NotNull Future<String> getAccessToken() {
@@ -63,8 +73,8 @@ public interface JBAccountInfoService {
       LoginSession loginSession = startLoginSession(LoginMode.AUTO);
       loginSession.onCompleted()
         .thenAccept(result -> {
-          if (result instanceof LoginResult.LoginSuccessful successful && userIdConsumer != null) {
-            userIdConsumer.accept(successful.jbaUser().id);
+          if (result instanceof LoginResult.LoginSuccessful(JBAData user) && userIdConsumer != null) {
+            userIdConsumer.accept(user.id);
           }
           if (result instanceof LoginResult.LoginFailed && onFailure != null) {
             onFailure.run();
@@ -113,6 +123,11 @@ public interface JBAccountInfoService {
   @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode,
                                           @Nullable String authProviderId,
                                           @NotNull Map<@NotNull String, @NotNull String> clientMetadata);
+
+  /**
+   * Performs the logout action by clearing stored authentication data.
+   */
+  @NotNull CompletableFuture<LogoutResult> performLogout();
 
   /**
    * Returns the list of licenses available in the current user's account matching the specified productCode.
@@ -219,6 +234,11 @@ public interface JBAccountInfoService {
   sealed interface LoginResult permits LoginResult.LoginFailed, LoginResult.LoginSuccessful {
     record LoginSuccessful(@NotNull JBAData jbaUser) implements LoginResult { }
     record LoginFailed(@NlsSafe @NotNull String errorMessage) implements LoginResult { }
+  }
+
+  sealed interface LogoutResult permits LogoutResult.LogoutSuccessful, LogoutResult.LogoutFailed {
+    record LogoutSuccessful() implements LogoutResult { }
+    record LogoutFailed(@NlsSafe @NotNull String errorMessage) implements LogoutResult { }
   }
 
   record JbaLicense(

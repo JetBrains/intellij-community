@@ -1,0 +1,23 @@
+true && false ==> false || true
+-----
+Groovy script
+  Logical expression
+    Logical expression
+      Literal
+        PsiElement(true)('true')
+      PsiWhiteSpace(' ')
+      PsiElement(&&)('&&')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(false)('false')
+    PsiWhiteSpace(' ')
+    PsiElement(==>)('==>')
+    PsiWhiteSpace(' ')
+    Logical expression
+      Literal
+        PsiElement(false)('false')
+      PsiWhiteSpace(' ')
+      PsiElement(||)('||')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(true)('true')

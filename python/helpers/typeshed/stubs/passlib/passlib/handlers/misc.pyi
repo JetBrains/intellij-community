@@ -1,5 +1,5 @@
-from _typeshed import Incomplete
 from typing import Any, ClassVar
+from typing_extensions import deprecated
 
 import passlib.utils.handlers as uh
 from passlib.ifc import DisabledHash
@@ -19,7 +19,7 @@ class unix_disabled(DisabledHash, uh.MinimalHandler):
     setting_kwds: ClassVar[tuple[str, ...]]
     context_kwds: ClassVar[tuple[str, ...]]
     @classmethod
-    def using(cls, marker: Incomplete | None = None, **kwds): ...  # type: ignore[override]
+    def using(cls, marker=None, **kwds): ...  # type: ignore[override]
     @classmethod
     def identify(cls, hash: str | bytes) -> bool: ...
     @classmethod
@@ -27,7 +27,7 @@ class unix_disabled(DisabledHash, uh.MinimalHandler):
     @classmethod
     def hash(cls, secret: str | bytes, **kwds) -> str: ...
     @classmethod
-    def genhash(cls, secret: str | bytes, config, marker: Incomplete | None = None): ...  # type: ignore[override]
+    def genhash(cls, secret: str | bytes, config, marker=None): ...  # type: ignore[override]
     @classmethod
     def disable(cls, hash: str | bytes | None = None) -> str: ...
     @classmethod
@@ -41,10 +41,14 @@ class plaintext(uh.MinimalHandler):
     @classmethod
     def identify(cls, hash: str | bytes): ...
     @classmethod
-    def hash(cls, secret: str | bytes, encoding: Incomplete | None = None): ...  # type: ignore[override]
+    def hash(cls, secret: str | bytes, encoding=None): ...  # type: ignore[override]
     @classmethod
     def verify(cls, secret: str | bytes, hash: str | bytes, encoding: str | None = None): ...  # type: ignore[override]
+    @deprecated("Deprecated since Passlib 1.7, will be removed in 2.0")
     @classmethod
-    def genconfig(cls): ...
+    def genconfig(cls): ...  # type: ignore[override]
+    @deprecated("Deprecated since Passlib 1.7, will be removed in 2.0")
     @classmethod
     def genhash(cls, secret, config, encoding: str | None = None): ...  # type: ignore[override]
+
+__all__ = ["unix_disabled", "unix_fallback", "plaintext"]

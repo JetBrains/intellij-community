@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
@@ -22,6 +23,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -35,9 +37,19 @@ import java.util.Set;
 
 public final class ExplicitToImplicitClassMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
 
+  public boolean convertToIo = true;
+
   @Override
   public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
     return Set.of(JavaFeature.IMPLICIT_CLASSES);
+  }
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.checkbox("convertToIo",
+                       JavaBundle.message("inspection.explicit.to.implicit.convert.to.io"))
+    );
   }
 
   @Override
@@ -45,11 +57,11 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
     return new JavaElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
-        if (aClass.isInterface() || aClass.isRecord() || aClass.isEnum()) {
+        if (aClass.isInterface() || aClass.isRecord() || aClass.isEnum() || PsiUtil.isLocalOrAnonymousClass(aClass)) {
           return;
         }
 
-        if (aClass.getAnnotations().length > 0) return;
+        if (aClass.hasAnnotations()) return;
 
         PsiElement lBrace = aClass.getLBrace();
         PsiElement rBrace = aClass.getRBrace();
@@ -60,10 +72,11 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
         if (aClass.getContainingClass() != null) {
           return;
         }
-        PsiJavaFile file = (PsiJavaFile)aClass.getContainingFile();
-        boolean underRoot = file.getPackageStatement() == null;
+        PsiFile file = aClass.getContainingFile();
+        if (!(file instanceof PsiJavaFile javaFile)) return;
+        boolean underRoot = javaFile.getPackageStatement() == null;
 
-        if (file.getClasses().length != 1) {
+        if (javaFile.getClasses().length != 1) {
           return;
         }
 
@@ -159,14 +172,14 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
         if (underRoot) {
           holder.registerProblem(aClass, new TextRange(0, classIdentifier.getTextRangeInParent().getEndOffset()),
                                  JavaBundle.message("inspection.explicit.to.implicit.class.migration.name"),
-                                 new ReplaceWithImplicitClassFix());
+                                 new ReplaceWithImplicitClassFix(convertToIo));
         }
         else {
           holder.registerProblem(aClass,
                                  JavaBundle.message("inspection.explicit.to.implicit.class.migration.name"),
                                  ProblemHighlightType.INFORMATION,
                                  new TextRange(0, classIdentifier.getTextRangeInParent().getEndOffset()),
-                                 new ReplaceWithImplicitClassFix());
+                                 new ReplaceWithImplicitClassFix(convertToIo));
         }
       }
 
@@ -180,6 +193,10 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
 
 
   private static class ReplaceWithImplicitClassFix extends ModCommandQuickFix {
+
+    private final boolean myConvertToIo;
+
+    private ReplaceWithImplicitClassFix(boolean io) { myConvertToIo = io; }
 
     @Override
     public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
@@ -206,7 +223,7 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
       );
     }
 
-    private static @NotNull ModCommandAction getCommandActionWithMovingToRoot(@NotNull Project project) {
+    private @NotNull ModCommandAction getCommandActionWithMovingToRoot(@NotNull Project project) {
       return new ModCommandAction() {
         @Override
         public Presentation getPresentation(@NotNull ActionContext context) {
@@ -243,7 +260,7 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
       };
     }
 
-    private static void applyFix(@NotNull Project project, @NotNull PsiElement element) {
+    private void applyFix(@NotNull Project project, @NotNull PsiElement element) {
       PsiFile containingFile = element.getContainingFile();
       if (!(containingFile instanceof PsiJavaFile javaFile)) {
         return;
@@ -281,9 +298,9 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
       CommentTracker tracker = new CommentTracker();
       String body = tracker.rangeText(lBrace.getNextSibling(), rBrace.getPrevSibling());
       PsiImplicitClass newClass = PsiElementFactory.getInstance(project).createImplicitClassFromText(body, psiClass);
-      if(!(newClass.getContainingFile() instanceof PsiJavaFile dummyFile) ||
-         dummyFile.getImportList() == null ||
-         javaFile.getImportList() == null) {
+      if (!(newClass.getContainingFile() instanceof PsiJavaFile dummyFile) ||
+          dummyFile.getImportList() == null ||
+          javaFile.getImportList() == null) {
         return;
       }
       //it is necessary to resolve accurately inside a new implicit class
@@ -299,8 +316,34 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
       cleanMainMethod(implicitClass);
 
       PsiFile replacedContainingFile = replaced.getContainingFile();
-      if (replacedContainingFile != null) {
-        JavaCodeStyleManager.getInstance(project).optimizeImports(replacedContainingFile);
+      if (replacedContainingFile == null) return;
+
+      if (myConvertToIo && PsiUtil.isAvailable(JavaFeature.JAVA_LANG_IO, replacedContainingFile)) {
+        convertToIOMethods(replacedContainingFile);
+      }
+
+      JavaCodeStyleManager.getInstance(project).optimizeImports(replacedContainingFile);
+    }
+
+    private static void convertToIOMethods(@NotNull PsiFile file) {
+      if (!(file instanceof PsiJavaFile javaFile)) {
+        return;
+      }
+      List<SmartPsiElementPointer<PsiMethodCallExpression>> systemOutPrints = new ArrayList<>();
+      SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(file.getProject());
+      javaFile.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+          if (MigrateToJavaLangIoInspection.isSystemOutPrintln(expression)) {
+            systemOutPrints.add(smartPointerManager.createSmartPsiElementPointer(expression));
+          }
+          super.visitMethodCallExpression(expression);
+        }
+      });
+      for (SmartPsiElementPointer<PsiMethodCallExpression> print : systemOutPrints) {
+        PsiMethodCallExpression element = print.getElement();
+        if (element == null) continue;
+        MigrateToJavaLangIoInspection.replaceToIO(element);
       }
     }
 

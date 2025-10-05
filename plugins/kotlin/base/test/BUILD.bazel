@@ -1,17 +1,17 @@
 ### auto-generated section `build kotlin.base.test` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "test",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "test_test_lib",
+  module_name = "kotlin.base.test",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -19,7 +19,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-impl-base",
     "@lib//:kotlinc-analysis-api-impl-base-tests",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//jps/model-api:model",
@@ -32,11 +32,17 @@ jvm_library(
     "//java/testFramework",
     "//plugins/junit_rt:junit-rt",
     "@lib//:slf4j-api",
-  ]
+    "//java/java-runtime:rt",
+  ],
+  exports = ["//plugins/junit_rt:junit-rt"]
 )
+### auto-generated section `build kotlin.base.test` end
+
+### auto-generated section `test kotlin.base.test` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "test_test",
   runtime_deps = [":test_test_lib"]
 )
-### auto-generated section `build kotlin.base.test` end
+### auto-generated section `test kotlin.base.test` end

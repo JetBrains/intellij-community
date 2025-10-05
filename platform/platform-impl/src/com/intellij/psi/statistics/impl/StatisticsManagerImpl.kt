@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.statistics.impl
 
 import com.intellij.CommonBundle
@@ -6,7 +6,7 @@ import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.statistics.StatisticsInfo
@@ -175,4 +175,4 @@ private fun getUnitNumber(key1: String) = abs(key1.hashCode() % UNIT_COUNT)
 private fun getPathToUnit(unitNumber: Int) = storeDir.resolve("unit.$unitNumber")
 
 private val storeDir: Path
-  get() = appSystemDir.resolve("stat")
+  get() = getSystemDir().resolve("stat")

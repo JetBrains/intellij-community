@@ -128,13 +128,11 @@ public final class UncheckedWarningLocalInspection extends AbstractBaseJavaLocal
           message += JavaBundle.message("unchecked.warning.inspection.reason.expr.has.raw.type.so.result.erased", rawExpression, referenceName);
         }
 
-        PsiElement element2Highlight = null;
-        if (psiElement instanceof PsiNewExpression) {
-          element2Highlight = ((PsiNewExpression)psiElement).getClassOrAnonymousClassReference();
-        }
-        else if (psiElement instanceof PsiMethodCallExpression) {
-          element2Highlight = ((PsiMethodCallExpression)psiElement).getMethodExpression();
-        }
+        PsiElement element2Highlight = switch (psiElement) {
+          case PsiNewExpression expression -> expression.getClassOrAnonymousClassReference();
+          case PsiMethodCallExpression call -> call.getMethodExpression();
+          default -> null;
+        };
 
         holder.registerProblem(ObjectUtils.notNull(element2Highlight, psiElement), message, quickFixes);
       }

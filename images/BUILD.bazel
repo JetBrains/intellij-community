@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.platform.images` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "images_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -13,6 +12,7 @@ jvm_library(
   module_name = "intellij.platform.images",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":images_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -28,15 +28,16 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "@lib//:jcef",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//xml/xml-parser:parser",
     "//platform/ui.jcef",
     "@lib//:kotlin-stdlib",
     "//platform/statistics",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":images_resources"]
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-psi-api:psi",
+  ]
 )
 
 jvm_library(
@@ -62,20 +63,25 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:jcef",
     "@lib//:junit4",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//xml/xml-parser:parser",
     "//platform/ui.jcef",
     "@lib//:kotlin-stdlib",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/util/coroutines",
-  ],
-  runtime_deps = [":images_resources"]
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-psi-api:psi",
+  ]
 )
+### auto-generated section `build intellij.platform.images` end
+
+### auto-generated section `test intellij.platform.images` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "images_test",
   runtime_deps = [":images_test_lib"]
 )
-### auto-generated section `build intellij.platform.images` end
+### auto-generated section `test intellij.platform.images` end

@@ -19,10 +19,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.WriteExternalException
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
+import com.jetbrains.python.PYTHON_PROF_PLUGIN_ID
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.createPromoPanel
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -30,17 +30,13 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import javax.swing.JComponent
 
-private class PythonLockedRunConfigurationEditor : SettingsEditor<PythonLockedRunConfiguration>() {
+private class PythonLockedRunConfigurationEditor : SettingsEditor<PythonLockedRunConfiguration>(null, true) {
 
   override fun resetEditorFrom(s: PythonLockedRunConfiguration) {}
 
   override fun applyEditorTo(s: PythonLockedRunConfiguration) {}
 
-  protected override fun createEditor(): JComponent = panel {
-    row {
-      label(PyBundle.message("python.run.configuration.is.not.editable.in.this.mode")).align(AlignX.CENTER)
-    }
-  }
+  protected override fun createEditor(): JComponent = createPromoPanel()
 }
 
 private class PythonLockedRunConfiguration(val configProject: Project, val configFactory: ConfigurationFactory)
@@ -135,9 +131,8 @@ private open class PythonLockedRunConfigurationTypeBase(val theId: String, @Nls 
   init {
     // Do not enable "lock" configs for non PyCharm or Idea (as it's capable of running the Python plugin) IDEs or if the Python plugin is enabled.
     if ((!PlatformUtils.isPyCharm() && !PlatformUtils.isIntelliJ()) ||
-        PluginManager.getInstance().findEnabledPlugin(PluginId.getId("Pythonid")) != null ||
-        PlatformUtils.isDataSpell())
-    {
+        PluginManager.getInstance().findEnabledPlugin(PluginId.getId(PYTHON_PROF_PLUGIN_ID)) != null ||
+        PlatformUtils.isDataSpell()) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -174,8 +169,8 @@ private open class PythonLockedRunConfigurationTypeBase(val theId: String, @Nls 
 
 private class DjangoServerLockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.DjangoServer", PyBundle.message("python.run.configuration.django.name"))
 private class FlaskServerLockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.FlaskServer", PyBundle.message("flask.name"))
-private class DbtRunLockedConfigurationType : PythonLockedRunConfigurationTypeBase("DbtRunConfiguration", "dbt")
-private class FastAPILockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.FastAPI", "FastAPI")
+private class DbtRunLockedConfigurationType : PythonLockedRunConfigurationTypeBase("DbtRunConfiguration", PyBundle.message("python.run.configuration.dbt.name"))
+private class FastAPILockedRunConfigurationType : PythonLockedRunConfigurationTypeBase("Python.FastAPI", PyBundle.message("python.run.configuration.fastapi.name"))
 
 private class DjangoFacetIgnorer : FacetIgnorer {
   override fun isIgnored(facet: InvalidFacet): Boolean = facet.name == "Django"

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 
@@ -32,16 +33,25 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
     return createBuildFile(relativePath) {
       withJavaPlugin()
       withPrefix {
-        assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
-        assignIfNotNull("targetCompatibility", projectTargetCompatibility)
-        call("compileJava") {
+        // Since Gradle 7.1, the source and target compatiblity can be defined by string value
+        if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.1")) {
+          withJava {
+            assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
+            assignIfNotNull("targetCompatibility", projectTargetCompatibility)
+          }
+        }
+        else {
+          assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
+          assignIfNotNull("targetCompatibility", projectTargetCompatibility)
+        }
+        compileJava {
           assignIfNotNull("sourceCompatibility", mainSourceCompatibility)
           assignIfNotNull("targetCompatibility", mainTargetCompatibility)
           if (mainSourceCompatibilityEnablePreview) {
             call("options.compilerArgs.add", "--enable-preview")
           }
         }
-        call("compileTestJava") {
+        compileTestJava {
           assignIfNotNull("sourceCompatibility", testSourceCompatibility)
           assignIfNotNull("targetCompatibility", testTargetCompatibility)
           if (testSourceCompatibilityEnablePreview) {

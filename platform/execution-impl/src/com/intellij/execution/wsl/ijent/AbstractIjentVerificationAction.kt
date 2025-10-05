@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.eel.provider.utils.copy
 import com.intellij.platform.eel.provider.utils.asEelChannel
@@ -21,8 +22,9 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.ijent.IjentMissingBinary
+import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
-import com.intellij.platform.ijent.deploy
+import com.intellij.platform.ijent.createIjentSession
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -58,8 +60,8 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
         try {
           withModalProgress(modalTaskOwner, e.presentation.text, TaskCancellation.cancellable()) {
             coroutineScope {
-              val (title, deployingStrategy) = deployingStrategy(this)
-              deployingStrategy.deploy().ijentApi.use { ijent ->
+              val (title, deployingStrategy, descriptor) = deployingStrategy(this)
+              deployingStrategy.createIjentSession<IjentPosixApi>().getIjentInstance(descriptor).use { ijent ->
                 coroutineScope {
                   launch {
                     val info = ijent.ijentProcessInfo
@@ -112,7 +114,7 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
     }
   }
 
-  protected abstract suspend fun deployingStrategy(ijentProcessScope: CoroutineScope): Pair<String, IjentDeployingStrategy>
+  protected abstract suspend fun deployingStrategy(ijentProcessScope: CoroutineScope): Triple<String, IjentDeployingStrategy, EelDescriptor>
 
   companion object {
     protected val LOG = logger<AbstractIjentVerificationAction>()

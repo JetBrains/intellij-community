@@ -76,7 +76,7 @@ object UvSdkFlavor : CPythonSdkFlavor<PyFlavorData.Empty>() {
 }
 
 class UvSdkFlavorProvider : PythonFlavorProvider {
-  override fun getFlavor(platformIndependent: Boolean): PythonSdkFlavor<*> {
+  override fun getFlavor(): PythonSdkFlavor<*> {
     return UvSdkFlavor
   }
 }

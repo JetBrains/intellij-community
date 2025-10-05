@@ -145,8 +145,7 @@ fun Document.isActionAvailableByHint(project: Project?, offset: Int, actionId: S
 
 @Internal
 private fun MarkupModelEx.isActionAvailableByHint(offset: Int, actionId: String, backend: String): Boolean? {
-  val overlappingIterator = overlappingIterator(offset, offset)
-  try {
+  overlappingIterator(offset, offset).use { overlappingIterator->
     for (highlighterEx in overlappingIterator) {
       for (actionAvailabilityHint in highlighterEx.actionAvailabilityHints) {
         if (actionAvailabilityHint.actionId == actionId && (actionAvailabilityHint.backend == "ANY" || actionAvailabilityHint.backend == backend)) {
@@ -154,9 +153,6 @@ private fun MarkupModelEx.isActionAvailableByHint(offset: Int, actionId: String,
         }
       }
     }
-  }
-  finally {
-    overlappingIterator.dispose()
   }
   return null
 }

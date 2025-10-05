@@ -1,17 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.java.syntax.element.lazyParser.IncompleteFragmentParsingException;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Dummy file element for using together with DummyHolder.
  * See {@link com.intellij.psi.impl.PsiJavaParserFacadeImpl} for details.
+
+ * @deprecated Use {@link com.intellij.psi.impl.source.JavaDummyElement}.
  */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 public class BasicJavaDummyElement extends FileElement {
   private final BasicJavaParserUtil.ParserWrapper myParser;
   private final LanguageLevel myLanguageLevel;
@@ -53,7 +59,7 @@ public class BasicJavaDummyElement extends FileElement {
     try {
       return super.getFirstChildNode();
     }
-    catch (AssertionError e) {
+    catch (IncompleteFragmentParsingException e) {
       myParserError = e;
       return null;  // masquerade parser errors
     }
@@ -64,7 +70,7 @@ public class BasicJavaDummyElement extends FileElement {
     try {
       return super.getLastChildNode();
     }
-    catch (AssertionError e) {
+    catch (IncompleteFragmentParsingException e) {
       myParserError = e;
       return null;  // masquerade parser errors
     }

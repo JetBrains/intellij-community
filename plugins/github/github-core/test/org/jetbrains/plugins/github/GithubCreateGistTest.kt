@@ -3,20 +3,19 @@ package org.jetbrains.plugins.github
 
 import com.intellij.idea.IJIgnore
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.progress.DumbProgressIndicator
+import com.intellij.openapi.components.service
 import org.jetbrains.plugins.github.api.data.request.GithubGistRequest.FileContent
 import org.junit.Ignore
 
 @Ignore
 @IJIgnore(issue = "no server")
 class GithubCreateGistTest : GithubCreateGistTestBase() {
-  private val indicator = DumbProgressIndicator.INSTANCE
-
-  fun testSimple() {
+  fun testSimple() = kotlinx.coroutines.test.runTest {
     val expected = createContent()
 
-    val url = GithubCreateGistAction.createGist(myProject, mainAccount.executor, indicator, mainAccount.account.server,
-                                                expected, true, gistDescription, null)
+    val service = project.service<GithubCreateGistService>()
+    val url = service.createGist(myProject, mainAccount.executor, mainAccount.account.server,
+                                 expected, true, gistDescription, null)
     assertNotNull(url)
     gistId = url!!.substring(url.lastIndexOf('/') + 1)
 
@@ -27,11 +26,12 @@ class GithubCreateGistTest : GithubCreateGistTestBase() {
     checkGistContent(expected)
   }
 
-  fun testUnusedFilenameField() {
+  fun testUnusedFilenameField() = kotlinx.coroutines.test.runTest {
     val expected = createContent()
 
-    val url = GithubCreateGistAction.createGist(myProject, mainAccount.executor, indicator, mainAccount.account.server,
-                                                expected, true, gistDescription, "filename")
+    val service = project.service<GithubCreateGistService>()
+    val url = service.createGist(myProject, mainAccount.executor, mainAccount.account.server,
+                                 expected, true, gistDescription, "filename")
     assertNotNull(url)
     gistId = url!!.substring(url.lastIndexOf('/') + 1)
 
@@ -42,12 +42,13 @@ class GithubCreateGistTest : GithubCreateGistTestBase() {
     checkGistContent(expected)
   }
 
-  fun testUsedFilenameField() {
+  fun testUsedFilenameField() = kotlinx.coroutines.test.runTest {
     val content = listOf(FileContent("file.txt", "file.txt content"))
     val expected = listOf(FileContent("filename", "file.txt content"))
 
-    val url = GithubCreateGistAction.createGist(myProject, mainAccount.executor, indicator, mainAccount.account.server,
-                                                content, true, gistDescription, "filename")
+    val service = project.service<GithubCreateGistService>()
+    val url = service.createGist(myProject, mainAccount.executor, mainAccount.account.server,
+                                 content, true, gistDescription, "filename")
     assertNotNull(url)
     gistId = url!!.substring(url.lastIndexOf('/') + 1)
 
@@ -58,11 +59,12 @@ class GithubCreateGistTest : GithubCreateGistTestBase() {
     checkGistContent(expected)
   }
 
-  fun testPublic() {
+  fun testPublic() = kotlinx.coroutines.test.runTest {
     val expected = createContent()
 
-    val url = GithubCreateGistAction.createGist(myProject, mainAccount.executor, indicator, mainAccount.account.server,
-                                                expected, false, gistDescription, null)
+    val service = project.service<GithubCreateGistService>()
+    val url = service.createGist(myProject, mainAccount.executor, mainAccount.account.server,
+                                 expected, false, gistDescription, null)
     assertNotNull(url)
     gistId = url!!.substring(url.lastIndexOf('/') + 1)
 
@@ -73,11 +75,12 @@ class GithubCreateGistTest : GithubCreateGistTestBase() {
     checkGistContent(expected)
   }
 
-  fun testEmpty() {
+  fun testEmpty() = kotlinx.coroutines.test.runTest {
     val expected = emptyList<FileContent>()
 
-    val url = GithubCreateGistAction.createGist(myProject, mainAccount.executor, indicator, mainAccount.account.server,
-                                                expected, true, gistDescription, null)
+    val service = project.service<GithubCreateGistService>()
+    val url = service.createGist(myProject, mainAccount.executor, mainAccount.account.server,
+                                 expected, true, gistDescription, null)
     assertNull("Gist was created", url)
 
     checkNotification(NotificationType.WARNING, "Can't create Gist", "Can't create empty gist")

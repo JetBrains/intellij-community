@@ -1,0 +1,4 @@
+<fold text='{"second": 123...}'>{
+  "first": {"id":  10},
+  "second": 123
+}</fold>

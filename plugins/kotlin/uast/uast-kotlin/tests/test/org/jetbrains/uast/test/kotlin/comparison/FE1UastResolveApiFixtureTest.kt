@@ -286,12 +286,20 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveConstructorCallFromLibrary(myFixture)
     }
 
+    fun testResolveAnnotationConstructorCallFromLibrary() {
+        checkResolveAnnotationConstructorCallFromLibrary(myFixture)
+    }
+
     fun testResolveTopLevelInlineReifiedFromLibrary() {
         checkResolveTopLevelInlineReifiedFromLibrary(myFixture, withJvmName = false)
     }
 
     fun testResolveTopLevelInlineReifiedFromLibraryWithJvmName() {
         checkResolveTopLevelInlineReifiedFromLibrary(myFixture, withJvmName = true)
+    }
+
+    fun testResolveTopLevelInlineReifiedFromLibraryRecursiveTypeParameter() {
+        checkResolveTopLevelInlineReifiedFromLibrary_recursiveTypeParameter(myFixture, isK2 = false)
     }
 
     fun testResolveTopLevelInlineInFacadeFromLibrary() {

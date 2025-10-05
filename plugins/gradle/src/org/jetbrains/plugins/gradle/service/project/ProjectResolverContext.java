@@ -23,12 +23,15 @@ import java.util.Collection;
 @ApiStatus.NonExtendable
 public interface ProjectResolverContext extends GradleExecutionContext, UserDataHolderEx {
 
+  @NotNull String getExternalProjectPath();
+
   @NotNull ExternalSystemTaskId getExternalSystemTaskId();
 
   @NotNull String getProjectGradleVersion();
 
   @Nullable String getIdeProjectPath();
 
+  @ApiStatus.Internal
   boolean isPhasedSyncEnabled();
 
   boolean isResolveModulePerSourceSet();

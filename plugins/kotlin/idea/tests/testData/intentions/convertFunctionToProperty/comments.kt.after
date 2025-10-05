@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 annotation class X(val s: String)
 
 // 1

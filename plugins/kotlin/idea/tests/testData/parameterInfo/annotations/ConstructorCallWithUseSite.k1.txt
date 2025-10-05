@@ -1,0 +1,1 @@
+Text: (<highlight>foo: Int</highlight>, @Fancy foo1: Int, foo2: Int), Disabled: false, Strikeout: false, Green: true

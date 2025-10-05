@@ -13,8 +13,8 @@ public class MavenServerDownloadListenerWrapper extends MavenRemoteObject
   private final ConcurrentLinkedQueue<DownloadArtifactEvent> myPullingQueue = new ConcurrentLinkedQueue<DownloadArtifactEvent>();
 
   @Override
-  public void artifactDownloaded(File file, String relativePath) {
-    myPullingQueue.add(new DownloadArtifactEvent(file.getAbsolutePath(), relativePath));
+  public void artifactDownloaded(File file) {
+    myPullingQueue.add(new DownloadArtifactEvent(file.getAbsolutePath()));
   }
 
   @Override

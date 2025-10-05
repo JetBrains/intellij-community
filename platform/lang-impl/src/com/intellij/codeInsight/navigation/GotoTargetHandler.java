@@ -38,7 +38,9 @@ import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.components.JBList;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -184,7 +186,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setAdText(getAdText(gotoData.source, targets.length));
     final JBPopup popup = builder.createPopup();
 
-    JScrollPane pane = builder instanceof PopupChooserBuilder ? ((PopupChooserBuilder<?>)builder).getScrollPane() : null;
+    JScrollPane pane;
+    if (builder instanceof PopupChooserBuilder<?> popupChooserBuilder) {
+      ClientProperty.put(popupChooserBuilder.getChooserComponent(), JBList.IMMUTABLE_MODEL_AND_RENDERER, true);
+      pane = popupChooserBuilder.getScrollPane();
+    } else {
+      pane = null;
+    }
+
     if (pane != null) {
       if (!ExperimentalUI.isNewUI()) {
         pane.setBorder(null);

@@ -2,15 +2,13 @@
 
 package org.jetbrains.kotlin.idea
 
-import com.intellij.ide.plugins.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.update.verify
 
-
 @Service
-class KotlinPluginUpdater : StandalonePluginUpdateChecker(
+internal class KotlinPluginUpdater : StandalonePluginUpdateChecker(
     KotlinIdePlugin.id,
     PROPERTY_NAME,
     notificationGroup = null,

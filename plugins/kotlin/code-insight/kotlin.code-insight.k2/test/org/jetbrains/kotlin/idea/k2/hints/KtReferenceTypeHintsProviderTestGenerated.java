@@ -125,6 +125,16 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/FlexibleType.kt");
     }
 
+    @TestMetadata("FlexibleTypeWithRanges.kt")
+    public void testFlexibleTypeWithRanges() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/FlexibleTypeWithRanges.kt");
+    }
+
+    @TestMetadata("FlexibleTypeWithRangesArrayElement.kt")
+    public void testFlexibleTypeWithRangesArrayElement() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/FlexibleTypeWithRangesArrayElement.kt");
+    }
+
     @TestMetadata("FunctionalType.kt")
     public void testFunctionalType() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/FunctionalType.kt");
@@ -213,6 +223,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
     @TestMetadata("SAMConstructor.kt")
     public void testSAMConstructor() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/SAMConstructor.kt");
+    }
+
+    @TestMetadata("SmartCast.kt")
+    public void testSmartCast() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/SmartCast.kt");
     }
 
     @TestMetadata("SuspendFunctionalType.kt")

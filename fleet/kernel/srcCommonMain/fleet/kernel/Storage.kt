@@ -105,7 +105,7 @@ suspend fun <T> withStorage(
           val entitiesCount = snapshot.snapshot.entities.size
           Storage.logger.debug { "snapshot for $storageKey built with $entitiesCount entities, took $snapshotBuildDuration" }
           val savingDuration = measureTime {
-            saveSnapshot(snapshot)
+            coroutineScope { saveSnapshot(snapshot) }
           }
           Storage.logger.debug { "successfully saved snapshot for $storageKey, written in $savingDuration" }
         }

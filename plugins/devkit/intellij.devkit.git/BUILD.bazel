@@ -1,30 +1,29 @@
 ### auto-generated section `build intellij.devkit.git` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "git_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_provided_library(
-  name = "vcs-core_provided",
+  name = "platform_vcs-api_vcs-core_provided",
   lib = "//platform/vcs-api/vcs-api-core:vcs-core"
 )
 
 jvm_provided_library(
-  name = "vcs-log_provided",
+  name = "platform_vcs-log_vcs-log_provided",
   lib = "//platform/vcs-log/api:vcs-log"
 )
 
 jvm_provided_library(
-  name = "vcs-dvcs-impl_provided",
+  name = "platform_vcs-dvcs-impl_provided",
   lib = "//platform/dvcs-impl:vcs-dvcs-impl"
 )
 
 jvm_provided_library(
-  name = "vcs-git_provided",
+  name = "plugins_vcs-git_provided",
   lib = "//plugins/git4idea:vcs-git"
 )
 
@@ -32,7 +31,8 @@ jvm_library(
   name = "git",
   module_name = "intellij.devkit.git",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":git_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/util-ex",
@@ -41,18 +41,20 @@ jvm_library(
     "//platform/util",
     "//platform/ide-core",
     "//plugins/devkit/devkit-core:core",
-    ":vcs-core_provided",
-    ":vcs-log_provided",
-    ":vcs-dvcs-impl_provided",
-    ":vcs-git_provided",
-  ],
-  runtime_deps = [":git_resources"]
+    "//platform/vcs-api/shared",
+    "//platform/vcs-log/impl",
+    "//platform/platform-api:ide",
+    ":platform_vcs-api_vcs-core_provided",
+    ":platform_vcs-log_vcs-log_provided",
+    ":platform_vcs-dvcs-impl_provided",
+    ":plugins_vcs-git_provided",
+  ]
 )
 
 jvm_library(
   name = "git_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":git"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -72,12 +74,19 @@ jvm_library(
     "@lib//:junit4",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-  ],
-  runtime_deps = [":git_resources"]
+    "//platform/vcs-api/shared",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
+    "//platform/platform-api:ide",
+  ]
 )
+### auto-generated section `build intellij.devkit.git` end
+
+### auto-generated section `test intellij.devkit.git` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "git_test",
   runtime_deps = [":git_test_lib"]
 )
-### auto-generated section `build intellij.devkit.git` end
+### auto-generated section `test intellij.devkit.git` end

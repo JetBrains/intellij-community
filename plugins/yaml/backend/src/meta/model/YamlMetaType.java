@@ -97,6 +97,10 @@ public abstract class YamlMetaType {
     //
   }
 
+  public boolean isSupportedTag(@NotNull String tag) {
+    return true;
+  }
+
   /**
    * Validates the value not only at current level but also goes recursively through its children if it's a compound YAML value
    * TODO: unfinished experimental feature to support JSON Schema like features (anyOf, oneOf, allOf, not). Used in Kubernetes plugin. WIP

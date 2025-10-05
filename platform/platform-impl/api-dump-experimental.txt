@@ -1,3 +1,40 @@
+*:com.intellij.execution.impl.EditorTextDecoration
+- a:getId():com.intellij.execution.impl.EditorTextDecorationId
+*:com.intellij.execution.impl.EditorTextDecorationApplier
+- a:addDecorations(java.util.Collection):V
+- a:getHoveredHyperlink():com.intellij.execution.impl.HyperlinkDecoration
+- a:removeDecorations(java.util.Collection):V
+*f:com.intellij.execution.impl.EditorTextDecorationApplierKt
+- *sf:buildHighlighting(com.intellij.execution.impl.EditorTextDecorationId,I,I,com.intellij.openapi.editor.markup.TextAttributes,kotlin.jvm.functions.Function1):com.intellij.execution.impl.HighlightingDecoration
+- *bs:buildHighlighting$default(com.intellij.execution.impl.EditorTextDecorationId,I,I,com.intellij.openapi.editor.markup.TextAttributes,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.impl.HighlightingDecoration
+- *sf:buildHyperlink(com.intellij.execution.impl.EditorTextDecorationId,I,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.execution.impl.HyperlinkDecoration
+- *bs:buildHyperlink$default(com.intellij.execution.impl.EditorTextDecorationId,I,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.impl.HyperlinkDecoration
+- *sf:buildInlay(com.intellij.execution.impl.EditorTextDecorationId,I,com.intellij.execution.impl.InlayProvider,kotlin.jvm.functions.Function1):com.intellij.execution.impl.InlayDecoration
+- *bs:buildInlay$default(com.intellij.execution.impl.EditorTextDecorationId,I,com.intellij.execution.impl.InlayProvider,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.impl.InlayDecoration
+- *sf:createEditorTextDecorationApplier(com.intellij.openapi.editor.ex.EditorEx,com.intellij.openapi.Disposable):com.intellij.execution.impl.EditorTextDecorationApplier
+- *sf:createTextDecorationId(J):com.intellij.execution.impl.EditorTextDecorationId
+*:com.intellij.execution.impl.EditorTextDecorationId
+- java.lang.Comparable
+- a:getValue():J
+*:com.intellij.execution.impl.HighlightingBuilder
+- a:getLayer():I
+- a:setLayer(I):V
+*:com.intellij.execution.impl.HighlightingDecoration
+- com.intellij.execution.impl.EditorTextDecoration
+*:com.intellij.execution.impl.HyperlinkBuilder
+- a:getAttributes():com.intellij.openapi.editor.markup.TextAttributes
+- a:getFollowedAttributes():com.intellij.openapi.editor.markup.TextAttributes
+- a:getHoveredAttributes():com.intellij.openapi.editor.markup.TextAttributes
+- a:getLayer():I
+- a:setAttributes(com.intellij.openapi.editor.markup.TextAttributes):V
+- a:setFollowedAttributes(com.intellij.openapi.editor.markup.TextAttributes):V
+- a:setHoveredAttributes(com.intellij.openapi.editor.markup.TextAttributes):V
+- a:setLayer(I):V
+*:com.intellij.execution.impl.HyperlinkDecoration
+- com.intellij.execution.impl.EditorTextDecoration
+*:com.intellij.execution.impl.InlayBuilder
+*:com.intellij.execution.impl.InlayDecoration
+- com.intellij.execution.impl.EditorTextDecoration
 *:com.intellij.execution.impl.InlayProvider
 - createInlay(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.editor.Inlay
 - createInlayRenderer(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.EditorCustomElementRenderer
@@ -22,6 +59,9 @@ c:com.intellij.execution.wsl.WSLDistribution
 - com.intellij.ide.CommandLineInspectionProjectConfigurator
 - configureProject(com.intellij.openapi.project.Project,com.intellij.ide.CommandLineInspectionProjectConfigurator$ConfiguratorContext):V
 - a:configureProjectAsync(com.intellij.openapi.project.Project,com.intellij.ide.CommandLineInspectionProjectConfigurator$ConfiguratorContext,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.ide.CustomDataContextSerializer
+- a:getKey():com.intellij.openapi.actionSystem.DataKey
+- a:getSerializer():kotlinx.serialization.KSerializer
 f:com.intellij.ide.IdeTooltipManager
 - com.intellij.openapi.Disposable
 - *f:isProcessing(java.awt.Component):Z
@@ -39,6 +79,8 @@ f:com.intellij.ide.plugins.PluginNode
 - com.intellij.ide.plugins.IdeaPluginDescriptor
 - *:getChannel():java.lang.String
 - *:setChannel(java.lang.String):V
+f:com.intellij.ide.startup.StartupActionScriptManager
+- *s:addActionCommandsToBeginning(java.util.List):V
 *:com.intellij.ide.trustedProjects.TrustedProjectsListener
 - *sf:Companion:com.intellij.ide.trustedProjects.TrustedProjectsListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -115,6 +157,9 @@ f:com.intellij.ide.wizard.UIWizardUtil
 f:com.intellij.openapi.actionSystem.ActionGroupUtil
 - *s:forceHideDisabledChildren(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionGroup
 - *s:forceRecursiveUpdateInBackground(com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionGroup
+*f:com.intellij.openapi.application.impl.TestOnlyThreading
+- sf:INSTANCE:com.intellij.openapi.application.impl.TestOnlyThreading
+- sf:releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(kotlin.jvm.functions.Function0):java.lang.Object
 *e:com.intellij.openapi.editor.ComponentInlayAlignment
 - java.lang.Enum
 - sf:FIT_CONTENT_WIDTH:com.intellij.openapi.editor.ComponentInlayAlignment
@@ -162,6 +207,27 @@ com.intellij.openapi.editor.impl.EditorGutterListener
 - *:hoverStarted(com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent):V
 *:com.intellij.openapi.editor.impl.EditorHighlightingPredicate
 - a:shouldRender(com.intellij.openapi.editor.markup.RangeHighlighter):Z
+*f:com.intellij.openapi.editor.impl.EditorId
+- *sf:Companion:com.intellij.openapi.editor.impl.EditorId$Companion
+- <init>(fleet.util.UID):V
+- f:copy(fleet.util.UID):com.intellij.openapi.editor.impl.EditorId
+- bs:copy$default(com.intellij.openapi.editor.impl.EditorId,fleet.util.UID,I,java.lang.Object):com.intellij.openapi.editor.impl.EditorId
+- equals(java.lang.Object):Z
+- hashCode():I
+*bf:com.intellij.openapi.editor.impl.EditorId$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.openapi.editor.impl.EditorId$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.openapi.editor.impl.EditorId
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.openapi.editor.impl.EditorId):V
+*f:com.intellij.openapi.editor.impl.EditorId$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.openapi.editor.impl.EditorIdKt
+- *sf:editorId(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.impl.EditorId
+- *sf:editorIdOrNull(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.impl.EditorId
+- *sf:findEditor(com.intellij.openapi.editor.impl.EditorId):com.intellij.openapi.editor.Editor
+- *sf:findEditorOrNull(com.intellij.openapi.editor.impl.EditorId):com.intellij.openapi.editor.Editor
 f:com.intellij.openapi.editor.impl.EditorImpl
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.diagnostic.Dumpable
@@ -172,15 +238,24 @@ f:com.intellij.openapi.editor.impl.EditorImpl
 - java.awt.event.FocusListener
 - *:addHighlightingPredicate(com.intellij.openapi.util.Key,com.intellij.openapi.editor.impl.EditorHighlightingPredicate):com.intellij.openapi.editor.impl.EditorHighlightingPredicate
 - *:removeHighlightingPredicate(com.intellij.openapi.util.Key):com.intellij.openapi.editor.impl.EditorHighlightingPredicate
-*f:com.intellij.openapi.editor.impl.EditorThreading
-- sf:INSTANCE:com.intellij.openapi.editor.impl.EditorThreading
-- sf:assertInteractionAllowed():V
-- sf:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
-- sf:run(java.lang.Runnable):V
 *f:com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent
 - java.util.EventObject
 - <init>(com.intellij.openapi.editor.ex.EditorGutterComponentEx,com.intellij.openapi.editor.markup.GutterIconRenderer):V
 - getGutterIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
+*f:com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation
+- <init>(com.intellij.codeInsight.multiverse.CodeInsightContext,java.lang.String,javax.swing.Icon):V
+- f:component1():com.intellij.codeInsight.multiverse.CodeInsightContext
+- f:component2():java.lang.String
+- f:component3():javax.swing.Icon
+- f:copy(com.intellij.codeInsight.multiverse.CodeInsightContext,java.lang.String,javax.swing.Icon):com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation
+- bs:copy$default(com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation,com.intellij.codeInsight.multiverse.CodeInsightContext,java.lang.String,javax.swing.Icon,I,java.lang.Object):com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation
+- equals(java.lang.Object):Z
+- f:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+- f:getIcon():javax.swing.Icon
+- f:getText():java.lang.String
+- hashCode():I
+f:com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentationKt
+- *sf:createCodeInsightContextPresentation(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentation
 *:com.intellij.openapi.editor.markup.FillingLineMarkerRenderer
 - com.intellij.openapi.editor.markup.LineMarkerRendererEx
 - getIcon():javax.swing.Icon
@@ -240,15 +315,6 @@ a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - a:openInChildProcess(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.project.impl.P3SupportKt
 - *sf:processPerProjectSupport():com.intellij.openapi.project.impl.P3Support
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
-- com.intellij.openapi.components.PersistentStateComponent
-- *:getUnknownFeaturesOfType(java.lang.String):java.util.Set
-- *:unregisterUnknownFeature(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature):Z
-f:com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-- com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-- com.intellij.openapi.Disposable
-- *:offlineByDefault(com.intellij.openapi.vfs.VirtualFile,Z):V
-- *s:setOfflineByDefault(com.intellij.openapi.vfs.VirtualFile,Z):V
 a:com.intellij.openapi.wm.impl.FrameTitleBuilder
 - *:getFileTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.wm.impl.IdeBackgroundUtil
@@ -266,6 +332,8 @@ c:com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 c:com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen
 - com.intellij.openapi.wm.impl.welcomeScreen.AbstractWelcomeScreen
 - *:selectTab(com.intellij.openapi.wm.WelcomeScreenTab):V
+*:com.intellij.toolWindow.ToolWindowSplitContentProvider
+- a:createContentCopy(com.intellij.openapi.project.Project,com.intellij.ui.content.Content):com.intellij.ui.content.Content
 *a:com.intellij.ui.ToolbarActionTracker
 - com.intellij.openapi.Disposable
 - sf:ARROW_SHIFT:I
@@ -352,18 +420,6 @@ c:com.intellij.ui.content.impl.ContentManagerImpl
 - com.intellij.ui.content.ContentManager
 - java.beans.PropertyChangeListener
 - *:<init>(Z,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.ui.content.impl.ContentManagerImpl$ContentUiProducer):V
-*f:com.intellij.ui.content.tabs.TabbedContentAction$SplitTabAction
-- com.intellij.ui.content.tabs.TabbedContentAction
-- <init>(com.intellij.ui.content.ContentManager,Z):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-*f:com.intellij.ui.content.tabs.TabbedContentAction$UnsplitTabAction
-- com.intellij.ui.content.tabs.TabbedContentAction
-- <init>(com.intellij.ui.content.ContentManager):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ui.dsl.builder.ButtonKt
 - *sf:whenStateChangedFromUi(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
 - *bs:whenStateChangedFromUi$default(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
@@ -422,10 +478,10 @@ f:com.intellij.ui.dsl.builder.components.ValidationTooltipKt
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.components.ValidationType
 - s:values():com.intellij.ui.dsl.builder.components.ValidationType[]
+f:com.intellij.ui.render.RenderersKt
+- *sf:fontInfoRenderer(Z):javax.swing.ListCellRenderer
 f:com.intellij.util.SwingBindingsKt
-- *sf:bindSelectedTabIn(javax.swing.JTabbedPane,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
-- *sf:bindTextIn(javax.swing.text.JTextComponent,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):V
-- *sf:bindTextOnShow(javax.swing.text.JTextComponent,kotlinx.coroutines.flow.MutableStateFlow,java.lang.String):V
+- *sf:bindSelectedTabIn(javax.swing.JTabbedPane,kotlinx.coroutines.flow.MutableStateFlow,kotlinx.coroutines.CoroutineScope):kotlinx.coroutines.Job
 *f:com.intellij.util.ui.RestartDialogImpl
 - *sf:Companion:com.intellij.util.ui.RestartDialogImpl$Companion
 - <init>():V

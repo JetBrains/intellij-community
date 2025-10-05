@@ -21,7 +21,7 @@ import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.SwingConstants
 
-open class JvmClassIntentionActionGroup(
+public open class JvmClassIntentionActionGroup(
   actions: List<JvmGroupIntentionAction>,
   private val actionGroup: JvmActionGroup,
   private val callSiteLanguage: Language

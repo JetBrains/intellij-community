@@ -84,7 +84,6 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   private static boolean shouldSuggestJavaTarget(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
     if (PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class) != null) return false;
-
     PsiAnnotation anno = PsiTreeUtil.getParentOfType(ref, PsiAnnotation.class);
     if (!ref.isQualified() && target instanceof PsiPackage) return false;
     if (target instanceof PsiClass) {
@@ -112,6 +111,10 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (anno != null &&
         ref.getParent() instanceof PsiNameValuePair &&
         !JavaCompletionContributor.mayCompleteValueExpression(ref, anno.resolveAnnotationType())) {
+      return false;
+    }
+    if (ref.getParent() instanceof PsiJavaCodeReferenceElement parentReference &&
+        PsiTreeUtil.isAncestor(ref, parentReference.getQualifier(), false)) {
       return false;
     }
     return true;

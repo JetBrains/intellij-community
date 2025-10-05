@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.gradle.scripting.shared
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.gradle.scripting.shared.actions.ShowKotlinGradleDslLogs
-import org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider
+import org.jetbrains.kotlin.idea.core.script.shared.ScriptDiagnosticFixProvider
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 class GradleScriptDiagnosticFixProvider : ScriptDiagnosticFixProvider {

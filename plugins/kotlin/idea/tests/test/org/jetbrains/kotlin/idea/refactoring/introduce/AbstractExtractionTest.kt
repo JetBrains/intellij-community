@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.DataManager
+import com.intellij.lang.LanguageRefactoringSupport
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -25,6 +26,7 @@ import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.IntroduceParameterRefactoring
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
@@ -42,14 +44,17 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.chooseMembers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperRefactoring
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperConflictSearcher
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperRefactoring
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
@@ -162,6 +167,19 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
 
             file as KtFile
+
+            val introduceVariableHandler =
+                LanguageRefactoringSupport.getInstance()
+                    .forLanguage(KotlinLanguage.INSTANCE).introduceVariableHandler as KotlinIntroduceVariableHandler
+            introduceVariableHandler.occurenceReplaceChoice =
+                if (InTextDirectivesUtils.isDirectiveDefined(file.text, "// REPLACE_SINGLE_OCCURRENCE")) {
+                    OccurrencesChooser.ReplaceChoice.NO
+                } else {
+                    OccurrencesChooser.ReplaceChoice.ALL
+                }
+
+            KotlinCommonRefactoringSettings.getInstance().INTRODUCE_SPECIFY_TYPE_EXPLICITLY =
+                InTextDirectivesUtils.isDirectiveDefined(file.text, "// SPECIFY_TYPE_EXPLICITLY")
 
             getIntroduceVariableHandler().invoke(
                 fixture.project,
@@ -379,19 +397,25 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 KtPsiFactory(project).createModifierList(it).firstChild.node.elementType as KtModifierKeywordToken
             }
             val editor = fixture.editor
-            object : KotlinIntroduceTypeAliasHandler() {
-                override fun doInvoke(
-                    project: Project,
-                    editor: Editor,
-                    elements: List<PsiElement>,
-                    targetSibling: PsiElement,
-                    descriptorSubstitutor: ((IntroduceTypeAliasDescriptor) -> IntroduceTypeAliasDescriptor)?
-                ) {
-                    super.doInvoke(project, editor, elements, explicitPreviousSibling ?: targetSibling) {
-                        it.copy(name = aliasName ?: it.name, visibility = aliasVisibility ?: it.visibility)
-                    }
-                }
-            }.invoke(project, editor, file, null)
+            getIntroduceTypeAliasHandler(explicitPreviousSibling, aliasName, aliasVisibility).invoke(project, editor, file, null)
+        }
+    }
+
+    protected open fun getIntroduceTypeAliasHandler(
+        explicitPreviousSibling: PsiElement?,
+        aliasName: String?,
+        aliasVisibility: KtModifierKeywordToken?
+    ): RefactoringActionHandler = object : KotlinIntroduceTypeAliasHandler() {
+        override fun doInvoke(
+            project: Project,
+            editor: Editor,
+            elements: List<PsiElement>,
+            targetSibling: PsiElement,
+            descriptorSubstitutor: ((IntroduceTypeAliasDescriptor) -> IntroduceTypeAliasDescriptor)?
+        ) {
+            super.doInvoke(project, editor, elements, explicitPreviousSibling ?: targetSibling) {
+                it.copy(name = aliasName ?: it.name, visibility = aliasVisibility ?: it.visibility)
+            }
         }
     }
 
@@ -428,7 +452,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         }
     }
 
-    protected fun doExtractSuperTest(unused: String, isInterface: Boolean) {
+    protected open fun doExtractSuperTest(unused: String, isInterface: Boolean) {
         doTest(checkAdditionalAfterdata = true) { file ->
             file as KtFile
 
@@ -442,7 +466,13 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             val editor = fixture.editor
             val originalClass = file.findElementAt(editor.caretModel.offset)?.getStrictParentOfType<KtClassOrObject>()!!
             val memberInfos = chooseMembers(extractClassMembers(originalClass))
-            val conflicts = ExtractSuperRefactoring.collectConflicts(originalClass, memberInfos, targetParent, className, isInterface)
+            val conflicts = KotlinExtractSuperConflictSearcher.getInstance().collectConflicts(
+                originalClass,
+                memberInfos,
+                targetParent,
+                className,
+                isInterface,
+            )
             project.checkConflictsInteractively(conflicts) {
                 val extractInfo = ExtractSuperInfo(
                     originalClass,
@@ -453,7 +483,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                     isInterface,
                     DocCommentPolicy(DocCommentPolicy.ASIS)
                 )
-                ExtractSuperRefactoring(extractInfo).performRefactoring()
+                KotlinExtractSuperRefactoring.getInstance().performRefactoring(extractInfo)
             }
         }
     }

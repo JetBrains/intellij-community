@@ -43,7 +43,7 @@ import java.util.function.Predicate;
 /**
  * Model for "Go to | File" action
  */
-public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements DumbAware, Comparator<Object> {
+public class GotoFileModel extends DisposableGotoModelWithPersistentFilter<FileTypeRef> implements DumbAware, Comparator<Object> {
   private final int myMaxSize;
   private final Predicate<PsiFileSystemItem> myCustomFilter;
 

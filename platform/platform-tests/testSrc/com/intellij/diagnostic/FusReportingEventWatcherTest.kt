@@ -94,7 +94,7 @@ class FusReportingEventWatcherTest {
 
   @Test
   fun `reading lock execution statistics`() = timeoutRunBlocking(context = Dispatchers.Default) {
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       repeat(100) {
         runReadAction {
           Thread.sleep(12)
@@ -112,7 +112,7 @@ class FusReportingEventWatcherTest {
 
   @Test
   fun `reading lock waiting statistics`() = timeoutRunBlocking(context = Dispatchers.Default) {
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       repeat(100) {
         val waStarted = Job(coroutineContext.job)
         val waEnded = Job(coroutineContext.job)
@@ -143,7 +143,7 @@ class FusReportingEventWatcherTest {
 
   @Test
   fun `write lock execution statistics`() = timeoutRunBlocking(context = Dispatchers.Default) {
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       repeat(100) {
         runWriteAction {
           Thread.sleep(12)
@@ -161,7 +161,7 @@ class FusReportingEventWatcherTest {
 
   @Test
   fun `writing lock waiting statistics`() = timeoutRunBlocking(context = Dispatchers.Default) {
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       repeat(100) {
         val raStarted = Job(coroutineContext.job)
         val raEnded = Job(coroutineContext.job)

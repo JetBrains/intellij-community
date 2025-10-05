@@ -33,7 +33,7 @@ class Test2 {
 }
 
 class Test3 {
-  @Nullable final Object <warning descr="@Nullable field is always initialized not-null">member</warning>;
+  @Nullable final Object <warning descr="@Nullable field is always initialized non-null">member</warning>;
 
   public Test3(@NotNull Object member) {
     this.member = member;

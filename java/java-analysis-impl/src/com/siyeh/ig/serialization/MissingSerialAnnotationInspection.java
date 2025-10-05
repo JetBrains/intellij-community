@@ -38,7 +38,7 @@ public final class MissingSerialAnnotationInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new SerialAnnotationVisitor();
   }
 

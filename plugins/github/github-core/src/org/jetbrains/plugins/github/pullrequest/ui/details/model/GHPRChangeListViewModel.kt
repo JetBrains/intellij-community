@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.details.model.*
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
@@ -23,14 +24,15 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputation
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
 
 @ApiStatus.Experimental
-interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails, CodeReviewChangeListViewModel.WithGrouping {
+interface GHPRChangeListViewModel :
+  CodeReviewChangeListViewModel.WithDetails,
+  CodeReviewChangeListViewModel.WithGrouping,
+  CodeReviewChangeListViewModel.WithViewedState {
+
   val isOnLatest: Boolean
 
-  @RequiresEdt
-  fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean)
-
   companion object {
-    val DATA_KEY = DataKey.create<GHPRChangeListViewModel>("GitHub.PullRequest.Details.Changes.List.ViewModel")
+    val DATA_KEY: DataKey<GHPRChangeListViewModel> = DataKey.create<GHPRChangeListViewModel>("GitHub.PullRequest.Details.Changes.List.ViewModel")
   }
 }
 
@@ -73,7 +75,7 @@ internal class GHPRChangeListViewModelImpl(
 
   @RequiresEdt
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
-    cs.launch {
+    cs.launchNow {
       val paths = changes.map { relativePath(repository.root, it.filePath) }
       // TODO: handle error
       viewedStateData.updateViewedState(paths, viewed)

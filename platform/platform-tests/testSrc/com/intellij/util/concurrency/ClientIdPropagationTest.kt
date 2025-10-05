@@ -17,8 +17,10 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.Alarm
 import com.intellij.util.application
 import io.kotest.assertions.failure
-import kotlinx.coroutines.*
-import java.lang.Runnable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
@@ -148,7 +150,7 @@ class ClientIdPropagationTest : LightPlatformTestCase() {
   private fun doTest(expectedClientId: ClientId = TEST_CLIENT_ID, controllerContainerClientId: ClientId = TEST_CLIENT_ID, testRunnable: Runnable) {
     service<ClientSessionsManager<ClientAppSession>>().registerSession(testRootDisposable,
                                                                        TestClientAppSession(application as ApplicationImpl, controllerContainerClientId))
-    installThreadContext(ClientIdContextElement(TEST_CLIENT_ID)).use {
+    installThreadContext(ClientIdContextElement(TEST_CLIENT_ID)) {
       testRunnable.run()
     }
 

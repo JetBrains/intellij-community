@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>org.jetbrains.debugger.streams</id>
   <name>Java Stream Debugger</name>
   <vendor>JetBrains</vendor>

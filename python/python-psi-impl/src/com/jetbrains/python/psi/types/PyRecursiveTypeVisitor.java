@@ -185,6 +185,11 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
     }
 
     @Override
+    public @NotNull List<@Nullable PyType> visitPyUnsafeUnionType(@NotNull PyUnsafeUnionType unsafeUnionType) {
+      return Collections.unmodifiableList(new ArrayList<>(unsafeUnionType.getMembers()));
+    }
+
+    @Override
     public @NotNull List<@Nullable PyType> visitPyUnpackedTupleType(@NotNull PyUnpackedTupleType unpackedTupleType) {
       return unpackedTupleType.getElementTypes();
     }

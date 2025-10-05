@@ -1,2 +1,0 @@
-# TODO: triage these (new in py313)
-posixpath.splitroot

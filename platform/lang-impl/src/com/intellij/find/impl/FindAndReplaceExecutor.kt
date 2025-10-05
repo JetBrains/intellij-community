@@ -2,12 +2,14 @@
 package com.intellij.find.impl
 
 import com.intellij.find.FindModel
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageInfoAdapter
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 import javax.swing.table.TableCellRenderer
 
 @ApiStatus.Internal
@@ -31,6 +33,8 @@ interface FindAndReplaceExecutor {
     findModel: FindModel,
     previousUsages: Set<UsageInfoAdapter>,
     shouldThrottle: Boolean,
+    disposableParent: Disposable,
+    onUpdateModelCallback: Consumer<UsageInfoAdapter>,
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?,
   )
@@ -48,6 +52,8 @@ interface FindAndReplaceExecutor {
   fun performFindAllOrReplaceAll(findModel: FindModel, project: Project)
 
   fun validateModel(findModel: FindModel, onFinish: (Boolean) -> Any?)
+
+  fun performScopeSelection(scopeId: String, project: Project)
 
   fun cancelActivities()
 

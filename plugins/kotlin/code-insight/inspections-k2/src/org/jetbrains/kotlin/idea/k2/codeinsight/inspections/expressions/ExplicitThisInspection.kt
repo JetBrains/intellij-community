@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenOptions
+import org.jetbrains.kotlin.analysis.api.components.collectPossibleReferenceShortenings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -31,7 +32,7 @@ internal class ExplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
                 parent is KtCallableReferenceExpression && parent.receiverExpression == element
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun checkShortening(el: KtElement): Unit? {
         val shortenCommand = collectPossibleReferenceShortenings(
             el.containingKtFile,

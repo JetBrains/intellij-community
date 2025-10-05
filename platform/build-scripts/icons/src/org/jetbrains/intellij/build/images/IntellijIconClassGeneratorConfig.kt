@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import org.jetbrains.jps.model.module.JpsModule
@@ -44,7 +44,7 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       )
       "intellij.css" -> IntellijIconClassGeneratorModuleConfig(
         className = "CssIcons",
-        packageName = "com.intellij.lang.css",
+        packageName = "com.intellij.css.common",
         iconDirectory = "icons/css",
       )
       "intellij.platform.split" -> IntellijIconClassGeneratorModuleConfig(
@@ -71,7 +71,6 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.jetbrains.python.psi.icons",
         iconDirectory = "icons/com/jetbrains/python/psi",
       )
-
 
       "intellij.python" -> IntellijIconClassGeneratorModuleConfig(
         className = "PythonUltimateIcons",
@@ -107,6 +106,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "JavaScriptCoreIcons",
         packageName = "icons",
         iconDirectory = "icons",
+      )
+      "intellij.javascript.debugger.common" -> IntellijIconClassGeneratorModuleConfig(
+        className = "JavaScriptDebuggerIcons",
+        packageName = "com.intellij.javascript.debugger.common",
       )
       "intellij.toml.core" -> IntellijIconClassGeneratorModuleConfig(className = "TomlIcons", packageName = "org.toml")
       "intellij.markdown" -> IntellijIconClassGeneratorModuleConfig(
@@ -184,6 +187,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       "intellij.java.ultimate.icons" -> IntellijIconClassGeneratorModuleConfig(
         className = "JavaUltimateIcons",
         packageName = "com.intellij.java.ultimate.icons",
+      )
+
+      "intellij.uiDesigner" -> IntellijIconClassGeneratorModuleConfig(
+        className = "UiDesignerIcons",
+        packageName = "com.intellij.designer",
       )
 
       else -> super.getConfigForModule(moduleName)

@@ -2,19 +2,18 @@ package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyLanguageFacade;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -103,7 +102,7 @@ public class PyAstElementGenerator {
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
     final String name = getDummyFileName();
     final LightVirtualFile virtualFile = new LightVirtualFile(name, PythonFileType.INSTANCE, contents);
-    specifyFileLanguageLevel(virtualFile, langLevel);
+    PyLanguageFacade.getINSTANCE().setEffectiveLanguageLevel(virtualFile, langLevel);
     final PsiFile psiFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(virtualFile, PythonLanguage.getInstance(), physical, true);
     assert psiFile != null;
     return psiFile;
@@ -126,8 +125,6 @@ public class PyAstElementGenerator {
     final PyAstStatementList statementList = function.getStatementList();
     return (PyAstPassStatement)statementList.getStatements()[0];
   }
-
-  protected void specifyFileLanguageLevel(@NotNull VirtualFile virtualFile, @Nullable LanguageLevel langLevel) { }
 
   public @NotNull PyAstExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text)
     throws IncorrectOperationException {

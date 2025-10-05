@@ -4,7 +4,7 @@
 3(16) exit context manager: context_manager
 4(5,3) element: PyIfStatement
 5(6,7,3) READ ACCESS: c
-6(13) element: null. Condition: c:false
+6(13,3) element: null. Condition: c:false
 7(8) element: null. Condition: c:true
 8(3,9) ASSERTTYPE ACCESS: c
 9(10) element: PyStatementList

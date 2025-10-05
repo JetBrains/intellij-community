@@ -28,7 +28,7 @@ maven.install(
         "com.jetbrains.intellij.platform:jps-model-impl:" + intellij_version,
         "com.jetbrains.intellij.platform:build-scripts-downloader:" + intellij_version,
         "com.jetbrains.intellij.platform:jps-model-serialization:" + intellij_version,
-        "org.jetbrains.kotlin:kotlin-jps-plugin:2.1.20",
+        "org.jetbrains.kotlin:kotlin-jps-plugin:2.2.0",
         "org.jetbrains.teamcity:serviceMessages:2024.07",
     ],
     fail_if_repin_required = True,
@@ -51,4 +51,18 @@ use_repo(toolchains, "zig_sdk")
 register_toolchains(
     "@zig_sdk//toolchain/...",
     "@zig_sdk//libc_aware/toolchain/...",
+)
+
+bazel_dep(name = "rules_python", version = "1.6.3")
+
+# Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "remote_java_tools_windows_with_vc_redist",
+    sha256 = "9ec4e41ebbb2b7259eb14f1ad708e8ee60087f33515bdec4876c675205e6950f",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v13.18-with-vc_redist.zip",
+)
+override_repo(
+    use_extension("@rules_java//java:extensions.bzl", "toolchains"),
+    remote_java_tools_windows = "remote_java_tools_windows_with_vc_redist",
 )

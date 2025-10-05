@@ -33,8 +33,8 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 class KotlinJUnit3Framework: JUnit3Framework(), KotlinPsiBasedTestFramework {
     private val psiBasedDelegate = object : AbstractKotlinPsiBasedTestFramework() {
-        override val markerClassFqn: String
-            get() = JUnitUtil.TEST_CASE_CLASS
+        override val markerClassFqns: Collection<String>
+            get() = listOf(JUnitUtil.TEST_CASE_CLASS)
 
         override val disabledTestAnnotation: String
             get() = throw UnsupportedOperationException("JUnit3 does not support Ignore methods")

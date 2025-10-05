@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -45,8 +46,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -459,25 +460,26 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
                                     contentEntryFile.getPresentableUrl()));
           }
         }
-        // check if the same root is configured for another module
-        final Module[] modules = myModulesProvider.getModules();
-        for (final Module module : modules) {
-          if (myModuleName.equals(module.getName())) {
-            continue;
-          }
-          ModuleRootModel rootModel = myModulesProvider.getRootModel(module);
-          LOG.assertTrue(rootModel != null);
-          final VirtualFile[] moduleContentRoots = rootModel.getContentRoots();
-          for (VirtualFile moduleContentRoot : moduleContentRoots) {
-            if (file.equals(moduleContentRoot)) {
-              throw new Exception(
-                ProjectBundle.message("module.paths.add.content.duplicate.error", file.getPresentableUrl(), module.getName()));
+        if (!CodeInsightContexts.isSharedSourceSupportEnabled(myProject)) {
+          // check if the same root is configured for another module
+          final Module[] modules = myModulesProvider.getModules();
+          for (final Module module : modules) {
+            if (myModuleName.equals(module.getName())) {
+              continue;
+            }
+            ModuleRootModel rootModel = myModulesProvider.getRootModel(module);
+            LOG.assertTrue(rootModel != null);
+            final VirtualFile[] moduleContentRoots = rootModel.getContentRoots();
+            for (VirtualFile moduleContentRoot : moduleContentRoots) {
+              if (file.equals(moduleContentRoot)) {
+                throw new Exception(
+                  ProjectBundle.message("module.paths.add.content.duplicate.error", file.getPresentableUrl(), module.getName()));
+              }
             }
           }
         }
       }
     }
-
   }
 
   public static @NlsContexts.ConfigurableName String getName() {

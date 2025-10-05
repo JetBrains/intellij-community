@@ -9,22 +9,14 @@
   <resource-bundle>messages.DevKitWorkspaceModelBundle</resource-bundle>
 
   <actions>
-    <group id="WorkspaceModel" popup="true">
-      <action id="WorkspaceEntitiesJsonClipboard" internal="true"
-              class="com.intellij.devkit.workspaceModel.jsonDump.DumpWorkspaceEntitiesToClipboardAction"/>
-      <action id="WorkspaceEntitiesJsonLog" internal="true"
-              class="com.intellij.devkit.workspaceModel.jsonDump.DumpWorkspaceEntitiesToLogAction"/>
-      <action id="WorkspaceEntitiesJsonLogFile" internal="true"
-              class="com.intellij.devkit.workspaceModel.jsonDump.DumpWorkspaceEntitiesToLogFileAction"/>
-    </group>
     <action id="WorkspaceModelGeneration" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerationAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-    <action id="WorkspaceModelGenerateAllModulesAction" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerateAllModulesAction">
-      <add-to-group group-id="WorkspaceModel" anchor="first"/>
-    </action>
+    <action id="WorkspaceModelGenerateAllModulesAction" class="com.intellij.devkit.workspaceModel.WorkspaceModelGenerateAllModulesAction"/>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="devkit.workspaceModel.code.generation" defaultValue="false" restartRequired="false"
+                 description="Enable code generation for workspace model entities"/>
     <localInspection language="kotlin"
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitWorkspaceModelBundle"
@@ -53,5 +45,8 @@
     <notificationGroup id="Incompatible codegen api versions"
                        displayType="BALLOON"
                        key="notification.workspace.incompatible.codegen.api.versions"/>
+    <notificationGroup id="Workspace code generation not available"
+                       displayType="BALLOON"
+                       key="notification.workspace.code.generation.not.available"/>
   </extensions>
 </idea-plugin>

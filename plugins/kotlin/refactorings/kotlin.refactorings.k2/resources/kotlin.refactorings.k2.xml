@@ -29,6 +29,12 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoStorageSupport"
             serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.pullUp.K2MemberInfoStorageSupport"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperConflictSearcher"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.extractClass.K2ExtractSuperConflictSearcher"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractSuperRefactoring"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.extractClass.K2ExtractSuperRefactoring"/>
     <lang.refactoringSupport language="kotlin"
                              implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringSupportProvider"/>
     <refactoring.safeDeleteProcessor
@@ -96,6 +102,11 @@
     <action id="IntroduceProperty" class="org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.IntroduceK2PropertyAction"
             use-shortcut-of="IntroduceField">
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceField"/>
+    </action>
+
+    <action id="IntroduceTypeAlias" class="org.jetbrains.kotlin.idea.k2.refactoring.introduceTypeAlias.IntroduceTypeAliasAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt shift A"/>
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceProperty"/>
     </action>
 
   </actions>

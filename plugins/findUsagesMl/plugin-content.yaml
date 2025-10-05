@@ -1,0 +1,8 @@
+- name: lib/commons-text.jar
+  library: commons-text
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar
+  reason: <- intellij.findUsagesMl
+- name: lib/findUsagesMl.jar
+  modules:
+  - name: intellij.findUsagesMl

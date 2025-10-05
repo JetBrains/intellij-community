@@ -53,6 +53,28 @@ fun Semaphore.waitForMaybeCancellable() {
 
 @RequiresBackgroundThread(generateAssertion = false)
 @RequiresBlockingContext
+@JvmOverloads
+fun java.util.concurrent.Semaphore.acquireMaybeCancellable(permits: Int = 1) {
+  while (true) {
+    ProgressManager.checkCanceled()
+    try {
+      if (tryAcquire(permits, ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+        return
+      }
+    }
+    catch (e: InterruptedException) {
+      //This code is a modern (less intricate) version of ProgressIndicatorUtils.awaitWithCheckCanceled().
+      // awaitWithCheckCanceled() doesn't throw InterruptedException, it wraps them into PCE -- and we better
+      // follow the same API here for more smooth transition -- especially important since kotlin code doesn't
+      // declare (checked) InterruptedException, that makes them an unexpected surprise when called from
+      // java code
+      throw ProcessCanceledException(e)
+    }
+  }
+}
+
+@RequiresBackgroundThread(generateAssertion = false)
+@RequiresBlockingContext
 fun Lock.lockCancellable() {
   LOG.assertTrue(isInCancellableContext())
   while (true) {

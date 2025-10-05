@@ -666,16 +666,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       MavenProjectImporter.scheduleUpdateTargetFolders(myProject);
   }
 
-  /**
-   * @deprecated Use {@link #scheduleUpdateAllMavenProjects(MavenSyncSpec)}}
-   */
-  @Deprecated(forRemoval = true)
-  // used in third-party plugins
-  public List<Module> importProjects() {
-    scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.importProjects"));
-    return List.of();
-  }
-
   @ApiStatus.Internal
   public Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
     Map<VirtualFile, Module> result = new HashMap<>();

@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.jna.JnaLoader;
@@ -10,12 +11,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.system.OS;
 import com.sun.jna.platform.win32.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,7 +66,7 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
   }
 
   private static Path getDesktopDirectory() {
-    if (SystemInfo.isWindows && JnaLoader.isLoaded()) {
+    if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded()) {
       char[] path = new char[WinDef.MAX_PATH];
       WinNT.HRESULT res = Shell32.INSTANCE.SHGetFolderPath(null, ShlObj.CSIDL_DESKTOP, null, ShlObj.SHGFP_TYPE_CURRENT, path);
       if (WinError.S_OK.equals(res)) {
@@ -74,7 +75,7 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
         return Path.of(new String(path, 0, len));
       }
     }
-    else if (SystemInfo.isMac && JnaLoader.isLoaded()) {
+    else if (OS.CURRENT == OS.macOS && JnaLoader.isLoaded()) {
       ID manager = Foundation.invoke(Foundation.getObjcClass("NSFileManager"), "defaultManager");
       ID url = Foundation.invoke(manager, "URLForDirectory:inDomain:appropriateForURL:create:error:",
         12 /*NSDesktopDirectory*/, 1 /*NSUserDomainMask*/, null, false, null);
@@ -83,8 +84,8 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
         return Path.of(path);
       }
     }
-    else if (SystemInfo.hasXdgOpen()) {
-      String path = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-user-dir", "DESKTOP"));
+    else if (PathEnvironmentVariableUtil.isOnPath("xdg-user-dir")) {
+      var path = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-user-dir", "DESKTOP"));
       if (path != null && !path.isBlank()) {
         try {
           return Path.of(path);

@@ -27,3 +27,14 @@ class One<A> {
     One<Void>.Two<Void>.Three<Void> x;
   }
 }
+class C {
+  void x(int i) {
+    new Object() {
+      class Local { // can't be static
+        int get() {
+          return i;
+        }
+      }
+    };
+  }
+}

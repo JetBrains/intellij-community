@@ -14,6 +14,8 @@ import kotlin.io.path.isDirectory
 import kotlin.jvm.optionals.getOrNull
 
 
+private val fileLogger = fileLogger()
+
 @OptIn(ExperimentalPathApi::class)
 @Throws(IOException::class, FileLockedException::class)
 internal fun deleteCheckLockingImpl(path: Path, vararg processesToKill: Regex) {
@@ -26,7 +28,6 @@ internal fun deleteCheckLockingImpl(path: Path, vararg processesToKill: Regex) {
     }
 
     val paths = listOf(path) + if (path.isDirectory()) Files.walk(path).use { it.toList() } else emptyList()
-
     // First, kill processes
     for (child in paths) {
       for (process in getProcessLockedPath(child).orThrow()) {
@@ -34,8 +35,11 @@ internal fun deleteCheckLockingImpl(path: Path, vararg processesToKill: Regex) {
         val fileName = Path.of(command).fileName.toString()
         if (processesToKill.any { it.matches(fileName) }) {
           val processInfo = WinProcessInfo.get(process.pid())
-          fileLogger().info("Killing ${process.pid()} ${processInfo}")
+          fileLogger.warn("Killing ${process.pid()} ${processInfo}")
           killProcess(process)
+        }
+        else {
+          fileLogger.warn("Process ${WinProcessInfo.get(process.pid())} locks file $child, but I can't kill it as it doesnt match ${processesToKill.joinToString(",")}")
         }
       }
     }

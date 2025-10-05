@@ -313,6 +313,8 @@ fun parseApplication(builder: PsiBuilder, level: Int,
 
 fun parseKeyword(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(KEYWORDS)
 
+fun parseReservedKeyword(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(RESERVED_KEYWORDS)
+
 fun parsePrimitiveType(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(primitiveTypes)
 
 fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(ASSIGNMENTS)

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,10 +40,13 @@ public final class ManagedHighlighterRecycler {
 
   // return true if RH is successfully recycled, false if race condition intervened
   synchronized void recycleHighlighter(@NotNull PsiElement psiElement, @NotNull HighlightInfo info) {
+    RangeHighlighterEx highlighter = info.getHighlighter();
+    if (HighlightInfo.fromRangeHighlighter(highlighter) != info) {
+      return;  // do not recycle the alien highlighter
+    }
     assert info.isFromHighlightVisitor() || info.isFromAnnotator() || info.isFromInspection() || info.isInjectionRelated(): info;
     assert info.getHighlighter() != null;
     assert info.getGroup() == HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP: info;
-    RangeHighlighterEx highlighter = info.getHighlighter();
     if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
       UpdateHighlightersUtil.LOG.debug("recycleHighlighter " + highlighter + HighlightInfoUpdaterImpl.currentProgressInfo());
     }
@@ -51,26 +55,40 @@ public final class ManagedHighlighterRecycler {
   }
 
   // null means no highlighter found in the cache
-  synchronized @Nullable InvalidPsi pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
+  synchronized @Nullable InvalidPsi pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer, @Nullable String preferredDescription) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
     List<InvalidPsi> list = incinerator.get(range);
-    if (list != null) {
-      for (int i = 0; i < list.size(); i++) {
-        InvalidPsi psi = list.get(i);
-        RangeHighlighterEx highlighter = psi.info().getHighlighter();
-        if (highlighter.isValid() && highlighter.getLayer() == layer) {
-          list.remove(i);
-          if (list.isEmpty()) {
-            incinerator.remove(range);
-          }
-          if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
-            UpdateHighlightersUtil.LOG.debug("pickupHighlighterFromGarbageBin pickedup:" + highlighter + HighlightInfoUpdaterImpl.currentProgressInfo());
-          }
-          return psi;
+    if (list == null) {
+      return null;
+    }
+    int i;
+    int previousFound = -1;
+    for (i = list.size()-1; i>=0; i--) {
+      InvalidPsi psi = list.get(i);
+      RangeHighlighterEx highlighter = psi.info().getHighlighter();
+      if (highlighter != null && highlighter.isValid() && highlighter.getLayer() == layer && HighlightInfo.fromRangeHighlighter(highlighter) == psi.info()) {
+        if (Comparing.strEqual(psi.info().getDescription(), preferredDescription)) {
+          break;
+        }
+        else {
+          previousFound = i;
         }
       }
     }
-    return null;
+    if (i == -1) {
+      i = previousFound;
+      if (i == -1) {
+        return null;
+      }
+    }
+    InvalidPsi psi = list.remove(i);
+    if (list.isEmpty()) {
+      incinerator.remove(range);
+    }
+    if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
+      UpdateHighlightersUtil.LOG.debug("pickupHighlighterFromGarbageBin pickedup:" + psi.info().getHighlighter() + HighlightInfoUpdaterImpl.currentProgressInfo());
+    }
+    return psi;
   }
 
   synchronized @NotNull @Unmodifiable Collection<InvalidPsi> forAllInGarbageBin() {
@@ -96,8 +114,19 @@ public final class ManagedHighlighterRecycler {
   // usually you don't want to lose recycled highlighters
   synchronized void incinerateAndClear() {
     for (InvalidPsi psi : forAllInGarbageBin()) {
-      UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(psi.info(), myHighlightingSession);
+      HighlightInfo info = psi.info();
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      if (highlighter != null && HighlightInfo.fromRangeHighlighter(highlighter) == info) {
+        UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, myHighlightingSession);
+      }
     }
     incinerator.clear();
+  }
+  synchronized @NotNull ManagedHighlighterRecycler copy() {
+    ManagedHighlighterRecycler cop = new ManagedHighlighterRecycler(myHighlightingSession);
+    for (Long2ObjectMap.Entry<List<InvalidPsi>> entry : incinerator.long2ObjectEntrySet()) {
+      cop.incinerator.put(entry.getLongKey(), new ArrayList<>(entry.getValue()));
+    }
+    return cop;
   }
 }

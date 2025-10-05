@@ -7,8 +7,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 import org.jetbrains.jewel.samples.showcase.components.Banners
 import org.jetbrains.jewel.samples.showcase.components.Borders
+import org.jetbrains.jewel.samples.showcase.components.BrushesShowcase
 import org.jetbrains.jewel.samples.showcase.components.Buttons
 import org.jetbrains.jewel.samples.showcase.components.Checkboxes
 import org.jetbrains.jewel.samples.showcase.components.ChipsAndTrees
@@ -19,13 +21,13 @@ import org.jetbrains.jewel.samples.showcase.components.ProgressBar
 import org.jetbrains.jewel.samples.showcase.components.RadioButtons
 import org.jetbrains.jewel.samples.showcase.components.Scrollbars
 import org.jetbrains.jewel.samples.showcase.components.SegmentedControls
-import org.jetbrains.jewel.samples.showcase.components.ShowcaseIcons
 import org.jetbrains.jewel.samples.showcase.components.Sliders
 import org.jetbrains.jewel.samples.showcase.components.SplitLayouts
 import org.jetbrains.jewel.samples.showcase.components.Tabs
 import org.jetbrains.jewel.samples.showcase.components.TextAreas
 import org.jetbrains.jewel.samples.showcase.components.TextFields
 import org.jetbrains.jewel.samples.showcase.components.Tooltips
+import org.jetbrains.jewel.samples.showcase.components.TypographyShowcase
 import org.jetbrains.jewel.ui.component.SplitLayoutState
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 
@@ -82,14 +84,25 @@ public class ComponentsViewModel(
                 title = "SplitLayout",
                 iconKey = ShowcaseIcons.Components.splitlayout,
                 content = {
-                    SplitLayouts(outerSplitState, verticalSplitState, innerSplitState) {
-                        outerSplitState = SplitLayoutState(0.5f)
-                        verticalSplitState = SplitLayoutState(0.5f)
-                        innerSplitState = SplitLayoutState(0.5f)
-                    }
+                    SplitLayouts(
+                        outerSplitState,
+                        verticalSplitState,
+                        innerSplitState,
+                        onResetState = {
+                            outerSplitState = SplitLayoutState(0.5f)
+                            verticalSplitState = SplitLayoutState(0.5f)
+                            innerSplitState = SplitLayoutState(0.5f)
+                        },
+                    )
                 },
             ),
             ViewInfo(title = "Banners", iconKey = ShowcaseIcons.Components.banners, content = { Banners() }),
+            ViewInfo(
+                title = "Typography",
+                iconKey = ShowcaseIcons.Components.typography,
+                content = { TypographyShowcase() },
+            ),
+            ViewInfo(title = "Brushes", iconKey = ShowcaseIcons.Components.brush, content = { BrushesShowcase() }),
         )
 
     private var _currentView: ViewInfo by mutableStateOf(views.first())

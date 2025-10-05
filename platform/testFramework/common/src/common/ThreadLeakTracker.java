@@ -5,6 +5,7 @@ import com.intellij.diagnostic.JVMResponsivenessMonitor;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -13,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -26,7 +28,6 @@ import java.util.*;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
-import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 @TestOnly
@@ -89,6 +90,7 @@ public final class ThreadLeakTracker {
       "HttpClient-",  // JRE's HttpClient thread pool is not supposed to be disposed - to reuse connections
       ProcessIOExecutorService.POOLED_THREAD_PREFIX,
       "IDEA Test Case Thread",
+      "IjentThreadPool-",  // Many tests use global IJents that start lazily on the first request but exit when the whole application exits.
       "Image Fetcher ",
       "InnocuousThreadGroup",
       "Java2D Disposer",
@@ -105,6 +107,10 @@ public final class ThreadLeakTracker {
       // see okhttp3.ConnectionPool: "this pool holds up to 5 idle connections which will be evicted after 5 minutes of inactivity"
       "OkHttp ",
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
+      // com.jetbrains.plugins.webDeployment.connections.RemoteConnectionPool
+      // uses org.apache.commons.vfs2.impl.DefaultFileSystemManager which
+      // starts a long-running thread in org.apache.commons.vfs2.cache.SoftRefFilesCache.startThread:
+      "org.apache.commons.vfs2.cache.SoftRefFilesCache$ReleaseThread",
       "Periodic tasks thread", // com.intellij.util.concurrency.AppDelayQueue.TransferThread
       "process reaper", // Thread[#46,process reaper(pid7496),10,InnocuousThreadGroup] (since JDK-8279488 part of InnocuousThreadGroup)
       "qtp", // used in tests for mocking via WireMock in integration testing
@@ -115,6 +121,7 @@ public final class ThreadLeakTracker {
       "Save classpath indexes for file loader",
       "Shared Index Hash Index Flushing Queue",
       "Signal Dispatcher",
+      "SystemPropertyWatcher", //started by sun.awt.UNIXToolkit.initSystemPropertyWatcher
       "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
       "testcontainers",
       "timer-int", //serverIm,
@@ -132,8 +139,7 @@ public final class ThreadLeakTracker {
       // init zillions of timers in e.g., MacOSXPreferencesFile
       Preferences.userRoot().flush();
     }
-    catch (BackingStoreException e) {
-      throw new RuntimeException(e);
+    catch (Throwable ignored) {
     }
   }
 
@@ -181,7 +187,10 @@ public final class ThreadLeakTracker {
     while (System.currentTimeMillis() < deadlineMs) {
       // give a blocked thread an opportunity to die if it's stuck doing invokeAndWait()
       if (EDT.isCurrentThreadEdt()) {
-        UIUtil.dispatchAllInvocationEvents();
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+          UIUtil.dispatchAllInvocationEvents();
+          return Unit.INSTANCE;
+        });
       }
       else {
         UIUtil.pump();
@@ -234,6 +243,7 @@ public final class ThreadLeakTracker {
 
     return isIdleApplicationPoolThread(stackTrace)
            || isIdleCommonPoolThread(thread, stackTrace)
+           || isIdleDelaySchedulerThread(thread, stackTrace)
            || isFutureTaskAboutToFinish(stackTrace)
            || isIdleDefaultCoroutineExecutorThread(thread, stackTrace)
            || isCoroutineSchedulerPoolThread(thread, stackTrace)
@@ -297,6 +307,14 @@ public final class ThreadLeakTracker {
            && stackTrace[0].getClassName().endsWith(".Unsafe") && stackTrace[0].getMethodName().equals("park")
            && stackTrace[1].getClassName().equals("java.util.concurrent.locks.LockSupport") && stackTrace[1].getMethodName().equals("park")
            && stackTrace[2].getClassName().equals("java.util.concurrent.ForkJoinPool") && stackTrace[2].getMethodName().equals("runWorker");
+  }
+
+  // DelayScheduler is created when calling, for example, java.util.concurrent.CompletableFuture.orTimeout
+  private static boolean isIdleDelaySchedulerThread(Thread thread, StackTraceElement[] stackTrace) {
+    return thread.getClass().getName().equals("java.util.concurrent.DelayScheduler")
+           && stackTrace.length > 1
+           && stackTrace[0].getClassName().endsWith(".Unsafe") && stackTrace[0].getMethodName().equals("park")
+           && stackTrace[1].getClassName().equals("java.util.concurrent.DelayScheduler") && stackTrace[1].getMethodName().equals("loop");
   }
 
   // in newer JDKs strange long hangups observed in Unsafe.unpark:
@@ -425,7 +443,9 @@ public final class ThreadLeakTracker {
     if (System.getProperty("ide.testFramework.share.ijent.application.wide", "false").equals("true")) {
       return ContainerUtil.exists(stackTrace, element ->
         element.getClassName().contains("com.intellij.platform.ijent.spi.IjentSessionMediatorKt") ||
-        element.getClassName().contains("com.intellij.platform.ijent.spi.IjentThreadPool$IjentThreadFactory"));
+        element.getClassName().contains("com.intellij.platform.ijent.spi.IjentThreadPool$IjentThreadFactory") ||
+        element.getClassName().contains("com.intellij.platform.ijent.impl.hyperv.HyperV")
+      );
     }
     return false;
   }

@@ -7,6 +7,7 @@ import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyM
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -159,15 +160,24 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
 
     override fun canBuild(modelName: String?): Boolean = modelName == KotlinGradleModel::class.java.name
 
-    private fun getImplementedProjects(project: Project): List<Project> {
+    private fun getImplementedProjectNames(project: Project): List<String> {
         return listOf("expectedBy", "implement")
             .flatMap { project.configurations.findByName(it)?.dependencies ?: emptySet<Dependency>() }
             .filterIsInstance<ProjectDependency>()
-            .mapNotNull { it.dependencyProject }
+            .mapNotNull { dependency ->
+                if (GradleVersionUtil.isCurrentGradleOlderThan("9.0")) {
+                    val dependencyProject = GradleReflectionUtil.getValue(dependency, "getDependencyProject", Project::class.java)
+                    dependencyProject?.pathOrName()
+                } else {
+                    dependency.pathOrName()
+                }
+            }
     }
 
     // see GradleProjectResolverUtil.getModuleId() in IDEA codebase
     private fun Project.pathOrName() = if (path == ":") name else path
+
+    private fun ProjectDependency.pathOrName() = if (path == ":") name else path
 
     private fun Task.getDependencyClasspath(): List<String> {
         try {
@@ -254,7 +264,6 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         }
 
         val platform = platformPluginId ?: pluginToPlatform.entries.singleOrNull { project.plugins.findPlugin(it.key) != null }?.value
-        val implementedProjects = getImplementedProjects(project)
 
         if (builderContext != null) {
             downloadKotlinStdlibSourcesIfNeeded(project, builderContext)
@@ -266,7 +275,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             additionalVisibleSourceSets = additionalVisibleSourceSets,
             coroutines = getCoroutines(project),
             platformPluginId = platform,
-            implements = implementedProjects.map { it.pathOrName() },
+            implements = getImplementedProjectNames(project),
             kotlinTarget = platform ?: kotlinPluginId,
             kotlinTaskProperties = extraProperties,
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath,

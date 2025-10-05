@@ -37,7 +37,7 @@ fun <T> runBlockingWithFlushing(id: String, timeout: Duration, action: suspend C
       withTimeoutAndDump("runBlockingWithFlushing $id", timeout, action)
     }
 
-    resetThreadContext().use {
+    resetThreadContext {
       pumpMessages { task.isCompleted }
     }
     task.await()

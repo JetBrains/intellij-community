@@ -125,12 +125,12 @@ class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellView
     val interval = cell.interval
     val startOffset = editor.document.getLineStartOffset(interval.lines.first + 1)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
-    val foldingModel = editor.foldingModel
-    val currentFoldingRegion = foldingModel.getFoldRegion(startOffset, endOffset)
+    val currentFoldingRegion = editor.foldingModel.getFoldRegion(startOffset, endOffset)
+
     if (currentFoldingRegion == null) {
       ctx.addFoldingOperation { foldingModel ->
         val text = editor.document.getText(TextRange(startOffset, endOffset))
-        val firstNotEmptyString = text.lines().firstOrNull { it.trim().isNotEmpty() }
+        val firstNotEmptyString = text.lines().firstOrNull { it.isNotBlank() }
         val placeholder = StringUtil.shortenTextWithEllipsis(firstNotEmptyString ?: "\u2026", 20, 0)
         foldingModel.createFoldRegion(startOffset, endOffset, placeholder, null, false)?.apply {
           FoldingModelImpl.hideGutterRendererForCollapsedRegion(this)
@@ -140,7 +140,7 @@ class TextEditorCellViewComponent(private val cell: EditorCell) : EditorCellView
     }
     else {
       ctx.addFoldingOperation { foldingModel ->
-        if (currentFoldingRegion.isExpanded) {
+        if (folded) {
           currentFoldingRegion.isExpanded = false
         }
         else {

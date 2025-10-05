@@ -10,9 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.*
-import com.intellij.vcs.log.data.ContainingBranchesGetter
-import com.intellij.vcs.log.data.VcsCommitExternalStatus
-import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.*
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.details.CommitDetailsListPanel

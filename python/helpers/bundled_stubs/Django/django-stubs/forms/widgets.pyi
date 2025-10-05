@@ -1,18 +1,34 @@
 import datetime
 from collections.abc import Iterable, Iterator, Mapping, Sequence
-from typing import Any, Literal, Protocol, type_check_only
+from typing import Any, Literal, Protocol, TypeAlias, type_check_only
 
+import _typeshed
 from django.core.files.base import File
 from django.forms.renderers import BaseRenderer
 from django.forms.utils import _DataT, _FilesT
 from django.utils.choices import _Choices
 from django.utils.datastructures import _ListOrTuple
 from django.utils.safestring import SafeString
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self
 
 _OptAttrs: TypeAlias = dict[str, Any]
 
 class MediaOrderConflictWarning(RuntimeWarning): ...
+
+class MediaAsset:
+    element_template: str
+
+    def __init__(self, path: str, **attributes: _OptAttrs) -> None: ...
+    def __eq__(self, other: object) -> bool: ...
+    def __hash__(self) -> int: ...
+    def __html__(self) -> SafeString: ...
+    @property
+    def path(self) -> str: ...
+
+class Script(MediaAsset):
+    element_template: str
+
+    def __init__(self, src: str, **attributes: _OptAttrs) -> None: ...
 
 class Media:
     def __init__(
@@ -30,7 +46,13 @@ class Media:
     def merge(*lists: Iterable[Any]) -> list[Any]: ...
     def __add__(self, other: Media) -> Media: ...
 
-class MediaDefiningClass(type): ...
+class MediaDefiningClass(type):
+    def __new__(
+        mcs: type[_typeshed.Self],  # noqa: TID251
+        name: str,
+        bases: tuple[type, ...],
+        attrs: dict[str, Any],
+    ) -> _typeshed.Self: ...  # noqa: TID251
 
 class Widget(metaclass=MediaDefiningClass):
     needs_multipart_form: bool
@@ -74,6 +96,18 @@ class EmailInput(Input):
     template_name: str
 
 class URLInput(Input):
+    input_type: str
+    template_name: str
+
+class ColorInput(Input):
+    input_type: str
+    template_name: str
+
+class SearchInput(Input):
+    input_type: str
+    template_name: str
+
+class TelInput(Input):
     input_type: str
     template_name: str
 
@@ -284,3 +318,36 @@ class SelectDateWidget(Widget):
     def id_for_label(self, id_: str) -> str: ...
     def value_from_datadict(self, data: _DataT, files: _FilesT, name: str) -> str | None | Any: ...
     def value_omitted_from_data(self, data: _DataT, files: _FilesT, name: str) -> bool: ...
+
+__all__ = (
+    "Script",
+    "Media",
+    "MediaDefiningClass",
+    "Widget",
+    "TextInput",
+    "NumberInput",
+    "EmailInput",
+    "URLInput",
+    "ColorInput",
+    "SearchInput",
+    "TelInput",
+    "PasswordInput",
+    "HiddenInput",
+    "MultipleHiddenInput",
+    "FileInput",
+    "ClearableFileInput",
+    "Textarea",
+    "DateInput",
+    "DateTimeInput",
+    "TimeInput",
+    "CheckboxInput",
+    "Select",
+    "NullBooleanSelect",
+    "SelectMultiple",
+    "RadioSelect",
+    "CheckboxSelectMultiple",
+    "MultiWidget",
+    "SplitDateTimeWidget",
+    "SplitHiddenDateTimeWidget",
+    "SelectDateWidget",
+)

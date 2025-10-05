@@ -193,46 +193,6 @@ public abstract class JsonSchemaObject {
     return JsonSchemaObjectReadingUtils.getTypeDescription(this, shortDesc);
   }
 
-  /**
-   * @deprecated use {@link JsonSchemaObjectReadingUtils#guessType}
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable JsonSchemaType guessType() {
-    return JsonSchemaObjectReadingUtils.guessType(this);
-  }
-
-  /**
-   * @deprecated use {@link JsonSchemaObjectReadingUtils#hasStringChecks}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean hasStringChecks() {
-    return JsonSchemaObjectReadingUtils.hasStringChecks(this);
-  }
-
-  /**
-   * @deprecated use {@link JsonSchemaObjectReadingUtils#hasNumericChecks}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean hasNumericChecks() {
-    return JsonSchemaObjectReadingUtils.hasNumericChecks(this);
-  }
-
-  /**
-   * @deprecated use {@link JsonSchemaObjectReadingUtils#hasArrayChecks}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean hasArrayChecks() {
-    return JsonSchemaObjectReadingUtils.hasArrayChecks(this);
-  }
-
-  /**
-   * @deprecated use {@link JsonSchemaObjectReadingUtils#hasObjectChecks}
-   */
-  @Deprecated(forRemoval = true)
-  public boolean hasObjectChecks() {
-    return JsonSchemaObjectReadingUtils.hasObjectChecks(this);
-  }
-
   // Candidates for removal
 
   /**

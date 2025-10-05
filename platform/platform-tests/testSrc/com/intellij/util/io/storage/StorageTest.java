@@ -18,7 +18,7 @@ public class StorageTest extends StorageTestBase {
   public void testSmoke() throws Exception {
     final int record = myStorage.createNewRecord();
     myStorage.writeBytes(record, new ByteArraySequence("Hello".getBytes(StandardCharsets.UTF_8)), false);
-    assertEquals("Hello", new String(myStorage.readBytes(record), StandardCharsets.UTF_8));
+    assertEquals("Hello", new String(myStorage.readBytesTestAccessor(record), StandardCharsets.UTF_8));
   }
 
   @Test
@@ -36,7 +36,7 @@ public class StorageTest extends StorageTestBase {
     }
 
     for (int record : records) {
-      assertEquals(hello, new String(myStorage.readBytes(record), StandardCharsets.UTF_8));
+      assertEquals(hello, new String(myStorage.readBytesTestAccessor(record), StandardCharsets.UTF_8));
     }
 
     long timedelta = System.currentTimeMillis() - start;
@@ -79,6 +79,6 @@ public class StorageTest extends StorageTestBase {
         out.write(0);
       }
     }
-    myStorage.readBytes(r);
+    myStorage.readBytesTestAccessor(r);
   }
 }

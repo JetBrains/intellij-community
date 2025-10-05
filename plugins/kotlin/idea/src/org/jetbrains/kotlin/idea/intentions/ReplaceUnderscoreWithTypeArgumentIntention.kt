@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext.isNulla
 
 class ReplaceUnderscoreWithTypeArgumentIntention : SelfTargetingRangeIntention<KtTypeProjection>(
     KtTypeProjection::class.java,
-    KotlinBundle.lazyMessage("replace.with.explicit.type")
+    KotlinBundle.messagePointer("replace.with.explicit.type")
 ), LowPriorityAction {
 
     override fun applicabilityRange(element: KtTypeProjection): TextRange? {

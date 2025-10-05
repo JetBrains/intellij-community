@@ -21,7 +21,7 @@ internal class PropertiesStubRegistryExtension : StubRegistryExtension {
     registry.registerLightStubFactory(PropertiesElementTypes.PROPERTY_TYPE, PropertyStubFactory())
     registry.registerLightStubFactory(PropertiesElementTypes.PROPERTIES_LIST, PropertiesListStubFactory())
 
-    registry.registerStubSerializer(PropertiesParserDefinition.FILE_ELEMENT_TYPE, PropertyFileStubSerializer())
+    registry.registerStubSerializer(PropertiesParserDefinition.FILE_ELEMENT_TYPE, DefaultFileStubSerializer())
     registry.registerStubSerializer(PropertiesElementTypes.PROPERTY_TYPE, PropertyStubSerializer())
     registry.registerStubSerializer(PropertiesElementTypes.PROPERTIES_LIST, PropertiesListStubSerializer())
   }
@@ -55,20 +55,6 @@ private class PropertyStubFactory: LightStubElementFactory<PropertyStub, Propert
     val keyText = LightTreeUtil.toFilteredString(tree, keyNode, null)
     return PropertyStubImpl(parentStub, keyText)
   }
-}
-
-private class PropertyFileStubSerializer : StubSerializer<PsiFileStub<*>> {
-  override fun getExternalId(): String {
-    return StubSerializerId.DEFAULT_EXTERNAL_ID
-  }
-
-  override fun serialize(stub: PsiFileStub<*>, dataStream: StubOutputStream) = Unit
-
-  override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): PsiFileStub<*> {
-    return PsiFileStubImpl(null)
-  }
-
-  override fun indexStub(stub: PsiFileStub<*>, sink: IndexSink) = Unit
 }
 
 private class PropertyStubSerializer : StubSerializer<PropertyStub> {

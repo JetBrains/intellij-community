@@ -521,7 +521,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testCustomDelimiters() = runBlocking {
     createProjectSubDir("res")
 
-    importProjectAndExpectResourcePluginIndexed("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -536,7 +536,6 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                         <plugin>
                           <groupId>org.apache.maven.plugins</groupId>
                           <artifactId>maven-resources-plugin</artifactId>
-                          <version>2.5</version>
                           <configuration>
                             <delimiters>
                               <delimiter>|</delimiter>
@@ -565,7 +564,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   fun testDontUseDefaultDelimiter1() = runBlocking {
     createProjectSubDir("res")
 
-    importProjectAndExpectResourcePluginIndexed("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -604,7 +603,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
   @Test
   fun testDoNotAddReferenceToDelimiterDefinition() = runBlocking {
-    importProjectAndExpectResourcePluginIndexed("""
+    importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -688,12 +687,5 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     }
 
     assertTrue("Maven filter reference was not added", added.get())
-  }
-
-  private fun importProjectAndExpectResourcePluginIndexed(@Language(value = "XML", prefix = "<project>",
-                                                                    suffix = "</project>") xml: String) = runBlocking {
-    runAndExpectPluginIndexEvents(setOf("maven-resources-plugin")) {
-      importProjectAsync(xml)
-    }
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.ex;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.impl.FilteringMarkupIterator;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -46,11 +47,34 @@ public interface MarkupModelEx extends MarkupModel {
 
   void setRangeHighlighterAttributes(@NotNull RangeHighlighter highlighter, @NotNull TextAttributes textAttributes);
 
+  /**
+   * process all highlighters intersecting with [start, end) interval by {@code processor}.
+   * You must not do any changes to the markup model in the processor.
+   * Moreover, no meaningful work should be performed in the {@code processor} because iteration happens under the MarkupModel lock.
+   * @return true if no invocations of the {@code processor} returned false
+   */
   boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
   boolean processRangeHighlightersOutside(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor);
 
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
+
+  /**
+   * makes an iterator which enumerates only error-stripe {@link RangeHighlighterEx}s,
+   * i.e. those for which {@link com.intellij.openapi.editor.impl.ErrorStripeMarkersModel#isErrorStripeHighlighter} returns true
+   */
+  @NotNull
+  default MarkupIterator<RangeHighlighterEx> overlappingErrorStripeIterator(int startOffset, int endOffset) {
+    return new FilteringMarkupIterator<>(overlappingIterator(startOffset, endOffset), h->h.getErrorStripeMarkColor(null) != null);
+  }
+  /**
+   * makes an iterator which enumerates only {@link RangeHighlighterEx}s shown on the gutter.
+   * i.e. those for which {@link RangeHighlighterEx#isRenderedInGutter()} returns true
+   */
+  @NotNull
+  default MarkupIterator<RangeHighlighterEx> overlappingGutterIterator(int startOffset, int endOffset) {
+    return new FilteringMarkupIterator<>(overlappingIterator(startOffset, endOffset), h->h.isRenderedInGutter());
+  }
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull

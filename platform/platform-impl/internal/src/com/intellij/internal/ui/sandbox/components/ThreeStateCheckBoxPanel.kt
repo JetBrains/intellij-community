@@ -10,7 +10,7 @@ import javax.swing.JComponent
 
 internal class ThreeStateCheckBoxPanel : UISandboxPanel {
 
-  override val title: String = "ThreeStateCheckBoxPanel"
+  override val title: String = "ThreeStateCheckBox"
 
   override fun createContent(disposable: Disposable): JComponent {
     return panel {

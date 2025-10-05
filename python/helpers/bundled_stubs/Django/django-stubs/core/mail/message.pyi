@@ -4,10 +4,10 @@ from email.mime.base import MIMEBase
 from email.mime.message import MIMEMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Any, overload
+from email.utils import make_msgid as make_msgid
+from typing import Any, NamedTuple, TypeAlias, overload
 
 from django.utils.functional import _StrOrPromise
-from typing_extensions import TypeAlias
 
 utf8_charset: Any
 utf8_charset_qp: Any
@@ -46,6 +46,15 @@ _AttachmentContent: TypeAlias = bytes | EmailMessage | Message | SafeMIMEText | 
 _AttachmentTuple: TypeAlias = (
     tuple[str, _AttachmentContent] | tuple[str | None, _AttachmentContent, str] | tuple[str, _AttachmentContent, None]
 )
+
+class EmailAlternative(NamedTuple):
+    content: _AttachmentContent
+    mimetype: str
+
+class EmailAttachment(NamedTuple):
+    filename: str | None
+    content: _AttachmentContent
+    mimetype: str
 
 class EmailMessage:
     content_subtype: str
@@ -109,3 +118,4 @@ class EmailMultiAlternatives(EmailMessage):
         reply_to: Sequence[str] | None = None,
     ) -> None: ...
     def attach_alternative(self, content: _AttachmentContent, mimetype: str) -> None: ...
+    def body_contains(self, text: str) -> bool: ...

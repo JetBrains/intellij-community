@@ -31,11 +31,13 @@ enum class JavaFeature {
   STRING_SWITCH(LanguageLevel.JDK_1_7, "feature.string.switch"),
   OBJECTS_CLASS(LanguageLevel.JDK_1_7, "feature.objects.class"),
   STREAM_OPTIONAL(LanguageLevel.JDK_1_8, "feature.stream.and.optional.api", true),
+
   /**
    * java.util.Arrays.setAll, java.util.Collection#removeIf, java.util.List.sort(Comparator),
    * java.util.Map#putIfAbsent, java.util.Map#forEach
    */
   ADVANCED_COLLECTIONS_API(LanguageLevel.JDK_1_8, "feature.advanced.collection.api", true),
+
   /**
    * ThreadLocal.withInitial
    */
@@ -136,7 +138,17 @@ enum class JavaFeature {
   },
 
   SCOPED_VALUES(LanguageLevel.JDK_21_PREVIEW, "feature.scoped.values"),
+  STABLE_VALUES(LanguageLevel.JDK_25_PREVIEW, "feature.stable.values"),
   STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency"),
+  STRUCTURED_CONCURRENCY_TASK_SCOPE_CONSTRUCTORS(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency.constructors") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) && !useSiteLevel.isAtLeast(LanguageLevel.JDK_25)
+    }
+  },
+
+  STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS(LanguageLevel.JDK_25_PREVIEW, "feature.structured.concurrency.static.factory.methods"),
+
+  PEM_API(LanguageLevel.JDK_25_PREVIEW, "feature.pem.api"),
 
   /**
    * JEP 512
@@ -166,6 +178,7 @@ enum class JavaFeature {
 
     override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
   },
+
   /**
    * Was a preview feature in Java 20 Preview.
    * Keep the implementation, as it could reappear in the future.
@@ -258,7 +271,7 @@ enum class JavaFeature {
   TRANSITIVE_DEPENDENCY_ON_JAVA_BASE(LanguageLevel.JDK_24_PREVIEW, "feature.package.transitive.dependency.on.java.base") { //jep 494
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
       return useSiteLevel.isAtLeast(LanguageLevel.JDK_25) ||
-             LanguageLevel.JDK_24_PREVIEW == useSiteLevel//jep 494
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel //jep 494
     }
 
     override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
@@ -291,7 +304,7 @@ enum class JavaFeature {
   constructor(
     level: LanguageLevel,
     key: @PropertyKey(resourceBundle = JavaSyntaxBundle.BUNDLE) String,
-    vararg obsoletePreviewLevels: LanguageLevel
+    vararg obsoletePreviewLevels: LanguageLevel,
   ) {
     minimumLevel = level
     myKey = key
@@ -306,7 +319,7 @@ enum class JavaFeature {
   constructor(
     level: LanguageLevel,
     key: @PropertyKey(resourceBundle = JavaSyntaxBundle.BUNDLE) String,
-    canBeCustomized: Boolean = false
+    canBeCustomized: Boolean = false,
   ) {
     minimumLevel = level
     myKey = key
@@ -359,7 +372,9 @@ enum class JavaFeature {
         "STRING_TEMPLATES" -> STRING_TEMPLATES
         "UNNAMED_CLASSES", "IMPLICIT_CLASSES" -> IMPLICIT_CLASSES
         "SCOPED_VALUES" -> SCOPED_VALUES
+        "STABLE_VALUES" -> STABLE_VALUES
         "STRUCTURED_CONCURRENCY" -> STRUCTURED_CONCURRENCY
+        "PEM_API" -> PEM_API
         "CLASSFILE_API" -> CLASSFILE_API
         "STREAM_GATHERERS" -> STREAM_GATHERERS
         "FOREIGN" -> FOREIGN_FUNCTIONS

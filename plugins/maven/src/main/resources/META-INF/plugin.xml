@@ -116,6 +116,8 @@
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.server.ssl.IdeCertificateManagerMavenTLSCertificateChecker"
+                    serviceInterface="org.jetbrains.idea.maven.server.ssl.MavenTLSCertificateChecker"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"
                         serviceImplementation="org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider" overrides="true"/>
@@ -225,6 +227,22 @@
                      key="inspection.property.in.parent.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection"/>
+
+    <localInspection language="XML" shortName="MavenModelVersionMissed" bundle="messages.MavenDomBundle"
+                     key="inspection.missed.model.version"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenModelVersionMissedInspection"/>
+
+    <localInspection language="XML" shortName="MavenNewElementsInOldSchema" bundle="messages.MavenDomBundle"
+                     key="inspection.wrong.model.version"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenNewElementsInOldSchemaInspection"/>
+
+    <localInspection language="XML" shortName="MavenNewModelVersionInOldSchema" bundle="messages.MavenDomBundle"
+                     key="inspection.wrong.model.version"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenNewModelVersionInOldSchemaInspection"/>
+
     <xml.xmlExtension implementation="org.jetbrains.idea.maven.dom.MavenXmlExtension"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
@@ -649,11 +667,16 @@
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenBadJvmConfigEventParser"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenBadConfigEventParser"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.Maven4UpdateJdkTo17"/>
+    <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Maven4ModelVersionErrorParser"/>
+
     <log.import.parser
       implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadJvmConfigEventParser"/>
     <log.import.parser
       implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadConfigEventParser"/>
+    <log.import.parser
+      implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Maven4ModelVersionErrorParser"/>
     <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.InvalidTargetReleaseQuickFix"/>
+    <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.Maven4ModelVersionErrorParser"/>
 
     <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.ExecRemoteConnectionCreator" order="last"/>
   </extensions>
@@ -862,6 +885,7 @@
       <reference ref="Maven.AddManagedFiles"/>
       <reference ref="Maven.RemoveManagedFiles"/>
       <separator/>
+      <reference ref="Maven.RunBuild"/>
       <reference ref="Maven.ExecuteGoal"/>
       <reference ref="Maven.ToggleOffline"/>
       <reference ref="Maven.ToggleSkipTests"/>

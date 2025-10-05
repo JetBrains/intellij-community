@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass.PreprocessedInlayData
 import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeIndentedBlockInlayRenderer
+import com.intellij.codeInsight.hints.declarative.impl.inlayRenderer.DeclarativeInlayRenderer
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking

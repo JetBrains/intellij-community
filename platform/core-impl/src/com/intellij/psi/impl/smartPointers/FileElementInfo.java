@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
@@ -31,7 +31,7 @@ final class FileElementInfo extends SmartPointerElementInfo {
   FileElementInfo(@NotNull PsiFile file) {
     FileViewProvider provider = file.getViewProvider();
     myVirtualFile = provider.getVirtualFile();
-    myContext = FileViewProviderUtil.getCodeInsightContext(provider);
+    myContext = CodeInsightContextUtil.getCodeInsightContext(provider);
     myProject = file.getProject();
     myLanguageId = LanguageUtil.getRootLanguage(file).getID();
     myFileClassName = file.getClass().getName();

@@ -52,10 +52,12 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
     val initScript = """
     def gradleProjectId = '$gradleProjectId'
     def runAppTaskName = '${params.runAppTaskName}'
-    def mainClass = '${params.mainClass}'
+    def mainClassToRun = '${params.mainClass}'
     def javaExePath = '${params.javaExePath}'
     def _workingDir = ${if (params.workingDirectory.isNullOrEmpty()) "null\n" else "'${params.workingDirectory}'\n"}
     def sourceSetName = '${params.sourceSetName}'
+    
+    def isOlderThan64 = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.4")) < 0
 
     allprojects {
         afterEvaluate { project ->
@@ -74,8 +76,13 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
                     } else {
                         classpath = project.sourceSets[sourceSetName].runtimeClasspath
                     }
+                    
+                    if (isOlderThan64) {
+                        main = mainClassToRun
+                    } else {
+                        mainClass = mainClassToRun
+                    }
     
-                    main = mainClass
                     ${params.params}
                     if(_workingDir) workingDir = _workingDir
                     standardInput = System.in

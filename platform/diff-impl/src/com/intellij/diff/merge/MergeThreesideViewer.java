@@ -51,7 +51,6 @@ import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -70,6 +69,7 @@ import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.psi.*;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -394,7 +394,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
                                              LOG.error(e);
                                              return () -> myMergeContext.finishMerge(MergeResult.CANCEL);
                                            }
-                                         }), null, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS,
+                                         }), null, ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS,
                                          ApplicationManager.getApplication().isUnitTestMode());
   }
 
@@ -721,7 +721,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       if (myScheduled.isEmpty()) return;
 
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(() -> launchRediff(false), ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      myAlarm.addRequest(() -> launchRediff(false), ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
     }
 
     @RequiresEdt
@@ -734,7 +734,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       List<Document> documents = ThreeSide.map((side) -> getEditor(side).getDocument());
       final List<InnerChunkData> data = ContainerUtil.map(scheduled, change -> new InnerChunkData(change, documents));
 
-      int waitMillis = trySync ? ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
+      long waitMillis = trySync ? ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS : 0;
       ProgressIndicator progress =
         BackgroundTaskUtil.executeAndTryWait(indicator -> performRediff(scheduled, data, indicator), null, waitMillis, false);
 

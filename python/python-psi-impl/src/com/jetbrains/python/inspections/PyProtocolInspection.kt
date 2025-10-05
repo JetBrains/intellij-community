@@ -13,13 +13,8 @@ import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecorator.*
-import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
-import com.jetbrains.python.psi.resolve.RatedResolveResult
-import com.jetbrains.python.psi.types.PyClassLikeType
-import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyTypeChecker
-import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.*
 
 class PyProtocolInspection : PyInspection() {
 
@@ -55,7 +50,7 @@ class PyProtocolInspection : PyInspection() {
         .forEach { protocol ->
           inspectProtocolSubclass(protocol, type, myTypeEvalContext).forEach {
             val subclassElements = it.second
-            if (!subclassElements.isNullOrEmpty()) {
+            if (subclassElements.isNotEmpty()) {
               checkMemberCompatibility(it.first, subclassElements, type, protocol)
             }
           }
@@ -111,12 +106,10 @@ class PyProtocolInspection : PyInspection() {
     }
 
     private fun checkNewTypeWithProtocols(node: PyCallExpression) {
-      val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
-
-      node
-        .multiResolveCalleeFunction(resolveContext)
-        .firstOrNull { it.qualifiedName == PyTypingTypeProvider.NEW_TYPE }
-        ?.let {
+      val callee = node.callee as? PyReferenceExpression ?: return
+      val resolved = callee.followAssignmentsChain(resolveContext).element ?: return
+      val isNewTypeCall = resolved is PyQualifiedNameOwner && resolved.qualifiedName == PyTypingTypeProvider.NEW_TYPE
+      if (isNewTypeCall) {
           val base = node.arguments.getOrNull(1)
           if (base != null) {
             val type = myTypeEvalContext.getType(base)
@@ -127,21 +120,23 @@ class PyProtocolInspection : PyInspection() {
         }
     }
 
-    private fun checkMemberCompatibility(protocolElement: PyTypedElement,
-                                         subclassElements: List<RatedResolveResult>,
-                                         type: PyClassType,
-                                         protocol: PyClassType) {
+    private fun checkMemberCompatibility(
+      protocolElement: PyTypedElement,
+      subclassElements: List<PyTypedResolveResult>,
+      type: PyClassType,
+      protocol: PyClassType
+    ) {
       val expectedMemberType = myTypeEvalContext.getType(protocolElement)
 
       subclassElements
         .asSequence()
-        .map { it.element }
-        .filterIsInstance<PyTypedElement>()
-        .filter { it.containingFile == type.pyClass.containingFile }
-        .filterNot { PyTypeChecker.match(expectedMemberType, myTypeEvalContext.getType(it), myTypeEvalContext) }
+        .filter { it.element?.containingFile == type.pyClass.containingFile }
+        .filterNot { PyTypeChecker.match(expectedMemberType, it.type, myTypeEvalContext) }
         .forEach {
-          val place = if (it is PsiNameIdentifierOwner) it.nameIdentifier else it
-          registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.incompatible.with.protocol", it.name, protocol.name))
+          val element = it.element
+          val place = if (element is PsiNameIdentifierOwner) element.nameIdentifier else element ?: return@forEach
+          val elementName = if (element is PsiNameIdentifierOwner) element.name else return@forEach
+          registerProblem(place, PyPsiBundle.message("INSP.protocol.element.type.incompatible.with.protocol", elementName, protocol.name))
         }
     }
   }

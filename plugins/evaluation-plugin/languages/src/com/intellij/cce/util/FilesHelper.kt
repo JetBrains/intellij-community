@@ -15,9 +15,10 @@ object FilesHelper {
   fun getFilesOfLanguage(project: Project,
                          evaluationRoots: List<String>,
                          ignoreFileNames: Set<String>,
-                         language: String): List<VirtualFile> {
-    return getFiles(evaluationRoots.map { getFile(project, it) }, ignoreFileNames)[language]?.toList()
-           ?: throw IllegalArgumentException("No files for $language found")
+                         language: String?): List<VirtualFile> {
+    val extensionToFiles = getFiles(evaluationRoots.map { getFile(project, it) }, ignoreFileNames)
+    if (language == null) return extensionToFiles.flatMap { it.value }.toList()
+    return extensionToFiles[language]?.toList() ?: throw IllegalArgumentException("No files for $language found")
   }
 
   private fun getFiles(evaluationRoots: List<VirtualFile>, ignoreFileNames: Set<String>): Map<String, Set<VirtualFile>> {

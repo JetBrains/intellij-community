@@ -461,16 +461,25 @@ public class Notification {
                          id, myGroupId, myType, myTitle, mySubtitle, myContent);
   }
 
-  //<editor-fold desc="Deprecated stuff.">
+  private static final String DO_NOT_ASK_PREFIX = "Notification.DoNotAsk-";
+  private static final String DO_NOT_ASK_DISPLAY_PREFIX = "Notification.DisplayName-DoNotAsk-";
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Contract("_ -> this")
   public Notification setDoNotAskFor(@Nullable Project project) {
     PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
-    manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
-    manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
+    manager.setValue(DO_NOT_ASK_PREFIX + myDoNotAskId, true);
+    manager.setValue(DO_NOT_ASK_DISPLAY_PREFIX + myDoNotAskId, myDoNotAskDisplayName);
     return this;
   }
+
+  @ApiStatus.Experimental
+  public static boolean isDoNotAskFor(@Nullable Project project, @NotNull String doNotAskId) {
+    return project != null && PropertiesComponent.getInstance(project).getBoolean(DO_NOT_ASK_PREFIX + doNotAskId)
+           || PropertiesComponent.getInstance().getBoolean(DO_NOT_ASK_PREFIX + doNotAskId);
+  }
+
+  //<editor-fold desc="Deprecated stuff.">
 
   public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
     var dataContext = context != null ? context : CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT, sink -> sink.set(KEY, notification));

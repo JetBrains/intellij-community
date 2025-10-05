@@ -15,103 +15,87 @@ import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiClass
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.util.Textifier
 import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor
 import java.awt.BorderLayout
-import java.awt.GridLayout
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
-import javax.swing.JPanel
-import javax.swing.SwingConstants
 import kotlin.math.min
 
-/**
- * Displays JVM bytecode in a tool window.
- *
- * It has 2 states:
- * - there is bytecode: display a non-editable editor with source<->bytecode line matching
- * - there is no bytecode: display a label instructing the user to build the project first.
- */
 internal class BytecodeToolWindowPanel(
   private val project: Project,
-  private val psiClass: PsiClass,
-  private val classFile: VirtualFile?,
+  private val psiClass: PsiClass?,
+  private val classFile: VirtualFile,
 ) : JBPanel<Nothing>(BorderLayout()), Disposable {
   private val bytecodeEditor: Editor = EditorFactory.getInstance()
     .createEditor(EditorFactory.getInstance().createDocument(""), project, JavaClassFileType.INSTANCE, true)
 
   init {
-    if (classFile == null) {
-      val labelsPanel = JPanel(GridLayout(0, 1))
-      labelsPanel.setBorder(JBUI.Borders.empty())
-
-      val className = psiClass.name
-      val message = if (className != null) BytecodeViewerBundle.message("bytecode.not.found.for.class", className)
-      else BytecodeViewerBundle.message("bytecode.not.found")
-
-      JBLabel(wrapWithHtml(message), SwingConstants.CENTER).apply {
-        foreground = UIUtil.getLabelDisabledForeground()
-        setBorder(JBUI.Borders.empty(2, 0))
-        labelsPanel.add(this)
+    add(bytecodeEditor.getComponent())
+    updateTextInEditor()
+    EditorFactory.getInstance().getEventMulticaster().addCaretListener(object : CaretListener {
+      override fun caretPositionChanged(event: CaretEvent) {
+        val sourceEditor = selectedMatchingEditor
+        if (event.editor != sourceEditor) return
+        updateBytecodeSelection(sourceEditor, bytecodeEditor)
       }
 
-      JBLabel(wrapWithHtml(BytecodeViewerBundle.message("please.build.project")), SwingConstants.CENTER).apply {
-        foreground = UIUtil.getLabelDisabledForeground()
-        setBorder(JBUI.Borders.empty(2, 0))
-        labelsPanel.add(this)
+      override fun caretAdded(event: CaretEvent) {
+        val sourceEditor = selectedMatchingEditor
+        if (event.editor != sourceEditor) return
+        updateBytecodeSelection(sourceEditor, bytecodeEditor)
       }
 
-      val centerPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.MIDDLE))
-      centerPanel.add(labelsPanel)
+      override fun caretRemoved(event: CaretEvent) {
+        val sourceEditor = selectedMatchingEditor
+        if (event.editor != sourceEditor) return
+        updateBytecodeSelection(sourceEditor, bytecodeEditor)
+      }
+    }, this@BytecodeToolWindowPanel)
 
-      add(centerPanel, BorderLayout.CENTER)
-    }
-    else {
-      add(bytecodeEditor.getComponent())
-      updateTextInEditor()
-      EditorFactory.getInstance().getEventMulticaster().addCaretListener(object : CaretListener {
-        override fun caretPositionChanged(event: CaretEvent) {
-          val sourceEditor = selectedMatchingEditor
-          if (event.editor != sourceEditor) return
-          updateBytecodeSelection(sourceEditor, bytecodeEditor)
-        }
+    EditorFactory.getInstance().getEventMulticaster().addSelectionListener(object : SelectionListener {
+      override fun selectionChanged(e: SelectionEvent) {
+        val sourceEditor = selectedMatchingEditor
+        if (e.editor != sourceEditor) return
+        updateBytecodeSelection(sourceEditor, bytecodeEditor)
+      }
+    }, this@BytecodeToolWindowPanel)
 
-        override fun caretAdded(event: CaretEvent) {
-          val sourceEditor = selectedMatchingEditor
-          if (event.editor != sourceEditor) return
-          updateBytecodeSelection(sourceEditor, bytecodeEditor)
+    val messageBusConnection = project.messageBus.connect(this)
+    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID) ?: return
+        for (event in events) {
+          val file = event.file ?: continue
+          if (file.fileType !is JavaClassFileType) continue
+          // Maybe also check: ProjectRootManager.getInstance(project).fileIndex.isInGeneratedSources(file)
+          val content = toolWindow.contentManager.contents.firstOrNull { it.getUserData(JAVA_CLASS_FILE) == file } ?: continue
+          when (event) {
+            is VFileContentChangeEvent -> {
+              this@BytecodeToolWindowPanel.classFile.refresh(true, false) { updateTextInEditor() }
+            }
+            is VFileDeleteEvent -> {
+              toolWindow.contentManager.removeContent(content, true)
+            }
+          }
         }
-
-        override fun caretRemoved(event: CaretEvent) {
-          val sourceEditor = selectedMatchingEditor
-          if (event.editor != sourceEditor) return
-          updateBytecodeSelection(sourceEditor, bytecodeEditor)
-        }
-      }, this@BytecodeToolWindowPanel)
-
-      EditorFactory.getInstance().getEventMulticaster().addSelectionListener(object : SelectionListener {
-        override fun selectionChanged(e: SelectionEvent) {
-          val sourceEditor = selectedMatchingEditor
-          if (e.editor != sourceEditor) return
-          updateBytecodeSelection(sourceEditor, bytecodeEditor)
-        }
-      }, this@BytecodeToolWindowPanel)
-    }
+      }
+    })
   }
 
   fun updateTextInEditor() {
-    if (classFile == null) throw IllegalStateException("Class file must not be null")
     val byteCodeText = deserializeBytecode(classFile)
     bytecodeEditor.document.putUserData(BYTECODE_WITH_DEBUG_INFO, byteCodeText) // include debug info for selection matching
     val byteCodeToShow = if (BytecodeViewerSettings.getInstance().state.showDebugInfo) byteCodeText else removeDebugInfo(byteCodeText)
@@ -130,7 +114,7 @@ internal class BytecodeToolWindowPanel(
     get() = FileEditorManager.getInstance(project).getSelectedTextEditor()?.takeIf { editor ->
       val document = editor.getDocument()
       val virtualFile = FileDocumentManager.getInstance().getFile(document)
-      virtualFile == psiClass.containingFile.virtualFile
+      virtualFile == psiClass?.containingFile?.virtualFile
     }
 
   override fun dispose() {
@@ -143,14 +127,6 @@ internal class BytecodeToolWindowPanel(
     private val LOG = Logger.getInstance(BytecodeToolWindowPanel::class.java)
 
     private val BYTECODE_WITH_DEBUG_INFO = Key.create<String>("BYTECODE_WITH_DEBUG_INFO")
-
-    /**
-     * Wrapping with HTML tags ensures the text wraps and is not cut off when the tool window becomes too narrow.
-     */
-    @NlsContexts.Label
-    private fun wrapWithHtml(@NlsContexts.Label text: String): String {
-      return "<html>$text</html>"
-    }
 
     private fun updateBytecodeSelection(sourceEditor: Editor, bytecodeEditor: Editor) {
       if (sourceEditor.getCaretModel().getCaretCount() != 1) {

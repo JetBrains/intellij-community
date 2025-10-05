@@ -109,6 +109,9 @@ public final class ReincludedRootsUtil {
           filesFromIndexableSetContributors.add(file);
           continue;
         }
+        if (!fileSet.getKind().isIndexable()) {
+          continue;
+        }
 
         EntityPointer<?> entityPointer = WorkspaceFileSetRecognizer.INSTANCE.getEntityPointer(fileSet);
 
@@ -132,10 +135,12 @@ public final class ReincludedRootsUtil {
           continue;
         }
 
+
         if (WorkspaceFileSetRecognizer.INSTANCE.isFromAdditionalLibraryRootsProvider(fileSet)) {
           filesFromAdditionalLibraryRootsProviders.add(file);
           continue;
         }
+
 
         LibraryId libraryId = WorkspaceFileSetRecognizer.INSTANCE.getLibraryId(fileSet, entityStorage);
         if (libraryId != null) {

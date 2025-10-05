@@ -27,9 +27,12 @@ import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor;
 import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor.ResultWithContext;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.*;
 import com.intellij.psi.scope.processor.MethodsProcessor;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -89,8 +92,13 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @Override
   public PsiPackageStatement getPackageStatement() {
-    ASTNode node = calcTreeElement().findChildByType(JavaElementType.PACKAGE_STATEMENT);
-    return node != null ? (PsiPackageStatement)node.getPsi() : null;
+    return withGreenStubOrAst(stub -> {
+      StubElement<?> element = stub.findChildStubByElementType(JavaElementType.PACKAGE_STATEMENT);
+      return element == null ? null : (PsiPackageStatement)element.getPsi();
+    }, file -> {
+      ASTNode childNode = file.findChildByType(JavaElementType.PACKAGE_STATEMENT);
+      return childNode == null ? null : (PsiPackageStatement)childNode.getPsi();
+    });
   }
 
   @Override
@@ -150,12 +158,23 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private void cleanupBrokenPackageKeyword() {
     PsiElement child = getFirstChild();
     while (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiErrorElement) {
-      if (child instanceof PsiErrorElement && child.getFirstChild() != null && child.getFirstChild().textMatches(JavaKeywords.PACKAGE)) {
+      if (isErrorElementThatContainsPackageStatement(child)) {
         child.delete();
         break;
       }
       child = child.getNextSibling();
     }
+  }
+
+  private static boolean isErrorElementThatContainsPackageStatement(PsiElement element) {
+    if (!(element instanceof PsiErrorElement)) return false;
+    PsiElement firstChild = element.getFirstChild();
+    if (firstChild == null) return false;
+    if (firstChild.textMatches(JavaKeywords.PACKAGE)) return true;
+    if (!(firstChild instanceof PsiModifierList)) return false;
+    PsiElement secondChild = firstChild.getNextSibling();
+    if (secondChild == null) return false;
+    return secondChild.textMatches(JavaKeywords.PACKAGE);
   }
 
   @Override
@@ -612,31 +631,36 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (virtualFile == null) virtualFile = getViewProvider().getVirtualFile();
 
     String sourceLevel = null;
-    try {
-      CharSequence contents = getViewProvider().getContents();
-      int lineBound = Strings.indexOf(contents, "\n");
-      CharSequence line = lineBound > 0 ? contents.subSequence(0, lineBound) : contents;
-      if (Strings.startsWith(line, 0,"#!")) {
-        List<String> params = ParametersListUtil.parse(line.toString());
-        int srcIdx = params.indexOf("--source");
-        if (srcIdx > 0 && srcIdx + 1 < params.size()) {
-          sourceLevel = params.get(srcIdx + 1);
-          LanguageLevel sheBangLevel = LanguageLevel.parse(sourceLevel);
-          if (sheBangLevel != null) {
-            return sheBangLevel;
+    FileElement treeElement = getTreeElement();
+    ASTNode firstLeaf = treeElement == null ? null : TreeUtil.findFirstLeaf(treeElement, false);
+    // optimization: do not (re)compute the whole file text on each PSI change - will lead to quadratic nightmare in case of many small changes otherwise
+    if (firstLeaf == null || Strings.startsWith(firstLeaf.getChars(), 0, "#!")) {
+      try {
+        CharSequence contents = getViewProvider().getContents();
+        int lineBound = Strings.indexOf(contents, "\n");
+        CharSequence line = lineBound > 0 ? contents.subSequence(0, lineBound) : contents;
+        if (Strings.startsWith(line, 0, "#!")) {
+          List<String> params = ParametersListUtil.parse(line.toString());
+          int srcIdx = params.indexOf("--source");
+          if (srcIdx > 0 && srcIdx + 1 < params.size()) {
+            sourceLevel = params.get(srcIdx + 1);
+            LanguageLevel sheBangLevel = LanguageLevel.parse(sourceLevel);
+            if (sheBangLevel != null) {
+              return sheBangLevel;
+            }
           }
         }
       }
-    }
-    catch (Throwable ignored) {
-    }
-    finally {
-      if (!Objects.equals(sourceLevel, virtualFile.getUserData(SHEBANG_SOURCE_LEVEL)) && virtualFile.isInLocalFileSystem()) {
-        virtualFile.putUserData(SHEBANG_SOURCE_LEVEL, sourceLevel);
-        VirtualFile file = virtualFile;
-        ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(file),
-                                                        ModalityState.nonModal(),
-                                                        ApplicationManager.getApplication().getDisposed());
+      catch (Throwable ignored) {
+      }
+      finally {
+        if (!Objects.equals(sourceLevel, virtualFile.getUserData(SHEBANG_SOURCE_LEVEL)) && virtualFile.isInLocalFileSystem()) {
+          virtualFile.putUserData(SHEBANG_SOURCE_LEVEL, sourceLevel);
+          VirtualFile file = virtualFile;
+          ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(file),
+                                                          ModalityState.nonModal(),
+                                                          ApplicationManager.getApplication().getDisposed());
+        }
       }
     }
 

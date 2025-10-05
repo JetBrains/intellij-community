@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -115,7 +115,7 @@ class CompoundRendererConfigurable extends JPanel {
         PsiClass psiClass = DebuggerUtils.getInstance()
           .chooseClassDialog(JavaDebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
         if (psiClass != null) {
-          String qName = JVMNameUtil.getNonAnonymousClassName(psiClass);
+          String qName = JVMNameUtil.getClassVMName(psiClass);
           myClassNameField.setText(qName);
           updateContext(qName);
         }

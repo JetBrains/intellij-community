@@ -9,7 +9,7 @@ import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.provider.Provider;
-import org.gradle.internal.impldep.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.gradle.internal.os.OperatingSystem;
 import org.gradle.language.cpp.*;
 import org.gradle.language.cpp.plugins.CppBasePlugin;

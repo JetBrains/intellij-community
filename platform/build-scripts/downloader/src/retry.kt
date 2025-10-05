@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import io.opentelemetry.api.common.AttributeKey
@@ -16,6 +16,7 @@ suspend fun <T> retryWithExponentialBackOff(
   backOffLimitMs: Long = TimeUnit.MINUTES.toMillis(3),
   backOffFactor: Int = 2, backOffJitter: Double = 0.1,
   onException: suspend (attempt: Int, e: Exception) -> Unit = { attempt, e -> defaultExceptionConsumer(attempt, e) },
+  isRetryAllowed: suspend (e: Exception) -> Boolean = { true },
   action: suspend (attempt: Int) -> T
 ): T {
   var effectiveDelay = initialDelayMs
@@ -25,7 +26,7 @@ suspend fun <T> retryWithExponentialBackOff(
   }
   catch (e: Exception) {
     onException(attempt, e)
-    if (e is IExceptionWithRetryPolicy && e.isRetryAllowed.not()) {
+    if ((e is IExceptionWithRetryPolicy && e.isRetryAllowed.not()) || isRetryAllowed(e).not()) {
       throw Exception("Attempt $attempt failed, stopping retries", e).apply {
         exceptions.forEach(this::addSuppressed)
       }

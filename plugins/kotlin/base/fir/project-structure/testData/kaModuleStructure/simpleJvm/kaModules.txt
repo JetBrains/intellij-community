@@ -61,6 +61,21 @@ KaSourceModule:
     <empty>
 
 KaSourceModule:
+  description: Sources of A
+  targetPlatform: JVM (1.8)
+  name: A
+  sourceModuleKind: TEST
+  stableModuleName: <A>
+  regularDependencies:
+    KaLibraryModule(L1)
+    KaLibraryModule(L3)
+    KaSourceModule(A, production)
+  friendDependencies:
+    KaSourceModule(A, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
   description: Sources of B
   targetPlatform: JVM (1.8)
   name: B
@@ -83,9 +98,24 @@ KaSourceModule:
   regularDependencies:
     KaLibraryModule(L2)
     KaSourceModule(A, production)
+    KaSourceModule(A, test)
     KaSourceModule(B, production)
   friendDependencies:
     KaSourceModule(B, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of C
+  targetPlatform: JVM (1.8)
+  name: C
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <C>
+  regularDependencies:
+    KaLibraryModule(L3)
+    KaSourceModule(A, production)
+  friendDependencies:
+    <empty>
   dependsOnDependencies:
     <empty>
 
@@ -98,7 +128,9 @@ KaSourceModule:
   regularDependencies:
     KaLibraryModule(L3)
     KaSourceModule(A, production)
+    KaSourceModule(A, test)
+    KaSourceModule(C, production)
   friendDependencies:
-    <empty>
+    KaSourceModule(C, production)
   dependsOnDependencies:
     <empty>

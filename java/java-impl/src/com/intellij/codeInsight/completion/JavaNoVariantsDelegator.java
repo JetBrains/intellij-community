@@ -141,7 +141,7 @@ public final class JavaNoVariantsDelegator extends CompletionContributor impleme
     CompletionResultSet tagResultSet = result.withPrefixMatcher(tagMatcher);
     tagResultSet.runRemainingContributors(parameters, downstream -> {
       LookupElement element = downstream.getLookupElement();
-      if (element != null && !prefixMatcher.prefixMatches(element) && tagMatcher.prefixMatches(element)) {
+      if (!prefixMatcher.prefixMatches(element) && tagMatcher.prefixMatches(element)) {
         LookupElement lookupElement = MethodTags.wrapLookupWithTags(element, prefixMatcher::prefixMatches, prefixMatcher.getPrefix(),
                                                                     parameters.getCompletionType());
         if (lookupElement != null) {
@@ -278,7 +278,7 @@ public final class JavaNoVariantsDelegator extends CompletionContributor impleme
       }
 
       element = highlighter.highlightIfNeeded(null, element, element.getObject());
-      if (!sameNamedBatch.isEmpty() && !element.getLookupString().equals(sameNamedBatch.get(0).getLookupString())) {
+      if (!sameNamedBatch.isEmpty() && !element.getLookupString().equals(sameNamedBatch.getFirst().getLookupString())) {
         result.addAllElements(sameNamedBatch);
         sameNamedBatch.clear();
       }

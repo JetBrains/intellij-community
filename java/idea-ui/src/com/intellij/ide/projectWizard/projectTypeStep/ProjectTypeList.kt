@@ -231,6 +231,7 @@ internal class ProjectTypeList(
     list = JBList(model)
     list.setSelectionModel(SingleSelectionModel())
     list.setCellRenderer(ProjectTypeListRenderer(context, model))
+    list.accessibleContext.accessibleName = UIBundle.message("newProjectWizard.ProjectTypeStep.list.accessible.name")
 
     searchTextField = SearchTextField(false)
     searchTextField.textEditor.border = JBUI.Borders.empty(2, 5, 2, 0)

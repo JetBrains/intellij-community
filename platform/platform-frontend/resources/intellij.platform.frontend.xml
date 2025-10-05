@@ -1,2 +1,2 @@
-<idea-plugin package="com.intellij.platform.frontend">
+<idea-plugin visibility="public" package="com.intellij.platform.frontend">
 </idea-plugin>

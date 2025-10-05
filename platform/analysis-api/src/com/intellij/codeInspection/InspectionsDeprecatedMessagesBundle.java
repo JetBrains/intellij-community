@@ -2,19 +2,16 @@
 package com.intellij.codeInspection;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
-public final class InspectionsDeprecatedMessagesBundle extends DynamicBundle {
+@ApiStatus.Internal
+public final class InspectionsDeprecatedMessagesBundle {
   private static final @NonNls String BUNDLE = "messages.InspectionsDeprecatedMessagesBundle";
-  private static final InspectionsDeprecatedMessagesBundle INSTANCE = new InspectionsDeprecatedMessagesBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(InspectionsDeprecatedMessagesBundle.class, BUNDLE);
 
   private InspectionsDeprecatedMessagesBundle() {
-    super(BUNDLE);
   }
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

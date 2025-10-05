@@ -15,6 +15,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInputStream;
 import java.io.DataOutput;
@@ -77,7 +78,11 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
 
   protected ValueContainerImpl() {
   }
-
+  
+  @TestOnly
+  public static <T> ValueContainerImpl<T> createValueContainerForTests() {
+    return new ValueContainerImpl<>();
+  }
 
   @Override
   public void addValue(int inputId, Value value) {
@@ -156,7 +161,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     return sb.toString();
   }
 
-  protected void removeValue(int inputId, Value value) {
+  public void removeValue(int inputId, Value value) {
     removeValue(inputId, getFileSetObject(value), value);
   }
 

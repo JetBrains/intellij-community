@@ -7,10 +7,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -187,11 +184,9 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
     }
 
     // ensure that the shortcuts of the actions registered above are included in tooltips
-    span("stripeButton.updatePresentation executing$suffix") {
-      withContext(Dispatchers.EDT) {
-        for (result in entries) {
-          result.entry.stripeButton?.updatePresentation()
-        }
+    span("stripeButton.updatePresentation executing$suffix", Dispatchers.UI) {
+      for (result in entries) {
+        result.entry.stripeButton?.updatePresentation()
       }
     }
 

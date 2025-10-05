@@ -127,6 +127,8 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     createProductIcon()
   }
 
+  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+
   init {
     isOpaque = true
     background = getHeaderBackground()
@@ -285,6 +287,11 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
   open fun addMenuItems(menu: JPopupMenu) {
     val closeMenuItem = menu.add(createCloseAction(this))
     closeMenuItem.font = JBFont.label().deriveFont(Font.BOLD)
+  }
+
+  override fun paint(g: Graphics) {
+    super.paint(g)
+    borderPainter.paintAfterChildren(this, g)
   }
 
   override fun getAccessibleContext(): AccessibleContext {

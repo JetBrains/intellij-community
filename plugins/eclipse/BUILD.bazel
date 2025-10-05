@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.eclipse` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "eclipse_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -13,6 +12,7 @@ jvm_library(
   module_name = "intellij.eclipse",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":eclipse_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -37,12 +37,11 @@ jvm_library(
     "//platform/core-ui",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "//xml/xml-frontback-impl:frontback-impl",
     "//platform/statistics",
     "@lib//:kotlin-reflect",
     "//platform/backend/workspace",
-  ],
-  runtime_deps = [":eclipse_resources"]
+    "//xml/xml-psi-impl:psi-impl",
+  ]
 )
 
 jvm_library(
@@ -80,7 +79,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "//xml/xml-frontback-impl:frontback-impl",
     "@lib//:kotlinx-coroutines-core",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
@@ -89,12 +87,16 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "//platform/backend/workspace",
-  ],
-  runtime_deps = [":eclipse_resources"]
+    "//xml/xml-psi-impl:psi-impl",
+  ]
 )
+### auto-generated section `build intellij.eclipse` end
+
+### auto-generated section `test intellij.eclipse` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "eclipse_test",
   runtime_deps = [":eclipse_test_lib"]
 )
-### auto-generated section `build intellij.eclipse` end
+### auto-generated section `test intellij.eclipse` end

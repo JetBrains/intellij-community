@@ -11,9 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PyPIPackageCache
-import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
 
@@ -27,7 +26,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.packages", 8)
+  private val GROUP = EventLogGroup("python.packages", 9)
 
   //full list is stored in metadata, see FUS-1218 for more details
   private val PYTHON_PACKAGE_INSTALLED = registerPythonSpecificEvent(GROUP,
@@ -49,13 +48,14 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
       val sdk = module.getSdk() ?: continue
       if (!PythonSdkUtil.isPythonSdk(sdk)) continue
       val usageData = getPythonSpecificInfo(sdk)
-      PyPackageManager.getInstance(sdk).getRequirements(module).orEmpty()
+      val requirements = PythonPackageManager.forSdk(project, sdk).getDependencyManager()?.getDependencies().orEmpty()
+      requirements
         .filter { pypiPackages.containsPackage(it.name) }
         .forEach { req ->
           ProgressManager.checkCanceled()
           val version = req.versionSpecs.firstOrNull()?.version?.trim() ?: "unknown"
           val data = ArrayList(usageData) // Not to calculate interpreter on each call
-          data.add(PACKAGE_FIELD.with(normalizePackageName(req.name)))
+          data.add(PACKAGE_FIELD.with(PyPackageName.normalizePackageName(req.name)))
           data.add(PACKAGE_VERSION_FIELD.with(version))
           result.add(PYTHON_PACKAGE_INSTALLED.metric(data))
         }
@@ -81,7 +81,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
         .forEach { pythonPackage ->
           val version = pythonPackage.version
           val data = buildList {
-            add(PACKAGE_FIELD.with(normalizePackageName(pythonPackage.name)))
+            add(PACKAGE_FIELD.with(PyPackageName.normalizePackageName(pythonPackage.name)))
             add(PACKAGE_VERSION_FIELD.with(version))
             add(EXECUTION_TYPE.with(executionType.value))
             add(INTERPRETER_TYPE.with(interpreterType.value))
@@ -93,5 +93,5 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
   }
 }
 
-val PACKAGE_FIELD = EventFields.StringValidatedByEnum("package", "python_packages")
+val PACKAGE_FIELD = EventFields.StringValidatedByDictionary("package", "python_packages.ndjson")
 val PACKAGE_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("package_version", "version")

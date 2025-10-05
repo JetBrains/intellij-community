@@ -17,7 +17,7 @@ import java.util.function.Predicate
  *
  * The concept is similar to how code completion works. Platform runs multiple code completion
  * contributors to build a list of available items for a particular place in the code. Later on,
- * the list is displayed to the user. Query executor on the other hand uses list of contributed
+ * the list is displayed to the user. Query executor, on the other hand, uses a list of contributed
  * [PolySymbolScope]s at a given location to either list all available symbols,
  * get code completions or match a name against the list of available symbols.
  *

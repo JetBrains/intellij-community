@@ -11,5 +11,6 @@
     <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough" />
     <module name="intellij.platform.jewel.markdown.extensions.gfmTables" />
     <module name="intellij.platform.jewel.markdown.extensions.autolink" />
+    <module name="intellij.platform.jewel.markdown.extensions.images" />
   </dependencies>
 </idea-plugin>

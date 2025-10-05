@@ -215,20 +215,19 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
   
   public void testWildcardAnnotated() {
     PsiType type = configureAndGetExpressionType("""
-      import org.jetbrains.annotations.NotNull;
-      import org.jetbrains.annotations.Nullable;
+      import org.jetbrains.annotations.*;
       
-      class X<T> {
+      class X<T extends @Nullable Object> {
         native X<@NotNull T> foo();
       
-        @SuppressWarnings("NullableProblems")
-        static void test(X<@Nullable ?> x) {
+        @NotNullByDefault
+        static void test(X<?> x) {
           <caret>x;
         }
       }
       """);
     assertEquals("X<?>", type.getCanonicalText());
-    assertEquals("NULLABLE (@Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
+    assertEquals("NULLABLE (inherited @Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
   }
   
   public void testSubstitutorOnTypeParameterUnknown() {
@@ -376,5 +375,36 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
     assertNotNull(info);
     TypeNullability typeNullability = info.toTypeNullability();
     assertEquals("NOT_NULL (@NotNullByDefault on package foo)", typeNullability.toString());
+  }
+  
+  public void testFBoundResolveUnderNotNull() {
+    myFixture.addClass("""
+      package org.jetbrains.annotations;
+      
+      public @interface NotNullByDefault {}
+      """);
+    myFixture.configureByText("Test.java", """
+      import org.jetbrains.annotations.NotNullByDefault;
+      
+      @NotNullByDefault
+      interface RestClient2 {
+          default void test(RequestHeadersUriSpec<?> spec2) {
+              spec2.uri().attributes().retrieve();
+          }
+
+          interface UriSpec<S extends RequestHeadersSpec<?>> {
+              S uri();
+          }
+      
+          interface RequestHeadersSpec<S extends RequestHeadersSpec<S>> {
+              S attributes();
+              Object retrieve();
+          }
+      
+          interface RequestHeadersUriSpec<S extends RequestHeadersSpec<S>> extends UriSpec<S>, RequestHeadersSpec<S> {
+          }
+      }
+      """);
+    myFixture.checkHighlighting();
   }
 }

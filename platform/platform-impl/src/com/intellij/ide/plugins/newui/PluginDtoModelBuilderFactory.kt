@@ -4,11 +4,13 @@ package com.intellij.ide.plugins.newui
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
 
 @ApiStatus.Internal
+@IntellijInternalApi
 class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
   private val resultDto = PluginDto(null, pluginId)
 
@@ -179,12 +181,18 @@ class PluginDtoModelBuilder(pluginId: PluginId) : PluginUiModelBuilder {
     return this
   }
 
+  override fun setDisableAllowed(disabledAllowed: Boolean): PluginUiModelBuilder {
+    resultDto.isDisableAllowed = disabledAllowed
+    return this
+  }
+
   override fun build(): PluginUiModel {
     return resultDto
   }
 }
 
 @ApiStatus.Internal
+@IntellijInternalApi
 object PluginDtoModelBuilderFactory : PluginUiModelBuilderFactory {
   override fun createBuilder(id: PluginId): PluginUiModelBuilder {
     return PluginDtoModelBuilder(id)

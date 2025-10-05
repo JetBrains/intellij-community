@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.run
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.CompilerModuleExtension
@@ -157,7 +157,7 @@ abstract class AbstractRunConfigurationBaseTest : KotlinCodeInsightTestCase(),
     private fun createModule(projectDir: VirtualFile, name: String): Module {
         val moduleDir = projectDir.findFileByRelativePath(name) ?: error("Directory for module $name not found")
         val moduleImlPath = moduleDir.toNioPath().resolve("$name.iml")
-        return ModuleManager.getInstance(project).newModule(moduleImlPath, StdModuleTypes.JAVA.id)
+        return ModuleManager.getInstance(project).newModule(moduleImlPath, JavaModuleType.getModuleType().id)
     }
 
     private fun configureModule(

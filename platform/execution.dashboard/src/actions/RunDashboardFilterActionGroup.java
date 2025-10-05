@@ -9,9 +9,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor;
-import com.intellij.platform.execution.dashboard.tree.RunDashboardStatusFilter;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManager;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.RunDashboardStatusFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +69,7 @@ final class RunDashboardFilterActionGroup extends DefaultActionGroup implements 
       Project project = e.getProject();
       if (project == null) return false;
 
-      RunDashboardStatusFilter statusFilter = ((RunDashboardManagerImpl)RunDashboardManager.getInstance(project)).getStatusFilter();
+      RunDashboardStatusFilter statusFilter = FrontendRunDashboardManager.getInstance(project).getStatusFilter();
       return statusFilter.isVisible(myStatus);
     }
 
@@ -83,15 +83,14 @@ final class RunDashboardFilterActionGroup extends DefaultActionGroup implements 
       Project project = e.getProject();
       if (project == null) return;
 
-      RunDashboardManagerImpl manager = (RunDashboardManagerImpl)RunDashboardManager.getInstance(project);
-      RunDashboardStatusFilter statusFilter = manager.getStatusFilter();
+      RunDashboardStatusFilter statusFilter = FrontendRunDashboardManager.getInstance(project).getStatusFilter();
       if (state) {
         statusFilter.show(myStatus);
       }
       else {
         statusFilter.hide(myStatus);
       }
-      manager.updateDashboard(true);
+      RunDashboardManager.getInstance(project).updateDashboard(true);
     }
   }
 }

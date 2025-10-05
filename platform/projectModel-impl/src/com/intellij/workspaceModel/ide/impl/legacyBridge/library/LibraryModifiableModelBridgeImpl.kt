@@ -103,8 +103,8 @@ internal class LibraryModifiableModelBridgeImpl(
               it.applyChangesFrom(diff)
             }
           }
-          is LibraryOrigin.OfDescriptor -> {
-            GlobalWorkspaceModel.getInstance(o.descriptor).updateModel("Library model commit") {
+          is LibraryOrigin.OfMachine -> {
+            GlobalWorkspaceModel.getInstance(o.eelMachine).updateModel("Library model commit") {
               it.applyChangesFrom(diff)
             }
           }
@@ -194,6 +194,7 @@ internal class LibraryModifiableModelBridgeImpl(
     assertModelIsLive()
 
     val rootTypeId = rootType.toLibraryRootType()
+
     val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 

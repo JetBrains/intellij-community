@@ -35,6 +35,18 @@ class ReaderBaseState(google.protobuf.message.Message):
         num_records_produced: builtins.int | None = ...,
         current_work: builtins.bytes | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["current_work", b"current_work", "num_records_produced", b"num_records_produced", "work_finished", b"work_finished", "work_started", b"work_started"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "current_work",
+            b"current_work",
+            "num_records_produced",
+            b"num_records_produced",
+            "work_finished",
+            b"work_finished",
+            "work_started",
+            b"work_started",
+        ],
+    ) -> None: ...
 
 global___ReaderBaseState = ReaderBaseState

@@ -17,12 +17,12 @@ internal class ExpectedKotlinType private constructor(
     nullability: Nullability,
 ) : ExpectedTypeWithNullability(jvmType, nullability) {
     
-    context(KaSession)
+    context(session: KaSession)
     val kaType: KaType?
-        get() = kaTypePointer.restore()
+        get() = with (session) { kaTypePointer.restore() }
 
     companion object {
-        context(KaSession)
+        context(_: KaSession)
         fun create(kaType: KaType, jvmType: JvmType): ExpectedKotlinType = 
             ExpectedKotlinType(kaType.createPointer(), jvmType, kaType.nullability.toNullability())
     }

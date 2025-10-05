@@ -15,14 +15,14 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @ApiStatus.Internal
-object JavaCompletionFeatures {
+public object JavaCompletionFeatures {
   private val VARIABLES_KEY: Key<VariablesInfo> = Key.create("java.ml.completion.variables")
   private val PACKAGES_KEY: Key<PackagesInfo> = Key.create("java.ml.completion.packages")
   private val CHILD_CLASS_WORDS_KEY: Key<List<String>> = Key.create("java.ml.completion.child.class.name.words")
 
   private val wordsSplitter: WordsSplitter = WordsSplitter.Builder.identifiers().build()
 
-  enum class JavaKeyword {
+  public enum class JavaKeyword {
     ABSTRACT,
     BOOLEAN,
     BREAK,
@@ -65,16 +65,16 @@ object JavaCompletionFeatures {
     NULL,
     ANOTHER;
 
-    companion object {
+    public companion object {
       private val ALL_VALUES: Map<String, JavaKeyword> = values().associateBy { it.toString() }
 
-      fun getValue(text: String): JavaKeyword? = ALL_VALUES[text]
+      public fun getValue(text: String): JavaKeyword? = ALL_VALUES[text]
     }
 
     override fun toString(): String = name.lowercase(Locale.ENGLISH)
   }
 
-  enum class JavaType {
+  public enum class JavaType {
     VOID,
     BOOLEAN,
     NUMERIC,
@@ -87,8 +87,8 @@ object JavaCompletionFeatures {
     THROWABLE,
     ANOTHER;
 
-    companion object {
-      fun getValue(type: PsiType): JavaType {
+    public companion object {
+      public fun getValue(type: PsiType): JavaType {
         return when {
           type == PsiTypes.voidType() -> VOID
           type == PsiTypes.charType() -> CHAR
@@ -106,16 +106,16 @@ object JavaCompletionFeatures {
     }
   }
 
-  fun asKeyword(text: String): JavaKeyword? = JavaKeyword.getValue(text)
+  public fun asKeyword(text: String): JavaKeyword? = JavaKeyword.getValue(text)
 
-  fun asJavaType(type: PsiType): JavaType = JavaType.getValue(type)
+  public fun asJavaType(type: PsiType): JavaType = JavaType.getValue(type)
 
-  fun calculateChildClassWords(environment: CompletionEnvironment, childClass: PsiElement) {
+  public fun calculateChildClassWords(environment: CompletionEnvironment, childClass: PsiElement) {
     val childClassWords = wordsSplitter.split(childClass.text)
     environment.putUserData(CHILD_CLASS_WORDS_KEY, childClassWords)
   }
 
-  fun getChildClassTokensMatchingFeature(contextFeatures: ContextFeatures, baseClassName: String): MLFeatureValue? {
+  public fun getChildClassTokensMatchingFeature(contextFeatures: ContextFeatures, baseClassName: String): MLFeatureValue? {
     contextFeatures.getUserData(CHILD_CLASS_WORDS_KEY)?.let { childClassTokens ->
       val baseClassTokens = wordsSplitter.split(baseClassName)
       if (baseClassTokens.isNotEmpty()) {
@@ -125,7 +125,7 @@ object JavaCompletionFeatures {
     return null
   }
 
-  fun calculateVariables(environment: CompletionEnvironment): Unit? = try {
+  public fun calculateVariables(environment: CompletionEnvironment): Unit? = try {
     PsiTreeUtil.getParentOfType(environment.parameters.position, PsiMethod::class.java)?.let { enclosingMethod ->
       val variables = getVariablesInScope(environment.parameters.position, enclosingMethod)
       val names = variables.mapNotNull { it.name }.toSet()
@@ -135,7 +135,7 @@ object JavaCompletionFeatures {
     }
   } catch (ignored: PsiInvalidElementAccessException) {}
 
-  fun getArgumentsVariablesMatchingFeatures(contextFeatures: ContextFeatures, method: PsiMethod): Map<String, MLFeatureValue> {
+  public fun getArgumentsVariablesMatchingFeatures(contextFeatures: ContextFeatures, method: PsiMethod): Map<String, MLFeatureValue> {
     val result = mutableMapOf<String, MLFeatureValue>()
     val parameters = method.parameterList.parameters
     result["args_count"] = MLFeatureValue.numerical(parameters.size)
@@ -148,7 +148,7 @@ object JavaCompletionFeatures {
     return result
   }
 
-  fun isInQualifierExpression(environment: CompletionEnvironment): Boolean {
+  public fun isInQualifierExpression(environment: CompletionEnvironment): Boolean {
     val parentExpressions = mutableSetOf<PsiExpression>()
     var curParent = environment.parameters.position.context
     while (curParent is PsiExpression) {
@@ -161,7 +161,7 @@ object JavaCompletionFeatures {
     return false
   }
 
-  fun isAfterMethodCall(environment: CompletionEnvironment): Boolean {
+  public fun isAfterMethodCall(environment: CompletionEnvironment): Boolean {
     val context = environment.parameters.position.context
     if (context is PsiReferenceExpression) {
       val qualifier = context.qualifierExpression
@@ -170,7 +170,7 @@ object JavaCompletionFeatures {
     return false
   }
 
-  fun collectPackages(environment: CompletionEnvironment) {
+  public fun collectPackages(environment: CompletionEnvironment) {
     val file = environment.parameters.originalFile as? PsiJavaFile ?: return
     val packageTrie = FqnTrie.withFqn(file.packageName)
     val importsTrie = FqnTrie.create()
@@ -179,7 +179,7 @@ object JavaCompletionFeatures {
     environment.putUserData(PACKAGES_KEY, PackagesInfo(packageTrie, importsTrie))
   }
 
-  fun getPackageMatchingFeatures(contextFeatures: ContextFeatures, psiClass: PsiClass): Map<String, MLFeatureValue> {
+  public fun getPackageMatchingFeatures(contextFeatures: ContextFeatures, psiClass: PsiClass): Map<String, MLFeatureValue> {
     val packagesInfo = contextFeatures.getUserData(PACKAGES_KEY) ?: return emptyMap()
     val packageName = PsiUtil.getPackageName(psiClass)
     if (packageName.isNullOrEmpty()) return emptyMap()
@@ -220,21 +220,21 @@ object JavaCompletionFeatures {
     val importPackages: FqnTrie
   )
 
-  class FqnTrie private constructor(private val level: Int) {
-    companion object {
-      fun create(): FqnTrie = FqnTrie(0)
+  public class FqnTrie private constructor(private val level: Int) {
+    public companion object {
+      public fun create(): FqnTrie = FqnTrie(0)
 
-      fun withFqn(name: String): FqnTrie = create().also { it.addFqn(name) }
+      public fun withFqn(name: String): FqnTrie = create().also { it.addFqn(name) }
     }
     private val children = mutableMapOf<String, FqnTrie>()
 
-    fun addFqn(name: String) {
+    public fun addFqn(name: String) {
       if (name.isEmpty()) return
       val (prefix, postfix) = split(name)
       children.getOrPut(prefix) { FqnTrie(level + 1) }.addFqn(postfix)
     }
 
-    fun matchedParts(name: String): Int {
+    public fun matchedParts(name: String): Int {
       if (name.isEmpty()) return level
       val (prefix, postfix) = split(name)
       return children[prefix]?.matchedParts(postfix) ?: return level

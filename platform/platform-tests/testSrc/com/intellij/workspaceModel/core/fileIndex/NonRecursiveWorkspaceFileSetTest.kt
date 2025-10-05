@@ -10,15 +10,12 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.workspaceModel.update
-import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
-import com.intellij.util.indexing.testEntities.IndexingTestEntity
-import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
+import com.intellij.util.indexing.testEntities.*
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import io.kotest.common.runBlocking
@@ -124,16 +121,4 @@ class NonRecursiveWorkspaceFileSetTest {
       assertFalse(fileIndex.isInContent(file2))
     }
   }
-
-  private class NonRecursiveFileSetContributor : WorkspaceFileIndexContributor<NonRecursiveTestEntity> {
-    override val entityClass: Class<NonRecursiveTestEntity>
-      get() = NonRecursiveTestEntity::class.java
-
-    override fun registerFileSets(entity: NonRecursiveTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-      registrar.registerNonRecursiveFileSet(entity.root, WorkspaceFileKind.CONTENT, entity, NonRecursiveFileCustomData())
-    }
-  }
-
-  private class NonRecursiveFileCustomData : WorkspaceFileSetData
-
 }

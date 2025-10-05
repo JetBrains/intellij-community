@@ -10,7 +10,6 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.impl.storageIds
 import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.Nls
 
@@ -29,7 +28,7 @@ private class InvalidateVcsLogCaches : DumbAwareAction(actionText(VcsLogBundle.m
     }
 
     e.presentation.isVisible = true
-    e.presentation.isEnabled = logManager.storageIds().isNotEmpty()
+    e.presentation.isEnabled = logManager.hasPersistentStorage
     e.presentation.text = actionText(VcsLogUtil.getVcsDisplayName(project, logManager))
   }
 
@@ -42,7 +41,7 @@ private class InvalidateVcsLogCaches : DumbAwareAction(actionText(VcsLogBundle.m
     runWithModalProgressBlocking(owner = ModalTaskOwner.project(project),
                                  title = VcsLogBundle.message("vcs.log.invalidate.caches.progress", vcsName),
                                  cancellation = TaskCancellation.nonCancellable()) {
-      projectLog.reinit(invalidateCaches = true)
+      projectLog.invalidateCaches()
     }
   }
 

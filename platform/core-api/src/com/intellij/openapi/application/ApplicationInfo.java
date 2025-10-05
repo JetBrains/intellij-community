@@ -32,6 +32,12 @@ public abstract class ApplicationInfo {
 
   public abstract @NotNull BuildNumber getBuild();
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @Nullable String getBuildBranchName() {
+    return null;
+  }
+
   public abstract @NotNull String getApiVersion();
 
   public abstract String getMajorVersion();
@@ -80,20 +86,6 @@ public abstract class ApplicationInfo {
   public abstract @NlsSafe String getShortCompanyName();
 
   public abstract String getCompanyURL();
-
-  /**
-   * @deprecated use properties from {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public abstract @Nullable String getProductUrl();
-
-  /**
-   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getYouTubeChannelUrl()} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public abstract @Nullable String getJetBrainsTvUrl();
 
   public abstract boolean hasHelp();
 
@@ -144,4 +136,10 @@ public abstract class ApplicationInfo {
 
   @ApiStatus.Internal
   public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public boolean isSimplifiedSplashSupported() {
+    return false;
+  }
 }

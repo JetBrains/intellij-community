@@ -8,7 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XmlLexer;
+import com.intellij.lexer.XmlLexerKt;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -46,7 +46,7 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
 
           if (fileType instanceof XmlLikeFileType) {
             synchronized(CheckValidXmlInScriptBodyInspectionBase.class) {
-              if (myXmlLexer == null) myXmlLexer = new XmlLexer();
+              if (myXmlLexer == null) myXmlLexer = XmlLexerKt.createXmlLexer();
               final XmlTagValue tagValue = tag.getValue();
               final String tagBodyText = tagValue.getText();
 

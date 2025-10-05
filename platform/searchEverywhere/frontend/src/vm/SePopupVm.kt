@@ -2,21 +2,31 @@
 package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.searcheverywhere.HistoryIterator
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.SearchHistoryList
+import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.SEHeaderActionListener.Companion.SE_HEADER_ACTION_TOPIC
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.PREVIEW_EVENTS
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.SeProviderId
+import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
+import com.intellij.psi.PsiManager
+import com.intellij.usageView.UsageInfo
 import com.intellij.util.SystemProperties
-import fleet.kernel.DurableRef
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -25,20 +35,23 @@ import org.jetbrains.annotations.ApiStatus
 @OptIn(ExperimentalCoroutinesApi::class)
 class SePopupVm(
   val coroutineScope: CoroutineScope,
+  val session: SeSession,
   private val project: Project?,
-  private val sessionRef: DurableRef<SeSessionEntity>,
   tabs: List<SeTab>,
   deferredTabs: List<SuspendLazyProperty<SeTab?>>,
   initialSearchPattern: String?,
   initialTabIndex: String,
   private val historyList: SearchHistoryList,
+  private val availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+  private val onShowFindToolWindow: (SePopupVm) -> Unit,
   private val closePopupHandler: () -> Unit,
 ) {
-  val searchPattern: MutableStateFlow<String> = MutableStateFlow("")
+  private val _searchPattern: MutableStateFlow<String> = MutableStateFlow("")
+  val searchPattern: StateFlow<String> = _searchPattern.asStateFlow()
 
   private val _deferredTabVms = MutableSharedFlow<SeTabVm>(replay = 100)
   val deferredTabVms: SharedFlow<SeTabVm> = _deferredTabVms.asSharedFlow()
-  private val tabVmsSateFlow = MutableStateFlow(tabs.map { SeTabVm(project, coroutineScope, it, searchPattern) })
+  private val tabVmsSateFlow = MutableStateFlow(tabs.map { SeTabVm(project, coroutineScope, it, searchPattern, availableLegacyContributors) })
   val tabVms: List<SeTabVm> get() = tabVmsSateFlow.value
 
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(tabVms.indexOfFirst { it.tabId == initialTabIndex }.takeIf { it >= 0 } ?: 0)
@@ -48,6 +61,9 @@ class SePopupVm(
   private val canBeShownInFindResultsFlow = MutableStateFlow(false)
   val canBeShownInFindResults: Boolean get() = canBeShownInFindResultsFlow.value
 
+  private val _searchFieldWarning = MutableStateFlow("")
+  val searchFieldWarning: StateFlow<String> = _searchFieldWarning
+
   private var historyIterator: HistoryIterator = historyList.getIterator(currentTab.tabId)
     get() {
       val selectedContributorID = currentTab.tabId
@@ -56,6 +72,16 @@ class SePopupVm(
       }
       return field
     }
+
+  val previewConfigurationFlow: Flow<SePreviewConfiguration?>
+  private val showPreviewSetting = MutableStateFlow(UISettings.getInstance().showPreviewInSearchEverywhere)
+
+  private val previewFetcher =
+    if (project == null) null
+    else SearchEverywherePreviewFetcher(project = project, publishPreviewTime = { selectedItem, duration ->
+      previewTopicPublisher.onPreviewDataReady(project, selectedItem, duration)
+    }, coroutineScope.asDisposable())
+  private val previewTopicPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(PREVIEW_EVENTS)
 
   init {
     check(tabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
@@ -68,12 +94,12 @@ class SePopupVm(
       next
     }
 
-    searchPattern.value = initialSearchPattern ?: run {
+    _searchPattern.value = initialSearchPattern ?: run {
       // History could be suppressed by the user for some reason (creating promo video, conference demo etc.)
       // or could be suppressed just for All tab in the registry.
       val suppressHistory = SystemProperties.getBooleanProperty("idea.searchEverywhere.noHistory", false) ||
-                            (SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == currentTab.tabId &&
-                             Registry.`is`("search.everywhere.disable.history.for.all"))
+                            SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == currentTab.tabId &&
+                            Registry.`is`("search.everywhere.disable.history.for.all")
       if (!suppressHistory) historyIterator.next() else ""
     }
 
@@ -92,9 +118,59 @@ class SePopupVm(
     deferredTabs.forEach {
       coroutineScope.launch {
         it.getValue()?.let { tab ->
-          _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, searchPattern))
+          _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, searchPattern, availableLegacyContributors))
         }
       }
+    }
+
+    coroutineScope.launch {
+      project ?: return@launch
+      combine(
+        currentTabFlow,
+        DumbService.getInstance(project).state,
+        project.service<IncompleteDependenciesService>().stateFlow
+      ) { currentTab, dumbMode, dependenciesState ->
+        Triple(currentTab, dumbMode.isDumb, !dependenciesState.isComplete)
+      }.map { (currentTab, isDumb, isIncomplete) ->
+        // IJPL-193615: In RemDev, IncompleteDependenciesService state is not synchronized between frontend and backend,
+        // so isIncomplete always remains false on frontend, making dependency loading messages unavailable in RemDev.
+        if (!currentTab.isIndexingDependent) ""
+        else if (isDumb || isIncomplete) {
+          if (isDumb) IdeBundle.message("dumb.mode.results.might.be.incomplete")
+          else IdeBundle.message("incomplete.mode.results.might.be.incomplete")
+        }
+        else ""
+      }.distinctUntilChanged().collect {
+        _searchFieldWarning.value = it
+      }
+    }
+
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(
+      SE_HEADER_ACTION_TOPIC,
+      object : SEHeaderActionListener {
+        override fun performed(event: SEHeaderActionListener.SearchEverywhereActionEvent) {
+          if (event.actionID == PREVIEW_ACTION_ID) {
+            showPreviewSetting.value = UISettings.getInstance().showPreviewInSearchEverywhere
+          }
+        }
+      }
+    )
+
+    if (PreviewExperiment.isExperimentEnabled && previewFetcher != null) {
+      previewConfigurationFlow = combine(currentTabFlow, showPreviewSetting) { tabVm, previewSetting ->
+        tabVm.isPreviewEnabled.getValue() to previewSetting
+      }.mapLatest { (tabPreviewEnabled, previewSetting) ->
+        if (tabPreviewEnabled) {
+          if (previewSetting) SePreviewConfiguration(previewFetcher.project, this::fetchPreview)
+          else SePreviewConfiguration(previewFetcher.project, null)
+        }
+        else {
+          SePreviewConfiguration(previewFetcher.project, null)
+        }
+      }
+    }
+    else {
+      previewConfigurationFlow = flowOf(null)
     }
   }
 
@@ -110,8 +186,8 @@ class SePopupVm(
     }
   }
 
-  suspend fun openInFindWindow(sessionRef: DurableRef<SeSessionEntity>, initEvent: AnActionEvent): Boolean {
-    return currentTab.openInFindWindow(sessionRef, initEvent)
+  suspend fun openInFindWindow(session: SeSession, initEvent: AnActionEvent): Boolean {
+    return currentTab.openInFindWindow(session, initEvent)
   }
 
   fun selectNextTab() {
@@ -144,7 +220,7 @@ class SePopupVm(
     }
   }
 
-  fun getHistoryItem(next: Boolean) : String {
+  fun getHistoryItem(next: Boolean): String {
     val searchText = if (next) historyIterator.next() else historyIterator.prev()
     return searchText
   }
@@ -153,10 +229,33 @@ class SePopupVm(
     return historyIterator.getList()
   }
 
-  inner class ShowInFindToolWindowAction(private val onShowFindToolWindow: () -> Unit) : DumbAwareAction(IdeBundle.messagePointer("show.in.find.window.button.name"),
-                                                                   IdeBundle.messagePointer("show.in.find.window.button.description")) {
+  fun setSearchText(text: String) {
+    _searchPattern.value = text
+  }
+
+  private suspend fun fetchPreview(newValue: SeItemData): List<UsageInfo>? {
+    if (project == null) return null
+    val usageInfo = currentTab.getPreviewInfo(newValue) ?: return null
+
+    val virtualFile = usageInfo.fileUrl.virtualFile() ?: return null
+
+    val usages = readAction {
+      val psiElement = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction null
+
+      usageInfo.navigationRanges.map { (start, end) ->
+        UsageInfo(psiElement, start, end, false)
+      }
+    } ?: return null
+
+    return previewFetcher?.fetchPreview(usages)
+  }
+
+  private val popupVm = this
+
+  inner class ShowInFindToolWindowAction : DumbAwareAction(IdeBundle.messagePointer("show.in.find.window.button.name"),
+                                                           IdeBundle.messagePointer("show.in.find.window.button.description")) {
     override fun actionPerformed(e: AnActionEvent) {
-      onShowFindToolWindow()
+      onShowFindToolWindow(popupVm)
       closePopup()
     }
 
@@ -182,3 +281,7 @@ private fun <T> Flow<T>.withPrevious(): Flow<Pair<T?, T>> = flow {
     previous = current
   }
 }
+
+@ApiStatus.Internal
+class SePreviewConfiguration(val project: Project,
+                             val fetchPreview: (suspend (SeItemData) -> (List<UsageInfo>?))?)

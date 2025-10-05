@@ -23,10 +23,10 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.concurrency.AppExecutorUtil
 
 
-class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase(), SearchableConfigurable, NoScroll {
+public class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase(), SearchableConfigurable, NoScroll {
 
-  companion object {
-    const val LOG_MAX_NAME_LENGTH = 200
+  public companion object {
+    public const val LOG_MAX_NAME_LENGTH: Int = 200
   }
 
   private lateinit var warningRow: Row

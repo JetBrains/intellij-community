@@ -8,8 +8,10 @@ import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.TerminalSelection
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider
+import org.jetbrains.annotations.ApiStatus
 
-internal class TerminalDisplayImpl(private val settings: DefaultSettingsProvider) : TerminalDisplay {
+@ApiStatus.Internal
+class TerminalDisplayImpl(private val settings: DefaultSettingsProvider) : TerminalDisplay {
   private var cursorX: Int = 0
   private var cursorY: Int = 0
 

@@ -47,6 +47,7 @@ fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: 
  * That's unexpected behavior
  */
 @ApiStatus.ScheduledForRemoval
+@ApiStatus.Internal
 @Deprecated("Use correspondent constructors JLabel/JBLabel/MultiLineLabel, depends on situation")
 fun Label(
   @Label text: String,
@@ -151,6 +152,7 @@ fun CheckBox(@Checkbox text: String, selected: Boolean = false, toolTip: @Toolti
 }
 
 @ApiStatus.ScheduledForRemoval
+@ApiStatus.Internal
 @Deprecated("Use Kotlin UI DSL, method Panel.group")
 @JvmOverloads
 fun Panel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLayout()): JPanel {
@@ -159,14 +161,6 @@ fun Panel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLa
     @Suppress("HardCodedStringLiteral")
     setTitledBorder(title = it, panel = panel, hasSeparator = false)
   }
-  return panel
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL, method Panel.group", level = DeprecationLevel.ERROR)
-fun Panel(title: @BorderTitle String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
-  val panel = JPanel(layout)
-  title?.let { setTitledBorder(it, panel, hasSeparator) }
   return panel
 }
 

@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToEl
 import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToFqnTest
 import org.jetbrains.kotlin.idea.k2.refactoring.copy.AbstractK2CopyTest
 import org.jetbrains.kotlin.idea.k2.refactoring.copy.AbstractK2MultiModuleCopyTest
-import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTest
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.*
@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteT
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
 internal fun MutableTWorkspace.generateK2RefactoringsTests() {
@@ -67,10 +68,18 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         testClass<AbstractKotlinFirInlineTest> {
             model("refactoring/inline", pattern = Patterns.KT_WITHOUT_DOTS, excludedDirectories = listOf("withFullJdk"))
         }
+
+        testClass<AbstractKotlinFirMultiplatformTest> {
+            model("refactoring/inlineMultiModule", pattern = Patterns.KT_WITHOUT_DOTS)
+        }
     }
     testGroup("refactorings/kotlin.refactorings.tests.k2", category = EXTRACT_REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2IntroduceFunctionTest> {
             model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest")
+        }
+
+        testClass<AbstractK2IntroduceTypeAliasTest> {
+            model("refactoring/introduceTypeAlias", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroduceTypeAliasTest")
         }
 
         testClass<AbstractK2IntroduceFunctionWithExtractFunctionModifierTest> {
@@ -147,6 +156,10 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         testClass<AbstractK2PushDownTest> {
             model("refactoring/pushDown/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
             model("refactoring/pushDown/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
+        }
+        testClass<AbstractK2ExtractionTest> {
+            model("refactoring/extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
+            model("refactoring/extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
         }
     }
 }

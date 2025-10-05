@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.impl.util
 
+import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -15,6 +16,13 @@ class CallableBridge(private val callable: KCallable<*>, private val thisRef: An
     fun encodeToString(): String {
       val serializer = serializerOrNull(resultType) ?: error("Result type ${result} is not serializable")
       return json.encodeToString(serializer, result)
+    }
+
+    fun encodeToJson(): JsonObject? {
+      val serializer = serializerOrNull(resultType) ?: error("Result type ${result} is not serializable")
+      val jsonObject = json.encodeToJsonElement(serializer, result) as? JsonObject
+      thisLogger().assertTrue(jsonObject != null, "Result must be a JSON object")
+      return jsonObject
     }
   }
 

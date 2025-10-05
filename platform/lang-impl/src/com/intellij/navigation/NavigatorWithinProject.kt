@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.navigation
 
@@ -14,7 +14,10 @@ import com.intellij.ide.impl.getProjectOriginUrl
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.JBProtocolCommand
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -27,6 +30,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
@@ -66,7 +70,7 @@ suspend fun openProject(parameters: Map<String, String?>): ProtocolOpenProjectRe
     return ProtocolOpenProjectResult.Success(alreadyOpenProject)
   }
 
-  val recentProjectAction = RecentProjectListActionProvider.getInstance().getActions().asSequence()
+  val recentProjectAction = RecentProjectListActionProvider.getInstance().getActionsWithoutGroups().asSequence()
                               .filterIsInstance(ReopenProjectAction::class.java)
                               .find {
                                 projectName != null && it.projectName == projectName ||
@@ -194,7 +198,7 @@ class NavigatorWithinProject(
     }
     val locationInFile = LocationInFile(line?.toInt() ?: 0, column?.toInt() ?: 0)
 
-    path = FileUtil.expandUserHome(path)
+    path = OSAgnosticPathUtil.expandUserHome(path)
     withBackgroundProgress(project, IdeBundle.message("navigate.command.search.reference.progress.title", pathText)) {
       val virtualFile = findFileByStringPath(path) ?: return@withBackgroundProgress
       val textEditor = withContext(Dispatchers.EDT) {

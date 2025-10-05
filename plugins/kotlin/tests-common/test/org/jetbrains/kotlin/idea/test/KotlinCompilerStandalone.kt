@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.js.K2JSCompiler
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone.Platform.JavaScript
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone.Platform.Jvm
 import org.junit.Assert.assertEquals
@@ -19,6 +19,7 @@ import java.io.PrintStream
 import java.lang.ref.SoftReference
 import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -99,10 +100,10 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
             when (platform) {
                 is Jvm -> {
                     targetForJava = KotlinTestUtils.tmpDirForReusableFolder("java-lib")
-                    completeClasspath += listOf(TestKotlinArtifacts.kotlinStdlib, TestKotlinArtifacts.jetbrainsAnnotations, targetForJava)
+                    completeClasspath += listOf(TestKotlinArtifacts.kotlinStdlib.toFile(), TestKotlinArtifacts.jetbrainsAnnotations.toFile(), targetForJava)
                 }
                 is JavaScript -> {
-                    completeClasspath += TestKotlinArtifacts.kotlinStdlibJs
+                    completeClasspath += TestKotlinArtifacts.kotlinStdlibJs.toFile()
                 }
             }
         }
@@ -263,7 +264,7 @@ object KotlinCliCompilerFacade {
         return classLoader.loadClass(compilerClass.java.name)
     }
 
-    fun getTestArtifactsNeededForCLICompiler(): List<File> {
+    fun getTestArtifactsNeededForCLICompiler(): List<Path> {
         return listOf(
             TestKotlinArtifacts.kotlinStdlib,
             TestKotlinArtifacts.kotlinStdlibJdk7,
@@ -290,7 +291,7 @@ object KotlinCliCompilerFacade {
         val tempDirWithOldBackedMarker = createTempDirectory()
         (tempDirWithOldBackedMarker / "META-INF" / "unsafe-allow-use-old-backend").createDirectories()
 
-        val urls = (artifacts + tempDirWithOldBackedMarker.toFile()).map { it.toURI().toURL() }.toTypedArray()
+        val urls = (artifacts + tempDirWithOldBackedMarker).map { it.toFile().toURI().toURL() }.toTypedArray()
         return URLClassLoader(urls, ClassLoader.getPlatformClassLoader())
     }
 }

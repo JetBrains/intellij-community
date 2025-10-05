@@ -309,6 +309,9 @@ internal fun KaSession.getJvmSignature(symbol: KaCallableSymbol, isConstructor: 
 private fun KaSession.jvmName(type: KaType?, element: PsiElement): String? {
     if (type is KaTypeParameterType) return "Ljava/lang/Object;"
     if (type !is KaClassType) return null
+    if (type.isArrayOrPrimitiveArray) {
+        return "[" + jvmName(type.arrayElementType, element)
+    }
     val psiType = type.asPsiType(element, allowErrorTypes = false) ?: return null
     if (isInlineClass(type.symbol)) {
         // handle wrapped types

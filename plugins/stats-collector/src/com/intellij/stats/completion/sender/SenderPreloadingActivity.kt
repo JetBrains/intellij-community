@@ -6,9 +6,11 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.stats.completion.network.service.RequestService
 import com.intellij.stats.completion.network.status.bean.AnalyticsPlatformSettingsDeserializer
 import kotlinx.coroutines.Dispatchers
@@ -19,31 +21,31 @@ import kotlin.time.Duration.Companion.minutes
 internal fun isCompletionLogsSendAllowed(): Boolean =
   ApplicationManager.getApplication().isEAP && System.getProperty("completion.stats.send.logs", "true").toBoolean()
 
-private const val USE_ANALYTICS_PLATFORM_KEY = "completion.stats.analytics.platform.send"
-private const val ANALYTICS_PLATFORM_URL_KEY = "completion.stats.analytics.platform.url"
-
 private val LOG = logger<SenderPreloadingActivity>()
 
 private class SenderPreloadingActivity : ApplicationActivity {
-  private val statusUrl: String
-
   init {
     val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode || app.isHeadlessEnvironment || !Registry.`is`(USE_ANALYTICS_PLATFORM_KEY, false)) {
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()
     }
-    statusUrl = Registry.get(ANALYTICS_PLATFORM_URL_KEY).takeIf { it.isChangedFromDefault() }?.asString()
-                ?: "https://resources.jetbrains.com/storage/ap/mlcc/config/v1/${ApplicationInfo.getInstance().build.productCode}.json"
   }
 
   override suspend fun execute() {
+    serviceAsync<RegistryManager>()
+    if (!Registry.`is`("completion.stats.analytics.platform.send", false)) return
+    val urlValue = Registry.get("completion.stats.analytics.platform.url")
+    val statusUrl =
+      if (urlValue.isChangedFromDefault()) urlValue.asString()
+      else "https://resources.jetbrains.com/storage/ap/mlcc/config/v1/${ApplicationInfo.getInstance().build.productCode}.json"
+
     // do not check right after the start - avoid getting UsageStatisticsPersistenceComponent too early
     delay(5.minutes)
     while (isCompletionLogsSendAllowed() && StatisticsUploadAssistant.isSendAllowed()) {
       delay(5.minutes)
       withContext(Dispatchers.IO) {
         runCatching {
-          updateAndGetUrl()?.let { url ->
+          updateAndGetUrl(statusUrl)?.let { url ->
             service<StatisticSender>().sendStatsData(url)
           }
         }.onFailure {
@@ -53,7 +55,7 @@ private class SenderPreloadingActivity : ApplicationActivity {
     }
   }
 
-  private fun updateAndGetUrl(): String? {
+  private fun updateAndGetUrl(statusUrl: String): String? {
     val response = service<RequestService>().get(statusUrl)
     if (response == null || !response.isOK()) return null
 

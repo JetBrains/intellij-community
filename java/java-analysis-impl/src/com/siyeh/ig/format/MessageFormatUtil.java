@@ -339,7 +339,7 @@ public final class MessageFormatUtil {
       if (holder.errors.isEmpty()) {
         List<MessageFormatPart> notStrings =
           ContainerUtil.filter(holder.parts, t -> !(t.getParsedType() == MessageFormatParsedType.STRING && t.getText().isEmpty()));
-        if (notStrings.size() == 1 && notStrings.get(0).getParsedType() == MessageFormatParsedType.FORMAT_ELEMENT) {
+        if (notStrings.size() == 1 && notStrings.getFirst().getParsedType() == MessageFormatParsedType.FORMAT_ELEMENT) {
           return nextQuote + current;
         }
       }
@@ -382,7 +382,7 @@ public final class MessageFormatUtil {
               currentSelector = ChoiceFormat.nextDouble(currentSelector);
             }
             if (!selectors.isEmpty()) {
-              Double previousSelector = selectors.get(selectors.size() - 1);
+              Double previousSelector = selectors.getLast();
               if (previousSelector >= currentSelector) {
                 holder.addError(MessageFormatErrorType.INCORRECT_ORDER_CHOICE_SELECTOR, holder.current - selector.length(), holder.current);
               }
@@ -643,7 +643,7 @@ public final class MessageFormatUtil {
     }
 
     private @NotNull MessageFormatPart getLastPart() {
-      return parts.get(parts.size() - 1);
+      return parts.getLast();
     }
 
     private void startFormatElement(char ch) {

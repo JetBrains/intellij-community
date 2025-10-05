@@ -1,14 +1,27 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ * Modified 2025 by JetBrains s.r.o.
+ * Copyright (C) 2025 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.compose.ide.plugin.shared.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
-import com.intellij.compose.ide.plugin.shared.JETPACK_PREVIEW_PARAMETER_CLASS_ID
-import com.intellij.compose.ide.plugin.shared.MULTIPLATFORM_PREVIEW_PARAMETER_CLASS_ID
-import com.intellij.compose.ide.plugin.shared.classIdMatches
+import com.intellij.compose.ide.plugin.shared.isPreviewParameterAnnotation
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -52,10 +65,5 @@ internal class MultiplatformPreviewAnnotationInFunctionWithParametersInspection 
    * This will return true if the parameter has a default value or a value provider.
    */
   private fun isAcceptableForPreview(parameter: KtParameter): Boolean =
-    parameter.hasDefaultValue() || parameter.annotationEntries.any { isPreviewParameter(it) }
-
-  private fun isPreviewParameter(annotation: KtAnnotationEntry): Boolean = analyze(annotation) {
-    classIdMatches(annotation, MULTIPLATFORM_PREVIEW_PARAMETER_CLASS_ID) ||
-    classIdMatches(annotation, JETPACK_PREVIEW_PARAMETER_CLASS_ID)
-  }
+    parameter.hasDefaultValue() || parameter.annotationEntries.any { it.isPreviewParameterAnnotation() }
 }

@@ -11,6 +11,12 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
+import org.jetbrains.kotlin.analysis.api.components.combinedDeclaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.combinedMemberScope
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.packageScope
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -43,7 +49,7 @@ fun checkRedeclarationConflicts(declaration: KtNamedDeclaration, newName: String
     checkRedeclarationConflictsInInheritors(declaration, newName, result)
 }
 
-context(KaSession)
+context(_: KaSession)
 fun KaScope.findSiblingsByName(
     symbol: KaDeclarationSymbol,
     newName: Name,
@@ -65,7 +71,7 @@ fun KaScope.findSiblingsByName(
     return (classifierSymbols + callables)
 }
 
-context(KaSession)
+context(_: KaSession)
 fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclarationSymbol): Boolean {
     if (symbol == candidateSymbol) return false
     if (candidateSymbol is KaFunctionSymbol) {
@@ -92,7 +98,7 @@ fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclaration
     return true
 }
 
-context(KaSession)
+context(_: KaSession)
 fun checkDeclarationNewNameConflicts(
     declaration: KtNamedDeclaration,
     newName: Name,
@@ -215,13 +221,13 @@ fun registerAlreadyDeclaredConflict(candidateSymbol: KaDeclarationSymbol, result
     result += BasicUnresolvableCollisionUsageInfo(candidate, candidate, message)
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun areSameSignatures(candidateSymbol: KaFunctionSymbol, symbol: KaFunctionSymbol) : Boolean {
     return areSameSignatures(candidateSymbol.receiverType, symbol.receiverType, candidateSymbol.valueParameters.map { it.returnType }, symbol.valueParameters.map { it.returnType }, candidateSymbol.contextReceivers, symbol.contextReceivers)
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun areSameSignatures(candidateSymbol: KaPropertySymbol, symbol: KaFunctionSymbol) : Boolean {
     val type = candidateSymbol.returnType
@@ -232,7 +238,7 @@ private fun areSameSignatures(candidateSymbol: KaPropertySymbol, symbol: KaFunct
     return false
 }
 
-context(KaSession)
+context(_: KaSession)
 @KaExperimentalApi
 fun areSameSignatures(
     receiverType1: KaType?,
@@ -247,7 +253,7 @@ fun areSameSignatures(
           c1.size == c2.size && c1.zip(c2).all { (c1, c2) -> c1.type.semanticallyEquals(c2.type) }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun areTypesTheSame(t1: KaType?, t2: KaType?): Boolean {
   if (t1 === t2) return true
   if (t2 == null) return false

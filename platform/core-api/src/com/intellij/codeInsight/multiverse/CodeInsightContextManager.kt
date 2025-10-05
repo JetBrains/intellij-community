@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.components.service
@@ -12,7 +12,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.EventListener
+import java.util.*
 
 /**
  * Handles contexts for virtual files and allows running a code insight session with a given [CodeInsightContext].
@@ -26,20 +26,6 @@ interface CodeInsightContextManager {
 
     val topic: Topic<CodeInsightContextChangeListener> = Topic(CodeInsightContextChangeListener::class.java)
   }
-
-  /**
-   * A code insight context is fixed within a single code insight session.
-   *
-   * Code insight session does not support coroutines because the project state can change while a coroutine is suspended.
-   */
-  @RequiresReadLock
-  @RequiresBackgroundThread
-  fun <Result> performCodeInsightSession(context: CodeInsightContext, block: CodeInsightSession.() -> Result): Result
-
-  val currentCodeInsightSession: CodeInsightSession?
-
-  val currentCodeInsightContext: CodeInsightContext
-    get() = currentCodeInsightSession?.context ?: defaultContext()
 
   /**
    * Returns all registered contexts for [file]
@@ -59,11 +45,23 @@ interface CodeInsightContextManager {
   fun getCodeInsightContext(fileViewProvider: FileViewProvider): CodeInsightContext
 
   /**
+   * Internal API, use with care
+   *
+   * @return the context associated with [fileViewProvider] or [anyContext] if it's not *yet* associated with any context
+   */
+  @Internal
+  @RequiresReadLock
+  fun getCodeInsightContextRaw(fileViewProvider: FileViewProvider): CodeInsightContext
+
+  /**
+   * DANGEROUS API, AUTHORIZED PERSONNEL ONLY
+   *
    * Tries to assign context of [fileViewProvider] to [context] if it's not yet assigned to something else.
    *
    * @return the context assigned to [fileViewProvider]
    */
   @Internal
+  @Deprecated("DANGEROUS API, AUTHORIZED PERSONNEL ONLY")
   fun getOrSetContext(fileViewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext
 
   /**
@@ -71,8 +69,6 @@ interface CodeInsightContextManager {
    * A new emission means all the contexts are invalidated and will be inferred from scratch.
    */
   val changeFlow: Flow<Unit>
-
-  val isSharedSourceSupportEnabled: Boolean
 }
 
 /**

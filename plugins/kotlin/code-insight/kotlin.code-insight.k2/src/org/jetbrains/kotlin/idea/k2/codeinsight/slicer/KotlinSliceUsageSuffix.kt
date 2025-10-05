@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
@@ -84,7 +85,7 @@ object KotlinSliceUsageSuffix {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun StringBuilder.renderPropertyOrAccessor(callableSymbol: KaCallableSymbol, accessor: KaPropertyAccessorSymbol?) {
         append(callableSymbol.name?.render())
         if (accessor != null) {

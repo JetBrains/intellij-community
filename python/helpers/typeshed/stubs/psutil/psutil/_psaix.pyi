@@ -13,12 +13,6 @@ from psutil._common import (
     memoize_when_activated as memoize_when_activated,
     usage_percent as usage_percent,
 )
-from psutil._compat import (
-    PY3 as PY3,
-    FileNotFoundError as FileNotFoundError,
-    PermissionError as PermissionError,
-    ProcessLookupError as ProcessLookupError,
-)
 
 __extra__all__: Incomplete
 HAS_THREADS: Incomplete
@@ -37,10 +31,10 @@ class pmem(NamedTuple):
 pfullmem = pmem
 
 class scputimes(NamedTuple):
-    user: Incomplete
-    system: Incomplete
-    idle: Incomplete
-    iowait: Incomplete
+    user: float
+    system: float
+    idle: float
+    iowait: float
 
 class svmem(NamedTuple):
     total: Incomplete

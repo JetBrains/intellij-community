@@ -1,2 +1,1 @@
-com/jetbrains/rhizomedb/impl/EntityTypeProvider
 kotlin/jvm/internal/DefaultConstructorMarker

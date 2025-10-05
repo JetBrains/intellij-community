@@ -359,7 +359,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
     var warning = ReadAction.nonBlocking<RuntimeConfigurationException?> {
       try {
-        ExecutionManagerImpl.withEnvironmentDataContext(dataContext).use {
+        ExecutionManagerImpl.withEnvironmentDataContext(dataContext) {
           configuration.checkConfiguration()
         }
       }

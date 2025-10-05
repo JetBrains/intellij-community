@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 
-object LibraryUsageDescriptors {
+public object LibraryUsageDescriptors {
   private val descriptors: List<LibraryDescriptor> = downloadLibraryDescriptors()
   private val libraryDescriptorFinder: LibraryLayer = LibraryLayer.create(downloadLibraryDescriptors())
 
@@ -22,9 +22,9 @@ object LibraryUsageDescriptors {
       .map { LibraryDescriptor(it.name!!, it.root!!) }
   }
 
-  fun findSuitableLibrary(packageQualifier: String): String? = libraryDescriptorFinder.findSuitableLibrary(packageQualifier)
+  public fun findSuitableLibrary(packageQualifier: String): String? = libraryDescriptorFinder.findSuitableLibrary(packageQualifier)
 
-  val libraryNames: Set<String>
+  public val libraryNames: Set<String>
     get() = descriptors.mapTo(HashSet()) { it.libraryName }
 }
 

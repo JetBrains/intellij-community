@@ -8,6 +8,7 @@ import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.dom.inspections.MavenModelVersionMissedInspection
 import org.junit.Test
 
 class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
@@ -110,8 +111,22 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                            <artifactId>foo</artifactId>
                          </project>
                          """.trimIndent())
+    fixture.enableInspections(listOf(MavenModelVersionMissedInspection ::class.java))
     checkHighlighting()
   }
+
+  @Test
+  fun testAbsentModelVersionFor410XsdNoError() = runBlocking {
+    fixture.saveText(projectPom,
+                     """
+                         <project xmlns="http://maven.apache.org/POM/4.1.0"         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd">
+                           <artifactId>foo</artifactId>
+                         </project>
+                         """.trimIndent())
+    fixture.enableInspections(listOf(MavenModelVersionMissedInspection ::class.java))
+    checkHighlighting()
+  }
+
 
   @Test
   fun testAbsentArtifactId() = runBlocking {
@@ -264,22 +279,7 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
                          """.trimIndent())
     importProjectAsync()
 
-    fixture.saveText(projectPom,
-                     """
-                         <project>
-                           <modelVersion>4.0.0</modelVersion>
-                           <groupId>test</groupId>
-                           <artifactId>project</artifactId>
-                           <version>1</version>
-                           <<error descr="Parent 'test:parent:1' has problems">parent</error>>
-                             <groupId>test</groupId>
-                             <artifactId>parent</artifactId>
-                             <version>1</version>
-                             <relativePath>parent/pom.xml</relativePath>
-                           </parent>
-                         </project>
-                         """.trimIndent())
-    checkHighlighting()
+    checkHighlighting(projectPom, Highlight(text = "parent", description="Parent 'test:parent:1' has problems"))
   }
 
   @Test

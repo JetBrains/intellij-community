@@ -4,13 +4,10 @@ package com.jetbrains.python.inspections.quickfix
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.execution.ExecutionException
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
-import com.jetbrains.python.packaging.PyPackageInstallUtils.confirmInstall
-import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import org.jetbrains.annotations.Nls
@@ -19,22 +16,10 @@ internal open class InstallPackageQuickFix(open val packageName: String) : Local
   override fun getFamilyName(): @Nls String = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName)
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    if (!confirmInstall(project, packageName)) return
-
-    descriptor.psiElement.let { element ->
-      val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
-      val sdk = PythonSdkUtil.findPythonSdk(element) ?: return
-
-      PyInstallRequirementsFix(
-        familyName, sdk,
-        listOf(pyRequirement(packageName)),
-        listener = object : RunningPackagingTasksListener(module) {
-          override fun finished(exceptions: List<ExecutionException>) {
-            onSuccess(descriptor)
-          }
-        }
-      ).applyFix(module.project, descriptor)
-
+    val sdk = PythonSdkUtil.findPythonSdk(descriptor.psiElement) ?: return
+    PyPackageCoroutine.launch(project) {
+      PythonPackageManagerUI.forSdk(project, sdk).installWithConfirmation(listOf(packageName)) ?: return@launch
+      onSuccess(descriptor)
       PyPackagesUsageCollector.installSingleEvent.log()
     }
   }
@@ -43,11 +28,7 @@ internal open class InstallPackageQuickFix(open val packageName: String) : Local
 
   override fun availableInBatchMode(): Boolean = false
 
-  open fun onSuccess(descriptor: ProblemDescriptor?) { }
+  open fun onSuccess(descriptor: ProblemDescriptor?) {}
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
-
-  companion object {
-    const val CONFIRM_PACKAGE_INSTALLATION_PROPERTY: String = "python.confirm.package.installation"
-  }
 }

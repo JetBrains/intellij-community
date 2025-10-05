@@ -5,20 +5,25 @@ package com.intellij.ui
 
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SystemProperties
+import com.intellij.util.SystemProperties.getIntProperty
 import kotlinx.coroutines.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
@@ -38,19 +43,22 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
       }
     }
 
-    private val log = logger<IconDeferrerImpl>()
+    private val log: Logger = logger<IconDeferrerImpl>()
   }
 
-  // Due to a critical bug (https://youtrack.jetbrains.com/issue/IDEA-320644/Improve-Smart-PSI-pointer-equals-implementation),
-  // we are not using "caffeine".
-  private val iconCache = ConcurrentHashMap<Any, Icon>()
-  @Volatile
-  private var mightBePopulated = false // used to avoid multiple calls CHM#clear() which might be expensive, no need to be atomic or something else
-  private val lastClearTimestamp = LongAdder()
+  private val preConfiguredCacheSize = getIntProperty("ide.icons.deferrerCacheSize", 1000)
 
   // we restrict max cache size for cases when a user reads code only.
-  private val maxCacheSize = SystemProperties.getLongProperty("ide.icons.deferrerCacheSize", 1000)
-  private val deferrerCacheClearingCheckPeriod= SystemProperties.getLongProperty("ide.icons.deferrerCacheClearingCheckPeriod.ms", 30.seconds.toLong(DurationUnit.MILLISECONDS))
+  @Volatile
+  private var maxCacheSize: Int = preConfiguredCacheSize
+  // Due to a critical bug (https://youtrack.jetbrains.com/issue/IDEA-320644/Improve-Smart-PSI-pointer-equals-implementation),
+  // we are not using "caffeine".
+  private val iconCache: ConcurrentMap<Any, Icon> = ConcurrentHashMap(min(1000, preConfiguredCacheSize))
+  @Volatile
+  private var mightBePopulated: Boolean = false // used to avoid multiple calls CHM#clear() which might be expensive, no need to be atomic or something else
+  private val lastClearTimestamp: LongAdder = LongAdder()
+
+  private val deferrerCacheClearingCheckPeriod: Long = SystemProperties.getLongProperty("ide.icons.deferrerCacheClearingCheckPeriod.ms", 30.seconds.toLong(DurationUnit.MILLISECONDS))
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
@@ -60,10 +68,11 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
     })
 
     // update "locked" icon
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: List<VFileEvent>) {
         log.trace("clearing icon deferrer cache after vfs events")
         clearCache()
+        recomputeMaxCacheSize(events.size)
       }
     })
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
@@ -89,6 +98,13 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
       lowMemoryWatcher.stop()
     }
   }
+  private fun recomputeMaxCacheSize(neededSize: Int) {
+    if (maxCacheSize < neededSize) {
+      // in case of modifications across the very big project it make sense to increase the cache size,
+      // but make sure to not exceed sensible threshold (10K icons here) and not descend below the configured "ide.icons.deferrerCacheSize=" value
+      maxCacheSize = max(preConfiguredCacheSize, min(10_000, neededSize))
+    }
+  }
 
   /** clears cache once in a while if the cache gets too big */
   private fun scheduleCacheClearingTask(coroutineScope: CoroutineScope) {
@@ -96,6 +112,7 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
       while (true) {
         delay(deferrerCacheClearingCheckPeriod)
         val currentCacheSize = iconCache.size
+        recomputeMaxCacheSize(currentCacheSize)
         if (currentCacheSize > maxCacheSize) {
           log.trace { "Clearing icon deferrer cache because it's too big: $currentCacheSize > $maxCacheSize" }
           clearCache()

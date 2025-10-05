@@ -20,7 +20,6 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -47,6 +46,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.jetbrains.jdi.MethodImpl;
+import com.jetbrains.jdi.ReferenceTypeImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
@@ -224,6 +224,11 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return Boolean.TRUE.equals(debugProcess.getUserData(BatchEvaluator.REMOTE_SESSION_KEY));
   }
 
+  @Override
+  protected void logErrorImpl(@NotNull Throwable e) {
+    logError(e);
+  }
+
   public static void logError(@NotNull Throwable e) {
     logIfNeeded(e, false, LOG::error);
   }
@@ -269,10 +274,16 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   }
 
   public static boolean instanceOf(@Nullable ReferenceType type, @NotNull ReferenceType superType) {
+    if (type instanceof ReferenceTypeImpl referenceTypeImpl) {
+      return referenceTypeImpl.isAssignableTo(superType);
+    }
     if (type == null) {
       return false;
     }
-    if (superType.equals(type) || (!(type instanceof InterfaceType) && CommonClassNames.JAVA_LANG_OBJECT.equals(superType.name()))) {
+    if (superType.equals(type)) {
+      return true;
+    }
+    if (type instanceof InterfaceType && CommonClassNames.JAVA_LANG_OBJECT.equals(superType.name())) {
       return true;
     }
     if (type instanceof ArrayType arrayType) {
@@ -297,7 +308,9 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       }
       else {
         String superName = superType.name();
-        return CommonClassNames.JAVA_LANG_CLONEABLE.equals(superName) || CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superName);
+        return CommonClassNames.JAVA_LANG_CLONEABLE.equals(superName) ||
+               CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superName) ||
+               CommonClassNames.JAVA_LANG_OBJECT.equals(superName);
       }
     }
     if (superType instanceof ClassType) { // may check superclass only
@@ -582,23 +595,6 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       }
     }
     return null;
-  }
-
-  // do not catch VMDisconnectedException
-  public static <T> void forEachSafe(ExtensionPointName<T> ep, Consumer<? super T> action) {
-    forEachSafe(ep.getIterable(), action);
-  }
-
-  // do not catch VMDisconnectedException
-  public static <T> void forEachSafe(Iterable<? extends T> iterable, Consumer<? super T> action) {
-    for (T o : iterable) {
-      try {
-        action.accept(o);
-      }
-      catch (Throwable e) {
-        logError(e);
-      }
-    }
   }
 
   public static @Nullable Value invokeClassMethod(@NotNull EvaluationContext evaluationContext,

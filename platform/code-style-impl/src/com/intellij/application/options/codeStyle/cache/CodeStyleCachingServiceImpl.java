@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -23,21 +24,24 @@ import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Disposable {
-  public static final int MAX_CACHE_SIZE = 100;
-
   private static final Key<SoftReference<CodeStyleCachedValueProvider>> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
 
   private final Map<String, FileData> myFileDataCache = new HashMap<>();
 
   private final Object CACHE_LOCK = new Object();
-
-  private final PriorityQueue<FileData> myRemoveQueue = new PriorityQueue<>(
-    MAX_CACHE_SIZE,
-    Comparator.comparingLong(fileData -> fileData.lastRefTimeStamp));
+  private final int maxCacheSize;
+  private final PriorityQueue<FileData> myRemoveQueue;
   private final Project myProject;
+
+  private final TooFrequentCodeStyleComputationWatcher myFrequentCodeStyleComputationWatcher;
 
   public CodeStyleCachingServiceImpl(Project project) {
     myProject = project;
+    maxCacheSize = Math.max(Registry.intValue("code.style.cache.maximum.size", 100), 1);
+    myRemoveQueue = new PriorityQueue<>(
+      maxCacheSize,
+      Comparator.comparingLong(fileData -> fileData.lastRefTimeStamp));
+    myFrequentCodeStyleComputationWatcher = TooFrequentCodeStyleComputationWatcher.getInstance(project);
     ApplicationManager.getApplication().getMessageBus().connect(this).
       subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
@@ -115,24 +119,16 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
     }
   }
 
-  private static class VirtualFileGetter implements Supplier<VirtualFile> {
-    private final VirtualFile virtualFile;
-
-    private VirtualFileGetter(VirtualFile file) { virtualFile = file; }
-
+  private record VirtualFileGetter(@NotNull VirtualFile virtualFile) implements Supplier<VirtualFile> {
     @Override
-    public VirtualFile get() {
+    public @NotNull VirtualFile get() {
       return virtualFile;
     }
   }
 
-  private static class LightVirtualFileCopyGetter implements Supplier<VirtualFile> {
-    private final LightVirtualFile virtualFile;
-
-    private LightVirtualFileCopyGetter(LightVirtualFile file) { virtualFile = file; }
-
+  private record LightVirtualFileCopyGetter(@NotNull LightVirtualFile virtualFile) implements Supplier<VirtualFile> {
     @Override
-    public VirtualFile get() {
+    public @NotNull VirtualFile get() {
       return getCopy(virtualFile);
     }
   }
@@ -187,12 +183,13 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
    * @param existingData the result of calling {@code getDataHolder(path)} within a same synchronized block
    */
   private @NotNull FileData createFileData(@NotNull String path, @Nullable FileData existingData) {
+    myFrequentCodeStyleComputationWatcher.beforeCacheEntryInserted(myFileDataCache.size(), maxCacheSize);
     if (existingData != null) {
       myFileDataCache.remove(path);
       myRemoveQueue.remove(existingData);
     }
     FileData newData = new FileData();
-    if (existingData == null && myFileDataCache.size() >= MAX_CACHE_SIZE) {
+    if (existingData == null && myFileDataCache.size() >= maxCacheSize) {
       FileData fileData = myRemoveQueue.poll();
       if (fileData != null) {
         myFileDataCache.values().remove(fileData);
@@ -218,8 +215,9 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
     clearCache();
   }
 
-  private static final class FileData extends UserDataHolderBase {
-    private long lastRefTimeStamp;
+  // exposed for TooFrequentCodeStyleComputationWatcher
+  public static final class FileData extends UserDataHolderBase {
+    public long lastRefTimeStamp;
 
     private FileData() {
       update();
@@ -227,6 +225,33 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
 
     void update() {
       lastRefTimeStamp = System.currentTimeMillis();
+    }
+  }
+
+  void dumpState(StringBuilder sb) {
+    synchronized (CACHE_LOCK) {
+      sb.append("Max cache size: ").append(maxCacheSize).append("\n");
+      sb.append("Cache size: ").append(myFileDataCache.size()).append("\n");
+      sb.append("Cached Entries: \n");
+      myFileDataCache.forEach((key, value) -> {
+        sb
+          .append("URL: ").append(key)
+          .append("\nProvider: ");
+        final var providerRef = value.getUserData(PROVIDER_KEY);
+        if (providerRef != null) {
+          final var provider = providerRef.get();
+          if (provider != null) {
+            provider.dumpState(sb);
+          }
+          else {
+            sb.append("null: garbage collected");
+          }
+        }
+        else {
+          sb.append("null: not initialized");
+        }
+        sb.append("\n");
+      });
     }
   }
 }

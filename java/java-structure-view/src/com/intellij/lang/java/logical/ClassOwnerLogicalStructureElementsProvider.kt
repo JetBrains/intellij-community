@@ -2,11 +2,16 @@
 package com.intellij.lang.java.logical
 
 import com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
+import com.intellij.ide.structureView.logical.model.LogicalPsiDescription
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.toUElement
 
 @ApiStatus.Internal
-class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvider<PsiClassOwner, Any> {
+class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvider<PsiClassOwner, Any>, LogicalPsiDescription {
   override fun getElements(parent: PsiClassOwner): List<Any> {
     val result = mutableListOf<Any>()
     var convertedAtLeastOne = false
@@ -26,5 +31,14 @@ class ClassOwnerLogicalStructureElementsProvider: LogicalStructureElementsProvid
     }
     if (convertedAtLeastOne) return result
     return emptyList()
+  }
+
+  override fun getSuitableElement(psiElement: PsiElement): PsiElement? {
+    if (psiElement is PsiClass) return psiElement
+    return (psiElement.toUElement() as? UClass)?.javaPsi
+  }
+
+  override fun isAskChildren(): Boolean {
+    return true
   }
 }

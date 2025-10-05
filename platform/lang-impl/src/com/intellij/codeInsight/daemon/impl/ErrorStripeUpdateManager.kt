@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
+import com.intellij.ide.EssentialHighlightingMode
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -222,7 +223,7 @@ private suspend fun isEditorEligible(editor: Editor, psiFile: PsiFile, project: 
 
 private class EssentialHighlightingModeListener : RegistryValueListener {
   override fun afterValueChanged(value: RegistryValue) {
-    if ("ide.highlighting.mode.essential" != value.key) {
+    if (!EssentialHighlightingMode.isMyRegistryValue(value)) {
       return
     }
 

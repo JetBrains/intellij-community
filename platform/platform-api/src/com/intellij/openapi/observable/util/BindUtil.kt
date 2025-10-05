@@ -4,6 +4,7 @@
 package com.intellij.openapi.observable.util
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.observable.properties.ObservableBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -11,10 +12,12 @@ import com.intellij.openapi.ui.emptyText
 import com.intellij.openapi.ui.getTreePath
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
@@ -290,4 +293,20 @@ fun <C : JTextComponent> C.bind(property: ObservableMutableProperty<String>): C 
       property.set(text)
     }
   }
+}
+
+fun <C : JBLoadingPanel> C.bindLoading(property: ObservableBooleanProperty): C = apply {
+  if (property.get()) {
+    startLoading()
+  }
+  else {
+    stopLoading()
+  }
+  property.afterSet { startLoading() }
+  property.afterReset { stopLoading() }
+}
+
+fun <C : JBLoadingPanel> C.bindLoadingText(property: ObservableProperty<@Nls String>): C = apply {
+  setLoadingText(property.get())
+  property.afterChange { setLoadingText(it) }
 }

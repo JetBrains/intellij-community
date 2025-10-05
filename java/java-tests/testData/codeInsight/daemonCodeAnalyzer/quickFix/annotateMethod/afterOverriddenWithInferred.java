@@ -1,4 +1,4 @@
-// "Annotate overriding methods as '@NotNull'" "true"
+// "Add missing nullability annotations to overriding methods" "true"
 
 import org.jetbrains.annotations.NotNull;
 

@@ -22,6 +22,9 @@ data class LinesCache internal constructor(
 
   fun linesLayout(): LinesLayout = LinesCacheLinesLayout(this)
 
+  fun withSoftWrapBuilder(softWrapBuilder: SoftWrapBuilder): LinesCache =
+    copy(softWrapBuilder = softWrapBuilder)
+
   val textLength: Long
     get() = rope.size(LinesMonoid.LengthMetric).toLong()
 
@@ -85,7 +88,7 @@ class LinesCacheLinesLayout(val linesCache: LinesCache) : LinesLayout {
       var top = cur.location(LinesMonoid.HeightMetric)
       var index = cur.location(LinesMonoid.CountMetric)
       var indexInLeaf = 0
-      while (indexInLeaf < lines.size-1) {
+      while (indexInLeaf < lines.size - 1) {
         val len = lines.length(indexInLeaf)
         if (from < offset + len) break
         offset = offset + len

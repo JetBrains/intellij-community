@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.buildtool
 
+import com.intellij.build.events.MessageEvent
+import com.intellij.build.issue.BuildIssue
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.server.MavenArtifactEvent
 import org.jetbrains.idea.maven.server.MavenServerConsoleEvent
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
@@ -9,6 +12,11 @@ import org.jetbrains.idea.maven.utils.MavenLog
 interface MavenEventHandler {
   fun handleConsoleEvents(consoleEvents: List<MavenServerConsoleEvent>)
   fun handleDownloadEvents(downloadEvents: List<MavenArtifactEvent>)
+}
+
+@ApiStatus.Internal
+interface MavenBuildIssueHandler {
+  fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind)
 }
 
 object MavenLogEventHandler : MavenEventHandler {

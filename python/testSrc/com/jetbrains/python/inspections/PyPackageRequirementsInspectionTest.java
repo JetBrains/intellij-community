@@ -11,9 +11,9 @@ import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.RequirementsProviderType;
 import com.jetbrains.python.packaging.management.TestPythonPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PythonSdkAdditionalDataUtils;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.pipenv.PipenvFilesUtilsKt;
+import com.jetbrains.python.sdk.SdksKt;
+import com.jetbrains.python.sdk.pipenv.PipEnvParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -34,7 +34,7 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
   public void setUp() throws Exception {
     super.setUp();
     final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    PythonSdkAdditionalDataUtils.associateSdkWithModulePath(sdk, myFixture.getModule());
+    SdksKt.setAssociationToModuleAsync(sdk, myFixture.getModule());
     assertNotNull(sdk);
 
     PyPIPackageCache.reload(List.of("opster", "clevercss", "django", "test3", "pyzmq", "markdown", "pytest", "django-simple-captcha"));
@@ -137,11 +137,10 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
     final VirtualFile pipFileLock = myFixture.findFileInTempDir("Pipfile.lock");
     assertNotNull(pipFileLock);
-    final List<PyRequirement> requirements = PipenvFilesUtilsKt.getPipFileLockRequirementsSync(pipFileLock);
+    final List<PyRequirement> requirements = PipEnvParser.getPipFileLockRequirements(pipFileLock);
     final List<String> names = ContainerUtil.map(requirements, PyRequirement::getName);
     assertNotEmpty(names);
-    assertContainsElements(names, "atomicwrites", "attrs", "more-itertools", "pluggy", "py", "pytest", "six");
-    assertDoesntContain(names, "pathlib2");
+    assertContainsElements(names, "atomicwrites", "attrs", "more-itertools", "pathlib2", "pluggy", "py", "pytest", "six");
   }
 
   // PY-41106

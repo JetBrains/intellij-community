@@ -8,28 +8,45 @@ import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.dialog.uiBlocks.EmailBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.SegmentedButtonBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 
 @Serializable
 internal data class CsatFeedbackSystemData(
   val isNewUser: Boolean,
-  val systemInfo: CommonFeedbackSystemData
-): SystemDataJsonSerializable {
+  val systemInfo: CommonFeedbackSystemData,
+  @Transient val extraInfo: CsatFeedbackExtraInfo? = null
+) : SystemDataJsonSerializable {
   override fun serializeToJson(json: Json): JsonElement {
-    return json.encodeToJsonElement(this)
+    var result = json.encodeToJsonElement(this)
+
+    result = JsonObject(result.jsonObject.toMutableMap().apply {
+      extraInfo?.let {
+        put("extraInfo", it.serializeToJson(json))
+      }
+    })
+
+    return result
   }
 
   override fun toString(): String = buildString {
     appendLine("Is new installation:")
     appendLine(isNewUser)
     append(systemInfo.toString())
+
+    extraInfo?.let {
+      append(it.toString())
+    }
   }
 }
 
@@ -45,15 +62,13 @@ internal class CsatFeedbackDialog(
 
   override val myFeedbackReportId: String = "csat_feedback"
 
-  override val mySystemInfoData: CsatFeedbackSystemData by lazy {
-    getCsatSystemInfo()
-  }
+  override suspend fun computeSystemInfoData(): CsatFeedbackSystemData = getCsatSystemInfo(myProject)
 
   @Suppress("HardCodedStringLiteral")
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData.systemInfo) {
+  override fun showFeedbackSystemInfoDialog(systemInfoData: CsatFeedbackSystemData) {
+    showFeedbackSystemInfoDialog(myProject, systemInfoData.systemInfo) {
       row("Is new installation:") {
-        label(mySystemInfoData.isNewUser.toString())
+        label(systemInfoData.isNewUser.toString())
       }
     }
   }
@@ -80,14 +95,31 @@ internal class CsatFeedbackDialog(
   )
 
   init {
+    val customFeedbackAgreementBlock = getExtraDataProvider()?.getFeedbackAgreementBlock {
+      showFeedbackSystemInfoDialog(mySystemInfoDataComputation.getComputationResult())
+    }
+    if (customFeedbackAgreementBlock != null) {
+      emailBlockWithAgreement = EmailBlock(myProject, customFeedbackAgreementBlock)
+    }
+
     init()
   }
 }
 
-private fun getCsatSystemInfo(): CsatFeedbackSystemData {
+private fun getCsatSystemInfo(project: Project?): CsatFeedbackSystemData {
   val userCreatedDate = getCsatUserCreatedDate()
   val today = getCsatToday()
   val isNewUser = userCreatedDate?.let { isNewUser(today, userCreatedDate) } ?: false
 
-  return CsatFeedbackSystemData(isNewUser, CommonFeedbackSystemData.getCurrentData())
+  return CsatFeedbackSystemData(isNewUser, CommonFeedbackSystemData.getCurrentData(), getExtraDataProvider()?.getExtraInfo(project))
+}
+
+private fun getExtraDataProvider(): CsatFeedbackExtraDataProvider? {
+  val extraDataProviders = CsatFeedbackExtraDataProvider.EP_NAME.extensionList
+
+  assert(extraDataProviders.size <= 1)
+
+  if (extraDataProviders.isEmpty())
+    return null
+  return extraDataProviders.first()
 }

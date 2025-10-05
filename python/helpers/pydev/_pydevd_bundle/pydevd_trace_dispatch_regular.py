@@ -440,11 +440,11 @@ class ThreadTracer:
                     return None
 
             if is_stepping:
-                if py_db.is_files_filter_enabled and py_db.is_ignored_by_filters(filename):
+                if py_db.is_filter_enabled and py_db.is_ignored_by_filters(filename):
                     # ignore files matching stepping filters
                     if event != 'call': frame.f_trace = NO_FTRACE
                     return None
-                if py_db._is_libraries_filter_enabled and not py_db.in_project_scope(filename):
+                if py_db.is_filter_libraries and not py_db.in_project_scope(filename):
                     # ignore library files while stepping
                     if event != 'call': frame.f_trace = NO_FTRACE
                     return None

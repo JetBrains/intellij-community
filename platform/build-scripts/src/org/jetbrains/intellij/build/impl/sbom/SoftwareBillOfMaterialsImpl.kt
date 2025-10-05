@@ -14,6 +14,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
@@ -30,7 +32,6 @@ import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
 import org.jetbrains.intellij.build.downloadAsText
-import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.impl.DistributionForOsTaskResult
@@ -105,8 +106,13 @@ class SoftwareBillOfMaterialsImpl(
   private val distributionFiles: List<DistributionFileEntry>
 ) : SoftwareBillOfMaterials {
   private companion object {
-    val JETBRAINS_GITHUB_ORGANIZATIONS: Set<String> = setOf("JetBrains", "Kotlin")
-    val STRICT_MODE: Boolean = System.getProperty("intellij.build.sbom.strictMode").toBoolean()
+    /**
+     * Cannot be enabled by default because the Maven resolver doesn't resolve pom.xml reproducibly, see IJI-1882.
+     * It may resolve nothing, hence no metadata like a supplier value, hence sporadic failures of [checkNtiaConformance].
+     *
+     * Also, the full verification is required, see IJI-2119.
+     */
+    val STRICT_MODE: Boolean = System.getProperty("intellij.build.sbom.strictMode", "false").toBoolean()
   }
 
   private val specVersion: String = Version.TWO_POINT_THREE_VERSION
@@ -132,7 +138,7 @@ class SoftwareBillOfMaterialsImpl(
   }
 
   /**
-   * See [com.intellij.ide.gdpr.EndUserAgreement]
+   * See https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/src/com/intellij/ide/gdpr/EndUserAgreement.java
    */
   private val jetBrainsOwnLicense: Options.DistributionLicense by lazy {
     val eula = context.paths.communityHomeDir
@@ -178,6 +184,11 @@ class SoftwareBillOfMaterialsImpl(
     document.specVersion = specVersion
     document.dataLicense = parseLicense(document, SpdxConstants.SPDX_DATA_LICENSE_ID)
     document.setName(name)
+    document.setComment(
+      "This document represents the ongoing effort in providing the complete SBOM for IntelliJ-based IDEs. " +
+      "At the moment, it should be considered a work in progress. " +
+      "The content may lack important details and therefore should not be used to draw any conclusions from it."
+    )
     return document
   }
 
@@ -192,7 +203,6 @@ class SoftwareBillOfMaterialsImpl(
 
   override suspend fun generate() {
     val skipReason = when {
-      true -> "IJI-2177"
       !context.shouldBuildDistributions() -> "No distribution was built"
       documentNamespace == null -> "Document namespace isn't specified"
       context.productProperties.sbomOptions.creator == null -> "Document creator isn't specified"
@@ -230,7 +240,7 @@ class SoftwareBillOfMaterialsImpl(
       distributions.associateWith { distribution ->
         getFiles(distribution)
           .map { async(CoroutineName("checksums for $it")) { Checksums(it) } }
-          .map { it.await() }
+          .awaitAll()
       }
     }.flatMap { (distribution, filesWithChecksums) ->
       filesWithChecksums.map {
@@ -446,7 +456,7 @@ class SoftwareBillOfMaterialsImpl(
         .filterNot { it.startsWith(context.paths.tempDir) }
         .toList().map {
           async(CoroutineName("checksums for $it")) { Checksums(it) }
-        }.map { it.await() }
+        }.awaitAll()
     }
   }
 
@@ -490,20 +500,16 @@ class SoftwareBillOfMaterialsImpl(
         JpsJavaExtensionService.dependencies(module)
           .includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
           .libraries.asSequence()
-          .map { it to module }
       }.distinctBy {
-        it.first.mavenDescriptor?.mavenId ?: it.first.name
-      }.groupBy({ it.first }, { it.second }).map { (library, modules) ->
+        it.mavenDescriptor?.mavenId ?: it.name
+      }.map { library ->
         val libraryName = getLibraryFilename(library)
         async(CoroutineName("maven library $libraryName")) {
           val libraryEntry = librariesBundledInDistributions.get(libraryName)
           val libraryFile = libraryEntry?.libraryFile ?: return@async null
           val libraryLicense = context.productProperties.allLibraryLicenses.firstOrNull {
             it.getLibraryNames().contains(libraryName)
-          }
-          checkNotNull(libraryLicense) {
-            "Missing license for '$libraryName' used in ${modules.joinToString { "'${it.name}'" }} modules"
-          }
+          } ?: return@async null
           val mavenDescriptor = library.mavenDescriptor
           if (mavenDescriptor != null) {
             mavenLibrary(mavenDescriptor = mavenDescriptor, libraryFile = libraryFile, libraryEntry = libraryEntry, libraryLicense = libraryLicense)
@@ -517,7 +523,7 @@ class SoftwareBillOfMaterialsImpl(
             ).takeIf { it.coordinates != null }
           }
         }
-      }.mapNotNull { it.await() }
+      }.toList().mapNotNull { it.await() }
     }
   }
 
@@ -594,10 +600,10 @@ class SoftwareBillOfMaterialsImpl(
     }
   }
 
-  private fun MavenCoordinates.externalRef(document: SpdxDocument, repositoryUrl: String): ExternalRef {
+  private fun MavenCoordinates.externalRef(document: SpdxDocument, repositoryUrl: String?): ExternalRef {
     val (refType, locator) = when (repositoryUrl) {
       "https://repo1.maven.org/maven2" -> "maven-central" to "$groupId:$artifactId:$version"
-      else -> "purl" to "pkg:maven/$groupId/$artifactId@$version?repository_url=$repositoryUrl"
+      else -> "purl" to "pkg:maven/$groupId/$artifactId@$version" + (repositoryUrl?.let { "?repository_url=$it" } ?: "")
     }
     return document.createExternalRef(ReferenceCategory.PACKAGE_MANAGER,
                                       ReferenceType(SpdxConstants.SPDX_LISTED_REFERENCE_TYPES_PREFIX + refType),
@@ -750,10 +756,7 @@ class SoftwareBillOfMaterialsImpl(
     }
 
     val isSupplierJetBrains: Boolean by lazy {
-      library.license == LibraryLicense.JETBRAINS_OWN || JETBRAINS_GITHUB_ORGANIZATIONS.any {
-        library.url?.startsWith("https://github.com/$it/") == true ||
-        library.licenseUrl?.startsWith("https://github.com/$it/") == true
-      }
+      LibraryLicense.isJetBrainsOwnLibrary(library)
     }
 
     val isSupplierApache: Boolean by lazy {
@@ -808,9 +811,7 @@ class SoftwareBillOfMaterialsImpl(
       setDownloadLocation(library.downloadUrl ?: SpdxConstants.NOASSERTION_VALUE)
       setOrigin(spdxPackageBuilder = this, library = library, upstreamPackage = upstreamPackage)
       addChecksum(document.createChecksum(ChecksumAlgorithm.SHA256, library.sha256Checksum))
-      if (library.repositoryUrl != null) {
-        addExternalRef(library.coordinates.externalRef(document, library.repositoryUrl))
-      }
+      addExternalRef(library.coordinates.externalRef(document, library.repositoryUrl))
     }
     if (upstreamPackage != null) {
       libPackage.relatesTo(upstreamPackage, RelationshipType.VARIANT_OF)
@@ -944,8 +945,15 @@ class SoftwareBillOfMaterialsImpl(
 
   private fun validate(modelObject: ModelObject) {
     val errors = modelObject.verify()
-    check(errors.none()) {
-      errors.joinToString(separator = "\n")
+    if (STRICT_MODE && errors.any()) {
+      throw Exception("Cannot validate $modelObject").apply {
+        errors.forEach { addSuppressed(Exception(it)) }
+      }
+    }
+    else {
+      errors.forEach {
+        context.messages.warning("Cannot validate $modelObject: $it")
+      }
     }
   }
 
@@ -979,7 +987,7 @@ class SoftwareBillOfMaterialsImpl(
    * See https://pypi.org/project/ntia-conformance-checker/
    */
   private suspend fun checkNtiaConformance(documents: List<Path>, context: BuildContext) {
-    if (!Docker.isAvailable || SystemInfoRt.isWindows) {
+    if (!STRICT_MODE || !Docker.isAvailable || SystemInfoRt.isWindows) {
       return
     }
 
@@ -990,32 +998,29 @@ class SoftwareBillOfMaterialsImpl(
         workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
       )
     }
-    documents.forEachConcurrent { document ->
-      try {
-        context.runProcess(
-          args = listOf(
-            "docker", "run", "--rm",
-            "--volume=${document.parent}:${document.parent}:ro",
-            ntiaChecker, "--file", "${document.toAbsolutePath()}", "--verbose"
-          ),
-          attachStdOutToException = true,
-        )
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Exception) {
-        val message =
-          """
-           Generated SBOM $document is not NTIA-conformant. 
-           Please look for 'Components missing a supplier' in the suppressed exceptions and specify all missing suppliers.
-           You may use https://package-search.jetbrains.com/ to search for them.
-          """.trimIndent()
-        if (STRICT_MODE) {
-          throw IllegalStateException(message, e)
-        }
-        else {
-          Span.current().addEvent("$message\n${e.stackTraceToString()}")
+    supervisorScope {
+      for (document in documents) {
+        launch(CoroutineName("NTIA conformance check for ${document.name}")) {
+          try {
+            context.runProcess(
+              args = listOf(
+                "docker", "run", "--rm",
+                "--volume=${document.parent}:${document.parent}:ro",
+                ntiaChecker, "--file", "${document.toAbsolutePath()}", "--verbose"
+              ),
+              attachStdOutToException = true,
+            )
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Exception) {
+            context.messages.logErrorAndThrow("""
+             Generated SBOM $document is not NTIA-conformant. 
+             Please look for 'Components missing a supplier' in the suppressed exceptions and specify all missing suppliers.
+             You may use https://package-search.jetbrains.com/ to search for them.
+            """.trimIndent(), e)
+          }
         }
       }
     }

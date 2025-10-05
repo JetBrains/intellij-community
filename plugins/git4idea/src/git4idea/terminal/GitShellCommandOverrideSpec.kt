@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.terminal
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
@@ -26,12 +27,12 @@ internal val ShellRuntimeContext.repository: GitRepository?
 
 // Find remote generators in the git.json file by searching for scripts doing:
 // remote -v
-private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
+private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-remotes") { context ->
   val repository = context.repository
 
   if (repository != null) {
     repository.remotes.map {
-      ShellCompletionSuggestion(
+      branchSuggestion(
         name = it.name,
         description = it.firstUrl ?: ""
       )
@@ -49,7 +50,7 @@ private val remotesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSugg
         @Suppress("HardCodedStringLiteral")
         val description: @Nls String = remoteLineParts.getOrNull(1)?.split(" ")?.firstOrNull() ?: ""
 
-        ShellCompletionSuggestion(
+        branchSuggestion(
           name = remoteLineParts.first(),
           description = description
         )
@@ -66,29 +67,29 @@ private fun postProcessBranchesFromCommandLine(lines: List<String>, insertWithou
 
     // Current branch
     if (isCurrentBranch) {
-      return@map ShellCompletionSuggestion(name, description = GitTerminalBundle.message("branch.current"), priority = 100)
+      return@map branchSuggestion(name, description = GitTerminalBundle.message("branch.current"), priority = 100)
     }
 
     // Remote branches
     if (name.startsWith("remotes/")) {
-      return@map ShellCompletionSuggestion(
+      return@map branchSuggestion(
         if (insertWithoutRemotes) name.removePrefix("remotes/") else name,
         description = GitTerminalBundle.message("branch.remote")
       )
     }
 
-    ShellCompletionSuggestion(name)
+    branchSuggestion(name)
   }.distinctBy { it.name }
 
 // git --no-optional-locks branch --no-color --sort=-committerdate
-private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
+private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-local-branches") { context ->
   val repository = context.repository
 
   if (repository != null) {
     val currentBranch = repository.currentBranch
     val branches = repository.branches
     branches.localBranches.map { branch ->
-      ShellCompletionSuggestion(
+      branchSuggestion(
         branch.name,
         description = if (branch == currentBranch) GitTerminalBundle.message("branch.current") else GitTerminalBundle.message("branch"),
         priority = if (branch == currentBranch) 100 else 50
@@ -104,14 +105,14 @@ private val localBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompleti
 }
 
 // git --no-optional-locks branch -a --no-color --sort=-committerdate
-private val allBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
+private val allBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-all-branches") { context ->
   val repository = context.repository
 
   if (repository != null) {
     val currentBranch = repository.currentBranch
     val branches = repository.branches
     (branches.localBranches + branches.remoteBranches).map { branch ->
-      ShellCompletionSuggestion(
+      branchSuggestion(
         branch.name,
         description = if (branch == currentBranch) GitTerminalBundle.message("branch.current") else if (branch is GitRemoteBranch) GitTerminalBundle.message("branch.remote") else GitTerminalBundle.message("branch"),
         priority = if (branch == currentBranch) 100 else 50
@@ -127,13 +128,13 @@ private val allBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletion
 }
 
 // git --no-optional-locks branch -r --no-color --sort=-committerdate
-private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
+private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-remote-branches") { context ->
   val repository = context.repository
 
   if (repository != null) {
     val branches = repository.branches
     branches.remoteBranches.map { branch ->
-      ShellCompletionSuggestion(
+      branchSuggestion(
         branch.name,
         description = GitTerminalBundle.message("branch.remote"),
         priority = 50
@@ -152,13 +153,22 @@ private val remoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellComplet
 // TODO: Fix this after there's some 'parsedOptions' or something in context to check for here.
 // TODO: Maybe show all branches for the time being?
 // Problem is that completion for 'git branch -d -r {caret}' will not know about '-r'
-private val localOrRemoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator { context ->
+private val localOrRemoteBranchesGenerator: ShellRuntimeDataGenerator<List<ShellCompletionSuggestion>> = ShellRuntimeDataGenerator("git-local-or-remote-branches") { context ->
   if (context.typedPrefix.contains("-r") || context.typedPrefix.contains("--remotes")) {
     remoteBranchesGenerator.generate(context)
   }
   else {
     localBranchesGenerator.generate(context)
   }
+}
+
+private fun branchSuggestion(name: String, description: @Nls String? = null, priority: Int = 50): ShellCompletionSuggestion {
+  return ShellCompletionSuggestion(
+    name,
+    description = description,
+    priority = priority,
+    icon = AllIcons.Vcs.Branch
+  )
 }
 
 private fun ShellCommandContext.trackingOptions() {

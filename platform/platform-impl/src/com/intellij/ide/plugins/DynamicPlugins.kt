@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
@@ -41,6 +41,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.impl.BundledColorSchemeEPName
@@ -62,7 +63,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
@@ -102,11 +103,10 @@ import javax.swing.ToolTipManager
 
 private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = mutableMapOf<PluginId, WeakList<PluginClassLoader>>()
+private val VETOER_EP_NAME = ExtensionPointName<DynamicPluginVetoer>("com.intellij.ide.dynamicPluginVetoer")
 
 @ApiStatus.Internal
 object DynamicPlugins {
-  private val VETOER_EP_NAME: ExtensionPointName<DynamicPluginVetoer> = ExtensionPointName.create("com.intellij.ide.dynamicPluginVetoer");
-
   private var myProcessRun = 0
   private val myProcessCallbacks = mutableListOf<Runnable>()
   private val myLock = Any()
@@ -328,7 +328,7 @@ object DynamicPlugins {
     checkUnloadActions(module)?.let { return it }
 
     for (moduleRef in module.contentModules) {
-      if (pluginSet.isModuleEnabled(moduleRef.moduleName)) {
+      if (pluginSet.isModuleEnabled(moduleRef.moduleId)) {
         checkCanUnloadWithoutRestart(module = moduleRef,
                                      parentModule = module,
                                      optionalDependencyPluginId = null,
@@ -565,9 +565,11 @@ object DynamicPlugins {
 
     if (options.checkImplementationDetailDependencies) {
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor, pluginSet) { dependentDescriptor ->
-        dependentDescriptor.isMarkedForLoading = false
-        unloadPluginWithoutProgress(dependentDescriptor, UnloadPluginOptions(waitForClassloaderUnload = false,
-                                                                             checkImplementationDetailDependencies = false))
+        if (dependentDescriptor is PluginMainDescriptor) {
+          dependentDescriptor.isMarkedForLoading = false
+          unloadPluginWithoutProgress(dependentDescriptor, UnloadPluginOptions(waitForClassloaderUnload = false,
+                                                                               checkImplementationDetailDependencies = false))
+        }
         true
       }
     }
@@ -799,7 +801,7 @@ object DynamicPlugins {
   }
 
   internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
-    val notification = UpdateChecker.getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
+    val notification = service<UpdateCheckerFacade>().getNotificationGroupForPluginUpdateResults().createNotification(text, notificationType)
     for (action in actions) {
       notification.addAction(action)
     }
@@ -915,6 +917,9 @@ object DynamicPlugins {
 
   @JvmOverloads
   fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
+    if (!allowLoadUnloadWithoutRestart(pluginDescriptor)) {
+      return false
+    }
     return runProcess {
       withPotemkinProgress(project, IdeBundle.message("plugins.progress.loading.plugin.title", pluginDescriptor.name)) {
         publishingPluginsLoadedEvent {
@@ -995,7 +1000,13 @@ object DynamicPlugins {
         loadModules(
           modules = optionalDependenciesOnPlugin(dependencyPlugin = pluginDescriptor,
                                                  classLoaderConfigurator = classLoaderConfigurator,
-                                                 pluginSet = pluginSet).toList(),
+                                                 pluginSet = pluginSet).filter { descriptorImpl ->
+            when (descriptorImpl) {
+              is ContentModuleDescriptor if !pluginSet.isModuleEnabled(descriptorImpl.moduleId) -> false
+              is PluginMainDescriptor if !pluginSet.isPluginEnabled(descriptorImpl.pluginId) -> false
+              else -> true
+            }
+          }.toList(),
           app = app,
           listenerCallbacks = listenerCallbacks,
         )
@@ -1021,7 +1032,8 @@ object DynamicPlugins {
       processImplementationDetailDependenciesOnPlugin(pluginDescriptor, pluginSet) { dependentDescriptor ->
         val dependencies = dependentDescriptor.dependencies
         if (dependencies.all { it.isOptional || PluginManagerCore.getPlugin(it.pluginId) != null }) {
-          if (!loadPluginWithoutProgress(dependentDescriptor, checkImplementationDetailDependencies = false)) {
+          if (dependentDescriptor is PluginMainDescriptor &&
+              !loadPluginWithoutProgress(dependentDescriptor, checkImplementationDetailDependencies = false)) {
             implementationDetailsLoadedWithoutRestart = false
           }
         }
@@ -1176,7 +1188,7 @@ private fun optionalDependenciesOnPlugin(
     return emptySet()
   }
   val topologicalComparator = PluginSetBuilder(dependentDescriptors.map { it.getMainDescriptor() }.toSet()).topologicalComparator
-  dependentDescriptors.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.getMainDescriptor(), o2.getMainDescriptor()) })
+  dependentDescriptors.sortWith { o1, o2 -> topologicalComparator.compare(o1.getMainDescriptor(), o2.getMainDescriptor()) }
   return dependentDescriptors
     .distinct()
     .filter {
@@ -1242,7 +1254,7 @@ private fun processDependenciesOnPlugin(
   val wantedIds = HashSet<String>(1 + dependencyTarget.contentModules.size)
   wantedIds.add(dependencyTarget.pluginId.idString)
   for (module in dependencyTarget.contentModules) {
-    wantedIds.add(module.moduleName)
+    wantedIds.add(module.moduleId.id)
   }
   // FIXME plugin aliases probably missing?
 
@@ -1267,12 +1279,12 @@ private fun processDependenciesOnPlugin(
         }
       }
       for (item in module.moduleDependencies.modules) {
-        if (wantedIds.contains(item.name) && !processor(plugin, module)) {
+        if (wantedIds.contains(item.id) && !processor(plugin, module)) {
           return
         }
       }
       for (item in module.moduleDependencies.plugins) {
-        if (dependencyTarget.pluginId == item.id && !processor(plugin, module)) {
+        if (dependencyTarget.pluginId == item && !processor(plugin, module)) {
           return
         }
       }
@@ -1398,6 +1410,10 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(
     if (epName.startsWith("org.jetbrains.kotlin") && descriptor.pluginId.idString == "org.jetbrains.kotlin") {
       continue
     }
+    // Workaround until SID-207 fixed
+    if (epName.startsWith("Pythonid.template") && descriptor.pluginId.idString in listOf("com.intellij.python.django", "org.jetbrains.dbt")) {
+      continue
+    }
 
     return "Plugin ${descriptor.pluginId} is not unload-safe because of unresolved extension $epName"
   }
@@ -1413,10 +1429,7 @@ private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl,
                                                   ?: findInContainer(moduleContainerDescriptor)
   pluginDescriptor.findInAnyScope()?.let { return it }
   pluginDescriptor.contentModules.forEach { contentModule ->
-    // FIXME incomplete fix for IJPL-190703
-    if (contentModule.moduleLoadingRule == ModuleLoadingRule.EMBEDDED) {
-      contentModule.findInAnyScope()?.let { return it }
-    }
+    contentModule.findInAnyScope()?.let { return it }
   }
   return null
 }
@@ -1452,13 +1465,13 @@ private inline fun processDirectDependencies(module: IdeaPluginDescriptorImpl,
                                              pluginSet: PluginSet,
                                              processor: (IdeaPluginDescriptorImpl) -> Unit) {
    for (item in module.moduleDependencies.modules) {
-     val descriptor = pluginSet.findEnabledModule(item.name)
+     val descriptor = pluginSet.findEnabledModule(item)
      if (descriptor != null) {
        processor(descriptor)
     }
   }
   for (item in module.moduleDependencies.plugins) {
-    val descriptor = pluginSet.findEnabledPlugin(item.id)
+    val descriptor = pluginSet.findEnabledPlugin(item)
     if (descriptor != null) {
       processor(descriptor)
     }

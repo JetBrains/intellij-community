@@ -5,18 +5,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.io.CleanableStorage;
-import com.intellij.util.io.ClosedStorageException;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.Unmappable;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -217,7 +212,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
    */
   public long actualFileSize() throws IOException {
     synchronized (pagesLock) {
-      //RC: Lock the pages to prevent file expansion (file expansion also acquires .pagesLock, see .pageByOffset())
+      //MMappedFileStorageFactory.dealWithPageUnAlignedFileSize() ensures channel.size must be aligned with page size.
+      // Lock the pages to prevent file expansion (file expansion also acquires .pagesLock, see .pageByOffset())
       //    If file is expanded concurrently with this method, we could see not-pageSize-aligned file size,
       //    which is confusing to deal with.
       //    Better to just prohibit such cases: file expansion (=new page allocation) is a relatively rare
@@ -319,8 +315,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       int startOffsetInPage = toOffsetInPage(offset);
       int endOffsetInPage = endOffsetInFile > page.lastOffsetInFile() ?
                             pageSize - 1 : toOffsetInPage(endOffsetInFile);
-      //MAYBE RC: it could be done much faster -- with putLong(), with preallocated array of zeroes,
-      //          with Unsafe.setMemory() -- but does it worth it?
+      //MAYBE RC: it could be done much faster -- with putLong(), or with preallocated array of zeroes,
+      //          or with Unsafe.setMemory() -- but does it worth it?
       for (int pos = startOffsetInPage; pos <= endOffsetInPage; pos++) {
         //TODO RC: make putLong() (but check both startOffsetInPage and endOffsetInPage are 64-aligned)
         pageBuffer.put(pos, (byte)0);
@@ -511,8 +507,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       RegionAllocationAtomicityLock.Region region = regionAllocationAtomicityLock.region(offsetInFile, pageSize);
 
       //The difference between the branches:
-      //In the 'correct' branch: we don't touch already existing part of the file -- because it could be already written
-      //  to, and we don't want to ruin that data.
+      //In the 'correct' branch: we don't touch the already existing part of the file -- because it could be already
+      //  written to, and we don't want to ruin that data.
       //In the unfinished (='recovering') branch: we intentionally zero _all_ the region -- because we know we didn't
       //  finish page allocation, so page wasn't published for use => nobody should _legally_ write anything meaningful
       //  into it, but page-zeroing is likely also un-finished, hence it could be some _garbage_ on the page, which we
@@ -568,30 +564,10 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       if (!buffer.isDirect()) {
         return;
       }
-      if (INVOKE_CLEANER_METHOD == null) {
-        throw new IllegalStateException("No access to Unsafe.invokeCleaner() -- explicit mapped buffers unmapping is unavailable");
-      }
-
-      INVOKE_CLEANER_METHOD.invoke(ReflectionUtil.getUnsafe(), buffer);
-      if (LOG_UNMAP_OPERATIONS) {
+      boolean result = ByteBufferUtil.cleanBuffer(buffer);
+      if (LOG_UNMAP_OPERATIONS && result) {
         LOG.info("Buffer unmapped: " + buffer);
       }
-    }
-
-    private static final Method INVOKE_CLEANER_METHOD;
-
-    static {
-      Method cleanerMethod;
-      try {
-        Object unsafe = ReflectionUtil.getUnsafe();
-        Class<?> unsafeClass = unsafe.getClass();
-        cleanerMethod = ReflectionUtil.getDeclaredMethod(unsafeClass, "invokeCleaner", ByteBuffer.class);
-      }
-      catch (Throwable t) {
-        LOG.error("Can't get access to Unsafe.invokeCleaner() -- explicit mapped buffers unmapping will be unavailable", t);
-        cleanerMethod = null;
-      }
-      INVOKE_CLEANER_METHOD = cleanerMethod;
     }
   }
 
@@ -725,6 +701,9 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
             //NoSuchFileException usually means 'parent dir doesn't exist'
             Path parent = mappingLockFile.getParent();
             if (!Files.exists(parent)) {
+              //RC: Why not just re-create the parent dirs? Because the mmapped file itself was 100% deleted, together with the folder,
+              //    i.e., the data is 100% compromised one way or another -- so better fail early, than continue working pretending
+              //    everything is fine, and waiting for some bizarre errors to pop up later on.
               Path firstExistingParent = firstExistingParent(parent);
               throw new IOException("Parent dir[" + parent.toAbsolutePath() + "] is not exist/was removed -- can't create .lock-file.\n" +
                                     "First existing parent: [" + firstExistingParent + "]", e);

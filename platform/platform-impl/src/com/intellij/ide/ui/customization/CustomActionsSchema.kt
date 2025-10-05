@@ -41,6 +41,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
 
@@ -78,7 +79,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   @Volatile
   private var idToActionGroup: Map<String, ActionGroup> = java.util.Map.of()
   private val extGroupIds = HashSet<String>()
-  private val actions = ArrayList<ActionUrl>()
+  private val actions = CopyOnWriteArrayList<ActionUrl>()
   private var isFirstLoadState = true
   var modificationStamp: Int = 0
     private set
@@ -159,10 +160,16 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   }
 
   /**
-   * Mutable list is returned.
+   * An immutable view of the action list is returned.
+   * 
+   * The returned list may change at any moment,
+   * so one must not rely on, e.g., values returned by `size`.
+   * But iterating over is safe, as per the [CopyOnWriteArrayList] contract.
+   * 
+   * Any attempt to modify the list will throw [UnsupportedOperationException].
    */
   @ApiStatus.Internal
-  fun getActions(): List<ActionUrl> = actions
+  fun getActions(): List<ActionUrl> = Collections.unmodifiableList(actions)
 
   @ApiStatus.Internal
   fun setActions(newActions: List<ActionUrl>) {

@@ -183,34 +183,6 @@ public final class PyUtil {
   // TODO: move to a more proper place?
 
   /**
-   * Determine the type of a special attribute. Currently supported: {@code __class__} and {@code __dict__}.
-   *
-   * @param ref reference to a possible attribute; only qualified references make sense.
-   * @return type, or null (if type cannot be determined, reference is not to a known attribute, etc.)
-   */
-  public static @Nullable PyType getSpecialAttributeType(@Nullable PyReferenceExpression ref, TypeEvalContext context) {
-    if (ref != null) {
-      PyExpression qualifier = ref.getQualifier();
-      if (qualifier != null) {
-        String attr_name = ref.getReferencedName();
-        if (PyNames.__CLASS__.equals(attr_name)) {
-          PyType qualifierType = context.getType(qualifier);
-          if (qualifierType instanceof PyClassType) {
-            return new PyClassTypeImpl(((PyClassType)qualifierType).getPyClass(), true); // always as class, never instance
-          }
-        }
-        else if (PyNames.DUNDER_DICT.equals(attr_name)) {
-          PyType qualifierType = context.getType(qualifier);
-          if (qualifierType instanceof PyClassType && ((PyClassType)qualifierType).isDefinition()) {
-            return PyBuiltinCache.getInstance(ref).getDictType();
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
    * Makes sure that 'thing' is not null; else throws an {@link IncorrectOperationException}.
    *
    * @param thing what we check.
@@ -446,11 +418,10 @@ public final class PyUtil {
     return currentElement;
   }
 
-  /**
-   * Note that returned list may contain {@code null} items, e.g. for unresolved import elements, originally wrapped
-   * in {@link com.jetbrains.python.psi.resolve.ImportedResolveResult}.
-   */
-  public static @NotNull List<PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
+  // Note that returned list may contain null items, e.g. for unresolved import elements, originally wrapped
+  //  in `com.jetbrains.python.psi.resolve.ImportedResolveResult`
+  //  TODO: it would be a good idea to revise `filterTopPriority` to return the import definer when the element is null
+  public static @NotNull List<@Nullable PsiElement> multiResolveTopPriority(@NotNull PsiElement element, @NotNull PyResolveContext resolveContext) {
     if (element instanceof PyReferenceOwner referenceOwner) {
       return multiResolveTopPriority(referenceOwner.getReference(resolveContext));
     }
@@ -460,7 +431,7 @@ public final class PyUtil {
     }
   }
 
-  public static @NotNull List<PsiElement> multiResolveTopPriority(@NotNull PsiPolyVariantReference reference) {
+  public static @NotNull List<@NotNull PsiElement> multiResolveTopPriority(@NotNull PsiPolyVariantReference reference) {
     return filterTopPriorityElements(Arrays.asList(reference.multiResolve(false)));
   }
 

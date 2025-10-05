@@ -11,8 +11,8 @@ import com.intellij.util.io.DataExternalizer
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
-import org.jetbrains.kotlin.idea.core.util.readString
-import org.jetbrains.kotlin.idea.core.util.writeString
+import org.jetbrains.kotlin.idea.core.script.v1.readString
+import org.jetbrains.kotlin.idea.core.script.v1.writeString
 import java.io.DataInput
 import java.io.DataOutput
 

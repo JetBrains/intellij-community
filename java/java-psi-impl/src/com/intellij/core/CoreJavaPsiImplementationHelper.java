@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.lang.ASTNode;
@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
+import com.intellij.psi.javadoc.PsiDocFragmentName;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import com.intellij.psi.util.PsiUtil;
@@ -82,6 +83,11 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
 
   @Override
   public @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @Nullable PsiSymbolReference getFragmentNameSymbol(@NotNull PsiDocFragmentName token) {
     throw new UnsupportedOperationException();
   }
 

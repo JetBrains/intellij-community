@@ -41,11 +41,11 @@ class svmem(NamedTuple):
     wired: int
 
 class scputimes(NamedTuple):
-    user: Any
-    nice: Any
-    system: Any
-    idle: Any
-    irq: Any
+    user: float
+    nice: float
+    system: float
+    idle: float
+    irq: float
 
 class pmem(NamedTuple):
     rss: Any

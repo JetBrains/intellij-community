@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.Disposable;
@@ -107,7 +107,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     ComboBox<ScopeDescriptor> combo = getComboBox();
     combo.setMinimumAndPreferredWidth(JBUIScale.scale(300));
-    combo.setRenderer(ScopeSeparatorKt.createScopeDescriptorRenderer(() -> scopes));
+    combo.setRenderer(
+      ScopeSeparatorKt.createScopeDescriptorRenderer(scopes == null ? null : (descriptor) -> scopes.getSeparatorFor(descriptor), ""));
     combo.setSwingPopup(false);
 
     if (selection != null) {

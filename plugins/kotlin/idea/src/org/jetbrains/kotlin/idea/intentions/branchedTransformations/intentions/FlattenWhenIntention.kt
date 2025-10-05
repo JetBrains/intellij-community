@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class FlattenWhenIntention : SelfTargetingIntention<KtWhenExpression>(
     KtWhenExpression::class.java,
-    KotlinBundle.lazyMessage("flatten.when.expression")
+    KotlinBundle.messagePointer("flatten.when.expression")
 ) {
     override fun isApplicableTo(element: KtWhenExpression, caretOffset: Int): Boolean {
         val subject = element.subjectExpression

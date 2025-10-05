@@ -37,9 +37,9 @@ class KotlinChangePropertySignatureDialog(project: Project,
     override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         val returnPresentableText =
             analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
-                m.method.returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                (m.method as? KtCallableDeclaration)?.returnType?.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
             }
-        return kotlinPsiFactory.createTypeCodeFragment(returnPresentableText, m.method)
+        return kotlinPsiFactory.createTypeCodeFragment(returnPresentableText ?: "", m.method)
     }
 
     @OptIn(KaExperimentalApi::class)

@@ -29,6 +29,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-72232
+  public void testWithItemNonContextManager() {
+    doTest();
+  }
+
   // PY-10660
   public void testStructUnpackPy3() {
     doMultiFileTest();
@@ -55,6 +60,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-16898
   public void testAsyncForIterable() {
+    doTest();
+  }
+
+  // PY-6729
+  public void testYieldFromNonIterable() {
     doTest();
   }
 
@@ -558,8 +568,8 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    
                    class Color(Enum):
                        R = 1
-                       G == 2
-                       B == 3
+                       G = 2
+                       B = 3
                        RED = R
                        BLUE = B
                    
@@ -2884,6 +2894,28 @@ def foo(param: str | int) -> TypeGuard[str]:
                    """);
   }
 
+  // PY-74277
+  public void testPassingTypeIsCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> doTestByText("""
+                           from typing_extensions import TypeIs, Callable
+                           
+                           def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
+                               if narrower(x):
+                                   expr1: int = x
+                                   #            └─ should be of `int` type
+                               else:
+                                   expr2: str = x
+                                   #            └─ should be of `str` type
+                           
+                           def is_bool(x: object) -> TypeIs[bool]:
+                               return isinstance(x, bool)
+                           
+                           takes_narrower(42, <warning descr="Expected type '(object) -> TypeIs[int]', got '(x: object) -> TypeIs[bool]' instead">is_bool</warning>)
+                           """));
+  }
+
   // PY-75556
   public void testLiteralTypeOnKwargs() {
     doTestByText("""
@@ -2909,7 +2941,7 @@ def foo(param: str | int) -> TypeGuard[str]:
                      """)
     );
   }
-  
+
   // PY-55691
   public void testAttrsDataclassProtocolMatchingFrozen() {
     runWithAdditionalClassEntryInSdkRoots("packages", () ->
@@ -2925,4 +2957,145 @@ def foo(param: str | int) -> TypeGuard[str]:
     );
   }
 
+  // PY-76854
+  public void testNonHashableDataclassAssignedToHashable() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   from typing import Hashable
+                   
+                   
+                   @dataclass
+                   class DC:
+                       a: int
+                   
+                   
+                   v: Hashable = <warning descr="Expected type 'Hashable', got 'DC' instead">DC(0)</warning>
+                   
+                   @dataclass(eq=True)
+                   class DC2:
+                       a: int
+                   
+                   
+                   v2: Hashable = <warning descr="Expected type 'Hashable', got 'DC2' instead">DC2(0)</warning>
+                   """);
+  }
+
+  // PY-76854
+  public void testHashableDataclassAssignedToHashable() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   from typing import Hashable
+                   
+                   
+                   @dataclass(eq=True, frozen=True)
+                   class DC:
+                       a: int
+                   
+                   
+                   v: Hashable = DC(0)
+                   
+                   @dataclass(eq=True)
+                   class DC2:
+                       a: int
+                   
+                       def __hash__(self) -> int:
+                           return 0
+                   
+                   
+                   v2: Hashable = DC2(0)
+                   
+                   @dataclass(unsafe_hash=True)
+                   class DC3:
+                       a: int
+                   
+                   
+                   v3: Hashable = DC3(0)
+                   
+                   @dataclass(eq=False, frozen=True)
+                   class DC4:
+                       a: int
+                   
+                   
+                   v4: Hashable = DC4(0)
+                   
+                   @dataclass(eq=False)
+                   class DC5:
+                       a: int
+                   
+                   
+                   v5: Hashable = DC5(0)
+                   """);
+  }
+
+  // PY-76855
+  public void testAccessToAttributeOfGenericClassWithDefaultIsNotAmbiguous() {
+    doTestByText("""
+                   class Test1[T = int]():
+                       attr: T
+                   class Test2[T]():
+                       attr: T
+                   
+                   Test1.attr #OK
+                   Test2.<warning descr="Access to generic instance variables via class is ambiguous">attr</warning>
+                   """);
+  }
+
+  // PY-76818
+  public void testMatchModuleWithProtocolNumOfAttrs() {
+    doMultiFileTest();
+  }
+
+  // PY-76818
+  public void testMatchProtocolWithModuleCallables() {
+    doMultiFileTest();
+  }
+
+  // PY-76818
+  public void testMatchGenericProtocolWithModule() {
+    doMultiFileTest();
+  }
+
+  // PY-82871
+  public void testConcatenateWithEllipsis() {
+    doTestByText("""
+                   from typing import Callable, Concatenate
+                   
+                   call: Callable[Concatenate[int, ...], str]
+                   
+                   call(42)
+                   call(42, True)
+                   call(<warning descr="Expected type 'int', got 'str' instead">"foo"</warning>)
+                   call()
+                   
+                   def single_int(x: int) -> str:
+                       pass
+                   
+                   def int_bool(x: int, y: bool) -> str:
+                       pass
+
+                   def single_str(x: str) -> str:
+                       pass
+
+                   def empty() -> str:
+                       pass
+                   
+                   call = single_int
+                   call = int_bool
+                   call = <warning descr="Expected type '(Concatenate(int, ...)) -> str', got '(x: str) -> str' instead">single_str</warning>
+                   call = <warning descr="Expected type '(Concatenate(int, ...)) -> str', got '() -> str' instead">empty</warning>
+                   """);
+  }
+
+  public void testNoWarningIfUnreachable() {
+    doTestByText("""
+                   def foo() -> int:
+                       assert False
+                       return "42" # no warning here, because it is unreachable
+                   """);
+  }
+
+  // PY-24834
+  public void testStrictUnionImplicitProtocolMatching() {
+    doTest();
+  }
 }

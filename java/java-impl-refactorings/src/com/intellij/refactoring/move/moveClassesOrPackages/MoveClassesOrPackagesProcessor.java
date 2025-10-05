@@ -433,37 +433,23 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
 
-  private @NotNull String getNewQName(PsiElement element) {
+  private @NotNull String getNewQName(@NotNull PsiElement element) {
     final String qualifiedName = myTargetPackage.getQualifiedName();
-    if (element instanceof PsiClass) {
-      return StringUtil.getQualifiedName(qualifiedName, StringUtil.notNullize(((PsiClass)element).getName()));
-    }
-    else if (element instanceof PsiPackage) {
-      return StringUtil.getQualifiedName(qualifiedName, StringUtil.notNullize(((PsiPackage)element).getName()));
-    }
-    else if (element instanceof PsiClassOwner) {
-      return ((PsiClassOwner)element).getName();
-    }
-    else {
-      LOG.assertTrue(false);
-      return null;
-    }
+    return switch (element) {
+      case PsiClass aClass -> StringUtil.getQualifiedName(qualifiedName, StringUtil.notNullize(aClass.getName()));
+      case PsiPackage aPackage -> StringUtil.getQualifiedName(qualifiedName, StringUtil.notNullize(aPackage.getName()));
+      case PsiClassOwner owner -> owner.getName();
+      default -> throw new IllegalArgumentException("Unexpected element: " + element);
+    };
   }
 
-  private static @Nullable String getOldQName(PsiElement element) {
-    if (element instanceof PsiClass) {
-      return ((PsiClass)element).getQualifiedName();
-    }
-    else if (element instanceof PsiPackage) {
-      return ((PsiPackage)element).getQualifiedName();
-    }
-    else if (element instanceof PsiClassOwner) {
-      return ((PsiClassOwner)element).getName();
-    }
-    else {
-      LOG.error("unknown element: " + element);
-      return null;
-    }
+  private static @Nullable String getOldQName(@NotNull PsiElement element) {
+    return switch (element) {
+      case PsiClass aClass -> aClass.getQualifiedName();
+      case PsiPackage aPackage -> aPackage.getQualifiedName();
+      case PsiClassOwner owner -> owner.getName();
+      default -> throw new IllegalArgumentException("Unexpected element: " + element);
+    };
   }
 
   @Override

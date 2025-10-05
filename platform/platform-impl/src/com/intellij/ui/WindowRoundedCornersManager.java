@@ -78,24 +78,24 @@ public final class WindowRoundedCornersManager {
         return;
       }
     }
-    else if (SystemInfo.isWindows) {
+    else if (SystemInfo.isWindows || StartupUiUtil.isWaylandToolkit()) {
       if (params == null) {
-        params = "full";
+        params = defaultCornerRadiusString();
       }
       else if (params instanceof PopupCornerType cornerType) {
         if (cornerType == PopupCornerType.None) {
           return;
         }
-        params = cornerType == PopupCornerType.RoundedTooltip ? "small" : "full";
+        params = cornerType == PopupCornerType.RoundedTooltip ? "small" : defaultCornerRadiusString();
       }
       else if (params instanceof Color) {
-        params = new Object[]{"full", params};
+        params = new Object[]{defaultCornerRadiusString(), params};
       }
       else if (params instanceof Object[] values) {
         if (values.length != 2 || !(values[0] instanceof PopupCornerType cornerType) || !(values[1] instanceof Color)) {
           return;
         }
-        params = new Object[]{cornerType == PopupCornerType.RoundedTooltip ? "small" : "full", values[1]};
+        params = new Object[]{cornerType == PopupCornerType.RoundedTooltip ? "small" : defaultCornerRadiusString(), values[1]};
       }
       else if (!(params instanceof String)) {
         return;
@@ -103,5 +103,9 @@ public final class WindowRoundedCornersManager {
     }
 
     JBR.getRoundedCornersManager().setRoundedCorners(window, params);
+  }
+
+  private static @NotNull String defaultCornerRadiusString() {
+    return StartupUiUtil.isWaylandToolkit() ? "small" : "full";
   }
 }

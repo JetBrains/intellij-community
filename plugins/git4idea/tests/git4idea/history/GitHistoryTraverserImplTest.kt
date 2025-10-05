@@ -12,28 +12,35 @@ import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitCommit
-import git4idea.log.createLogData
+import git4idea.log.createLogDataIn
 import git4idea.log.refreshAndWait
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.makeCommit
+import kotlinx.coroutines.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.random.nextInt
 
 class GitHistoryTraverserImplTest : GitSingleRepoTest() {
+  private lateinit var testCs: CoroutineScope
   private lateinit var logData: VcsLogData
 
   private val traverser: GitHistoryTraverser
-    get() = GitHistoryTraverserImpl(repo.project, logData)
+    get() = GitHistoryTraverserImpl(repo.project, logData, testRootDisposable)
 
   override fun setUp() {
     super.setUp()
     VcsLogData.getIndexingRegistryValue().setValue(true)
-    logData = createLogData(repo, logProvider, testRootDisposable)
+    @Suppress("RAW_SCOPE_CREATION")
+    testCs = CoroutineScope(SupervisorJob())
+    logData = createLogDataIn(testCs, repo, logProvider)
   }
 
   override fun tearDown() {
     try {
+      runBlocking {
+        testCs.coroutineContext.job.cancelAndJoin()
+      }
       VcsLogData.getIndexingRegistryValue().resetToDefault()
     }
     catch (e: Throwable) {

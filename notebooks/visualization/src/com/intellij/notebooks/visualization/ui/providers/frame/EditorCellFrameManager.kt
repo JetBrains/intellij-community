@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui.providers.frame
 
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.ui.afterDistinctChange
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
-import com.intellij.notebooks.visualization.NotebookCellLines.CellType
 import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.notebookEditor
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
@@ -21,7 +21,6 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     get() = editorCell.intervalOrNull?.type
   private val view
     get() = editorCell.view
-
 
   private val isSelected
     get() = editorCell.isSelected.get()
@@ -87,22 +86,15 @@ class EditorCellFrameManager(private val editorCell: EditorCell) : Disposable { 
     val upperInlayBounds = inlays.firstOrNull {
       it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && it.properties.isShownAbove
     }?.bounds ?: return null
-
-    val bottomRectHeight = editor.notebookAppearance.cellBorderHeight / 2
-    val delimiterHeight = upperInlayBounds.height - bottomRectHeight
-    val topPosition = upperInlayBounds.y + delimiterHeight
-
     val lowerInlayBounds = inlays.lastOrNull {
       it.properties.priority == editor.notebookAppearance.cellInputInlaysPriority && !it.properties.isShownAbove
     }?.bounds ?: return null
 
-    val lineX = upperInlayBounds.x + upperInlayBounds.width - 0.5
-    val lineStartY = (topPosition).toDouble()
-    val lineEndY = (lowerInlayBounds.y + lowerInlayBounds.height).toDouble()
+    val x = upperInlayBounds.x + upperInlayBounds.width - 0.5
+    val startY = (upperInlayBounds.y + upperInlayBounds.height - editor.notebookAppearance.cellBorderHeight / 2).toDouble() + 0.5
+    val endY = (lowerInlayBounds.y + lowerInlayBounds.height).toDouble() - 1
 
-    val line2DDouble = Line2D.Double(lineX, lineStartY, lineX, lineEndY)
-    cachedRightLine = line2DDouble
-    return line2DDouble
+    return Line2D.Double(x, startY, x, endY).also { cachedRightLine = it }
   }
 
   fun updateCellFrameShow() {

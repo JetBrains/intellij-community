@@ -10,6 +10,8 @@ import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.repo.GitRepository
@@ -73,4 +75,7 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
   protected fun updateUntrackedFiles() {
     updateUntrackedFiles(repo)
   }
+
+  protected fun commitDetails(hash: String): VcsFullCommitDetails =
+    VcsLogUtil.getDetails(findGitLogProvider(repo.project), repo.root, listOf(hash)).first()
 }

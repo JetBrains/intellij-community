@@ -1,0 +1,15 @@
+- name: lib/modules/intellij.vcs.gitlab.git.jar
+  contentModules:
+  - name: intellij.vcs.gitlab.git
+- name: lib/modules/intellij.vcs.gitlab.ultimate.ci.sh.jar
+  contentModules:
+  - name: intellij.vcs.gitlab.ultimate.ci.sh
+- name: lib/modules/intellij.vcs.gitlab.ultimate.features.jar
+  contentModules:
+  - name: intellij.vcs.gitlab.ultimate.features
+- name: lib/modules/intellij.vcs.gitlab.yaml.jar
+  contentModules:
+  - name: intellij.vcs.gitlab.yaml
+- name: lib/vcs-gitlab.jar
+  contentModules:
+  - name: intellij.vcs.gitlab

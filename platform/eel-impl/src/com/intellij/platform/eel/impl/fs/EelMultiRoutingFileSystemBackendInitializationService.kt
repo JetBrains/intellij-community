@@ -13,12 +13,13 @@ internal class EelMultiRoutingFileSystemBackendInitializationService : MultiRout
 
   private fun init() {
     val log = logger<EelMultiRoutingFileSystemBackendInitializationService>()
-    if (FileSystems.getDefault().javaClass.name != MultiRoutingFileSystem::class.java.name) {
+    val fs = FileSystems.getDefault()
+    if (fs !is MultiRoutingFileSystem) {
       log.info("The default file system is ${FileSystems.getDefault()}, Eel MultiRoutingFileSystem can't be initialized")
       return
     }
 
-    GlobalEelMrfsBackendProvider.install()
+    GlobalEelMrfsBackendProvider.install(fs.provider())
     log.info("Eel MultiRoutingFileSystem backend is initialized")
   }
 }

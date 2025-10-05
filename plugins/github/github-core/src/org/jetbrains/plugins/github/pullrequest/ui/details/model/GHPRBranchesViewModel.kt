@@ -1,15 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
-import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitStandardRemoteBranch
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.HostedGitRepositoryRemote
@@ -31,7 +27,7 @@ class GHPRBranchesViewModel internal constructor(
   private val mapping: GHGitRepositoryMapping,
   private val detailsState: StateFlow<GHPullRequest>
 ) : CodeReviewBranchesViewModel {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(this::class)
 
   private val gitRepository = mapping.remote.repository
 

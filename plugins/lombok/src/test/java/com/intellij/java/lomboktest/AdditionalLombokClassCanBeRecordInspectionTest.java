@@ -32,11 +32,6 @@ public class AdditionalLombokClassCanBeRecordInspectionTest extends AbstractLomb
     }
     """;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
-  }
-
   public void testClassCanBeRecord_renamingAccessors() {
     myFixture.enableInspections(new ClassCanBeRecordInspection(ConversionStrategy.DO_NOT_SUGGEST, true));
     myFixture.configureByText("Test.java", VALUE_CLASS_SAMPLE);

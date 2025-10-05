@@ -3,18 +3,19 @@ package org.jetbrains.idea.maven.project.compilation
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.util.io.UnsyncByteArrayOutputStream
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import org.jdom.Element
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getMavenModuleType
-import org.jetbrains.idea.maven.importing.MavenImportUtil.getModuleNames
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getModuleEntities
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.model.MavenResource
 import org.jetbrains.idea.maven.project.MavenProject
@@ -43,26 +44,18 @@ internal class ResourceConfigGenerator(
     if ("pom" == mavenProject.packaging) return
 
     val pomXml = mavenProject.file
-    val module = fileIndex.getModuleForFile(pomXml)
-    if (module == null) return
 
     if (mavenProject.directoryFile != fileIndex.getContentRootForFile(pomXml)) return
 
-    val project = module.project
-    val moduleName = module.name
-    val moduleType = module.getMavenModuleType()
+    val project = mavenProjectsManager.project
+    val storage = project.workspaceModel.currentSnapshot
+    val moduleEntities = getModuleEntities(project, pomXml)
 
-    generate(module, moduleType)
-
-    if (moduleType == StandardMavenModuleType.COMPOUND_MODULE) {
-      val otherModuleNames = getModuleNames(project, pomXml).filter { it != moduleName }
-
-      val moduleManager = ModuleManager.getInstance(project)
-      for (otherModuleName in otherModuleNames) {
-        val otherModule = moduleManager.findModuleByName(otherModuleName) ?: continue
-        val otherModuleType = otherModule.getMavenModuleType()
-        generate(otherModule, otherModuleType)
-      }
+    for (moduleEntity in moduleEntities) {
+      val moduleType = moduleEntity.getMavenModuleType()
+      if (moduleType == StandardMavenModuleType.COMPOUND_MODULE) continue
+      val module = storage.moduleMap.getDataByEntity(moduleEntity) ?: continue
+      generate(module, moduleType)
     }
   }
 

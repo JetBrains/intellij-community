@@ -1207,7 +1207,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
     return mySoftMargins.getValues();
   }
 
-  public void setSoftMargins(List<Integer> values) {
+  public void setSoftMargins(@NotNull List<Integer> values) {
     mySoftMargins.setValues(values);
   }
 }

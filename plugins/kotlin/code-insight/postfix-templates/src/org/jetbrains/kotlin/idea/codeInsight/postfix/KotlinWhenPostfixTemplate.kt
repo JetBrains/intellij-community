@@ -3,8 +3,11 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.sealedClassInheritors
+import org.jetbrains.kotlin.analysis.api.components.staticDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -91,7 +94,8 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
         return emptyList()
     }
 
-    context(KaSession)
+    @OptIn(KaContextParameterApi::class)
+    context(_: KaSession)
     private fun collectEnumBranches(klass: KaNamedClassSymbol): List<CaseBranch> {
         val enumEntries = klass.staticDeclaredMemberScope
             .callables
@@ -105,12 +109,13 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun collectSealedClassInheritors(klass: KaNamedClassSymbol): List<CaseBranch> {
         return mutableListOf<CaseBranch>().also { processSealedClassInheritor(klass, it) }
     }
 
-    context(KaSession)
+    @OptIn(KaContextParameterApi::class)
+    context(_: KaSession)
     private fun processSealedClassInheritor(klass: KaNamedClassSymbol, consumer: MutableList<CaseBranch>): Boolean {
         val classId = klass.classId ?: return false
 

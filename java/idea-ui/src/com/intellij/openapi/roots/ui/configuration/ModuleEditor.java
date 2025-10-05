@@ -7,14 +7,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.UiDataProvider;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.ModuleConfigurableEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -47,8 +44,6 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private static final ExtensionPointName<ModuleConfigurationEditorProviderEp> EP_NAME =
     new ExtensionPointName<>("com.intellij.moduleConfigurationEditorProvider");
 
-  private static final Logger LOG = Logger.getInstance(ModuleEditor.class);
-  private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = new ExtensionPointName<>("com.intellij.moduleConfigurable");
   public static final String SELECTED_EDITOR_NAME = "selectedEditor";
 
   private final Project myProject;
@@ -175,26 +170,10 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
     }
 
-    for(ModuleConfigurableEP extension : MODULE_CONFIGURABLES.getExtensionList(module)) {
-      if (extension.canCreateConfigurable()) {
-        Configurable configurable = extension.createConfigurable();
-        if (configurable != null) {
-          reportDeprecatedModuleEditor(configurable.getClass());
-          myEditors.add(new ModuleConfigurableWrapper(configurable));
-        }
-      }
-    }
     for (ModuleConfigurationEditor editor : myEditors) {
       if (editor instanceof ModuleElementsEditor) {
         ((ModuleElementsEditor)editor).addListener(this::updateImportedModelWarning);
       }
-    }
-  }
-
-  private static final Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
-  private static void reportDeprecatedModuleEditor(@NotNull Class<?> aClass) {
-    if (ourReportedDeprecatedClasses.add(aClass)) {
-      LOG.error(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
     }
   }
 

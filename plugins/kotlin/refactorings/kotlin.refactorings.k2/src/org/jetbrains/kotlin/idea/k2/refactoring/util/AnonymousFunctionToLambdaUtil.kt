@@ -6,6 +6,8 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -48,7 +50,7 @@ object AnonymousFunctionToLambdaUtil {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun prepareAnonymousFunctionToLambdaContext(element: KtNamedFunction): KtExpression? {
         if (element.receiverTypeReference != null && element.expectedType == null) return null
         val argument = element.getStrictParentOfType<KtValueArgument>()?.getArgumentExpression()

@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.LoadingOrder.Orderable
 import com.intellij.openapi.fileEditor.FileEditor
@@ -56,7 +57,6 @@ import com.intellij.ui.util.height
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
-import fleet.util.logging.logger
 import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -112,6 +112,8 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   private val listeners = EventDispatcher.create(StatusBarListener::class.java)
 
   private val progressFlow = MutableSharedFlow<ProgressSetChangeEvent>(replay = 1, extraBufferCapacity = Int.MAX_VALUE)
+
+  internal var borderPainter: BorderPainter = DefaultBorderPainter()
 
   companion object {
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
@@ -209,7 +211,16 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
 
     enableEvents(AWTEvent.MOUSE_EVENT_MASK)
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK)
-    IdeEventQueue.getInstance().addDispatcher({ e -> if (e is MouseEvent) dispatchMouseEvent(e) else false }, coroutineScope)
+    IdeEventQueue.getInstance().addDispatcher(object : IdeEventQueue.NonLockedEventDispatcher {
+      override fun dispatch(e: AWTEvent): Boolean {
+        return if (e is MouseEvent) {
+          dispatchMouseEvent(e)
+        }
+        else {
+          false
+        }
+      }
+    }, coroutineScope)
   }
 
   internal fun initialize() {
@@ -300,7 +311,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
    * @param widget widget to add
    */
   internal suspend fun addWidgetToLeft(widget: StatusBarWidget) {
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       addWidget(widget, Position.LEFT, LoadingOrder.ANY)
     }
   }
@@ -325,7 +336,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     val anyModality = ModalityState.any().asContextElement()
     val items: List<WidgetBean> = span("status bar widget creating") {
       widgets.map { (widget, anchor) ->
-        val component = span(widget.ID(), Dispatchers.ui(UiDispatcherKind.RELAX) + anyModality) {
+        val component = span(widget.ID(), Dispatchers.UiWithModelAccess + anyModality) {
           val component = wrap(widget)
           if (component is StatusBarWidgetWrapper) {
             component.beforeUpdate()
@@ -339,7 +350,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
       }
     }
 
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + anyModality + CoroutineName("status bar widget adding")) {
+    withContext(Dispatchers.UiWithModelAccess + anyModality + CoroutineName("status bar widget adding")) {
       for (item in items) {
         widgetMap.put(item.widget.ID(), item)
       }
@@ -353,14 +364,14 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
     }
 
     if (listeners.hasListeners()) {
-      withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + anyModality) {
+      withContext(Dispatchers.UiWithModelAccess + anyModality) {
         for (item in items) {
           fireWidgetAdded(widget = item.widget, anchor = item.anchor)
         }
       }
     }
 
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       PopupHandler.installPopupMenu(this@IdeStatusBarImpl, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE)
     }
   }
@@ -592,6 +603,7 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   override fun paintChildren(g: Graphics) {
     paintWidgetEffectBackground(g)
     super.paintChildren(g)
+    borderPainter.paintAfterChildren(this, g)
   }
 
   private fun dispatchMouseEvent(e: MouseEvent): Boolean {

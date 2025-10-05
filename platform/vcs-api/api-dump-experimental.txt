@@ -23,6 +23,8 @@
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:isAdditionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
 - f:isDeletionAllowed(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):Z
+a:com.intellij.openapi.vcs.VcsRootChecker
+- *:shouldAlwaysRunInitialDetection():Z
 *:com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 - com.intellij.openapi.vcs.changes.CommitExecutor
 - a:getText(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String

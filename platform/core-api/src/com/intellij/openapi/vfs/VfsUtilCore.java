@@ -304,14 +304,15 @@ public class VfsUtilCore {
         if (result.skipChildren) return result;
       }
 
-      Iterable<VirtualFile> childrenIterable = null;
-      VirtualFile[] children = null;
-
+      Iterable<VirtualFile> children = null;
       try {
         if (file.isValid() && visitor.allowVisitChildren(file) && !visitor.depthLimitReached()) {
-          childrenIterable = visitor.getChildrenIterable(file);
-          if (childrenIterable == null) {
-            children = file.getChildren();
+          children = visitor.getChildrenIterable(file);
+          if (children == null) {
+            VirtualFile[] childrenArray = file.getChildren(/* requireSorted: */ !visitor.childrenMayBeUnsorted());
+            if (childrenArray.length > 0) {
+              children = Arrays.asList(childrenArray);
+            }
           }
         }
       }
@@ -320,15 +321,7 @@ public class VfsUtilCore {
         return VirtualFileVisitor.CONTINUE;
       }
 
-      if (childrenIterable != null) {
-        visitor.saveValue();
-        pushed = true;
-        for (VirtualFile child : childrenIterable) {
-          VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
-          if (result.skipToParent != null && !Comparing.equal(result.skipToParent, child)) return result;
-        }
-      }
-      else if (children != null && children.length != 0) {
+      if (children != null) {
         visitor.saveValue();
         pushed = true;
         for (VirtualFile child : children) {
@@ -463,7 +456,7 @@ public class VfsUtilCore {
   }
 
   public static @NotNull String pathToUrl(@NotNull String path) {
-    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, FileUtil.toSystemIndependentName(path));
+    return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, FileUtilRt.toSystemIndependentName(path));
   }
 
   public static @NotNull String fileToUrl(@NotNull File file) {

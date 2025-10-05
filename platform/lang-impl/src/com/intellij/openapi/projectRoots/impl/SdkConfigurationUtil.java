@@ -41,6 +41,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 
@@ -119,7 +120,11 @@ public final class SdkConfigurationUtil {
   }
 
   public static void addSdk(final @NotNull Sdk sdk) {
-    ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(sdk));
+    addSdk(sdk, () -> ProjectJdkTable.getInstance());
+  }
+
+  private static void addSdk(final @NotNull Sdk sdk, Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
+    ApplicationManager.getApplication().runWriteAction(() -> projectJdkTableSupplier.get().addJdk(sdk));
   }
 
   public static void removeSdk(@NotNull Sdk sdk) {
@@ -131,29 +136,54 @@ public final class SdkConfigurationUtil {
    * but doesn't catch exceptions
    */
   @ApiStatus.Internal
-  public static @NotNull Sdk setupSdk(@NotNull Sdk @NotNull []allSdks,
-                             @NotNull VirtualFile homeDir,
-                             @NotNull SdkType sdkType,
-                             final @Nullable SdkAdditionalData additionalData,
-                             final @Nullable String customSdkSuggestedName) {
-    Sdk sdk = createSdk(Arrays.asList(allSdks), homeDir, sdkType, additionalData, customSdkSuggestedName);
+  public static @NotNull Sdk setupSdk(@NotNull Sdk @NotNull [] allSdks,
+                                      @NotNull VirtualFile homeDir,
+                                      @NotNull SdkType sdkType,
+                                      final @Nullable SdkAdditionalData additionalData,
+                                      final @Nullable String customSdkSuggestedName) {
+    return setupSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance());
+  }
+
+  /**
+   * Same as {@link #setupSdk(Sdk[], VirtualFile, SdkType, boolean, SdkAdditionalData, String)}
+   * but doesn't catch exceptions
+   */
+  @ApiStatus.Internal
+  public static @NotNull Sdk setupSdk(@NotNull Sdk @NotNull [] allSdks,
+                                      @NotNull VirtualFile homeDir,
+                                      @NotNull SdkType sdkType,
+                                      final @Nullable SdkAdditionalData additionalData,
+                                      final @Nullable String customSdkSuggestedName,
+                                      @NotNull Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
+    Sdk sdk = createSdk(Arrays.asList(allSdks), homeDir, sdkType, additionalData, customSdkSuggestedName, projectJdkTableSupplier);
     sdkType.setupSdkPaths(sdk);
     return sdk;
   }
 
   /**
    * Creates SDK, catches any error, logs it, and shows error if not `silent`.
+   *
    * @see #setupSdk(Sdk[], VirtualFile, SdkType, SdkAdditionalData, String)
    */
   public static @Nullable Sdk setupSdk(Sdk @NotNull [] allSdks,
-                             @NotNull VirtualFile homeDir,
-                             @NotNull SdkType sdkType,
-                             final boolean silent,
-                             final @Nullable SdkAdditionalData additionalData,
-                             final @Nullable String customSdkSuggestedName) {
+                                       @NotNull VirtualFile homeDir,
+                                       @NotNull SdkType sdkType,
+                                       final boolean silent,
+                                       final @Nullable SdkAdditionalData additionalData,
+                                       final @Nullable String customSdkSuggestedName) {
+    return setupSdk(allSdks, homeDir, sdkType, silent, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance());
+  }
+
+  private static @Nullable Sdk setupSdk(Sdk @NotNull [] allSdks,
+                                        @NotNull VirtualFile homeDir,
+                                        @NotNull SdkType sdkType,
+                                        final boolean silent,
+                                        final @Nullable SdkAdditionalData additionalData,
+                                        final @Nullable String customSdkSuggestedName,
+                                        @NotNull Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
     Sdk sdk = null;
     try {
-      sdk = setupSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
+      sdk = setupSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName, projectJdkTableSupplier);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -187,7 +217,17 @@ public final class SdkConfigurationUtil {
                                        @NotNull SdkType sdkType,
                                        @Nullable SdkAdditionalData additionalData,
                                        @Nullable String customSdkSuggestedName) {
-    return createSdk(allSdks, sdkType.sdkPath(homeDir), sdkType, additionalData, customSdkSuggestedName);
+    return createSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance());
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
+                                       @NotNull VirtualFile homeDir,
+                                       @NotNull SdkType sdkType,
+                                       @Nullable SdkAdditionalData additionalData,
+                                       @Nullable String customSdkSuggestedName,
+                                       @NotNull Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
+    return createSdk(allSdks, sdkType.sdkPath(homeDir), sdkType, additionalData, customSdkSuggestedName, projectJdkTableSupplier);
   }
 
   public static @NotNull Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
@@ -195,11 +235,30 @@ public final class SdkConfigurationUtil {
                                        @NotNull SdkType sdkType,
                                        @Nullable SdkAdditionalData additionalData,
                                        @Nullable String customSdkSuggestedName) {
+    return createSdk(allSdks, homePath, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance());
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Sdk createSdk(@NotNull Project project,
+                                       @NotNull Collection<? extends Sdk> allSdks,
+                                       @NotNull String homePath,
+                                       @NotNull SdkType sdkType,
+                                       @Nullable SdkAdditionalData additionalData,
+                                       @Nullable String customSdkSuggestedName) {
+    return createSdk(allSdks, homePath, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance(project));
+  }
+
+  private static @NotNull Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
+                                        @NotNull String homePath,
+                                        @NotNull SdkType sdkType,
+                                        @Nullable SdkAdditionalData additionalData,
+                                        @Nullable String customSdkSuggestedName,
+                                        @NotNull Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
     final String sdkName = customSdkSuggestedName == null
                            ? createUniqueSdkName(sdkType, homePath, allSdks)
                            : createUniqueSdkName(customSdkSuggestedName, allSdks);
 
-    Sdk sdk = ProjectJdkTable.getInstance().createSdk(sdkName, sdkType);
+    Sdk sdk = projectJdkTableSupplier.get().createSdk(sdkName, sdkType);
     SdkModificator sdkModificator = sdk.getSdkModificator();
     if (additionalData != null) {
       // additional initialization.
@@ -282,21 +341,59 @@ public final class SdkConfigurationUtil {
    * @return newly created SDK, or null.
    */
   public static @Nullable Sdk createAndAddSDK(@NotNull String path, @NotNull SdkType sdkType) {
+    return createAndAddSDK(path, sdkType, () -> ProjectJdkTable.getInstance());
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Sdk createAndAddSDK(@NotNull Project project, @NotNull Path path, @NotNull SdkType sdkType) {
+    VirtualFile sdkHome = WriteAction.compute(() -> {
+      return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path);
+    });
+    if (sdkHome == null) return null;
+    return createAndAddSDK(sdkHome, sdkType, () -> ProjectJdkTable.getInstance(project));
+  }
+
+  /**
+   * Tries to create an SDK identified by path; if successful, add the SDK to the global SDK table.
+   * <p>
+   * Must be called from the EDT (because it uses {@link WriteAction#compute} under the hood).
+   *
+   * @param path                    identifies the SDK
+   * @param projectJdkTableSupplier provides access to the ProjectJdkTable instance (either global or project-specific)
+   * @return newly created SDK, or null.
+   */
+  private static @Nullable Sdk createAndAddSDK(@NotNull String path,
+                                               @NotNull SdkType sdkType,
+                                               @NotNull Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
     VirtualFile sdkHome = WriteAction.compute(() -> {
       return LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(path));
     });
-    if (sdkHome != null) {
-      final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
-      if (newSdk != null) {
-        addSdk(newSdk);
-      }
-      return newSdk;
+    if (sdkHome == null) return null;
+    return createAndAddSDK(sdkHome, sdkType, projectJdkTableSupplier);
+  }
+
+  /**
+   * Tries to create an SDK identified by path; if successful, add the SDK to the global SDK table.
+   * <p>
+   * Must be called from the EDT (because it uses {@link WriteAction#compute} under the hood).
+   *
+   * @param sdkHome                 identifies the SDK
+   * @param projectJdkTableSupplier provides access to the ProjectJdkTable instance (either global or project-specific)
+   * @return newly created SDK, or null.
+   */
+  private static @Nullable Sdk createAndAddSDK(@NotNull VirtualFile sdkHome,
+                                               @NotNull SdkType sdkType,
+                                               @NotNull Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
+    final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null, projectJdkTableSupplier);
+    if (newSdk != null) {
+      addSdk(newSdk, projectJdkTableSupplier);
     }
-    return null;
+    return newSdk;
   }
 
   /// Tries to create an SDK identified by path; if successful, add the SDK to the global SDK table.
   /// Contrary to [#createAndAddSDK(String, SdkType)], SDK paths are not setup.
+  ///
   /// @param path identifies the SDK
   /// @return newly created incomplete SDK, or null.
   public static @Nullable Sdk createIncompleteSDK(@NotNull String path, @NotNull SdkType sdkType) {

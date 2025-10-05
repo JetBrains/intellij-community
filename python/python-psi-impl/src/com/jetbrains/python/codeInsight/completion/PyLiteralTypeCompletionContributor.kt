@@ -18,6 +18,24 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 
+/**
+ * Provides literal type variants in the following cases:
+ * ```python
+ * x: Literal["foo", "bar"]
+ * x = <caret>
+ * x = fo<caret>
+ * x = "fo<caret>"
+ * ```
+ *
+ * or
+ *
+ * ```python
+ * def f(x: Literal["foo", "bar"]): ...
+ * f(<caret>)
+ * f(fo<caret>)
+ * f("fo<caret>")
+ * ```
+ */
 class PyLiteralTypeCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC, psiElement(), PyLiteralTypeCompletionProvider())
@@ -27,6 +45,7 @@ class PyLiteralTypeCompletionContributor : CompletionContributor() {
 private class PyLiteralTypeCompletionProvider : CompletionProvider<CompletionParameters?>() {
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val position = parameters.position.parent as? PyExpression ?: return
+    if (!(position is PyStringLiteralExpression || position is PyReferenceExpression && !position.isQualified)) return
     val typeEvalContext = TypeEvalContext.codeCompletion(position.project, position.containingFile)
 
     val mappedParameters = position.getMappedParameters(PyResolveContext.defaultContext(typeEvalContext))

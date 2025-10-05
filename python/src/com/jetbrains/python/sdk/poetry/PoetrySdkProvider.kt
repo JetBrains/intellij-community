@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.poetry.PoetryPyProjectTomlPythonVersionsService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.poetry.quickFixes.PoetryAssociationQuickFix
 import org.jdom.Element

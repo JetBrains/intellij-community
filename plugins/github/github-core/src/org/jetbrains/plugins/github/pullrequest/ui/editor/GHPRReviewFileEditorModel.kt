@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.mapModelsToViewModels
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
@@ -12,34 +12,46 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
+import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Key
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 
 internal class GHPRReviewFileEditorModel internal constructor(
   private val cs: CoroutineScope,
   private val settings: GithubPullRequestsProjectUISettings,
   private val fileVm: GHPRReviewFileEditorViewModel,
   private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
-  @RequiresEdt private val showEditor: (RefComparisonChange, Int) -> Unit
+  @RequiresEdt private val showEditor: (RefComparisonChange, Int) -> Unit,
 ) : CodeReviewEditorGutterChangesModel by changesModel,
     CodeReviewEditorGutterActionableChangesModel,
     CodeReviewEditorModel<GHPREditorMappedComponentModel>,
-    CodeReviewNavigableEditorViewModel {
+    CodeReviewNavigableEditorViewModel,
+    CodeReviewEditorGutterControlsModel.WithMultilineComments {
 
   private val postReviewRanges = MutableStateFlow<List<Range>?>(null)
 
   override var shouldHighlightDiffRanges: Boolean by settings::highlightDiffLinesInEditor
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val linesWithNewCommentsFlow: StateFlow<Set<Int>> =
+    fileVm.newComments.flatMapLatest { vms ->
+      if (vms.isEmpty()) flowOf(emptySet())
+      else combine(vms.map { it.location.map { loc -> loc.lineIdx } }) { lines ->
+        lines.toSet()
+      }
+    }.stateInNow(cs, emptySet())
+
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
-    combine(postReviewRanges, fileVm.linesWithComments, fileVm.newComments) { postReviewRanges, linesWithComments, newComments ->
+    combine(postReviewRanges, fileVm.linesWithComments, linesWithNewCommentsFlow) { postReviewRanges, linesWithComments, newCommentsLines ->
       if (postReviewRanges != null) {
         val shiftedLinesWithComments = linesWithComments.mapTo(mutableSetOf()) {
           ReviewInEditorUtil.transferLineToAfter(postReviewRanges, it)
@@ -47,8 +59,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
         val shiftedCommentableRanges = ExcludingApproximateChangedRangesShifter.shift(fileVm.commentableRanges, postReviewRanges).map {
           it.getAfterLines()
         }
-        val linesWithNewComments = newComments.mapTo(mutableSetOf()) {
-          ReviewInEditorUtil.transferLineToAfter(postReviewRanges, it.line)
+        val linesWithNewComments = newCommentsLines.mapTo(mutableSetOf()) {
+          ReviewInEditorUtil.transferLineToAfter(postReviewRanges, it)
         }
         GHPRReviewEditorGutterControlsState(shiftedLinesWithComments, linesWithNewComments, shiftedCommentableRanges)
       }
@@ -56,8 +68,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
     }.stateInNow(cs, null)
 
   override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> = combine(
-    fileVm.threads.mapModelsToViewModels { ShiftedThread(it) },
-    fileVm.newComments.mapModelsToViewModels { ShiftedNewComment(it) },
+    fileVm.threads.mapStatefulToStateful { ShiftedThread(it) },
+    fileVm.newComments.mapStatefulToStateful { ShiftedNewComment(cs, it) },
   ) { threads, new ->
     // very explicit ordering: if we order back to front, loading of editor appears smoother (most initial loading happens off-screen)
     threads.sortedByDescending { it.line.value ?: -1 } + new
@@ -100,14 +112,14 @@ internal class GHPRReviewFileEditorModel internal constructor(
     changesModel.setChanges(ExcludingApproximateChangedRangesShifter.shift(fileVm.changedRanges, changedRanges).map(Range::asLst))
   }
 
-  override fun canGotoNextComment(focusedThreadId: String): Boolean = fileVm.lookupNextComment(focusedThreadId) != null
+  override fun canGotoNextComment(threadId: String): Boolean = fileVm.lookupNextComment(threadId) != null
   override fun canGotoNextComment(line: Int): Boolean = fileVm.lookupNextComment(line.shiftLineToBefore()) != null
-  override fun canGotoPreviousComment(focusedThreadId: String): Boolean = fileVm.lookupPreviousComment(focusedThreadId) != null
+  override fun canGotoPreviousComment(threadId: String): Boolean = fileVm.lookupPreviousComment(threadId) != null
   override fun canGotoPreviousComment(line: Int): Boolean = fileVm.lookupPreviousComment(line.shiftLineToBefore()) != null
 
   @RequiresEdt
-  override fun gotoNextComment(focusedThreadId: String) {
-    val commentId = fileVm.lookupNextComment(focusedThreadId) ?: return
+  override fun gotoNextComment(threadId: String) {
+    val commentId = fileVm.lookupNextComment(threadId) ?: return
     gotoComment(commentId)
   }
 
@@ -118,8 +130,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
   }
 
   @RequiresEdt
-  override fun gotoPreviousComment(focusedThreadId: String) {
-    val commentId = fileVm.lookupPreviousComment(focusedThreadId) ?: return
+  override fun gotoPreviousComment(threadId: String) {
+    val commentId = fileVm.lookupPreviousComment(threadId) ?: return
     gotoComment(commentId)
   }
 
@@ -137,7 +149,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
       unmappedLine.shiftLineToAfter()
       // if the line number is from a different file, we can't currently easily access outside changes to shift with
       // the current line would be a best-guess estimate
-    } else unmappedLine
+    }
+    else unmappedLine
 
     showEditor(change, line)
     fileVm.requestThreadFocus(threadId)
@@ -161,22 +174,87 @@ internal class GHPRReviewFileEditorModel internal constructor(
     return ReviewInEditorUtil.transferLineFromAfter(ranges, this, approximate = true) ?: 0
   }
 
+  override fun requestNewComment(lineRange: LineRange) {
+    val ranges = postReviewRanges.value ?: return
+    val originalStartLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineRange.start)?.takeIf { it >= 0 } ?: return
+    val originalEndLine = ReviewInEditorUtil.transferLineFromAfter(ranges, lineRange.end)?.takeIf { it >= 0 } ?: return
+    fileVm.requestNewComment(LineRange(originalStartLine, originalEndLine), true)
+  }
+
+  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) {
+    val ranges = postReviewRanges.value ?: return
+    val originalStartLine = ReviewInEditorUtil.transferLineFromAfter(ranges, oldLineRange.start)?.takeIf { it >= 0 } ?: return
+    val originalEndLine = ReviewInEditorUtil.transferLineFromAfter(ranges, oldLineRange.end)?.takeIf { it >= 0 } ?: return
+    val newStartLine = ReviewInEditorUtil.transferLineFromAfter(ranges, newLineRange.start)?.takeIf { it >= 0 } ?: return
+    val newEndLine = ReviewInEditorUtil.transferLineFromAfter(ranges, newLineRange.end)?.takeIf { it >= 0 } ?: return
+
+    fileVm.updateCommentLines(LineRange(originalStartLine, originalEndLine), LineRange(newStartLine, newEndLine))
+  }
+
+  override fun canCreateComment(lineRange: LineRange): Boolean {
+    val gutterControlState = gutterControlsState.value ?: return false
+    return (lineRange.start..lineRange.end).all {
+      gutterControlState.isLineCommentable(it)
+    }
+  }
+
   private inner class ShiftedThread(vm: GHPRReviewFileEditorThreadViewModel)
     : GHPREditorMappedComponentModel.Thread<GHPRReviewFileEditorThreadViewModel>(vm) {
     override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
     override val line: StateFlow<Int?> = vm.line.shiftLine()
+    override val range: StateFlow<Pair<Side, IntRange>?> = postReviewRanges.combineState(vm.commentRange) { ranges, commentRange ->
+      if (ranges == null || commentRange == null) return@combineState null
+      val start = ReviewInEditorUtil.transferLineToAfter(ranges, commentRange.first)
+      val end = ReviewInEditorUtil.transferLineToAfter(ranges, commentRange.last)
+      Side.RIGHT to start..end
+    }
   }
 
-  private inner class ShiftedNewComment(vm: GHPRReviewFileEditorNewCommentViewModel)
+  private inner class ShiftedNewComment(cs: CoroutineScope, vm: GHPRReviewFileEditorNewCommentViewModel)
     : GHPREditorMappedComponentModel.NewComment<GHPRReviewNewCommentEditorViewModel>(vm) {
-    private val originalLine = vm.line
-    override val key: Any = "NEW_$originalLine"
+    private val originalLocation: GHPRReviewCommentLocation = vm.location.value
+    override val key: Any = "NEW_$originalLocation"
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
-    override val line: StateFlow<Int?> = postReviewRanges.mapState { ranges ->
-      if (ranges != null) {
-        ReviewInEditorUtil.transferLineToAfter(ranges, originalLine).takeIf { it >= 0 }
+
+    private val cs = cs.childScope("${this::class.simpleName}")
+    private val _range = MutableStateFlow(originalLocation.lineIdx.shiftLineToAfter().let { Side.RIGHT to it..it })
+    override val range: StateFlow<Pair<Side, IntRange>?> = _range.asStateFlow()
+    override val line: StateFlow<Int?> = range.mapState { it?.second?.last }
+
+    private val manualRange = MutableStateFlow(range.value)
+    private var isManualUpdate = false
+
+    override fun setRange(range: Pair<Side, IntRange>?) {
+      if (manualRange.value == range) return
+      isManualUpdate = true
+      manualRange.value = range
+    }
+
+    init {
+      this.cs.launch {
+        postReviewRanges.collectLatest { ranges ->
+          if (ranges != null && !isManualUpdate) {
+            val logical = manualRange.value?.second
+            if (logical != null) _range.value = adjustRange(ranges)
+          }
+        }
       }
-      else null
+      this.cs.launch {
+        manualRange.collectLatest { newRange ->
+          if (newRange != null) {
+            _range.value = newRange
+            isManualUpdate = false
+          }
+        }
+      }
+    }
+
+    private fun adjustRange(ranges: List<Range>): Pair<Side, IntRange> {
+      val loc = (vm as GHPRReviewFileEditorNewCommentViewModel).location.value
+      val startSrc = (loc as? GHPRReviewCommentLocation.MultiLine)?.startLineIdx ?: loc.lineIdx
+      val start = ReviewInEditorUtil.transferLineToAfter(ranges, startSrc)
+      val end = ReviewInEditorUtil.transferLineToAfter(ranges, loc.lineIdx)
+      return Side.RIGHT to start..end
     }
   }
 

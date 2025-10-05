@@ -17,7 +17,7 @@ public class LombokImplementationsViewTest extends LightJavaCodeInsightFixtureTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
   }
 
   public void testFromCompletionForBuilder() {

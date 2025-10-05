@@ -2,7 +2,9 @@
 package com.intellij.platform.eel.impl.fs
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+import com.intellij.platform.eel.impl.fs.telemetry.MeasuringFileSystemListener
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -21,11 +23,10 @@ object GlobalEelMrfsBackendProvider {
   }
 
   fun install(provider: MultiRoutingFileSystemProvider) {
-    provider.setBackendProvider0(::compute, ::getCustomRoots, ::getCustomFileStores)
-  }
-
-  fun install() {
-    MultiRoutingFileSystemProvider.setBackendProvider(::compute, ::getCustomRoots, ::getCustomFileStores)
+    provider.theOnlyFileSystem.setBackendProvider(::compute, ::getCustomRoots, ::getCustomFileStores)
+    if (System.getProperty("nio.mrfs.telemetry.enable", "false").toBoolean()) {
+      provider.setTraceListener(MeasuringFileSystemListener())
+    }
   }
 
   fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem {
@@ -43,7 +44,13 @@ object GlobalEelMrfsBackendProvider {
             ?.getExtensionPointIfRegistered<MultiRoutingFileSystemBackend>(MultiRoutingFileSystemBackend.EP_NAME.name)
             ?.extensionList
             ?.firstNotNullOfOrNull { backend ->
-              backend.compute(localFS, sanitizedPath)
+              try {
+                backend.compute(localFS, sanitizedPath)
+              }
+              catch (err: Exception) {
+                logger<GlobalEelMrfsBackendProvider>().error("$backend threw an error trying to handle $sanitizedPath", err)
+                null
+              }
             }
         if (nonDefaultCandidate != null) {
           return nonDefaultCandidate

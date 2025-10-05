@@ -7,7 +7,9 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
 import com.intellij.ui.RowIcon
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.psi.KtElement
@@ -15,7 +17,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 object KotlinIconProvider {
-    context(KaSession)
+    context(_: KaSession)
     fun getIconFor(symbol: KaSymbol, @Iconable.IconFlags flags: Int = 0): Icon? {
         symbol.psi?.let { referencedPsi ->
             if (referencedPsi !is KtElement) {
@@ -36,7 +38,7 @@ object KotlinIconProvider {
         return baseIcon
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getBaseIcon(symbol: KaSymbol): Icon? {
         if (symbol is KaNamedFunctionSymbol) {
             val isAbstract = symbol.modality == KaSymbolModality.ABSTRACT
@@ -70,8 +72,9 @@ object KotlinIconProvider {
             }
         }
 
+        @OptIn(KaExperimentalApi::class)
         return when (symbol) {
-            is KaValueParameterSymbol -> KotlinIcons.PARAMETER
+            is KaValueParameterSymbol, is KaContextParameterSymbol -> KotlinIcons.PARAMETER
             is KaLocalVariableSymbol -> if (symbol.isVal) KotlinIcons.VAL else KotlinIcons.VAR
             is KaPropertySymbol -> if (symbol.isVal) KotlinIcons.FIELD_VAL else KotlinIcons.FIELD_VAR
             is KaTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Class)

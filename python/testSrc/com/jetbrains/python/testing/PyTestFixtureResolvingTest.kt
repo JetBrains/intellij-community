@@ -70,6 +70,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val PYTEST_PLUGINS_FIXTURES_AS_STR_DIR = "/pytest_plugins_as_str"
     const val PYTEST_PLUGINS_FIXTURES_AS_TUPLE_DIR = "/pytest_plugins_as_tuple"
     const val PYTEST_PLUGINS_FIXTURES_AS_REF_DIR = "/pytest_plugins_as_ref"
+    const val PYTEST_PLUGINS_FIXTURES_NOT_PARSABLE_DIR = "/pytest_plugins_not_parsable"
     const val PYTEST_PLUGINS_FIXTURES = "fixtures"
     const val PYTEST_PLUGINS_FIXTURES_FIRST = "first.py"
     const val PYTEST_PLUGINS_FIXTURES_SECOND = "second.py"
@@ -79,6 +80,7 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val PYTEST_PLUGINS_FIXTURES_AS_TUPLE_SECOND_TEST = "/test_pytest_plugins_as_tuple_second.py"
     const val PYTEST_PLUGINS_FIXTURES_AS_STR_TEST = "/test_pytest_plugins_as_str.py"
     const val PYTEST_PLUGINS_FIXTURES_AS_REF_TEST = "/test_pytest_plugins_as_ref.py"
+    const val PYTEST_PLUGINS_FIXTURES_NOT_PARSABLE_TEST = "/test_pytest_plugins_not_parsable.py"
 
     const val IMPORT_WITH_WILDCARD_DIR_NAME = "testImportWithWildcard"
     const val IMPORT_WITH_WILDCARD_DIR = "/$IMPORT_WITH_WILDCARD_DIR_NAME"
@@ -302,6 +304,11 @@ class PyTestFixtureResolvingTest : PyTestCase() {
   fun testPytestPluginsFixtureAsReferences() {
     val testDir = PYTEST_PLUGINS_FIXTURES_DIR + PYTEST_PLUGINS_FIXTURES_AS_REF_DIR
     assertCorrectFile(testDir, PYTEST_PLUGINS_FIXTURES_AS_REF_TEST, PYTEST_PLUGINS_FIXTURES_FIRST, PYTEST_PLUGINS_FIXTURES)
+  }
+
+  fun testPytestPluginsFixtureNotParsable() {
+    val testDir = PYTEST_PLUGINS_FIXTURES_DIR + PYTEST_PLUGINS_FIXTURES_NOT_PARSABLE_DIR
+    assertCorrectFile(testDir, PYTEST_PLUGINS_FIXTURES_NOT_PARSABLE_TEST, PYTEST_PLUGINS_FIXTURES_FIRST, PYTEST_PLUGINS_FIXTURES)
   }
 
   fun testImportWithWildCardFromInit() {

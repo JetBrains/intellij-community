@@ -6,7 +6,7 @@ import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
 import org.gradle.api.JavaVersion;
-import org.gradle.internal.impldep.gnu.trove.TObjectHashingStrategy;
+import gnu.trove.TObjectHashingStrategy;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.consumer.converters.BackwardsCompatibleIdeaModuleDependency;
 import org.gradle.tooling.model.*;

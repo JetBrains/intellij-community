@@ -1,5 +1,5 @@
-from collections.abc import Iterable
-from typing import Any, Generic, Literal, Sequence, TypeVar
+from collections.abc import Iterable, Sequence
+from typing import Any, Generic, Literal, TypeVar
 
 from django.core.exceptions import EmptyResultSet
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -93,7 +93,7 @@ class IntegerGreaterThanOrEqual(IntegerFieldOverflow, IntegerFieldFloatRounding,
 class IntegerLessThan(IntegerFieldOverflow, IntegerFieldFloatRounding, LessThan[int | float]): ...
 class IntegerLessThanOrEqual(IntegerFieldOverflow, LessThanOrEqual[int | float]): ...
 
-class In(FieldGetDbPrepValueIterableMixin, BuiltinLookup):
+class In(FieldGetDbPrepValueIterableMixin, BuiltinLookup[_T]):
     def split_parameter_list_as_sql(self, compiler: SQLCompiler, connection: BaseDatabaseWrapper) -> Any: ...
 
 class PatternLookup(BuiltinLookup[str]):

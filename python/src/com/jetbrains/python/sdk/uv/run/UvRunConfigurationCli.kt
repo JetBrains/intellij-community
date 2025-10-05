@@ -8,7 +8,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.run.PythonExecution
 import com.jetbrains.python.run.PythonToolModuleExecution
 import com.jetbrains.python.run.PythonToolScriptExecution
-import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
@@ -32,10 +31,10 @@ fun buildUvRunConfigurationCli(options: UvRunConfigurationOptions, isDebug: Bool
     toolParams += listOf("--cache-dir", pycacheDir.toAbsolutePath().pathString)
   }
 
-  val associatedModuleDirectory = options.uvSdk?.associatedModulePath
+  val workingDirectory = options.workingDirectory
 
-  if (!options.uvArgs.contains("--project") && associatedModuleDirectory != null) {
-    toolParams += listOf("--project", associatedModuleDirectory)
+  if (!options.uvArgs.contains("--project") && workingDirectory != null) {
+    toolParams += listOf("--project", workingDirectory.pathString)
   }
 
   toolParams += options.uvArgs
@@ -48,6 +47,7 @@ fun buildUvRunConfigurationCli(options: UvRunConfigurationOptions, isDebug: Bool
           listOf(
             "run",
             "--no-sync", // initial script helper execution should not sync
+            "--active",
             PythonHelpersLocator.findPathStringInHelpers("uv/uv_sync_proxy.py"),
             toolPath.pathString,
             options.scriptOrModule

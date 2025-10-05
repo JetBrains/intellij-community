@@ -44,7 +44,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueModifier;
@@ -99,6 +98,16 @@ public final class DebuggerUIUtil {
 
   public static void invokeLater(Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(runnable);
+  }
+
+  @ApiStatus.Internal
+  public static void invokeLaterIfNeeded(Runnable runnable) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
+    }
   }
 
   public static @Nullable RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
@@ -303,6 +312,7 @@ public final class DebuggerUIUtil {
     final JComponent mainPanel = propertiesPanel.getMainPanel();
     final Balloon balloon = showBreakpointEditor(project, mainPanel, point, component, showMoreOptions, breakpoint);
     balloonRef.set(balloon);
+    propertiesPanel.setBalloon(balloon);
 
     Disposable disposable = Disposer.newDisposable();
 
@@ -415,8 +425,8 @@ public final class DebuggerUIUtil {
 
   public static @Nullable String getNodeRawValue(@NotNull XValueNodeImpl valueNode) {
     String res = null;
-    if (valueNode.getValueContainer() instanceof XValueTextProvider) {
-      res = ((XValueTextProvider)valueNode.getValueContainer()).getValueText();
+    if (valueNode.getValueContainer() instanceof XValueTextProvider textValue && textValue.shouldShowTextValue()) {
+      res = textValue.getValueText();
     }
     if (res == null) {
       res = valueNode.getRawValue();

@@ -4,16 +4,25 @@ package com.intellij.openapi.diff.impl.patch;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class PatchLine {
   public enum Type {CONTEXT, ADD, REMOVE}
+  public static final int UNKNOWN_PATCH_FILE_LINE_NUMBER = -1;
 
   private final @NotNull Type myType;
   private final @NotNull String myText;
   private boolean mySuppressNewLine;
+  private final int myPatchFileLineNumber;
 
   public PatchLine(@NotNull Type type, @NotNull String text) {
+    this(type, text, UNKNOWN_PATCH_FILE_LINE_NUMBER);
+  }
+
+  public PatchLine(@NotNull Type type, @NotNull String text, int patchFileLineNumber) {
     myType = type;
     myText = text;
+    myPatchFileLineNumber = patchFileLineNumber;
   }
 
   public @NotNull Type getType() {
@@ -32,12 +41,31 @@ public class PatchLine {
     mySuppressNewLine = suppressNewLine;
   }
 
+  public int getPatchFileLineNumber() {
+    return myPatchFileLineNumber;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof PatchLine line)) return false;
+    return mySuppressNewLine == line.mySuppressNewLine &&
+           myPatchFileLineNumber == line.myPatchFileLineNumber &&
+           myType == line.myType &&
+           Objects.equals(myText, line.myText);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myType, myText, mySuppressNewLine, myPatchFileLineNumber);
+  }
+
   @Override
   public String toString() {
     return "PatchLine{" +
            "myType=" + myType +
            ", myText='" + myText + '\'' +
            ", mySuppressNewLine=" + mySuppressNewLine +
+           ", myPatchFileLineNumber=" + myPatchFileLineNumber +
            '}';
   }
 }

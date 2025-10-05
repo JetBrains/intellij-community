@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
-class KotlinGoToSuperMethodCommandCompletionProvider : AbstractGoToSuperMethodCompletionCommandProvider() {
+internal class KotlinGoToSuperMethodCommandCompletionProvider : AbstractGoToSuperMethodCompletionCommandProvider() {
     override fun canGoToSuperMethod(element: PsiElement, offset: Int): Boolean {
         val namedFunction = element.parentOfType<KtNamedFunction>() ?: return false
         if (namedFunction.range.startOffset > offset ||

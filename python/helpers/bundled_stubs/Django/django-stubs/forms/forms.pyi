@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Iterable, Iterator, MutableMapping
 from typing import Any, ClassVar
 
 from django.core.exceptions import ValidationError
@@ -19,7 +19,7 @@ class BaseForm(RenderableFormMixin):
     data: _DataT
     files: _FilesT
     auto_id: bool | str
-    initial: Mapping[str, Any]
+    initial: MutableMapping[str, Any]
     error_class: type[ErrorList]
     prefix: str | None
     label_suffix: str
@@ -32,13 +32,14 @@ class BaseForm(RenderableFormMixin):
     template_name_table: str
     template_name_ul: str
     template_name_label: str
+    bound_field_class: type[BoundField] | None
     def __init__(
         self,
         data: _DataT | None = None,
         files: _FilesT | None = None,
         auto_id: bool | str = "id_%s",
         prefix: str | None = None,
-        initial: Mapping[str, Any] | None = None,
+        initial: MutableMapping[str, Any] | None = None,
         error_class: type[ErrorList] = ...,
         label_suffix: str | None = None,
         empty_permitted: bool = False,
@@ -74,3 +75,5 @@ class BaseForm(RenderableFormMixin):
 class Form(BaseForm, metaclass=DeclarativeFieldsMetaclass):
     base_fields: ClassVar[dict[str, Field]]
     declared_fields: ClassVar[dict[str, Field]]
+
+__all__ = ("BaseForm", "Form")

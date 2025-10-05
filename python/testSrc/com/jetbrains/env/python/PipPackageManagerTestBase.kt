@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python
 
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
-import kotlinx.coroutines.test.runTest
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.not
@@ -24,9 +26,12 @@ abstract class PipPackageManagerTestBase {
 
   @Test
   fun testList(): Unit =  timeoutRunBlocking(5.minutes) {
-    PipPythonPackageManager(projectRule.project, sdkRule.sdk).apply {
-      assertThat("No packages return", reloadPackages().successOrNull, not(empty()))
-      assertThat("Installed packages shouldn't be empty", listInstalledPackages(), not(empty()))
+    disposableFixture().get().use {
+      PipPythonPackageManager(projectRule.project, sdkRule.sdk).apply {
+        Disposer.register(it, this)
+        assertThat("No packages return", reloadPackages().successOrNull, not(empty()))
+        assertThat("Installed packages shouldn't be empty", listInstalledPackages(), not(empty()))
+      }
     }
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.database.csv.CsvSettingsService;
 import com.intellij.database.data.types.BaseConversionGraph;
 import com.intellij.database.data.types.DataTypeConversion;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn;
+import com.intellij.database.editor.DataGridContainer;
 import com.intellij.database.editor.TableEditorBase;
 import com.intellij.database.extractors.*;
 import com.intellij.database.extractors.DatabaseObjectFormatterConfig.DatabaseDisplayObjectFormatterConfig;
@@ -437,8 +438,8 @@ public class GridUtil extends GridUtilCore {
 
   public static @Nullable DataGrid getDataGrid(DataContext dataContext) {
     FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
-    if (editor instanceof TableEditorBase) {
-      return ((TableEditorBase)editor).getDataGrid();
+    if (editor instanceof DataGridContainer) {
+      return ((DataGridContainer)editor).getDataGrid();
     }
     DataGrid grid = editor == null ? null : editor.getUserData(GRID_KEY);
     return grid != null ? grid : DatabaseDataKeys.DATA_GRID_KEY.getData(dataContext);
@@ -462,8 +463,8 @@ public class GridUtil extends GridUtilCore {
   }
 
   public static @Nullable CellAttributesKey getMutationCellAttributes(@Nullable MutationType type) {
-    if (type == null) return null;
     return switch (type) {
+      case null -> null;
       case MODIFY -> CellColors.REPLACE;
       case INSERT -> CellColors.INSERT;
       case DELETE -> CellColors.REMOVE;

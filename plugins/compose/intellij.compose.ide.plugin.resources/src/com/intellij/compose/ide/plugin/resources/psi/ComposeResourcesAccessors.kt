@@ -6,9 +6,11 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 
 private const val ITEMS_PER_FILE_LIMIT = 100
 private const val RESOURCE_ITEM_CLASS = "ResourceItem"
@@ -86,7 +88,7 @@ private suspend fun getChunkFileSpec(
             buildString {
               append("${RESOURCE_ITEM_CLASS}(")
               append("setOf(${item.addQualifiers()}),")
-              append("\"${item.path}\",")
+              append("\"${item.path.invariantSeparatorsPathString}\",")
               append("${item.offset},")
               append(item.size)
               append(")")
@@ -111,14 +113,11 @@ private suspend fun getChunkFileSpec(
 @RequiresWriteLock
 private suspend fun writeAccessors(moduleDir: String, fileName: String, content: String): Unit = writeAction {
   val path = Path.of(moduleDir, fileName)
-  runUndoTransparentWriteAction {
-    Files.writeString(path, content)
-  }
-
-  path.toVirtualFile()?.let { virtualFile ->
-    virtualFile.refresh(false, false)
-    FileDocumentManager.getInstance().reloadFiles(virtualFile)
-  }
+  if (!path.exists()) path.createFile()
+  val documentManager = FileDocumentManager.getInstance()
+  val document = path.toVirtualFile()?.let { virtualFile -> documentManager.getDocument(virtualFile) } ?: return@writeAction
+  runUndoTransparentWriteAction { document.setText(content) }
+  documentManager.saveDocument(document)
 }
 
 

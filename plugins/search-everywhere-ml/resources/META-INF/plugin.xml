@@ -17,6 +17,8 @@
     <module name="intellij.json.backend"/>
   </dependencies>
   <content>
+    <module name="intellij.platform.ml.logs"/>
+
     <module name="intellij.searchEverywhereMl.typos"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
     <module name="intellij.searchEverywhereMl.ranking.core"/>
@@ -47,7 +49,7 @@
     <registryKey defaultValue="false"
                  description="When enabled ML experiments with symbols order won't be performed"
                  key="search.everywhere.force.disable.experiment.symbols.ml"/>
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="When enabled ML experiments to order All tab items won't be performed"
                  key="search.everywhere.force.disable.experiment.all.ml"/>
     <registryKey defaultValue="false"
@@ -57,16 +59,24 @@
 
     <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlCoreBundle"/>
+                     bundle="messages.searchEverywhereMlCoreBundle"
+                     service="com.intellij.searchEverywhereMl.SearchEverywhereMlSettingsService"
+                     property="enableActionsTabMlRanking"/>
     <advancedSetting default="true" id="searcheverywhere.ml.sort.files"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlCoreBundle"/>
+                     bundle="messages.searchEverywhereMlCoreBundle"
+                     service="com.intellij.searchEverywhereMl.SearchEverywhereMlSettingsService"
+                     property="enableFilesTabMlRanking"/>
     <advancedSetting default="true" id="searcheverywhere.ml.sort.classes"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlCoreBundle"/>
+                     bundle="messages.searchEverywhereMlCoreBundle"
+                     service="com.intellij.searchEverywhereMl.SearchEverywhereMlSettingsService"
+                     property="enableClassesTabMlRanking"/>
     <advancedSetting default="false" id="searcheverywhere.ml.sort.all"
                      groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlCoreBundle"/>
+                     bundle="messages.searchEverywhereMlCoreBundle"
+                     service="com.intellij.searchEverywhereMl.SearchEverywhereMlSettingsService"
+                     property="enableAllTabMlRanking"/>
 
     <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.SearchEverywhereMlServiceImpl"/>
     <statistic.eventLog.eventLoggerProvider

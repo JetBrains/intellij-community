@@ -274,7 +274,12 @@ private fun getFixtureFromPytestPlugins(targetFile: PyFile, fixtureCandidates: L
     is PyParenthesizedExpression -> assignedValue.children.find { it is PyTupleExpression }?.let { tuple ->
       (tuple as PyTupleExpression).elements.mapNotNull { resolve(it) }
     } ?: emptyList()
-    else -> emptyList()
+    else -> {
+      // `pytest_plugins` is not parsable, most likely looks like `pytest_plugins = create_pytest_plugins()`
+      // In that case it is better to return any suitable fixtureCandidate
+      val candidate = fixtureCandidates.firstOrNull() ?: return null
+      return NamedFixtureLink(candidate, null)
+    }
   }
 
   if (fixtures.isEmpty()) return null
@@ -401,6 +406,6 @@ internal fun isPyTestEnabled(module: Module): Boolean {
   if (factory.id == PyTestFactory.id) return true
 
   val sdk = module.getSdk() ?: return false
-  val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(sdk) else factory).id
+  val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(sdk, module.project) else factory).id
   return factoryId == PyTestFactory.id
 }

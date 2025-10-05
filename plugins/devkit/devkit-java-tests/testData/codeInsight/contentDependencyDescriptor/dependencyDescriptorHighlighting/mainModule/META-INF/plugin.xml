@@ -6,7 +6,7 @@
   <dependencies>
     <module name="anotherModule"/>
     <module name="anotherModule/secondary-descriptor"/>
-    <module name="<error descr="Cannot resolve module descriptor 'invalid.module.xml' in source roots of module 'invalid.module'">invalid.module</error>"/>
+    <module name="<error descr="Cannot resolve module descriptor 'invalid.module.xml' in source and library roots">invalid.module</error>"/>
     <module name="anotherModule/secondary-descriptor2" <error descr="Attribute loading is not allowed here">loading</error>="required"/>
 
   <plugin id="anotherModule.plugin.id"/>

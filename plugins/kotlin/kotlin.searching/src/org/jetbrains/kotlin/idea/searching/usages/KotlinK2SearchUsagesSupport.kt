@@ -12,6 +12,8 @@ import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.defaultType
 import org.jetbrains.kotlin.analysis.api.imports.getDefaultImports
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -25,6 +27,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
@@ -193,7 +196,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
     override fun getReceiverTypeSearcherInfo(psiElement: PsiElement, isDestructionDeclarationSearch: Boolean): ReceiverTypeSearcherInfo? {
         return when (psiElement) {
             is KtCallableDeclaration -> {
-                analyze(psiElement) {
+                allowAnalysisFromWriteActionInEdt(psiElement) {
                     fun resolveKtClassOrObject(ktType: KaType): KtClassOrObject? {
                         return (ktType as? KaClassType)?.symbol?.psiSafe<KtClassOrObject>()
                     }
@@ -202,12 +205,12 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                         is KaValueParameterSymbol -> {
                             // TODO: The following code handles only constructors. Handle other cases e.g.,
                             //       look for uses of component functions cf [isDestructionDeclarationSearch]
-                            val ktClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java) ?: return@analyze null
+                            val ktClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java) ?: return@allowAnalysisFromWriteActionInEdt null
 
                             val classPointer = ktClass.createSmartPointer()
                             ReceiverTypeSearcherInfo(ktClass) { declaration ->
                                 runReadAction {
-                                    analyze(declaration) {
+                                    allowAnalysisFromWriteActionInEdt(declaration) {
                                         fun KaType.containsClassType(clazz: KtClassOrObject?): Boolean {
                                             if (clazz == null) return false
                                             return this is KaClassType && (clazz.isEquivalentTo(symbol.psi) ||
@@ -219,7 +222,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
                                                     })
                                         }
 
-                                        declaration.returnType.containsClassType(classPointer.element)
+                                        (declaration as? KtDeclarationWithReturnType)?.returnType?.containsClassType(classPointer.element) == true
                                     }
                                 }
                             }
@@ -256,7 +259,7 @@ internal class KotlinK2SearchUsagesSupport(private val project: Project) : Kotli
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getContainingClassType(symbol: KaCallableSymbol): KaType? {
         val containingSymbol = symbol.containingDeclaration ?: return null
         val classSymbol = containingSymbol as? KaNamedClassSymbol ?: return null

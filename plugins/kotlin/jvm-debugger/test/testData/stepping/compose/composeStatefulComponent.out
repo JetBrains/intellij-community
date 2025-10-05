@@ -1,0 +1,15 @@
+LineBreakpoint created at composeStatefulComponent.kt:14
+LineBreakpoint created at composeStatefulComponent.kt:21
+LineBreakpoint created at composeStatefulComponent.kt:26
+LineBreakpoint created at composeStatefulComponent.kt:48
+LineBreakpoint created at composeStatefulComponent.kt:55
+Run Java
+Connected to the target VM
+composeStatefulComponent.kt:48
+composeStatefulComponent.kt:14
+composeStatefulComponent.kt:21
+composeStatefulComponent.kt:26
+composeStatefulComponent.kt:55
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -4,12 +4,17 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessPatternVariables;
 
 public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditionalExpression {
 
@@ -36,6 +41,17 @@ public class GrConditionalExprImpl extends GrExpressionImpl implements GrConditi
       if (nextSibling instanceof GrExpression) return (GrExpression)nextSibling;
     }
     return null;
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (!shouldProcessLocals(processor) || !shouldProcessPatternVariables(state)) return true;
+    GrExpression condition = getCondition();
+    if (condition == lastParent) return true;
+    return condition.processDeclarations(processor, state, null, place);
   }
 
   @Override

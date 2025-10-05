@@ -1,9 +1,8 @@
+import zoneinfo
 from contextlib import ContextDecorator
 from datetime import date, datetime, time, timedelta, timezone, tzinfo
 from types import TracebackType
 from typing import Literal, overload
-
-import zoneinfo  # type: ignore[import-not-found,unused-ignore]
 
 def get_fixed_timezone(offset: timedelta | int) -> timezone: ...
 def get_default_timezone() -> zoneinfo.ZoneInfo: ...
@@ -38,3 +37,21 @@ def is_naive(value: time) -> Literal[True]: ...
 def is_naive(value: datetime) -> bool: ...
 def make_aware(value: datetime, timezone: tzinfo | None = None) -> datetime: ...
 def make_naive(value: datetime, timezone: tzinfo | None = None) -> datetime: ...
+
+__all__ = [
+    "get_fixed_timezone",
+    "get_default_timezone",
+    "get_default_timezone_name",
+    "get_current_timezone",
+    "get_current_timezone_name",
+    "activate",
+    "deactivate",
+    "override",
+    "localtime",
+    "localdate",
+    "now",
+    "is_aware",
+    "is_naive",
+    "make_aware",
+    "make_naive",
+]

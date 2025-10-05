@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -11,11 +11,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public abstract class LightFixtureCompletionTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected LookupElement[] myItems;
@@ -86,6 +88,7 @@ public abstract class LightFixtureCompletionTestCase extends LightJavaCodeInsigh
       type(completionChar);
     }
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    PlatformTestUtil.waitForAllDocumentsCommitted(10, TimeUnit.SECONDS);
   }
 
   protected LookupImpl getLookup() {

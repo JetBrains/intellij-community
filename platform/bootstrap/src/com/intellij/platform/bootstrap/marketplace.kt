@@ -1,14 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.BytecodeTransformer
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.system.OS
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -33,7 +33,7 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
       }
     }
     catch (_: IOException) { }
-    if (ideVersion == null && SystemInfoRt.isMac) {
+    if (ideVersion == null && OS.CURRENT == OS.macOS) {
       Files.newBufferedReader(homePath.resolve("Resources/build.txt")).use { reader ->
         ideVersion = parseVersion(reader.readLine())
       }
@@ -109,17 +109,13 @@ internal fun initMarketplace() {
 }
 
 private class SimpleVersion(private val major: Int, private val minor: Int) : Comparable<SimpleVersion> {
-  private fun isAtLeast(ver: Comparable<SimpleVersion>) = ver <= this
-
-  fun isCompatible(since: SimpleVersion?, until: SimpleVersion?): Boolean = when {
-    since != null && until != null -> compareTo(since) >= 0 && compareTo(until) <= 0
-    since != null -> isAtLeast(since)
-    until != null -> until.isAtLeast(this)
-    else -> true  // assume compatible of nothing is specified
-  }
+  fun isCompatible(since: SimpleVersion?, until: SimpleVersion?): Boolean =
+    (since == null || this >= since) && (until == null || this <= until)  // assume compatible when no bounds are specified
 
   override fun compareTo(other: SimpleVersion): Int =
     if (major != other.major) major.compareTo(other.major) else minor.compareTo(other.minor)
+
+  override fun toString(): String = "${major}/${minor}"
 }
 
 private fun parseVersion(rawText: String?): SimpleVersion? {
@@ -138,7 +134,7 @@ private fun parseVersion(rawText: String?): SimpleVersion? {
 
     val dot = text.indexOf('.')
     if (dot >= 0) {
-      return SimpleVersion(major = text.substring(0, dot).toInt(), minor = parseMinor(text.substring(dot + 1)))
+      return SimpleVersion(major = text.take(dot).toInt(), minor = parseMinor(text.substring(dot + 1)))
     }
     return SimpleVersion(major = text.toInt(), minor = 0)
   }
@@ -153,7 +149,7 @@ private fun parseMinor(text: String): Int {
     }
 
     val dot = text.indexOf('.')
-    return (if (dot >= 0) text.substring(0, dot) else text).toInt()
+    return (if (dot >= 0) text.take(dot) else text).toInt()
   }
   catch (_: NumberFormatException) { }
   return 0

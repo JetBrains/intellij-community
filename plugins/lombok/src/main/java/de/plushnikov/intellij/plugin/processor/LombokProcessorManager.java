@@ -58,6 +58,8 @@ public final class LombokProcessorManager {
   private final SetterProcessor mySetterProcessor = new SetterProcessor();
   private final ToStringProcessor myToStringProcessor = new ToStringProcessor();
   private final WitherProcessor myWitherProcessor = new WitherProcessor();
+  private final WithByProcessor myWithByProcessor = new WithByProcessor();
+  private final WithByFieldProcessor myWithByFieldProcessor = new WithByFieldProcessor();
   private final BuilderPreDefinedInnerClassFieldProcessor myBuilderPreDefinedInnerClassFieldProcessor =
     new BuilderPreDefinedInnerClassFieldProcessor();
   private final BuilderPreDefinedInnerClassMethodProcessor myBuilderPreDefinedInnerClassMethodProcessor =
@@ -99,6 +101,10 @@ public final class LombokProcessorManager {
       }
     }
     return map;
+  }
+
+  public WithByFieldProcessor getWithByFieldProcessor() {
+    return myWithByFieldProcessor;
   }
 
   public static LombokProcessorManager getInstance() {
@@ -265,6 +271,10 @@ public final class LombokProcessorManager {
     return myDelegateMethodProcessor;
   }
 
+  public WithByProcessor getWithByProcessor() {
+    return myWithByProcessor;
+  }
+
   public CleanupProcessor getCleanupProcessor() {
     return myCleanupProcessor;
   }
@@ -303,6 +313,7 @@ public final class LombokProcessorManager {
       mySetterProcessor,
       myToStringProcessor,
       myWitherProcessor,
+      myWithByProcessor,
 
       myBuilderPreDefinedInnerClassFieldProcessor,
       myBuilderPreDefinedInnerClassMethodProcessor,
@@ -331,6 +342,7 @@ public final class LombokProcessorManager {
       myGetterFieldProcessor,
       mySetterFieldProcessor,
       myWitherFieldProcessor,
+      myWithByFieldProcessor,
 
       myDelegateMethodProcessor,
 

@@ -6,9 +6,11 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.junit5.fixture.EelForFixturesProvider.Companion.getEelForParametrizedTestProvider
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.*
 import org.junit.platform.commons.support.HierarchyTraversalMode
 import org.junit.platform.commons.support.ReflectionSupport
+import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.function.Predicate
@@ -23,14 +25,30 @@ internal class TestFixtureExtension : BeforeAllCallback,
 
   override fun beforeAll(context: ExtensionContext) {
     before(context, static = true)
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      before(context, static = false)
+    }
   }
 
   override fun beforeEach(context: ExtensionContext) {
-    // If test is parametrized with eel -- postpone fixture initialization till interception: we can't call it before it:
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      return
+    }
+    // If the test is parametrized with eel -- postpone fixture initialization till interception: we can't call it before it:
     // we need invocation context.
     if (context.getEelForParametrizedTestProvider() == null) {
       before(context, static = false)
     }
+  }
+
+  override fun <T : Any?> interceptTestClassConstructor(invocation: InvocationInterceptor.Invocation<T?>?, invocationContext: ReflectiveInvocationContext<Constructor<T>>, extensionContext: ExtensionContext): T? {
+    val instance = super.interceptTestClassConstructor(invocation, invocationContext, extensionContext)
+    val eelForFixturesProvider = extensionContext.getEelForParametrizedTestProvider()
+    if (eelForFixturesProvider != null) {
+      before(extensionContext, static = false, eelApi = eelForFixturesProvider.getEel(invocationContext), instance=instance)
+
+    }
+    return instance
   }
 
   override fun interceptTestTemplateMethod(invocation: InvocationInterceptor.Invocation<Void>, invocationContext: ReflectiveInvocationContext<Method>, extensionContext: ExtensionContext) {
@@ -40,43 +58,56 @@ internal class TestFixtureExtension : BeforeAllCallback,
     }
 
     super.interceptTestTemplateMethod(invocation, invocationContext, extensionContext)
-
-    if (eelForFixturesProvider != null) {
-      after(extensionContext)
-    }
   }
 
-  private fun before(context: ExtensionContext, static: Boolean, eelApi: EelApi? = null) {
+  private fun collectTestInstances(context: ExtensionContext): Map<Class<*>, Any> {
+    val allTestInstances = context.testInstances.getOrNull()?.allInstances.orEmpty()
+    return allTestInstances.associateBy { it.javaClass }
+  }
+
+  private fun before(context: ExtensionContext, static: Boolean, eelApi: EelApi? = null, instance: Any? = null) {
     val testClass: Class<*> = context.testClass.getOrNull() ?: return
-    val testInstance = context.testInstance.getOrNull()
 
     @OptIn(DelicateCoroutinesApi::class)
     val testScope = GlobalScope.childScope(context.displayName)
     val pendingFixtures = ArrayList<Deferred<*>>()
-    val fields = ReflectionSupport.findFields(testClass, Predicate { field ->
-      TestFixture::class.java.isAssignableFrom(field.type) && Modifier.isStatic(field.modifiers) == static
-    }, HierarchyTraversalMode.TOP_DOWN)
-    for (field in fields) {
-      field.isAccessible = true
-      val fixture = field.get(testInstance) as TestFixtureImpl<*>
-      pendingFixtures.add(fixture.init(testScope, TestContextImpl(context, eelApi)))
+
+    val classToTestInstance = collectTestInstances(context)
+    // start with the outermost one, in case the inner ones depend on them
+    val classes = context.enclosingTestClasses + listOf(testClass)
+    for (clazz in classes) {
+      val testInstance = classToTestInstance[clazz] ?: instance
+      val fieldsForDeclaringClass = ReflectionSupport.findFields(clazz, Predicate { field ->
+        TestFixture::class.java.isAssignableFrom(field.type) && Modifier.isStatic(field.modifiers) == static
+      }, HierarchyTraversalMode.TOP_DOWN)
+
+      for (field in fieldsForDeclaringClass) {
+        field.isAccessible = true
+        val fixture = field.get(testInstance) as TestFixtureImpl<*>
+        pendingFixtures.add(fixture.init(testScope, TestContextImpl(context, eelApi)))
+      }
     }
+
     awaitFixtureInitialization(testScope, pendingFixtures)
-    context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension", testScope)
+    context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension_$static", testScope)
   }
 
   override fun afterEach(context: ExtensionContext) {
-    if (context.getEelForParametrizedTestProvider() == null) {
-      after(context)
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      return
     }
+    after(context, static = false)
   }
 
   override fun afterAll(context: ExtensionContext) {
-    after(context)
+    if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
+      after(context, static = false)
+    }
+    after(context, static = true)
   }
 
-  private fun after(context: ExtensionContext) {
-    val testScope = context.getStore(ExtensionContext.Namespace.GLOBAL).get("TestFixtureExtension") ?: return
+  private fun after(context: ExtensionContext, static: Boolean) {
+    val testScope = context.getStore(ExtensionContext.Namespace.GLOBAL).get("TestFixtureExtension_$static") ?: return
     @Suppress("SSBasedInspection")
     runBlocking {
       (testScope as CoroutineScope).coroutineContext.job.cancelAndJoin()

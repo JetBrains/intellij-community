@@ -750,7 +750,7 @@ public final class JavaCompletionSorting {
     }
 
     @Override
-    public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+    public @NotNull Classifier<LookupElement> createClassifier(@NotNull Classifier<LookupElement> next) {
       return new LiftShorterItemsClassifier("liftShorterClasses", next, new LiftShorterItemsClassifier.LiftingCondition() {
         @Override
         public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {

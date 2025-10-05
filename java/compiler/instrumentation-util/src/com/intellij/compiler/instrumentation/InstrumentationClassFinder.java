@@ -98,6 +98,17 @@ public class InstrumentationClassFinder {
     myClasspath.releaseResources();
     myLoaded.clear();
     myBuffer = null;
+
+    for (ClassLoader loader = myLoader; loader != null; loader = loader.getParent()) {
+      if (loader instanceof Closeable) {
+        try {
+          ((Closeable)loader).close();
+        }
+        catch (Throwable ignored) {
+        }
+      }
+    }
+
     myLoader = null;
   }
 

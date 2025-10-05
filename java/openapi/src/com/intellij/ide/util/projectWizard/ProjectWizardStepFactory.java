@@ -20,10 +20,22 @@ public abstract class ProjectWizardStepFactory {
     return ApplicationManager.getApplication().getService(ProjectWizardStepFactory.class);
   }
 
+  /**
+   * @deprecated the current implementation of the 'New Project' wizard doesn't have a separate step for specifying project name and location.
+   */
+  @Deprecated
   public abstract ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext);
 
+  /**
+   * @deprecated the current implementation of the 'New Project' wizard doesn't have a separate step for selecting source paths.
+   */
+  @Deprecated
   public abstract ModuleWizardStep createSourcePathsStep(WizardContext context, SourcePathsBuilder builder, Icon icon, @NonNls String helpId);
 
+  /**
+   * @deprecated the current implementation of the 'New Project' wizard doesn't have a separate step for SDK selection.
+   */
+  @Deprecated
   public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, SdkType type, JavaModuleBuilder builder, Computable<Boolean> isVisible, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext);

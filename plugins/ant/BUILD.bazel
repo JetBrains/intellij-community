@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.ant` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "ant_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -13,6 +12,7 @@ jvm_library(
   module_name = "intellij.ant",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ant_resources"],
   deps = [
     "//java/openapi:java",
     "@lib//ant/lib:ant-antlr",
@@ -36,7 +36,6 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//java/idea-ui:ui",
     "//xml/dom-openapi:dom",
-    "//xml/openapi:xml",
     "//platform/util",
     "//platform/lang-impl",
     "//platform/execution-impl",
@@ -55,8 +54,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",
     "//xml/xml-psi-api:psi",
-  ],
-  runtime_deps = [":ant_resources"]
+  ]
 )
 
 jvm_library(
@@ -91,7 +89,6 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//java/idea-ui:ui",
     "//xml/dom-openapi:dom",
-    "//xml/openapi:xml",
     "//platform/util",
     "//platform/lang-impl",
     "//platform/execution-impl",
@@ -114,12 +111,15 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/xml-psi-api:psi",
     "//xml/testFramework",
-  ],
-  runtime_deps = [":ant_resources"]
+  ]
 )
+### auto-generated section `build intellij.ant` end
+
+### auto-generated section `test intellij.ant` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "ant_test",
   runtime_deps = [":ant_test_lib"]
 )
-### auto-generated section `build intellij.ant` end
+### auto-generated section `test intellij.ant` end

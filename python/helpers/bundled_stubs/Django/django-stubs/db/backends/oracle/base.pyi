@@ -1,5 +1,5 @@
-from collections.abc import Generator, Iterator
-from contextlib import contextmanager
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 from typing import Any
 
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -11,8 +11,7 @@ from .introspection import DatabaseIntrospection
 from .operations import DatabaseOperations
 from .validation import DatabaseValidation
 
-@contextmanager
-def wrap_oracle_errors() -> Generator[None, None, None]: ...
+def wrap_oracle_errors() -> AbstractContextManager[None]: ...
 
 class _UninitializedOperatorsDescriptor:
     def __get__(self, instance: Any, cls: Any | None = None) -> Any: ...

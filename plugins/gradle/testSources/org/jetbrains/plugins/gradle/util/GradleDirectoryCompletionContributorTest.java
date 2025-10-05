@@ -30,7 +30,7 @@ public class GradleDirectoryCompletionContributorTest extends GradleImportingTes
       "apply plugin: 'java'\n" +
       "sourceSets { main { java { srcDirs 'src/main/java2' } } }");
 
-    check(myProjectRoot,
+    check(getMyProjectRoot(),
           Pair.create("src/main/java", JavaSourceRootType.SOURCE),
           Pair.create("src/main/resources", JavaResourceRootType.RESOURCE),
           Pair.create("src/main/java2", JavaSourceRootType.SOURCE),
@@ -46,7 +46,7 @@ public class GradleDirectoryCompletionContributorTest extends GradleImportingTes
 
   private void check(VirtualFile dir, Pair<String, JpsModuleSourceRootType<?>>... expected) {
     Collection<CreateDirectoryCompletionContributor.Variant> variants = ReadAction.compute(() -> 
-      new GradleDirectoryCompletionContributor().getVariants(PsiManager.getInstance(myProject).findDirectory(dir))
+      new GradleDirectoryCompletionContributor().getVariants(PsiManager.getInstance(getMyProject()).findDirectory(dir))
     );
 
     List<Pair<String, JpsModuleSourceRootType<?>>> map = ContainerUtil.map(

@@ -1,36 +1,38 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see CompletionResultSet#withRelevanceSorter(CompletionSorter)
+ */
 public abstract class CompletionSorter {
-  public abstract CompletionSorter weighBefore(@NotNull String beforeId, LookupElementWeigher... weighers);
+  /**
+   * @param beforeId id of the weigher which must be run after {@code weighers}
+   * @param weighers weighers to add
+   * @return a sorter combining the current one and added weighers
+   */
+  public abstract @NotNull CompletionSorter weighBefore(@NotNull String beforeId, LookupElementWeigher... weighers);
 
-  public abstract CompletionSorter weighAfter(@NotNull String afterId, LookupElementWeigher... weighers);
+  /**
+   * @param afterId  id of the weigher which must be run before {@code weighers}
+   * @param weighers weighers to add.
+   * @return a sorter combining the current one and added weighers
+   */
+  public abstract @NotNull CompletionSorter weighAfter(@NotNull String afterId, LookupElementWeigher... weighers);
 
-  public abstract CompletionSorter weigh(LookupElementWeigher weigher);
+  /**
+   * @param weigher a new weigher to append
+   * @return a sorter combining the current sorter and the added weigher
+   */
+  public abstract @NotNull CompletionSorter weigh(@NotNull LookupElementWeigher weigher);
 
-  public static CompletionSorter emptySorter() {
+  public static @NotNull CompletionSorter emptySorter() {
     return CompletionService.getCompletionService().emptySorter();
   }
 
-  public static CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher) {
+  public static @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
     return CompletionService.getCompletionService().defaultSorter(parameters, matcher);
   }
-
 }

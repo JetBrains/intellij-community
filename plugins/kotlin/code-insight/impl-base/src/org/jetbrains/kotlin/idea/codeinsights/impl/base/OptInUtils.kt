@@ -5,7 +5,11 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.components.evaluateAsAnnotationValue
+import org.jetbrains.kotlin.analysis.api.components.isClassType
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -23,7 +27,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * This is K2 implementation which is very similar to [org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed].
  * One difference is that check of [SubclassOptInRequired] is not implemented here since it is not needed for current method usages.
  */
-context(KaSession)
+context(_: KaSession)
 fun KtElement.isOptInAllowed(annotationClassId: ClassId): Boolean {
     if (annotationClassId.asFqNameString() in languageVersionSettings.getFlag(AnalysisFlags.optIn)) return true
 
@@ -33,18 +37,18 @@ fun KtElement.isOptInAllowed(annotationClassId: ClassId): Boolean {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun PsiElement.isDeclarationAnnotatedWith(annotationClassId: ClassId): Boolean =
     this is KtDeclaration && symbol.annotations.contains(annotationClassId)
 
-context(KaSession)
+context(_: KaSession)
 private fun KtAnnotationEntry.getAnnotatedOptIns(): Set<ClassId> {
     if (typeReference?.type?.isClassType(OptInNames.OPT_IN_CLASS_ID) != true) return emptySet()
 
     return valueArguments.mapNotNull { it.getAnnotationClassValue() }.toSet()
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun ValueArgument.getAnnotationClassValue(): ClassId? =
     getArgumentExpression()
@@ -52,11 +56,11 @@ private fun ValueArgument.getAnnotationClassValue(): ClassId? =
         ?.safeAs<KaAnnotationValue.ClassLiteralValue>()
         ?.classId
 
-context(KaSession)
+context(_: KaSession)
 private fun PsiElement.isElementAnnotatedWithOptIn(annotationClassId: ClassId): Boolean =
     this is KtAnnotated && annotationEntries.any { annotationClassId in it.getAnnotatedOptIns() }
 
-context(KaSession)
+context(_: KaSession)
 fun KaAnnotatedSymbol.getRequiredOptIns(possibleOptIns: Set<ClassId>, moduleApiVersion: ApiVersion): Set<ClassId> {
     val requiredOptIns = annotations.classIds.toMutableSet()
 
@@ -75,11 +79,11 @@ fun KaAnnotatedSymbol.getRequiredOptIns(possibleOptIns: Set<ClassId>, moduleApiV
     return requiredOptIns
 }
 
-context(KaSession)
+context(_: KaSession)
 fun KaAnnotatedSymbol.isOptInRequired(annotationClassId: ClassId, moduleApiVersion: ApiVersion) =
     annotationClassId in getRequiredOptIns(setOf(annotationClassId), moduleApiVersion)
 
-context(KaSession)
+context(_: KaSession)
 fun KtElement.isOptInSatisfied(symbol: KaAnnotatedSymbol, annotationClassId: ClassId): Boolean =
     !symbol.isOptInRequired(annotationClassId, languageVersionSettings.apiVersion)
             || isOptInAllowed(annotationClassId)

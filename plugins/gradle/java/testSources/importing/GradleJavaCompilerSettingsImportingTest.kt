@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.pom.java.JavaRelease
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.SystemProperties
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
@@ -74,15 +75,17 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
   @Test
   fun `test language level approximation`() {
-    val nonPreviewLevel = LanguageLevel.HIGHEST
-    val preview = LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1]
-    val javaVersion = nonPreviewLevel.toJavaVersion()
-    val feature = javaVersion.feature
+    val highest = JavaRelease.getHighest()
+    val nonPreview = highest.getNonPreviewLevel()
+    val preview = nonPreview.getPreviewLevel()
 
-    Assume.assumeTrue(GradleJvmSupportMatrix.isSupported(currentGradleVersion, javaVersion))
+    Assume.assumeTrue("The IDE $highest Java version doesn't have preview level",
+                      preview != null)
+    Assume.assumeTrue("The $currentGradleVersion doesn't support the IDE $highest Java version",
+                      GradleJvmSupportMatrix.isSupported(currentGradleVersion, nonPreview.toJavaVersion()))
 
     createJavaGradleSubProject(
-      projectSourceCompatibility = "$feature",
+      projectSourceCompatibility = nonPreview.shortText,
       mainSourceCompatibilityEnablePreview = true,
       testSourceCompatibilityEnablePreview = true
     )
@@ -94,7 +97,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
     createJavaGradleSubProject(
       "module",
-      projectSourceCompatibility = "$feature",
+      projectSourceCompatibility = nonPreview.shortText,
       mainSourceCompatibilityEnablePreview = true,
       testSourceCompatibilityEnablePreview = true
     )
@@ -110,40 +113,40 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
     createJavaGradleSubProject(
       "module1",
-      projectSourceCompatibility = "$feature",
+      projectSourceCompatibility = nonPreview.shortText,
       mainSourceCompatibilityEnablePreview = true,
       testSourceCompatibilityEnablePreview = false
     )
     createJavaGradleSubProject(
       "module2",
-      projectSourceCompatibility = "$feature",
+      projectSourceCompatibility = nonPreview.shortText,
       mainSourceCompatibilityEnablePreview = false,
       testSourceCompatibilityEnablePreview = true
     )
     createJavaGradleSubProject(
       "module3",
-      projectSourceCompatibility = "$feature",
+      projectSourceCompatibility = nonPreview.shortText,
       mainSourceCompatibilityEnablePreview = false,
       testSourceCompatibilityEnablePreview = false
     )
-    createGradleSettingsFile("module", "module1", "module2", "module3", "module4")
+    createGradleSettingsFile("module", "module1", "module2", "module3")
     importProject()
-    assertProjectLanguageLevel(nonPreviewLevel)
+    assertProjectLanguageLevel(nonPreview)
     assertModuleLanguageLevel("project", preview)
     assertModuleLanguageLevel("project.main", preview)
     assertModuleLanguageLevel("project.test", preview)
     assertModuleLanguageLevel("project.module", preview)
     assertModuleLanguageLevel("project.module.main", preview)
     assertModuleLanguageLevel("project.module.test", preview)
-    assertModuleLanguageLevel("project.module1", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module1", nonPreview)
     assertModuleLanguageLevel("project.module1.main", preview)
-    assertModuleLanguageLevel("project.module1.test", nonPreviewLevel)
-    assertModuleLanguageLevel("project.module2", nonPreviewLevel)
-    assertModuleLanguageLevel("project.module2.main", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module1.test", nonPreview)
+    assertModuleLanguageLevel("project.module2", nonPreview)
+    assertModuleLanguageLevel("project.module2.main", nonPreview)
     assertModuleLanguageLevel("project.module2.test", preview)
-    assertModuleLanguageLevel("project.module3", nonPreviewLevel)
-    assertModuleLanguageLevel("project.module3.main", nonPreviewLevel)
-    assertModuleLanguageLevel("project.module3.test", nonPreviewLevel)
+    assertModuleLanguageLevel("project.module3", nonPreview)
+    assertModuleLanguageLevel("project.module3.main", nonPreview)
+    assertModuleLanguageLevel("project.module3.test", nonPreview)
   }
 
   @Test

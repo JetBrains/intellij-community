@@ -1,27 +1,12 @@
 UBlockExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: foo
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
-    fun foo() {}
-    inline fun inlineFoo() {
-
-    }
-}: A
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:ClassOrObject: A
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: foo
     UBlockExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: inlineFoo
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
-    fun foo() {}
-    inline fun inlineFoo() {
-
-    }
-}: A
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:ClassOrObject: A
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = inlineFoo) -> Kotlin_Light_Method: inlineFoo
     UBlockExpression -> UQualifiedReferenceExpression -> Decompiled_Method: forEach
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = listOf) -> Decompiled_Method: listOf
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
-    fun foo() {}
-    inline fun inlineFoo() {
-
-    }
-}: A
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:ClassOrObject: A
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = forEach) -> Decompiled_Method: forEach
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = println) -> Decompiled_Method: println
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it
@@ -66,23 +51,13 @@ UBlockExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: foo
     UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = IntRange) -> Decompiled_Method: IntRange
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
-    fun foo() {}
-    inline fun inlineFoo() {
-
-    }
-}: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:ClassOrObject: A
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
     UBlockExpression -> UQualifiedReferenceExpression -> Kotlin_Light_Method: foo
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = t) -> Kotlin_Light_Value_Parameter: t
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: foo
 UTypeReferenceExpression (name = java.util.List<? extends A>) -> USimpleNameReferenceExpression (identifier = List) -> Decompiled_Class: List
-UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
-    fun foo() {}
-    inline fun inlineFoo() {
-
-    }
-}: A
+UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:ClassOrObject: A
 UTypeReferenceExpression (name = T) -> USimpleNameReferenceExpression (identifier = T) -> Kotlin_Light_Type_Parameter: T
     UBlockExpression -> UQualifiedReferenceExpression -> Decompiled_Method: isEmpty
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = listT) -> Kotlin_Light_Value_Parameter: listT

@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 
 open class StepOutAction : XDebuggerActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
@@ -23,7 +22,11 @@ open class StepOutAction : XDebuggerActionBase(), ActionRemoteBehaviorSpecificat
 private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
     performDebuggerActionAsync(session.project, dataContext) {
-      XDebugSessionApi.getInstance().stepOut(session.id)
+      session.stepOut()
     }
+  }
+
+  override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
+    return super.isEnabled(session, dataContext) && session.isStepOutActionAllowed
   }
 }

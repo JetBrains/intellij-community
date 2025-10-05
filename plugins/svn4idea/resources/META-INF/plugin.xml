@@ -140,11 +140,11 @@
     <search.projectOptionsTopHitProvider implementation="org.jetbrains.idea.svn.SvnOptionsTopHitProvider"/>
     <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"
          areChildrenValidMappings="true"/>
-    <projectConfigurable id="vcs.Subversion" key="configurable.name.svn.general" instance="org.jetbrains.idea.svn.SvnConfigurable$General"
+    <projectConfigurable id="vcs.Subversion" key="configurable.name.svn.general" instance="org.jetbrains.idea.svn.GeneralSvnConfigurable"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500">
-      <configurable id="vcs.Subversion.Presentation" instance="org.jetbrains.idea.svn.SvnConfigurable$Presentation"
+      <configurable id="vcs.Subversion.Presentation" instance="org.jetbrains.idea.svn.PresentationSvnConfigurable"
                     bundle="messages.SvnBundle" key="configurable.name.svn.presentation"/>
-      <configurable id="vcs.Subversion.Network" instance="org.jetbrains.idea.svn.SvnConfigurable$Network"
+      <configurable id="vcs.Subversion.Network" instance="org.jetbrains.idea.svn.NetworkSvnConfigurable"
                     bundle="messages.SvnBundle" key="configurable.name.svn.network"/>
       <configurable id="vcs.Subversion.SSH" instance="org.jetbrains.idea.svn.SvnConfigurable$Ssh"
                     bundle="messages.SvnBundle" key="configurable.name.svn.ssh"/>

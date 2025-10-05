@@ -270,7 +270,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     if (!editor.getSettings().isAnimatedScrolling() || animationDisabled || RemoteDesktopService.isRemoteSession()) {
       useAnimation = false;
     }
-    else if (CommandProcessor.getInstance().getCurrentCommand() == null) {
+    else if (!CommandProcessor.getInstance().isCommandInProgress()) {
       useAnimation = editor.getComponent().isShowing();
     }
     else {

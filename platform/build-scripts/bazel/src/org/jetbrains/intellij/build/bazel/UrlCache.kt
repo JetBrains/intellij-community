@@ -4,12 +4,6 @@
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.containers.orNull
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jdom.Namespace
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
@@ -22,19 +16,26 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
-import java.util.*
+import java.util.Base64
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.moveTo
+import kotlin.io.path.readText
+import kotlin.jvm.optionals.getOrNull
 
-@Serializable
 internal data class CacheEntry(
   @JvmField val path: String,
   @JvmField val url: String,
   @JvmField val sha256: String,
-  @Transient @JvmField var used: Boolean = false,
 )
 
-internal data class JarRepository(@JvmField val url: String, @JvmField val isPrivate: Boolean)
+internal data class JarRepository(val url: String, val isPrivate: Boolean) {
+  init {
+    check(!url.endsWith("/")) {
+      "Repository URL must not end with '/': $url"
+    }
+  }
+
+  val urlWithSlash = "$url/"
+}
 
 private fun getAuthFromSystemProperties(): Pair<String, String>? {
   val username = System.getProperty(BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME)
@@ -110,38 +111,96 @@ private val authHeaderValue by lazy {
   "Basic " + Base64.getEncoder().encodeToString("${credentials.first}:${credentials.second}".toByteArray())
 }
 
-internal class UrlCache(val cacheFile: Path) {
-  private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
+private val httpFileRegex = Regex(
+  "http_file\\(\\s+" +
+  "name\\s+=\\s+\"[^\"]+\",\\s+" +
+  "url\\s+=\\s+\"([^\"]+)\",\\s+" +
+  "sha256\\s+=\\s+\"([0-9a-f]{64})\","
+)
 
-  private val cache: MutableMap<String, CacheEntry> by lazy {
-    if (Files.exists(cacheFile)) {
-      Json.decodeFromString<List<CacheEntry>>(Files.readString(cacheFile)).associateByTo(HashMap()) { it.path }
+internal fun readModules(modulesBazel: List<Path>, repositories: List<JarRepository>, warningsAsErrors: Boolean): Map<String, CacheEntry> {
+  fun warn(message: String) {
+    if (warningsAsErrors) {
+      error(message)
     }
     else {
-      HashMap<String, CacheEntry>()
+      println("WARN: $message")
     }
   }
 
-  @OptIn(ExperimentalSerializationApi::class)
-  fun save() {
-    val entries = cache.values.filter { it.used }.toTypedArray()
-    entries.sortBy { it.path }
-    val tempFile = Files.createTempFile(cacheFile.fileName.toString(), ".tmp")
-    @Suppress("JSON_FORMAT_REDUNDANT")
-    Files.writeString(tempFile, Json {
-      prettyPrint = true
-      prettyPrintIndent = "  "
-    }.encodeToString(entries))
-    tempFile.moveTo(target = cacheFile, overwrite = true)
+  val map: MutableMap<String, CacheEntry> = HashMap()
+
+  for (modulesFile in modulesBazel) {
+    if (!modulesFile.isRegularFile()) {
+      warn("File $modulesFile is not found")
+      continue
+    }
+
+    val modulesText = modulesFile.readText()
+    for (match in httpFileRegex.findAll(modulesText)) {
+      val (url, sha256) = match.destructured
+
+      val matchedRepositories = repositories.filter { url.startsWith(it.urlWithSlash) }
+      if (matchedRepositories.isEmpty()) {
+        warn("Cannot find repository for $url across all repositories: ${repositories.map { it.urlWithSlash }}")
+        continue
+      }
+      if (matchedRepositories.size > 1) {
+        warn("Multiple repositories match $url: ${matchedRepositories.map { it.urlWithSlash }}")
+        continue
+      }
+      val repository = matchedRepositories.single()
+
+      val path = url.removePrefix(repository.urlWithSlash)
+      check(path != url) {
+        "Unable to remove prefix '${repository.urlWithSlash}' from '$url'"
+      }
+
+      val existingEntry = map.get(path)
+      if (existingEntry != null) {
+        if (existingEntry.url != url) {
+          warn("Conflicting entries for $path: ${existingEntry.url} and $url")
+          map.remove(path)
+          continue
+        }
+        if (existingEntry.sha256 != sha256) {
+          warn("Conflicting entries for $path: ${existingEntry.sha256} and $sha256")
+          map.remove(path)
+          continue
+        }
+      }
+
+      map[path] = CacheEntry(path = path, url = url, sha256 = sha256)
+    }
   }
 
-  fun getEntry(jarPath: String): CacheEntry? = cache.get(jarPath)?.also { it.used = true }
+  println("DEBUG: read ${map.size} existing entries from $modulesBazel")
+
+  return map
+}
+
+internal class UrlCache(val modulesBazel: List<Path>, val repositories: List<JarRepository>) {
+  private val httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()
+  private val usedPaths = mutableSetOf<String>()
+
+  private val cache: MutableMap<String, CacheEntry> by lazy {
+    readModules(modulesBazel, repositories, warningsAsErrors = false).toMutableMap()
+  }
+
+  fun getEntry(jarPath: String): CacheEntry? {
+    usedPaths.add(jarPath)
+    return cache.get(jarPath)
+  }
 
   fun putUrl(jarPath: String, url: String, hash: String): CacheEntry {
-    val entry = CacheEntry(path = jarPath, url = url, sha256 = hash, used = true)
-    cache.put(jarPath, entry)
+    val entry = CacheEntry(path = jarPath, url = url, sha256 = hash)
+    cache[jarPath] = entry
+    usedPaths.add(jarPath)
     return entry
   }
+
+  fun getUsedEntries(): Map<String, CacheEntry> =
+    cache.entries.filter { usedPaths.contains(it.key) }.associate { it.key to it.value }
 
   fun checkUrl(url: String, repo: JarRepository): Boolean {
     val requestBuilder = HttpRequest.newBuilder()
@@ -160,7 +219,6 @@ internal class UrlCache(val cacheFile: Path) {
 
   @Suppress("DuplicatedCode")
   fun calculateHash(url: String, repo: JarRepository): String {
-    val digest = MessageDigest.getInstance("SHA-256")
     println("Downloading '$url'")
     val requestBuilder = HttpRequest.newBuilder()
       .uri(URI.create(url))
@@ -174,24 +232,17 @@ internal class UrlCache(val cacheFile: Path) {
       error("Cannot download $url: ${response.statusCode()}\n$body")
     }
 
-    response.body().use { inputStream ->
-      val buffer = ByteArray(8192)
-      var bytesRead: Int
-      while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-        digest.update(buffer, 0, bytesRead)
-      }
-    }
-    return digest.digest().joinToString("") { "%02x".format(it) }
+    return response.body().sha256()
   }
 
   private inline fun <reified T> HttpResponse<T>.followRedirectsIfNeeded(maxRedirects: Int = 5): HttpResponse<T> {
     var response = this
-    for (i in 0..maxRedirects) {
+    (0..maxRedirects).forEach { _ ->
       if (!isHttpResponseRedirect(response.statusCode())) {
         return response
       }
 
-      val location = response.headers().firstValue("Location").orNull() ?: error("Missing Location header")
+      val location = response.headers().firstValue("Location").getOrNull() ?: error("Missing Location header")
       val requestBuilder = HttpRequest.newBuilder().uri(URI.create(location)).method(this.request().method(), HttpRequest.BodyPublishers.noBody())
       @Suppress("UNCHECKED_CAST")
       response = httpClient.send(requestBuilder.build(), when (T::class) {
@@ -234,4 +285,16 @@ private fun parseNetrc(netrcPath: Path, @Suppress("SameParameterValue") machine:
   }
   // no matching machine found
   return null
+}
+
+fun InputStream.sha256(): String {
+  val digest = MessageDigest.getInstance("SHA-256")
+  use {
+    val buffer = ByteArray(8192)
+    var bytesRead: Int
+    while (read(buffer).also { bytesRead = it } != -1) {
+      digest.update(buffer, 0, bytesRead)
+    }
+  }
+  return digest.digest().joinToString("") { "%02x".format(it) }
 }

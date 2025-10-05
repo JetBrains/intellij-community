@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
@@ -67,7 +67,7 @@ open class KotlinConstructorUMethod(
 
     protected open fun getBodyExpressions(): List<KtExpression> {
         if (isPrimary) return getInitializers()
-        val bodyExpression = (sourcePsi as? KtFunction)?.bodyExpression ?: return emptyList()
+        val bodyExpression = (sourcePsi as? KtFunction)?.bodyExpressionIfNotCompiled ?: return emptyList()
         if (bodyExpression is KtBlockExpression) return bodyExpression.statements
         return listOf(bodyExpression)
     }

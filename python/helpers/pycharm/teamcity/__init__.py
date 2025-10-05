@@ -3,7 +3,7 @@ import os
 
 __all__ = ['is_running_under_teamcity']
 
-__version__ = "1.29"
+__version__ = "1.33"
 
 teamcity_presence_env_var = "TEAMCITY_VERSION"
 

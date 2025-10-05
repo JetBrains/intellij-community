@@ -1,16 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
-import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
+import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
+import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import kotlinx.coroutines.flow.Flow
 
@@ -20,17 +21,22 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
     return XDebugSessionProxy.useFeProxy() ||
            (frontendType is FrontendType.Remote && frontendType.isGuest()) // CWM case
   }
+
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val valueId = (value as FrontendXValue).xValueDto.id
+    val valueId = FrontendXValue.asFrontendXValue(value).xValueDto.id
     return block(valueId)
+  }
+
+  override fun getXValueId(value: XValue): XValueId? =
+    FrontendXValue.asFrontendXValueOrNull(value)?.xValueDto?.id
+
+  override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
+    val executionStackId = (stack as FrontendXExecutionStack).id
+    return block(executionStackId)
   }
 
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
     return FrontendXDebuggerManager.getInstance(project).currentSession.value
-  }
-
-  override fun getSessionIdByContentDescriptor(project: Project, descriptor: RunContentDescriptor): XDebugSessionId? {
-    return FrontendXDebuggerManager.getInstance(project).getSessionIdByContentDescriptor(descriptor)
   }
 
   override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
@@ -45,9 +51,7 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
     return FrontendXDebuggerManager.getInstance(project).breakpointsManager
   }
 
-  override fun canUpdateInlineDebuggerFrames(): Boolean {
-    val frontendType = FrontendApplicationInfo.getFrontendType()
-    val isCwm = (frontendType is FrontendType.Remote && frontendType.isGuest()) // CWM case
-    return !isCwm
+  override fun hasBackendCounterpart(xValue: XValue): Boolean {
+    return FrontendXValue.asFrontendXValueOrNull(xValue) != null
   }
 }

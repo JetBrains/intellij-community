@@ -210,7 +210,7 @@ public class UnscrambleDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-        FileChooser.chooseFiles(descriptor, myProject, null, files -> myLogFile.setText(FileUtil.toSystemDependentName(files.get(files.size() - 1).getPath())));
+        FileChooser.chooseFiles(descriptor, myProject, null, files -> myLogFile.setText(FileUtil.toSystemDependentName(files.getLast().getPath())));
       }
     });
     myLogFileChooserPanel.setLayout(new BorderLayout());

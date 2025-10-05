@@ -107,6 +107,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
     return contains(file, CodeInsightContexts.anyContext(), false);
   }
 
+  @ApiStatus.Experimental
   @Override
   public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
     return this;
@@ -239,7 +240,7 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
       Module module = myModules.iterator().next();
       CachedValueProvider<VirtualFileEnumeration> provider = () -> {
         VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-        VirtualFileEnumeration enumeration = ModuleWithDependenciesScope.getFileEnumerationUnderRoots(List.of(roots));
+        VirtualFileEnumeration enumeration = ModuleScopeUtil.getFileEnumerationUnderRoots(List.of(roots));
         return CachedValueProvider.Result.create(enumeration, VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
       };
       CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(module.getProject());

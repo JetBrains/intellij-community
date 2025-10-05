@@ -5,8 +5,21 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.*
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.containingJvmClassName
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.components.fullyExpandedType
+import org.jetbrains.kotlin.analysis.api.components.hasFlexibleNullability
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.isUnitType
+import org.jetbrains.kotlin.analysis.api.components.originalConstructorIfTypeAliased
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -22,6 +35,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
@@ -57,7 +71,7 @@ internal inline fun <R> analyzeForUast(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun containingKtClass(
     ktConstructorSymbol: KaConstructorSymbol,
 ): KtClass? {
@@ -68,7 +82,7 @@ internal fun containingKtClass(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun toPsiClass(
     ktType: KaType,
     source: UElement?,
@@ -76,7 +90,15 @@ internal fun toPsiClass(
     typeOwnerKind: TypeOwnerKind,
     isBoxed: Boolean = true,
 ): PsiClass? {
+    // Try the underlying symbol's PSI first, if any.
+    // For the declaration from the Library, this will give
+    // [FirKotlinUastLibraryPsiProviderService] a chance to provide a PSI.
+    (ktType as? KaClassType)?.symbol?.let { classSymbol ->
+        psiForUast(classSymbol, context) as? PsiClass
+    }?.let { return it }
+    // Next, try SLC conversion if from Kotlin
     (context as? KtClass)?.toLightClass()?.let { return it }
+    // Then, use JavaPsiFacade if from Java
     return PsiTypesUtil.getPsiClass(
         toPsiType(
             ktType,
@@ -87,7 +109,7 @@ internal fun toPsiClass(
     )
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun fakePsiMethodForReifiedInline(
     functionSymbol: KaFunctionSymbol,
@@ -117,7 +139,7 @@ private fun fakePsiMethodForReifiedInline(
     return null
 }
 
-context(KaSession)
+context(session: KaSession)
 internal fun toPsiMethod(
     functionSymbol: KaFunctionSymbol,
     context: KtElement,
@@ -156,7 +178,7 @@ internal fun toPsiMethod(
         is KtFunction -> {
             // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
             fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
-                val module = getModule(source)
+                val module = session.getModule(source)
                 if (module !is KaSourceModule) return null
                 return getContainingLightClass(source)?.let { UastFakeSourceLightMethod(source, it) }
             }
@@ -177,7 +199,7 @@ internal fun toPsiMethod(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun toPsiMethodForDeserialized(
     functionSymbol: KaFunctionSymbol,
@@ -347,7 +369,7 @@ private fun KaAnnotatedSymbol.getJvmNameFromAnnotation(allowedUseSiteTargets: Se
     return null
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun toPsiType(
     ktType: KaType,
     source: UElement?,
@@ -361,7 +383,7 @@ internal fun toPsiType(
         config
     )
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun toPsiType(
     ktType: KaType,
@@ -386,7 +408,10 @@ internal fun toPsiType(
         }
         if (psiType != null) return psiType
     }
-    val psiTypeParent: PsiElement = containingLightDeclaration ?: context
+    val psiTypeParent: PsiElement =
+        containingLightDeclaration.takeIf { !ktType.isLocal || it is KtLightElement<*, *> }
+            ?: context.parentOfType<KtDeclaration>()
+            ?: context
     return ktType.asPsiType(
         psiTypeParent,
         allowErrorTypes = false,
@@ -395,7 +420,7 @@ internal fun toPsiType(
     ) ?: UastErrorType
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun receiverType(
     ktCall: KaCallableMemberCall<*, *>,
     source: UElement,
@@ -421,14 +446,21 @@ internal fun receiverType(
     )
 }
 
-context(KaSession)
+context(_: KaSession)
 internal val KaType.typeForValueClass: Boolean
     get() {
         val symbol = expandedSymbol as? KaNamedClassSymbol ?: return false
         return symbol.isInline
     }
 
-context(KaSession)
+context(_: KaSession)
+private val KaType.isLocal: Boolean
+    get() {
+        val symbol = expandedSymbol as? KaNamedClassSymbol ?: return false
+        return symbol.isLocal
+    }
+
+context(_: KaSession)
 internal fun isInheritedGenericType(ktType: KaType?): Boolean {
     if (ktType == null) return false
     return ktType is KaTypeParameterType &&
@@ -438,19 +470,19 @@ internal fun isInheritedGenericType(ktType: KaType?): Boolean {
         nullability(ktType) != KaTypeNullability.NON_NULLABLE
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun nullability(ktType: KaType?): KaTypeNullability? {
     if (ktType == null) return null
     if (ktType is KaErrorType) return null
     val expanded = ktType.fullyExpandedType
     return when {
         expanded.hasFlexibleNullability -> KaTypeNullability.UNKNOWN
-        expanded.canBeNull -> KaTypeNullability.NULLABLE
+        expanded.isNullable -> KaTypeNullability.NULLABLE
         else -> KaTypeNullability.NON_NULLABLE
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KaType? {
     return (ktCallableDeclaration.symbol as? KaCallableSymbol)?.returnType
 }
@@ -458,7 +490,7 @@ internal fun getKtType(ktCallableDeclaration: KtCallableDeclaration): KaType? {
 /**
  * Finds Java stub-based [PsiElement] for symbols that refer to declarations from [KaSymbolOrigin.LIBRARY]
  */
-context(KaSession)
+context(session: KaSession)
 @OptIn(KaExperimentalApi::class)
 internal tailrec fun psiForUast(
     symbol: KaSymbol,
@@ -470,7 +502,7 @@ internal tailrec fun psiForUast(
         }
 
         val psiProvider = FirKotlinUastLibraryPsiProviderService.getInstance()
-        return with(psiProvider) { provide(symbol) }
+        return with(psiProvider) { session.provide(symbol) }
     }
 
     if (symbol is KaConstructorSymbol) {

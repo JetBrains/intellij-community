@@ -76,8 +76,7 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyVariableViewSettings;
 import com.jetbrains.python.debugger.ValuesPolicy;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.icons.PythonIcons;
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
+import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider;
@@ -107,6 +106,7 @@ import static com.jetbrains.python.console.PyConsoleUtil.ASYNCIO_REPL_ENV;
 /**
  * @author traff, oleg
  */
+@ApiStatus.Internal
 public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   /**
    * The address that IDE uses to listen for incoming connections from Python
@@ -221,7 +221,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     // Execute
     actions.add(
       new ConsoleExecuteAction(myConsoleView, myConsoleExecuteActionHandler, myConsoleExecuteActionHandler.getEmptyExecuteAction(),
-                               myConsoleExecuteActionHandler, PythonIcons.Python.ExecuteCurrentStatement));
+                               myConsoleExecuteActionHandler, AllIcons.Debugger.ExecuteCurrentStatement));
     toolbarActions.addAll(actions);
     // Attach Debugger
     toolbarActions.add(new ConnectDebuggerAction());
@@ -338,7 +338,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private void showErrorsInConsole(Exception e) {
-
+    fireConsoleInitializationErrorEvent(e);
     DefaultActionGroup actionGroup = new DefaultActionGroup(createRerunAction());
 
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("PydevConsoleRunnerErrors",
@@ -1103,9 +1103,23 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myConsoleListeners.add(consoleListener);
   }
 
+  @Override
+  @ApiStatus.Internal
+  public void removeConsoleListener(ConsoleListener consoleListener) {
+    myConsoleListeners.remove(consoleListener);
+  }
+
   private void fireConsoleInitializedEvent(@NotNull LanguageConsoleView consoleView) {
     for (ConsoleListener listener : myConsoleListeners) {
       listener.handleConsoleInitialized(consoleView);
+    }
+  }
+
+  private void fireConsoleInitializationErrorEvent(@NotNull Throwable th) {
+    for (ConsoleListener listener : myConsoleListeners) {
+      if (listener instanceof ConsoleListenerEx l) {
+        l.handleInitializationError(th);
+      }
     }
   }
 
@@ -1208,7 +1222,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     ConnectDebuggerAction() {
       super(PyBundle.messagePointer("console.attach.debugger"), PyBundle.messagePointer("console.attach.debugger.description"),
-            PythonIcons.Python.AttachDebugger);
+            AllIcons.Debugger.AttachToProcess);
     }
 
     @Override
@@ -1256,7 +1270,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
 
     return XDebuggerManager.getInstance(myProject).
-      startSessionAndShowTab(PyBundle.message("pydev.console.runner.python.console.debugger"), PythonPsiApiIcons.Python, null, true,
+      startSessionAndShowTab(PyBundle.message("pydev.console.runner.python.console.debugger"), PythonParserIcons.PythonFile, null, true,
                              new XDebugProcessStarter() {
                                @Override
                                public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
@@ -1333,7 +1347,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       myConsoleSettings = consoleSettings;
       myWorkingDir = workingDir;
       mySdk = sdk;
-      myEnvironmentVariables = envs;
+      myEnvironmentVariables = new HashMap<>();
+      myEnvironmentVariables.putAll(envs);
       myEnvironmentVariables.putAll(consoleSettings.getEnvs());
       myEnvFiles = consoleSettings.myEnvFiles;
       PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
@@ -1471,5 +1486,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     public void setEnvFilePaths(@NotNull List<String> strings) {
       myEnvFiles = strings;
     }
+  }
+
+  @ApiStatus.Internal
+  public interface ConsoleListenerEx extends ConsoleListener {
+    void handleInitializationError(@NotNull Throwable th);
   }
 }

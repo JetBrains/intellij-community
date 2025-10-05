@@ -3,7 +3,7 @@ fun foo(f: (Int, Int, Int) -> Unit) {
 }
 
 fun main() {
-    foo { <caret> }
+    foo { i, i1, i2 -> <caret> }
 }
 
 // ELEMENT: foo

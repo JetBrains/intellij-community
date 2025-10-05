@@ -29,6 +29,7 @@ interface ShellCommandSpecsProvider {
   fun getCommandSpecs(): List<ShellCommandSpecInfo>
 
   companion object {
-    internal val EP_NAME: ExtensionPointName<ShellCommandSpecsProvider> = ExtensionPointName.create("org.jetbrains.plugins.terminal.commandSpecsProvider")
+    @ApiStatus.Internal
+    val EP_NAME: ExtensionPointName<ShellCommandSpecsProvider> = ExtensionPointName.create("org.jetbrains.plugins.terminal.commandSpecsProvider")
   }
 }

@@ -11,3 +11,7 @@ tarfile.open("test.tar.xz", "w:xz", preset=9)
 # Test with invalid preset values
 tarfile.open("test.tar.xz", "w:xz", preset=-1)  # type: ignore
 tarfile.open("test.tar.xz", "w:xz", preset=10)  # type: ignore
+
+# Test pipe modes
+tarfile.open("test.tar.xz", "r|*")
+tarfile.open("test.tar.xz", mode="r|*")

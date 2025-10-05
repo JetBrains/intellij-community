@@ -2,10 +2,10 @@
 package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
+import com.intellij.platform.debugger.impl.rpc.XSmartStepIntoTargetDto
 import com.intellij.xdebugger.impl.actions.XDebuggerProxySuspendedActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
-import com.intellij.xdebugger.impl.rpc.XSmartStepIntoTargetDto
 
 internal class XDebuggerStepIntoHandler : XDebuggerSmartStepIntoHandler() {
   override fun isEnabled(session: XDebugSessionProxy, dataContext: DataContext): Boolean {
@@ -24,7 +24,7 @@ internal class XDebuggerStepIntoHandler : XDebuggerSmartStepIntoHandler() {
       }
     }
     if (targets.size < 2) {
-      XDebugSessionApi.getInstance().stepInto(session.id)
+      session.stepInto(ignoreBreakpoints = false)
       return true
     }
     return false

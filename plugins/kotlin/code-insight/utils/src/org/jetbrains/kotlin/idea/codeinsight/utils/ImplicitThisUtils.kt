@@ -2,8 +2,14 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -24,7 +30,8 @@ data class ExplicitReceiverInfo(
     val receiverProvidedBy: KtDeclaration,
 )
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 @ApiStatus.Internal
 fun KtExpression.getImplicitReceiverInfo(): ImplicitReceiverInfo? {
     val reference = when (this) {
@@ -43,7 +50,7 @@ fun KtExpression.getImplicitReceiverInfo(): ImplicitReceiverInfo? {
     return getImplicitReceiverInfoOfClass(allImplicitReceivers, declarationAssociatedClass)
 }
 
-context(KaSession)
+context(_: KaSession)
 @ApiStatus.Internal
 fun getLabelToBeReferencedByThis(symbol: KaSymbol): ExplicitReceiverInfo? {
     val (receiverProvidedBy, associatedTag) = when (symbol) {
@@ -67,7 +74,8 @@ fun getLabelToBeReferencedByThis(symbol: KaSymbol): ExplicitReceiverInfo? {
     return (receiverProvidedBy as? KtDeclaration)?.let { ExplicitReceiverInfo(associatedTag, it) }
 }
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 private fun getAssociatedClass(symbol: KaSymbol): KaClassSymbol? {
     // both variables and functions are callable, and only they can be referenced by "this"
     if (symbol !is KaCallableSymbol) return null
@@ -84,7 +92,8 @@ private fun getAssociatedClass(symbol: KaSymbol): KaClassSymbol? {
     }
 }
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 private fun getImplicitReceiverInfoOfClass(
     implicitReceivers: List<KaImplicitReceiver>, associatedClass: KaClassSymbol
 ): ImplicitReceiverInfo? {
@@ -113,7 +122,7 @@ private fun getImplicitReceiverInfoOfClass(
     return null
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun getImplicitReceiverClassAndTag(receiver: KaImplicitReceiver): ExplicitReceiverInfo? {
     return getLabelToBeReferencedByThis(receiver.ownerSymbol)
 }

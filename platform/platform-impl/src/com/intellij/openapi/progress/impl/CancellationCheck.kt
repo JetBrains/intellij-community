@@ -46,15 +46,6 @@ class CancellationCheck private constructor(
     }
   }
 
-  private fun enableCancellationTimer(hook: CoreProgressManager.CheckCanceledHook, record: CanceledStatusRecord, enabled: Boolean) {
-    val progressManagerImpl = ProgressManager.getInstance() as ProgressManagerImpl
-
-    if (enabled) progressManagerImpl.addCheckCanceledHook(hook) else progressManagerImpl.removeCheckCanceledHook(hook)
-    record.enabled = enabled
-    record.timestamp = Clock.getTime()
-    record.lastCancellationCall = null
-  }
-
   fun <T> withCancellationCheck(block: () -> T): T {
     if (!checkEnabled()) return block()
 
@@ -66,21 +57,28 @@ class CancellationCheck private constructor(
       false
     }
 
-    enableCancellationTimer(hook, record, true)
-    try {
-      val r = try {
-        block()
+    var r:T? = null
+    (ProgressManager.getInstance() as ProgressManagerImpl).runWithHook(hook) {
+      record.enabled = true
+      record.timestamp = Clock.getTime()
+      record.lastCancellationCall = null
+      try {
+        r = try {
+          block()
+        }
+        catch (e: Throwable) {
+          checkCancellationDiff(record, e)
+          throw e
+        }
+        checkCancellationDiff(record, null)
       }
-      catch (e: Throwable) {
-        checkCancellationDiff(record, e)
-        throw e
+      finally {
+        record.enabled = false
+        record.timestamp = Clock.getTime()
+        record.lastCancellationCall = null
       }
-      checkCancellationDiff(record, null)
-      return r
     }
-    finally {
-      enableCancellationTimer(hook, record, false)
-    }
+    return r as T
   }
 
   private data class CanceledStatusRecord(

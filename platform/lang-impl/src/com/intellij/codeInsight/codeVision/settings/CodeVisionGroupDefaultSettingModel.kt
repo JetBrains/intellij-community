@@ -42,8 +42,10 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
     var positionComboBox: ComboBox<CodeVisionAnchorKind>? = null
     val panel = panel {
       row {
-        label(CodeVisionBundle.message("CodeVisionConfigurable.column.name.position"))
-        val comboBox = comboBox(CodeVisionGlobalSettingsProvider.supportedAnchors, renderer = textListCellRenderer("") { CodeVisionBundle.message(it.key) }).component
+        label(CodeVisionMessageBundle.message("CodeVisionConfigurable.column.name.position"))
+        val comboBox = comboBox(CodeVisionGlobalSettingsProvider.supportedAnchors, renderer = textListCellRenderer("") {
+          CodeVisionMessageBundle.message(it.key)
+        }).component
         comboBox.item = settings.getPositionForGroup(id)
         positionComboBox = comboBox
       }

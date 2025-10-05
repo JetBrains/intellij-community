@@ -120,7 +120,7 @@ class TargetIncomingConnector : IncomingConnector {
       return socket.socket().localSocketAddress.toString() + " to " + socket.socket().remoteSocketAddress
     }
 
-    override fun <T> create(serializer: StatefulSerializer<T>): RemoteConnection<T> {
+    override fun <T : Any> create(serializer: StatefulSerializer<T>): RemoteConnection<T> {
       return SocketConnection(socket, KryoBackedMessageSerializer(), serializer)
     }
   }

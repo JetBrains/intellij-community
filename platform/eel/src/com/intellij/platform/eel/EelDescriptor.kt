@@ -4,6 +4,7 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.path.EelPath.OS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import java.nio.file.Path
 
 /**
  * A marker interface that indicates an environment where native file chooser dialogs should be disabled.
@@ -21,33 +22,92 @@ import org.jetbrains.annotations.NonNls
 interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
 
 /**
- * A descriptor of an environment where [EelApi] may exist.
+ * Identifies a specific machine — such as a Docker container, WSL distribution, or SSH host.
+ *
+ * Multiple [EelDescriptor]s may map to the same machine.
+ * This interface is useful when caching, deduplicating, or sharing resources across descriptor instances.
  *
  * ## Examples
- * 1. There is a singleton [LocalEelDescriptor] which always exists, and it denotes the environment where the IDE runs
- * 2. On Windows, there can be [EelDescriptor] that corresponds to a WSL distribution.
- * Each distribution gives rise to a unique [EelDescriptor]
- * 3. Each separate Docker container has its own [EelDescriptor]
- * 4. Each SSH host has its own [EelDescriptor]
+ * - For WSL: all descriptors with base paths like `\\wsl$\Ubuntu` and `\\wsl.localhost\Ubuntu` point to the same [EelMachine].
+ * - For Docker: descriptors with `/docker-<id>/...` paths share the same container machine.
  *
- * ## Purpose
- * [EelDescriptor] is a marker of an environment, that is
- * - **Lightweight**: it is opposed to [EelApi], which is a heavy object that takes considerable amount of resources to initialize.
- * While it is not free to obtain [EelDescriptor] (i.e., you may need to interact with WSL services and Docker daemon), it is much cheaper than
- * preparing an environment for deep interaction (i.e., running a WSL Distribution or a Docker container).
- * - **Durable**: There is no guarantee that an instance of [EelApi] would be alive for a long time.
- * For example, an SSH connection can be interrupted, and a Docker container can be restarted. These events do not affect the lifetime of [EelDescriptor].
+ * Use this when caching or pooling long-lived data that’s stable across paths.
+ */
+@ApiStatus.Experimental
+interface EelMachine {
+  /**
+   * The platform of an environment corresponding to this [EelMachine].
+   */
+  @get:ApiStatus.Experimental
+  val osFamily: EelOsFamily
+
+  /**
+   * Describes machine in a user-readable manner, i.e: "Docker: <container_name>" or "Wsl: <distro name>".
+   * Format is *not* specified but guaranteed to be user-readable.
+   */
+  @get:ApiStatus.Experimental
+  val name: @NonNls String
+
+  /**
+   * Converts this machine into a [EelApi] — starts or reuses a running environment.
+   */
+  @ApiStatus.Experimental
+  suspend fun toEelApi(descriptor: EelDescriptor): EelApi
+}
+
+/**
+ * Specialization of [EelDescriptor] that resolves to a path-based environment.
  *
- * ## Usage
- * The intended way to obtain [EelDescriptor] is with the use of `getEelDescriptor`:
+ * These descriptors are tied to a concrete filesystem root (e.g. `\\wsl$\Ubuntu` or `/docker-xyz`).
+ * Different paths to the same logical environment yield different descriptors — even if they point to the same [EelMachine].
+ *
+ * This allows tools to distinguish between environments even if the underlying host is the same.
+ */
+@ApiStatus.Experimental
+interface EelPathBoundDescriptor : EelDescriptor {
+  /**
+   * A platform-specific base path representing the environment's root.
+   *
+   * Examples:
+   * - `\\wsl$\Ubuntu` for a WSL distribution
+   * - `/docker-12345/` for Docker containers
+   */
+  val rootPath: Path
+}
+
+/**
+ * Represents an abstract description of an environment where [EelApi] may exist.
+ *
+ * ## Concepts
+ * - [EelDescriptor] describes a *specific path-based access* to an environment.
+ * - [EelMachine] describes the *physical or logical host* (e.g., WSL distribution, Docker container).
+ *
+ * For example, two descriptors like `\\wsl$\Ubuntu` and `\\wsl.localhost\Ubuntu` may point to the same [EelMachine],
+ * but they should be treated as distinct [EelDescriptor]s since tooling behavior or caching may differ per path.
+ *
+ * ## Use cases
+ * - If you're caching data that is *machine-wide*, prefer using [machine] as a cache key instead of [EelDescriptor].
+ * - If you're accessing a specific path (e.g., resolving symbolic links or permissions), use [EelDescriptor].
+ *
+ * ## Examples
+ * - [LocalEelDescriptor] refers to the machine where the IDE runs (same machine and descriptor).
+ * - WSL: Each distribution is a machine. Paths like `\\wsl$\Ubuntu` and `\\wsl.localhost\Ubuntu` are different descriptors pointing to the same machine.
+ * - Docker: Each container is a machine. Paths like `/docker-abc123/...` are descriptors.
+ * - SSH: Each remote host is a machine. A descriptor may correspond to a specific session or path.
+ *
+ * ## Lifecycle
+ * [EelDescriptor] is:
+ * - **Lightweight**: Unlike [EelApi], it does not represent a running environment.
+ * - **Durable**: It can persist even when [EelApi] becomes unavailable (e.g., Docker stopped).
+ *
+ * ## Access
+ * Use `getEelDescriptor()` to resolve a descriptor from a [Path] or [Project].
+ *
  * ```kotlin
- * Path.of("\\\\wsl.localhost\\Ubuntu\\home\\Jacob\\projects").getEelDescriptor()
- * project.getEelDescriptor()
+ * val descriptor = Path.of("\\\\wsl.localhost\\Ubuntu\\home\\me").getEelDescriptor()
+ * val machine = descriptor.machine  // Shared between paths pointing to the same distro/container
+ * val api = descriptor.toEelApi()   // Starts or connects to the actual environment
  * ```
- *
- * You are free to compare and store [EelDescriptor].
- * TODO: In the future, [EelDescriptor] may also be serializable.
- * If you need to access the remote environment, you can use the method [toEelApi], which can suspend for some time before returning a working instance of [EelApi]
  */
 @ApiStatus.Experimental
 interface EelDescriptor {
@@ -60,20 +120,24 @@ interface EelDescriptor {
     }
 
   /**
-   * Describes Eel in a user-readable manner, i.e: "Docker: <container_name>" or "Wsl: <distro name>".
-   * Format is *not* specified, but guaranteed to be user-readable.
+   * Returns the machine this descriptor belongs to.
+   *
+   * Multiple descriptors may resolve to the same [EelMachine], e.g.:
+   * - Docker paths with different mount points
+   * - WSL descriptors using `wsl$` vs `wsl.localhost`
    */
-  @get:ApiStatus.Internal
-  val userReadableDescription: @NonNls String
+  val machine: EelMachine
 
   /**
    * The platform of an environment corresponding to this [EelDescriptor].
    */
   @get:ApiStatus.Experimental
-  val osFamily: EelOsFamily
+  val osFamily: EelOsFamily get() = machine.osFamily
 
   @ApiStatus.Experimental
-  suspend fun toEelApi(): EelApi
+  suspend fun toEelApi(): EelApi {
+    return machine.toEelApi(this)
+  }
 
   /**
    * Retrieves an instance of [EelApi] corresponding to this [EelDescriptor].

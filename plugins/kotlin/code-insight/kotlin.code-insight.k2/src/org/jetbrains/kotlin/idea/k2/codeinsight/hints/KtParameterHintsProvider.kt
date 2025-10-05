@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.ExcludeListDialog
+import com.intellij.codeInsight.hints.InlayInfo
+import com.intellij.codeInsight.hints.ParameterNameHintsSuppressor
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.parameters.AbstractDeclarativeParameterHintsCustomSettingsProvider
 import com.intellij.codeInsight.hints.parameters.ParameterHintsExcludeListConfigProvider
@@ -20,9 +22,11 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
@@ -53,7 +57,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         }
     }
 
-    context(KaSession)
+    context(session: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun collectFromParameters(
         callElement: KtCallElement,
@@ -66,6 +70,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val excludeListed: Boolean
         val contextMenuPayloads: List<InlayPayload>?
         val callableFqName = functionSymbol.callableId?.asSingleFqName()?.asString()
+            ?: (functionSymbol as? KaConstructorSymbol)?.containingClassId?.asSingleFqName()?.asString()
         if (callableFqName != null) {
             val parameterNames = valueParameters.map { it.name.asString() }
             excludeListed = isExcludeListed(callableFqName, parameterNames)
@@ -82,15 +87,15 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         sink.whenOptionEnabled(SHOW_EXCLUDED_PARAMETERS.name) {
             if (excludeListed) {
                 val valueParametersWithNames =
-                    calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return@whenOptionEnabled
+                    session.calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return@whenOptionEnabled
 
-                collectFromParameters(functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
+                collectFromParameters(callElement, functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
             }
         }
 
         if (excludeListed) return
 
-        val valueParametersWithNames = calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return
+        val valueParametersWithNames = session.calculateValueParametersWithNames(functionSymbol, callElement, valueParameters) ?: return
 
         val compiledSource = valueParametersWithNames.any { pair ->
             val psi = pair.first.takeIf { it.origin == KaSymbolOrigin.JAVA_LIBRARY }?.psi ?: return@any false
@@ -100,10 +105,10 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
         if (compiledSource) {
             sink.whenOptionEnabled(SHOW_COMPILED_PARAMETERS.name) {
-                collectFromParameters(functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
+                collectFromParameters(callElement, functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
             }
         } else {
-            collectFromParameters(functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
+            collectFromParameters(callElement, functionCall.argumentMapping, valueParametersWithNames, contextMenuPayloads, sink)
         }
     }
 
@@ -137,14 +142,17 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         return valueParametersWithNames
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun collectFromParameters(
+        callElement: KtCallElement,
         args: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
         valueParametersWithNames: List<Pair<KaValueParameterSymbol, Name?>>,
         contextMenuPayloads: List<InlayPayload>?,
         sink: InlayTreeSink
     ) {
-        for ((symbol, name) in valueParametersWithNames) {
+        val referencedName = (callElement.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
+        for (indexedValue in valueParametersWithNames.withIndex()) {
+            val (symbol, name) = indexedValue.value
             if (name == null) continue
 
             val arg = args.filter { (_, signature) -> signature.symbol == symbol }.keys.firstOrNull() ?: continue
@@ -161,10 +169,20 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 continue
             }
 
-            if (argument.isArgumentNamed(symbol)) continue
+            if (argument.isArgumentNamed(symbol)) {
+                continue
+            }
+
+            // do not show parameter name when it is similar to caller name, e.g. `Call("call =" )`
+            if (indexedValue.index == 0
+                && referencedName != null
+                && isSimilarName(symbol.name.asString(), referencedName)) {
+                continue
+            }
 
             name.takeUnless(Name::isSpecial)?.asString()?.let { stringName ->
                 val element = arg.getParentOfType<KtValueArgument>(true, KtValueArgumentList::class.java) ?: arg
+                if (ParameterNameHintsSuppressor.isSuppressedFor(element.containingKtFile, InlayInfo("", element.startOffset))) continue
                 sink.addPresentation(
                     InlineInlayPosition(element.startOffset, true),
                     payloads = contextMenuPayloads,
@@ -190,12 +208,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val symbolName = symbol.name.asString()
         if (argumentText == symbolName) return true
 
-        if (symbolName.length > 1) {
-            val name = symbolName.lowercase()
-            val lowercase = argumentText.lowercase()
-            // avoid cases like "`type = Type(...)`" and "`value =` myValue"
-            if (lowercase.startsWith(name) || lowercase.endsWith(name)) return true
-        }
+        if (isSimilarName(symbolName, argumentText)) return true
 
         // avoid cases like "/* value = */ value"
         var sibling: PsiElement? = this.prevSibling
@@ -212,9 +225,19 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
 
         return false
     }
+
+    private fun isSimilarName(parameterName: String, otherName: String?): Boolean =
+        if (otherName != null && parameterName.length > 1) {
+            val lowercase = otherName.lowercase()
+            val name = parameterName.lowercase()
+            // avoid cases like "`type = Type(...)`" and "`value =` myValue"
+            lowercase.startsWith(name) || lowercase.endsWith(name)
+        } else {
+            false
+        }
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun isExcludeListed(callableFqName: String, parameterNames: List<String>): Boolean {
     return ParameterHintsExcludeListService.getInstance().isExcluded(
         callableFqName,
@@ -227,7 +250,7 @@ class KtParameterHintsExcludeListConfigProvider : ParameterHintsExcludeListConfi
     override fun getDefaultExcludeList(): Set<String> = setOf(
         "*listOf", "*setOf", "*arrayOf", "*ListOf", "*SetOf", "*ArrayOf", "*assert*(*)", "*mapOf", "*MapOf",
         "kotlin.require*(*)", "kotlin.check*(*)", "*contains*(value)", "*containsKey(key)", "kotlin.lazyOf(value)",
-        "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)",
+        "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)", "kotlin.Triple",
 
         /* Gradle DSL especially annoying hints */
         "org.gradle.api.Project.property(propertyName)",

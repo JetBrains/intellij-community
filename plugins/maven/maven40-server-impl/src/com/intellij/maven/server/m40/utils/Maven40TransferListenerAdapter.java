@@ -8,7 +8,6 @@ import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.transfer.TransferResource;
 import org.jetbrains.idea.maven.server.MavenProcessCanceledRuntimeException;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
-import org.jetbrains.idea.maven.server.MavenServerGlobals;
 
 import java.io.File;
 
@@ -72,7 +71,7 @@ public class Maven40TransferListenerAdapter implements TransferListener {
   @Override
   public void transferSucceeded(TransferEvent event) {
     myIndicator.debug("Finished (" + StringUtilRt.formatFileSize(event.getTransferredBytes()) + ") " + formatResourceName(event));
-    MavenServerGlobals.getDownloadListener().artifactDownloaded(event.getResource().getFile(), event.getResource().getResourceName());
+    myIndicator.artifactDownloaded(event.getResource().getPath().toFile());
   }
 
   @Override

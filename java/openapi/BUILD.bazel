@@ -1,20 +1,20 @@
 ### auto-generated section `build intellij.java` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "java_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "java_resources_1",
-  files = glob(["compatibilityResources/**/*"]),
+  srcs = glob(["compatibilityResources/**/*"]),
   strip_prefix = "compatibilityResources"
 )
 
 jvm_provided_library(
-  name = "java-guiForms-rt_provided",
+  name = "platform_java-guiForms-rt_provided",
   lib = "//platform/forms_rt:java-guiForms-rt"
 )
 
@@ -22,7 +22,11 @@ jvm_library(
   name = "java",
   module_name = "intellij.java",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [
+    ":java_resources",
+    ":java_resources_1",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -36,7 +40,6 @@ jvm_library(
     "//platform/extensions",
     "//platform/icons",
     "//platform/workspace/storage",
-    "//xml/openapi:xml",
     "//platform/platform-api:ide",
     "//platform/lang-api:lang",
     "//platform/vcs-api:vcs",
@@ -52,18 +55,13 @@ jvm_library(
     "//platform/backend/workspace",
     "//xml/xml-psi-api:psi",
     "@lib//:kotlin-stdlib",
-    ":java-guiForms-rt_provided",
+    ":platform_java-guiForms-rt_provided",
   ],
   exports = [
     "//platform/util",
-    "//xml/openapi:xml",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//java/java-analysis-api:analysis",
-  ],
-  runtime_deps = [
-    ":java_resources",
-    ":java_resources_1",
   ]
 )
 ### auto-generated section `build intellij.java` end

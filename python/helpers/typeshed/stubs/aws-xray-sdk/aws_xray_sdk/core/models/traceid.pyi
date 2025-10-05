@@ -1,8 +1,8 @@
-from typing import Any
+from typing import ClassVar
 
 class TraceId:
-    VERSION: str
-    DELIMITER: str
-    start_time: Any
+    VERSION: ClassVar[str]
+    DELIMITER: ClassVar[str]
+    start_time: int
     def __init__(self) -> None: ...
-    def to_id(self): ...
+    def to_id(self) -> str: ...

@@ -13,9 +13,16 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Strings
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelResult.Error
+import com.intellij.platform.eel.EelResult.Ok
+import com.intellij.platform.eel.fs.EelFileInfo
+import com.intellij.platform.eel.fs.stat
+import com.intellij.platform.eel.isMac
 import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.text.nullize
@@ -161,10 +168,29 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
       return "powershell.exe"
     }
     val eelApi = eelDescriptor.toEelApi()
-    return eelApi.exec.fetchLoginShellEnvVariables()["SHELL"] ?: when (eelApi.platform) {
-      is EelPlatform.Darwin -> "/bin/zsh"
-      is EelPlatform.Linux -> "/bin/bash"
-      else -> "/bin/sh"
+    val envs = if (eelDescriptor == LocalEelDescriptor) System.getenv() else eelApi.exec.fetchLoginShellEnvVariables()
+    val candidates = listOfNotNull(
+      envs["SHELL"],
+      "/bin/zsh".takeIf { eelApi.platform.isMac },
+      "/bin/bash"
+    ).distinct()
+    return candidates.firstOrNull { isFile(it, eelApi) } ?: "/bin/sh"
+  }
+
+  /**
+   * Tests whether a file is a regular file, symlinks are followed.
+   * Similar to `Files.isRegularFile(Path.of(absoluteFilePath))`.
+   */
+  private suspend fun isFile(absoluteFilePath: String, eelApi: EelApi): Boolean {
+    val path = try {
+      EelPath.parse(absoluteFilePath, eelApi.descriptor)
+    }
+    catch (_: EelPathException) {
+      return false
+    }
+    return when (val result = eelApi.fs.stat(path).resolveAndFollow().eelIt()) {
+      is Ok -> result.value.type is EelFileInfo.Type.Regular
+      is Error -> false
     }
   }
 

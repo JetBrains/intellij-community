@@ -70,17 +70,18 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import socket
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout, IPPROTO_TCP
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, \
     IS_PY2, IS_PY3K, \
     IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, \
     GlobalDebuggerHolder, \
-    get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR
+    get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR, IS_WINDOWS
 from _pydev_bundle.pydev_override import overrides
 import json
 import weakref
 
 from _pydevd_bundle.pydevd_daemon_thread import PyDBDaemonThread
+
 try:
     from urllib import quote_plus, unquote, unquote_plus
 except:
@@ -184,51 +185,40 @@ def pydevd_log(level, *args):
             pass
 
 
-#------------------------------------------------------------------- ACTUAL COMM
-
 #=======================================================================================================================
 # ReaderThread
 #=======================================================================================================================
 class ReaderThread(PyDBDaemonThread):
     """ reader thread reads and dispatches commands in an infinite loop """
-
-    def __init__(self, sock, py_db, terminate_on_socket_close=True):
-        assert sock is not None
+    def __init__(self, sock, py_db):
         PyDBDaemonThread.__init__(self, py_db)
-        self.__terminate_on_socket_close = terminate_on_socket_close
         self.sock = sock
         self.name = "pydevd.Reader"
         from _pydevd_bundle.pydevd_process_net_command import process_net_command
         self.process_net_command = process_net_command
 
     def do_kill_pydev_thread(self):
-        #We must close the socket so that it doesn't stay halted there.
         PyDBDaemonThread.do_kill_pydev_thread(self)
+        #We must close the socket so that it doesn't stay halted there.
+
         try:
-            self.sock.shutdown(SHUT_RD) #shutdown the socket for read
+           self.sock.shutdown(SHUT_RD)
         except:
-            #just ignore that
-            pass
+           pass
+        try:
+           self.sock.close()
+        except:
+           pass
 
     @overrides(PyDBDaemonThread._on_run)
     def _on_run(self):
         read_buffer = ""
         try:
-            while True:
+            while not self._kill_received:
                 try:
                     r = self.sock.recv(1024)
-
-                    if len(r) == 0:
-                        pydev_log.debug("ReaderThread: empty contents received (len(r) == 0).")
-                        self._terminate_on_socket_close()
-                        return  # Finished communication.
-
-                    if self._kill_received:
-                        continue
                 except OSError:
-                    if not self._kill_received:
-                        self._terminate_on_socket_close()
-                    return #Finished communication.
+                    return
                 except:
                     if not self._kill_received:
                         traceback.print_exc()
@@ -243,7 +233,7 @@ class ReaderThread(PyDBDaemonThread):
 
                 read_buffer += r
                 if DebugInfoHolder.DEBUG_RECORD_SOCKET_READS:
-                    sys.stderr.write('debugger: received >>%s<<\n' % (read_buffer,))
+                    sys.stderr.write(u'debugger: received >>%s<<\n' % (read_buffer,))
                     sys.stderr.flush()
 
                 if len(read_buffer) == 0:
@@ -265,10 +255,11 @@ class ReaderThread(PyDBDaemonThread):
         except:
             traceback.print_exc()
             self._terminate_on_socket_close()
+        finally:
+            pydev_log.debug("ReaderThread: exit")
 
     def _terminate_on_socket_close(self):
-        if self.__terminate_on_socket_close:
-            self.py_db.dispose_and_kill_all_pydevd_threads()
+        self.py_db.dispose_and_kill_all_pydevd_threads()
 
     def process_command(self, cmd_id, seq, text):
         self.process_net_command(self.py_db, cmd_id, seq, text)
@@ -280,12 +271,11 @@ class ReaderThread(PyDBDaemonThread):
 #=======================================================================================================================
 class WriterThread(PyDBDaemonThread):
     """ writer thread writes out the commands in an infinite loop """
-    def __init__(self, sock, py_db, terminate_on_socket_close=True):
+    def __init__(self, sock, py_db):
         PyDBDaemonThread.__init__(self, py_db)
         self.sock = sock
-        self.__terminate_on_socket_close = terminate_on_socket_close
         self.name = "pydevd.Writer"
-        self._cmd_queue = _queue.Queue()
+        self.cmdQueue = _queue.Queue()
         if pydevd_vm_type.get_vm_type() == 'python':
             self.timeout = 0
         else:
@@ -294,22 +284,25 @@ class WriterThread(PyDBDaemonThread):
     def add_command(self, cmd):
         """ cmd is NetCommand """
         if not self._kill_received: #we don't take new data after everybody die
-            self._cmd_queue.put(cmd, False)
+            self.cmdQueue.put(cmd)
 
     @overrides(PyDBDaemonThread._on_run)
     def _on_run(self):
         """ just loop and write responses """
-
         try:
             while True:
                 try:
                     try:
-                        cmd = self._cmd_queue.get(True, 0.1)
+                        cmd = self.cmdQueue.get(True, 0.1)
                     except _queue.Empty:
                         if self._kill_received:
                             pydev_log.debug("WriterThread: kill_received (sock.shutdown(SHUT_WR))")
                             try:
                                 self.sock.shutdown(SHUT_WR)
+                            except:
+                                pass
+
+                            try:
                                 self.sock.close()
                             except:
                                 pass
@@ -325,22 +318,21 @@ class WriterThread(PyDBDaemonThread):
                 cmd.send(self.sock)
 
                 if cmd.id == CMD_EXIT:
-                    pydev_log.debug("WriterThread: CMD_EXIT received")
                     break
                 if time is None:
-                    break  # interpreter shutdown
+                    break #interpreter shutdown
                 time.sleep(self.timeout)
         except Exception:
-            if self.__terminate_on_socket_close:
-                self.py_db.dispose_and_kill_all_pydevd_threads()
-                if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 0:
-                    traceback.print_exc()
+            self.py_db.dispose_and_kill_all_pydevd_threads()
+            if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 0:
+                traceback.print_exc()
         finally:
             pydev_log.debug("WriterThread: exit")
 
     def empty(self):
-        return self._cmd_queue.empty()
+        return self.cmdQueue.empty()
 
+    @overrides(PyDBDaemonThread.do_kill_pydev_thread)
     def do_kill_pydev_thread(self):
         if not self._kill_received:
             # Add command before setting the kill flag (otherwise the command may not be added).
@@ -349,50 +341,68 @@ class WriterThread(PyDBDaemonThread):
 
         PyDBDaemonThread.do_kill_pydev_thread(self)
 
-
-
 #--------------------------------------------------- CREATING THE SOCKET THREADS
 
 #=======================================================================================================================
 # start_server
 #=======================================================================================================================
 def create_server_socket(host, port):
-    s = socket(AF_INET, SOCK_STREAM)
-    s.settimeout(None)
-
     try:
-        from socket import SO_REUSEPORT
-        s.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
-    except ImportError:
-        s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
+        if IS_WINDOWS:
+            try:
+                from socket import SO_EXCLUSIVEADDRUSE
+                server.setsockopt(SOL_SOCKET, SO_EXCLUSIVEADDRUSE, 1)
+            except ImportError:
+                server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        else:
+            try:
+                from socket import SO_REUSEPORT
+                server.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+            except ImportError:
+                server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 
-    s.bind(('', port))
-    pydevd_log(1, "Bound to port ", str(port))
+        server.bind((host, port))
+        server.settimeout(None)
+    except Exception:
+        server.close()
+        raise
 
-    return s
+    return server
+
+
 
 def start_server(port):
     """ binds to a port, waits for the debugger to connect """
-    s = create_server_socket(host="", port=port)
+    s = create_server_socket('', port)
 
     try:
         s.listen(1)
-        newSock, _addr = s.accept()
-        pydevd_log(1, "Connection accepted")
+        # Let the user know it's halted waiting for the connection.
+        host, port = s.getsockname()
+        msg = "pydevd: waiting for connection at: %host:%port%".format(host=host, port=port)
+        pydev_log.info(msg)
+
+        new_socket, _addr = s.accept()
+        pydev_log.info("Connection accepted")
         # closing server socket is not necessary but we don't need it
         try:
             s.shutdown(SHUT_RDWR)
         except:
             pass
-        finally:
+        try:
             s.close()
-        return newSock
+        except:
+            pass
+
+        return new_socket
 
     except:
         sys.stderr.write("Could not bind to port: %s\n" % (port,))
         sys.stderr.flush()
         traceback.print_exc()
         raise
+
 
 #=======================================================================================================================
 # start_client
@@ -412,19 +422,27 @@ def start_client(host, port):
     #  then sends a keepalive ping once every 3 seconds (TCP_KEEPINTVL),
     #  and closes the connection after 5 failed ping (TCP_KEEPCNT), or 15 seconds
     try:
-        from socket import IPPROTO_TCP, SO_KEEPALIVE, TCP_KEEPIDLE, TCP_KEEPINTVL, TCP_KEEPCNT
-        s.setsockopt(SOL_SOCKET, SO_KEEPALIVE, 1)
-        s.setsockopt(IPPROTO_TCP, TCP_KEEPIDLE, 1)
-        s.setsockopt(IPPROTO_TCP, TCP_KEEPINTVL, 3)
-        s.setsockopt(IPPROTO_TCP, TCP_KEEPCNT, 5)
-    except ImportError:
+        s.setsockopt(SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+    except (AttributeError, OSError):
+        pass  # May not be available everywhere.
+    try:
+        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 1)
+    except (AttributeError, OSError):
+        pass  # May not be available everywhere.
+    try:
+        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 3)
+    except (AttributeError, OSError):
+        pass  # May not be available everywhere.
+    try:
+        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 5)
+    except (AttributeError, OSError):
         pass  # May not be available everywhere.
 
     try:
         s.settimeout(10)  # 10 seconds timeout
         s.connect((host, port))
         s.settimeout(None)  # no timeout after connected
-        pydevd_log(1, "Connected.")
+        pydev_log.info("Connected to: {socket}.".format(socket=s))
         return s
     except:
         sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
@@ -504,8 +522,9 @@ class NetCommand:
             sock.sendall(('Content-Length: %s\r\n\r\n' % len(as_bytes)).encode('ascii'))
         try:
             sock.sendall(as_bytes)
-        except Exception as e:
-            print("Connection closed unexpectedly!")
+        except OSError as e:
+            if not IS_PY2 and isinstance(e, ConnectionError):
+                print("Connection error: %s" % (e,))
 
     @classmethod
     def _show_debug_info(cls, cmd_id, seq, text):
@@ -991,7 +1010,7 @@ INTERNAL_SUSPEND_THREAD = 2
 #=======================================================================================================================
 # InternalThreadCommand
 #=======================================================================================================================
-class InternalThreadCommand(object):
+class InternalThreadCommand:
     """ internal commands are generated/executed by the debugger.
 
     The reason for their existence is that some commands have to be executed
@@ -1003,9 +1022,8 @@ class InternalThreadCommand(object):
         self.thread_id = thread_id
 
     def can_be_executed_by(self, thread_id):
-        """
-        By default, it must be in the same thread to be executed
-        """
+        '''By default, it must be in the same thread to be executed
+        '''
         return self.thread_id == thread_id or self.thread_id.endswith('|' + thread_id)
 
     def do_it(self, dbg):
@@ -1014,7 +1032,6 @@ class InternalThreadCommand(object):
 
 class ReloadCodeCommand(InternalThreadCommand):
     def __init__(self, module_name, thread_id):
-        InternalThreadCommand.__init__(self, thread_id)
         self.thread_id = thread_id
         self.module_name = module_name
         self.executed = False
@@ -1124,7 +1141,6 @@ class InternalRunThread(InternalThreadCommand):
 #=======================================================================================================================
 class InternalStepThread(InternalThreadCommand):
     def __init__(self, thread_id, cmd_id):
-        InternalThreadCommand.__init__(self, thread_id)
         self.thread_id = thread_id
         self.cmd_id = cmd_id
 
@@ -1140,7 +1156,6 @@ class InternalStepThread(InternalThreadCommand):
 #=======================================================================================================================
 class InternalSetNextStatementThread(InternalThreadCommand):
     def __init__(self, thread_id, cmd_id, line, func_name, seq=0):
-        InternalThreadCommand.__init__(self, thread_id)
         self.thread_id = thread_id
         self.cmd_id = cmd_id
         self.line = line
@@ -1165,7 +1180,6 @@ class InternalSetNextStatementThread(InternalThreadCommand):
 
 class InternalSmartStepInto(InternalThreadCommand):
     def __init__(self, thread_id, frame_id, cmd_id, func_name, line, call_order, start_line, end_line, seq=0):
-        InternalThreadCommand.__init__(self, thread_id)
         self.thread_id = thread_id
         self.cmd_id = cmd_id
         self.line = line
@@ -1200,7 +1214,6 @@ class InternalSmartStepInto(InternalThreadCommand):
 class InternalGetVariable(InternalThreadCommand):
     """ gets the value of a variable """
     def __init__(self, seq, thread_id, frame_id, scope, attrs):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1242,7 +1255,6 @@ class InternalGetVariable(InternalThreadCommand):
 #=======================================================================================================================
 class InternalGetArray(InternalThreadCommand):
     def __init__(self, seq, roffset, coffset, rows, cols, format, thread_id, frame_id, scope, attrs):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1272,7 +1284,6 @@ class InternalGetArray(InternalThreadCommand):
 #=======================================================================================================================
 class InternalDataViewerAction(InternalThreadCommand):
     def __init__(self, sequence, thread_id, frame_id, var, action, args):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = sequence
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1448,7 +1459,6 @@ class InternalTableImageChunkCommand(InternalTableImageCommandBase):
 class InternalChangeVariable(InternalThreadCommand):
     """ changes the value of a variable """
     def __init__(self, seq, thread_id, frame_id, scope, attr, expression):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1476,7 +1486,6 @@ class InternalChangeVariable(InternalThreadCommand):
 class InternalGetFrame(InternalThreadCommand):
     """ gets the value of a variable """
     def __init__(self, seq, thread_id, frame_id, group_type):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1506,7 +1515,6 @@ class InternalGetFrame(InternalThreadCommand):
 
 class InternalGetSmartStepIntoVariants(InternalThreadCommand):
     def __init__(self, seq, thread_id, frame_id, start_line, end_line):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1547,7 +1555,6 @@ class InternalGetSmartStepIntoVariants(InternalThreadCommand):
 class InternalGetNextStatementTargets(InternalThreadCommand):
     """ gets the valid line numbers for use with set next statement """
     def __init__(self, seq, thread_id, frame_id):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1589,7 +1596,6 @@ class InternalEvaluateExpression(InternalThreadCommand):
     """ gets the value of a variable """
 
     def __init__(self, seq, thread_id, frame_id, expression, doExec, doTrim, temp_name):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1621,7 +1627,6 @@ class InternalGetCompletions(InternalThreadCommand):
     """ Gets the completions in a given scope """
 
     def __init__(self, seq, thread_id, frame_id, act_tok):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1665,7 +1670,6 @@ class InternalGetDescription(InternalThreadCommand):
     """
 
     def __init__(self, seq, thread_id, frame_id, expression):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1693,7 +1697,6 @@ class InternalGetDescription(InternalThreadCommand):
 class InternalGetBreakpointException(InternalThreadCommand):
     """ Send details of exception raised while evaluating conditional breakpoint """
     def __init__(self, thread_id, exc_type, stacktrace):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = 0
         self.thread_id = thread_id
         self.stacktrace = stacktrace
@@ -1734,7 +1737,6 @@ class InternalSendCurrExceptionTrace(InternalThreadCommand):
         '''
         :param arg: exception type, description, traceback object
         '''
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = 0
         self.thread_id = thread_id
         self.curr_frame_id = curr_frame_id
@@ -1758,7 +1760,6 @@ class InternalSendCurrExceptionTraceProceeded(InternalThreadCommand):
     """ Send details of the exception that was caught and where we've broken in.
     """
     def __init__(self, thread_id):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = 0
         self.thread_id = thread_id
 
@@ -1780,7 +1781,6 @@ class InternalEvaluateConsoleExpression(InternalThreadCommand):
     """ Execute the given command in the debug console """
 
     def __init__(self, seq, thread_id, frame_id, line, buffer_output=True):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1823,7 +1823,6 @@ class InternalRunCustomOperation(InternalThreadCommand):
     """ Run a custom command on an expression
     """
     def __init__(self, seq, thread_id, frame_id, scope, attrs, style, encoded_code_or_file, fnname):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1853,7 +1852,6 @@ class InternalConsoleGetCompletions(InternalThreadCommand):
     """ Fetch the completions in the debug console
     """
     def __init__(self, seq, thread_id, frame_id, act_tok):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1880,7 +1878,6 @@ class InternalConsoleExec(InternalThreadCommand):
     """ gets the value of a variable """
 
     def __init__(self, seq, thread_id, frame_id, expression):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1925,7 +1922,6 @@ class InternalLoadFullValue(InternalThreadCommand):
     Loads values asynchronously
     """
     def __init__(self, seq, thread_id, frame_id, vars):
-        InternalThreadCommand.__init__(self, thread_id)
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
@@ -1963,7 +1959,7 @@ class AbstractGetValueAsyncThread(PyDBDaemonThread):
     Abstract class for a thread, which evaluates values for async variables
     """
     def __init__(self, frame_accessor, seq, var_objects, user_type_renderers=None):
-        PyDBDaemonThread.__init__(self, frame_accessor)
+        PyDBDaemonThread.__init__(self)
         self.frame_accessor = frame_accessor
         self.seq = seq
         self.var_objs = var_objects

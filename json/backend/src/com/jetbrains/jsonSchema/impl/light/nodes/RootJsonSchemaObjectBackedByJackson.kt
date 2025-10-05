@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light.nodes
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -98,7 +98,7 @@ class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schemaFile: Vi
   private fun <T : Any> indexSchema(root: JsonNode, parentPointer: List<String> = emptyList(), retrieveDataFromNode: (JsonNode, List<String>) -> T?): Sequence<T> {
     return when {
       root.isObject -> {
-        root.fields().asSequence().flatMap { (name, objectField) ->
+        root.properties().asSequence().flatMap { (name, objectField) ->
           val retrievedValue = retrieveDataFromNode(root, parentPointer)
           if (retrievedValue != null) return@flatMap sequenceOf(retrievedValue)
 

@@ -6,6 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
@@ -93,7 +95,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         else -> null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.receiverSymbol(): KaSymbol? {
         when (val receiverExpression = (this as? KtDotQualifiedExpression)?.receiverExpression) {
             is KtThisExpression -> return receiverExpression.instanceReference.mainReference.resolveToSymbol()
@@ -103,7 +105,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         return getImplicitReceiverSymbolIfExists()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.getImplicitReceiverSymbolIfExists(): KaSymbol? {
         val implicitReceiver = this.resolveToCall()?.singleVariableAccessCall()?.partiallyAppliedSymbol?.let {
             it.dispatchReceiver ?: it.extensionReceiver

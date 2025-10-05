@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 internal class RenameCompilerPluginDeclarationByReferenceHandler : AbstractForbidRenamingSymbolByReferenceHandler() {
-    context(KaSession)
+    context(_: KaSession)
     override fun shouldForbidRenaming(symbol: KaSymbol): Boolean {
         return symbol.origin == KaSymbolOrigin.PLUGIN
     }

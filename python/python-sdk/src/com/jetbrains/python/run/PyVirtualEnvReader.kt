@@ -3,16 +3,15 @@ package com.jetbrains.python.run
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.EnvReader
 import com.intellij.util.EnvironmentUtil
+import com.intellij.util.ShellEnvironmentReader
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 
-internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : EnvReader() {
+internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) {
   companion object {
     private val LOG = Logger.getInstance(PyVirtualEnvReader::class.java)
 
@@ -29,50 +28,36 @@ internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : EnvRe
     }
   }
 
-  // in case of Conda we need to pass an argument to an activate script that tells which exactly environment to activate
-  val activate: Pair<String, String?>? = findActivateScript(virtualEnvSdkPath, shell)
-
-  override fun getShell(): String? {
-    return when {
+  private val shell: String? by lazy {
+    when {
       Files.exists(Path.of("/bin/bash")) -> "/bin/bash"
       Files.exists(Path.of("/bin/sh")) -> "/bin/sh"
-      else -> super.getShell()
+      else -> System.getenv("SHELL")
     }
   }
+
+  // in case of Conda we need to pass an argument to the activation script telling which environment to activate
+  val activate: Pair<String, String?>? = findActivateScript(virtualEnvSdkPath, shell)
 
   fun readPythonEnv(): MutableMap<String, String> {
     try {
       if (SystemInfo.isUnix) {
+        val command = ShellEnvironmentReader.shellCommand(shell, activate?.first?.let { Path.of(it) }, activate?.second?.let { listOf(it) })
         // pass shell environment for correct virtualenv environment setup (virtualenv expects to be executed from the terminal)
-        return super.readShellEnv(null, EnvironmentUtil.getEnvironmentMap())
+        command.environment().putAll(EnvironmentUtil.getEnvironmentMap())
+        return ShellEnvironmentReader.readEnvironment(command, 0).first
       }
-      else {
-        if (activate != null) {
-          return readBatEnv(Paths.get(activate.first), listOfNotNull(activate.second))
-        }
-        else {
-          LOG.error("Can't find activate script for $virtualEnvSdkPath")
-        }
+      if (activate != null) {
+        val command = ShellEnvironmentReader.winShellCommand(Path.of(activate.first), listOfNotNull(activate.second))
+        return ShellEnvironmentReader.readEnvironment(command, 0).first
       }
+      LOG.error("Can't find activate script for $virtualEnvSdkPath")
     }
     catch (e: Exception) {
       LOG.warn("Couldn't read shell environment: ${e.message}")
     }
 
     return mutableMapOf()
-  }
-
-  override fun getShellProcessCommand(): MutableList<String> {
-    val shellPath = shell
-    if (shellPath == null || !File(shellPath).canExecute()) {
-      throw RuntimeException("shell:$shellPath")
-    }
-
-    return if (activate != null) {
-      val activateArg = if (activate.second != null) "'${activate.first}' '${activate.second}'" else "'${activate.first}'"
-      mutableListOf(shellPath, "-c", ". $activateArg")
-    }
-    else super.getShellProcessCommand()
   }
 }
 

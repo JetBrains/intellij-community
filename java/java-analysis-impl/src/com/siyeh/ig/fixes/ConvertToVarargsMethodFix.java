@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -56,7 +57,10 @@ public class ConvertToVarargsMethodFix extends PsiUpdateModCommandQuickFix {
     final PsiTypeElement newTypeElement = factory.createTypeElement(ellipsisType);
     final PsiTypeElement typeElement = lastParameter.getTypeElement();
     if (typeElement != null) {
-      typeElement.replace(newTypeElement);
+      CommentTracker ct = new CommentTracker();
+      ct.grabComments(typeElement);
+      PsiElement result = typeElement.replace(newTypeElement);
+      ct.insertCommentsBefore(result.getLastChild()); // Swap comments, example: String /* Foo */ [] -> String/* Foo */...
     }
   }
 

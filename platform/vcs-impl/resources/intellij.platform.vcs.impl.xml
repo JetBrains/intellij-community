@@ -1,11 +1,15 @@
 <!--suppress PluginXmlDynamicPlugin -->
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.vcs"/>
 
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.platform.vcs.impl.shared"/>
+    <module name="intellij.platform.vcs.shared"/>
+    <module name="intellij.platform.vcs"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.kernel.backend"/>
   </dependencies>
 
   <xi:include href="/META-INF/VcsExtensionPoints.xml"/>

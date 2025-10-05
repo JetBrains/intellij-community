@@ -70,7 +70,7 @@ import java.util.*
 
 class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamedDeclaration>(
     KtNamedDeclaration::class.java,
-    KotlinBundle.lazyMessage("move.to.companion.object")
+    KotlinBundle.messagePointer("move.to.companion.object")
 ) {
     override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
         if (element !is KtNamedFunction && element !is KtProperty && element !is KtClassOrObject) return null

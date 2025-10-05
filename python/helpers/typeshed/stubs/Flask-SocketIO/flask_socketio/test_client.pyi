@@ -1,9 +1,10 @@
 from _typeshed import Incomplete
-from typing import Any, TypedDict
+from typing import Any, TypedDict, type_check_only
 
 from flask import Flask
 from flask.testing import FlaskClient
 
+@type_check_only
 class _Packet(TypedDict):
     name: str
     args: Any
@@ -29,7 +30,7 @@ class SocketIOTestClient:
         auth: dict[str, Incomplete] | None = None,
     ) -> None: ...
     def disconnect(self, namespace: str | None = None) -> None: ...
-    def emit(self, event: str, *args, callback: bool = True, namespace: str | None = None) -> Incomplete | None: ...
+    def emit(self, event: str, *args, callback: bool = False, namespace: str | None = None) -> Incomplete | None: ...
     def send(
         self,
         data: str | dict[str, Incomplete] | list[Incomplete],

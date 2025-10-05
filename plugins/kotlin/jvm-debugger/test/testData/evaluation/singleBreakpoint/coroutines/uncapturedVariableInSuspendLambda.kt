@@ -1,6 +1,6 @@
 package uncapturedVariableInSuspendLambda
 
-// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2)
+// ATTACH_LIBRARY_BY_LABEL: classes(@kotlin_test_deps//:kotlinx-coroutines-core-1.4.2.jar)
 
 import kotlinx.coroutines.runBlocking
 

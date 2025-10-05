@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.java.workspace.entities.JavaProjectSettingsEntity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -9,14 +12,24 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.WatchedRootsProvider;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -25,9 +38,18 @@ import java.util.Set;
 final class CompilerProjectExtensionImpl extends CompilerProjectExtension implements Disposable {
   private static final String OUTPUT_TAG = "output";
   private static final String URL = "url";
+  private static final Logger LOG = Logger.getInstance(CompilerProjectExtensionImpl.class);
 
+  // This field is not used when useWsm set to `true`
   private VirtualFilePointer myCompilerOutput;
+
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
+  private final Project project;
+  private final boolean useWsm = Registry.is("project.root.manager.over.wsm", true);
+
+  CompilerProjectExtensionImpl(@NotNull Project project) {
+    this.project = project;
+  }
 
   /**
    * Returns true if the compiler output was changed after read
@@ -60,32 +82,107 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     myCompilerOutput = null;
   }
 
+  private @Nullable VirtualFileUrl getCompilerOutputWSM() {
+    LOG.assertTrue(useWsm, "This code does should not be used when project.root.manager.over.wsm is false");
+    JavaProjectSettingsEntity entity = JavaEntitiesWsmUtils.getSingleEntity(WorkspaceModel.getInstance(project).getCurrentSnapshot(), JavaProjectSettingsEntity.class);
+    return entity != null ? entity.getCompilerOutput() : null;
+  }
+
+  @RequiresWriteLock
+  private void setCompilerOutputWSM(@Nullable String fileUrl) {
+    LOG.assertTrue(useWsm, "This code does should not be used when project.root.manager.over.wsm is false");
+    ThreadingAssertions.assertWriteAccess();
+
+    WorkspaceModel workspaceModel = WorkspaceModel.getInstance(project);
+    VirtualFileUrlManager vfum = workspaceModel.getVirtualFileUrlManager();
+    workspaceModel.updateProjectModel("setCompilerOutputWSM", mutableStorage -> {
+      JavaEntitiesWsmUtils.addOrModifyJavaProjectSettingsEntity(project, mutableStorage, entity -> {
+        VirtualFileUrl vfu = fileUrl != null ? vfum.getOrCreateFromUrl(fileUrl) : null;
+        entity.setCompilerOutput(vfu);
+      });
+      return Unit.INSTANCE;
+    });
+  }
+
   @Override
   public VirtualFile getCompilerOutput() {
-    return myCompilerOutput != null ? myCompilerOutput.getFile() : null;
+    if (useWsm) {
+      VirtualFileUrl fileUrl = getCompilerOutputWSM();
+      return fileUrl != null ? VirtualFileUrls.getVirtualFile(fileUrl) : null;
+    }
+    else {
+      return myCompilerOutput != null ? myCompilerOutput.getFile() : null;
+    }
   }
 
   @Override
   public String getCompilerOutputUrl() {
-    return myCompilerOutput != null ? myCompilerOutput.getUrl() : null;
+    if (useWsm) {
+      VirtualFileUrl fileUrl = getCompilerOutputWSM();
+      return fileUrl != null ? fileUrl.getUrl() : null;
+    }
+    else {
+      return myCompilerOutput != null ? myCompilerOutput.getUrl() : null;
+    }
   }
 
   @Override
-  public VirtualFilePointer getCompilerOutputPointer() {
-    return myCompilerOutput;
+  public @Nullable VirtualFilePointer getCompilerOutputPointer() {
+    if (useWsm) {
+      VirtualFileUrl fileUrl = getCompilerOutputWSM();
+      if (fileUrl == null) {
+        return null;
+      }
+      else if (fileUrl instanceof VirtualFilePointer virtualFilePointer) {
+        return virtualFilePointer;
+      }
+      else {
+        return new LightFilePointer(fileUrl.getUrl());
+      }
+    }
+    else {
+      return myCompilerOutput;
+    }
   }
 
   @Override
-  public void setCompilerOutputPointer(VirtualFilePointer pointer) {
-    myCompilerOutput = pointer;
+  @RequiresWriteLock(generateAssertion = false)
+  public void setCompilerOutputPointer(@Nullable VirtualFilePointer pointer) {
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
+                   "Compiler outputs may only be updated under write action. " +
+                   "This method is deprecated. Please consider using `setCompilerOutputUrl` instead.");
+
+    if (useWsm) {
+      setCompilerOutputWSM(pointer != null ? pointer.getUrl() : null);
+    }
+    else {
+      myCompilerOutput = pointer;
+    }
   }
 
   @Override
-  public void setCompilerOutputUrl(String compilerOutputUrl) {
-    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, this, null);
-    setCompilerOutputPointer(pointer);
-    String path = VfsUtilCore.urlToPath(compilerOutputUrl);
-    myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
+  @RequiresWriteLock(generateAssertion = false)
+  public void setCompilerOutputUrl(@Nullable String compilerOutputUrl) {
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed(),
+                   "Compiler outputs may only be updated under write action. " +
+                   "Please acquire write action before invoking setCompilerOutputUrl.");
+
+    if (compilerOutputUrl == null) {
+      setCompilerOutputPointer(null);
+    }
+    else {
+      // TODO ANK (Maybe): maybe we should remove old compilerOutputUrl from watched roots? (keep in mind that there might be
+      //  some other code which has added exactly the same root to the watch roots)
+      if (useWsm) {
+        setCompilerOutputWSM(compilerOutputUrl);
+      }
+      else {
+        VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, this, null);
+        setCompilerOutputPointer(pointer);
+      }
+      String path = VfsUtilCore.urlToPath(compilerOutputUrl);
+      myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
+    }
   }
 
   private static Set<String> getRootsToWatch(Project project) {

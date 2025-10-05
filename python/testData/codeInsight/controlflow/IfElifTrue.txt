@@ -18,14 +18,15 @@
 17(18) element: null. Condition: d:true
 18(19) ASSERTTYPE ACCESS: d
 19(20) element: PyStatementList
-20(30) element: PyPassStatement
+20(31) element: PyPassStatement
 21(22,23) READ ACCESS: True
-22() element: null. Condition: True:false
+22(27) element: null. Condition: True:false
 23(24) element: null. Condition: True:true
 24(25) ASSERTTYPE ACCESS: True
 25(26) element: PyStatementList
-26(30) element: PyPassStatement
-27(28) element: PyStatementList
-28(29) element: PyAssignmentStatement
-29(30) WRITE ACCESS: e
-30() element: null
+26(31) element: PyPassStatement
+27(28) ASSERTTYPE ACCESS: null
+28(29) element: PyStatementList
+29(30) element: PyAssignmentStatement
+30(31) WRITE ACCESS: e
+31() element: null

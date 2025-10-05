@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
@@ -22,12 +23,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Restarter;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction implements A
   private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix && !SystemInfo.isMac && !ExternalUpdateManager.isCreatingDesktopEntries() && SystemInfo.hasXdgOpen();
+    return OS.isGenericUnix() &&!ExternalUpdateManager.isCreatingDesktopEntries() && PathEnvironmentVariableUtil.isOnPath("xdg-desktop-menu");
   }
 
   @Override

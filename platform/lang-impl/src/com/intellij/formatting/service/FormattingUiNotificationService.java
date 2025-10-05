@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -32,22 +33,20 @@ final class FormattingUiNotificationService implements FormattingNotificationSer
 
   @Override
   public void reportError(@NotNull String groupId,
-                          @NotNull @NlsContexts.NotificationTitle String title,
-                          @NotNull @NlsContexts.NotificationContent String message) {
-    Notifications.Bus.notify(new Notification(groupId, title, message, NotificationType.ERROR), myProject);
-  }
-
-  @Override
-  public void reportError(@NotNull String groupId,
+                          @Nullable String displayId,
                           @NotNull @NlsContexts.NotificationTitle String title,
                           @NotNull @NlsContexts.NotificationContent String message, AnAction... actions) {
     Notification notification = new Notification(groupId, title, message, NotificationType.ERROR);
+    if (displayId != null) {
+      notification.setDisplayId(displayId);
+    }
     notification.addActions(List.of(actions));
     Notifications.Bus.notify(notification, myProject);
   }
 
   @Override
   public void reportErrorAndNavigate(@NotNull String groupId,
+                                     @Nullable String displayId,
                                      @NotNull String title,
                                      @NotNull String message,
                                      @NotNull FormattingContext context,
@@ -58,21 +57,19 @@ final class FormattingUiNotificationService implements FormattingNotificationSer
         () -> {
           FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(virtualFile);
           if (editors.length > 0) {
-            reportError(groupId, title, message);
+            reportError(groupId, displayId, title, message);
             FileEditor textEditor = ContainerUtil.find(editors, editor -> editor instanceof TextEditor);
             if (textEditor != null) {
               navigateToFile(virtualFile, offset);
             }
           }
           else {
-            Notification notification = new Notification(groupId, title, message, NotificationType.ERROR);
-            notification.addAction(new DumbAwareAction(CodeStyleBundle.message("formatting.service.open.file", virtualFile.getName())) {
+            reportError(groupId, displayId, title, message, new DumbAwareAction(CodeStyleBundle.message("formatting.service.open.file", virtualFile.getName())) {
               @Override
               public void actionPerformed(@NotNull AnActionEvent e) {
                 navigateToFile(virtualFile, offset);
               }
             });
-            Notifications.Bus.notify(notification, myProject);
           }
         }
       );

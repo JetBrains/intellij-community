@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.j2k.Nullability.*
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.nj2k.NullabilityInfo
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
+import org.jetbrains.kotlin.nj2k.NullabilityInfo
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol
@@ -25,7 +25,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
 
     fun fromPsiType(type: PsiType): JKType = createFromPsiType(type)
 
-    context(KaSession)
+    context(_: KaSession)
     fun fromKaType(type: KaType): JKType = createFromKaType(type)
 
     inner class DefaultTypes {
@@ -153,7 +153,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         return nullability
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createFromKaType(type: KaType): JKType {
         return when (type) {
             is KaTypeParameterType -> {

@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.platform.testFramework.junit5.codeInsight` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "codeInsight",
+  module_name = "intellij.platform.testFramework.junit5.codeInsight",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  deps = [
+    "//platform/testFramework",
+    "//platform/testFramework/junit5",
+    "//platform/core-api:core",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.junit5.codeInsight` end

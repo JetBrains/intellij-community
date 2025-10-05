@@ -38,8 +38,7 @@ class ProblemNode(parent: Node, val file: VirtualFile, override val problem: Pro
 
   override fun getSeverity(): Int = severity
 
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   var context: CodeInsightContext? = null
     private set
 

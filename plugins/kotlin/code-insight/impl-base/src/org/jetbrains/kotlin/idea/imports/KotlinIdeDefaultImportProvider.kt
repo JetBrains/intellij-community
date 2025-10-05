@@ -4,8 +4,11 @@ package org.jetbrains.kotlin.idea.imports
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.imports.KaDefaultImport
+import org.jetbrains.kotlin.analysis.api.imports.KaDefaultImportPriority
+import org.jetbrains.kotlin.analysis.api.imports.KaDefaultImports
+import org.jetbrains.kotlin.analysis.api.imports.KaDefaultImportsProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -22,14 +25,19 @@ class KotlinIdeDefaultImportProvider {
     }
 
     fun isImportedWithLowPriorityDefaultImport(importPath: ImportPath, contextFile: KtFile): Boolean {
-        val analyzerServices = contextFile.platform.findAnalyzerServices(contextFile.project)
+        val defaultImports = KaDefaultImportsProvider.getService(contextFile.project).getDefaultImports(contextFile.platform)
 
-        return importPath.isImported(analyzerServices.defaultLowPriorityImports, analyzerServices.excludedImports)
+        val defaultLowPriorityImports = defaultImports.defaultLowPriorityImports.map { it.importPath }
+        val excludedImports = defaultImports.excludedFromDefaultImports.map { it.fqName }
+
+        return importPath.isImported(defaultLowPriorityImports, excludedImports)
     }
 
     fun computeDefaultAndExcludedImports(contextFile: KtFile): Pair<List<ImportPath>, List<FqName>> {
-        val analyzerServices = contextFile.platform.findAnalyzerServices(contextFile.project)
-        val allDefaultImports = analyzerServices.getDefaultImports(includeLowPriorityImports = true).toMutableList()
+        val defaultImports = KaDefaultImportsProvider.getService(contextFile.project).getDefaultImports(contextFile.platform)
+
+        val allDefaultImports = defaultImports.defaultImports.map { it.importPath }.toMutableList()
+        val excludedImports = defaultImports.excludedFromDefaultImports.map { it.fqName }
 
         if (PseudoCommonSourceSetUtils.inPseudoCommonSourceSet(contextFile)) {
             allDefaultImports.removeAll(PseudoCommonSourceSetUtils.PLATFORM_SPECIFIC_IMPORTS)
@@ -42,7 +50,7 @@ class KotlinIdeDefaultImportProvider {
             scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }
         }.orEmpty()
 
-        return (allDefaultImports + scriptExtraImports) to analyzerServices.excludedImports
+        return (allDefaultImports + scriptExtraImports) to excludedImports
     }
 
     companion object {
@@ -50,6 +58,9 @@ class KotlinIdeDefaultImportProvider {
         fun getInstance(): KotlinIdeDefaultImportProvider = service()
     }
 }
+
+private val KaDefaultImports.defaultLowPriorityImports: List<KaDefaultImport>
+    get() = defaultImports.filter { it.priority == KaDefaultImportPriority.LOW }
 
 //region Copy of `isImported` functions from `fqNameUtils.kt`
 

@@ -11,6 +11,10 @@ from typing_extensions import Self
 
 _Self = TypeVar("_Self", bound=Model)
 
+class Deferred: ...
+
+DEFERRED: Deferred
+
 class ModelStateFieldsCacheDescriptor:
     @overload
     def __get__(self, inst: None, owner: object) -> Self: ...
@@ -71,6 +75,7 @@ class Model(metaclass=ModelBase):
     def get_constraints(self) -> list[tuple[type[Model], Sequence[BaseConstraint]]]: ...
     def save(
         self,
+        *,
         force_insert: bool | tuple[ModelBase, ...] = False,
         force_update: bool = False,
         using: str | None = None,
@@ -78,6 +83,7 @@ class Model(metaclass=ModelBase):
     ) -> None: ...
     async def asave(
         self,
+        *,
         force_insert: bool | tuple[ModelBase, ...] = False,
         force_update: bool = False,
         using: str | None = None,

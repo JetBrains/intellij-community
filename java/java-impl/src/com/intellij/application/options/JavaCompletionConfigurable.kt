@@ -9,7 +9,7 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Panel
 
-class JavaCompletionConfigurable : UiDslUnnamedConfigurable.Simple() {
+public class JavaCompletionConfigurable : UiDslUnnamedConfigurable.Simple() {
 
   override fun Panel.createContent() {
     row {

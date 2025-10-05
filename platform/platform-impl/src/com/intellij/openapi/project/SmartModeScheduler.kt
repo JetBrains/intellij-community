@@ -110,7 +110,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
     // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
     while (canRunSmart()) {
       val runnable = myRunWhenSmartQueue.pollFirst() ?: break
-      resetThreadContext().use {
+      resetThreadContext {
         doRun(runnable)
       }
     }

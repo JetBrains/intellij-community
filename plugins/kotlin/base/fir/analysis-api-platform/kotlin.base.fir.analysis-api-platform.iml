@@ -2,13 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction -opt-in=org.jetbrains.kotlin.analysis.api.KaPlatformInterface -Xcontext-receivers" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction -opt-in=org.jetbrains.kotlin.analysis.api.KaPlatformInterface -opt-in=org.jetbrains.kotlin.analysis.api.KaContextParameterApi -Xcontext-parameters -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
-            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="jvmTarget" arg="21" />
             <stringArg name="apiVersion" arg="2.2" />
             <stringArg name="languageVersion" arg="2.2" />
           </stringArguments>
@@ -43,7 +43,25 @@
     <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
     <orderEntry type="library" name="kotlinc.low-level-api-fir" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
-    <orderEntry type="library" scope="TEST" name="gson" level="project" />
+    <orderEntry type="module-library">
+      <library name="ehcache.sizeof" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.ehcache:sizeof:0.4.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ehcache/sizeof/0.4.0/sizeof-0.4.0.jar">
+              <sha256sum>0429cb1f5cda94180007874ea926a88149fca2028e92b4556d35f0cfce310c53</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/ehcache/sizeof/0.4.0/sizeof-0.4.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/ehcache/sizeof/0.4.0/sizeof-0.4.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
@@ -66,9 +84,11 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
-    <orderEntry type="module" module-name="kotlin.base.scripting" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.searching.k2" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
+    <orderEntry type="module" module-name="kotlin.base.fir.project-structure" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.indices" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.indices.tests" scope="TEST" />
   </component>
 </module>

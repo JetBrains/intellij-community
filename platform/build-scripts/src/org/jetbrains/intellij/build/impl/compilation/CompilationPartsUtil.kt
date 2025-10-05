@@ -4,7 +4,7 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
+import com.intellij.devkit.runtimeModuleRepository.generator.RuntimeModuleRepositoryGenerator
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -107,8 +107,8 @@ private fun getAndNormalizeServerUrlBySystemProperty(): String {
 
 private const val COMPILATION_CACHE_METADATA_JSON = "metadata.json"
 internal val COMPILATION_PARTS_SPECIAL_FILES: Collection<String> = setOf(
-  RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME,
-  RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME,
+  RuntimeModuleRepositoryGenerator.JAR_REPOSITORY_FILE_NAME,
+  RuntimeModuleRepositoryGenerator.COMPACT_REPOSITORY_FILE_NAME,
 )
 
 suspend fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: CompilationCacheUploadConfiguration) {

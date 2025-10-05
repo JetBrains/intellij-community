@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.compiler
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -22,8 +24,9 @@ internal class ExternalCompilerConfigurationStorage(private val project: Project
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): ExternalCompilerConfigurationStorage =
-      project.getService(ExternalCompilerConfigurationStorage::class.java)
+    fun getInstance(project: Project): ExternalCompilerConfigurationStorage {
+      return project.getService(ExternalCompilerConfigurationStorage::class.java)
+    }
   }
 
   override fun getState(): Element {

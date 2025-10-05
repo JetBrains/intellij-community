@@ -57,7 +57,7 @@ object ApplicationActivationStateManager {
       delayedDeactivatedJob?.cancel()
       delayedDeactivatedJob = app.getCoroutineScope().launch(CoroutineName("ApplicationDeactivation")) {
         delay(Registry.intValue("application.deactivation.timeout", 1_500).milliseconds)
-        withContext(Dispatchers.ui(UiDispatcherKind.STRICT) + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT) + ModalityState.any().asContextElement()) {
           if (state != ApplicationActivationStateManagerState.DEACTIVATING) {
             return@withContext
           }
@@ -68,7 +68,7 @@ object ApplicationActivationStateManager {
           if (ideFrame != null) {
             // getIdeFrameFromWindow returns something from a UI tree, so, if not null, it must be Window
             val publisher = app.getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC)
-            withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+            withContext(Dispatchers.UiWithModelAccess) {
               publisher.delayedApplicationDeactivated(ideFrame as Window)
             }
           }

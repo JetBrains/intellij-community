@@ -16,9 +16,11 @@ fun DbContext<Q>.sharedId(eid: EID, uidAttribute: Attribute<UID>): UID? =
     else -> null
   }
 
-internal fun DbContext<Q>.encodeDbValue(uidAttribute: Attribute<UID>,
-                                        a: Attribute<*>,
-                                        v: Any): DurableDbValue =
+internal fun DbContext<Q>.encodeDbValue(
+  uidAttribute: Attribute<UID>,
+  a: Attribute<*>,
+  v: Any,
+): DurableDbValue =
   when {
     a.schema.isRef -> {
       when (val typeIdent = getOne(v as EID, EntityType.Ident.attr as Attribute<String>)) {
@@ -52,7 +54,7 @@ internal fun DbContext<Q>.deserialize(
 internal fun DbContext<Q>.serialize1(
   eidToUid: DbContext<Q>.(EID) -> UID?,
   a: Attribute<*>,
-  v: Any
+  v: Any,
 ): DurableDbValue? =
   when {
     a.schema.isRef ->
@@ -65,7 +67,7 @@ internal fun DbContext<Q>.serialize1(
 
 private fun DbContext<Q>.serializeScalar(
   attribute: Attribute<*>,
-  value: Any
+  value: Any,
 ): DurableDbValue.Scalar =
   when (value) {
     is JsonElement -> DurableDbValue.Scalar(lazyOf(value))

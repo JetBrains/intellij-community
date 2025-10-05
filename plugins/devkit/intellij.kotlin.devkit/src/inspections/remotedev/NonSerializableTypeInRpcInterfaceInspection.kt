@@ -204,6 +204,8 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
           if (typeSymbol.hasCustomSerializer()) return null // expect that custom serializers handle type serialization fully
 
           for (member in getPotentiallySerializableMembers(type)) {
+            check(member is KtCallableDeclaration) // should be parameter or property
+
             val memberName = member.name ?: continue
             if (member.isAnnotatedWith(serializableAnnotationFqn)) continue
             if (member.isAbstractPropertyOfNonFinalType()) continue

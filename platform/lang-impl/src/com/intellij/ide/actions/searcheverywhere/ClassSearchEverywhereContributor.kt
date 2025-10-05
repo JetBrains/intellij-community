@@ -28,14 +28,26 @@ import java.util.regex.Pattern
 
 private val patternToDetectMembers = Pattern.compile("(.+)(#)(.*)")
 
-open class ClassSearchEverywhereContributor(event: AnActionEvent)
-  : AbstractGotoSEContributor(event), EssentialContributor, SearchEverywherePreviewProvider {
+open class ClassSearchEverywhereContributor @Internal constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?)
+  : AbstractGotoSEContributor(event, contributorModules), EssentialContributor, SearchEverywherePreviewProvider {
   private val filter = createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT))
 
   @Internal
-  constructor(event: AnActionEvent, contributorModules: List<SearchEverywhereContributorModule>?) : this(event) {
-    this.contributorModules = contributorModules
+  override val navigationHandler: SearchEverywhereNavigationHandler = object : SearchEverywhereNavigationHandler(project) {
+    override suspend fun createSourceNavigationRequest(project: Project, element: PsiElement, file: VirtualFile, searchText: String, offset: Int): NavigationRequest? {
+      val memberName = getMemberName(searchText)
+      if (memberName != null) {
+        readAction {
+          findMember(memberPattern = memberName, fullPattern = searchText, psiElement = element, file = file)?.navigationRequest()
+        }?.let {
+          return it
+        }
+      }
+      return super.createSourceNavigationRequest(project, element, file, searchText, offset)
+    }
   }
+
+  constructor(event: AnActionEvent) : this(event, null)
 
   companion object {
     @JvmStatic
@@ -53,6 +65,9 @@ open class ClassSearchEverywhereContributor(event: AnActionEvent)
   override fun getSortWeight(): Int = 100
 
   override fun createModel(project: Project): FilteringGotoByModel<LanguageRef> {
+    val customModel = contributorModules?.firstNotNullOfOrNull { mod -> mod.createCustomModel(project, this) }
+    if (customModel != null) return customModel
+
     val model = GotoClassModel2(project)
     model.setFilterItems(filter.selectedElements)
     return model
@@ -83,19 +98,6 @@ open class ClassSearchEverywhereContributor(event: AnActionEvent)
 
   override fun createExtendedInfo(): ExtendedInfo? = createPsiExtendedInfo().let {
     contributorModules?.firstNotNullOfOrNull { mod -> mod.mixinExtendedInfo(it) } ?: it
-  }
-
-  override suspend fun createSourceNavigationRequest(element: PsiElement, file: VirtualFile, searchText: String): NavigationRequest? {
-    val memberName = getMemberName(searchText)
-    if (memberName != null) {
-      readAction {
-        findMember(memberPattern = memberName, fullPattern = searchText, psiElement = element, file = file)?.navigationRequest()
-      }?.let {
-        return it
-      }
-    }
-
-    return super.createSourceNavigationRequest(element, file, searchText)
   }
 
   @Internal

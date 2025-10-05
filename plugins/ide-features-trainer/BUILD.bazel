@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.featuresTrainer` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "featuresTrainer_resources",
-  files = glob(["res/**/*"]),
+  srcs = glob(["res/**/*"]),
   strip_prefix = "res"
 )
 
@@ -12,10 +11,11 @@ jvm_library(
   name = "featuresTrainer",
   module_name = "intellij.featuresTrainer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":featuresTrainer_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:assert_j",
     "@lib//:assertj-swing",
     "//platform/analysis-api:analysis",
@@ -28,7 +28,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/projectModel-api:projectModel",
@@ -39,8 +38,8 @@ jvm_library(
     "//platform/core-ui",
     "//xml/xml-psi-api:psi",
     "//platform/feedback",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinx-datetime-jvm",
     "//platform/util/jdom",
     "//platform/editor-ui-ex:editor-ex",
@@ -51,19 +50,18 @@ jvm_library(
   exports = [
     "@lib//:assert_j",
     "@lib//:assertj-swing",
-  ],
-  runtime_deps = [":featuresTrainer_resources"]
+  ]
 )
 
 jvm_library(
   name = "featuresTrainer_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":featuresTrainer"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:assert_j",
     "@lib//:assertj-swing",
     "//platform/analysis-api:analysis",
@@ -77,7 +75,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
@@ -92,8 +89,8 @@ jvm_library(
     "//platform/core-ui",
     "//xml/xml-psi-api:psi",
     "//platform/feedback",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinx-datetime-jvm",
     "//platform/util/jdom",
     "//platform/editor-ui-ex:editor-ex",
@@ -104,13 +101,20 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:mockito-kotlin",
-    "@lib//:mockito",
+    "//libraries/mockito",
   ],
-  runtime_deps = [":featuresTrainer_resources"]
+  exports = [
+    "@lib//:assert_j",
+    "@lib//:assertj-swing",
+  ]
 )
+### auto-generated section `build intellij.featuresTrainer` end
+
+### auto-generated section `test intellij.featuresTrainer` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "featuresTrainer_test",
   runtime_deps = [":featuresTrainer_test_lib"]
 )
-### auto-generated section `build intellij.featuresTrainer` end
+### auto-generated section `test intellij.featuresTrainer` end

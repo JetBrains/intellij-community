@@ -10,6 +10,21 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "true").toBoolean()
 
+/**
+ * - `false` means some high-level Swing code will not use write-intent lock defensively for execution of user's code
+ * - `true` means that write-intent lock will be inserted in more places
+ *
+ * See IJPL-199557
+ */
+@ApiStatus.Internal
+val doNotWrapHighLevelActionsInWriteIntent: Boolean = System.getProperty("idea.do.not.wrap.high.level.functions.in.write.intent", "false").toBoolean()
+
+/**
+ * - `false` means that [backgroundWriteAction] will block the thread during lock acquisition
+ * - `true` means that [backgroundWriteAction] will suspend during lock acquisition
+ */
+@ApiStatus.Internal
+val useTrueSuspensionForWriteAction: Boolean = System.getProperty("idea.true.suspension.for.write.action", "true").toBoolean()
 
 /**
  * - `false` means wrong action chains are ignored and not reported
@@ -22,6 +37,16 @@ val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid
 
 @get:ApiStatus.Internal
 val installSuvorovProgress: Boolean = System.getProperty("ide.install.suvorov.progress", "true").toBoolean()
+
+@get:ApiStatus.Internal
+val useDebouncedDrawingInSuvorovProgress: Boolean = System.getProperty("ide.suvorov.progress.debounced.drawing", "true").toBoolean()
+
+/**
+ * - `true` means that [kotlinx.coroutines.Dispatchers.EDT] will acquire write-intent lock in non-blocking way
+ * - `false` means that [kotlinx.coroutines.Dispatchers.EDT] will block on the acquisition of high-level write-intent lock.
+ */
+@get:ApiStatus.Internal
+val useNonBlockingIntentLockForEdtCoroutines: Boolean = System.getProperty("ide.non.blocking.write.intent.lock.for.edt.coroutines", "true").toBoolean()
 
 /**
  * Represents the deadline before blocking read lock acquisition starts compensating parallelism for coroutine worker threads

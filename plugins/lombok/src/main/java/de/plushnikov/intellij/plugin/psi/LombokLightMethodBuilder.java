@@ -168,13 +168,6 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     return myReadWriteAccess;
   }
 
-  // add Parameter as is, without wrapping with LightTypeParameter
-  @Override
-  public LightMethodBuilder addTypeParameter(PsiTypeParameter parameter) {
-    ((LightTypeParameterListBuilder)getTypeParameterList()).addParameter(parameter);
-    return this;
-  }
-
   @Override
   public @NotNull LombokLightModifierList getModifierList() {
     return (LombokLightModifierList)super.getModifierList();

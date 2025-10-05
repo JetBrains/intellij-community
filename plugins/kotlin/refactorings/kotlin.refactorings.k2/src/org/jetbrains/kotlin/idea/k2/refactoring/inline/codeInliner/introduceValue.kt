@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.renderer.render
  * @param nameSuggestion Name suggestion for the variable.
  * @param safeCall If true, then the whole code must not be executed if the [value] evaluates to null.
  */
-context(KaSession)
+context(_: KaSession)
 internal fun MutableCodeToInline.introduceValue(
     value: KtExpression,
     valueType: AbstractCodeInliner.TypeDescription?,
@@ -103,7 +103,7 @@ internal fun MutableCodeToInline.introduceValue(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 fun String.nameHasConflictsInScope(expressionToBeReplaced: KtExpression): Boolean {
     val nameValidator =
         KotlinDeclarationNameValidator(expressionToBeReplaced, true, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE)

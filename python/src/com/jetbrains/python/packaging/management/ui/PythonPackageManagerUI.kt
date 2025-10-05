@@ -6,10 +6,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.pyRequirement
+import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -43,14 +46,52 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     }
   }
 
+  suspend fun installWithConfirmation(packages: List<String>): List<PythonPackage>? {
+    val requirements = packages.map { pyRequirement(it) }
+    return installPyRequirementsWithConfirmation(requirements)
+  }
+
+  suspend fun installPyRequirementsWithConfirmation(packages: List<PyRequirement>): List<PythonPackage>? {
+    val confirmed = PyPackageManagerUiConfirmationHelpers.getConfirmedPackages(packages, project)
+    if (confirmed.isEmpty())
+      return null
+
+    PyPackagesUsageCollector.installAllEvent.log(confirmed.size)
+    return installPyRequirementsBackground(confirmed)
+  }
+
+  suspend fun installPyRequirementsDetachedWithConfirmation(packages: List<PyRequirement>): List<PythonPackage>? {
+    val confirmed = PyPackageManagerUiConfirmationHelpers.getConfirmedPackages(packages, project)
+    if (confirmed.isEmpty())
+      return null
+
+    PyPackagesUsageCollector.installAllEvent.log(confirmed.size)
+    return installPyRequirementsDetachedBackground(confirmed)
+  }
+
   /**
    * @return List of all installed packages or null if the operation was failed.
    */
-  suspend fun installPackagesBackground(
+  suspend fun installPackagesRequestBackground(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
   ): List<PythonPackage>? {
-    val progressTitle = when (installRequest) {
+    return executeCommand(getProgressTitle(installRequest)) {
+      manager.installPackage(installRequest, options)
+    }
+  }
+
+  suspend fun installPackagesRequestDetachedBackground(
+    installRequest: PythonPackageInstallRequest,
+    options: List<String> = emptyList(),
+  ): List<PythonPackage>? {
+    return executeCommand(getProgressTitle(installRequest)) {
+      manager.installPackageDetached(installRequest, options)
+    }
+  }
+
+  private fun getProgressTitle(installRequest: PythonPackageInstallRequest): @Nls String {
+    return when (installRequest) {
       is PythonPackageInstallRequest.ByLocation -> PyBundle.message("python.packaging.installing.package", installRequest.title)
       is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> if (installRequest.specifications.size == 1) {
         PyBundle.message("python.packaging.installing.package", installRequest.specifications.first().name)
@@ -58,10 +99,6 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
       else {
         PyBundle.message("python.packaging.installing.packages")
       }
-    }
-
-    return executeCommand(progressTitle) {
-      manager.installPackage(installRequest, options)
     }
   }
 
@@ -107,6 +144,7 @@ class PythonPackageManagerUI(val manager: PythonPackageManager, val sink: ErrorS
     progressTitle: @Nls String,
     operation: suspend (() -> PyResult<T>?),
   ): T? = PythonPackageManagerUIHelpers.runPackagingOperationMaybeBackground(manager.project, sink, progressTitle) {
+
     operation()
   }
 

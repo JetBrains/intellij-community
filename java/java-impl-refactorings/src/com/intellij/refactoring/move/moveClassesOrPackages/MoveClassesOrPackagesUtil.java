@@ -86,23 +86,14 @@ public final class MoveClassesOrPackagesUtil {
                                           searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
   }
 
-  private static String getStringToSearch(PsiElement element) {
-    if (element instanceof PsiPackage) {
-      return ((PsiPackage)element).getQualifiedName();
-    }
-    else if (element instanceof PsiClass) {
-      return ((PsiClass)element).getQualifiedName();
-    }
-    else if (element instanceof PsiDirectory) {
-      return getStringToSearch(JavaDirectoryService.getInstance().getPackage((PsiDirectory)element));
-    }
-    else if (element instanceof PsiClassOwner) {
-      return ((PsiClassOwner)element).getName();
-    }
-    else {
-      LOG.error("Unknown element: " + (element == null ? null : element.getClass().getName()));
-      return null;
-    }
+  private static String getStringToSearch(@Nullable PsiElement element) {
+    return switch (element) {
+      case PsiPackage aPackage -> aPackage.getQualifiedName();
+      case PsiClass aClass -> aClass.getQualifiedName();
+      case PsiDirectory directory -> getStringToSearch(JavaDirectoryService.getInstance().getPackage(directory));
+      case PsiClassOwner owner -> owner.getName();
+      case null, default -> throw new IllegalArgumentException("Unknown element: " + (element == null ? null : element.getClass().getName()));
+    };
   }
 
   // Does not process non-code usages!

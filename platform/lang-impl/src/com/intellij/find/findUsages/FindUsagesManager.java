@@ -43,7 +43,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.*;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
@@ -426,6 +425,7 @@ public final class FindUsagesManager {
               if (!ref.getElement().isValid()) return null;
               return new UsageInfo(ref);
             });
+
             return info == null || usageInfoProcessor.process(info);
           });
       }

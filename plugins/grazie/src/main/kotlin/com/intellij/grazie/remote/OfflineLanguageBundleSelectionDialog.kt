@@ -28,7 +28,7 @@ internal class OfflineLanguageBundleSelectionDialog private constructor(
   override fun createCenterPanel(): JComponent {
     return panel {
       row {
-        text(msg("grazie.offline.language.bundle.dialog.text", language.nativeName, language.remote.url))
+        text(msg("grazie.offline.language.bundle.dialog.text", language.nativeName, language.ltRemote!!.url))
       }
     }
   }

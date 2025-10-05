@@ -8,7 +8,9 @@ import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.isPublicApi
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -59,7 +61,7 @@ class PublicApiImplicitTypeInspection(
                 }
             }
 
-            context(KaSession)
+            context(_: KaSession)
             private fun shouldReportDeclarationVisibility(
                 declaration: KtCallableDeclaration,
             ): Boolean  {

@@ -8,6 +8,7 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.Splitter;
@@ -24,26 +25,46 @@ public class HtmlSpellcheckingStrategy extends XmlSpellcheckingStrategy implemen
 
   @Override
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof HtmlDocumentImpl) {
+    if (element instanceof HtmlDocumentImpl && !useTextLevelSpellchecking()) {
       return myDocumentTextTokenizer;
     }
-    if (element instanceof XmlAttributeValue) {
+    if (shouldAttributeBeIgnored(element)) return EMPTY_TOKENIZER;
+    if (element instanceof XmlAttributeValue attributeValue) {
       if (URLUtil.isDataUri(ElementManipulators.getValueText(element))) {
         return EMPTY_TOKENIZER;
       }
-      PsiElement parent = element.getParent();
-      if (parent instanceof XmlAttribute) {
-        if (HtmlCompletionContributor.hasHtmlAttributesCompletion(element) &&
-            HtmlCompletionContributor.addSpecificCompletions((XmlAttribute)parent).length > 0) {
-          return EMPTY_TOKENIZER;
-        }
-        XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-        if (descriptor != null && (descriptor.isEnumerated() || descriptor.isFixed())) {
-          return EMPTY_TOKENIZER;
-        }
-      }
+      if (shouldBeIgnored(attributeValue)) return EMPTY_TOKENIZER;
     }
     return super.getTokenizer(element);
+  }
+
+  public static boolean shouldParentAttributeBeIgnored(PsiElement element) {
+    if (PsiUtilCore.getElementType(element) == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      return shouldAttributeBeIgnored(element.getParent());
+    }
+    return false;
+  }
+
+  private static boolean shouldAttributeBeIgnored(PsiElement element) {
+    if (element instanceof XmlAttributeValue value && value.getParent() instanceof XmlAttribute attr) {
+      return "class".equals(attr.getName()) || shouldBeIgnored(value);
+    }
+    return false;
+  }
+
+  private static boolean shouldBeIgnored(XmlAttributeValue element) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof XmlAttribute) {
+      if (HtmlCompletionContributor.hasHtmlAttributesCompletion(element) &&
+          HtmlCompletionContributor.addSpecificCompletions((XmlAttribute)parent).length > 0) {
+        return true;
+      }
+      XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
+      if (descriptor != null && (descriptor.isEnumerated() || descriptor.isFixed())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

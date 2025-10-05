@@ -202,7 +202,7 @@ class ImlCreationPropertyTest {
   }
 }
 
-private fun javaPluginPresent() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
+private fun javaPluginPresent() = PluginManagerCore.getPlugin(PluginId("com.intellij.java")) != null
 
 internal val newEmptyWorkspace: Generator<MutableEntityStorage>
   get() = Generator.constant(MutableEntityStorage.create())

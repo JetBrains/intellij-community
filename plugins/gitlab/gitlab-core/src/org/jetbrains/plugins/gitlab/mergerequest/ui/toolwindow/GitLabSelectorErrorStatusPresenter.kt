@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.openapi.project.Project
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.exception.GitLabHttpStatusErrorAction
@@ -17,6 +18,7 @@ internal class GitLabSelectorErrorStatusPresenter(
   private val project: Project,
   private val parentScope: CoroutineScope,
   private val accountManager: GitLabAccountManager,
+  private val loginSource: GitLabLoginSource,
   private val resetAction: () -> Unit
 ) : ErrorStatusPresenter.Text<RepositoryAndAccountSelectorViewModel.Error> {
   override fun getErrorTitle(error: RepositoryAndAccountSelectorViewModel.Error): String = when (error) {
@@ -41,7 +43,8 @@ internal class GitLabSelectorErrorStatusPresenter(
       project, parentScope,
       account = error.account as GitLabAccount,
       accountManager = accountManager,
-      resetAction
+      loginSource = loginSource,
+      resetAction = resetAction
     )
     else -> null
   }

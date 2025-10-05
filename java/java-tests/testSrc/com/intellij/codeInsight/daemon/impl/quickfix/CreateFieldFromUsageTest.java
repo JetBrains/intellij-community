@@ -83,6 +83,8 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   public void testCreateFromAnnotationParameterIncorrectCode() { doSingleTest(); }
 
   public void testAbstractClassIncorrectCode() { doSingleTest(); }
+  
+  public void testBrokenCode() { doSingleTest(); }
 
   protected void doSingleTest() {
     doSingleTest(getTestName(false) + ".java");

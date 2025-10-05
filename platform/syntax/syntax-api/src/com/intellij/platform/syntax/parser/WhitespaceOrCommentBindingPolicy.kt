@@ -2,6 +2,7 @@
 package com.intellij.platform.syntax.parser
 
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.element.SyntaxTokenTypes
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -31,4 +32,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.OverrideOnly
 fun interface WhitespaceOrCommentBindingPolicy {
   fun isLeftBound(elementType: SyntaxElementType): Boolean
+}
+
+/**
+ * A [WhitespaceOrCommentBindingPolicy], which makes the [SyntaxTokenTypes.ERROR_ELEMENT] type left-bound.
+ */
+@ApiStatus.Experimental
+object DefaultWhitespaceBindingPolicy : WhitespaceOrCommentBindingPolicy {
+  override fun isLeftBound(elementType: SyntaxElementType): Boolean =
+    elementType == SyntaxTokenTypes.ERROR_ELEMENT
 }

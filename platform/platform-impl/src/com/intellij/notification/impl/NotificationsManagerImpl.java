@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -82,6 +82,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   private static final Logger LOG = Logger.getInstance(NotificationsManagerImpl.class);
 
   private @Nullable List<Pair<Notification, @Nullable Project>> myEarlyNotifications = new ArrayList<>();
+  private @Nullable List<Pair<Notification, @Nullable Project>> myPostponedNotifications = null;
+
   private final IJTracer myTracer = TelemetryManager.getInstance().getTracer(NotificationScopeKt.NotificationScope);
 
   public NotificationsManagerImpl() {
@@ -161,11 +163,36 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   @RequiresEdt
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  public void pauseNotifications() {
+    if (myPostponedNotifications == null) {
+      myPostponedNotifications = new ArrayList<>();
+    }
+  }
+
+  @RequiresEdt
+  @ApiStatus.Internal
+  @IntellijInternalApi
+  public void resumeNotifications() {
+    if (myPostponedNotifications != null) {
+      List<Pair<Notification, @Nullable Project>> postponedNotifications = myPostponedNotifications;
+      myPostponedNotifications = null;
+      postponedNotifications.forEach(pair -> showNotificationWithSpan(pair.first, pair.second));
+    }
+  }
+
+  @RequiresEdt
   private void showNotificationInner(Notification notification, @Nullable Project project) {
     if (LOG.isDebugEnabled()) LOG.debug("incoming: " + notification + ", project=" + project);
 
     if (myEarlyNotifications != null) {
       myEarlyNotifications.add(new Pair<>(notification, project));
+      return;
+    }
+
+    if (myPostponedNotifications != null) {
+      myPostponedNotifications.add(new Pair<>(notification, project));
       return;
     }
 
@@ -287,7 +314,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   @RequiresEdt
   private void showNotificationWithSpan(Notification notification, @Nullable Project project) {
     TraceKt.use(myTracer.spanBuilder("show notification")
-                  .setAttribute("project", project != null ? project.toString() : null)
+                  .setAttribute("project", project == null ? null : project.toString())
                   .setAttribute("notification", notification.toString()), __ -> {
       showNotificationInner(notification, project);
       return null;

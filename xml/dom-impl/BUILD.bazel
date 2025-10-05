@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.xml.dom.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "dom-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +11,8 @@ jvm_library(
   name = "dom-impl",
   module_name = "intellij.xml.dom.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":dom-impl_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -32,7 +33,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/indexing-impl",
     "//xml/xml-parser:parser",
-    "//xml/openapi:xml",
     "//platform/refactoring",
     "//platform/usageView",
     "@lib//:fastutil-min",
@@ -40,9 +40,6 @@ jvm_library(
     "//platform/libraries/cglib",
   ],
   exports = ["//xml/dom-openapi:dom"],
-  runtime_deps = [
-    ":dom-impl_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.xml.dom.impl` end

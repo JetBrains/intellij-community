@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.vcs.impl.frontend` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "frontend_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +11,8 @@ jvm_library(
   name = "frontend",
   module_name = "intellij.platform.vcs.impl.frontend",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":frontend_resources"],
   deps = [
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-stdlib",
@@ -29,11 +30,12 @@ jvm_library(
     "//platform/vcs-impl/shared",
     "//platform/project/shared:project",
     "//platform/util/coroutines",
-    "@lib//:kotlinx-serialization-core",
-    "@lib//:kotlinx-serialization-json",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
     "//platform/recentFiles/frontend",
     "//platform/analysis-api:analysis",
-  ],
-  runtime_deps = [":frontend_resources"]
+    "//platform/vcs-api/shared",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+  ]
 )
 ### auto-generated section `build intellij.platform.vcs.impl.frontend` end

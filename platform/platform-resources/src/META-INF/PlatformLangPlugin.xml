@@ -10,7 +10,6 @@
   <module value="com.intellij.platform.ide.impl.wsl"/>
 
   <xi:include href="PlatformLangComponents.xml"/>
-  <xi:include href="/META-INF/ide-concurrency.xml"/>
   <xi:include href="/idea/PriorityEditorLangActions.xml"/>
   <xi:include href="/idea/PlatformActions.xml"/>
   <xi:include href="/META-INF/PlatformExecutionActions.xml"/>
@@ -33,10 +32,6 @@
   <xi:include href="/META-INF/Editor.xml"/>
   <xi:include href="/META-INF/EditorEx.xml"/>
 
-  <xi:include href="/META-INF/Inspect.xml">
-    <xi:fallback/>
-  </xi:include>
-
   <xi:include href="/META-INF/IdeCore.xml"/>
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
   <xi:include href="/META-INF/Refactoring.xml"/>
@@ -48,6 +43,8 @@
   <xi:include href="/META-INF/credential-store.xml">
     <xi:fallback/>
   </xi:include>
+
+  <xi:include href="/META-INF/ide-concurrency.xml"/>
 
   <xi:include href="/META-INF/LangExtensions.xml"/>
   <xi:include href="/META-INF/ProjectModelLangExtensions.xml"/>
@@ -96,6 +93,8 @@
     <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
     <advancedSetting id="show.line.bookmarks.in.popup" default="true"
                      bundle="messages.BookmarkBundle" groupKey="group.advanced.settings.bookmarks"/>
+    <advancedSetting id="tasks.enable.bookmark.context.on.branch.switch"
+                     default="true" groupKey="group.advanced.settings.bookmarks" bundle="messages.BookmarkBundle"/>
 
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"

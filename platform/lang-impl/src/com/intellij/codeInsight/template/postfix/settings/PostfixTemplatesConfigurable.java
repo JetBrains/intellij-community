@@ -173,6 +173,7 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
       myTemplatesSettings.setProviderToDisabledTemplates(myCheckboxTree.getDisabledTemplatesState());
       myTemplatesSettings.setPostfixTemplatesEnabled(myUi.postfixTemplatesEnabled.isSelected());
       myTemplatesSettings.setTemplatesCompletionEnabled(myUi.completionEnabledCheckbox.isSelected());
+      myTemplatesSettings.setShowAsSeparateGroup(myUi.postfixTemplatesGroupCompletion.isSelected());
       myTemplatesSettings.setShortcut(stringToShortcut((String)myUi.shortcutComboBox.getSelectedItem()));
 
       MultiMap<PostfixTemplateProvider, PostfixTemplate> state = myCheckboxTree.getEditableTemplates();
@@ -191,6 +192,7 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
       myCheckboxTree.setDisabledTemplatesState(myTemplatesSettings.getProviderToDisabledTemplates());
       myUi.postfixTemplatesEnabled.setSelected(myTemplatesSettings.isPostfixTemplatesEnabled());
       myUi.completionEnabledCheckbox.setSelected(myTemplatesSettings.isTemplatesCompletionEnabled());
+      myUi.postfixTemplatesGroupCompletion.setSelected(myTemplatesSettings.isShowAsSeparateGroup());
       myUi.shortcutComboBox.setSelectedItem(shortcutToString((char)myTemplatesSettings.getShortcut()));
       resetDescriptionPanel();
       updateComponents();
@@ -217,6 +219,7 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
     }
     if (myUi.postfixTemplatesEnabled.isSelected() != myTemplatesSettings.isPostfixTemplatesEnabled() ||
         myUi.completionEnabledCheckbox.isSelected() != myTemplatesSettings.isTemplatesCompletionEnabled() ||
+        myUi.postfixTemplatesGroupCompletion.isSelected() != myTemplatesSettings.isShowAsSeparateGroup() ||
         stringToShortcut((String)myUi.shortcutComboBox.getSelectedItem()) != myTemplatesSettings.getShortcut() ||
         !myCheckboxTree.getDisabledTemplatesState().equals(myTemplatesSettings.getProviderToDisabledTemplates())) {
       return true;
@@ -247,6 +250,7 @@ public final class PostfixTemplatesConfigurable implements SearchableConfigurabl
     boolean pluginEnabled = myUi.postfixTemplatesEnabled.isSelected();
     myUi.completionEnabledCheckbox.setVisible(!LiveTemplateCompletionContributor.shouldShowAllTemplates());
     myUi.completionEnabledCheckbox.setEnabled(pluginEnabled);
+    myUi.postfixTemplatesGroupCompletion.setEnabled(pluginEnabled);
     myUi.shortcutComboBox.setEnabled(pluginEnabled);
     if (myCheckboxTree != null) {
       myCheckboxTree.setEnabled(pluginEnabled);

@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.ui.component
 
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,20 +13,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.takeOrElse
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
@@ -72,6 +78,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
  * @param itemContent Composable content for rendering each item in the list
  * @see com.intellij.openapi.ui.ComboBox
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @Composable
 public fun <T : Any> ListComboBox(
@@ -86,105 +93,30 @@ public fun <T : Any> ListComboBox(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ComboBoxStyle = JewelTheme.comboBoxStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
-    listState: SelectableLazyListState = rememberSelectableLazyListState(),
+    listState: SelectableLazyListState =
+        rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
-    LaunchedEffect(Unit) { listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex])) }
-
-    var previewSelectedIndex by remember { mutableIntStateOf(selectedIndex) }
-    val scope = rememberCoroutineScope()
-
-    fun setSelectedItem(index: Int) {
-        if (index >= 0 && index <= items.lastIndex) {
-            listState.selectedKeys = setOf(itemKeys(index, items[index]))
-            onSelectedItemChange(index)
-            scope.launch { listState.lazyListState.scrollToIndex(index) }
-        } else {
-            JewelLogger.getInstance("ListComboBox").trace("Ignoring item index $index as it's invalid")
-        }
-    }
-
-    fun resetPreviewSelectedIndex() {
-        previewSelectedIndex = -1
-    }
-
-    val contentPadding = style.metrics.popupContentPadding
-    val popupMaxHeight = maxPopupHeight.takeOrElse { style.metrics.maxPopupHeight }
-
-    val popupManager = remember {
-        PopupManager(
-            onPopupVisibleChange = { visible ->
-                resetPreviewSelectedIndex()
-                onPopupVisibleChange(visible)
-            },
-            name = "ListComboBoxPopup",
-        )
-    }
-
-    ComboBox(
-        modifier =
-            modifier.onPreviewKeyEvent {
-                if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-
-                if (it.key == Key.Enter || it.key == Key.NumPadEnter) {
-                    if (popupManager.isPopupVisible.value && previewSelectedIndex >= 0) {
-                        setSelectedItem(previewSelectedIndex)
-                        resetPreviewSelectedIndex()
-                    }
-                    popupManager.setPopupVisible(false)
-                    true
-                } else {
-                    false
-                }
-            },
+    ListComboBoxImpl(
+        items = items,
+        selectedIndex = selectedIndex,
+        onSelectedItemChange = onSelectedItemChange,
+        itemKeys = itemKeys,
+        modifier = modifier,
         enabled = enabled,
-        maxPopupHeight = popupMaxHeight,
-        onArrowDownPress = {
-            var currentSelectedIndex = listState.selectedItemIndex(items, itemKeys)
-
-            // When there is a preview-selected item, pressing down will actually change the
-            // selected value to the one underneath it (unless it's the last one)
-            if (previewSelectedIndex >= 0 && previewSelectedIndex < items.lastIndex) {
-                currentSelectedIndex = previewSelectedIndex
-                resetPreviewSelectedIndex()
-            }
-
-            setSelectedItem((currentSelectedIndex + 1).coerceAtMost(items.lastIndex))
-        },
-        onArrowUpPress = {
-            var currentSelectedIndex = listState.selectedItemIndex(items, itemKeys)
-
-            // When there is a preview-selected item, pressing up will actually change the
-            // selected value to the one above it (unless it's the first one)
-            if (previewSelectedIndex > 0) {
-                currentSelectedIndex = previewSelectedIndex
-                resetPreviewSelectedIndex()
-            }
-
-            setSelectedItem((currentSelectedIndex - 1).coerceAtLeast(0))
-        },
-        style = style,
-        interactionSource = interactionSource,
         outline = outline,
-        popupManager = popupManager,
-        labelContent = { itemContent(items[selectedIndex], false, false) },
-    ) {
-        PopupContent(
-            items = items,
-            previewSelectedItemIndex = previewSelectedIndex,
-            listState = listState,
-            popupMaxHeight = popupMaxHeight,
-            contentPadding = contentPadding,
-            onPreviewSelectedItemChange = {
-                if (it >= 0 && previewSelectedIndex != it) {
-                    previewSelectedIndex = it
-                }
-            },
-            onSelectedItemChange = { index: Int -> setSelectedItem(index) },
-            itemKeys = itemKeys,
-            itemContent = itemContent,
-        )
-    }
+        maxPopupHeight = maxPopupHeight,
+        interactionSource = interactionSource,
+        style = style,
+        onPopupVisibleChange = onPopupVisibleChange,
+        listState = listState,
+        labelContent = { item ->
+            if (item != null) {
+                itemContent(item, false, false)
+            }
+        },
+        itemContent = itemContent,
+    )
 }
 
 /**
@@ -231,114 +163,33 @@ public fun ListComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
-    listState: SelectableLazyListState = rememberSelectableLazyListState(),
+    listState: SelectableLazyListState =
+        rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
 ) {
-    var labelText by remember { mutableStateOf(items[selectedIndex]) }
-    var previewSelectedIndex by remember { mutableIntStateOf(-1) }
-    val scope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        // Select the first item in the list when creating
-        listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
-    }
-
-    fun setSelectedItem(index: Int) {
-        if (index >= 0 && index <= items.lastIndex) {
-            listState.selectedKeys = setOf(itemKeys(index, items[index]))
-            labelText = items[index]
-            onSelectedItemChange(index)
-            scope.launch { listState.lazyListState.scrollToIndex(index) }
-        } else {
-            JewelLogger.getInstance("ListComboBox").trace("Ignoring item index $index as it's invalid")
-        }
-    }
-
-    val contentPadding = style.metrics.popupContentPadding
-    val popupMaxHeight = maxPopupHeight.takeOrElse { style.metrics.maxPopupHeight }
-
-    val popupManager = remember {
-        PopupManager(
-            onPopupVisibleChange = { visible ->
-                previewSelectedIndex = -1
-                onPopupVisibleChange(visible)
-            },
-            name = "ListComboBoxPopup",
-        )
-    }
-
-    ComboBox(
-        modifier =
-            modifier.onPreviewKeyEvent {
-                if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-
-                if (it.key == Key.Enter || it.key == Key.NumPadEnter) {
-                    if (popupManager.isPopupVisible.value && previewSelectedIndex >= 0) {
-                        setSelectedItem(previewSelectedIndex)
-                        previewSelectedIndex = -1
-                        popupManager.setPopupVisible(false)
-                    }
-                    true
-                } else {
-                    false
-                }
-            },
+    ListComboBoxImpl(
+        items = items,
+        selectedIndex = selectedIndex,
+        onSelectedItemChange = onSelectedItemChange,
+        itemKeys = itemKeys,
+        modifier = modifier,
         enabled = enabled,
-        labelText = labelText,
-        maxPopupHeight = popupMaxHeight,
-        onArrowDownPress = {
-            var currentSelectedIndex = listState.selectedItemIndex(items, itemKeys)
-
-            // When there is a preview-selected item, pressing down will actually change the
-            // selected value to the one underneath it (unless it's the last one)
-            if (previewSelectedIndex >= 0 && previewSelectedIndex < items.lastIndex) {
-                currentSelectedIndex = previewSelectedIndex
-                previewSelectedIndex = -1
-            }
-
-            setSelectedItem((currentSelectedIndex + 1).coerceAtMost(items.lastIndex))
-        },
-        onArrowUpPress = {
-            var currentSelectedIndex = listState.selectedItemIndex(items, itemKeys)
-
-            // When there is a preview-selected item, pressing up will actually change the
-            // selected value to the one above it (unless it's the first one)
-            if (previewSelectedIndex > 0) {
-                currentSelectedIndex = previewSelectedIndex
-                previewSelectedIndex = -1
-            }
-
-            setSelectedItem((currentSelectedIndex - 1).coerceAtLeast(0))
-        },
-        style = style,
-        textStyle = textStyle,
-        interactionSource = interactionSource,
         outline = outline,
-        popupManager = popupManager,
-    ) {
-        PopupContent(
-            items = items,
-            previewSelectedItemIndex = previewSelectedIndex,
-            listState = listState,
-            popupMaxHeight = popupMaxHeight,
-            contentPadding = contentPadding,
-            onPreviewSelectedItemChange = {
-                if (it >= 0 && previewSelectedIndex != it) {
-                    previewSelectedIndex = it
-                }
-            },
-            onSelectedItemChange = ::setSelectedItem,
-            itemKeys = itemKeys,
-            itemContent = { item, isSelected, isActive ->
-                SimpleListItem(
-                    modifier = Modifier.thenIf(!enabled) { disabledAppearance() },
-                    text = item,
-                    selected = isSelected,
-                    active = isActive,
-                    iconContentDescription = item,
-                )
-            },
-        )
-    }
+        maxPopupHeight = maxPopupHeight,
+        interactionSource = interactionSource,
+        style = style,
+        onPopupVisibleChange = onPopupVisibleChange,
+        listState = listState,
+        labelContent = { item -> ComboBoxLabelText(item.orEmpty(), textStyle, style, enabled) },
+        itemContent = { item, isSelected, isActive ->
+            SimpleListItem(
+                modifier = Modifier.thenIf(!enabled) { disabledAppearance() },
+                text = item,
+                selected = isSelected,
+                active = isActive,
+                iconContentDescription = item,
+            )
+        },
+    )
 }
 
 /**
@@ -386,15 +237,16 @@ public fun EditableListComboBox(
     textStyle: TextStyle = JewelTheme.defaultTextStyle,
     onPopupVisibleChange: (visible: Boolean) -> Unit = {},
     itemKeys: (Int, String) -> Any = { _, item -> item },
-    listState: SelectableLazyListState = rememberSelectableLazyListState(),
+    listState: SelectableLazyListState =
+        rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
 ) {
-    val textFieldState = rememberTextFieldState(items[selectedIndex])
-    var previewSelectedIndex by remember { mutableIntStateOf(-1) }
+    val textFieldState = rememberTextFieldState(items.getOrNull(selectedIndex).orEmpty())
+    var hoveredItemIndex by remember { mutableIntStateOf(-1) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(itemKeys) {
         // Select the first item in the list when creating
-        listState.selectedKeys = setOf(itemKeys(selectedIndex, items[selectedIndex]))
+        listState.selectedKeys = setOf(itemKeys(selectedIndex, items.getOrNull(selectedIndex).orEmpty()))
     }
 
     fun setSelectedItem(index: Int) {
@@ -434,9 +286,10 @@ public fun EditableListComboBox(
 
             // When there is a preview-selected item, pressing down will actually change the
             // selected value to the one underneath it (unless it's the last one)
-            if (previewSelectedIndex >= 0 && previewSelectedIndex < items.lastIndex) {
-                currentSelectedIndex = previewSelectedIndex
-                previewSelectedIndex = -1
+            if (hoveredItemIndex >= 0 && hoveredItemIndex < items.lastIndex) {
+                currentSelectedIndex = hoveredItemIndex
+                @Suppress("AssignedValueIsNeverRead")
+                hoveredItemIndex = -1
             }
 
             setSelectedItem((currentSelectedIndex + 1).coerceAtMost(items.lastIndex))
@@ -446,9 +299,10 @@ public fun EditableListComboBox(
 
             // When there is a preview-selected item, pressing up will actually change the
             // selected value to the one above it (unless it's the first one)
-            if (previewSelectedIndex > 0) {
-                currentSelectedIndex = previewSelectedIndex
-                previewSelectedIndex = -1
+            if (hoveredItemIndex > 0) {
+                currentSelectedIndex = hoveredItemIndex
+                @Suppress("AssignedValueIsNeverRead")
+                hoveredItemIndex = -1
             }
 
             setSelectedItem((currentSelectedIndex - 1).coerceAtLeast(0))
@@ -463,7 +317,7 @@ public fun EditableListComboBox(
             remember {
                 PopupManager(
                     onPopupVisibleChange = {
-                        previewSelectedIndex = -1
+                        hoveredItemIndex = -1
                         onPopupVisibleChange(it)
                     },
                     name = "EditableListComboBoxPopup",
@@ -472,24 +326,21 @@ public fun EditableListComboBox(
         popupContent = {
             PopupContent(
                 items = items,
-                previewSelectedItemIndex = previewSelectedIndex,
+                currentlySelectedIndex = selectedIndex,
+                previewSelectedItemIndex = hoveredItemIndex,
                 listState = listState,
                 popupMaxHeight = popupMaxHeight,
                 contentPadding = contentPadding,
-                onPreviewSelectedItemChange = {
-                    if (it >= 0 && previewSelectedIndex != it) {
-                        previewSelectedIndex = it
+                onHoveredItemChange = {
+                    if (it >= 0 && hoveredItemIndex != it) {
+                        @Suppress("AssignedValueIsNeverRead")
+                        hoveredItemIndex = it
                     }
                 },
                 onSelectedItemChange = ::setSelectedItem,
                 itemKeys = itemKeys,
                 itemContent = { item, isSelected, isActive ->
-                    SimpleListItem(
-                        text = item,
-                        isSelected = isSelected,
-                        isActive = isActive,
-                        iconContentDescription = item,
-                    )
+                    SimpleListItem(text = item, selected = isSelected, active = isActive, iconContentDescription = item)
                 },
             )
         },
@@ -501,24 +352,17 @@ private suspend fun LazyListState.scrollToIndex(itemIndex: Int) {
 
     // If there are no visible items, just return
     val lastItemInfo = layoutInfo.visibleItemsInfo.lastOrNull() ?: return
-    val isLastItemFullyVisible = layoutInfo.viewportEndOffset - lastItemInfo.offset >= lastItemInfo.size
-
     val lastItemInfoSize = lastItemInfo.size
+    val isLastItemFullyVisible = layoutInfo.viewportEndOffset - lastItemInfo.offset >= lastItemInfoSize
+
     when {
-        itemIndex < visibleItemsRange.first -> scrollToItem((itemIndex - 1).coerceAtLeast(0))
+        itemIndex < visibleItemsRange.first -> scrollToItem(itemIndex.coerceAtLeast(0))
         itemIndex == visibleItemsRange.first && !isFirstItemFullyVisible -> scrollToItem(itemIndex)
         itemIndex == visibleItemsRange.last && !isLastItemFullyVisible -> {
-            scrollToItem(itemIndex, layoutInfo.viewportEndOffset - lastItemInfoSize)
+            scrollToItem(itemIndex, -(layoutInfo.viewportEndOffset - lastItemInfoSize))
         }
         itemIndex > visibleItemsRange.last -> {
-            // First scroll assuming the new item has the same height as the current last item
-            scrollToItem(itemIndex, layoutInfo.viewportEndOffset - lastItemInfoSize)
-
-            // After scrolling, check if we need to adjust due to different item sizes
-            val newLastItemInfo = layoutInfo.visibleItemsInfo.lastOrNull() ?: return
-            if (newLastItemInfo.size != lastItemInfoSize) {
-                scrollToItem(itemIndex, layoutInfo.viewportEndOffset - newLastItemInfo.size)
-            }
+            scrollToItem(itemIndex, -(layoutInfo.viewportEndOffset - lastItemInfoSize))
         }
     }
 }
@@ -537,30 +381,162 @@ public fun <T> SelectableLazyListState.selectedItemIndex(items: List<T>, itemKey
 }
 
 @Composable
+internal fun <T : Any> ListComboBoxImpl(
+    items: List<T>,
+    selectedIndex: Int,
+    onSelectedItemChange: (Int) -> Unit,
+    itemKeys: (Int, T) -> Any,
+    enabled: Boolean,
+    outline: Outline,
+    maxPopupHeight: Dp,
+    interactionSource: MutableInteractionSource,
+    style: ComboBoxStyle,
+    onPopupVisibleChange: (visible: Boolean) -> Unit,
+    listState: SelectableLazyListState,
+    labelContent: @Composable (item: T?) -> Unit,
+    modifier: Modifier = Modifier,
+    itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
+) {
+    LaunchedEffect(itemKeys) {
+        val item = items.getOrNull(selectedIndex)
+        if (item != null) {
+            listState.selectedKeys = setOf(itemKeys(selectedIndex, item))
+        } else {
+            listState.selectedKeys = emptySet()
+        }
+    }
+
+    val currentSelectedIndex by rememberUpdatedState(selectedIndex)
+    var hoveredItemIndex by remember { mutableIntStateOf(selectedIndex) }
+    val scope = rememberCoroutineScope()
+
+    fun setSelectedItem(index: Int) {
+        if (index == currentSelectedIndex) return
+
+        if (index >= 0 && index <= items.lastIndex) {
+            listState.selectedKeys = setOf(itemKeys(index, items[index]))
+            onSelectedItemChange(index)
+            scope.launch { listState.lazyListState.scrollToIndex(index) }
+        } else {
+            JewelLogger.getInstance("ListComboBox").trace("Ignoring item index $index as it's invalid")
+        }
+    }
+
+    fun resetPreviewSelectedIndex() {
+        hoveredItemIndex = -1
+    }
+
+    val contentPadding = style.metrics.popupContentPadding
+    val popupMaxHeight = maxPopupHeight.takeOrElse { style.metrics.maxPopupHeight }
+
+    val popupManager = remember {
+        PopupManager(
+            onPopupVisibleChange = { visible ->
+                resetPreviewSelectedIndex()
+                onPopupVisibleChange(visible)
+            },
+            name = "ListComboBoxPopup",
+        )
+    }
+
+    ComboBox(
+        modifier =
+            modifier.onPreviewKeyEvent {
+                if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+
+                if (it.key == Key.Enter || it.key == Key.NumPadEnter) {
+                    if (popupManager.isPopupVisible.value && hoveredItemIndex >= 0) {
+                        setSelectedItem(hoveredItemIndex)
+                        resetPreviewSelectedIndex()
+                    }
+                    popupManager.setPopupVisible(false)
+                    true
+                } else {
+                    false
+                }
+            },
+        enabled = enabled,
+        maxPopupHeight = popupMaxHeight,
+        onArrowDownPress = {
+            var currentSelection = listState.selectedItemIndex(items, itemKeys)
+
+            // When there is a preview-selected item, pressing down will actually change the
+            // selected value to the one underneath it (unless it's the last one)
+            if (hoveredItemIndex >= 0 && hoveredItemIndex < items.lastIndex) {
+                currentSelection = hoveredItemIndex
+                resetPreviewSelectedIndex()
+            }
+
+            setSelectedItem((currentSelection + 1).coerceAtMost(items.lastIndex))
+        },
+        onArrowUpPress = {
+            var currentSelection = listState.selectedItemIndex(items, itemKeys)
+
+            // When there is a preview-selected item, pressing up will actually change the
+            // selected value to the one above it (unless it's the first one)
+            if (hoveredItemIndex > 0) {
+                currentSelection = hoveredItemIndex
+                resetPreviewSelectedIndex()
+            }
+
+            setSelectedItem((currentSelection - 1).coerceAtLeast(0))
+        },
+        style = style,
+        interactionSource = interactionSource,
+        outline = outline,
+        popupManager = popupManager,
+        labelContent = { labelContent(items.getOrNull(selectedIndex)) },
+        popupContent = {
+            PopupContent(
+                items = items,
+                previewSelectedItemIndex = hoveredItemIndex,
+                currentlySelectedIndex = selectedIndex,
+                listState = listState,
+                popupMaxHeight = popupMaxHeight,
+                contentPadding = contentPadding,
+                onHoveredItemChange = {
+                    if (it >= 0 && hoveredItemIndex != it) {
+                        hoveredItemIndex = it
+                    }
+                },
+                onSelectedItemChange = { index: Int -> setSelectedItem(index) },
+                itemKeys = itemKeys,
+                itemContent = itemContent,
+            )
+        },
+    )
+}
+
+@Composable
 private fun <T : Any> PopupContent(
     items: List<T>,
+    currentlySelectedIndex: Int,
     previewSelectedItemIndex: Int,
     listState: SelectableLazyListState,
     popupMaxHeight: Dp,
     contentPadding: PaddingValues,
-    onPreviewSelectedItemChange: (Int) -> Unit,
+    onHoveredItemChange: (Int) -> Unit,
     onSelectedItemChange: (Int) -> Unit,
     itemKeys: (Int, T) -> Any,
     itemContent: @Composable (item: T, isSelected: Boolean, isActive: Boolean) -> Unit,
 ) {
     VerticallyScrollableContainer(
-        scrollState = listState.lazyListState,
+        scrollState = listState.lazyListState as ScrollableState,
         modifier = Modifier.heightIn(max = popupMaxHeight),
     ) {
         SelectableLazyColumn(
-            modifier = Modifier.fillMaxWidth().heightIn(max = popupMaxHeight).padding(contentPadding),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .heightIn(max = popupMaxHeight)
+                    .padding(contentPadding)
+                    .testTag("Jewel.ComboBox.List"),
             selectionMode = SelectionMode.Single,
             state = listState,
             onSelectedIndexesChange = { selectedItemsIndexes ->
                 val selectedIndex = selectedItemsIndexes.firstOrNull()
                 if (selectedIndex != null) onSelectedItemChange(selectedIndex)
             },
-        ) { ->
+        ) {
             itemsIndexed(
                 items = items,
                 key = { itemIndex, item -> itemKeys(itemIndex, item) },
@@ -570,7 +546,7 @@ private fun <T : Any> PopupContent(
                             Modifier.thenIf(!listState.isScrollInProgress) {
                                 onMove {
                                     if (previewSelectedItemIndex != index) {
-                                        onPreviewSelectedItemChange(index)
+                                        onHoveredItemChange(index)
                                     }
                                 }
                             }
@@ -583,10 +559,23 @@ private fun <T : Any> PopupContent(
                         val showAsSelected =
                             (isItemSelected && previewSelectedItemIndex < 0) || previewSelectedItemIndex == index
 
-                        itemContent(item, showAsSelected, isActive)
+                        // We assume items are active when visible (the popup isn't really, but should show as such)
+                        itemContent(item, showAsSelected, true)
                     }
                 },
             )
         }
     }
+
+    LaunchedEffect(Unit) {
+        // Only run the call when the list is actually visible
+        val visibleItems = snapshotFlow { listState.visibleItemsRange }.filter { it.first >= 0 && it.last >= 0 }.first()
+
+        val indexToShow = currentlySelectedIndex.takeIfInBoundsOrZero(items.indices)
+        if (indexToShow !in visibleItems) {
+            listState.lazyListState.scrollToIndex(indexToShow)
+        }
+    }
 }
+
+private fun Int.takeIfInBoundsOrZero(acceptedIndices: IntRange) = if (this in acceptedIndices) this else 0

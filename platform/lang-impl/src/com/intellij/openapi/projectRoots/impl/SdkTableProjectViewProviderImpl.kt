@@ -7,18 +7,21 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTableProjectViewProvider
 import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.project.ProjectStoreOwner
 import org.jetbrains.annotations.Unmodifiable
 import java.nio.file.Path
 
 private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjectViewProvider, Disposable {
-  private val descriptor = project.basePath?.toNioPathOrNull()?.getEelDescriptor() ?: LocalEelDescriptor
+  @Suppress("SimpleRedundantLet")
+  private val descriptor = (project as? ProjectStoreOwner)
+                             ?.let { it.componentStore.storeDescriptor.historicalProjectBasePath.getEelDescriptor() }
+                           ?: LocalEelDescriptor
 
   private var perEnvironmentModelSeparation: Boolean
 
@@ -34,10 +37,11 @@ private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjec
 
   override fun getSdkTableView(): ProjectJdkTable {
     val generalTable = ProjectJdkTable.getInstance()
-    return if (!perEnvironmentModelSeparation) {
-      generalTable
-    } else {
-      ProjectJdkTableProjectView(descriptor, generalTable)
+    if (perEnvironmentModelSeparation) {
+      return ProjectJdkTableProjectView(descriptor, generalTable)
+    }
+    else {
+      return generalTable
     }
   }
 

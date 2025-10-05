@@ -156,6 +156,12 @@ public final class PluginDownloader {
     return myDescriptor;
   }
 
+  // TODO this method is nullable for extra safety, can probably be dropped later with some caution
+  @ApiStatus.Internal
+  public @Nullable PluginUiModel getUiModel() {
+    return myModel;
+  }
+
   public @NotNull Path getFilePath() throws IOException {
     if (myFile != null) {
       return myFile;
@@ -265,7 +271,7 @@ public final class PluginDownloader {
   private @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact() throws IOException {
     ThreadingAssertions.assertBackgroundThread();
     if (myBuildNumber == null) {
-      return PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(getFilePath(), null);
+      return PluginDescriptorLoader.loadDescriptorFromArtifact(getFilePath(), null);
     }
     else {
       return PluginDescriptorLoader.readBasicDescriptorDataFromArtifact(getFilePath());
@@ -404,7 +410,7 @@ public final class PluginDownloader {
 
   @ApiStatus.Internal
   public static @NotNull PluginDownloader createDownloader(@NotNull PluginUiModel pluginUiModel,
-                                                           @Nullable String host,
+                                                           @Nullable String host, // FIXME this should come from pluginUiModel (there is repositoryName)
                                                            @Nullable BuildNumber buildNumber) throws IOException {
     return createDownloader(pluginUiModel, host, buildNumber, pluginUiModel.getDownloadUrl(),
                             pluginUiModel.isFromMarketplace());

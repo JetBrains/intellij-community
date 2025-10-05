@@ -23,6 +23,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,9 +53,25 @@ public class TestMethods extends TestMethod {
                                                          : GlobalSearchScope.allScope(project);
     ReadAction.run(() -> addClassesListToJavaParameters(myFailedTests, testInfo -> testInfo != null
                                                                                    ? getTestPresentation(testInfo, project, searchScope)
-                                                                                   : null, data.getPackageName(), true, javaParameters));
+                                                                                   : null,
+                                                        isRunningUnderSuite(getConfiguration(), myFailedTests)
+                                                        ? ""
+                                                        : data.getPackageName(),
+                                                        true, javaParameters));
 
     return javaParameters;
+  }
+
+  private static boolean isRunningUnderSuite(@NotNull JUnitConfiguration configuration, @NotNull Collection<? extends AbstractTestProxy> failedTests) {
+    String pkg = configuration.getPersistentData().getPackageName();
+    for (AbstractTestProxy test : failedTests) {
+      String url = test.getLocationUrl();
+      if (url == null) continue;
+      if (!PathUtil.toPresentableUrl(url).startsWith(pkg)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

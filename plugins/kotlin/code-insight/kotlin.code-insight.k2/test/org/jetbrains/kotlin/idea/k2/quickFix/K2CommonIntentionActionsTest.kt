@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.quickFix
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -8,10 +7,13 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest.NestedAnnotation
 import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest.StringValue
 import com.intellij.lang.jvm.types.JvmSubstitutor
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair.pair
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.runInEdtAndWait
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -21,9 +23,12 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.uast.UClass
 import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.toUElementOfType
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -39,7 +44,8 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         private val returnType: ExpectedTypes = emptyList(),
         private val annotations: Collection<AnnotationRequest> = emptyList(),
         parameters: List<ExpectedParameter> = emptyList(),
-        private val targetSubstitutor: JvmSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
+        private val targetSubstitutor: JvmSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY),
+        private val elementToReplace: PsiElement? = null,
     ) : CreateMethodRequest {
         private val expectedParameters = parameters
 
@@ -57,6 +63,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
 
         override fun isValid(): Boolean = true
 
+        override fun getElementToReplace(): PsiElement? = elementToReplace
     }
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
@@ -84,7 +91,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testMakePrivate() {
+    fun testMakePrivate() {
         myFixture.configureByText(
             "foo.kt", """
         class Foo<caret> {
@@ -107,7 +114,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testMakeNotPrivate() {
+    fun testMakeNotPrivate() {
         myFixture.configureByText(
             "foo.kt", """
         private class Foo<caret> {
@@ -130,7 +137,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testMakePrivatePublic() {
+    fun testMakePrivatePublic() {
         myFixture.configureByText(
             "foo.kt", """class Foo {
                         |    private fun <caret>bar(){}
@@ -149,7 +156,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testMakeProtectedPublic() {
+    fun testMakeProtectedPublic() {
         myFixture.configureByText(
             "foo.kt", """open class Foo {
                         |    protected fun <caret>bar(){}
@@ -168,7 +175,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testMakeInternalPublic() {
+    fun testMakeInternalPublic() {
         myFixture.configureByText(
             "foo.kt", """class Foo {
                         |    internal fun <caret>bar(){}
@@ -743,7 +750,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testChangeMethodType() {
+    fun testChangeMethodType() {
         myFixture.configureByText(
             "foo.kt", """class Foo {
                         |   fun <caret>bar(){}
@@ -761,7 +768,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testChangeMethodTypeToTypeWithAnnotations() {
+    fun testChangeMethodTypeToTypeWithAnnotations() {
         myFixture.configureByText(
             "foo.kt", """class Foo {
                         |   fun <caret>bar(){}
@@ -791,7 +798,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testChangeMethodTypeRemoveAnnotations() {
+    fun testChangeMethodTypeRemoveAnnotations() {
         myFixture.addKotlinFileToProject(
             "pkg/myannotation/annotations.kt", """
             package pkg.myannotation
@@ -824,7 +831,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testChangeMethodTypeChangeAnnotationsOnly() {
+    fun testChangeMethodTypeChangeAnnotationsOnly() {
         myFixture.addKotlinFileToProject(
             "pkg/myannotation/annotations.kt", """
             package pkg.myannotation
@@ -861,7 +868,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testChangeMethodTypeAddJavaAnnotation() {
+    fun testChangeMethodTypeAddJavaAnnotation() {
         myFixture.addJavaFileToProject(
             "pkg/myannotation/JavaAnnotation.java", """
             package pkg.myannotation;
@@ -910,7 +917,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testChangeMethodTypeWithComments() {
+    fun testChangeMethodTypeWithComments() {
         myFixture.addKotlinFileToProject(
             "pkg/myannotation/annotations.kt", """
             package pkg.myannotation
@@ -947,7 +954,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testChangeMethodTypeToJavaType() {
+    fun testChangeMethodTypeToJavaType() {
         myFixture.addJavaFileToProject(
             "pkg/mytype/MyType.java", """
             package pkg.mytype;
@@ -992,7 +999,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         assertEmpty(createModifierActions(myFixture.atCaret(), TestModifierRequest(JvmModifier.PUBLIC, true)))
     }
 
-    fun _testDontMakeFunInObjectsOpen() {
+    fun testDontMakeFunInObjectsOpen() {
         myFixture.configureByText(
             "foo.kt", """
         object Foo {
@@ -1034,7 +1041,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
-    fun _testAddIntIntMethod() {
+    fun testAddIntIntMethod() {
         myFixture.configureByText(
             "foo.kt", """
         |class Foo<caret> {
@@ -1069,7 +1076,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testAddIntPrimaryConstructor() {
+    fun testAddIntPrimaryConstructor() {
         myFixture.configureByText(
             "foo.kt", """
         |class Foo<caret> {
@@ -1090,7 +1097,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testAddIntSecondaryConstructor() {
+    fun testAddIntSecondaryConstructor() {
         myFixture.configureByText(
             "foo.kt", """
         |class <caret>Foo() {
@@ -1107,7 +1114,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         myFixture.checkResult(
             """
         |class Foo() {
-        |    constructor(param0: Int) {
+        |    constructor(param0: Int) : this() {
         |
         |    }
         |}
@@ -1115,7 +1122,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testChangePrimaryConstructorInt() {
+    fun testChangePrimaryConstructorInt() {
         myFixture.configureByText(
             "foo.kt", """
         |class <caret>Foo() {
@@ -1127,7 +1134,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
             createConstructorActions(
                 myFixture.atCaret(),
                 constructorRequest(project, listOf(pair("param0", PsiTypes.intType() as PsiType)))
-            ).findWithText("Add 'int' as 1st parameter to constructor 'Foo'")
+            ).findWithText("Add 'int' as 1st parameter to constructor 'Foo()'")
         )
         myFixture.checkResult(
             """
@@ -1137,7 +1144,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         )
     }
 
-    fun _testRemoveConstructorParameters() {
+    fun testRemoveConstructorParameters() {
         myFixture.configureByText(
             "foo.kt", """
         |class <caret>Foo(i: Int) {
@@ -1149,7 +1156,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
             createConstructorActions(
                 myFixture.atCaret(),
                 constructorRequest(project, emptyList())
-            ).findWithText("Remove 1st parameter from constructor 'Foo'")
+            ).findWithText("Remove 1st parameter from constructor 'Foo()'")
         )
         myFixture.checkResult(
             """
@@ -1160,7 +1167,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
-    fun _testAddStringVarProperty() {
+    fun testAddStringVarProperty() {
         myFixture.configureByText(
             "foo.kt", """
         |class Foo<caret> {
@@ -1195,7 +1202,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
-    fun _testAddLateInitStringVarProperty() {
+    fun testAddLateInitStringVarProperty() {
         myFixture.configureByText(
             "foo.kt", """
         |class Foo<caret> {
@@ -1329,7 +1336,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
-    fun _testGetMethodHasParameters() {
+    fun testGetMethodHasParameters() {
         myFixture.configureByText(
             "foo.kt", """
         |class Foo<caret> {
@@ -1365,7 +1372,7 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
-    fun _testSetMethodHasStringReturnType() {
+    fun testSetMethodHasStringReturnType() {
         myFixture.configureByText(
             "foo.kt", """
         |class Foo<caret> {
@@ -1434,6 +1441,50 @@ class K2CommonIntentionActionsTest : KotlinLightCodeInsightFixtureTestCaseBase()
         |    fun bar() {}
         |    fun setBaz(param0: String, param1: String) {
         |
+        |    }
+        |}
+        """.trim().trimMargin(), true
+        )
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun testReplaceRefByIntMethod() {
+        val file = myFixture.configureByText(
+            "foo.kt", """
+        |class Foo {
+        |    bar<caret>
+        |}
+        """.trim().trimMargin()
+        )
+
+        val psiReference = file.findElementAt(myFixture.caretOffset - 1)
+        val targetClass = PsiTreeUtil.getParentOfType(psiReference, KtClass::class.java)
+        assertNotNull(targetClass)
+
+        allowAnalysisOnEdt {
+            createMethodActions(
+                targetClass.toUElementOfType<UClass>()!!,
+                SimpleMethodRequest(
+                    project,
+                    methodName = "baz",
+                    modifiers = listOf(JvmModifier.PUBLIC),
+                    returnType = expectedTypes(PsiTypes.intType()),
+                    parameters = expectedParams(PsiTypes.intType()),
+                    elementToReplace = psiReference
+                )
+            ).first()
+        }.apply {
+            runInEdtAndWait {
+                WriteCommandAction.runWriteCommandAction(project) {
+                    invoke(project, myFixture.editor, myFixture.file)
+                }
+            }
+        }
+        myFixture.checkResult(
+            """
+        |class Foo {      
+        |    fun baz(param0: Int): Int {
+        |        TODO("Not yet implemented")
         |    }
         |}
         """.trim().trimMargin(), true

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,8 +13,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.FileTypeIndex;
@@ -74,7 +74,7 @@ public final class FileBasedIndexScanUtil {
                                               @NotNull GlobalSearchScope scope,
                                               @Nullable IdFilter idFilter) {
     if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
-      //TODO RC: why do we need up-to-date check here? -- VFS name index is always up-to date
+      // This is to update the project indexable files filter (idFilter), not VFS name index, which is always up-to date
       ensureUpToDate(indexId);
       //noinspection unchecked
       return FSRecords.processAllNames((Processor<CharSequence>)processor);
@@ -114,7 +114,7 @@ public final class FileBasedIndexScanUtil {
                                                        @Nullable IdFilter idFilter,
                                                        @NotNull FileBasedIndex.ValueProcessor<? super V> processor) {
     if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
-      //TODO RC: why do we need up-to-date check here? -- VFS name index is always up-to date
+      // This is to update the project indexable files filter (idFilter), not VFS name index, which is always up-to date
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       FSRecords.processFilesWithNames(Set.of((String)dataKey), id -> {
@@ -123,7 +123,7 @@ public final class FileBasedIndexScanUtil {
         }
         return true;
       });
-      PersistentFS fs = PersistentFS.getInstance();
+      ManagingFS fs = ManagingFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
         int id = iterator.nextInt();
@@ -239,7 +239,7 @@ public final class FileBasedIndexScanUtil {
                                                             @Nullable Condition<? super V> valueChecker,
                                                             @NotNull Processor<? super VirtualFile> processor) {
     if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
-      //TODO RC: why do we need up-to-date check here? -- VFS name index is always up-to date
+      // This is to update the project indexable files filter (idFilter), not VFS name index, which is always up-to date
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       //noinspection unchecked
@@ -249,7 +249,7 @@ public final class FileBasedIndexScanUtil {
         }
         return true;
       });
-      PersistentFS fs = PersistentFS.getInstance();
+      ManagingFS fs = ManagingFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
         int id = iterator.nextInt();

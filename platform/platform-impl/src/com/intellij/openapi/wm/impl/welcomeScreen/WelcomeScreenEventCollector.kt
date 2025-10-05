@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.wm.WelcomeScreenTab
 import org.jetbrains.annotations.ApiStatus
@@ -45,10 +45,14 @@ object WelcomeScreenEventCollector : CounterUsagesCollector() {
   internal val debuggerAttachUsed: EventId = GROUP.registerEvent("debugger.attach")
 
   @JvmStatic
-  fun logWelcomeScreenShown(): Unit = shown.log(ConfigImportHelper.isFirstSession(), ConfigImportHelper.isConfigImported())
+  fun logWelcomeScreenShown() {
+    shown.log(InitialConfigImportState.isFirstSession(), InitialConfigImportState.isConfigImported())
+  }
 
   @JvmStatic
-  fun logWelcomeScreenHide(): Unit = hide.log()
+  fun logWelcomeScreenHide() {
+    hide.log()
+  }
 
   @JvmStatic
   fun logTabSelected(selectedTab: WelcomeScreenTab): Unit = tabSelected.log(

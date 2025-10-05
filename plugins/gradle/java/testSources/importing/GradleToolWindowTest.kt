@@ -52,7 +52,7 @@ open class GradleToolWindowTest : GradleImportingTestCase() {
     super.setUp()
     isPreview = false
     toolWindow = ToolWindowHeadlessManagerImpl.MockToolWindow(myProject)
-    view = ExternalProjectsViewImpl(myProject, toolWindow!!, externalSystemId)
+    view = ExternalProjectsViewImpl(myProject, myProject, toolWindow!!, externalSystemId)
     runInEdtAndWait {
       ExternalProjectsManagerImpl.getInstance(myProject).registerView(view)
       view.initStructure()
@@ -296,7 +296,7 @@ include 'p1:leaf', 'p2:leaf'
     doTest()
   }
 
-  override fun createImportSpec(): ImportSpec? {
+  override fun createImportSpec(): ImportSpec {
     val importSpecBuilder = ImportSpecBuilder(super.createImportSpec())
     if (isPreview) {
       importSpecBuilder.usePreviewMode()

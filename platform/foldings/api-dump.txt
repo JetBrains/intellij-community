@@ -6,6 +6,7 @@ Fa:com.intellij.codeInsight.folding.CodeFoldingManager
 - a:getFoldRegionsAtOffset(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.editor.FoldRegion[]
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.folding.CodeFoldingManager
 - a:isCollapsedByDefault(com.intellij.openapi.editor.FoldRegion):java.lang.Boolean
+- a:keepExpandedOnFirstCollapseAll(com.intellij.openapi.editor.FoldRegion):java.lang.Boolean
 - a:readFoldingState(org.jdom.Element,com.intellij.openapi.editor.Document):com.intellij.openapi.fileEditor.impl.text.CodeFoldingState
 - a:releaseFoldings(com.intellij.openapi.editor.Editor):V
 - a:restoreFoldingState(com.intellij.openapi.editor.Editor,com.intellij.openapi.fileEditor.impl.text.CodeFoldingState):V

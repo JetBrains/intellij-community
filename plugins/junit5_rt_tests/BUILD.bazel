@@ -1,12 +1,17 @@
 ### auto-generated section `build intellij.junit.v5.rt.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "junit-v5-rt-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
 
 jvm_library(
   name = "junit-v5-rt-tests_test_lib",
+  module_name = "intellij.junit.v5.rt.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/junit5_rt:junit-v5-rt",
     "//java/testFramework",
@@ -39,9 +44,13 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
   ]
 )
+### auto-generated section `build intellij.junit.v5.rt.tests` end
+
+### auto-generated section `test intellij.junit.v5.rt.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "junit-v5-rt-tests_test",
   runtime_deps = [":junit-v5-rt-tests_test_lib"]
 )
-### auto-generated section `build intellij.junit.v5.rt.tests` end
+### auto-generated section `test intellij.junit.v5.rt.tests` end

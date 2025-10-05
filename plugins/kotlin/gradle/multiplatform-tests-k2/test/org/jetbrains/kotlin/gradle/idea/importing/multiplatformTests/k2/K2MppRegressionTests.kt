@@ -44,14 +44,14 @@ class K2MppRegressionTests : AbstractKotlinMppGradleImportingTest(), ReferenceTa
         doTest {
             onlyCheckers(HighlightingChecker, ReferenceTargetChecker)
             checkReference { referencedDeclaration ->
-                val kaModule = referencedDeclaration.getKaModule(project, useSiteModule = null)
+                val kaModule = referencedDeclaration.getKaModule(myProject, useSiteModule = null)
                 assertIs<KaLibraryModule>(kaModule)
                 assertTrue(
                     "A `KaLibrary` containing CInterop definitions should be a KLib-based one but was ${kaModule}",
-                    kaModule.getKotlinLibraries(project).isNotEmpty()
+                    kaModule.getKotlinLibraries(myProject).isNotEmpty()
                 )
                 val vFile = referencedDeclaration.containingKtFile.virtualFile
-                val psiFile = vFile.toPsiFile(project)!!
+                val psiFile = vFile.toPsiFile(myProject)!!
                 val editor = EditorHelper.openInEditor(referencedDeclaration.containingKtFile)
                 CodeInsightTestFixtureImpl.instantiateAndRun(
                     psiFile, editor,
@@ -67,6 +67,20 @@ class K2MppRegressionTests : AbstractKotlinMppGradleImportingTest(), ReferenceTa
     fun testComposeApp() {
         doTest {
             onlyCheckers(LibraryKindsChecker)
+        }
+    }
+
+    /**
+     * Relevant tickets: 
+     * - KTIJ-35244 for K2 Mode
+     * - KTIJ-29619 for K1 Mode
+     */
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.9.20-RC2+")
+    fun testKTIJ29619KotlinJvmWithTestFixtures() {
+        doTest {
+            onlyCheckers(HighlightingChecker)
+            hideLineMarkers = true
         }
     }
 }

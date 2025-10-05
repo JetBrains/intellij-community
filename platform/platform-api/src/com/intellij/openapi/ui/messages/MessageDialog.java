@@ -7,11 +7,14 @@ import com.intellij.openapi.ui.ExitActionType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -109,6 +112,18 @@ public class MessageDialog extends DialogWrapper {
                        int focusedOptionIndex,
                        @Nullable Icon icon,
                        @Nullable com.intellij.openapi.ui.DoNotAskOption doNotAskOption,
+                       @Nullable String helpId) {
+    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId, null, new ExitActionType[0]);
+  }
+
+  @Deprecated(forRemoval = true)
+  protected void _init(@NlsContexts.DialogTitle String title,
+                       @NlsContexts.DialogMessage @Nullable String message,
+                       String @NotNull [] options,
+                       int defaultOptionIndex,
+                       int focusedOptionIndex,
+                       @Nullable Icon icon,
+                       @Nullable DoNotAskOption doNotAskOption,
                        @Nullable String helpId) {
     _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId, null, new ExitActionType[0]);
   }
@@ -211,7 +226,21 @@ public class MessageDialog extends DialogWrapper {
   }
 
   protected JTextPane createMessageComponent(final @NlsContexts.DialogMessage String message) {
-    final JTextPane messageComponent = new JTextPane();
+    final JTextPane messageComponent = new JTextPane() {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleJEditorPane() {
+            @Override
+            public AccessibleRole getAccessibleRole() {
+              return AccessibleRole.LABEL;
+            }
+          };
+        }
+        return accessibleContext;
+      }
+    };
+    messageComponent.getAccessibleContext().setAccessibleName(StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message, " ")));
     return Messages.configureMessagePaneUi(messageComponent, message);
   }
 

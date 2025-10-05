@@ -18,7 +18,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class PropertiesDiffLangSpecificProviderTest : BasePlatformTestCase() {
-  override fun getTestDataPath(): String? {
+  override fun getTestDataPath(): String {
     return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/diff/languageSpecificChanges"
   }
 
@@ -57,8 +57,7 @@ class PropertiesDiffLangSpecificProviderTest : BasePlatformTestCase() {
   fun testReorderingWithNewProperties() = doTest(
     listOf(
       LineFragmentImpl(1, 2, 2, 3, 12, 24, 24, 38),
-      LineFragmentImpl(3, 4, 3, 4, 36, 48, 38, 52),
-      LineFragmentImpl(4, 5, 4, 5, 48, 59,  52, 65),
+      LineFragmentImpl(3, 5, 3, 5, 36, 59, 38, 65),
     )
   )
 
@@ -70,8 +69,8 @@ class PropertiesDiffLangSpecificProviderTest : BasePlatformTestCase() {
 
   fun testReorderingWithMultipleValueChanges() = doTest(
     listOf(
-      LineFragmentImpl(2, 3, 0, 1, 24, 35, 0, 16),
       LineFragmentImpl(0, 1, 2, 3, 0, 12, 28, 43),
+      LineFragmentImpl(2, 3, 0, 1, 24, 35, 0, 16),
     )
   )
 
@@ -89,24 +88,23 @@ class PropertiesDiffLangSpecificProviderTest : BasePlatformTestCase() {
 
   fun testNewOptionsWithChangesBefore() = doTest(
     listOf(
-      LineFragmentImpl(1, 1, 0, 2, 17, 17, 0, 46),
+      LineFragmentImpl(0, 0, 0, 2, 0, 0, 0, 46),
       LineFragmentImpl(0, 1, 2, 3, 0, 17, 46, 63),
     )
   )
 
   fun testNewOptionsWithChangesAfter() = doTest(
     listOf(
-      LineFragmentImpl(1, 1, 1, 3, 17, 17, 18, 63),
       LineFragmentImpl(0, 1, 0, 1, 0, 17, 0, 18),
+      LineFragmentImpl(1, 1, 1, 3, 17, 17, 18, 63),
     )
   )
 
-
   fun testNewOptionsWithChangesMixed() = doTest(
     listOf(
-      LineFragmentImpl(1, 1, 0, 2, 17, 17, 0, 46),
-      LineFragmentImpl(1, 1, 3, 5, 17, 17, 64, 109),
+      LineFragmentImpl(0, 0, 0, 2, 0, 0, 0, 46),
       LineFragmentImpl(0, 1, 2, 3, 0, 17, 46, 64),
+      LineFragmentImpl(1, 1, 3, 5, 17, 17, 64, 109),
     )
   )
 
@@ -160,9 +158,9 @@ class PropertiesDiffLangSpecificProviderTest : BasePlatformTestCase() {
 
   fun testChangeMultilineWithReorderingWithChange() = doTest(
     listOf(
+      LineFragmentImpl(0,1, 4, 5, 0, 10, 64, 77),
       LineFragmentImpl(1, 2, 0, 1, 10,33, 0, 29),
       LineFragmentImpl(4,5, 3, 4, 55, 63, 51, 64),
-      LineFragmentImpl(0,1, 4, 5, 0, 10, 64, 77),
     )
   )
 
@@ -187,6 +185,49 @@ class PropertiesDiffLangSpecificProviderTest : BasePlatformTestCase() {
   fun testExclamationMarkCommentAfterProperty() = doTest(
     listOf(
       LineFragmentImpl(0, 1, 0, 1, 0, 11, 0, 25),
+    )
+  )
+
+  fun testChangesAndAdditionWithMultilineProperty() = doTest(
+    listOf(
+      LineFragmentImpl(0, 1, 0, 1, 0, 23, 0, 27),
+      LineFragmentImpl(2, 4, 2, 4, 34, 53, 38, 66),
+      LineFragmentImpl(4, 4,5,9, 53, 53, 67, 120),
+    )
+  )
+
+  fun testChangesAndDeletionWithMultilineProperty() = doTest(
+    listOf(
+      LineFragmentImpl(0, 1, 0, 1, 0, 27, 0, 28),
+      LineFragmentImpl(2, 3, 2, 3, 38, 49,  39, 54),
+      LineFragmentImpl(5,9, 4, 4, 59, 108, 62, 62),
+    )
+  )
+
+  fun testReorderingWithMultilineProperty() = doTest(
+    listOf(
+      LineFragmentImpl(0, 1, 5, 6, 0, 23, 64, 91),
+      LineFragmentImpl(3, 4, 8, 9, 45, 54, 113,125),
+      LineFragmentImpl(6, 8, 1, 3, 79, 101, 24,54),
+    )
+  )
+
+  fun testPropertyAdditionIgnoreCommentAndBlankLine() = doTest(
+    listOf(
+      LineFragmentImpl(1, 1, 4, 5, 12, 12, 24, 43)
+    )
+  )
+
+  fun testPropertyDeletionIgnoreCommentAndBlankLine() = doTest(
+    listOf(
+      LineFragmentImpl(4, 5, 1, 1, 24, 43, 12, 12)
+    )
+  )
+
+  fun testKeyRenamingIsAdditionPlusDeletion() = doTest(
+    listOf(
+      LineFragmentImpl(0, 2, 0, 0, 0, 32, 0, 0),
+      LineFragmentImpl(0, 0, 0, 2, 0, 0, 0, 47),
     )
   )
 

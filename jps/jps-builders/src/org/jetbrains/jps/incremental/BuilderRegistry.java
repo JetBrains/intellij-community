@@ -17,19 +17,16 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.io.FileFilter;
 import java.util.*;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class BuilderRegistry {
   private static final Logger LOG = Logger.getInstance(BuilderRegistry.class);
   private static final class Holder {
     static final BuilderRegistry ourInstance = new BuilderRegistry();
   }
-  private final Map<BuilderCategory, List<ModuleLevelBuilder>> moduleLevelBuilders = new HashMap<>();
+  private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<>();
   private final List<JvmClassFileInstrumenter> myClassFileInstrumenters = new ArrayList<>();
-  private final Object2LongMap<BuildTargetType<?>> expectedBuildTime = new Object2LongOpenHashMap<>();
-  private final List<TargetBuilder<?,?>> targetBuilders = new ArrayList<>();
-  private final FileFilter moduleBuilderFileFilter;
+  private final Object2LongMap<BuildTargetType<?>> myExpectedBuildTime = new Object2LongOpenHashMap<>();
+  private final List<TargetBuilder<?,?>> myTargetBuilders = new ArrayList<>();
+  private final FileFilter myModuleBuilderFileFilter;
 
   public static @NotNull BuilderRegistry getInstance() {
     return Holder.ourInstance;
@@ -37,12 +34,12 @@ public final class BuilderRegistry {
 
   private BuilderRegistry() {
     for (BuilderCategory category : BuilderCategory.values()) {
-      moduleLevelBuilders.put(category, new ArrayList<>());
+      myModuleLevelBuilders.put(category, new ArrayList<>());
     }
 
     Set<String> compilableFileExtensions = CollectionFactory.createFilePathSet();
     for (BuilderService service : JpsServiceManager.getInstance().getExtensions(BuilderService.class)) {
-      targetBuilders.addAll(service.createBuilders());
+      myTargetBuilders.addAll(service.createBuilders());
       for (ModuleLevelBuilder builder : service.createModuleLevelBuilders()) {
         try {
           List<String> extensions = builder.getCompilableFileExtensions();
@@ -54,40 +51,44 @@ public final class BuilderRegistry {
           LOG.info(builder.getClass().getName() + " builder doesn't implement 'getCompilableFileExtensions' method so ModuleBuildTarget will process all files under source roots.");
           compilableFileExtensions = null;
         }
-        moduleLevelBuilders.get(builder.getCategory()).add(builder);
+        myModuleLevelBuilders.get(builder.getCategory()).add(builder);
         if (builder instanceof JvmClassFileInstrumenter) {
           myClassFileInstrumenters.add((JvmClassFileInstrumenter)builder);
         }
       }
     }
     Collections.sort(myClassFileInstrumenters, Comparator.comparing(JvmClassFileInstrumenter::getId));
-    
+    // ensure predictable order in which instrumentation changes are applied
+    Collections.sort(
+      myModuleLevelBuilders.get(BuilderCategory.CLASS_INSTRUMENTER), Comparator.comparing(builder -> builder instanceof JvmClassFileInstrumenter? ((JvmClassFileInstrumenter)builder).getId() : builder.getPresentableName())
+    );
+
     if (compilableFileExtensions == null) {
-      moduleBuilderFileFilter = FileFilters.EVERYTHING;
+      myModuleBuilderFileFilter = FileFilters.EVERYTHING;
     }
     else {
       Set<String> finalCompilableFileExtensions = compilableFileExtensions;
-      moduleBuilderFileFilter = file -> finalCompilableFileExtensions.contains(FileUtilRt.getExtension(file.getName()));
+      myModuleBuilderFileFilter = file -> finalCompilableFileExtensions.contains(FileUtilRt.getExtension(file.getName()));
     }
 
     long moduleTargetBuildTime = 0;
     for (ModuleLevelBuilder builder : getModuleLevelBuilders()) {
       moduleTargetBuildTime += builder.getExpectedBuildTime();
     }
-    expectedBuildTime.put(JavaModuleBuildTargetType.PRODUCTION, moduleTargetBuildTime);
-    expectedBuildTime.put(JavaModuleBuildTargetType.TEST, moduleTargetBuildTime);
+    myExpectedBuildTime.put(JavaModuleBuildTargetType.PRODUCTION, moduleTargetBuildTime);
+    myExpectedBuildTime.put(JavaModuleBuildTargetType.TEST, moduleTargetBuildTime);
 
-    for (TargetBuilder<?, ?> targetBuilder : targetBuilders) {
+    for (TargetBuilder<?, ?> targetBuilder : myTargetBuilders) {
       long buildTime = targetBuilder.getExpectedBuildTime();
       for (BuildTargetType<?> type : targetBuilder.getTargetTypes()) {
-        long total = expectedBuildTime.getLong(type);
-        expectedBuildTime.put(type, total + buildTime);
+        long total = myExpectedBuildTime.getLong(type);
+        myExpectedBuildTime.put(type, total + buildTime);
       }
     }
   }
 
   public @NotNull FileFilter getModuleBuilderFileFilter() {
-    return moduleBuilderFileFilter;
+    return myModuleBuilderFileFilter;
   }
 
   public int getModuleLevelBuilderCount() {
@@ -115,7 +116,7 @@ public final class BuilderRegistry {
   }
 
   public @NotNull @Unmodifiable List<ModuleLevelBuilder> getBuilders(BuilderCategory category){
-    return Collections.unmodifiableList(moduleLevelBuilders.get(category));
+    return Collections.unmodifiableList(myModuleLevelBuilders.get(category));
   }
 
   public @NotNull @Unmodifiable List<ModuleLevelBuilder> getModuleLevelBuilders() {
@@ -127,7 +128,7 @@ public final class BuilderRegistry {
   }
 
   public @NotNull @Unmodifiable List<TargetBuilder<?,?>> getTargetBuilders() {
-    return targetBuilders;
+    return myTargetBuilders;
   }
 
   /**
@@ -136,6 +137,6 @@ public final class BuilderRegistry {
    */
   public long getExpectedBuildTimeForTarget(BuildTargetType<?> targetType) {
     // it may happen that there are no builders registered for a given type, so it won't be built at all
-    return expectedBuildTime.getLong(targetType);
+    return myExpectedBuildTime.getLong(targetType);
   }
 }

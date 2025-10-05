@@ -6,25 +6,9 @@
     { "name": "O", "dependencies": [] }
   ],
   "targets": [
-    {
-      "module": "A",
-      "directDependents": ["C"],
-      "transitiveDependents": ["B", "C"]
-    },
-    {
-      "module": "B",
-      "directDependents": ["A"],
-      "transitiveDependents": ["A", "C"]
-    },
-    {
-      "module": "C",
-      "directDependents": ["B"],
-      "transitiveDependents": ["A", "B"]
-    },
-    {
-      "module": "O",
-      "directDependents": ["B"],
-      "transitiveDependents": ["A", "B", "C"]
-    }
+    { "module": "A" },
+    { "module": "B" },
+    { "module": "C" },
+    { "module": "O" }
   ]
 }

@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
 import java.io.Serializable
 import java.lang.reflect.Modifier
-import java.util.Locale
+import java.util.*
 
 interface KaptSourceSetModel : Serializable {
     val sourceSetName: String
@@ -116,8 +116,8 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
                     }
                 }
             } else {
-                val compileTasks = project.getTarget()?.compilations?.map { compilation -> compilation.getCompileKotlinTaskName(project) }
-                    ?: project.getAllTasks(false)[project]
+                val compileTasks = project.getTarget()?.compilations?.mapNotNull { comp -> comp.getCompileKotlinTaskName(project) }
+                    ?: project.getAllTasks(false)[project]?.filterNotNull()
                 compileTasks?.forEach{ compileTask ->
                     val sourceSetName = compileTask.getSourceSetName()
                     if (androidVariantRequest.shouldSkipSourceSet(sourceSetName)) return@forEach

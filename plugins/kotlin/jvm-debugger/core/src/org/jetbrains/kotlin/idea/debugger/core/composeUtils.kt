@@ -54,5 +54,11 @@ fun getComposableSingletonsClasses(debugProcess: DebugProcess, file: KtFile): Li
     }
 }
 
-fun getClassPrepareRequestPatternForComposableSingletons(file: KtFile): String =
-    "${computeComposableSingletonsClassName(file)}\$*"
+fun getClassPrepareRequestPatternsForComposableSingletons(file: KtFile): List<String> {
+    val composableSingletonsClassName = computeComposableSingletonsClassName(file)
+    return listOf(
+        composableSingletonsClassName,
+        // matcher for all composable lambdas
+        "$composableSingletonsClassName\$*"
+    )
+}

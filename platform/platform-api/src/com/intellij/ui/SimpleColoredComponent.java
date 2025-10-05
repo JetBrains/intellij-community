@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.ui.paint.EffectPainter;
@@ -20,6 +21,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -281,6 +283,20 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   public void clear() {
     _clear();
     revalidateAndRepaint();
+  }
+
+  /**
+   * Creates a {@code SimpleColoredComponent} from {@link MarkupText}.
+   * @param text markup text
+   * @return a newly created {@code SimpleColoredComponent} that visualizes the specified text
+   */
+  @ApiStatus.Experimental
+  public static SimpleColoredComponent fromMarkupText(@NotNull MarkupText text) {
+    SimpleColoredComponent component = new SimpleColoredComponent();
+    for (MarkupText.Fragment fragment : text.fragments()) {
+      component.append(fragment.text(), SimpleTextAttributes.fromMarkupTextKind(fragment.kind()));
+    }
+    return component;
   }
 
   private void _clear() {
@@ -1217,6 +1233,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   protected class AccessibleSimpleColoredComponent extends JComponent.AccessibleJComponent {
     @Override
     public String getAccessibleName() {
+      return AccessibleContextUtil.combineAccessibleStrings(getCharSequence(false).toString(), ", ", getIconToolTipText());
+    }
+
+    protected @Nullable @Nls String getAccessibleNameWithoutIconTooltip() {
       return getCharSequence(false).toString();
     }
 

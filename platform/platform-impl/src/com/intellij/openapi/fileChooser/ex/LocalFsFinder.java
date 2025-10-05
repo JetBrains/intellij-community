@@ -12,7 +12,6 @@ import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFilter;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -97,7 +96,7 @@ public final class LocalFsFinder implements Finder {
   @Override
   public String normalize(@NotNull String path) {
     try {
-      Path file = Path.of(FileUtil.expandUserHome(path));
+      Path file = Path.of(OSAgnosticPathUtil.expandUserHome(path));
       if (!file.isAbsolute() && myBaseDir != null) {
         file = myBaseDir.resolve(path).toAbsolutePath();
       }

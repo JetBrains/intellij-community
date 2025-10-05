@@ -11,7 +11,6 @@ import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyImportElementImpl;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
-import com.jetbrains.python.psi.stubs.PyImportNameIndex;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,14 +40,6 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
   public @NotNull PyImportElementStub createStub(@NotNull PyImportElement psi, StubElement parentStub) {
     final PyTargetExpression asName = psi.getAsNameElement();
     return new PyImportElementStubImpl(psi.getImportedQName(), asName != null ? asName.getName() : "", parentStub, getStubElementType());
-  }
-
-  @Override
-  public void indexStub(@NotNull PyImportElementStub stub, @NotNull IndexSink sink) {
-    QualifiedName name = stub.getImportedQName();
-    if (name != null) {
-      sink.occurrence(PyImportNameIndex.KEY, name.toString());
-    }
   }
 
   @Override

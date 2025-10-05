@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestActionEvent;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
@@ -60,7 +61,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
       var model = consoleEditor.getCaretModel();
       List<Caret> oldCarets = List.copyOf(model.getAllCarets());
 
-      for (EditorTestUtil.CaretInfo caret : state.carets()) {
+      for (EditorCaretTestUtil.CaretInfo caret : state.carets()) {
         if (caret.position != null) {
           model.addCaret(caret.position, primary.get());
           primary.set(false);

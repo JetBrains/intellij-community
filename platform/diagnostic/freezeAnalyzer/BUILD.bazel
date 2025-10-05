@@ -1,16 +1,15 @@
 ### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "freezeAnalyzer_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "freezeAnalyzer_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -18,19 +17,20 @@ jvm_library(
   name = "freezeAnalyzer",
   module_name = "intellij.platform.diagnostic.freezeAnalyzer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":freezeAnalyzer_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/threadDumpParser",
     "@lib//:jetbrains-annotations",
-  ],
-  runtime_deps = [":freezeAnalyzer_resources"]
+  ]
 )
 
 jvm_library(
   name = "freezeAnalyzer_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":freezeAnalyzer_test_resources"],
   associates = [":freezeAnalyzer"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -39,15 +39,15 @@ jvm_library(
     "@lib//:kotlin-test-assertions-core-jvm",
     "@lib//:junit5",
     "@lib//:jetbrains-annotations",
-  ],
-  runtime_deps = [
-    ":freezeAnalyzer_resources",
-    ":freezeAnalyzer_test_resources",
   ]
 )
+### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` end
+
+### auto-generated section `test intellij.platform.diagnostic.freezeAnalyzer` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "freezeAnalyzer_test",
   runtime_deps = [":freezeAnalyzer_test_lib"]
 )
-### auto-generated section `build intellij.platform.diagnostic.freezeAnalyzer` end
+### auto-generated section `test intellij.platform.diagnostic.freezeAnalyzer` end

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
+import com.intellij.execution.configurations.AdditionalTabComponentManagerEx;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
@@ -24,7 +25,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class LogConsoleManagerBase implements LogConsoleManager, Disposable {
+public abstract class LogConsoleManagerBase implements LogConsoleManager, Disposable, AdditionalTabComponentManagerEx {
   private final Project myProject;
   private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<>();
   private final GlobalSearchScope mySearchScope;
@@ -86,10 +87,13 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     return addAdditionalTabComponent(tabComponent, id, icon, true);
   }
 
-  public Content addAdditionalTabComponent(@NotNull AdditionalTabComponent tabComponent,
-                                           @NotNull String id,
-                                           @Nullable Icon icon,
-                                           boolean closeable) {
+  @Override
+  public @Nullable Content addAdditionalTabComponent(
+    @NotNull AdditionalTabComponent tabComponent,
+    @NotNull String id,
+    @Nullable Icon icon,
+    boolean closeable
+  ) {
     Content logContent = getUi().createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(), icon,
                                                tabComponent.getPreferredFocusableComponent());
     logContent.setCloseable(closeable);

@@ -40,9 +40,9 @@ public class LightIntroduceVariableTest extends LightJavaCodeInsightFixtureTestC
     myFixture.addClass("package org.checkerframework.framework.qual; public class DefaultQualifier {}");
     myFixture.addClass("package org.checkerframework.checker.nullness.qual; @java.lang.annotation.Target({ElementType.TYPE_USE}) public class NonNull {}");
     myFixture.addClass("package org.checkerframework.checker.nullness.qual; @java.lang.annotation.Target({ElementType.TYPE_USE}) public @interface Nullable {}");
-    myFixture.addFileToProject("p/package-info.java", """
+    myFixture.addFileToProject("refactoring/introduceVariable/package-info.java", """
       @org.checkerframework.framework.qual.DefaultQualifier(value = NonNull.class, locations = TypeUseLocation.ALL)
-      package p;
+      package refactoring.introduceVariable;
       import org.checkerframework.checker.nullness.qual.NonNull;
       """);
     MockIntroduceVariableHandler handler = new MockIntroduceVariableHandler("m", false, false, false, 

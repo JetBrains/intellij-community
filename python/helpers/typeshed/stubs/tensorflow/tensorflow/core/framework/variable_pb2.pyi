@@ -24,7 +24,9 @@ class _VariableSynchronization:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _VariableSynchronizationEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_VariableSynchronization.ValueType], builtins.type):
+class _VariableSynchronizationEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_VariableSynchronization.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     VARIABLE_SYNCHRONIZATION_AUTO: _VariableSynchronization.ValueType  # 0
     """`AUTO`: Indicates that the synchronization will be determined by the
@@ -72,7 +74,9 @@ class _VariableAggregation:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _VariableAggregationEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_VariableAggregation.ValueType], builtins.type):
+class _VariableAggregationEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_VariableAggregation.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     VARIABLE_AGGREGATION_NONE: _VariableAggregation.ValueType  # 0
     """`NONE`: This is the default, giving an error if you use a
@@ -159,7 +163,29 @@ class VariableDef(google.protobuf.message.Message):
         aggregation: global___VariableAggregation.ValueType | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["save_slice_info_def", b"save_slice_info_def"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["aggregation", b"aggregation", "initial_value_name", b"initial_value_name", "initializer_name", b"initializer_name", "is_resource", b"is_resource", "save_slice_info_def", b"save_slice_info_def", "snapshot_name", b"snapshot_name", "synchronization", b"synchronization", "trainable", b"trainable", "variable_name", b"variable_name"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "aggregation",
+            b"aggregation",
+            "initial_value_name",
+            b"initial_value_name",
+            "initializer_name",
+            b"initializer_name",
+            "is_resource",
+            b"is_resource",
+            "save_slice_info_def",
+            b"save_slice_info_def",
+            "snapshot_name",
+            b"snapshot_name",
+            "synchronization",
+            b"synchronization",
+            "trainable",
+            b"trainable",
+            "variable_name",
+            b"variable_name",
+        ],
+    ) -> None: ...
 
 global___VariableDef = VariableDef
 
@@ -193,6 +219,11 @@ class SaveSliceInfoDef(google.protobuf.message.Message):
         var_offset: collections.abc.Iterable[builtins.int] | None = ...,
         var_shape: collections.abc.Iterable[builtins.int] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["full_name", b"full_name", "full_shape", b"full_shape", "var_offset", b"var_offset", "var_shape", b"var_shape"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "full_name", b"full_name", "full_shape", b"full_shape", "var_offset", b"var_offset", "var_shape", b"var_shape"
+        ],
+    ) -> None: ...
 
 global___SaveSliceInfoDef = SaveSliceInfoDef

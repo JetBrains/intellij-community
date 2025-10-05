@@ -173,8 +173,6 @@
   <action id="GuiDesigner.EditGroup"/>
   <action id="HighlightUsagesInFile"/>    <!-- TODO -->
   <action id="IDEtalk.Rename"/>
-  <action id="Images.ShowThumbnails"/>
-  <action id="Images.Thumbnails.ToggleRecursive"/>
   <action id="ImplementMethods"/>
   <action id="IncrementalSearch">
     <keyboard-shortcut first-keystroke="meta J"/>

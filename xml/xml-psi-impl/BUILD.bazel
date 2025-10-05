@@ -1,15 +1,15 @@
 ### auto-generated section `build intellij.xml.psi.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "psi-impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "psi-impl_resources_1",
-  files = glob(["resources-gen/**/*"]),
+  srcs = glob(["resources-gen/**/*"]),
   strip_prefix = "resources-gen"
 )
 
@@ -17,40 +17,38 @@ jvm_library(
   name = "psi-impl",
   module_name = "intellij.xml.psi.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [
+    ":psi-impl_resources",
+    ":psi-impl_resources_1",
+  ],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/editor-ui-api:editor-ui",
-    "//platform/indexing-api:indexing",
     "//jps/model-serialization",
     "//platform/projectModel-api:projectModel",
-    "//xml/xml-frontback-impl:frontback-impl",
     "//xml/xml-psi-api:psi",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//xml/xml-parser:parser",
-    "//RegExpSupport:regexp",
     "//platform/ide-core-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "@lib//:xml-resolver",
     "//platform/util:util-ui",
     "@lib//:fastutil-min",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:caffeine",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/caffeine",
     "//platform/util/jdom",
     "//platform/markdown-utils",
     "//platform/polySymbols",
-    "//platform/polySymbols/backend",
-  ],
-  exports = ["//xml/xml-frontback-impl:frontback-impl"],
-  runtime_deps = [
-    ":psi-impl_resources",
-    ":psi-impl_resources_1",
-    "//platform/backend",
+    "//RegExpSupport:regexp",
+    "//platform/syntax/syntax-psi:psi",
+    "//xml/xml-syntax:syntax",
+    "//platform/platform-impl:ide-impl",
   ]
 )
 ### auto-generated section `build intellij.xml.psi.impl` end

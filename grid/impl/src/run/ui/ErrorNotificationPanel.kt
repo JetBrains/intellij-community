@@ -181,22 +181,14 @@ class ErrorNotificationPanel private constructor(
       }
 
       return addLink(DataGridBundle.message("action.details.text")) {
-        Messages.showIdeaMessageDialog(
-          null, message, DataGridBundle.message("dialog.title.query.error"),
-          arrayOf<String>(CommonBundle.getOkButtonText()), 0, Messages.getErrorIcon(), null)
+        ErrorNotificationPopup(DataGridBundle.message("dialog.title.query.error"), null, message).show()
       }
     }
 
     fun addFullMessageButtonIfNeeded(): Builder {
       if (!isChoppedMessage) return this
       return addLink(DataGridBundle.message("action.full.message.text"), KeyEvent.VK_F, Runnable {
-        val result = Messages.showIdeaMessageDialog(
-          null, message, DataGridBundle.message("dialog.title.query.error"),
-          arrayOf<String>(CommonBundle.getCancelButtonText(),  DataGridBundle.message("dialog.button.copy.and.close")), 0, Messages.getErrorIcon(), null
-        )
-        if (result == 1) {
-          message?.let { CopyPasteManager.copyTextToClipboard(message) }
-        }
+        ErrorNotificationPopup(DataGridBundle.message("action.full.message.text"), error, message).show()
       })
     }
 

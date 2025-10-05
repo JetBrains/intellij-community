@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.system.OS
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -40,7 +41,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
         writer.writeStringField("version", version)
         writeAppInfo(writer)
         writer.writeStringField("generated", ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME))
-        writer.writeStringField("os", SystemInfo.getOsNameAndVersion())
+        writer.writeStringField("os", OS.CURRENT.name + " " + OS.CURRENT.version())
         writer.writeStringField("runtime", SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_VERSION + " " + SystemInfo.JAVA_RUNTIME_VERSION)
 
         writeProjectName(writer, projectName)

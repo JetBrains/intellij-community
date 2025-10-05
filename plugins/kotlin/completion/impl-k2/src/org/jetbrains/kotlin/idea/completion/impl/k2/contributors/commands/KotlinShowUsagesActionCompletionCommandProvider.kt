@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver.Companion.tokenType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
-class KotlinShowUsagesActionCompletionCommandProvider : AbstractShowUsagesActionCompletionCommandProvider() {
+internal class KotlinShowUsagesActionCompletionCommandProvider : AbstractShowUsagesActionCompletionCommandProvider() {
     override fun hasToShow(element: PsiElement): Boolean {
         if (element.tokenType != KtTokens.IDENTIFIER) return false
         return element.parent is KtNamedDeclaration

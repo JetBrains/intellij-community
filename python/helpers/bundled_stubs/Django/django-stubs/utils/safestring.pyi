@@ -1,7 +1,7 @@
 from collections.abc import Callable
-from typing import Any, TypeVar, overload
+from typing import Any, TypeAlias, TypeVar, overload
 
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self
 
 _SD = TypeVar("_SD", bound=SafeData)
 

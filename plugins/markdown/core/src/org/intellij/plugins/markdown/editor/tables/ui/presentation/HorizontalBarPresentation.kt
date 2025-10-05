@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -78,13 +79,15 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     get() = boundsState.height
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
-    if (isInvalid) {
-      return
-    }
-    graphics.useCopy { local ->
-      GraphicsUtil.setupAntialiasing(local)
-      GraphicsUtil.setupRoundedBorderAntialiasing(local)
-      paintBars(local)
+    runReadAction {
+      if (isInvalid) {
+        return@runReadAction
+      }
+      graphics.useCopy { local ->
+        GraphicsUtil.setupAntialiasing(local)
+        GraphicsUtil.setupRoundedBorderAntialiasing(local)
+        paintBars(local)
+      }
     }
   }
 

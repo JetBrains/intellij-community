@@ -13,9 +13,9 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
-import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.kotlin.idea.maven.PomFile
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
+import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator.Companion.kotlinPluginId
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.utils.PathUtil
 
@@ -27,14 +27,14 @@ class GenerateMavenTestCompileExecutionAction :
 
 class GenerateMavenPluginAction : PomFileActionBase(KotlinMavenPluginProvider())
 
-private const val DefaultKotlinVersion = "\${kotlin.version}"
+private const val DefaultKotlinVersion = $$"${kotlin.version}"
 
 open class PomFileActionBase(generateProvider: AbstractDomGenerateProvider<*>) : GenerateDomElementAction(generateProvider) {
     override fun isValidForFile(project: Project, editor: Editor, file: PsiFile): Boolean {
         return MavenDomUtil.isMavenFile(file) && super.isValidForFile(project, editor, file)
     }
 
-    override fun startInWriteAction() = true
+    override fun startInWriteAction(): Boolean = true
 }
 
 private class KotlinMavenPluginProvider :
@@ -53,7 +53,7 @@ private class KotlinMavenPluginProvider :
         }
 
         val pom = PomFile.forFileOrNull(DomUtil.getFile(parent)) ?: return null
-        return pom.addPlugin(MavenId(KotlinMavenConfigurator.GROUP_ID, KotlinMavenConfigurator.MAVEN_PLUGIN_ID, version))
+        return pom.addPlugin(kotlinPluginId(version))
     }
 
     override fun getElementToNavigate(t: MavenDomPlugin?) = t?.version

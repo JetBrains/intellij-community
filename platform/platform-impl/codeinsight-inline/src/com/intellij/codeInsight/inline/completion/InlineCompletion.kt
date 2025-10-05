@@ -9,6 +9,8 @@ import com.intellij.codeInsight.inline.completion.listeners.typing.InlineComplet
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -18,7 +20,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
-import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import java.util.concurrent.atomic.AtomicReference

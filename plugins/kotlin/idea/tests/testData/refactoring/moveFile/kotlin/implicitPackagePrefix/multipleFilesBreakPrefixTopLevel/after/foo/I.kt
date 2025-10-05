@@ -1,0 +1,3 @@
+package foo
+
+interface I

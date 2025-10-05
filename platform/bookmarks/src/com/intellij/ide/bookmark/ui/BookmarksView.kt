@@ -256,6 +256,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
       override fun focusLost(event: FocusEvent?) = Unit
       override fun focusGained(event: FocusEvent?) = selectionAlarm.cancelAndRequest()
     })
+    tree.accessibleContext.accessibleName = BookmarkBundle.message("bookmarks.tree.accessible.name")
 
     TreeUIHelper.getInstance().installTreeSpeedSearch(tree)
     TreeUtil.promiseSelectFirstLeaf(tree)

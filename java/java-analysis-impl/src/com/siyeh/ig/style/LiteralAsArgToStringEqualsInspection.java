@@ -43,7 +43,7 @@ public class LiteralAsArgToStringEqualsInspection extends BaseInspection impleme
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new LiteralAsArgToEqualsVisitor();
   }
 

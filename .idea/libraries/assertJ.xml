@@ -1,23 +1,18 @@
 <component name="libraryTable">
   <library name="assertJ" type="repository">
-    <properties maven-id="org.assertj:assertj-core:3.27.3">
+    <properties include-transitive-deps="false" maven-id="org.assertj:assertj-core:4.0.0-M1">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.27.3/assertj-core-3.27.3.jar">
-          <sha256sum>5b8a26205f6d5ea60ad9ce65ce4a40a2afe4c48abeec61bd0740a088c24e89f5</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11.jar">
-          <sha256sum>fa08998aae1e7bdae83bde0712c50e8444d71c0e0c196bb2247ade8d4ad0eb90</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/assertj/assertj-core/4.0.0-M1/assertj-core-4.0.0-M1.jar">
+          <sha256sum>03852ab5b4419c1b0b3689930cdc1ac4f0c437a0c8094a900370dcb170cfbb46</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.27.3/assertj-core-3.27.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/4.0.0-M1/assertj-core-4.0.0-M1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.27.3/assertj-core-3.27.3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.15.11/byte-buddy-1.15.11-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/4.0.0-M1/assertj-core-4.0.0-M1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

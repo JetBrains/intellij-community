@@ -1,5 +1,7 @@
 PsiJavaFile:ImplicitClass4.java
   PsiPackageStatement:pack1.pack2
+    PsiModifierList:
+      <empty list>
     PsiKeyword:package('package')
     PsiWhiteSpace(' ')
     PsiJavaCodeReferenceElement:pack1.pack2

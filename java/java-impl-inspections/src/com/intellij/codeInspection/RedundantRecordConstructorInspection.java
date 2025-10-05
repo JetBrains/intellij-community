@@ -84,8 +84,7 @@ public final class RedundantRecordConstructorInspection extends AbstractBaseJava
             return;
           }
         }
-        if (ctor.getModifierList().getAnnotations().length == 0 &&
-            ctor.getDocComment() == null) {
+        if (!ctor.hasAnnotations() && ctor.getDocComment() == null) {
           holder.registerProblem(ctorNameIdentifier,
                                  JavaBundle.message("inspection.redundant.record.constructor.compact.message"),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveRedundantCtorSimplifier());
@@ -115,7 +114,7 @@ public final class RedundantRecordConstructorInspection extends AbstractBaseJava
     PsiStatement[] statements = body.getStatements();
     int assignedCount = getAssignedComponentsCount(components, parameters, statements);
     if (statements.length == components.length && assignedCount == components.length &&
-        ctor.getModifierList().getAnnotations().length == 0 && ctor.getDocComment() == null) {
+        !ctor.hasAnnotations() && ctor.getDocComment() == null) {
       return new RemoveRedundantCtorSimplifier();
     }
     if (PsiUtil.findReturnStatements(body).length > 0) return null;

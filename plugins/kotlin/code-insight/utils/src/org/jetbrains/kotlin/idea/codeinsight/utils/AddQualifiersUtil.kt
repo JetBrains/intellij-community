@@ -6,8 +6,10 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.prevLeaf
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -33,6 +35,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import java.lang.RuntimeException
 
+@OptIn(KaContextParameterApi::class)
 object AddQualifiersUtil {
     fun addQualifiersRecursively(root: KtElement): KtElement {
         if (root is KtNameReferenceExpression) return applyIfApplicable(root) ?: root
@@ -48,7 +51,7 @@ object AddQualifiersUtil {
         return root
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextSymbol: KaSymbol): Boolean {
         if (referenceExpression.parent is KtInstanceExpressionWithLabel) return false
 

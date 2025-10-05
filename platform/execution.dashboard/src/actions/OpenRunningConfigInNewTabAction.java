@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 final class OpenRunningConfigInNewTabAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
@@ -23,7 +22,7 @@ final class OpenRunningConfigInNewTabAction extends ToggleAction implements Dumb
     Project project = e.getProject();
     if (project == null) return false;
 
-    return ((RunDashboardManagerImpl)RunDashboardManager.getInstance(project)).isOpenRunningConfigInNewTab();
+    return RunDashboardManager.getInstance(project).isOpenRunningConfigInNewTab();
   }
 
   @Override
@@ -31,6 +30,6 @@ final class OpenRunningConfigInNewTabAction extends ToggleAction implements Dumb
     Project project = e.getProject();
     if (project == null) return;
 
-    ((RunDashboardManagerImpl)RunDashboardManager.getInstance(project)).setOpenRunningConfigInNewTab(state);
+    RunDashboardManager.getInstance(project).setOpenRunningConfigInNewTab(state);
   }
 }

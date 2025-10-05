@@ -9,6 +9,7 @@ import com.intellij.codeInspection.IllegalDependencyOnInternalPackageInspection
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.codeInspection.java19modules.JavaModuleDefinitionInspection
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
@@ -48,6 +49,7 @@ import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.pom.java.JavaFeature
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaCompilerConfigurationProxy
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiResolveHelper
@@ -592,6 +594,45 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       }
     }
     highlight("test.java", checkFileText, isTest = checkFileInTests)
+  }
+
+  fun testLightModulePackageAccessibility() {
+    fun getModuleName(file: VirtualFile, importName: String): String? {
+      val psiFile = PsiManager.getInstance(project).findFile(file) as? PsiJavaFile
+      val importStatement = psiFile?.importList?.allImportStatements?.first { i -> i.importReference?.text == importName }
+      val resolved = importStatement?.resolve()
+      return JavaPsiModuleUtil.findDescriptorByElement(resolved)?.name
+    }
+
+    addFile("pkg/sub/C2X.java", """package pkg.sub;
+      public class C2X { }""".trimIndent(), M5)
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: m5.bar\n", module = M5)
+
+    addFile("pkg/sub/C2X.java", """package pkg.sub;
+      public class C2X { }""".trimIndent(), M6)
+    addResourceFile(JarFile.MANIFEST_NAME, "Automatic-Module-Name: m6.bar\n", module = M6)
+
+    val cFile = addFile("C.java", """
+        import pkg.sub.C2X;
+        
+        class C {
+          C2X c2 = new C2X();
+        }
+        """.trimIndent())
+
+    // first check
+    addFile("module-info.java", """module M { 
+      requires m5.bar;
+    }""".trimIndent())
+    highlight(cFile)
+    assertEquals("m5.bar", getModuleName(cFile, "pkg.sub.C2X"))
+
+    // change module-info and check again
+    addFile("module-info.java", """module M { 
+      requires m6.bar;
+    """)
+    highlight(cFile)
+    assertEquals("m6.bar", getModuleName(cFile, "pkg.sub.C2X"))
   }
 
   fun testPackageAccessibilityOverTestScope() {
@@ -1150,9 +1191,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
-  private fun highlight(path: String, text: String, module: ModuleDescriptor = MAIN, isTest: Boolean = false) {
-    myFixture.configureFromExistingVirtualFile(if (isTest) addTestFile(path, text, module) else addFile(path, text, module))
+  private fun highlight(file: VirtualFile) {
+    myFixture.configureFromExistingVirtualFile(file)
     myFixture.checkHighlighting()
+  }
+
+  private fun highlight(path: String, text: String, module: ModuleDescriptor = MAIN, isTest: Boolean = false) {
+    highlight(if (isTest) addTestFile(path, text, module) else addFile(path, text, module))
   }
 
   private fun fixes(text: String, fixes: Array<String>) = fixes("module-info.java", text, fixes)

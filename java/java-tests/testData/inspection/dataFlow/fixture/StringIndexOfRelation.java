@@ -6,7 +6,7 @@ class Test {
     int pos = s.indexOf('x');
     if (<warning descr="Condition 'pos < s.length()' is always 'true'">pos < s.length()</warning>) {}
     int pos2 = s.indexOf(s1);
-    if (<warning descr="Condition 'pos2 < s.length()' is always 'true'">pos2 < s.length()</warning>) {}
+    if (pos2 < s.length()) {}
     int pos3 = s.lastIndexOf('x');
     if (<warning descr="Condition 'pos3 < s.length()' is always 'true'">pos3 < s.length()</warning>) {}
     int pos4 = s.lastIndexOf("xyz");
@@ -20,5 +20,15 @@ class Test {
       if (<warning descr="Condition 'pos == -1' is always 'true'">pos == -1</warning>) {}
     }
     int max = Math.<warning descr="Result of 'max' is the same as the first argument making the call meaningless">max</warning>(s.length(), s.indexOf('a'));
+  }
+
+  private static void foo(String text) {
+    String s = "";
+    int idx = text.indexOf(s);
+    if (idx < 0) {
+      return;
+    }
+    String text1 = text.substring(idx);
+    System.out.println(text1.isEmpty());
   }
 }

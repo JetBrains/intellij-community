@@ -2,7 +2,6 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ThreadContext;
-import com.intellij.openapi.application.AccessToken;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,9 +22,10 @@ final class ContextRunnable implements Runnable {
   @Async.Execute
   @Override
   public void run() {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+    ThreadContext.resetThreadContext(() -> {
       myContext.runInChildContext(myRunnable);
-    }
+      return null;
+    });
   }
 
   public Runnable getDelegate() {

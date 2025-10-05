@@ -6,7 +6,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Allows to store custom settings in the settings sync, if these settings can't be collected and applied via the standard
+ * Allows storing custom settings in the settings sync, if these settings can't be collected and applied via the standard
  * [PersistentStateComponent] mechanism.
  *
  * @param T the structure class holding the settings.
@@ -16,7 +16,8 @@ import org.jetbrains.annotations.ApiStatus
 interface SettingsProvider<T: Any> {
 
   companion object {
-    val SETTINGS_PROVIDER_EP = ExtensionPointName.create<SettingsProvider<*>>("com.intellij.settingsSync.settingsProvider")
+    val SETTINGS_PROVIDER_EP: ExtensionPointName<SettingsProvider<*>> =
+      ExtensionPointName.create("com.intellij.settingsSync.settingsProvider")
   }
 
   /**
@@ -64,7 +65,7 @@ interface SettingsProvider<T: Any> {
    *
    * @param newer The state of the settings which was made later.
    * Usually, if there is a real conflict in the settings between the local and the cloud modifications (when the same property is set
-   * to different values), then the newer version should be performed, because that value was set by the user more recently.
+   * to different values), then the newer version should be performed. The user set that value more recently.
    *
    * @return the resulting state which will be used as the conflict resolution and will be recorded to the settings sync and propagated
    * both to the local IDE and to the cloud (and then to other machines).

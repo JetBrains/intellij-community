@@ -15,12 +15,10 @@ import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.lang.jvm.actions.groupActionsByType
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiImplUtil
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.*
 import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
-import com.intellij.psi.util.PsiUtilCore
-import com.intellij.psi.util.parentOfType
 
-fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
+public fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
   if (!checkReference(ref)) return emptyList()
   val fieldRequests = CreateFieldRequests(ref).collectRequests()
   val extensions = EP_NAME.extensionList
@@ -69,7 +67,7 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
       }
     }
     else {
-      val baseClass = resolveClassInClassTypeOnly(PsiImplUtil.getSwitchLabel(myRef)?.enclosingSwitchStatement?.expression?.type)
+      val baseClass = resolveClassInClassTypeOnly(PsiImplUtil.getSwitchLabel(myRef)?.enclosingSwitchBlock?.expression?.type)
       if (baseClass != null) {
         processHierarchy(baseClass)
       }
@@ -86,6 +84,9 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
   }
 
   private fun processOuterAndImported() {
+    val parent = myRef.parentOfTypes(PsiMember::class, PsiAnnotation::class)
+    // unresolved writable reference inside annotation: creating field will not help
+    if (parent is PsiAnnotation && PsiUtil.isAccessedForWriting(myRef)) return
     val inStaticContext = myRef.isInStaticContext()
     for (outerClass in collectOuterClasses(myRef)) {
       processClass(outerClass, inStaticContext)

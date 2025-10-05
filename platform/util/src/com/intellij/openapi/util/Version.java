@@ -1,21 +1,33 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
-public class Version implements Comparable<Version>, Serializable {
+public final class Version implements Comparable<Version>, Serializable {
   public final int major;
   public final int minor;
   public final int bugfix;
 
+  public Version(int major, int minor) {
+    this(major, minor, 0);
+  }
+
   public Version(int major, int minor, int bugfix) {
-    this.bugfix = bugfix;
-    this.minor = minor;
     this.major = major;
+    this.minor = minor;
+    this.bugfix = bugfix;
+  }
+
+  /**
+   * Returns a new version without a bugfix.
+   */
+  public @NotNull Version withoutBugfix() {
+    return bugfix == 0 ? this : new Version(major, minor, 0);
   }
 
   public static @Nullable Version parseVersion(@NotNull String versionString) {
@@ -39,7 +51,7 @@ public class Version implements Comparable<Version>, Serializable {
     return new Version(major, minor, patch);
   }
 
-  private static int parseNumber(String num, int def) {
+  private static int parseNumber(String num, @SuppressWarnings("SameParameterValue") int def) {
     return StringUtil.parseInt(num.replaceFirst("(\\d+).*", "$1"), def);
   }
 
@@ -115,14 +127,17 @@ public class Version implements Comparable<Version>, Serializable {
   /**
    * @return compact string representation in the following form: "n.n", "n.n.n", e.g 1.0, 1.1.0
    */
-  public @NlsSafe String toCompactString() {
-    return toCompactString(major, minor, bugfix);
+  public @NotNull @NlsSafe String toCompactString() {
+    String result = major + "." + minor;
+    if (bugfix > 0) result += "." + bugfix;
+    return result;
   }
 
+  /** @deprecated use {@link #toCompactString()} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static String toCompactString(int major, int minor, int bugfix) {
-    String res = major + "." + minor;
-    if (bugfix > 0) res += "." + bugfix;
-    return res;
+    return new Version(major, minor, bugfix).toCompactString();
   }
 
   @Override

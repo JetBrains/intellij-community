@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="ktor-utils" type="repository">
+        <properties maven-id="io.ktor:ktor-utils-jvm:3.1.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.1.3/ktor-utils-jvm-3.1.3.jar">
+              <sha256sum>33333937b98fc0c8e943ee4b10b3ea66b49782dfb569c44c142da4f32d85dffc</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1.jar">
+              <sha256sum>3565b6d4d789bf70683c45566944287fc1d8dc75c23d98bd87d01059cc76f2b3</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.slf4j:slf4j-api" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="io.ktor:ktor-io-jvm" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.1.3/ktor-utils-jvm-3.1.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3.1.3/ktor-utils-jvm-3.1.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.8.1/kotlinx-serialization-core-jvm-1.8.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

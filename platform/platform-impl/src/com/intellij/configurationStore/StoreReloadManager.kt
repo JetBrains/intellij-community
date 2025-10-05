@@ -6,11 +6,13 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 interface StoreReloadManager {
   companion object {
+    @RequiresBlockingContext
     fun getInstance(project: Project): StoreReloadManager = project.service<StoreReloadManager>()
   }
 

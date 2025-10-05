@@ -98,16 +98,14 @@ final class ExpressionChecker {
     if (aClass.hasModifierProperty(PsiModifier.STATIC)) return;
     PsiClass outerClass = aClass.getContainingClass();
     if (outerClass == null) {
-      if (!(aClass.getParent() instanceof PsiDeclarationStatement)) return;
-      PsiMember scope = PsiTreeUtil.getParentOfType(aClass, PsiMember.class); // local class
+      if (!(aClass.getParent() instanceof PsiDeclarationStatement)) return; // local class
+      PsiMember scope = PsiTreeUtil.getParentOfType(aClass, PsiMember.class);
       if (scope == null) return;
       if (scope.hasModifierProperty(PsiModifier.STATIC)) {
         PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(element, null);
         assert enclosingStaticElement != null;
         if (enclosingStaticElement != scope) {
-          JavaErrorKinds.LocalClassInstantiationErrorContext context =
-            new JavaErrorKinds.LocalClassInstantiationErrorContext(aClass, enclosingStaticElement);
-          myVisitor.report(JavaErrorKinds.LOCAL_CLASS_INSTANTIATED_FROM_DIFFERENT_STATIC_CONTEXT.create(element, context));
+          myVisitor.report(JavaErrorKinds.INSTANTIATION_LOCAL_CLASS_WRONG_STATIC_CONTEXT.create(element, aClass));
         }
         return;
       }
@@ -1619,10 +1617,10 @@ final class ExpressionChecker {
     }
     if (!(expression instanceof PsiThisExpression) && !(expression instanceof PsiSuperExpression) ||
         ((PsiQualifiedExpression)expression).getQualifier() == null) {
-      PsiClass expressionClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class, true);
+      PsiClass expressionClass = PsiUtil.getContainingClass(expression);
       while (expressionClass != null && parentClass != expressionClass) {
         if (InheritanceUtil.isInheritorOrSelf(expressionClass, referencedClass, true)) return;
-        expressionClass = PsiTreeUtil.getParentOfType(expressionClass, PsiClass.class, true);
+        expressionClass = PsiUtil.getContainingClass(expressionClass);
       }
     }
 

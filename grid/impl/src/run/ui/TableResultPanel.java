@@ -1175,7 +1175,7 @@ public class TableResultPanel extends UserDataHolderBase
       return absoluteRowIdx;
     }
     long lastRowIdx = pageModel.getTotalRowCount() - 1;
-    return Math.min(lastRowIdx > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int)lastRowIdx, absoluteRowIdx);
+    return Math.clamp(lastRowIdx, -1, absoluteRowIdx);
   }
 
   private void scrollTo(final int dataRowIndex, ModelIndex<GridColumn> columnIdx) {

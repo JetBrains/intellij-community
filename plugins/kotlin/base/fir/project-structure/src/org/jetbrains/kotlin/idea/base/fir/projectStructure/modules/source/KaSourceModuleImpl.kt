@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -11,7 +10,7 @@ import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaModuleWithD
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.InternalKaModuleConstructor
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 
-internal class KaSourceModuleImpl @InternalKaModuleConstructor constructor(
+internal open class KaSourceModuleImpl @InternalKaModuleConstructor constructor(
     override val entityId: ModuleId,
     override val kind: KaSourceModuleKind,
     override val project: Project,

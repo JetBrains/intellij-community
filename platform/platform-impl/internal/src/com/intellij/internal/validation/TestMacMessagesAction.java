@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -242,7 +243,7 @@ final class TestMacMessagesAction extends AnAction {
         JButton html = new JButton("Show Alert with HTML content");
         html.addActionListener(event -> Messages.showDialog(
           "<html>Message <a>message</a> message<br>test <b>test</b> test<br>&nbsp;&nbsp;&nbsp;foo &lt;&gt;&amp;&#39;&quot; foo</html>",
-          "<html>Title <b>AA</b></html>", new String[]{"Y&es", "<html>Zzz...</html>", "Cancel"}, 0, null, new DoNotAskOption() {
+          "<html>Title <b>AA</b></html>", new String[]{"Y&es", "<html>Zzz...</html>", "Cancel"}, 0, null, new com.intellij.openapi.ui.DoNotAskOption() {
             @Override
             public boolean isToBeShown() {
               return false;
@@ -348,8 +349,8 @@ final class TestMacMessagesAction extends AnAction {
     return messagePanel;
   }
 
-  private static @NotNull DialogWrapper.DoNotAskOption createDoNotAskOption(@NotNull String text) {
-    return new DialogWrapper.DoNotAskOption() {
+  private static @NotNull DoNotAskOption createDoNotAskOption(@NotNull String text) {
+    return new DoNotAskOption() {
       @Override
       public boolean isToBeShown() {
         return false;

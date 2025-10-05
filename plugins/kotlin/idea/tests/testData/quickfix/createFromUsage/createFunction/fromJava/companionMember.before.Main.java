@@ -5,5 +5,3 @@ class J {
         boolean b = K.<caret>foo(1, "2");
     }
 }
-
-// IGNORE_K2

@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 class ReplaceContainsIntention : SelfTargetingRangeIntention<KtDotQualifiedExpression>(
-    KtDotQualifiedExpression::class.java, KotlinBundle.lazyMessage("replace.contains.call.with.in.operator")
+    KtDotQualifiedExpression::class.java, KotlinBundle.messagePointer("replace.contains.call.with.in.operator")
 ), HighPriorityAction {
     override fun applicabilityRange(element: KtDotQualifiedExpression): TextRange? {
         if (element.calleeName != OperatorNameConventions.CONTAINS.asString()) return null

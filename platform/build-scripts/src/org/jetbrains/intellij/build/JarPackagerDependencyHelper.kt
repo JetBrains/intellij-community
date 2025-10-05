@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build
@@ -43,6 +43,11 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
         moduleName == "intellij.platform.split.testFramework" ||
         moduleName == "intellij.python.junit5Tests" ||
         moduleName == "intellij.rdct.tests.distributed") {
+      return true
+    }
+
+    // modules containing tests only as per https://youtrack.jetbrains.com/articles/IJPL-A-62
+    if (moduleName.endsWith(".tests")) {
       return true
     }
 
@@ -124,6 +129,10 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
   }
 
   fun getLibraryDependencies(module: JpsModule, withTests: Boolean): List<JpsLibraryDependency> {
+    //TODO Please write some sane code here, caching is broken, a proper caching crashes dev build
+    if (module.name == "intellij.python.pyproject" && withTests) {
+      return java.util.List.of()
+    }
     return libraryCache.computeIfAbsent(module) {
       val result = mutableListOf<JpsLibraryDependency>()
       for (element in module.dependenciesList.dependencies) {

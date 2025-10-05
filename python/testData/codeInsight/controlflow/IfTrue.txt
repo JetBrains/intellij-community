@@ -8,29 +8,32 @@
 7(8) element: PyPassStatement
 8(9) element: PyIfStatement
 9(10,11) READ ACCESS: True
-10() element: null. Condition: True:false
+10(15) element: null. Condition: True:false
 11(12) element: null. Condition: True:true
 12(13) ASSERTTYPE ACCESS: True
 13(14) element: PyStatementList
-14(18) element: PyPassStatement
-15(16) element: PyStatementList
-16(17) element: PyAssignmentStatement
-17(18) WRITE ACCESS: b
-18(19) element: PyIfStatement
-19(20,21) READ ACCESS: True
-20(25) element: null. Condition: True:false
-21(22) element: null. Condition: True:true
-22(23) ASSERTTYPE ACCESS: True
-23(24) element: PyStatementList
-24(35) element: PyPassStatement
-25(26,27) READ ACCESS: c
-26() element: null. Condition: c:false
-27(28) element: null. Condition: c:true
-28() ASSERTTYPE ACCESS: c
-29(30) element: PyStatementList
-30(31) element: PyAssignmentStatement
-31(35) WRITE ACCESS: d
-32(33) element: PyStatementList
-33(34) element: PyAssignmentStatement
-34(35) WRITE ACCESS: e
-35() element: null
+14(19) element: PyPassStatement
+15(16) ASSERTTYPE ACCESS: null
+16(17) element: PyStatementList
+17(18) element: PyAssignmentStatement
+18(19) WRITE ACCESS: b
+19(20) element: PyIfStatement
+20(21,22) READ ACCESS: True
+21(26) element: null. Condition: True:false
+22(23) element: null. Condition: True:true
+23(24) ASSERTTYPE ACCESS: True
+24(25) element: PyStatementList
+25(38) element: PyPassStatement
+26(27,28) READ ACCESS: c
+27(34) element: null. Condition: c:false
+28(29) element: null. Condition: c:true
+29(30) ASSERTTYPE ACCESS: c
+30(31) ASSERTTYPE ACCESS: null
+31(32) element: PyStatementList
+32(33) element: PyAssignmentStatement
+33(38) WRITE ACCESS: d
+34(35) ASSERTTYPE ACCESS: null
+35(36) element: PyStatementList
+36(37) element: PyAssignmentStatement
+37(38) WRITE ACCESS: e
+38() element: null

@@ -1,20 +1,28 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+/**
+ * Base class for prefix-based matching logic used in code completion.
+ * Determines whether strings or lookup elements match a given prefix
+ * and provides utilities for sorting and highlighting matches.
+ */
 public abstract class PrefixMatcher {
   public static final PrefixMatcher ALWAYS_TRUE = new PlainPrefixMatcher("");
+
   protected final String myPrefix;
 
-  protected PrefixMatcher(String prefix) {
+  protected PrefixMatcher(@NotNull String prefix) {
     myPrefix = prefix;
   }
 
@@ -27,7 +35,7 @@ public abstract class PrefixMatcher {
     return false;
   }
 
-  public boolean isStartMatch(LookupElement element) {
+  public boolean isStartMatch(@NotNull LookupElement element) {
     for (String s : element.getAllLookupStrings()) {
       if (isStartMatch(s)) {
         return true;
@@ -36,7 +44,7 @@ public abstract class PrefixMatcher {
     return false;
   }
 
-  public boolean isStartMatch(String name) {
+  public boolean isStartMatch(@NotNull String name) {
     return prefixMatches(name);
   }
 
@@ -48,7 +56,7 @@ public abstract class PrefixMatcher {
 
   public abstract @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix);
 
-  public int matchingDegree(String string) {
+  public int matchingDegree(@NotNull String string) {
     return 0;
   }
 
@@ -57,7 +65,7 @@ public abstract class PrefixMatcher {
    * "Start matching" items go first, then others.
    * Within both groups, names are sorted lexicographically in a case-insensitive way.
    */
-  public LinkedHashSet<String> sortMatching(Collection<String> _names) {
+  public @NotNull LinkedHashSet<String> sortMatching(Collection<String> _names) {
     ProgressManager.checkCanceled();
     if (getPrefix().isEmpty()) {
       return new LinkedHashSet<>(_names);
@@ -85,5 +93,9 @@ public abstract class PrefixMatcher {
 
     result.addAll(sorted);
     return result;
+  }
+
+  public @Nullable List<@NotNull TextRange> getMatchingFragments(@NotNull String name) {
+    return null;
   }
 }

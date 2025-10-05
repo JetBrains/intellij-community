@@ -4,6 +4,7 @@
 
 package org.jetbrains.plugins.gradle.util
 
+import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
@@ -163,8 +164,8 @@ fun whenExternalSystemTaskOutputAdded(
   action: (ExternalSystemTaskId, String, Boolean) -> Unit
 ) {
   val listener = object : ExternalSystemTaskNotificationListener {
-    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-      action(id, text, stdOut)
+    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, processOutputType: ProcessOutputType) {
+      action(id, text, processOutputType.isStdout)
     }
   }
   ExternalSystemProgressNotificationManager.getInstance()

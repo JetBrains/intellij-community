@@ -7,10 +7,12 @@ import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
-object PyDataViewerCollector : CounterUsagesCollector() {
+@ApiStatus.Internal
+internal object PyDataViewerCollector : CounterUsagesCollector() {
 
-  private val GROUP = EventLogGroup("python.dataview", 4)
+  private val GROUP = EventLogGroup("python.dataview", 5)
 
   /* Fields */
   private val DATA_TYPE_FIELD = EventFields.Enum<DataType>("type")
@@ -28,8 +30,10 @@ object PyDataViewerCollector : CounterUsagesCollector() {
                                                             IS_NEW_TABLE_FIELD)
   val SLICING_APPLIED_EVENT: EventId1<Boolean> = GROUP.registerEvent("slicing.applied", IS_NEW_TABLE_FIELD)
   val FORMATTING_APPLIED_EVENT: EventId1<Boolean> = GROUP.registerEvent("formatting.applied", IS_NEW_TABLE_FIELD)
+  val RELOAD_APPLIED_EVENT: EventId1<Boolean> = GROUP.registerEvent("reload.applied", IS_NEW_TABLE_FIELD)
 
-  enum class DataType(private val typeName: String?) {
+  @ApiStatus.Internal
+  internal enum class DataType(private val typeName: String?) {
     ARRAY("ndarray"),
     DATAFRAME("DataFrame"),
     GEO_DATAFRAME("GeoDataFrame"),
@@ -93,5 +97,9 @@ object PyDataViewerCollector : CounterUsagesCollector() {
 
   fun logDataFormattingApplied(isNewTable: Boolean) {
     FORMATTING_APPLIED_EVENT.log(isNewTable)
+  }
+
+  fun logDataReloadApplied(isNewTable: Boolean) {
+    RELOAD_APPLIED_EVENT.log(isNewTable)
   }
 }

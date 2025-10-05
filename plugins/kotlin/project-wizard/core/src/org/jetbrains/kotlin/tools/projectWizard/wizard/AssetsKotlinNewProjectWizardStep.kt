@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips as prepareKotlinSampleOnboardingTipsImpl
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode as withKotlinSampleCodeImpl
 
+@ApiStatus.Internal
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use AssetsKotlin util instead")
 abstract class AssetsKotlinNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsOnboardingTipsProjectWizardStep(parent) {

@@ -9,12 +9,14 @@ import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.RemoteKind
 import fleet.rpc.core.AssumptionsViolatedException
 import fleet.rpc.core.RemoteObject
+import fleet.rpc.core.RemoteResource
+import fleet.util.async.Resource
 import fleet.util.async.catching
+import fleet.util.async.resource
 import fleet.util.async.use
+import fleet.util.async.useOn
 import fleet.util.causeOfType
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.channels.onFailure
@@ -22,7 +24,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.produceIn
-import kotlinx.coroutines.yield
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -46,8 +47,10 @@ interface SuspendInvocationHandler {
   suspend fun call(remoteApiDescriptor: RemoteApiDescriptor<*>, method: String, args: List<Any?>, publish: (CallResult) -> Unit)
 }
 
-fun <T : RemoteApi<*>> suspendProxy(remoteApiDescriptor: RemoteApiDescriptor<T>,
-                                    handler: SuspendInvocationHandler): T {
+fun <T : RemoteApi<*>> suspendProxy(
+  remoteApiDescriptor: RemoteApiDescriptor<T>,
+  handler: SuspendInvocationHandler,
+): T {
   return span("rpcProxy", { set("class", remoteApiDescriptor.getApiFqn()) }) {
     remoteApiDescriptor.clientStub { method, args ->
       // a channel is used for its onUndelieveredElement
@@ -76,11 +79,12 @@ fun SuspendInvocationHandler.outOfScope(
 ): SuspendInvocationHandler =
   let { delegate ->
     object : SuspendInvocationHandler {
-      override suspend fun call(remoteApiDescriptor: RemoteApiDescriptor<*>,
-                                method: String,
-                                args: List<Any?>,
-                                publish: (SuspendInvocationHandler.CallResult) -> Unit) {
-        //TODO[jetzajac]: support RemoteObjects
+      override suspend fun call(
+        remoteApiDescriptor: RemoteApiDescriptor<*>,
+        method: String,
+        args: List<Any?>,
+        publish: (SuspendInvocationHandler.CallResult) -> Unit,
+      ) {
         val causeSpan = currentSpan
         calleeScope.async {
           yield() // make sure the coroutine gets the workspace db
@@ -102,11 +106,39 @@ fun SuspendInvocationHandler.outOfScope(
                 when (res) {
                   is RemoteObject -> {
                     val remoteObject = remoteApiDescriptor.getSignature(method).returnType as RemoteKind.RemoteObject
-                    suspendProxy(remoteObject.descriptor, delegatingHandler(res).outOfScope(callerContext, hotScope, calleeScope))
+                    suspendProxy(
+                      remoteApiDescriptor = remoteObject.descriptor,
+                      handler = delegatingHandler(res)
+                        .outOfScope(
+                          callerContext = callerContext,
+                          hotScope = hotScope,
+                          calleeScope = calleeScope,
+                        ))
                   }
                   is Flow<*> -> {
                     @Suppress("UNCHECKED_CAST")
                     (res as Flow<Any>).produceIn(calleeScope).consumeAsFlow()
+                  }
+                  is Resource<*> -> {
+                    val descriptor = remoteApiDescriptor.getSignature(method).returnType as RemoteKind.Resource
+                    resource { cc ->
+                      val r = CompletableDeferred<Any?>()
+                      calleeScope.launch {
+                        r.complete(res.useOn(this).await())
+                      }.apply {
+                        invokeOnCompletion { r.completeExceptionally(it ?: RuntimeException("unreacable")) }
+                      }.use {
+                        cc(suspendProxy(
+                          remoteApiDescriptor = descriptor.descriptor,
+                          handler = delegatingHandler((r.await() as RemoteResource))
+                            .outOfScope(
+                              callerContext = callerContext,
+                              hotScope = hotScope,
+                              calleeScope = calleeScope,
+                            ))
+                        )
+                      }
+                    }
                   }
                   else -> res
                 }
@@ -124,10 +156,12 @@ fun SuspendInvocationHandler.outOfScope(
 
 fun <A : RemoteApi<*>> delegatingHandler(target: A): SuspendInvocationHandler =
   object : SuspendInvocationHandler {
-    override suspend fun call(remoteApiDescriptor: RemoteApiDescriptor<*>,
-                              method: String,
-                              args: List<Any?>,
-                              publish: (SuspendInvocationHandler.CallResult) -> Unit) {
+    override suspend fun call(
+      remoteApiDescriptor: RemoteApiDescriptor<*>,
+      method: String,
+      args: List<Any?>,
+      publish: (SuspendInvocationHandler.CallResult) -> Unit,
+    ) {
       spannedScope("delegating",
                    {
                      set("target", target.toString())
@@ -149,10 +183,12 @@ fun <A : RemoteApi<*>> delegatingHandler(target: A): SuspendInvocationHandler =
 
 fun SuspendInvocationHandler.poisoned(poison: () -> Throwable?): SuspendInvocationHandler =
   object : SuspendInvocationHandler {
-    override suspend fun call(remoteApiDescriptor: RemoteApiDescriptor<*>,
-                              method: String,
-                              args: List<Any?>,
-                              publish: (SuspendInvocationHandler.CallResult) -> Unit) {
+    override suspend fun call(
+      remoteApiDescriptor: RemoteApiDescriptor<*>,
+      method: String,
+      args: List<Any?>,
+      publish: (SuspendInvocationHandler.CallResult) -> Unit,
+    ) {
       when (val cause = poison()) {
         null -> this@poisoned.call(remoteApiDescriptor, method, args, publish)
         else -> throw cause

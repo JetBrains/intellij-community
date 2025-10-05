@@ -6,7 +6,7 @@ import weakref
 
 import pydevd_tracing
 from _pydev_bundle import pydev_log
-from _pydev_bundle._pydev_saved_modules import threading
+from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import USE_LOW_IMPACT_MONITORING
 if USE_LOW_IMPACT_MONITORING:
     from _pydevd_bundle.pydevd_pep_669_tracing_wrapper import disable_pep669_monitoring
@@ -73,11 +73,11 @@ def mark_as_pydevd_daemon_thread(thread):
     thread.daemon = True
 
 
-def run_as_pydevd_daemon_thread(func, *args, **kwargs):
+def run_as_pydevd_daemon_thread(py_db, func, *args, **kwargs):
     """
     Runs a function as a pydevd daemon thread (without any tracing in place).
     """
-    t = PyDBDaemonThread(target_and_args=(func, args, kwargs))
+    t = PyDBDaemonThread(py_db, target_and_args=(func, args, kwargs))
     t.name = '%s (pydevd daemon thread)' % (func.__name__,)
     t.start()
     return t

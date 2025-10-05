@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "frontend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":frontend_resources"],
+  runtime_deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/compose",
+    "//platform/non-modal-welcome-screen",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.frontend` end

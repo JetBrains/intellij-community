@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnit5ConverterInspectionTestBase
@@ -105,7 +105,7 @@ abstract class KotlinJUnit5ConverterInspectionTest : JUnit5ConverterInspectionTe
     """.trimIndent(), "Migrate to JUnit 5")
   }
 
-  fun `test remove public modifier`() {
+  open fun `test remove public modifier`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
       import org.junit.Test

@@ -2,15 +2,15 @@
 package com.intellij.toolWindow.xNext.island
 
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.ui.BorderPainter
 import com.intellij.ui.ClientProperty
-import fleet.util.logging.logger
+import com.intellij.ui.DefaultBorderPainter
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Paint
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.border.Border
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -40,17 +40,18 @@ class XNextIslandHolder : JPanel() {
     super.addImpl(comp, constraints, index)
   }
 
-  override fun setBorder(border: Border?) {
-    if (border !is XNextRoundedBorder) {
-      logger<XNextIslandHolder>().warn {
-        "Border type is invalid. Expected JRoundedCornerBorder, but received: ${border?.javaClass?.name ?: "null"}."
-      }
-      return
-    }
-    super.setBorder(border)
-  }
-
   override fun isOpaque(): Boolean {
     return true
+  }
+
+  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+
+  override fun paintChildren(g: Graphics) {
+    super.paintChildren(g)
+    borderPainter.paintAfterChildren(this, g)
+  }
+
+  override fun isPaintingOrigin(): Boolean {
+    return borderPainter.isPaintingOrigin(this)
   }
 }

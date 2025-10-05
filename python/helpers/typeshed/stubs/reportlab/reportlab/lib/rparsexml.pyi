@@ -1,8 +1,10 @@
 from _typeshed import Incomplete
+from typing import type_check_only
 
 RequirePyRXP: int
 simpleparse: int
 
+@type_check_only
 class _smartDecode:
     @staticmethod
     def __call__(s): ...
@@ -17,7 +19,7 @@ CDATAENDMARKER: str
 replacelist: Incomplete
 
 def unEscapeContentList(contentList): ...
-def parsexmlSimple(xmltext, oneOutermostTag: int = 0, eoCB: Incomplete | None = None, entityReplacer=...): ...
+def parsexmlSimple(xmltext, oneOutermostTag: int = 0, eoCB=None, entityReplacer=...): ...
 
 parsexml = parsexmlSimple
 

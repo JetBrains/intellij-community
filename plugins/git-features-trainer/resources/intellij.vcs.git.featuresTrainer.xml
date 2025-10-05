@@ -1,5 +1,6 @@
 <idea-plugin package="training.git">
   <dependencies>
+    <module name="intellij.platform.vcs.log"/>
     <plugin id="Git4Idea"/>
   </dependencies>
 

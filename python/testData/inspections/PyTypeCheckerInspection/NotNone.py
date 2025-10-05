@@ -14,8 +14,8 @@ def test():
     x1 = f1()
     x2 = f2()
     x3 = 1
-    f(x1)  # Weaker union types
-    f(x2)  # Weaker union types
+    f(<warning descr="Expected type 'Union[int, str, list]', got 'Optional[int]' instead">x1</warning>)
+    f(<warning descr="Expected type 'Union[int, str, list]', got 'Union[int, str, None]' instead">x2</warning>)
     f(x3)
     if x1:
         f(x1)

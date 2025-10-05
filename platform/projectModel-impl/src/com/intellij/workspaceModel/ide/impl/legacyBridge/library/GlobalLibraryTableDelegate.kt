@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -19,11 +19,11 @@ import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 
-internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable, val descriptor: EelDescriptor, private val libraryTableId: LibraryTableId) : Disposable {
+internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable, val eelMachine: EelMachine, private val libraryTableId: LibraryTableId) : Disposable {
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 
   internal fun initializeLibraryBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
-    val entityStorage = GlobalWorkspaceModel.getInstance(descriptor).entityStorage
+    val entityStorage = GlobalWorkspaceModel.getInstance(eelMachine).entityStorage
 
     @Suppress("UNCHECKED_CAST")
     val libraryChanges = (changes[LibraryEntity::class.java] as? List<EntityChange<LibraryEntity>>) ?: emptyList()
@@ -34,7 +34,7 @@ internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable
       builder.mutableLibraryMap.getOrPutDataByEntity(addChange.newEntity) {
         LibraryBridgeImpl(
           libraryTable = libraryTable,
-          origin = LibraryOrigin.OfDescriptor(descriptor),
+          origin = LibraryOrigin.OfMachine(eelMachine),
           initialId = addChange.newEntity.symbolicId,
           initialEntityStorage = entityStorage,
           targetBuilder = builder
@@ -52,7 +52,7 @@ internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable
       .map { libraryEntity ->
         Pair(libraryEntity, LibraryBridgeImpl(
           libraryTable = libraryTable,
-          origin = LibraryOrigin.OfDescriptor(descriptor),
+          origin = LibraryOrigin.OfMachine(eelMachine),
           initialId = libraryEntity.symbolicId,
           initialEntityStorage = initialEntityStorage,
           targetBuilder = null
@@ -107,7 +107,7 @@ internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable
     val changes = event.getChanges(LibraryEntity::class.java).filterLibraryChanges(libraryTableId)
     if (changes.isEmpty()) return
 
-    val entityStorage = GlobalWorkspaceModel.getInstance(descriptor).entityStorage
+    val entityStorage = GlobalWorkspaceModel.getInstance(eelMachine).entityStorage
     for (change in changes) {
       LOG.debug { "Process ${libraryTableId.level} library change $change" }
       when (change) {
@@ -174,7 +174,7 @@ internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable
   }
 
   internal fun getLibraries(): Array<Library> {
-    val entityStorage = GlobalWorkspaceModel.getInstance(descriptor).entityStorage
+    val entityStorage = GlobalWorkspaceModel.getInstance(eelMachine).entityStorage
     val storage = entityStorage.current
     val libraryEntitySequence = storage.entities(LibraryEntity::class.java).filter { it.tableId == libraryTableId }.toList()
     val libs: Array<Library> = libraryEntitySequence.mapNotNull { storage.libraryMap.getDataByEntity(it) }
@@ -183,7 +183,7 @@ internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable
   }
 
   internal fun getLibraryByName(name: String): Library? {
-    val entityStorage = GlobalWorkspaceModel.getInstance(descriptor).entityStorage
+    val entityStorage = GlobalWorkspaceModel.getInstance(eelMachine).entityStorage
     val libraryId = LibraryId(name, libraryTableId)
     val library = entityStorage.current.resolve(libraryId)?.let { entity ->
       entityStorage.current.libraryMap.getDataByEntity(entity)

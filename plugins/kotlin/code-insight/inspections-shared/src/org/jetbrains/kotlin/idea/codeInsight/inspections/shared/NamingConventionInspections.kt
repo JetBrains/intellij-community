@@ -13,6 +13,7 @@ import com.intellij.codeInspection.reference.RefEntity
 import com.intellij.codeInspection.reference.RefFile
 import com.intellij.codeInspection.reference.RefPackage
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
@@ -20,22 +21,26 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.siyeh.ig.BaseGlobalInspection
-import com.siyeh.ig.psiutils.TestUtils
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.base.projectStructure.isInTestSource
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.quickfix.RenameIdentifierFix
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.regex.PatternSyntaxException
 
 data class NamingRule(val message: String, val matcher: (String) -> Boolean)
@@ -206,7 +211,7 @@ class EnumEntryNameInspection : NamingConventionInspection(
     }
 }
 
-abstract class AbstractFunctionNameInspection : NamingConventionInspection(
+class FunctionNameInspection : NamingConventionInspection(
     KotlinBundle.message("function"),
     "[a-z][A-Za-z\\d]*"
 ) {
@@ -217,22 +222,44 @@ abstract class AbstractFunctionNameInspection : NamingConventionInspection(
             if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
                 return@namedFunctionVisitor
             }
-            if (!TestUtils.isInTestSourceContent(function)) {
+            val virtualFile = function.containingFile.virtualFile
+            if (!ProjectFileIndex.getInstance(function.project).isInTestSource(virtualFile)) {
                 verifyName(function, holder) { !function.isFactoryFunction() }
             }
         }
     }
+}
 
-    private fun KtNamedFunction.isFactoryFunction(): Boolean {
-        val functionName = this.name ?: return false
-        val typeElement = typeReference?.typeElement
-        if (typeElement != null) {
-            return typeElement.unwrapNullability().safeAs<KtUserType>()?.referencedName == functionName
-        }
-        return isFactoryFunctionByAnalyze()
+private fun KtNamedFunction.isFactoryFunction(): Boolean {
+    val functionName = this.name ?: return false
+    val typeElement = typeReference?.typeElement
+    return if (typeElement != null) {
+        (typeElement.unwrapNullability() as? KtUserType)?.referencedName == functionName
+    } else {
+        isFactoryFunctionByAnalyze()
     }
+}
 
-    abstract fun KtNamedFunction.isFactoryFunctionByAnalyze(): Boolean
+private fun KtNamedFunction.isFactoryFunctionByAnalyze(): Boolean = analyze(this) {
+    val functionName = name ?: return false
+    val returnType = returnType
+
+    return returnType.hasShortName(functionName)
+            || returnType.allSupertypes.any { it.hasShortName(functionName) }
+}
+
+context(_: KaSession)
+private fun KaType.hasShortName(shortName: String): Boolean {
+    val typeShortName =
+        expandedSymbol
+            ?.classId
+            ?.relativeClassName
+            ?.takeUnless(FqName::isRoot)
+            ?.shortName()
+            ?.identifierOrNullIfSpecial
+            ?: return false
+
+    return shortName == typeShortName
 }
 
 class TestFunctionNameInspection : NamingConventionInspection(
@@ -243,13 +270,14 @@ class TestFunctionNameInspection : NamingConventionInspection(
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return namedFunctionVisitor { function ->
-            if (!TestUtils.isInTestSourceContent(function)) {
+            val virtualFile = function.containingFile.virtualFile
+            if (!ProjectFileIndex.getInstance(function.project).isInTestSource(virtualFile)) {
                 return@namedFunctionVisitor
             }
             if (function.nameIdentifier?.text?.startsWith("`") == true) {
                 return@namedFunctionVisitor
             }
-            verifyName(function, holder)
+            verifyName(function, holder) { !function.isFactoryFunction() }
         }
     }
 }

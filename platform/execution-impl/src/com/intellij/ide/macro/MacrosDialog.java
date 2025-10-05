@@ -65,7 +65,7 @@ public final class MacrosDialog extends DialogWrapper {
                                            @Nullable Map<String, String> userMacros) {
     textField.addExtension(ExtendableTextComponent.Extension.create(
       AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, ExecutionBundle.message("insert.macros"),
-      () -> show(textField, macroFilter, userMacros)));
+      true, () -> show(textField, macroFilter, userMacros)));
   }
 
   public static void addMacroSupport(@NotNull ExtendableTextField textField,
@@ -73,7 +73,7 @@ public final class MacrosDialog extends DialogWrapper {
                                      Computable<Boolean> hasModule) {
     textField.addExtension(ExtendableTextComponent.Extension.create(
       AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, ExecutionBundle.message("insert.macros"),
-      () -> show(textField, macroFilter, getPathMacros(hasModule.compute()))));
+      true, () -> show(textField, macroFilter, getPathMacros(hasModule.compute()))));
   }
 
   public static void show(@NotNull JTextComponent textComponent) {

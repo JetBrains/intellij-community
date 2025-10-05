@@ -123,12 +123,12 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     IElementType tokenType = expression.getOperationTokenType();
-    boolean and = tokenType.equals(JavaTokenType.ANDAND);
-    boolean or = tokenType.equals(JavaTokenType.OROR);
-    if (!and && !or) return true;
+    boolean isAndToken = tokenType.equals(JavaTokenType.ANDAND);
+    boolean isOrToken = tokenType.equals(JavaTokenType.OROR);
+    if (!isAndToken && !isOrToken) return true;
     ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
     if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
-    PatternResolveState wantedHint = PatternResolveState.fromBoolean(and);
+    PatternResolveState wantedHint = PatternResolveState.fromBoolean(isAndToken);
     if (state.get(PatternResolveState.KEY) == wantedHint.invert()) return true;
     return PsiScopesUtil.walkChildrenScopes(expression, processor, wantedHint.putInto(state), lastParent, place);
   }

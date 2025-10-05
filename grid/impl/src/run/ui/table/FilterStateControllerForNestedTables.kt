@@ -12,14 +12,14 @@ class FilterStateControllerForNestedTables(private val grid: DataGrid): NestedTa
 
   private val filterStateStack: NonEmptyStack<LocalFilterState> = NonEmptyStack(LocalFilterState(grid))
 
-  override fun enterNestedTable(coordinate: NestedTableCellCoordinate, nestedTable: NestedTable): LocalFilterState {
+  override suspend fun enterNestedTable(coordinate: NestedTableCellCoordinate, nestedTable: NestedTable): LocalFilterState {
     filterStateStack.push(LocalFilterState(grid, activeFilterState.isEnabled))
     grid.resultView.onLocalFilterStateChanged()
 
     return filterStateStack.last()
   }
 
-  override fun exitNestedTable(steps: Int): LocalFilterState {
+  override suspend fun exitNestedTable(steps: Int): LocalFilterState {
     filterStateStack.pop(steps)
     grid.resultView.onLocalFilterStateChanged()
 

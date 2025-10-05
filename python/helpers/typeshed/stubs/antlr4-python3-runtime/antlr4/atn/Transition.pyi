@@ -4,6 +4,7 @@ from antlr4.atn.ATNState import RuleStartState
 from antlr4.IntervalSet import IntervalSet
 
 class Transition:
+    __slots__ = ("target", "isEpsilon", "label")
     EPSILON: int
     RANGE: int
     RULE: int
@@ -22,6 +23,7 @@ class Transition:
     def __init__(self, target) -> None: ...
 
 class AtomTransition(Transition):
+    __slots__ = ("label_", "serializationType")
     label_: Incomplete
     label: Incomplete
     serializationType: Incomplete
@@ -30,6 +32,7 @@ class AtomTransition(Transition):
     def matches(self, symbol: int, minVocabSymbol: int, maxVocabSymbol: int): ...
 
 class RuleTransition(Transition):
+    __slots__ = ("ruleIndex", "precedence", "followState", "serializationType")
     ruleIndex: Incomplete
     precedence: Incomplete
     followState: Incomplete
@@ -39,6 +42,7 @@ class RuleTransition(Transition):
     def matches(self, symbol: int, minVocabSymbol: int, maxVocabSymbol: int): ...
 
 class EpsilonTransition(Transition):
+    __slots__ = ("serializationType", "outermostPrecedenceReturn")
     serializationType: Incomplete
     isEpsilon: bool
     outermostPrecedenceReturn: Incomplete
@@ -46,6 +50,7 @@ class EpsilonTransition(Transition):
     def matches(self, symbol: int, minVocabSymbol: int, maxVocabSymbol: int): ...
 
 class RangeTransition(Transition):
+    __slots__ = ("serializationType", "start", "stop")
     serializationType: Incomplete
     start: Incomplete
     stop: Incomplete
@@ -58,6 +63,7 @@ class AbstractPredicateTransition(Transition):
     def __init__(self, target) -> None: ...
 
 class PredicateTransition(AbstractPredicateTransition):
+    __slots__ = ("serializationType", "ruleIndex", "predIndex", "isCtxDependent")
     serializationType: Incomplete
     ruleIndex: Incomplete
     predIndex: Incomplete
@@ -68,6 +74,7 @@ class PredicateTransition(AbstractPredicateTransition):
     def getPredicate(self): ...
 
 class ActionTransition(Transition):
+    __slots__ = ("serializationType", "ruleIndex", "actionIndex", "isCtxDependent")
     serializationType: Incomplete
     ruleIndex: Incomplete
     actionIndex: Incomplete
@@ -77,6 +84,7 @@ class ActionTransition(Transition):
     def matches(self, symbol: int, minVocabSymbol: int, maxVocabSymbol: int): ...
 
 class SetTransition(Transition):
+    __slots__ = "serializationType"
     serializationType: Incomplete
     label: Incomplete
     def __init__(self, target, set: IntervalSet) -> None: ...
@@ -88,11 +96,13 @@ class NotSetTransition(SetTransition):
     def matches(self, symbol: int, minVocabSymbol: int, maxVocabSymbol: int): ...
 
 class WildcardTransition(Transition):
+    __slots__ = "serializationType"
     serializationType: Incomplete
     def __init__(self, target) -> None: ...
     def matches(self, symbol: int, minVocabSymbol: int, maxVocabSymbol: int): ...
 
 class PrecedencePredicateTransition(AbstractPredicateTransition):
+    __slots__ = ("serializationType", "precedence")
     serializationType: Incomplete
     precedence: Incomplete
     isEpsilon: bool

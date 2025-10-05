@@ -1,0 +1,80 @@
+for (i, j in [1, 2, 3]) {}
+
+for (i, j : [1, 2, 3]) {}
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    In clause
+      Parameter
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('i')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Parameter
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('j')
+      PsiWhiteSpace(' ')
+      PsiElement(in)('in')
+      PsiWhiteSpace(' ')
+      Generalized list
+        PsiElement([)('[')
+        Literal
+          PsiElement(Integer)('1')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('2')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('3')
+        PsiElement(])(']')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')
+  PsiElement(new line)('\n\n')
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    In clause
+      Parameter
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('i')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Parameter
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('j')
+      PsiWhiteSpace(' ')
+      PsiElement(:)(':')
+      PsiWhiteSpace(' ')
+      Generalized list
+        PsiElement([)('[')
+        Literal
+          PsiElement(Integer)('1')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('2')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('3')
+        PsiElement(])(']')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')

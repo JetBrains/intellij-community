@@ -46,7 +46,8 @@ open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironme
       workingDirectory = params.workingDirectory,
       useManifestJar = useManifestJar,
       useArgsFile = useArgsFile,
-      useClasspathFile = useClasspathFile
+      useClasspathFile = useClasspathFile,
+      javaModuleName = params.javaModuleName
     )
   }
 

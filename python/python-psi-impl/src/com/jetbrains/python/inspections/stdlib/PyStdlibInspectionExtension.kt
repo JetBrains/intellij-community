@@ -6,11 +6,11 @@ import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.inspections.PyInspectionExtension
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyNamedTupleType
-import com.jetbrains.python.psi.types.PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -32,7 +32,7 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
   override fun ignoreProtectedSymbol(expression: PyReferenceExpression, context: TypeEvalContext): Boolean {
     val qualifier = expression.qualifier
     return qualifier != null &&
-           expression.referencedName in NAMEDTUPLE_SPECIAL_ATTRIBUTES &&
+           expression.referencedName in PyNamedTupleType.getSpecialAttributes(LanguageLevel.forElement(expression)) &&
            PyNamedTupleTypeProvider.isNamedTuple(context.getType(qualifier), context)
   }
 

@@ -23,7 +23,8 @@ import org.jetbrains.annotations.ApiStatus
 
 internal const val USE_OLD_CONTENT = true
 
-internal class LocalHistoryActivityProvider(val project: Project, private val gateway: IdeaGateway) : ActivityProvider {
+@ApiStatus.Internal
+class LocalHistoryActivityProvider(val project: Project, private val gateway: IdeaGateway) : ActivityProvider {
   private val facade = LocalHistoryImpl.getInstanceImpl().facade!!
 
   override fun getActivityItemsChanged(scope: ActivityScope): Flow<Unit> {

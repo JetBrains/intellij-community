@@ -15,13 +15,17 @@ import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.impl.UnloadedModulesNameHolderImpl
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
+import com.intellij.openapi.roots.AnnotationOrderRootType
+import com.intellij.openapi.roots.JavadocOrderRootType
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
@@ -51,7 +55,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.function.Supplier
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.io.path.Path
 
 internal val sampleDirBasedProjectFile = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
 internal val sampleFileBasedProjectFile = File(PathManagerEx.getCommunityHomePath(),
@@ -436,9 +439,9 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
                                        parentDisposable: Disposable,
                                        action: (JpsGlobalFileEntitySource, JpsGlobalFileEntitySource) -> Unit) {
   val stateStore = ApplicationManager.getApplication().stateStore
-  val oldConfigPath = PathManager.getConfigPath()
+  val oldConfigDir = PathManager.getConfigDir()
   try {
-    PathManager.setExplicitConfigPath(testDir.absolutePath)
+    PathManager.setExplicitConfigPath(testDir.toPath())
     stateStore.setPath(testDir.toPath())
     stateStore.clearCaches()
 
@@ -460,7 +463,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
       ApplicationManager.getApplication().replaceService(GlobalWorkspaceModelRegistry::class.java, GlobalWorkspaceModelRegistry(), parentDisposable)
 
       // Entity source for global entities
-      val virtualFileManager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
+      val virtualFileManager = GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
       val globalLibrariesFile = virtualFileManager.getOrCreateFromUrl("$testDir/options/applicationLibraries.xml")
       val libraryEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
 
@@ -473,7 +476,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
         application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
         val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
                                         "platform/workspace/jps/tests/testData/serialization/global/$expectedFile")
-        val entityStorage = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).entityStorage.current
+        val entityStorage = GlobalWorkspaceModel.getInstance(LocalEelMachine).entityStorage.current
         if (entityStorage.entities(LibraryEntity::class.java).toList().isEmpty()) {
           optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()),
                                       filePathFilter = { it.contains("jdk.table.xml") })
@@ -486,8 +489,8 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
     }
   }
   finally {
-    PathManager.setExplicitConfigPath(oldConfigPath)
-    stateStore.setPath(Path(oldConfigPath))
+    PathManager.setExplicitConfigPath(oldConfigDir)
+    stateStore.setPath(oldConfigDir)
     stateStore.clearCaches()
   }
 }
@@ -495,4 +498,15 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
 internal fun unloadedHolder(unloaded: String): UnloadedModulesNameHolder {
   val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
   return UnloadedModulesNameHolderImpl(unloadedModuleNames)
+}
+
+internal fun ensureAnnotationAndJavadocOrderRootTypes(disposable: Disposable) {
+  ensurePersistentOrderRootType(disposable) { AnnotationOrderRootType() }
+  ensurePersistentOrderRootType(disposable) { JavadocOrderRootType() }
+}
+
+private inline fun <reified T : PersistentOrderRootType> ensurePersistentOrderRootType(disposable: Disposable, factory: () -> T) {
+  if (OrderRootType.EP_NAME.findExtension(T::class.java) == null) {
+    OrderRootType.EP_NAME.point.registerExtension(factory(), disposable)
+  }
 }

@@ -364,8 +364,12 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     return myTerminalWidget.getComponent();
   }
 
+  /**
+   * Shouldn't be called directly, see {@link Disposable} documentation.
+   */
   @Override
   public void dispose() {
+    // do nothing
   }
 
   public static boolean isAcceptable(@NotNull ProcessHandler processHandler) {

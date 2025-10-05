@@ -59,7 +59,7 @@ abstract class TaskContext : LearningDslBase {
    *                      Delay may be needed to give pass condition take place.
    *                      It is a hack solution because of possible race conditions.
    * @param [checkByTimer] Check by timer may be useful in UI detection tasks (in submenus for example).
-   * @param [restoreRequired] returns true iff restore is needed
+   * @param [restoreRequired] returns true if restore is needed
    */
   open fun restoreState(restoreId: TaskId? = null, delayMillis: Int = 0, checkByTimer: Int? = null, restoreRequired: TaskRuntimeContext.() -> Boolean) = Unit
 

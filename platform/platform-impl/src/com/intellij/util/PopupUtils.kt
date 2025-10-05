@@ -5,12 +5,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx.ICON_CENTER_POSITION
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR
 import com.intellij.openapi.editor.ex.util.EditorUtil.getDefaultCaretWidth
-import com.intellij.openapi.editor.ex.util.EditorUtil.logicalToVisualLine
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.awt.RelativePoint
@@ -24,7 +24,6 @@ import javax.swing.JTable
 import javax.swing.JTree
 import kotlin.math.max
 import kotlin.math.min
-
 
 fun getBestPopupPosition(context: DataContext): RelativePoint {
   return getBestPopupPositionInsideGutter(context)
@@ -58,10 +57,10 @@ private fun getBestPositionInsideGutter(context: DataContext, location: Rectangl
   val logicalLine = context.getData(LOGICAL_LINE_AT_CURSOR) ?: return null
   val iconCenterPosition = context.getData(ICON_CENTER_POSITION) ?: return null
   val renderer = component.getGutterRenderer(iconCenterPosition) ?: return null
-  val visualLine = logicalToVisualLine(editor, logicalLine)
   val visibleArea = component.visibleRect
   val x = iconCenterPosition.x - renderer.icon.iconWidth / 2
-  val rect = Rectangle(x, visualLine * editor.lineHeight, renderer.icon.iconWidth, editor.lineHeight)
+  val linePoint = editor.logicalPositionToXY(LogicalPosition(logicalLine,0))
+  val rect = Rectangle(x, linePoint.y, renderer.icon.iconWidth, editor.lineHeight)
   if (!visibleArea.contains(rect)) component.scrollRectToVisible(rect)
   return RelativePoint(component, rect.location())
 }

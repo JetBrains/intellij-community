@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
@@ -245,7 +246,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     if (executionConsole instanceof BuildView) {
       actionGroup.addAll(((BuildView)executionConsole).getSwitchActions());
-      actionGroup.add(BuildTreeFilters.createFilteringActionsGroup((BuildView)executionConsole));
+      actionGroup.add(BuildTreeFilters.createFilteringActionsGroup(new WeakFilterableSupplier<>((BuildView)executionConsole)));
     }
     RunConfigurationTaskState taskState = myConfiguration.getUserData(RunConfigurationTaskState.getKEY());
     if (taskState != null && consoleView != null) {
@@ -321,14 +322,14 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         }
 
         @Override
-        public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+        public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {
           if (consoleView != null) {
-            consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            consoleManager.onOutput(consoleView, processHandler, text, outputType);
           }
           else {
-            processHandler.notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            processHandler.notifyTextAvailable(text, outputType);
           }
-          eventDispatcher.setStdOut(stdOut);
+          eventDispatcher.setStdOut(outputType.isStdout());
           eventDispatcher.append(text);
         }
 

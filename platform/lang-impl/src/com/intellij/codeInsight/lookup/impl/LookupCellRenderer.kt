@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl
 
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.LookupElementPresentation.DecoratedTextRange
 import com.intellij.codeInsight.lookup.LookupElementPresentation.LookupItemDecoration
@@ -19,6 +20,7 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -51,7 +53,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
+import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import kotlin.math.max
@@ -78,7 +83,6 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   var lookupTextWidth: Int = 50
     private set
   private val widthLock = ObjectUtils.sentinel("lookup width lock")
-  private val lookupWidthUpdater: () -> Unit
   private val shrinkLookup: Boolean
 
   private val asyncRendering: AsyncRendering
@@ -86,6 +90,12 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   private val customizers: MutableList<ItemPresentationCustomizer> = ContainerUtil.createLockFreeCopyOnWriteList()
 
   private var isSelected = false
+
+  private val lookupWidthUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val presentationUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val forceRefreshUi = AtomicBoolean(false)
+  private val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
+  private val itemAddedCount = AtomicInteger()
 
   init {
     val scheme = lookup.topLevelEditor.colorsScheme
@@ -118,29 +128,29 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     boldMetrics = lookup.topLevelEditor.component.getFontMetrics(boldFont)
     asyncRendering = AsyncRendering(lookup)
 
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      // avoid delay in unit tests
-      lookupWidthUpdater = {
-        ApplicationManager.getApplication().invokeLater({ updateLookupWidthFromVisibleItems() }, lookup.project.disposed)
-      }
-    }
-    else {
-      val lookupWidthUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-      val coroutineContext = Dispatchers.EDT + ModalityState.stateForComponent(editorComponent).asContextElement()
-      lookup.coroutineScope.launch {
-        lookupWidthUpdateRequests
-          .throttle(50)
-          .collect {
-            withContext(coroutineContext) {
-              writeIntentReadAction {
-                updateLookupWidthFromVisibleItems()
-              }
+    val coroutineContext = Dispatchers.EDT + ModalityState.stateForComponent(editorComponent).asContextElement()
+    lookup.coroutineScope.launch {
+      lookupWidthUpdateRequests
+        .throttle(50)
+        .collect {
+          withContext(coroutineContext) {
+            writeIntentReadAction {
+              updateLookupWidthFromVisibleItems()
             }
           }
-      }
-      lookupWidthUpdater = {
-        check(lookupWidthUpdateRequests.tryEmit(Unit))
-      }
+        }
+    }
+
+    // Throttle presentation updates with a higher delay than width updates.
+    // Width updates must be fast to react to scrolling. Presentation updates,
+    // on the other hand, can be delayed more to avoid costly ui refreshing.
+    lookup.coroutineScope.launch {
+      presentationUpdateRequests
+        .throttle(150)
+        .collect {
+          forceRefreshUi.set(true)
+          check(lookupWidthUpdateRequests.tryEmit(Unit))
+        }
     }
 
     shrinkLookup = Registry.`is`("ide.lookup.shrink")
@@ -150,6 +160,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     private val CUSTOM_NAME_FONT = Key.create<Font>("CustomLookupElementNameFont")
     private val CUSTOM_TAIL_FONT = Key.create<Font>("CustomLookupElementTailFont")
     private val CUSTOM_TYPE_FONT = Key.create<Font>("CustomLookupElementTypeFont")
+    private val SCHEDULED_FOR_RENDERING = Key.create<Boolean>("ScheduledForRendering")
 
     @JvmField
     val BACKGROUND_COLOR: Color = JBColor.lazy(
@@ -160,8 +171,10 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
     @JvmField
     val MATCHED_FOREGROUND_COLOR: Color = JBColor.namedColor("CompletionPopup.matchForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED)
+
     @JvmField
     val SELECTED_BACKGROUND_COLOR: Color = JBColor.namedColor("CompletionPopup.selectionBackground", JBColor(0xc5dffc, 0x113a5c))
+
     @JvmField
     val SELECTED_NON_FOCUSED_BACKGROUND_COLOR: Color = JBColor.namedColor("CompletionPopup.selectionInactiveBackground",
                                                                           JBColor(0xE0E0E0, 0x515457))
@@ -223,6 +236,8 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     isSelected: Boolean,
     cellHasFocus: Boolean,
   ): Component {
+    val separator = tryToCreateSeparator(item, index)
+    if (separator != null) return separator
     @Suppress("NAME_SHADOWING")
     var isSelected = isSelected
     val nonFocusedSelection = isSelected && lookup.lookupFocusDegree == LookupFocusDegree.SEMI_FOCUSED
@@ -310,6 +325,28 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
     AccessibleContextUtil.setCombinedName(panel, nameComponent, "", tailComponent, " - ", typeLabel)
     AccessibleContextUtil.setCombinedDescription(panel, nameComponent, "", tailComponent, " - ", typeLabel)
+    return panel
+  }
+
+  private fun tryToCreateSeparator(item: LookupElement, index: Int): JComponent? {
+    val separatorLookupElement = item.`as`(SeparatorLookupElement::class.java) ?: return null
+
+    val insets = getIconInsets()
+    val separatorLabelInsets = JBUI.CurrentTheme.Popup.separatorLabelInsets()
+    if (index != 0) {
+      insets.set(separatorLabelInsets.top, insets.left, separatorLabelInsets.bottom, insets.right)
+    }
+    else {
+      insets.set(3, insets.left, separatorLabelInsets.bottom + separatorLabelInsets.top - 3, insets.right)
+    }
+
+    val res = GroupHeaderSeparator(insets)
+    res.caption = separatorLookupElement.title
+    res.isHideLine = index == 0
+
+    val panel = LookupPanel()
+    panel.add(res)
+
     return panel
   }
 
@@ -425,7 +462,8 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
     val prefix = if (item is EmptyLookupItem) "" else lookup.itemPattern(item)
     if (prefix.isNotEmpty()) {
-      var ranges: List<TextRange>? = getMatchingFragments(prefix, name)
+      val itemMatcher = lookup.itemMatcher(item)
+      var ranges: List<TextRange>? = itemMatcher.getMatchingFragments(name) ?: getMatchingFragments(prefix, name)
       if (ranges == null) {
         val startIndex = item.lookupString.indexOf(name)
         if (startIndex != -1) {
@@ -494,17 +532,18 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     }
     return null
   }
-
   /**
    * Update lookup width due to visible in lookup items
    */
   private fun updateLookupWidthFromVisibleItems() {
+    if (lookup.isLookupDisposed) return
+    scheduleVisibleItemsExpensiveRendering()
     val visibleItems = lookup.visibleItems
 
     var maxWidth = if (shrinkLookup) 0 else lookupTextWidth
     for (item in visibleItems) {
+      if(item.isSeparator()) continue
       val presentation = asyncRendering.getLastComputed(item)
-
       item.putUserData(CUSTOM_NAME_FONT, getFontAbleToDisplay(presentation.itemText))
       item.putUserData(CUSTOM_TAIL_FONT, getFontAbleToDisplay(presentation.tailText))
       item.putUserData(CUSTOM_TYPE_FONT, getFontAbleToDisplay(presentation.typeText))
@@ -516,24 +555,62 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     }
 
     synchronized(widthLock) {
+      // Check the forceRefresh UI state at the latest possible moment,
+      // since the presentation update may require only ui refresh without
+      // any width updates. If it requires width updates,
+      // they will be applied after a 50 ms delay anyway, if not, the secondary
+      // refreshUI call may be avoided.
+      val forceRefresh = this.forceRefreshUi.getAndSet(false)
       if (shrinkLookup || maxWidth > lookupTextWidth) {
         lookupTextWidth = maxWidth
         lookup.requestResize()
         lookup.refreshUi(false, false)
       }
+      else if (forceRefresh) {
+        lookup.refreshUi(false, false)
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  fun scheduleVisibleItemsExpensiveRendering() {
+    // Ensure that all visible items plus a range of invisible items have been
+    // scheduled for async rendering.
+    for (item in lookup.getItemsForAsyncRendering()) {
+      if (item.getUserData(SCHEDULED_FOR_RENDERING) != true) {
+        item.putUserData(SCHEDULED_FOR_RENDERING, true)
+        updateItemPresentation(item)
+      }
     }
   }
 
   fun scheduleUpdateLookupWidthFromVisibleItems() {
-    lookupWidthUpdater()
+    if (isUnitTestMode)
+    // avoid delay in unit tests
+      ApplicationManager.getApplication().invokeLater({ updateLookupWidthFromVisibleItems() },
+                                                      lookup.project.disposed)
+    else
+      check(lookupWidthUpdateRequests.tryEmit(Unit))
+  }
+
+  @ApiStatus.Internal
+  fun scheduleUpdateLookupAfterElementPresentationChange() {
+    check(presentationUpdateRequests.tryEmit(Unit))
   }
 
   fun itemAdded(element: LookupElement, fastPresentation: LookupElementPresentation) {
     updateIconWidth(fastPresentation.icon)
     scheduleUpdateLookupWidthFromVisibleItems()
     AsyncRendering.rememberPresentation(element, fastPresentation)
+  }
 
-    updateItemPresentation(element)
+  @ApiStatus.Internal
+  fun itemAddedToArranger(element: LookupElement) {
+    // Fast path for the first 20 matched items to
+    // avoid initial lookup flickering as much as possible
+    if (itemAddedCount.incrementAndGet() < 20 && lookup.arranger.matchingItems.contains(element)) {
+      updateItemPresentation(element)
+    }
   }
 
   fun updateItemPresentation(element: LookupElement) {
@@ -578,6 +655,15 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   private class MySimpleColoredComponent : SimpleColoredComponent() {
     init {
       setFocusBorderAroundIcon(true)
+    }
+
+    override fun getAccessibleContext(): AccessibleContext? {
+      if (accessibleContext == null) {
+        accessibleContext = object : AccessibleSimpleColoredComponent() {
+          override fun getAccessibleName() = accessibleNameWithoutIconTooltip
+        }
+      }
+      return accessibleContext
     }
   }
 
@@ -828,8 +914,10 @@ private fun getCustomFont(item: LookupElement, bold: Boolean, key: Key<Font>): F
 }
 
 private fun setIconInsets(component: SimpleColoredComponent) {
-  component.ipad = JBUI.insetsLeft(6)
+  component.ipad = getIconInsets()
 }
+
+private fun getIconInsets(): JBInsets = JBUI.insetsLeft(6)
 
 private fun selectionInsets(): Insets {
   val innerInsets = JBUI.CurrentTheme.CompletionPopup.selectionInnerInsets()
@@ -880,3 +968,29 @@ private fun getStyle(strikeout: Boolean, underlined: Boolean, italic: Boolean): 
   }
   return style
 }
+
+@ApiStatus.Internal
+fun createSeparator(@NlsContexts.Separator title: String): LookupElement {
+  return SeparatorLookupElement(title)
+}
+
+internal class SeparatorLookupElement(
+  @NlsContexts.Separator val title: String,
+) : LookupElement() {
+  override fun getLookupString(): String {
+    return title
+  }
+}
+
+internal class AlwaysSeparatorMatcher : PrefixMatcher(""){
+  override fun prefixMatches(name: String): Boolean {
+    return true
+  }
+
+  override fun cloneWithPrefix(prefix: String): PrefixMatcher {
+    return AlwaysSeparatorMatcher()
+  }
+}
+
+@ApiStatus.Internal
+fun LookupElement.isSeparator(): Boolean = this.`as`(SeparatorLookupElement::class.java) != null

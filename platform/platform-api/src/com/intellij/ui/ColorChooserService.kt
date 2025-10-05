@@ -3,6 +3,7 @@ package com.intellij.ui
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -50,7 +51,15 @@ class ColorChooserService {
                 popupCloseListener: ColorPickerPopupCloseListener? = null) {
     // dispatching based on editor? (each client has their own editor copy)
     val clientInstance = ClientColorChooserService.getCurrentInstance()
-    clientInstance.showPopup(project, currentColor, editor, listener, showAlpha, showAlphaAsPercent, popupCloseListener)
+    clientInstance.showPopup(
+      project = project,
+      currentColor = currentColor,
+      editor = editor,
+      listener = listener,
+      showAlpha = showAlpha,
+      showAlphaAsPercent = showAlphaAsPercent,
+      popupCloseListener = popupCloseListener,
+    )
   }
 
   @JvmOverloads
@@ -62,23 +71,40 @@ class ColorChooserService {
                 showAlphaAsPercent: Boolean = false,
                 popupCloseListener: ColorPickerPopupCloseListener? = null) {
     val clientInstance = ClientColorChooserService.getCurrentInstance()
-    clientInstance.showPopup(project, currentColor, listener, location, showAlpha, showAlphaAsPercent, popupCloseListener)
+    clientInstance.showPopup(
+      project = project,
+      currentColor = currentColor,
+      listener = listener,
+      location = location,
+      showAlpha = showAlpha,
+      showAlphaAsPercent = showAlphaAsPercent,
+      popupCloseListener = popupCloseListener,
+    )
   }
 
   @Deprecated("This method doesn't support remote development.",
               ReplaceWith("showPopup(project, currentColor, listener, location, showAlpha)"))
-  fun showColorPickerPopup(project: Project?,
-                           currentColor: Color?,
-                           listener: ColorListener,
-                           location: RelativePoint?,
-                           showAlpha: Boolean) {
-    showPopup(project, currentColor, listener, location, showAlpha, false, null)
+  fun showColorPickerPopup(
+    project: Project?,
+    currentColor: Color?,
+    listener: ColorListener,
+    location: RelativePoint?,
+    showAlpha: Boolean,
+  ) {
+    showPopup(
+      project = project,
+      currentColor = currentColor,
+      listener = listener,
+      location = location,
+      showAlpha = showAlpha,
+      showAlphaAsPercent = false,
+      popupCloseListener = null,
+    )
   }
 
   companion object {
     @JvmStatic
-    val instance: ColorChooserService
-      get() = ApplicationManager.getApplication().getService(ColorChooserService::class.java)
+    fun getInstance(): ColorChooserService = service()
   }
 }
 

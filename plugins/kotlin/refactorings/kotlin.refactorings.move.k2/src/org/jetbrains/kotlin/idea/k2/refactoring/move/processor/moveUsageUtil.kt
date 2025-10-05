@@ -15,6 +15,7 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
@@ -24,9 +25,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.markInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.OuterInstanceReferenceUsageInfo
 import org.jetbrains.kotlin.name.FqName
@@ -194,9 +197,11 @@ private fun KtNamedDeclaration.findNonCodeUsages(
 
     // Properties also have the additional getter and setter methods that can be referred to
     if (this is KtProperty) {
-        analyze(this) {
-            listOfNames.addIfNotNull((symbol as? KaPropertySymbol)?.javaGetterName?.asString())
-            listOfNames.addIfNotNull((symbol as? KaPropertySymbol)?.javaSetterName?.asString())
+        allowAnalysisFromWriteActionInEdt(this) {
+            (symbol as? KaPropertySymbol)?.let { symbol ->
+                listOfNames.addIfNotNull(symbol.javaGetterName.asString())
+                listOfNames.addIfNotNull(symbol.javaSetterName?.asString())
+            }
         }
     }
 
@@ -241,7 +246,7 @@ internal fun KtNamedDeclaration.usesOuterInstanceParameter(): Boolean {
     return collectOuterInstanceReferences(this).isNotEmpty()
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun KaSymbol.isStrictAncestorOf(other: KaSymbol): Boolean {
     var containingDeclaration = other.containingDeclaration
     while (containingDeclaration != null) {

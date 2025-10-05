@@ -3,14 +3,12 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.configurationStore.DefaultModuleStoreFactory
 import com.intellij.configurationStore.ModuleStoreFactory
-import com.intellij.configurationStore.NonPersistentModuleStore
+import com.intellij.configurationStore.NonPersistentStore
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.facet.FacetManagerFactory
 import com.intellij.facet.impl.FacetEventsPublisher
 import com.intellij.facet.impl.FacetManagerFactoryImpl
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
@@ -30,6 +28,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -55,7 +54,7 @@ open class ModuleBridgeImpl(
 
   override fun getModuleFile(): VirtualFile? = imlFilePointer?.file
 
-  override fun canStoreSettings(): Boolean = imlFilePointer != null && componentStore !is NonPersistentModuleStore
+  override fun canStoreSettings(): Boolean = imlFilePointer != null && componentStore !is NonPersistentStore
 
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
     imlFilePointer = newModuleFileUrl as VirtualFileUrlBridge
@@ -71,7 +70,7 @@ open class ModuleBridgeImpl(
       val isDisposed = Disposer.isDisposed(this)
       if (!isDisposed) {
         val store = componentStore
-        if (store !is NonPersistentModuleStore) {
+        if (store !is NonPersistentStore) {
           return store.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
         }
       }
@@ -96,7 +95,7 @@ open class ModuleBridgeImpl(
     val componentStore = componentStore
     (componentStore.storageManager as? RenameableStateStorageManager)?.pathRenamed(imlPath, null)
     componentStore.setPath(imlPath)
-    (PathMacroManager.getInstance(this) as? ModulePathMacroManager)?.onImlFileMoved()
+    ModulePathMacroManager(this, PathMacros.getInstance()).onImlFileMoved()
   }
 
   override fun markContainerAsCreated() {
@@ -179,7 +178,7 @@ open class ModuleBridgeImpl(
 
     internal suspend fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>, project: Project) {
       val facetManagerFactory = project.serviceAsync<FacetManagerFactory>() as FacetManagerFactoryImpl
-      span("init facets in EDT", Dispatchers.EDT) {
+      span("init facets in EDT", Dispatchers.UiWithModelAccess) {
         facetsInitializationTimeMs.addMeasuredTime {
           doInitFacetsInEdt(modules, facetManagerFactory)
         }
@@ -190,6 +189,7 @@ open class ModuleBridgeImpl(
     }
 
     // separate method to see it in a profiler
+    @RequiresEdt
     private fun doInitFacetsInEdt(
       modules: Collection<Pair<ModuleEntity, ModuleBridge>>,
       facetManagerFactory: FacetManagerFactory,
@@ -197,8 +197,13 @@ open class ModuleBridgeImpl(
       for ((_, module) in modules) {
         if (!module.isDisposed) {
           facetsInitializationTimeMs.addMeasuredTime {
-            for (facet in facetManagerFactory.getFacetManager(module).allFacets) {
-              facet.initFacet()
+            val allFacets = WriteIntentReadAction.compute<_, Throwable> { facetManagerFactory.getFacetManager(module).allFacets }
+            for (facet in allFacets) {
+              // this write-intent is needed because deeper in the stack WSM acquires a monitor IJPL-202616.
+              // Here we establish the correct order of locks
+              WriteIntentReadAction.run {
+                facet.initFacet()
+              }
             }
           }
         }

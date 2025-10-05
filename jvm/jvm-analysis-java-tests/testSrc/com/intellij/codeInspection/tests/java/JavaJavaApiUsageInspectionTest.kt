@@ -287,4 +287,114 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       }
     """.trimIndent())
   }
+
+  fun `test import for static methods`() {
+    myFixture.addClass("""
+      package java.lang;
+      public class IO {
+        public static void println() {}
+        public static void println(Object o) {}
+      }
+    """.trimIndent())
+    myFixture.setLanguageLevel(LanguageLevel.JDK_1_8)
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import static java.lang.<error descr="Usage of API documented as @since 25+">IO</error>.println;
+
+      class SimpleClass {
+          public static void main(String[] args) {
+          }
+          void foo() {
+              String s = "";
+              println();
+          }
+      }
+    """.trimIndent())
+  }
+
+  fun `test language level 24 with JDK 25`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_24)
+    addPreviewFeature()
+    addStableValue()
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.concurrent.StructuredTaskScope;
+
+        class Main {
+          static void main() {
+              StructuredTaskScope a; // JEP 505
+              <error descr="Usage of preview API documented as @since 25+"><error descr="java.lang.StableValue is a preview API and is disabled by default">StableValue<String></error></error> b = <error descr="Usage of preview API documented as @since 25+"><error descr="java.lang.StableValue is a preview API and is disabled by default">StableValue</error></error>.<caret>of("foo");
+          }
+      }
+    """.trimIndent())
+
+    myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive Types in Patterns, etc.")
+    assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
+  }
+
+  fun `test language level 24 preview with JDK 25`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_24_PREVIEW)
+    addPreviewFeature()
+    addStableValue()
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import java.util.concurrent.StructuredTaskScope;
+
+        class Main {
+          static void main() {
+              StructuredTaskScope a; // JEP 505
+              <error descr="Usage of preview API documented as @since 25+">StableValue<String></error> b = <error descr="Usage of preview API documented as @since 25+">StableValue</error>.<caret>of("foo");
+          }
+      }
+    """.trimIndent())
+
+    myFixture.runQuickFix("Set language level to 25 (Preview) - Primitive Types in Patterns, etc.")
+    assertEquals(LanguageLevel.JDK_25_PREVIEW, LanguageLevelUtil.getEffectiveLanguageLevel(myFixture.module))
+  }
+
+  private fun addStableValue() {
+    myFixture.addClass("""
+        package java.lang;
+        
+        import jdk.internal.javac.PreviewFeature;
+        
+        /**
+         * @since 25
+         */
+        @PreviewFeature(feature = PreviewFeature.Feature.STABLE_VALUES)
+        public class StableValue<T> {
+          private StableValue(T value) {}
+          public static <X> StableValue<X> of(X value) {
+            return new StableValue<>(value);
+          }
+        }
+      """.trimIndent())
+  }
+
+  private fun addPreviewFeature() {
+    // This code is copied from JDK sources
+    myFixture.addClass("""
+        package jdk.internal.javac;
+        
+        import java.lang.annotation.*;
+        
+        @Target({ElementType.METHOD,
+                 ElementType.CONSTRUCTOR,
+                 ElementType.FIELD,
+                 ElementType.PACKAGE,
+                 ElementType.TYPE})
+         // CLASS retention will hopefully be sufficient for the purposes at hand
+        @Retention(RetentionPolicy.RUNTIME)
+        // *Not* @Documented
+        public @interface PreviewFeature {
+            /**
+             * Name of the preview feature the annotated API is associated
+             * with.
+             */
+            public Feature feature();
+        
+            public enum Feature {
+              PEM_API,
+              STABLE_VALUES
+            }
+        }
+      """.trimIndent())
+  }
 }

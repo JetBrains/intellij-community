@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.internal;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -142,10 +143,10 @@ public final class ExternalSystemProcessingManagerImpl
   }
 
   @Override
-  public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+  public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {
     Long prev = myTasksInProgress.replace(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
     if (prev == null) {
-      LOG.warn("onTaskOutput is invoked before onStart or after onEnd (id: %s, stdOut: %b, text: %s)".formatted(id, stdOut, text));
+      LOG.warn("onTaskOutput is invoked before onStart or after onEnd (id: %s, outputType: %s, text: %s)".formatted(id, processOutputType.toString(), text));
     }
   }
 

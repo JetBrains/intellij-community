@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(IntellijInternalApi::class, ExperimentalStdlibApi::class)
 
 package com.intellij.openapi.actionSystem.impl
@@ -34,7 +34,10 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -49,10 +52,13 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
@@ -288,7 +294,7 @@ object Utils {
     val fastTrackTime = getFastTrackMaxTime(fastTrack, place, uiKind is ActionUiKind.Toolbar, true)
     val edtDispatcher =
       if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
-      else Dispatchers.ui(UiDispatcherKind.RELAX)[CoroutineDispatcher]!!
+      else Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, uiKind, edtDispatcher)
     val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
       updater.runUpdateSession(updaterContext(place, fastTrackTime, uiKind)) {
@@ -543,7 +549,7 @@ object Utils {
                             context: DataContext,
                             place: String,
                             uiKind: ActionUiKind.Popup) {
-    val useDarkIcons = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
+    val useDarkIcons = MacMenuSettings.isSystemMenu && NSDefaults.isDarkMenuBar()
     val isWindowMenu = (uiKind as? ActualActionUiKind.Menu)?.menu is JMenu
     component.removeAll()
     val filtered = filterInvisible(list, presentationFactory, place)
@@ -570,7 +576,7 @@ object Utils {
       component.add(each)
       children.add(each)
     }
-    if (SystemInfo.isMacSystemMenu && isWindowMenu) {
+    if (MacMenuSettings.isSystemMenu && isWindowMenu) {
       if (isAligned) {
         val icon = if (hasIcons(children)) EMPTY_MENU_ACTION_ICON else null
         children.forEach { child -> replaceIconIn(child, icon) }
@@ -605,7 +611,7 @@ object Utils {
                                      presentationFactory: PresentationFactory,
                                      context: DataContext,
                                      place: String) {
-    val useDarkIcons = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar()
+    val useDarkIcons = MacMenuSettings.isSystemMenu && NSDefaults.isDarkMenuBar()
     val filtered = filterInvisible(list, presentationFactory, place)
     for (action in filtered) {
       val presentation = presentationFactory.getPresentation(action)
@@ -909,7 +915,7 @@ object Utils {
   @JvmStatic
   fun initUpdateSession(e: AnActionEvent) {
     if (e.updateSession !== UpdateSession.EMPTY) return
-    val edtDispatcher = Dispatchers.ui(UiDispatcherKind.RELAX)[CoroutineDispatcher]!!
+    val edtDispatcher = Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
     val actionUpdater = ActionUpdater(PresentationFactory(), e.dataContext, e.place, e.uiKind, edtDispatcher)
     e.updateSession = actionUpdater.asUpdateSession()
   }
@@ -917,7 +923,7 @@ object Utils {
   suspend fun <R> withSuspendingUpdateSession(e: AnActionEvent, factory: PresentationFactory,
                                               actionFilter: (AnAction) -> Boolean,
                                               block: suspend CoroutineScope.(SuspendingUpdateSession) -> R): R = coroutineScope {
-    val edtDispatcher = Dispatchers.ui(UiDispatcherKind.RELAX)[CoroutineDispatcher]!!
+    val edtDispatcher = Dispatchers.UiWithModelAccess[CoroutineDispatcher]!!
     val dataContext = createAsyncDataContext(e.dataContext)
     checkAsyncDataContext(dataContext, "withSuspendingUpdateSession")
     val updater = ActionUpdater(factory, dataContext, e.place, e.uiKind, edtDispatcher, actionFilter)
@@ -1249,7 +1255,7 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
 
   fun runOwnQueueBlockingAndSwitchBackToEDT(job: Job, timeInMillis: Int) {
     try {
-      resetThreadContext().use {
+      resetThreadContext {
         // block EDT for a short and process the explicit EDT queue for update
         while (!job.isCompleted && TimeoutUtil.getDurationMillis(switchedAt) < timeInMillis) {
           val runnable = queue.poll(1, TimeUnit.MILLISECONDS)
@@ -1288,17 +1294,21 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
     // here we enter a new parallelization layer for the acquired write-intent lock so that inner read actions would ignore the pending background wa.
     // sometimes, this code runs under read action, so the parallelization here may just grant read access to the whole `block`
     // without a new parallelization layer
-    val (lockContextElement, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(ctx, true)
+    //
+    // sometimes this code runs under write action. It does not call read actions inside, so it makes no sense parallelizing lock; moreover, having write access
+    // could prevent deadlocks caused by background write actions
+    val (lockContextElement, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(ctx, !application.isWriteAccessAllowed)
     try {
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(ctx +
-                  context +
-                  lockContextElement +
-                  // sometimes action update runs inside a read action
-                  // Platform forbids switching to EDT under runBlocking and read action, but action subsystem handles it in its own way
-                  SafeForRunBlockingUnderReadAction +
-                  Context.current().asContextElement(),
-                  block)
+      @OptIn(InternalCoroutinesApi::class)
+      IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(
+        ctx +
+        context +
+        lockContextElement +
+        // sometimes action update runs inside a read action
+        // Platform forbids switching to EDT under runBlocking and read action, but action subsystem handles it in its own way
+        SafeForRunBlockingUnderReadAction +
+        Context.current().asContextElement(),
+        block)
     }
     finally {
       cleanup()

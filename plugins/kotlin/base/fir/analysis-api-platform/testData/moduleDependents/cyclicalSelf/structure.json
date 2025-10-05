@@ -4,15 +4,7 @@
     { "name": "B", "dependencies": ["A"] }
   ],
   "targets": [
-    {
-      "module": "A",
-      "directDependents": ["B"],
-      "transitiveDependents": ["B"]
-    },
-    {
-      "module": "B",
-      "directDependents": [],
-      "transitiveDependents": []
-    }
+    { "module": "A" },
+    { "module": "B" }
   ]
 }

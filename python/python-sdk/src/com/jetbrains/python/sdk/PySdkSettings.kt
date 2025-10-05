@@ -12,11 +12,13 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import kotlin.io.path.absolutePathString
 
 @State(name = "PySdkSettings", storages = [Storage(value = "pySdk.xml", roamingType = RoamingType.DISABLED)])
+@ApiStatus.Internal
 class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   companion object {
     @JvmStatic
@@ -27,18 +29,6 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   }
 
   private val state: State = State()
-
-  var useNewEnvironmentForNewProject: Boolean
-    get() = state.USE_NEW_ENVIRONMENT_FOR_NEW_PROJECT
-    set(value) {
-      state.USE_NEW_ENVIRONMENT_FOR_NEW_PROJECT = value
-    }
-
-  var preferredEnvironmentType: String?
-    get() = state.PREFERRED_ENVIRONMENT_TYPE
-    set(value) {
-      state.PREFERRED_ENVIRONMENT_TYPE = value
-    }
 
   var preferredVirtualEnvBaseSdk: String?
     get() = state.PREFERRED_VIRTUALENV_BASE_SDK
@@ -96,11 +86,6 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
 
   @Suppress("PropertyName")
   class State {
-    @JvmField
-    var USE_NEW_ENVIRONMENT_FOR_NEW_PROJECT: Boolean = true
-
-    @JvmField
-    var PREFERRED_ENVIRONMENT_TYPE: String? = null
 
     @JvmField
     var PREFERRED_VIRTUALENV_BASE_PATH: String? = null

@@ -8,7 +8,6 @@ import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
-import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -18,7 +17,6 @@ class SeTabMock(
   override val name: String,
   private val delegate: SeTabDelegate,
 ) : SeTab {
-  override val shortName: String = name
   override val id: String = name
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
@@ -35,6 +33,18 @@ class SeTabMock(
     return false
   }
 
+  override suspend fun performExtendedAction(item: SeItemData): Boolean {
+    return false
+  }
+
+  override suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? {
+    return delegate.getPreviewInfo(itemData, false)
+  }
+
+  override suspend fun isPreviewEnabled(): Boolean {
+    return delegate.isPreviewEnabled()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }
@@ -42,13 +52,13 @@ class SeTabMock(
   companion object {
     fun create(
       project: Project?,
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
       name: String,
       providerIds: List<SeProviderId>,
       initEvent: AnActionEvent,
       scope: CoroutineScope,
     ): SeTabMock {
-      val delegate = SeTabDelegate(project, sessionRef, name, providerIds, initEvent, scope)
+      val delegate = SeTabDelegate(project, session, name, providerIds, initEvent, scope)
       return SeTabMock(name, delegate)
     }
   }

@@ -13,7 +13,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.resolvePythonBinary
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.PythonExistingEnvironmentConfigurator
@@ -72,7 +72,7 @@ internal class HatchExistingEnvironmentSelector(
       else -> {
         val (project, module) = moduleOrProject.destructured
         val workingDirectory = resolveHatchWorkingDirectory(project, module).getOr { return it }
-        environment.createSdk(workingDirectory, module).onSuccess { sdk ->
+        environment.createSdk(workingDirectory).onSuccess { sdk ->
           module?.let { module -> sdk.setAssociationToModule(module) }
         }
       }

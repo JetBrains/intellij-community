@@ -17,9 +17,13 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.indices.MavenIndicesManager.MavenIndexerListener
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
@@ -29,11 +33,10 @@ import org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory
 import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.reposearch.DependencySearchService
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
   protected var myIndicesFixture: MavenIndicesTestFixture? = null
@@ -53,9 +56,9 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
                       """.trimIndent())
     }
     else {
-      MavenSettingsCache.getInstance(project).reloadAsync();
+      MavenSettingsCache.getInstance(project).reloadAsync()
     }
-    ApplicationManager.getApplication().invokeAndWait { myIndicesFixture!!.setUpAfterImport() }
+    withContext(Dispatchers.EDT) { myIndicesFixture!!.setUpAfterImport() }
   }
 
   protected open fun importProjectOnSetup(): Boolean {
@@ -86,51 +89,38 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
     }
   }
 
-  suspend protected fun runAndExpectPluginIndexEvents(expectedArtifactIds: Set<String>?, action: suspend () -> Unit) {
-    val latch = CountDownLatch(1)
+  protected suspend fun runAndExpectPluginIndexEvents(expectedArtifactIds: Set<String>, action: suspend () -> Unit) {
     val artifactIdsToIndex: MutableSet<String> = ConcurrentHashMap.newKeySet()
-    artifactIdsToIndex.addAll(expectedArtifactIds!!)
+    artifactIdsToIndex.addAll(expectedArtifactIds)
 
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
       .subscribe(MavenIndicesManager.INDEXER_TOPIC, object : MavenIndexerListener {
         override fun gavIndexUpdated(repo: MavenRepositoryInfo, added: Set<File>, failedToAdd: Set<File>) {
           artifactIdsToIndex.removeIf { artifactId: String? ->
             added.any { file: File ->
-              file.path.contains(
-                artifactId!!)
+              file.path.contains(artifactId!!)
             }
           }
-          if (artifactIdsToIndex.isEmpty()) {
-            latch.countDown()
-          }
         }
-
       })
 
     action()
 
-    try {
-      latch.await(1, TimeUnit.MINUTES)
-    }
-    catch (e: InterruptedException) {
-      throw RuntimeException(e)
-    }
+    awaitConfiguration()
 
     assertTrue("Maven plugins are not indexed in time: " + java.lang.String.join(", ", artifactIdsToIndex), artifactIdsToIndex.isEmpty())
   }
 
-  protected suspend fun runAndExpectArtifactDownloadEvents(groupId: String, artifactIds: Set<String>, action: suspend () -> Unit) {
-    val groupFolder = groupId.replace('.', '/')
-    val latch = CountDownLatch(1)
+  protected suspend fun runAndExpectArtifactDownloadEvents(expectedGroupId: String, expectedArtifactIds: Set<String>, action: suspend () -> Unit) {
+    val groupFolder = expectedGroupId.replace('.', '/')
     val actualEvents: MutableSet<String> = ConcurrentHashMap.newKeySet()
-    val downloadListener = MavenServerDownloadListener { file, relativePath ->
-      if (relativePath.startsWith(groupFolder)) {
-        val artifactId = relativePath.substring(groupFolder.length).split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[1]
-        if (artifactIds.contains(artifactId)) {
+    val downloadListener = MavenServerDownloadListener { file ->
+      val absolutePath = FileUtilRt.toSystemIndependentName(file.absolutePath)
+      if (absolutePath.contains(groupFolder) && absolutePath.endsWith("jar")) {
+        val artifactId = absolutePath.substringAfter(groupFolder).split("/")[1]
+        if (expectedArtifactIds.contains(artifactId)) {
+          MavenLog.LOG.warn("Artifact $artifactId is downloaded")
           actualEvents.add(artifactId)
-          if (actualEvents.size == artifactIds.size) {
-            latch.countDown()
-          }
         }
       }
     }
@@ -140,14 +130,13 @@ abstract class MavenDomWithIndicesTestCase : MavenDomTestCase() {
 
     action()
 
-    try {
-      latch.await(1, TimeUnit.MINUTES)
-    }
-    catch (e: InterruptedException) {
-      throw RuntimeException(e)
-    }
+    awaitConfiguration()
 
-    assertUnorderedElementsAreEqual(artifactIds, actualEvents)
+    val extraDownloaded = actualEvents - expectedArtifactIds
+    assertEmpty("Unexpected artifacts downloaded", extraDownloaded)
+
+    val notDownloaded = expectedArtifactIds - actualEvents
+    assertEmpty("Artifacts not downloaded", notDownloaded)
   }
 
   override suspend fun checkHighlighting() {

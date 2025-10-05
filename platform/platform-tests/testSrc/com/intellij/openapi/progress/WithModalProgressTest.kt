@@ -4,6 +4,7 @@ package com.intellij.openapi.progress
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.EdtImmediate
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
@@ -221,6 +222,18 @@ class WithModalProgressTest : ModalCoroutineTest() {
     modalEntered.acquire()
     processApplicationQueue()
     modalCoroutine.cancel()
+  }
+
+
+  @Test
+  fun `undispatched event loop outside modal progress`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    withContext(Dispatchers.Unconfined) {
+      withModalProgress {
+        withContext(Dispatchers.EDT) {
+          launch(Dispatchers.EdtImmediate) { }
+        }
+      }
+    }
   }
 }
 

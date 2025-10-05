@@ -30,7 +30,7 @@ public class MoveAnnotationToPackageInfoFileFix extends PsiUpdateModCommandActio
     PsiPackageStatement packageStatementInPackageInfoFile = PsiTreeUtil.findChildOfType(packageInfoFile, PsiPackageStatement.class);
     if (packageStatementInPackageInfoFile == null) return null;
     PsiModifierList missingAnnotations = findMissingAnnotations(packageStatement, packageStatementInPackageInfoFile);
-    if (missingAnnotations == null || missingAnnotations.getAnnotations().length == 0) return null;
+    if (!missingAnnotations.hasAnnotations()) return null;
     return Presentation.of(getFamilyName());
   }
 
@@ -71,22 +71,16 @@ public class MoveAnnotationToPackageInfoFileFix extends PsiUpdateModCommandActio
       packageStatementInPackageInfoFile = (PsiPackageStatement)packageInfoFile.addBefore(copy, packageInfoFile.getFirstChild());
     }
     PsiModifierList missingAnnotations = findMissingAnnotations(packageStatement, packageStatementInPackageInfoFile);
-    if (missingAnnotations == null) return null;
+    if (missingAnnotations.getAnnotations().length == 0) return null;
     PsiModifierList annotationList = packageStatementInPackageInfoFile.getAnnotationList();
-    if (annotationList != null) {
-      StreamEx.of(missingAnnotations.getAnnotations()).forEach(annotationList::add);
-    }
-    else {
-      packageStatementInPackageInfoFile.addBefore(missingAnnotations, packageStatementInPackageInfoFile.getFirstChild());
-    }
+    StreamEx.of(missingAnnotations.getAnnotations()).forEach(annotationList::add);
     CodeStyleManager.getInstance(packageInfoFile.getProject()).reformat(packageInfoFile);
     return packageInfoFile;
   }
 
-  private static @Nullable PsiModifierList findMissingAnnotations(@NotNull PsiPackageStatement packageStatement,
+  private static @NotNull PsiModifierList findMissingAnnotations(@NotNull PsiPackageStatement packageStatement,
                                                                   @NotNull PsiPackageStatement packageStatementInPackageInfoFile) {
     PsiModifierList annotationList = packageStatementInPackageInfoFile.getAnnotationList();
-    if (annotationList == null) return packageStatement.getAnnotationList();
     PsiPackageStatement copy = (PsiPackageStatement)packageStatement.copy();
     StreamEx.of(copy.getAnnotationList().getChildren())
       .select(PsiAnnotation.class)

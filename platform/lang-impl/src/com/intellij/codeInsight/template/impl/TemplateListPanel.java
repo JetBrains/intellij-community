@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -659,9 +660,21 @@ public class TemplateListPanel extends JPanel implements Disposable {
     group.add(new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.template.group")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        String newName = Messages
-          .showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
-                           CodeInsightBundle.message("dialog.title.create.new.group"), null, "", new TemplateGroupInputValidator(null));
+        String newName = null;
+        if (Registry.is("live.templates.separated.group", false)) {
+          newName = Messages
+            .showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
+                             CodeInsightBundle.message("dialog.title.create.new.group"), null, "", new TemplateGroupInputValidator(null),
+                             null,
+                             CodeInsightBundle.message("dialog.message.separate.new.group"));
+        }
+        else {
+          newName = Messages
+            .showInputDialog(myTree, CodeInsightBundle.message("label.enter.the.new.group.name"),
+                             CodeInsightBundle.message("dialog.title.create.new.group"), null, "", new TemplateGroupInputValidator(null),
+                             null, null);
+        }
+
         if (newName != null) {
           TemplateGroup newGroup = new TemplateGroup(newName);
           setSelectedNode(insertNewGroup(myTreeRoot, newGroup));
@@ -1100,7 +1113,20 @@ public class TemplateListPanel extends JPanel implements Disposable {
     @Override
     public boolean checkInput(String inputString) {
       return StringUtil.isNotEmpty(inputString) &&
-             (getTemplateGroup(inputString) == null || inputString.equals(myOldName));
+             (getTemplateGroup(inputString) == null || inputString.equals(myOldName)) &&
+             noEmptyGroups(inputString);
+    }
+
+    private static boolean noEmptyGroups(@Nullable String inputString) {
+      if (!Registry.is("live.templates.separated.group", false)) return true;
+      if (inputString == null) return false;
+      for (String part : inputString.split(PATH_SEPARATOR, -1)) {
+        if (StringUtil.isEmpty(part)) {
+          return false;
+        }
+      }
+
+      return true;
     }
 
     @Override

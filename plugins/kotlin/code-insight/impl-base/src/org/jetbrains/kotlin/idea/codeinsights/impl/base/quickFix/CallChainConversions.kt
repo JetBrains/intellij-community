@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
@@ -343,7 +344,7 @@ object AssociateFunctionUtil {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KtExpression.isReferenceTo(another: KaValueParameterSymbol): Boolean {
         val referenceExpression = this as? KtNameReferenceExpression ?: return false
         val symbol = referenceExpression.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.symbol

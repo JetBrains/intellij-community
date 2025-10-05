@@ -23,7 +23,7 @@ public class PluginDescriptorLoadingFromArtifactTest {
     assertThat(descriptor).isNotNull();
     assertThat(descriptor.getPluginId().getIdString()).isEqualTo("test.plugin");
 
-    descriptor = PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(jarFile, null);
+    descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(jarFile, null);
     assertThat(descriptor).isNotNull();
     assertThat(descriptor.getPluginId().getIdString()).isEqualTo("test.plugin");
   }
@@ -53,7 +53,7 @@ public class PluginDescriptorLoadingFromArtifactTest {
     assertThat(descriptor).isNotNull();
     assertThat(descriptor.getPluginId().getIdString()).isEqualTo("test.plugin");
 
-    descriptor = PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(zipFile, null);
+    descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(zipFile, null);
     assertThat(descriptor).isNotNull();
     assertThat(descriptor.getPluginId().getIdString()).isEqualTo("test.plugin");
   }

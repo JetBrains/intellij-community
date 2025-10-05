@@ -10,7 +10,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBrid
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 
-abstract class KaLibraryEntityBasedLibraryModuleBase : KaLibraryModuleBase<LibraryEntity, LibraryId>() {
+abstract class KaLibraryEntityBasedLibraryModuleBase : KaEntityBasedLibraryModuleBase<LibraryEntity, LibraryId>() {
     val library: LibraryEx
         get() = entity.findLibraryBridge(currentSnapshot) as LibraryEx?
             ?: error("Could not find Library $entityId")

@@ -1,19 +1,21 @@
 ### auto-generated section `build intellij.platform.workspace.storage` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  jvm_target = 11,
+  name = "custom_storage",
+  jvm_target = "11",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
     "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
-  ]
+  ],
+  x_explicit_api_mode = "strict"
 )
 
-jvm_resources(
+resourcegroup(
   name = "storage_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -21,22 +23,22 @@ jvm_library(
   name = "storage",
   module_name = "intellij.platform.workspace.storage",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":storage_resources"],
+  kotlinc_opts = ":custom_storage",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:kotlin-reflect",
     "//platform/util",
     "@lib//:fastutil-min",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "@lib//:kryo5",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/diagnostic",
     "@lib//:kotlinx-collections-immutable",
-  ],
-  runtime_deps = [":storage_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.workspace.storage` end

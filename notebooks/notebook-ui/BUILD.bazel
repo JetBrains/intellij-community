@@ -1,18 +1,18 @@
 ### auto-generated section `build intellij.notebooks.ui` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_ui",
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
   ]
 )
 
-jvm_resources(
+resourcegroup(
   name = "ui_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -20,11 +20,12 @@ jvm_library(
   name = "ui",
   module_name = "intellij.notebooks.ui",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ui_resources"],
+  kotlinc_opts = ":custom_ui",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
@@ -34,7 +35,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/projectModel-impl",
     "//platform/editor-ui-ex:editor-ex",
-  ],
-  runtime_deps = [":ui_resources"]
+  ]
 )
 ### auto-generated section `build intellij.notebooks.ui` end

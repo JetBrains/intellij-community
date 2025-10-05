@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
@@ -10,6 +11,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.ModulePath;
 import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestFrameworkUtil;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -24,10 +26,7 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -326,11 +325,20 @@ public final class PathManagerEx {
       throw new IllegalStateException("Classes root " + root + " doesn't exist");
     }
     if (!root.isDirectory()) {
-      String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
-      if (relevantJarsRoot != null && root.toPath().toAbsolutePath().startsWith(relevantJarsRoot)) {
+      String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
+      Map<String, String> mapping = ArchivedCompilationContextUtil.getArchivedCompiledClassesMapping();
+      if (relevantJarsRoot != null && mapping != null && root.toPath().toAbsolutePath().startsWith(relevantJarsRoot)) {
         // .../idea-compile-parts-v2/test/intellij.java.compiler.tests/$sha256.jar
         String moduleName = root.getParentFile().getName();
-        return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+        if (mapping.containsKey(moduleName)) {
+          return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+        }
+
+        // .../out/bazel-out/jvm-fastbuild/bin/external/community+/java/compiler/compiler-tests_test_lib.jar
+        return ContainerUtil.exists(getCommunityModules(),
+                                    s -> Objects.equals(mapping.get("production/" + s), classRootPath) ||
+                                         Objects.equals(mapping.get("test/" + s), classRootPath))
+               ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
       }
       //this means that clazz is located in a library; perhaps we should throw exception here
       return FileSystemLocation.ULTIMATE;

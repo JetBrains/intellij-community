@@ -1,3 +1,8 @@
+# TODO: missing from stub
+regex.__all__
+regex._regex_core.__all__
+regex.regex.__all__
+
 # Not exported in C modules:
 regex._regex.Splitter
 regex._regex.Scanner

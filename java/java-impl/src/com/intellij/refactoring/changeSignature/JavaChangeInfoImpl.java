@@ -202,9 +202,11 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
 
     toRemoveParm = new boolean[oldParameterNames.length];
     Arrays.fill(toRemoveParm, true);
-    for (ParameterInfoImpl info : newParms) {
-      if (info.oldParameterIndex < 0) continue;
-      toRemoveParm[info.oldParameterIndex] = false;
+    if (toRemoveParm.length > 0) {
+      for (ParameterInfoImpl info : newParms) {
+        if (info.oldParameterIndex < 0) continue;
+        toRemoveParm[info.oldParameterIndex] = false;
+      }
     }
 
     defaultValues = new PsiExpression[newParms.length];

@@ -15,9 +15,12 @@
  */
 package com.intellij.build.events;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Vladislav.Soroka
  */
 public interface FinishEvent extends BuildEvent {
-  EventResult getResult();
+
+  @NotNull EventResult getResult();
 }

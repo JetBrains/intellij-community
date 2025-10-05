@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
@@ -11,8 +11,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.decompiler.psi.text.ByDescriptorIndexer
 import org.jetbrains.kotlin.asJava.findFacadeClass
+import org.jetbrains.kotlin.base.fe10.analysis.decompiler.ByDescriptorIndexer
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
 import org.jetbrains.kotlin.fileClasses.fileClassInfo
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleIn
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.receiverAndParametersShortTypesMatch
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.sameReceiverPresenceAndParametersCount
 import org.jetbrains.kotlin.idea.stubindex.*

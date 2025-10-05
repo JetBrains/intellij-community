@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.completion.lookups.factories
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinNameSerializer
 import org.jetbrains.kotlin.idea.completion.implCommon.OperatorNameCompletion
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.name.Name
@@ -13,6 +15,7 @@ object OperatorNameLookupElementFactory {
     }
 }
 
+@Serializable
 internal data class OperatorNameLookupObject(
-    override val shortName: Name
+    @Serializable(with = KotlinNameSerializer::class) override val shortName: Name,
 ) : KotlinLookupObject

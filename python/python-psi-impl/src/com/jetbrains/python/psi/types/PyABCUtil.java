@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
@@ -97,6 +98,12 @@ public final class PyABCUtil {
     if (PyNames.AWAITABLE.equals(superClassName)) {
       return hasMethod(subClass, PyNames.DUNDER_AWAIT, inherited, context);
     }
+    if (PyNames.ABSTRACT_CONTEXT_MANAGER.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.ENTER, inherited, context) && hasMethod(subClass, PyNames.EXIT, inherited, context);
+    }
+    if (PyNames.ABSTRACT_ASYNC_CONTEXT_MANAGER.equals(superClassName)) {
+      return hasMethod(subClass, PyNames.AENTER, inherited, context) && hasMethod(subClass, PyNames.AEXIT, inherited, context);
+    }
     return false;
   }
 
@@ -118,6 +125,12 @@ public final class PyABCUtil {
       }
     }
     if (type instanceof PyUnionType) {
+      if (!PyUnionType.isStrictSemanticsEnabled()) {
+        return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
+      }
+      return PyTypeUtil.toStream(type).nonNull().allMatch(it -> isSubtype(it, superClassName, context));
+    }
+    if (type instanceof PyUnsafeUnionType) {
       return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
     }
     return false;

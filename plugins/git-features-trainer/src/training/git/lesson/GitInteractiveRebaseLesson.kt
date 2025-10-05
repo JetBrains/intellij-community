@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.roots
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.util.findBranch

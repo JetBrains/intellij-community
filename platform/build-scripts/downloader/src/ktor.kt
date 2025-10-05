@@ -11,6 +11,8 @@ import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.AuthConfig
+import io.ktor.client.plugins.auth.AuthProvider
 import io.ktor.client.plugins.auth.providers.BasicAuthCredentials
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.basic
@@ -49,6 +51,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
 import java.io.IOException
+import java.net.SocketException
 import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -207,11 +210,17 @@ fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependencie
 }
 
 suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
-  return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, token = null, credentialsProvider = null)
+  return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, authConfigSettings = null)
 }
 
 suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, token: String): Path {
-  return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, token = token, credentialsProvider = null)
+  return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, authConfigSettings = {
+    bearer {
+      loadTokens {
+        BearerTokens(token, "")
+      }
+    }
+  })
 }
 
 suspend fun downloadFileToCacheLocation(
@@ -219,14 +228,36 @@ suspend fun downloadFileToCacheLocation(
   communityRoot: BuildDependenciesCommunityRoot,
   credentialsProvider: () -> Credentials,
 ): Path {
-  return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, token = null, credentialsProvider = credentialsProvider)
+  return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, authConfigSettings = {
+    basic {
+      credentials {
+        sendWithoutRequest { true }
+        val credentials = credentialsProvider()
+        BasicAuthCredentials(credentials.username, credentials.password)
+      }
+    }
+  })
 }
+
+suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, authProvider: AuthProvider): Path {
+  return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, authConfigSettings = {
+    providers.add(authProvider)
+  })
+}
+
+private fun downloadFileIsRetryAllowed(e: Exception): Boolean =
+  when (e) {
+    is SocketException if e.message?.contains("Operation not permitted") == true -> {
+      // Most likely, in a Bazel sandbox where network access was disabled, retry is useless
+      false
+    }
+    else -> true
+  }
 
 private suspend fun downloadFileToCacheLocation(
   url: String,
   communityRoot: BuildDependenciesCommunityRoot,
-  token: String?,
-  credentialsProvider: (() -> Credentials)?,
+  authConfigSettings: (AuthConfig.() -> Unit)?,
 ): Path {
   BuildDependenciesDownloader.cleanUpIfRequired(communityRoot)
 
@@ -253,7 +284,7 @@ private suspend fun downloadFileToCacheLocation(
     println(" * Downloading $url")
 
     return spanBuilder("download").setAttribute("url", url).setAttribute("target", targetPath).useWithScope {
-      retryWithExponentialBackOff {
+      retryWithExponentialBackOff(isRetryAllowed = { e -> downloadFileIsRetryAllowed(e) }) {
         // save to the same disk to ensure that move will be atomic and not as a copy
         val tempFile = target.parent
           .resolve("${target.fileName}-${(Instant.now().epochSecond - 1634886185).toString(36)}-${Instant.now().nano.toString(36)}".take(255))
@@ -264,7 +295,7 @@ private suspend fun downloadFileToCacheLocation(
           val commonConfig: HttpClientConfig<*>.() -> Unit = {
             expectSuccess = false // we have custom error handler
 
-            install(ContentEncoding) {
+            ContentEncoding {
               // Any `Content-Encoding` will drop the "Content-Length" header in nginx responses,
               // yet we rely on that header in `downloadFileToCacheLocation`.
               // Hence, we override `ContentEncoding` plugin config from `httpClient` with zero weights.
@@ -272,9 +303,15 @@ private suspend fun downloadFileToCacheLocation(
               gzip(0.0F)
               identity(1.0F)
             }
+
+            if (authConfigSettings != null) {
+              Auth {
+                authConfigSettings()
+              }
+            }
           }
 
-          val response = getEffectiveClient(token = token, commonConfig = commonConfig, credentialsProvider = credentialsProvider).use { client ->
+          val response = httpClient.value.config(commonConfig).use { client ->
             doDownloadFileWithoutCaching(client = client, url = url, file = tempFile)
           }
 
@@ -325,39 +362,6 @@ private suspend fun downloadFileToCacheLocation(
   }
   finally {
     lock.unlock()
-  }
-}
-
-private fun getEffectiveClient(
-  token: String?,
-  commonConfig: HttpClientConfig<*>.() -> Unit,
-  credentialsProvider: (() -> Credentials)?,
-): HttpClient {
-  return when {
-    token != null -> httpClient.value.config {
-      commonConfig()
-      Auth {
-        bearer {
-          loadTokens {
-            BearerTokens(token, "")
-          }
-        }
-      }
-    }
-    credentialsProvider != null -> httpClient.value.config {
-      commonConfig()
-      Auth {
-        basic {
-          credentials {
-            sendWithoutRequest { true }
-            val credentials = credentialsProvider()
-            BasicAuthCredentials(credentials.username, credentials.password)
-          }
-        }
-      }
-    }
-
-    else -> httpClient.value.config(commonConfig)
   }
 }
 

@@ -18,9 +18,9 @@ data class GitLabMergeRequestDetails(
   val assignees: List<GitLabUserDTO>,
   val reviewers: List<GitLabUserDTO>,
   val webUrl: @NlsSafe String,
-  val labels: List<String>
+  val labels: List<String>,
+  val userNotesCount: Int?,
 ) {
-
   companion object {
     fun fromRestDTO(dto: GitLabMergeRequestShortRestDTO): GitLabMergeRequestDetails =
       GitLabMergeRequestDetails(
@@ -35,7 +35,8 @@ data class GitLabMergeRequestDetails(
         dto.assignees.map(GitLabUserDTO::fromRestDTO),
         dto.reviewers.map(GitLabUserDTO::fromRestDTO),
         dto.webUrl,
-        dto.labels
+        dto.labels,
+        dto.userNotesCount,
       )
   }
 }

@@ -16,7 +16,9 @@ import org.jetbrains.annotations.ApiStatus
 interface SeFilterEditor {
   val resultFlow: StateFlow<SeFilterState>
 
-  fun getActions(): List<AnAction>
+  fun getHeaderActions(): List<AnAction>
+
+  fun getSearchFieldActions(): List<AnAction> = emptyList()
 }
 
 @ApiStatus.Internal

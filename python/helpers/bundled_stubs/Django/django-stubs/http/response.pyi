@@ -3,9 +3,10 @@ from collections.abc import AsyncIterable, AsyncIterator, Iterable, Iterator
 from http.cookies import SimpleCookie
 from io import BytesIO
 from json import JSONEncoder
-from typing import Any, Literal, TypeVar, overload, type_check_only
+from typing import Any, Literal, NoReturn, TypeVar, overload, type_check_only
 
 from django.utils.datastructures import CaseInsensitiveMapping, _PropertyDescriptor
+from django.utils.functional import cached_property
 
 class BadHeaderError(ValueError): ...
 
@@ -102,6 +103,8 @@ class HttpResponse(HttpResponseBase, Iterable[bytes]):
     __bytes__ = serialize
     def __iter__(self) -> Iterator[bytes]: ...
     def getvalue(self) -> bytes: ...
+    @cached_property
+    def text(self) -> str: ...
 
 class StreamingHttpResponse(HttpResponseBase, Iterable[bytes], AsyncIterable[bytes]):
     is_async: bool
@@ -114,6 +117,10 @@ class StreamingHttpResponse(HttpResponseBase, Iterable[bytes], AsyncIterable[byt
     def __iter__(self) -> Iterator[bytes]: ...
     def __aiter__(self) -> AsyncIterator[bytes]: ...
     def getvalue(self) -> bytes: ...
+    @property
+    def content(self) -> NoReturn: ...
+    @property
+    def text(self) -> NoReturn: ...
 
 class FileResponse(StreamingHttpResponse):
     file_to_stream: BytesIO | None
@@ -125,12 +132,15 @@ class FileResponse(StreamingHttpResponse):
 
 class HttpResponseRedirectBase(HttpResponse):
     allowed_schemes: list[str]
-    def __init__(self, redirect_to: str, *args: Any, **kwargs: Any) -> None: ...
+    def __init__(self, redirect_to: str, preserve_request: bool = False, *args: Any, **kwargs: Any) -> None: ...
     @property
     def url(self) -> str: ...
 
-class HttpResponseRedirect(HttpResponseRedirectBase): ...
-class HttpResponsePermanentRedirect(HttpResponseRedirectBase): ...
+class HttpResponseRedirect(HttpResponseRedirectBase):
+    status_code_preserve_request: int
+
+class HttpResponsePermanentRedirect(HttpResponseRedirectBase):
+    status_code_preserve_request: int
 
 class HttpResponseNotModified(HttpResponse):
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...

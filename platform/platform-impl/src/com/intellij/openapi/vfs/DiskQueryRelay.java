@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
-import io.opentelemetry.api.metrics.Meter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,8 +47,7 @@ public final class DiskQueryRelay<Param, Result> {
     this(function, ProcessIOExecutorService.INSTANCE);
   }
 
-  public DiskQueryRelay(@NotNull Function<? super Param, ? extends Result> function,
-                        @NotNull ExecutorService executor) {
+  public DiskQueryRelay(@NotNull Function<? super Param, ? extends Result> function, @NotNull ExecutorService executor) {
     myFunction = arg -> {
       long startedAtNs = System.nanoTime();
       try {
@@ -170,13 +168,14 @@ public final class DiskQueryRelay<Param, Result> {
   }
 
   static {
-    Meter otelMeter = TelemetryManager.getInstance().getMeter(PlatformScopesKt.PlatformMetrics);
+    var otelMeter = TelemetryManager.getInstance().getMeter(PlatformScopesKt.PlatformMetrics);
 
     var taskExecutionTimeUs = otelMeter.counterBuilder("DiskQueryRelay.taskExecutionTotalTimeUs").buildObserver();
     var taskWaitingTimeUs = otelMeter.counterBuilder("DiskQueryRelay.taskWaitingTotalTimeUs").buildObserver();
     var tasksExecuted = otelMeter.counterBuilder("DiskQueryRelay.tasksExecuted").buildObserver();
     var tasksRequested = otelMeter.counterBuilder("DiskQueryRelay.tasksRequested").buildObserver();
 
+    //noinspection resource
     otelMeter.batchCallback(
       () -> {
         taskExecutionTimeUs.record(taskExecutionTotalTime(MICROSECONDS));

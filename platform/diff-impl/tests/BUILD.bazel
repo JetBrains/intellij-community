@@ -1,24 +1,24 @@
 ### auto-generated section `build intellij.platform.diff.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "tests_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.platform.diff.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-  associates = ["//platform/diff-impl"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/diff-api:diff",
@@ -28,25 +28,24 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/util/diff",
-    "//platform/vcs-api/vcs-api-core:vcs-core",
-    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
-    "@lib//:mockito",
+    "//platform/diff-impl",
+    "//libraries/mockito",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/core-impl",
     "@lib//:kotlin-test",
-    "//platform/vcs-impl",
-    "//platform/vcs-impl:vcs-impl_test_lib",
-    "//platform/platform-tests:tests_test_lib",
     "//platform/core-ui",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-  ],
-  runtime_deps = [":tests_test_resources"]
+  ]
 )
+### auto-generated section `build intellij.platform.diff.tests` end
+
+### auto-generated section `test intellij.platform.diff.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.diff.tests` end
+### auto-generated section `test intellij.platform.diff.tests` end

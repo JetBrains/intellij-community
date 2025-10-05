@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.impl.GenericZipFile;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.util.io.ResourceHandle;
@@ -13,6 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -47,11 +51,20 @@ public final class TimedZipHandler extends ZipHandlerBase {
 
   @ApiStatus.Internal
   public static void closeOpenZipReferences() {
+    List<Pair<TimedZipHandler, ScheduledFuture<?>>> entriesToClearAndCancel = new ArrayList<>();
     synchronized (handlersLRUCache) {
-      for (var handler : handlersLRUCache.keySet()) {
-        handler.clearCaches();
+      for (Map.Entry<TimedZipHandler, ScheduledFuture<?>> entry : handlersLRUCache.entrySet()) {
+        entriesToClearAndCancel.add(Pair.createNonNull(entry.getKey(), entry.getValue()));
       }
       handlersLRUCache.clear();
+    }
+    //Avoid invoking .clearCaches() under handlersLRUCache lock: handler's instance myLock shouldn't be acquired inside
+    // handlersLRUCache
+    for (var entry : entriesToClearAndCancel) {
+      TimedZipHandler handler = entry.first;
+      handler.clearCaches();
+      ScheduledFuture<?> invalidationRequest = entry.second;
+      invalidationRequest.cancel(false);
     }
   }
 

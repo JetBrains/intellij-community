@@ -1,8 +1,8 @@
-from _typeshed import Incomplete
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["line_graph", "inverse_line_graph"]
 
-@_dispatch
-def line_graph(G, create_using: Incomplete | None = None): ...
-@_dispatch
+@_dispatchable
+def line_graph(G, create_using=None): ...
+@_dispatchable
 def inverse_line_graph(G): ...

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.withInitial
@@ -11,11 +12,11 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -40,9 +41,9 @@ internal class GHPRChangesViewModelImpl(
   private val dataProvider: GHPRDataProvider,
   private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRChangesViewModel {
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(this::class)
 
-  override val changesLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
+  override val changesLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account, GHLoginSource.PR_CHANGES) {
     cs.launch {
       dataProvider.changesData.signalChangesNeedReload()
     }

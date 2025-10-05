@@ -21,6 +21,9 @@ class WindsurfSSEConfig(val serverUrl: String) : ServerConfig()
 class VSCodeSSEConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
+class ClaudeCodeSSEConfig(val url: String, val type: String) : ServerConfig()
+
+@Serializable
 class STDIOServerConfig(
   val command: String? = null,
   val args: List<String>? = null,
@@ -50,11 +53,5 @@ data class McpServers(
 @JsonIgnoreUnknownKeys
 @Serializable
 data class VSCodeConfig(
-  val mcp: VSCodeMcp? = null
-)
-
-@JsonIgnoreUnknownKeys
-@Serializable 
-data class VSCodeMcp(
   val servers: Map<String, ExistingConfig>? = null
 )

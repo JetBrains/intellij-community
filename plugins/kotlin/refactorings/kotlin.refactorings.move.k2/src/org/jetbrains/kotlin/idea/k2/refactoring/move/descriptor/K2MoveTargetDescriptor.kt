@@ -35,13 +35,14 @@ sealed interface K2MoveTargetDescriptor {
 
     open class Directory(
         override val pkgName: FqName,
-        override val baseDirectory: PsiDirectory
+        override val baseDirectory: PsiDirectory,
+        private val isMoveToExplicitPackage: Boolean = false,
     ) : K2MoveTargetDescriptor {
         override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): PsiFileSystemItem {
             if (!dirStructureMatchesPkg) return baseDirectory
             val pkgPrefixWithImplicit = baseDirectory.getFqNameWithImplicitPrefixOrRoot()
-            // if the new package does not match with the implicit prefix of the target, ignore (and break) the implicit prefix
-            return if (pkgName.startsWith(pkgPrefixWithImplicit)) {
+            // If the new package does not match with the implicit prefix of the target, ignore the implicit prefix.
+            return if (pkgName.startsWith(pkgPrefixWithImplicit) && !isMoveToExplicitPackage) {
                 findOrCreateSubdirectories(pkgPrefixWithImplicit)
             } else {
                 val pkgPrefixByDirectory = baseDirectory.getFqNameByDirectoryOrRoot()
@@ -98,8 +99,9 @@ sealed interface K2MoveTargetDescriptor {
     class File(
         val fileName: String,
         pkgName: FqName,
-        baseDirectory: PsiDirectory
-    ) : Directory(pkgName, baseDirectory), Declaration<KtFile> {
+        baseDirectory: PsiDirectory,
+        isMoveToExplicitPackage: Boolean = false,
+    ) : Directory(pkgName, baseDirectory, isMoveToExplicitPackage), Declaration<KtFile> {
         override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): KtFile {
             val directory = super.getOrCreateTarget(dirStructureMatchesPkg) as PsiDirectory
             return getOrCreateKotlinFile(fileName, directory, pkgName.asString())

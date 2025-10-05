@@ -394,6 +394,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     myEditor.getCaretModel().moveToOffset(myOrigOffset);
   }
 
+  @Override
+  protected @Nullable PsiElement checkLocalScope() {
+    PsiElement scope = super.checkLocalScope();
+    return scope != null && !(scope instanceof PsiFileSystemItem) ? scope.getParent() : scope;
+  }
+
   private @Nullable RangeHighlighter highlightConflictingElement(PsiElement conflictingElement) {
     if (conflictingElement != null) {
       try {
@@ -522,7 +528,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     boolean bind = false;
     if (myInsertedName != null) {
       final CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      if (commandProcessor.getCurrentCommand() != null && getVariable() != null) {
+      if (commandProcessor.isCommandInProgress() && getVariable() != null) {
         commandProcessor.setCurrentCommandName(getCommandName());
       }
 

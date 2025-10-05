@@ -26,6 +26,9 @@ public class AnnotationUtil {
   public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
   public static final String NOT_NULL_BY_DEFAULT = "org.jetbrains.annotations.NotNullByDefault";
 
+  public static final String J_SPECIFY_NON_NULL = "org.jspecify.annotations.NonNull";
+  public static final String J_SPECIFY_NULLABLE = "org.jspecify.annotations.Nullable";
+
   public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
   public static final String NLS = "org.jetbrains.annotations.Nls";
 
@@ -382,10 +385,6 @@ public class AnnotationUtil {
     return false;
   }
 
-  public static boolean isAnnotatingApplicable(@NotNull PsiElement elt) {
-    return isAnnotatingApplicable(elt, NullableNotNullManager.getInstance(elt.getProject()).getDefaultNullable());
-  }
-
   public static boolean isAnnotatingApplicable(@NotNull PsiElement elt, @NotNull String annotationFQN) {
     final Project project = elt.getProject();
     return PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, elt) &&
@@ -703,6 +702,7 @@ public class AnnotationUtil {
     {"NotNull", "Nullable", "NonNls", "PropertyKey", "TestOnly", "Language", "Identifier", "Pattern", "PrintFormat", "RegExp", "Subst"};
 
   /** @deprecated simple name is not enough for reliable identification */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isJetbrainsAnnotation(@NotNull String simpleName) {

@@ -71,6 +71,11 @@
     <intentionAction>
       <language>Groovy</language>
       <categoryKey>intention.category.control.flow</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.control.FlipImplicationIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <language>Groovy</language>
+      <categoryKey>intention.category.control.flow</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.control.FlipComparisonIntention</className>
     </intentionAction>
     <intentionAction>

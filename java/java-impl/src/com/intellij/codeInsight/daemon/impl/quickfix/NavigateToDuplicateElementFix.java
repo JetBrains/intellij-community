@@ -27,6 +27,10 @@ public class NavigateToDuplicateElementFix extends PsiBasedModCommandAction<Navi
 
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull NavigatablePsiElement element) {
+    return createSelectCommand(element);
+  }
+
+  static @NotNull ModCommand createSelectCommand(@NotNull NavigatablePsiElement element) {
     if (element instanceof PsiNameIdentifierOwner owner) {
       PsiElement identifier = owner.getNameIdentifier();
       if (identifier != null) {

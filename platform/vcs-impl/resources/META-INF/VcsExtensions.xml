@@ -204,9 +204,6 @@
 
     <customizableActionGroupProvider implementation="com.intellij.openapi.vcs.ui.VcsCustomizableActionGroupProvider"/>
 
-    <changesGroupingPolicy key="directory" id="directory" weight="10"
-                           implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
-
     <vcs.changes.changesViewModifier implementation="com.intellij.vcs.commit.EditedCommitChangesViewModifier"/>
 
     <vcs.changes.changesViewConflictsBannerCustomizer implementation="com.intellij.openapi.vcs.merge.DefaultChangesViewConflictsBannerCustomizer"/>
@@ -309,8 +306,6 @@
     <notificationGroup id="Vcs Notifications" displayType="BALLOON" bundle="messages.VcsBundle" key="notification.group.vcs.notifications"/>
     <notificationGroup id="Vcs Silent Notifications" displayType="NONE" bundle="messages.VcsBundle" key="notification.group.vcs.silent.notifications"/>
 
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
 
@@ -343,6 +338,7 @@
     <advancedSetting id="vcs.process.ignored" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
     <advancedSetting id="vcs.commit.tool.window" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
     <advancedSetting id="vcs.non.modal.commit.toggle.ui" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
+    <advancedSetting id="vcs.non.modal.commit.close.in.windowed.mode" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs" default="true"/>
     <advancedSetting id="vcs.push.all.with.commits" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
 
     <notificationGroup id="External Executable Critical Failures" displayType="STICKY_BALLOON" bundle="messages.VcsBundle" key="notification.group.external.executable"/>
@@ -361,6 +357,24 @@
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.actions.AnnotateWarningsProvider"/>
 
     <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
+
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.VcsRemoteApiProvider"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ShelvedChangeListToEntityConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.TagNodeToEntityConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ShelvedChangeNodeConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.ModuleNodeToEntityConverter"/>
+    <vcs.impl.backend.treeNodeConverter implementation="com.intellij.vcs.shelf.FilePathNodeToEntityConverter"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.vcs.changes.ui.BackendChangesTreeCompatibilityProvider"
+                        serviceInterface="com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider"/>
+
+    <projectService
+      serviceInterface="com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx"
+      serviceImplementation="com.intellij.openapi.vcs.changes.ui.BackendChangesViewModelBuilderService"/>
+
+    <projectService
+      serviceInterface="com.intellij.openapi.vcs.changes.ChangesListManagerStateProvider"
+      serviceImplementation="com.intellij.openapi.vcs.changes.ChangesListManagerStateProviderImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

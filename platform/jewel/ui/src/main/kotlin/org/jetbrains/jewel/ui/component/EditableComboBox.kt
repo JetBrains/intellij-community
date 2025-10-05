@@ -1,5 +1,3 @@
-@file:Suppress("ktlint:compose:parameter-naming")
-
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.background
@@ -56,6 +54,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.PopupProperties
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.onHover
@@ -75,6 +74,7 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 
+@Suppress("UnavailableSymbol") // TODO(JEWEL-983) Address Metalava suppressions
 @Composable
 public fun EditableComboBox(
     textFieldState: TextFieldState,
@@ -88,7 +88,8 @@ public fun EditableComboBox(
     onArrowDownPress: () -> Unit = {},
     onArrowUpPress: () -> Unit = {},
     onEnterPress: () -> Unit = {},
-    popupManager: PopupManager = PopupManager(),
+    // TODO(JEWEL-983) Address Metalava suppressions
+    @Suppress("HiddenTypeParameter", "ReferencesHidden") popupManager: PopupManager = remember { PopupManager() },
     popupContent: @Composable () -> Unit,
 ) {
     var chevronHovered by remember { mutableStateOf(false) }
@@ -165,8 +166,8 @@ public fun EditableComboBox(
                     onArrowDownPress = onArrowDownPress,
                     onArrowUpPress = onArrowUpPress,
                     onEnterPress = onEnterPress,
-                    onFocusedChange = { comboBoxState = comboBoxState.copy(focused = it) },
-                    onHoveredChange = { textFieldHovered = it },
+                    onFocusChange = { comboBoxState = comboBoxState.copy(focused = it) },
+                    onHoverChange = { textFieldHovered = it },
                     modifier = Modifier.weight(1f),
                 )
 
@@ -174,8 +175,8 @@ public fun EditableComboBox(
                     enabled = enabled,
                     style = style,
                     interactionSource = interactionSource,
-                    onHoveredChange = { chevronHovered = it },
-                    onPressWhenEnabled = {
+                    onHoverChange = { chevronHovered = it },
+                    onPress = {
                         popupManager.togglePopupVisibility()
                         textFieldFocusRequester.requestFocus()
                     },
@@ -208,7 +209,6 @@ public fun EditableComboBox(
 
 @Composable
 private fun TextField(
-    modifier: Modifier,
     enabled: Boolean,
     inputTextFieldState: TextFieldState,
     focused: Boolean,
@@ -220,8 +220,9 @@ private fun TextField(
     onArrowDownPress: () -> Unit,
     onArrowUpPress: () -> Unit,
     onEnterPress: () -> Unit,
-    onFocusedChange: (Boolean) -> Unit,
-    onHoveredChange: (Boolean) -> Unit,
+    onFocusChange: (Boolean) -> Unit,
+    onHoverChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val textColor = if (enabled) style.colors.content else style.colors.borderDisabled
     val popupVisible by popupManager.isPopupVisible
@@ -234,7 +235,7 @@ private fun TextField(
             modifier
                 .testTag("Jewel.ComboBox.TextField")
                 .padding(style.metrics.contentPadding)
-                .onFocusChanged { onFocusedChange(it.isFocused) }
+                .onFocusChanged { onFocusChange(it.isFocused) }
                 .focusRequester(textFieldFocusRequester)
                 .onPreviewKeyEvent {
                     if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
@@ -265,7 +266,7 @@ private fun TextField(
                         else -> false
                     }
                 }
-                .onHover { onHoveredChange(it) },
+                .onHover { onHoverChange(it) },
         lineLimits = TextFieldLineLimits.SingleLine,
         textStyle = textStyle.copy(color = textColor),
         cursorBrush = SolidColor(style.colors.content),
@@ -279,8 +280,8 @@ private fun Chevron(
     enabled: Boolean,
     style: ComboBoxStyle,
     interactionSource: MutableInteractionSource,
-    onHoveredChange: (Boolean) -> Unit,
-    onPressWhenEnabled: () -> Unit,
+    onHoverChange: (Boolean) -> Unit,
+    onPress: () -> Unit,
     onCancelPress: () -> Unit,
 ) {
     Box(
@@ -288,14 +289,14 @@ private fun Chevron(
             Modifier.testTag("Jewel.ComboBox.ChevronContainer")
                 .size(style.metrics.arrowAreaSize) // Fixed size
                 .thenIf(enabled) {
-                    onHover { onHoveredChange(it) }
+                    onHover { onHoverChange(it) }
                         .pointerInput(interactionSource) {
-                            detectPressAndCancel(onPress = onPressWhenEnabled, onCancel = onCancelPress)
+                            detectPressAndCancel(onPress = onPress, onCancel = onCancelPress)
                         }
                         .semantics {
                             onClick(
                                 action = {
-                                    onPressWhenEnabled()
+                                    onPress()
                                     true
                                 },
                                 label = "Chevron",
@@ -366,6 +367,7 @@ public value class ComboBoxState(public val state: ULong) : FocusableComponentSt
     }
 }
 
+@InternalJewelApi
 @ApiStatus.Internal
 public suspend fun PointerInputScope.detectPressAndCancel(onPress: () -> Unit, onCancel: () -> Unit) {
     coroutineScope {

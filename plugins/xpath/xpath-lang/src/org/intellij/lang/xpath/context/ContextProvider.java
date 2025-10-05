@@ -212,7 +212,7 @@ public abstract class ContextProvider {
           }
         }
 
-        private static void setXPathInjected(final PsiFile file) {
+        private void setXPathInjected(final PsiFile file) {
           final Boolean flag = file.getUserData(XML_FILE_WITH_XPATH_INJECTTION);
 
           // This is a very ugly hack, but it is required to make the implicit usages provider recognize namespace declarations used from
@@ -226,7 +226,7 @@ public abstract class ContextProvider {
                 file.putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
                 // TODO workaround for highlighting tests
                 if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-                  DaemonCodeAnalyzer.getInstance(file.getProject()).restart(file);
+                  DaemonCodeAnalyzer.getInstance(file.getProject()).restart(file, this);
                 }
               }
             });

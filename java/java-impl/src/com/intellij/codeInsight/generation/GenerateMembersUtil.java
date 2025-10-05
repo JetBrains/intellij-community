@@ -841,8 +841,7 @@ public final class GenerateMembersUtil {
         psiParameter.getTypeElement().replace(typeElementFromText);
         NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
       }
-      else {
-        PsiMethod psiMethod = (PsiMethod)annotationTarget;
+      else if (annotationTarget instanceof PsiMethod psiMethod) {
         PsiTypeElement returnTypeElement = psiMethod.getReturnTypeElement();
         if (returnTypeElement != null && returnTypeElement.getType().getCanonicalText(false).equals(fieldType.getCanonicalText(false))) {
           PsiTypeElement typeElementFromText = factory.createTypeElementFromText(type, psiMethod);
@@ -873,7 +872,7 @@ public final class GenerateMembersUtil {
     stack.add(typeElement);
     StringBuilder builder = new StringBuilder();
     while (!stack.isEmpty()) {
-      PsiElement current = stack.remove(stack.size() - 1);
+      PsiElement current = stack.removeLast();
       if (current instanceof PsiAnnotation annotation) {
         if (!NullableNotNullManager.isNullabilityAnnotation(annotation)) {
           continue;

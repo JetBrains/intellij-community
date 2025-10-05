@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.ui.JBColor
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -71,6 +72,7 @@ fun createKeywordElementWithSpace(
 
 fun Name?.labelNameToTail(): String = if (this != null) "@" + render() else ""
 
+@Serializable
 enum class ItemPriority {
     SUPER_METHOD_WITH_ARGUMENTS,
     FROM_UNRESOLVED_NAME_SUGGESTION,

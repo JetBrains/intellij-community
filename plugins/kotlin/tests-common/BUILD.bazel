@@ -1,17 +1,17 @@
 ### auto-generated section `build kotlin.tests-common` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "tests-common",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests-common_test_lib",
+  module_name = "kotlin.tests-common",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
@@ -19,7 +19,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-cli",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
@@ -47,9 +47,13 @@ jvm_library(
     "//jps/model-api:model",
   ]
 )
+### auto-generated section `build kotlin.tests-common` end
+
+### auto-generated section `test kotlin.tests-common` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests-common_test",
   runtime_deps = [":tests-common_test_lib"]
 )
-### auto-generated section `build kotlin.tests-common` end
+### auto-generated section `test kotlin.tests-common` end

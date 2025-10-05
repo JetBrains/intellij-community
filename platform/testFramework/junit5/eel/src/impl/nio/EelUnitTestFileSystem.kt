@@ -55,7 +55,9 @@ internal class EelUnitTestFileSystem(val provider: FileSystemProvider, val os: E
     else if (first.startsWith(fakeLocalRoot.replace(File.separatorChar, '/'))) {
       first.substringAfter(fakeLocalRoot.replace(File.separatorChar, '/'))
     }
-    else {
+    else if (first.replace(File.separatorChar, '/').startsWith('/')) {
+      first
+    } else {
       null
     }
     if (remaining != null) {

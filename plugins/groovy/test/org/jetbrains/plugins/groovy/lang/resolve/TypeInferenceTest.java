@@ -1083,7 +1083,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
               def bar(CharSequence xx) {
                    if (xx instanceof String) {
                          1 instanceof Object
-                         <caret>xx
+                         <caret>xx.hashCode()
                      }
                  }
              """, JAVA_LANG_STRING);

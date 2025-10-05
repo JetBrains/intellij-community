@@ -355,9 +355,6 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
         val all = flushScheduledUpdates() ?: return@scheduleTask
 
-        for (update in all) {
-          update.setProcessed()
-        }
         all.sortWith(priorityComparator)
         executeUpdates(all)
       }
@@ -377,11 +374,22 @@ open class MergingUpdateQueue @JvmOverloads constructor(
       try {
         coroutineContext.ensureActive()
       } catch (e : CancellationException) {
-        updates.subList(i, updates.size).forEachGuaranteed(Update::setRejected)
+        val remainingUpdates = updates.subList(i, updates.size)
+        if (waiterForMerge.isDisposed) {
+          remainingUpdates.forEachGuaranteed(Update::setRejected)
+        }
+        else {
+          // caused by forced restart
+          synchronized(scheduledUpdates) {
+            remainingUpdates.forEachGuaranteed(this::put)
+          }
+        }
         throw e
       }
 
       val update = updates[i++]
+
+      update.setProcessed()
 
       if (isExpired(update)) {
         update.setRejected()

@@ -9,13 +9,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.ui.ScrollingUtil
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
 internal abstract class TerminalCommandUpDownScrolling(private val up: Boolean) : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     //Copy logic from LookupActionHandler#executeUpOrDown for up/down scrolling in the terminal popup
-    val lookup = LookupManager.getActiveLookup(e.editor) as LookupImpl?
+    val lookup = LookupManager.getActiveLookup(e.terminalEditor) as LookupImpl?
     if (lookup == null) {
       return
     }
@@ -37,7 +37,7 @@ internal abstract class TerminalCommandUpDownScrolling(private val up: Boolean) 
   }
 
   override fun update(e: AnActionEvent) {
-    val editor = e.editor
+    val editor = e.terminalEditor
     if (editor == null || LookupManager.getActiveLookup(editor) == null || !editor.isOutputModelEditor) {
       e.presentation.isEnabled = false
     }
@@ -48,6 +48,6 @@ internal abstract class TerminalCommandUpDownScrolling(private val up: Boolean) 
   }
 }
 
-internal class TerminalCompletionUpAction : TerminalCommandUpDownScrolling(up = true), ActionRemoteBehaviorSpecification.Disabled
+internal class TerminalCompletionUpAction : TerminalCommandUpDownScrolling(up = true)
 
-internal class TerminalCompletionDownAction : TerminalCommandUpDownScrolling(up = false), ActionRemoteBehaviorSpecification.Disabled
+internal class TerminalCompletionDownAction : TerminalCommandUpDownScrolling(up = false)

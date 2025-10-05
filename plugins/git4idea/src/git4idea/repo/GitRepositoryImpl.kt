@@ -65,8 +65,7 @@ class GitRepositoryImpl private constructor(
   init {
     stagingAreaHolder = GitStagingAreaHolder(this)
 
-    untrackedFilesHolder = GitUntrackedFilesHolder(this)
-    Disposer.register(this, untrackedFilesHolder)
+    untrackedFilesHolder = GitUntrackedFilesHolder(coroutineScope, this)
 
     resolvedFilesHolder = GitResolvedMergeConflictsFilesHolder(this)
     Disposer.register(this, resolvedFilesHolder)
@@ -221,31 +220,6 @@ class GitRepositoryImpl private constructor(
 
   companion object {
     private val LOG = Logger.getInstance(GitRepositoryImpl::class.java)
-
-    @JvmStatic
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.")
-    fun getInstance(
-      root: VirtualFile,
-      project: Project,
-      listenToRepoChanges: Boolean,
-    ): GitRepository {
-      val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root)
-      return repository ?: createInstance(root, project, GitDisposable.getInstance(project))
-    }
-
-
-    @JvmStatic
-    @ApiStatus.Internal
-    @Deprecated("Use {@link #createInstance(VirtualFile, Project, Disposable)}")
-    fun createInstance(
-      root: VirtualFile,
-      project: Project,
-      parentDisposable: Disposable,
-      listenToRepoChanges: Boolean,
-    ): GitRepository {
-      return createInstance(root, project, parentDisposable)
-    }
 
     /**
      * Creates a new instance of the GitRepository for the given Git root directory. <br></br>

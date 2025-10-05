@@ -15,11 +15,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Ref
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 
+@IntellijInternalApi
 fun getEnableDisabledPluginsDependentConfirmationData(): Int? {
   val ref: Ref<Int?> = Ref(null)
   val exceptionRef: Ref<Exception?> = Ref(null)
@@ -50,6 +52,7 @@ fun getEnableDisabledPluginsDependentConfirmationData(): Int? {
   return ref.get()
 }
 
+@IntellijInternalApi
 fun getUiInspectorContextFor(selectedPlugin: PluginUiModel): List<PropertyBean> {
   val result = mutableListOf<PropertyBean>()
   result.add(PropertyBean("Plugin ID", selectedPlugin.pluginId, true))

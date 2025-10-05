@@ -1,16 +1,19 @@
 ### auto-generated section `build kotlin.code-insight.intentions.shared` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  name = "custom_kotlin-code-insight-intentions-shared",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ],
+  x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-code-insight-intentions-shared_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -18,14 +21,15 @@ jvm_library(
   name = "kotlin-code-insight-intentions-shared",
   module_name = "kotlin.code-insight.intentions.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-code-insight-intentions-shared_resources"],
+  kotlinc_opts = ":custom_kotlin-code-insight-intentions-shared",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
@@ -56,7 +60,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
     "//java/java-psi-impl:psi-impl",
-  ],
-  runtime_deps = [":kotlin-code-insight-intentions-shared_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.intentions.shared` end

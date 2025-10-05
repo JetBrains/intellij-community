@@ -11,10 +11,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.ThreadReference;
 import com.sun.jdi.event.EventSet;
+import com.sun.jdi.event.StepEvent;
 import com.sun.jdi.request.EventRequest;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Deque;
 import java.util.List;
@@ -23,7 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.debugger.impl.DebuggerUtilsImpl.forEachSafe;
+import static com.intellij.debugger.engine.DebuggerUtils.forEachSafe;
 
 public class SuspendManagerImpl implements SuspendManager {
   private static final Logger LOG = Logger.getInstance(SuspendManager.class);
@@ -117,7 +122,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
 
     if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
-      List<SuspendContextImpl> suspendAllContexts = ContainerUtil.filter(myEventContexts, c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL);
+      List<SuspendContextImpl> suspendAllContexts = getSuspendAllContexts();
       if (suspendAllContexts.size() > 1) {
         logError("More than one suspend all context: " + suspendAllContexts);
       }
@@ -157,11 +162,6 @@ public class SuspendManagerImpl implements SuspendManager {
     }
 
     popContext(context);
-    if (context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
-      if (!ContainerUtil.exists(myPausedContexts, c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL)) {
-        myExplicitlyResumedThreads.clear();
-      }
-    }
     Set<ThreadReferenceProxyImpl> resumedThreads = context.myResumedThreads;
     if (resumedThreads != null) {
       for (ThreadReferenceProxyImpl thread : resumedThreads) {
@@ -205,9 +205,18 @@ public class SuspendManagerImpl implements SuspendManager {
     myPausedContexts.addFirst(suspendContext);
   }
 
+  @ApiStatus.Internal
+  public List<SuspendContextImpl> getEventContextsAsItIs() {
+    return List.copyOf(myEventContexts);
+  }
+
   @Override
   public List<SuspendContextImpl> getEventContexts() {
-    return List.copyOf(myEventContexts);
+    return ContainerUtil.filter(myEventContexts, c -> !c.isResumed());
+  }
+
+  @NotNull List<SuspendContextImpl> getSuspendAllContexts() {
+    return ContainerUtil.filter(myEventContexts, c -> c.getSuspendPolicy() == EventRequest.SUSPEND_ALL && !c.isResumed());
   }
 
   @Override
@@ -225,7 +234,7 @@ public class SuspendManagerImpl implements SuspendManager {
       suspended = true;
     }
     else {
-      suspended = ContainerUtil.exists(myEventContexts, suspendContext -> suspendContext.suspends(thread));
+      suspended = ContainerUtil.exists(getEventContexts(), suspendContext -> suspendContext.suspends(thread));
     }
 
     //bug in JDI : newly created thread may be resumed even when suspendPolicy == SUSPEND_ALL
@@ -237,10 +246,6 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public void suspendThread(@NotNull SuspendContextImpl context, @NotNull ThreadReferenceProxyImpl thread) {
-    if (thread == context.getEventThread()) {
-      logError("Thread " + thread + " is already suspended at the breakpoint for " + context);
-    }
-
     if (LOG.isDebugEnabled()) {
       LOG.debug("Thread " + thread + " is going to be suspended in " + context);
     }
@@ -350,6 +355,7 @@ public class SuspendManagerImpl implements SuspendManager {
     }
     // resume in a separate request to allow other requests be processed (e.g. dependent bpts enable)
     suspendContext.myIsGoingToResume = true;
+    myPausedContexts.remove(suspendContext);
     suspendContext.getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> resume(suspendContext));
   }
 
@@ -394,5 +400,58 @@ public class SuspendManagerImpl implements SuspendManager {
 
   DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
+  }
+
+  void resumeAllSuspendAllContexts(@Nullable EventSet eventSet) {
+    if (!DebuggerUtils.isNewThreadSuspendStateTracking()) {
+      return;
+    }
+
+    List<SuspendContextImpl> suspendAllContexts = getSuspendAllContexts();
+
+    if (!suspendAllContexts.isEmpty()) {
+      if (eventSet == null) {
+        // It is from pause
+
+        LOG.warn("There were " + suspendAllContexts.size() + " suspend all context(s). Resuming them all");
+        for (SuspendContextImpl context : suspendAllContexts) {
+          LOG.warn("  Resuming suspend all context: " + context);
+        }
+      } else if (DebugProcessImpl.isResumeOnlyCurrentThread() && suspendAllContexts.size() == 1) {
+        boolean isCorrect = checkResumeOnlyCurrentThreadStepping(eventSet, suspendAllContexts);
+        if (!isCorrect) {
+          logError("Incorrect resume only current thread stepping, for " + eventSet + " in " + suspendAllContexts.get(0));
+        }
+      } else {
+        logError("There were " + suspendAllContexts.size() + " suspend all context(s) and new suspend all event set " + eventSet + " arrived");
+      }
+    }
+
+    // Anyway, better to leave only one suspend-all context, later will be added the new suspend all context
+    for (SuspendContextImpl context : suspendAllContexts) {
+      resume(context);
+    }
+  }
+
+  private static boolean checkResumeOnlyCurrentThreadStepping(@NotNull EventSet eventSet, @NotNull List<SuspendContextImpl> suspendAllContexts) {
+    ThreadReferenceProxyImpl resumeOneSteppingIn = suspendAllContexts.get(0).mySteppingThreadForResumeOneSteppingCurrentMode;
+    if (resumeOneSteppingIn == null) {
+      return false;
+    }
+
+    StepEvent stepEvent = ContainerUtil.findInstance(eventSet, StepEvent.class);
+
+    if (stepEvent == null) {
+      return false;
+    }
+
+    ThreadReference thread = stepEvent.thread();
+
+    return thread == resumeOneSteppingIn.getThreadReference();
+  }
+  
+  @TestOnly
+  public void addExplicitlyResumedThread(@NotNull ThreadReferenceProxyImpl thread) {
+    myExplicitlyResumedThreads.add(thread);
   }
 }

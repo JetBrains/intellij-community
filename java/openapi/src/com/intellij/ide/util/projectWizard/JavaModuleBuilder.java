@@ -2,6 +2,7 @@
 package com.intellij.ide.util.projectWizard;
 
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -9,7 +10,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -18,10 +18,13 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaRelease;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +34,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.MissingResourceException;
 import java.util.Objects;
 
 public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
@@ -159,27 +163,49 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   @Override
   public @Nullable List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
-    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
-    Boolean aDefault = extension.getDefault();
-    LOG.debug("commit: aDefault=" + aDefault);
+    ApplicationManager.getApplication().runWriteAction(() -> setProjectLanguageLevel(project));
+    return super.commit(project, model, modulesProvider);
+  }
+
+  private static void setProjectLanguageLevel(@NotNull Project project) {
+    LanguageLevel defaultLanguageLevel = getDefaultLanguageLevel();
     LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(project);
-    if (aDefault != null && !aDefault) {
-      instance.setLanguageLevel(extension.getLanguageLevel());
+    if (defaultLanguageLevel != null) {
+      instance.setLanguageLevel(defaultLanguageLevel);
     }
     else {
-      //setup default flag and language level according to jdk
       instance.setDefault(true);
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       LOG.debug("commit: projectSdk=" + sdk);
       if (sdk != null) {
         JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
         LOG.debug("commit: sdk.version=" + version);
-        if (version != null) {
-          instance.setLanguageLevel(version.getMaxLanguageLevel());
-        }
       }
     }
-    return super.commit(project, model, modulesProvider);
+  }
+
+  private static @Nullable LanguageLevel getDefaultLanguageLevel() {
+    // this is a fallback to simulate old behavior. Please delete this code (always return null). Wizard should have its own
+    // "default sdk" setting if needed instead of relying on registry option or default project: project sdk is stored in the WSM now,
+    // but default projects do not have workspace model (at least for now).
+    try {
+      String level = Registry.stringValue("default.language.level.name");
+
+      if (level.isBlank()) {
+        return null;
+      }
+      else {
+        for (LanguageLevel languageLevel : LanguageLevel.getEntries()) {
+          if (level.equals(languageLevel.name())) {
+            return languageLevel;
+          }
+        }
+        return JavaRelease.getHighest();
+      }
+    }
+    catch (MissingResourceException ignored) {
+      return null;
+    }
   }
 
   private static String getUrlByPath(final String path) {

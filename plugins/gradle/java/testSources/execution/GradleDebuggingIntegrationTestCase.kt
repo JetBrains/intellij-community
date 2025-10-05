@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution
 
+import com.intellij.debugger.impl.GenericDebuggerRunnerSettings
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
@@ -20,6 +21,8 @@ import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.String
+import com.intellij.execution.configurations.RunnerSettings
 
 abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
 
@@ -127,26 +130,43 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
     createProjectSubFile("$relativeModulePath/gradle.properties", content)
   }
 
+  fun executeDebugRunConfiguration(
+    vararg taskNames: String,
+    modulePath: String = ".",
+    scriptParameters: String = "",
+    isDebugServerProcess: Boolean = true,
+    isDebugAllEnabled: Boolean = false
+  ): String =
+    executeRunConfiguration(
+      *taskNames,
+      modulePath = modulePath,
+      scriptParameters = scriptParameters,
+      isDebugServerProcess = isDebugServerProcess,
+      isDebugAllEnabled = isDebugAllEnabled,
+      runnerSettings = GenericDebuggerRunnerSettings()
+    )
+
   fun executeRunConfiguration(
     vararg taskNames: String,
     modulePath: String = ".",
     scriptParameters: String = "",
     isDebugServerProcess: Boolean = false,
-    isDebugAllEnabled: Boolean = false
+    isDebugAllEnabled: Boolean = false,
+    runnerSettings: RunnerSettings? = null
   ): String {
-    val runConfiguration = createEmptyGradleRunConfiguration("run-configuration")
-    runConfiguration.isDebugServerProcess = isDebugServerProcess
-    runConfiguration.isDebugAllEnabled = isDebugAllEnabled
-    runConfiguration.settings.externalProjectPath = FileUtil.toCanonicalPath("$projectPath/$modulePath")
-    runConfiguration.settings.taskNames = taskNames.toList()
-    runConfiguration.settings.scriptParameters = scriptParameters
-
+    val runConfiguration = createEmptyGradleRunConfiguration("run-configuration").apply {
+      this.isDebugServerProcess = isDebugServerProcess
+      this.isDebugAllEnabled = isDebugAllEnabled
+      this.settings.externalProjectPath = FileUtil.toCanonicalPath("$projectPath/$modulePath")
+      this.settings.taskNames = taskNames.toList()
+      this.settings.scriptParameters = scriptParameters
+    }
     return ExternalSystemExecutionTracer.traceExecutionOutput {
-      executeRunConfiguration(runConfiguration)
+      executeRunConfiguration(runConfiguration, runnerSettings)
     }
   }
 
-  private fun executeRunConfiguration(runConfiguration: GradleRunConfiguration) {
+  private fun executeRunConfiguration(runConfiguration: GradleRunConfiguration, runnerSettings: RunnerSettings?) {
     val executor = DefaultDebugExecutor.getDebugExecutorInstance()
     val runner = ExternalSystemTaskDebugRunner()
     val latch = CountDownLatch(1)
@@ -156,6 +176,7 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
       latch.countDown()
     }
     val env = ExecutionEnvironmentBuilder.create(executor, runConfiguration)
+      .runnerSettings(runnerSettings)
       .build(callback)
 
     runInEdt {

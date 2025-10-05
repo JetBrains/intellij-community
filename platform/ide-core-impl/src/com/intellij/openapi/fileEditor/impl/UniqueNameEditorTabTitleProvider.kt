@@ -39,7 +39,7 @@ internal fun doGetUniqueNameEditorTabTitle(project: Project, file: VirtualFile):
 
   // Even though this is a 'tab title provider' it is used also when tabs are not shown, namely for building IDE frame title.
   val uniqueFilePathBuilder = UniqueVFilePathBuilder.getInstance()
-  var uniqueName = ReadAction.compute<String?, Throwable> {
+  var uniqueName = ReadAction.compute<String, Throwable> {
     if (uiSettings.editorTabPlacement == UISettings.TABS_NONE) {
       uniqueFilePathBuilder.getUniqueVirtualFilePath(project, file)
     }

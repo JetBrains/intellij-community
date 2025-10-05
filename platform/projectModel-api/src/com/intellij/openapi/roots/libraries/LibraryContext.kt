@@ -4,8 +4,7 @@ package com.intellij.openapi.roots.libraries
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import org.jetbrains.annotations.ApiStatus
 
-// todo IJPL-339 mark experimental
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface LibraryContext : CodeInsightContext {
   fun getLibrary(): Library?
 }

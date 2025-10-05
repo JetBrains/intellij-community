@@ -51,7 +51,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntention<KtTypeReference>(
     KtTypeReference::class.java,
-    KotlinBundle.lazyMessage("convert.function.type.receiver.to.parameter")
+    KotlinBundle.messagePointer("convert.function.type.receiver.to.parameter")
 ) {
     class ConversionData(
         val functionParameterIndex: Int?,
@@ -325,7 +325,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
             setReceiverTypeReference(null)
         }
 
-        setTextGetter(KotlinBundle.lazyMessage("convert.0.to.1", elementBefore.text, elementAfter.text))
+        setTextGetter(KotlinBundle.messagePointer("convert.0.to.1", elementBefore.text, elementAfter.text))
         return element.textRange
     }
 

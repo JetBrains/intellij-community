@@ -4,6 +4,12 @@
             qualifiedName="org.jetbrains.kotlin.beforeResolveHighlightingVisitor"
             interface="org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension"
             dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scriptHighlightingExtension"
+            interface="org.jetbrains.kotlin.idea.base.highlighting.KotlinScriptHighlightingExtension"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

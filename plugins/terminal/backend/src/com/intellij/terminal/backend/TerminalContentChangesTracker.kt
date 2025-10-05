@@ -1,22 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.backend
 
-import com.intellij.terminal.session.StyleRange
-import com.intellij.terminal.session.dto.StyleRangeDto
-import com.intellij.terminal.session.dto.toDto
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.model.TextBufferChangesListener
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.session.collectLines
 import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
 import org.jetbrains.plugins.terminal.block.session.scraper.StylesCollectingTerminalLinesCollector
 import org.jetbrains.plugins.terminal.fus.*
+import org.jetbrains.plugins.terminal.session.StyleRange
+import org.jetbrains.plugins.terminal.session.dto.StyleRangeDto
+import org.jetbrains.plugins.terminal.session.dto.toDto
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 import kotlin.time.TimeSource
 
-internal class TerminalContentChangesTracker(
+@ApiStatus.Internal
+class TerminalContentChangesTracker(
   private val textBuffer: TerminalTextBuffer,
   private val discardedHistoryTracker: TerminalDiscardedHistoryTracker,
 ) {
@@ -53,6 +57,7 @@ internal class TerminalContentChangesTracker(
         else {
           val additionalLines = lines.subList(lastChangedVisualLine, lines.size)
           lastChangedVisualLine = 0
+          anyLineChanged = true
           flushChanges(additionalLines)
         }
       }
@@ -65,6 +70,7 @@ internal class TerminalContentChangesTracker(
         // and it is not tracked now.
         // TODO: consider tracking of the discarded lines in case of resizing to not replace everything.
         lastChangedVisualLine = 0
+        anyLineChanged = true
       }
     })
   }
@@ -101,16 +107,26 @@ internal class TerminalContentChangesTracker(
     check(anyLineChanged) { "It is expected that this method is called only if something is changed" }
 
     // Transform to the TextBuffer coordinates: negative indexes for history, positive for the screen.
-    var startLine = lastChangedVisualLine - textBuffer.effectiveHistoryLinesCount
+    val startLine = lastChangedVisualLine - textBuffer.effectiveHistoryLinesCount
 
+    var effectiveStartLine = startLine
     // Ensure that startLine is either not a wrapped line or the start of the wrapped line.
-    while (startLine - 1 >= -textBuffer.effectiveHistoryLinesCount && textBuffer.getLine(startLine - 1).isWrapped) {
-      startLine--
+    while (effectiveStartLine - 1 >= -textBuffer.effectiveHistoryLinesCount && textBuffer.getLine(effectiveStartLine - 1).isWrapped) {
+      effectiveStartLine--
     }
 
-    val output: StyledCommandOutput = scrapeOutput(startLine, additionalLines)
+    val output: StyledCommandOutput = scrapeOutput(effectiveStartLine, additionalLines)
     // It is the absolut logical line index from the start of the output tracking (including lines already dropped from the history)
-    val logicalLineIndex = textBuffer.getLogicalLineIndex(startLine) + discardedHistoryTracker.getDiscardedLogicalLinesCount() - additionalLines.size
+    val logicalLineIndex = textBuffer.getLogicalLineIndex(effectiveStartLine) + discardedHistoryTracker.getDiscardedLogicalLinesCount() - additionalLines.size
+
+    LOG.debug {
+      "Content updated: length = ${output.text.length}, " +
+      "from line = $startLine (effective $effectiveStartLine, absolute $logicalLineIndex), " +
+      "last changed visual line = $lastChangedVisualLine, " +
+      "additional lines = ${additionalLines.size}, " +
+      "effective history lines = ${textBuffer.effectiveHistoryLinesCount}, " +
+      "discarded lines = ${discardedHistoryTracker.getDiscardedLogicalLinesCount()}"
+    }
 
     lastChangedVisualLine = textBuffer.effectiveHistoryLinesCount + textBuffer.screenLinesCount
     anyLineChanged = false
@@ -132,11 +148,12 @@ internal class TerminalContentChangesTracker(
     }
     textBuffer.collectLines(terminalLinesCollector, startLine)
 
-    return StyledCommandOutput(stringCollector.buildText(), false, styles)
+    return StyledCommandOutput(stringCollector.buildText(), styles)
   }
 }
 
-internal data class TerminalContentUpdate(
+@ApiStatus.Internal
+data class TerminalContentUpdate(
   val text: String,
   val styles: List<StyleRangeDto>,
   val startLineLogicalIndex: Long,
@@ -157,3 +174,5 @@ internal fun TerminalTextBuffer.getLogicalLineIndex(visualLine: Int): Int {
 
 private val TerminalTextBuffer.effectiveHistoryLinesCount: Int
   get() = if (isUsingAlternateBuffer) 0 else historyLinesCount
+
+private val LOG = logger<TerminalContentChangesTracker>()

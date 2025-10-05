@@ -36,34 +36,25 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return (DaemonCodeAnalyzerEx)getInstance(project);
   }
 
-  @ApiStatus.Internal
-  public abstract void restart(@NotNull Object reason);
-
   // todo IJPL-339 mark deprecated
+  /**
+   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
+   */
   public static boolean processHighlights(@NotNull Document document,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
                                           int startOffset,
                                           int endOffset,
                                           @NotNull Processor<? super HighlightInfo> processor) {
-    return processHighlights(document, project, minSeverity, startOffset, endOffset, CodeInsightContexts.anyContext(), processor);
-  }
-
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
-  public static boolean processHighlights(@NotNull Document document,
-                                          @NotNull Project project,
-                                          @Nullable("null means all") HighlightSeverity minSeverity,
-                                          int startOffset,
-                                          int endOffset,
-                                          @NotNull CodeInsightContext context,
-                                          @NotNull Processor<? super HighlightInfo> processor) {
+    CodeInsightContext context = CodeInsightContexts.anyContext();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return processHighlights(model, project, minSeverity, startOffset, endOffset, context, processor);
   }
 
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  /**
+   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
+   */
+  @ApiStatus.Experimental
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
                                           @Nullable("null means all") HighlightSeverity minSeverity,
@@ -78,12 +69,15 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
       if (info == null) return true;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
-             || info.getHighlighter() == null
+             || info.getHighlighter() != marker
              || !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(context, marker)
              || processor.process(info);
     });
   }
 
+  /**
+   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
+   */
   // todo IJPL-339 mark deprecated
   public static boolean processHighlights(@NotNull MarkupModelEx model,
                                           @NotNull Project project,
@@ -94,6 +88,9 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return processHighlights(model, project, minSeverity, startOffset, endOffset, CodeInsightContexts.anyContext(), processor);
   }
 
+  /**
+   * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
+   */
   static boolean processHighlightsOverlappingOutside(MarkupModelEx model,
                                                      int startOffset,
                                                      int endOffset,
@@ -103,7 +100,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return model.processRangeHighlightersOutside(startOffset, endOffset, marker -> {
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
       return info == null ||
-             info.getHighlighter() == null ||
+             info.getHighlighter() != marker ||
              !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(context, marker) ||
              processor.process(info);
     });
@@ -112,6 +109,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   public abstract boolean hasVisibleLightBulbOrPopup();
 
   @ApiStatus.Internal
+  @RequiresBackgroundThread
   public abstract @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                                              @NotNull Document document,
                                                              @NotNull ProgressIndicator progress);
@@ -133,11 +131,29 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   /**
    * Do not use because manual management of highlights is dangerous and may lead to unexpected flicking/disappearing/stuck highlighters.
    * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
+   *
+   * @param context pass the corresponding context or null if file level highlight is not context-dependent
    */
   @ApiStatus.Internal
-  public abstract void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile, @Nullable RangeHighlighter toReuse);
+  public abstract void addFileLevelHighlight(int group,
+                                             @NotNull HighlightInfo info,
+                                             @NotNull PsiFile psiFile,
+                                             @Nullable RangeHighlighter toReuse,
+                                             @Nullable CodeInsightContext context);
+
+  /**
+   * Do not use because manual management of highlights is dangerous and may lead to unexpected flicking/disappearing/stuck highlighters.
+   * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
+   *
+   * @param context pass the corresponding context or null if file level highlight is not context-dependent
+   */
   @ApiStatus.Internal
-  public abstract void replaceFileLevelHighlight(@NotNull HighlightInfo oldInfo, @NotNull HighlightInfo newInfo, @NotNull PsiFile psiFile, @Nullable RangeHighlighter toReuse);
+  public abstract void replaceFileLevelHighlight(@NotNull HighlightInfo oldInfo,
+                                                 @NotNull HighlightInfo newInfo,
+                                                 @NotNull PsiFile psiFile,
+                                                 @Nullable RangeHighlighter toReuse,
+                                                 @Nullable CodeInsightContext context);
+
   /**
    * Do not use because manual management of highlights is dangerous and may lead to unexpected flicking/disappearing/stuck highlighters.
    * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
@@ -155,8 +171,8 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     }
 
     Document document = textEditor.getEditor().getDocument();
-    CodeInsightContext context = EditorContextManager.getEditorContext(textEditor.getEditor(), project);
-    return getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(document, context);
+    CodeInsightContext context = EditorContextManager.getCachedEditorContext(textEditor.getEditor(), project);
+    return context != null && getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(document, context);
   }
 
   @ApiStatus.Internal
@@ -168,8 +184,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   protected abstract void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress);
   @ApiStatus.Internal
   protected static final int ANY_GROUP = -409423948;
-  @ApiStatus.Internal
-  protected static final int FILE_LEVEL_FAKE_LAYER = -4094; // the layer the (fake) RangeHighlighter is created for file-level HighlightInfo in
+
   @ApiStatus.Internal
   @RequiresBackgroundThread
   public void rescheduleShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull HighlightInfo.Builder builder) {

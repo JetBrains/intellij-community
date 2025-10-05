@@ -37,7 +37,6 @@ import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.util.*
@@ -343,7 +342,6 @@ class DependencyAnalyzerViewImpl(
     val externalProjectSelector = ExternalProjectSelector(externalProjectProperty, externalProjects, iconsProvider)
       .bindEnabled(!dependencyLoadingProperty)
     val dataFilterField = SearchTextField(SEARCH_HISTORY_PROPERTY)
-      .apply { setPreferredWidth(JBUI.scale(240)) }
       .apply { textEditor.bind(dependencyDataFilterProperty) }
       .bindEnabled(!dependencyLoadingProperty)
     val scopeFilterSelector = SearchScopeSelector(dependencyScopeFilterProperty)
@@ -357,6 +355,7 @@ class DependencyAnalyzerViewImpl(
       .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.groupId.show") }
     val viewOptionsButton = popupActionGroup(showDependencyGroupIdAction)
       .apply { templatePresentation.icon = AllIcons.Actions.Show }
+      .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.view.options") }
       .asActionButton(ACTION_PLACE)
       .bindEnabled(!dependencyLoadingProperty)
     val reloadNotificationProperty = isNotificationVisibleProperty(project, systemId, parentDisposable)
@@ -387,11 +386,11 @@ class DependencyAnalyzerViewImpl(
       .bindDependency(dependencyProperty)
       .bindEnabled(!dependencyLoadingProperty)
     val dependencyPanel = cardPanel<Boolean> { ScrollPaneFactory.createScrollPane(if (it) dependencyTree else dependencyList, true) }
-      .bind(showDependencyTreeProperty)
+      .bindSelected(showDependencyTreeProperty)
     val dependencyLoadingPanel = JBLoadingPanel(BorderLayout(), parentDisposable)
       .apply { add(dependencyPanel, BorderLayout.CENTER) }
       .apply { setLoadingText(ExternalSystemBundle.message("external.system.dependency.analyzer.dependency.loading")) }
-      .bind(dependencyLoadingProperty)
+      .bindLoading(dependencyLoadingProperty)
     val showDependencyTreeButton = toggleAction(showDependencyTreeProperty)
       .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.show") }
       .apply { templatePresentation.icon = AllIcons.Actions.ShowAsTree }

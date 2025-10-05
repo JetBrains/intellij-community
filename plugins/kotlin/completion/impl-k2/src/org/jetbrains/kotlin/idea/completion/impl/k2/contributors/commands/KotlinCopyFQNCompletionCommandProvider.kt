@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver.Companion.tokenType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
-class KotlinCopyFQNCompletionCommandProvider : AbstractCopyFQNCompletionCommandProvider() {
+internal class KotlinCopyFQNCompletionCommandProvider : AbstractCopyFQNCompletionCommandProvider() {
     override fun placeIsApplicable(element: PsiElement, offset: Int): Boolean {
         if (element.tokenType != KtTokens.IDENTIFIER) return false
         val member = element.parentOfType<KtNamedDeclaration>()

@@ -100,15 +100,11 @@ public final class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceS
 
   @Override
   public @NotNull CellAppearanceEx forContentFolder(final @NotNull ContentFolder folder) {
-    if (folder instanceof SourceFolder) {
-      return formatRelativePath(folder, PlatformIcons.FOLDER_ICON);
-    }
-    else if (folder instanceof ExcludeFolder) {
-      return formatRelativePath(folder, IconLoader.getDisabledIcon(PlatformIcons.FOLDER_ICON));
-    }
-    else {
-      throw new RuntimeException(folder.getClass().getName());
-    }
+    return switch (folder) {
+      case SourceFolder sourceFolder -> formatRelativePath(sourceFolder, PlatformIcons.FOLDER_ICON);
+      case ExcludeFolder excludeFolder -> formatRelativePath(excludeFolder, IconLoader.getDisabledIcon(PlatformIcons.FOLDER_ICON));
+      default -> throw new RuntimeException(folder.getClass().getName());
+    };
   }
 
   @Override

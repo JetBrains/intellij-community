@@ -5,6 +5,9 @@
     <content url="file://$MODULE_DIR$/testData">
       <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
     </content>
+    <content url="file://$MODULE_DIR$/testGen">
+      <sourceFolder url="file://$MODULE_DIR$/testGen" isTestSource="true" generated="true" />
+    </content>
     <content url="file://$MODULE_DIR$/testSources">
       <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" />
     </content>
@@ -13,7 +16,7 @@
     <orderEntry type="library" scope="TEST" name="jmock" level="project" />
     <orderEntry type="library" scope="TEST" name="jmock.junit4" level="project" />
     <orderEntry type="library" scope="TEST" name="jmock.legacy" level="project" />
-    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito-kotlin" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
@@ -58,5 +61,9 @@
     <orderEntry type="module" module-name="intellij.android.gradle.dsl.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" />
+    <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
   </component>
 </module>

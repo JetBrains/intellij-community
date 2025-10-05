@@ -25,7 +25,7 @@ internal object NotImportedWeigher {
         NOT_TO_BE_USED_IN_KOTLIN
     }
 
-    context(KaSession)
+    context(_: KaSession)
 fun addWeight(context: WeighingContext, element: LookupElement, symbol: KaSymbol, availableWithoutImport: Boolean) {
         if (availableWithoutImport) return
         val fqName = when (symbol) {

@@ -22,8 +22,7 @@ internal object JavaWhitespaceOrCommentBindingPolicy : WhitespaceOrCommentBindin
     JavaSyntaxElementType.EMPTY_EXPRESSION,
     JavaSyntaxElementType.EXPRESSION_LIST,
     JavaSyntaxElementType.ANNOTATION_PARAMETER_LIST,
-
-    )
+  )
 
   override fun isLeftBound(elementType: SyntaxElementType): Boolean =
     elementType in leftBoundTokens

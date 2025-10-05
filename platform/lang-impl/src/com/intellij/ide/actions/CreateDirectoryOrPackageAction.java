@@ -42,6 +42,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -276,6 +277,12 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     return variants;
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull List<String> collectSuggestedDirectoriesTestAccessor(@NotNull PsiDirectory directory) {
+    return ContainerUtil.map(collectSuggestedDirectories(directory), item -> item.relativePath);
+  }
+  
   private static @Nullable List<PsiElement> createDirectories(List<? extends Pair<String, JpsModuleSourceRootType<?>>> toCreate,
                                                               CreateGroupHandler validator) {
     List<PsiElement> createdDirectories = new ArrayList<>(toCreate.size());

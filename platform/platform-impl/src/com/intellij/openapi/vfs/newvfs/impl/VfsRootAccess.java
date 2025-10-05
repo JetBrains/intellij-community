@@ -198,6 +198,18 @@ public final class VfsRootAccess {
         allowed.add("/usr/lib/jvm");
       }
 
+      // The official directory accessible by tests under Bazel containing test dependencies
+      // > TEST_SRCDIR: absolute path to the base of the runfiles tree
+      // > Tests must access inputs through the runfiles mechanism, or other parts of the
+      // > execution environment which are specifically intended to make input files available.
+      // see https://bazel.build/reference/test-encyclopedia#initial-conditions
+      // and general overview at https://bazel.build/reference/test-encyclopedia#test-interaction-filesystem
+      String testSrcDir = System.getenv("TEST_SRCDIR");
+      if (testSrcDir != null && !testSrcDir.isBlank()) {
+        Path testSrcDirPath = Path.of(testSrcDir).toAbsolutePath();
+        allowed.add(FileUtil.toSystemIndependentName(testSrcDirPath.toString()));
+      }
+
       for (final Project project : openProjects) {
         if (!project.isInitialized()) {
           return null; // all is allowed

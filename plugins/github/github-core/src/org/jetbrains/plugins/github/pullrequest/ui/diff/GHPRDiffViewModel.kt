@@ -21,8 +21,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.api.data.pullrequest.getCommentRange
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
-import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -32,7 +32,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
 @ApiStatus.Internal
 interface GHPRDiffViewModel : CodeReviewDiffProcessorViewModel<GHPRDiffChangeViewModel>, CodeReviewDiscussionsViewModel {
@@ -107,7 +107,9 @@ internal class GHPRDiffViewModelImpl(
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  private val changesSorter = GithubPullRequestsProjectUISettings.getInstance(project).changesGroupingState
+  private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
+
+  private val changesSorter = settings.changesGroupingState
     .mapState { groupings ->
       { changes: List<RefComparisonChange> -> RefComparisonChangesSorter.Grouping(project, groupings).sort(changes) }
     }
@@ -121,7 +123,7 @@ internal class GHPRDiffViewModelImpl(
   private val threads: StateFlow<ComputedResult<List<GHPullRequestReviewThread>>> =
     reviewDataProvider.threadsComputationFlow.stateInNow(cs, ComputedResult.loading())
 
-  private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
+  private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(settings.editorReviewViewOption)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
 
   override val isLoadingReviewData: StateFlow<Boolean> = reviewVm.pendingReview.combineState(threads) { reviewResult, threadsResult ->
@@ -143,15 +145,14 @@ internal class GHPRDiffViewModelImpl(
                          ?: return@associateBy GHPRReviewThreadDiffViewModel.MappingData(isVisible, null, null)
             val diffData = allChanges.patchesByChange[change]
                            ?: return@associateBy GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, null)
-
-            val location = threadData.mapToLocation(diffData)
-            GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, location)
+            val commentRange = threadData.getCommentRange(diffData)
+            GHPRReviewThreadDiffViewModel.MappingData(isVisible, change, commentRange)
           }
         }
       }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
 
   private val mappedThreads: StateFlow<List<MappedGHPRReviewThreadDiffViewModel>> =
-    threadsVm.compactThreads.mapModelsToViewModels { sharedVm ->
+    threadsVm.compactThreads.mapStatefulToStateful { sharedVm ->
       MappedGHPRReviewThreadDiffViewModel(this, sharedVm, threadMappings.mapNotNull { it[sharedVm.id] })
     }.stateInNow(cs, emptyList())
 
@@ -173,6 +174,7 @@ internal class GHPRDiffViewModelImpl(
 
   override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
     _discussionsViewOption.value = viewOption
+    settings.editorReviewViewOption = viewOption
   }
 
   private fun CoroutineScope.createChangeVm(change: RefComparisonChange, diffData: GitTextFilePatchWithHistory) =

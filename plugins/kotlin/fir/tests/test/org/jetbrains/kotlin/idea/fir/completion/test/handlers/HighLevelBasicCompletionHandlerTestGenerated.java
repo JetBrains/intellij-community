@@ -1418,6 +1418,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/typeArgsForCall/Simple.kt");
             }
 
+            @TestMetadata("TypeArgumentsForComparator.kt")
+            public void testTypeArgumentsForComparator() throws Exception {
+                runTest("../../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsForComparator.kt");
+            }
+
+            @TestMetadata("TypeArgumentsForReversed.kt")
+            public void testTypeArgumentsForReversed() throws Exception {
+                runTest("../../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsForReversed.kt");
+            }
+
             @TestMetadata("TypeArgumentsFromParameters.kt")
             public void testTypeArgumentsFromParameters() throws Exception {
                 runTest("../../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromParameters.kt");
@@ -2147,6 +2157,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/ClassCompletionImport.kt");
         }
 
+        @TestMetadata("ClassCompletionImportBeforeIfInReturn.kt")
+        public void testClassCompletionImportBeforeIfInReturn() throws Exception {
+            runTest("../../completion/testData/handlers/ClassCompletionImportBeforeIfInReturn.kt");
+        }
+
         @TestMetadata("ClassCompletionInImport.kt")
         public void testClassCompletionInImport() throws Exception {
             runTest("../../completion/testData/handlers/ClassCompletionInImport.kt");
@@ -2237,6 +2252,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/InnerClass.kt");
         }
 
+        @TestMetadata("InnerClassWithTypeArgument.kt")
+        public void testInnerClassWithTypeArgument() throws Exception {
+            runTest("../../completion/testData/handlers/InnerClassWithTypeArgument.kt");
+        }
+
         @TestMetadata("InsertFqnForJavaClass.kt")
         public void testInsertFqnForJavaClass() throws Exception {
             runTest("../../completion/testData/handlers/InsertFqnForJavaClass.kt");
@@ -2262,6 +2282,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/InsertVoidJavaMethod.kt");
         }
 
+        @TestMetadata("JavaPlatformTypeInferredType.kt")
+        public void testJavaPlatformTypeInferredType() throws Exception {
+            runTest("../../completion/testData/handlers/JavaPlatformTypeInferredType.kt");
+        }
+
         @TestMetadata("KeywordClassName.kt")
         public void testKeywordClassName() throws Exception {
             runTest("../../completion/testData/handlers/KeywordClassName.kt");
@@ -2275,6 +2300,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("LocalClassCompletion.kt")
         public void testLocalClassCompletion() throws Exception {
             runTest("../../completion/testData/handlers/LocalClassCompletion.kt");
+        }
+
+        @TestMetadata("Multicaret.kt")
+        public void testMulticaret() throws Exception {
+            runTest("../../completion/testData/handlers/Multicaret.kt");
         }
 
         @TestMetadata("NamedParameterBeforeAnotherNamedParameter.kt")
@@ -2445,6 +2475,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         @TestMetadata("TypeArgOfSuper.kt")
         public void testTypeArgOfSuper() throws Exception {
             runTest("../../completion/testData/handlers/TypeArgOfSuper.kt");
+        }
+
+        @TestMetadata("TypeArgumentInClassLambda.kt")
+        public void testTypeArgumentInClassLambda() throws Exception {
+            runTest("../../completion/testData/handlers/TypeArgumentInClassLambda.kt");
+        }
+
+        @TestMetadata("TypeArgumentInClassLambdaBeforeLambda.kt")
+        public void testTypeArgumentInClassLambdaBeforeLambda() throws Exception {
+            runTest("../../completion/testData/handlers/TypeArgumentInClassLambdaBeforeLambda.kt");
         }
     }
 }

@@ -1,39 +1,59 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class FsRoot extends VirtualDirectoryImpl {
-  private final String myPathWithOneSlash;
+  private final String pathWithOneTrailingSlash;
 
-  @ApiStatus.Internal
-  public FsRoot(int id,
-                @NotNull VfsData vfsData,
-                @NotNull NewVirtualFileSystem fs,
-                @NotNull String pathBeforeSlash,
-                @NotNull FileAttributes attributes,
-                @NotNull String originalDebugPath,
-                @NotNull PersistentFS persistentFs) throws VfsData.FileAlreadyCreatedException {
-    super(id, vfsData.getSegment(id, true), new VfsData.DirectoryData(), null, fs);
+  public static @NotNull FsRoot create(int id,
+                                       @NotNull VfsData.Segment segment,
+                                       @NotNull NewVirtualFileSystem fileSystem,
+                                       @NotNull String pathBeforeSlash,
+                                       @NotNull FileAttributes fileAttributes,
+                                       boolean offlineByDefault,
+                                       @NotNull String originalDebugPath) throws VfsData.FileAlreadyCreatedException {
     if (!looksCanonical(pathBeforeSlash)) {
-      throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'. FS: " + fs + "; attributes: " + attributes + "; original path: '" + originalDebugPath + "'; " +
-                                         SystemInfo.getOsNameAndVersion());
+      throw new IllegalArgumentException(
+        "path must be canonical but got: '" + pathBeforeSlash + "'. FS: " + fileSystem + "; attributes(flags): " + fileAttributes + "; " +
+        "original path: '" + originalDebugPath + "'; " + OS.CURRENT
+      );
     }
-    myPathWithOneSlash = pathBeforeSlash + '/';
-    VfsData.Segment segment = getSegment();
-    segment.initFileData(id, myData, this);
-    // assume root has FS-default case-sensitivity
-    segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
-    segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
-    segment.setFlag(id, VfsDataFlags.IS_OFFLINE, PersistentFS.isOfflineByDefault(persistentFs.getFileAttributes(id)));
+
+    VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
+    FsRoot root = new FsRoot(id, segment, directoryData, fileSystem, pathBeforeSlash);
+    directoryData.assignDirectory(root);
+
+    segment.setFlags(id, ALL_FLAGS_MASK, VfsDataFlags.toFlags(fileAttributes, offlineByDefault));
+    //TODO RC: WRITABLE, HIDDEN, SPECIAL, SYMLINK flags are set 'false' by the legacy version.
+    //         Was it intentional, or just an omission?
+    //segment.setFlag(id, VfsDataFlags.IS_WRITABLE_FLAG, false);
+    //segment.setFlag(id, VfsDataFlags.IS_HIDDEN_FLAG, false);
+    //segment.setFlag(id, VfsDataFlags.IS_SPECIAL_FLAG, false);
+    //segment.setFlag(id, VfsDataFlags.IS_SYMLINK_FLAG, false);
+
+    //publish directoryData only _after_ all the initialization is done:
+    segment.initFileData(id, directoryData, /*parent: */ null);
+
+    return root;
+  }
+
+  private FsRoot(int id,
+                 @NotNull VfsData.Segment segment,
+                 @NotNull VfsData.DirectoryData directoryData,
+                 @NotNull NewVirtualFileSystem fileSystem,
+                 @NotNull String pathBeforeSlash) {
+    super(id, segment, directoryData, /*parent: */ null, fileSystem);
+
+    pathWithOneTrailingSlash = pathBeforeSlash + '/';
   }
 
   @Override
@@ -48,7 +68,7 @@ public final class FsRoot extends VirtualDirectoryImpl {
 
   @Override
   public @NotNull String getPath() {
-    return myPathWithOneSlash;
+    return pathWithOneTrailingSlash;
   }
 
   @Override
@@ -69,11 +89,11 @@ public final class FsRoot extends VirtualDirectoryImpl {
     while (true) {
       int i = pathBeforeSlash.indexOf("..", start);
       if (i == -1) break;
-      if ((i == 0 || pathBeforeSlash.charAt(i-1) == '/') // /..
-          && (i == pathBeforeSlash.length() - 2 || pathBeforeSlash.charAt(i+2) == '/')) { // ../
+      if ((i == 0 || pathBeforeSlash.charAt(i - 1) == '/') // /..
+          && (i == pathBeforeSlash.length() - 2 || pathBeforeSlash.charAt(i + 2) == '/')) { // ../
         return false;
       }
-      start = i+1;
+      start = i + 1;
     }
     return true;
   }

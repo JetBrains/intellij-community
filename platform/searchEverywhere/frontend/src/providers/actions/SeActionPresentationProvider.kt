@@ -19,7 +19,9 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeItemPresentation
 import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
@@ -33,10 +35,10 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object SeActionPresentationProvider {
-  suspend fun get(matchedValue: GotoActionModel.MatchedValue, extendedDescription: String?): SeItemPresentation {
+  suspend fun get(matchedValue: GotoActionModel.MatchedValue, extendedInfo: SeExtendedInfo?, isMultiSelectionSupported: Boolean): SeItemPresentation {
     val value = matchedValue.value
     if (value is GotoActionModel.ActionWrapper) {
-      var presentation = SeRunnableActionItemPresentation(commonData = SeActionItemPresentation.Common(text = "", extendedDescription = extendedDescription))
+      var presentation = SeRunnableActionItemPresentation(commonData = SeActionItemPresentation.Common(text = "", extendedInfo = extendedInfo), isMultiSelectionSupported = isMultiSelectionSupported)
 
       val anAction = value.action
       val actionPresentation = value.presentation
@@ -82,16 +84,19 @@ object SeActionPresentationProvider {
       val decoratedText = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         ActionPresentationDecorator.decorateTextIfNeeded(anAction, actionPresentation.text)
       }
+      val displayText = if (decoratedText.startsWith("<html>")) StringUtil.removeHtmlTags(decoratedText) else decoratedText
 
       presentation = presentation.run {
-        copy(commonData = commonData.copy(text = decoratedText))
+        copy(commonData = commonData.copy(text = displayText))
       }
 
       return presentation
     }
     else if (value is OptionDescription) {
       val hit = GotoActionModel.GotoActionListCellRenderer.calcHit(value)
-      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = hit, extendedDescription = extendedDescription),)
+      val displayText = if (hit.startsWith("<html>")) StringUtil.removeHtmlTags(hit) else hit
+
+      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = displayText, extendedInfo = extendedInfo), isMultiSelectionSupported = isMultiSelectionSupported)
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
         presentation = presentation.run {
@@ -108,6 +113,6 @@ object SeActionPresentationProvider {
 
     SeLog.log(ITEM_EMIT) { "Couldn't generate an action presentation. Unknown item: $matchedValue" }
     @Suppress("HardCodedStringLiteral")
-    return SeRunnableActionItemPresentation(SeActionItemPresentation.Common(text = "Unknown item"))
+    return SeRunnableActionItemPresentation(SeActionItemPresentation.Common(text = "Unknown item"), isMultiSelectionSupported = isMultiSelectionSupported)
   }
 }

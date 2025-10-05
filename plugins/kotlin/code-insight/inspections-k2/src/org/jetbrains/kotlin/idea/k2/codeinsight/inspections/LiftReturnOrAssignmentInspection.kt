@@ -135,9 +135,7 @@ internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(privat
         }
 
     private class LiftReturnOutFix(private val keyword: String) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("lift.return.out.fix.text.0", keyword)
-
-        override fun getFamilyName() = name
+        override fun getFamilyName(): String = KotlinBundle.message("lift.return.out.fix.text.0", keyword)
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val element = descriptor.psiElement as? KtExpression ?: return
@@ -147,9 +145,7 @@ internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(privat
     }
 
     private class LiftAssignmentOutFix(private val keyword: String) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("lift.assignment.out.fix.text.0", keyword)
-
-        override fun getFamilyName() = name
+        override fun getFamilyName(): String = KotlinBundle.message("lift.assignment.out.fix.text.0", keyword)
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val element = descriptor.psiElement as? KtExpression ?: return
@@ -157,7 +153,7 @@ internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(privat
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getStateForWhenOrTry(expression: KtExpression, keyword: PsiElement): List<LiftState>? {
         if (skipLongExpressions && expression.getLineCount() > LINES_LIMIT) return null
         if (expression.parent.node.elementType == KtNodeTypes.ELSE) return null

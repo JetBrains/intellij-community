@@ -25,14 +25,14 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 
-internal fun InlineCompletionTooltipComponent.shortcutActions(): ActionButtonWithText {
+internal fun InlineCompletionTooltipComponent.shortcutActions(insertActionId: String): ActionButtonWithText {
   val predefinedShortcuts = arrayOf(
     "Tab" to KeyboardShortcut.fromString("TAB"),
     "→" to KeyboardShortcut.fromString("RIGHT"),
     "Enter" to KeyboardShortcut.fromString("ENTER"),
     "Shift →" to KeyboardShortcut.fromString("shift pressed RIGHT"),
   )
-  val customCurrentShortcut = KeymapUtil.getPrimaryShortcut(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
+  val customCurrentShortcut = KeymapUtil.getPrimaryShortcut(insertActionId)
     .takeIf { predefinedShortcuts.find { (_, shortcut) -> shortcut.toString() == it.toString() } == null }
 
   val shortcuts = listOfNotNull(
@@ -40,7 +40,7 @@ internal fun InlineCompletionTooltipComponent.shortcutActions(): ActionButtonWit
     *predefinedShortcuts
   )
   val shortcutActions = shortcuts.map2Array { (name, shortcut) ->
-    object : InplaceChangeInlineCompletionShortcutAction(name, shortcut) {
+    object : InplaceChangeInlineCompletionShortcutAction(name, shortcut, insertActionId) {
       lateinit var updateAfterActionPerformed: ActionButtonWithText
       override fun actionPerformed(e: AnActionEvent) {
         super.actionPerformed(e)
@@ -68,7 +68,7 @@ internal fun InlineCompletionTooltipComponent.shortcutActions(): ActionButtonWit
 
     @Suppress("HardCodedStringLiteral")
     override fun update() {
-      val shortcut = KeymapUtil.getPrimaryShortcut(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
+      val shortcut = KeymapUtil.getPrimaryShortcut(insertActionId)
         .asSafely<KeyboardShortcut>()
 
       presentation.text = when (shortcut?.toString()) {
@@ -120,7 +120,8 @@ class InlineCompletionPopupActionGroup(@ApiStatus.Internal val actions: Array<An
 @ApiStatus.Internal
 open class InplaceChangeInlineCompletionShortcutAction(
   @NlsActions.ActionText text: String,
-  private val shortcut: Shortcut
+  private val shortcut: Shortcut,
+  private val insertActionId: String
 ) : AnAction(text), DumbAware, LightEditCompatible {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -141,9 +142,9 @@ open class InplaceChangeInlineCompletionShortcutAction(
     check(currentKeymap.canModify()) {
       "Cannot modify ${currentKeymap.presentableName} keymap"
     }
-    currentKeymap.removeAllActionShortcuts(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
+    currentKeymap.removeAllActionShortcuts(insertActionId)
     currentKeymap.addShortcut(
-      IdeActions.ACTION_INSERT_INLINE_COMPLETION,
+      insertActionId,
       shortcut
     )
   }

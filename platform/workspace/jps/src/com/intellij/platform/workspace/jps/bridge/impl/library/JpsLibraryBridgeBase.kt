@@ -22,7 +22,7 @@ internal abstract class JpsLibraryBridgeBase<P : JpsElement>(name: String, paren
     reportModificationAttempt()
   }
 
-  override fun addRoot(file: File, rootType: JpsOrderRootType) {
+  override fun addRoot(path: Path, rootType: JpsOrderRootType) {
     reportModificationAttempt()
   }
 

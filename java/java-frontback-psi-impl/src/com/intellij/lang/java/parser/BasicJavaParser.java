@@ -8,8 +8,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Use the new Java syntax library instead.
  *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             As a temporary solution, use {@link JavaParser}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 @ApiStatus.Experimental
 public abstract class BasicJavaParser {
 

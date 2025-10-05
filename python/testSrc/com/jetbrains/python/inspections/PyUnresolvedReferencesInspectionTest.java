@@ -815,14 +815,14 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> doTestByText("""
-       def foo(cls):
-           return cls
-                                  
-                                  
-       @foo
-       class Bar2(object):
-           def __init__(self):
-               print(self.<warning descr="Unresolved attribute reference 'hello' for class 'Bar2'">hello</warning>)
+                           def foo(cls):
+                               return cls
+                           
+                           
+                           @foo
+                           class Bar2(object):
+                               def __init__(self):
+                                   print(self.<warning descr="Unresolved attribute reference 'hello' for class 'Bar2'">hello</warning>)
                            """)
     );
   }
@@ -888,6 +888,48 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                        ...
                    class ForwardReference[T]: ...
                    """);
+    });
+  }
+
+  // PY-74257 simple example, depth two, no packages (__init__.py files)
+  public void testImportFromNestedDirectory1() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest("Main.py");
+    });
+  }
+
+  // PY-74257 depth three with packages, but implicit package 'project', i.e., no __init__.py in directory 'project'
+  public void testImportFromNestedDirectory2() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest("Main.py");
+    });
+  }
+
+  // PY-74257 depth three with packages, like before but with an explicit package 'project'
+  public void testImportFromNestedDirectory3() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest("Main.py");
+    });
+  }
+
+  // PY-78413
+  public void testAsyncAwaitWarningOnImportedFun() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-78413
+  public void testAsyncAwaitWarningOnImportedFunReturnAwaitable() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-78413
+  public void testAsyncAwaitWarningOnImportedFunOverloaded() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
     });
   }
 

@@ -24,6 +24,7 @@ import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
 import org.jetbrains.idea.maven.server.security.ChecksumUtil;
 
 import java.io.*;
@@ -93,15 +94,15 @@ public final class Maven40EffectivePomDumper {
   }
 
   // See org.apache.maven.plugins.help.EffectivePomMojo#execute from maven-help-plugin
-  public static @Nullable String evaluateEffectivePom(Maven40ServerEmbedderImpl embedder,
-                                            final @NotNull File file,
-                                            @NotNull List<String> activeProfiles,
-                                            @NotNull List<String> inactiveProfiles) {
+  public static @NotNull String evaluateEffectivePom(Maven40ServerEmbedderImpl embedder,
+                                                     @NotNull MavenServerConsoleIndicatorImpl indicator, final @NotNull File file,
+                                                     @NotNull List<String> activeProfiles,
+                                                     @NotNull List<String> inactiveProfiles) {
     final StringWriter w = new StringWriter();
 
     final MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
 
-    embedder.executeWithMavenSession(request, MavenWorkspaceMap.empty(), null, session -> {
+    embedder.executeWithMavenSession(request, MavenWorkspaceMap.empty(), indicator, session -> {
       try {
         // copied from DefaultMavenProjectBuilder.buildWithDependencies
         ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
@@ -113,7 +114,7 @@ public final class Maven40EffectivePomDumper {
 
         MavenProject project = buildingResult.getProject();
 
-        XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
+        XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), " ".repeat(XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
                                                     "\n", null, null);
 
         writeHeader(writer);
@@ -126,14 +127,6 @@ public final class Maven40EffectivePomDumper {
     });
 
     return w.toString();
-  }
-
-  private static String repeat(String str, int repeat) {
-    StringBuilder buffer = new StringBuilder(repeat * str.length());
-    for (int i = 0; i < repeat; i++) {
-      buffer.append(str);
-    }
-    return buffer.toString();
   }
 
   /**

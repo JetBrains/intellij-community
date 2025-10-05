@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,11 +60,19 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
     var logger = Logger.getInstance(this.getClass());
     var displayName = getConfigurableDisplayName();
     if (displayName == null) {
-      logger.error("Cannot determine id for configurable provider " + this.getClass() + ". Please override getConfigurableId or getLanguage.");
+      PluginException.logPluginError(
+        logger,
+        "Cannot determine id for configurable provider " + this.getClass() + ". Please override getConfigurableId or getLanguage.",
+        null,
+        this.getClass());
       return "preferences.sourceCode.null"; // emulate legacy behavior
     }
 
-    logger.error("Legacy configurable id calculation mode from localizable name will be used for configurable " + this.getClass() + ". Please override getConfigurableId or getLanguage.");
+    PluginException.logPluginError(
+      logger,
+      "Legacy configurable id calculation mode from localizable name will be used for configurable " + this.getClass() + ". Please override getConfigurableId or getLanguage.",
+      null,
+      this.getClass());
     return "preferences.sourceCode." + displayName;
   }
 

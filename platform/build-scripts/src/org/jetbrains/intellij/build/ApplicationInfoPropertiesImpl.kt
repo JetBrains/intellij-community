@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.JDOMUtil
@@ -165,25 +165,32 @@ internal fun computeAppInfoXml(context: BuildContext, appInfo: ApplicationInfoPr
   val isEapOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP)
   val suffixOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX)
 
+  val isBranchDefault = System.getProperty(BuildOptions.TEAMCITY_BUILD_BRANCH_IS_DEFAULT, "true").toBoolean()
+  val branchName = System.getProperty(BuildOptions.TEAMCITY_BUILD_BRANCH)
+
   @Suppress("DEPRECATION")
   val appInfoOverride = context.productProperties.applicationInfoOverride(context.project)
-  if (isEapOverride != null || suffixOverride != null || appInfoOverride != null) {
+  if (isEapOverride != null || suffixOverride != null || appInfoOverride != null || (context.isNightlyBuild && !isBranchDefault && branchName != null)) {
     patchedAppInfo = withAppInfoOverride(
       originalPatchedAppInfo = patchedAppInfo,
       isEapOverride = isEapOverride,
       suffixOverride = suffixOverride,
       appInfoXmlPath = appInfoXmlPath,
       appInfoOverride = appInfoOverride,
+      branchName = branchName,
     )
   }
   return patchedAppInfo
 }
 
-private fun withAppInfoOverride(originalPatchedAppInfo: String,
-                                isEapOverride: String?,
-                                suffixOverride: String?,
-                                appInfoXmlPath: Path,
-                                @Suppress("DEPRECATION") appInfoOverride: ProductProperties.ApplicationInfoOverrides?): String {
+private fun withAppInfoOverride(
+  originalPatchedAppInfo: String,
+  isEapOverride: String?,
+  suffixOverride: String?,
+  appInfoXmlPath: Path,
+  @Suppress("DEPRECATION") appInfoOverride: ProductProperties.ApplicationInfoOverrides?,
+  branchName: String?,
+): String {
   val element = JDOMUtil.load(originalPatchedAppInfo)
 
   @Suppress("HttpUrlsUsage")
@@ -230,6 +237,12 @@ private fun withAppInfoOverride(originalPatchedAppInfo: String,
     replaceAttribute(version, "suffix", suffixOverride)
   }
 
+  if (branchName != null) {
+    val build = element.getChildren("build", namespace).singleOrNull()
+                ?: error("Could not find child element 'build' under root of '$appInfoXmlPath'")
+    replaceAttribute(build, "branchName", branchName)
+  }
+
   return JDOMUtil.write(element)
 }
 
@@ -237,7 +250,7 @@ private fun withAppInfoOverride(originalPatchedAppInfo: String,
 private fun shortenCompanyName(name: String) = name.removeSuffix(" s.r.o.").removeSuffix(" Inc.")
 
 fun findApplicationInfoInSources(project: JpsProject, productProperties: ProductProperties): Path {
-  val module = checkNotNull(project.modules.find { it.name == productProperties.applicationInfoModule }) {
+  val module = checkNotNull(project.findModuleByName(productProperties.applicationInfoModule)) {
     "Cannot find required '${productProperties.applicationInfoModule}' module"
   }
   val appInfoRelativePath = "idea/${productProperties.platformPrefix ?: ""}ApplicationInfo.xml"

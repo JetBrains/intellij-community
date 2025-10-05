@@ -7,12 +7,10 @@ import java.awt.*
 import java.awt.image.ImageObserver
 import javax.swing.Icon
 import javax.swing.text.Element
-import javax.swing.text.FlowView
-import javax.swing.text.View
 import kotlin.math.max
 
 internal class FitToWidthImageView(element: Element) : DataUrlImageView(element) {
-  private var myAvailableWidth = 0
+  private val preferredSpan = ImageViewPreferredSpan(this) { axis -> super.getPreferredSpan(axis) }
 
   override fun getLoadingImageIcon(): Icon =
     AllIcons.Process.Step_passive
@@ -23,44 +21,7 @@ internal class FitToWidthImageView(element: Element) : DataUrlImageView(element)
   override fun getMaximumSpan(axis: Int): Float =
     getPreferredSpan(axis)
 
-  override fun getPreferredSpan(axis: Int): Float {
-    val baseSpan = super.getPreferredSpan(axis)
-    if (axis == X_AXIS) {
-      return baseSpan
-    }
-    else {
-      var availableWidth = availableWidth
-      if (availableWidth <= 0) return baseSpan
-      val baseXSpan = super.getPreferredSpan(X_AXIS)
-      if (baseXSpan <= 0) return baseSpan
-      if (availableWidth > baseXSpan) {
-        availableWidth = baseXSpan.toInt()
-      }
-      if (myAvailableWidth > 0 && availableWidth != myAvailableWidth) {
-        preferenceChanged(null, false, true)
-      }
-      myAvailableWidth = availableWidth
-      return baseSpan * availableWidth / baseXSpan
-    }
-  }
-
-  private val availableWidth: Int
-    get() {
-      var v: View? = this
-      while (v != null) {
-        val parent = v.parent
-        if (parent is FlowView) {
-          val childCount = parent.getViewCount()
-          for (i in 0 until childCount) {
-            if (parent.getView(i) === v) {
-              return parent.getFlowSpan(i)
-            }
-          }
-        }
-        v = parent
-      }
-      return 0
-    }
+  override fun getPreferredSpan(axis: Int): Float = preferredSpan.get(axis)
 
   override fun paint(g: Graphics, a: Shape) {
     val targetRect = if ((a is Rectangle)) a else a.bounds

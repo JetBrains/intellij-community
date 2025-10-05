@@ -83,7 +83,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
       return PyTypeUtil
         .toStream(type)
         .map(PyPrefixExpressionImpl::getGeneratorReturnType)
-        .collect(PyTypeUtil.toUnionFromRef());
+        .collect(PyTypeUtil.toUnionFromRef(type));
     }
     return null;
   }

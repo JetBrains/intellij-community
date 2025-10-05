@@ -39,6 +39,7 @@ public class OverrideImplementExploreUtil {
 
     PsiUtilCore.ensureValid(aClass);
     Collection<HierarchicalMethodSignature> allMethodSigs = aClass.getVisibleSignatures();
+    allMethodSigs = deleteShadowed(allMethodSigs);
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<>();
     Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<>();
@@ -104,6 +105,39 @@ public class OverrideImplementExploreUtil {
     }
 
     return result;
+  }
+
+  /**
+   * {@link PsiClass#getVisibleSignatures()} can return shadowed methods to highlight them (if there is a compilation error),
+   * but it is necessary to get rid of them, because otherwise some methods can be missed to implement.
+   */
+  private static @NotNull Collection<HierarchicalMethodSignature> deleteShadowed(@NotNull Collection<HierarchicalMethodSignature> sigs) {
+    ArrayList<HierarchicalMethodSignature> signatures = new ArrayList<>();
+    HashMap<String, List<HierarchicalMethodSignature>> nameToSignature = new HashMap<>();
+    for (HierarchicalMethodSignature signature : sigs) {
+      String name = signature.getMethod().getName();
+      List<HierarchicalMethodSignature> previousSignatures = nameToSignature.computeIfAbsent(name, n -> new ArrayList<>());
+      boolean addToList = true;
+      for (HierarchicalMethodSignature previousSignature : previousSignatures) {
+        if (!MethodSignatureUtil.areSignaturesErasureEqual(signature, previousSignature)) continue;
+        PsiClass containingClass = signature.getMethod().getContainingClass();
+        PsiClass previousContainingClass = previousSignature.getMethod().getContainingClass();
+        if (containingClass == null || previousContainingClass == null ||
+            containingClass.getManager().areElementsEquivalent(containingClass, previousContainingClass)) {
+          continue;
+        }
+        if (containingClass.isInheritor(previousContainingClass, true)) {
+          signatures.remove(previousSignature);
+        }
+        else if (previousContainingClass.isInheritor(containingClass, true)) {
+          addToList = false;
+          break;
+        }
+      }
+      previousSignatures.add(signature);
+      if (addToList) signatures.add(signature);
+    }
+    return signatures;
   }
 
   private static boolean isDefaultMethod(@NotNull PsiClass aClass, @NotNull PsiMethod method) {

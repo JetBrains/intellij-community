@@ -65,6 +65,11 @@ public class MoveLeftRightTestGenerated extends AbstractMoveLeftRightTest {
         runTest("testData/codeInsight/moveLeftRight/callArgs5.kt");
     }
 
+    @TestMetadata("funContextParams.kt")
+    public void testFunContextParams() throws Exception {
+        runTest("testData/codeInsight/moveLeftRight/funContextParams.kt");
+    }
+
     @TestMetadata("funParams1.kt")
     public void testFunParams1() throws Exception {
         runTest("testData/codeInsight/moveLeftRight/funParams1.kt");

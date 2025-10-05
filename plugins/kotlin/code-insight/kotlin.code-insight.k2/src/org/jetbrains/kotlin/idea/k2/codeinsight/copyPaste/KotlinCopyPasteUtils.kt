@@ -5,6 +5,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveCompanionObjectShortReferenceToContainingClassSymbol
@@ -33,12 +35,12 @@ internal fun <T> Collection<T>.toSortedStringSet(): Set<String> = map { it.toStr
 /**
  * In the resulting map symbols that cannot be imported (e.g., local symbols) are associated with `null` key.
  */
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaIdeApi::class)
 internal fun KtReference.getResolvedSymbolsGroupedByImportableFqName(): Map<FqName?, List<KaSymbol>> = resolveToImportableSymbols()
     .groupBy { symbol -> symbol.importableFqName }
 
-context(KaSession)
+context(_: KaSession)
 private fun KtReference.resolveToImportableSymbols(): Collection<KaSymbol> =
     resolveCompanionObjectShortReferenceToContainingClassSymbol()?.let { listOf(it) } ?: resolveToSymbols()
 

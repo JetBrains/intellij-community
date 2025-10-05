@@ -3,69 +3,17 @@
 package com.intellij.mcpserver.toolsets
 
 import com.intellij.mcpserver.McpToolsetTestBase
+import com.intellij.mcpserver.toolsets.Constants.MAX_USAGE_TEXT_CHARS
 import com.intellij.mcpserver.toolsets.general.TextToolset
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import io.kotest.common.runBlocking
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import org.junit.jupiter.api.Test
+import kotlin.test.assertTrue
 
 class TextToolsetTest : McpToolsetTestBase() {
-  @Test
-  fun get_open_in_editor_file_text() = runBlocking {
-    testMcpTool(
-      TextToolset::get_open_in_editor_file_text.name,
-      buildJsonObject {},
-      ""
-    )
-  }
-
-  // TODO: IMHO badly designed tool. Can junk LLM input. To remove in favor of list_editor_files and get_text_by_path
-  @Test
-  fun get_all_open_file_texts() = runBlocking {
-    testMcpTool(
-      TextToolset::get_all_open_file_texts.name,
-      buildJsonObject {},
-      "[]"
-    )
-  }
-
-  @Test
-  fun get_selected_in_editor_text() = runBlocking {
-    testMcpTool(
-      TextToolset::get_selected_in_editor_text.name,
-      buildJsonObject {},
-      ""
-    )
-  }
-
-  @Test
-  fun replace_selected_text() = runBlocking {
-    testMcpTool(
-      TextToolset::replace_selected_text.name,
-      buildJsonObject {
-        put("text", JsonPrimitive("replacement text"))
-      },
-      "no text selected"
-    )
-  }
-
-  @Test
-  fun replace_current_file_text() = runBlocking {
-    withContext(Dispatchers.EDT) {
-      FileEditorManager.getInstance(project).openFile(mainJavaFile, true)
-    }
-    testMcpTool(
-      TextToolset::replace_current_file_text.name,
-      buildJsonObject {
-        put("text", JsonPrimitive("new file content"))
-      },
-      "ok"
-    )
-  }
+  private val longContentFixture = sourceRootFixture.virtualFileFixture("long_content.txt", "x".repeat(1001) + "SEARCH_TARGET" + "y".repeat(1001))
 
   @Test
   fun get_file_text_by_path() = runBlocking {
@@ -79,27 +27,44 @@ class TextToolsetTest : McpToolsetTestBase() {
   }
 
   @Test
-  fun replace_specific_text() = runBlocking {
-    testMcpTool(
-      TextToolset::replace_specific_text.name,
-      buildJsonObject {
-        put("pathInProject", JsonPrimitive(testJavaFile.name))
-        put("oldText", JsonPrimitive("content"))
-        put("newText", JsonPrimitive("updated content"))
-      },
-      "ok"
-    )
-  }
-
-  @Test
   fun replace_file_text_by_path() = runBlocking {
     testMcpTool(
-      TextToolset::replace_file_text_by_path.name,
+      TextToolset::replace_text_in_file.name,
       buildJsonObject {
         put("pathInProject", JsonPrimitive(mainJavaFile.name))
         put("text", JsonPrimitive("updated content"))
       },
       "ok"
     )
+  }
+
+  @Test
+  fun search_in_files_by_text_truncates_long_lines() = runBlocking {
+    testMcpTool(
+      TextToolset::search_in_files_by_text.name,
+      buildJsonObject {
+        put("searchText", JsonPrimitive("SEARCH_TARGET"))
+      }
+    ) { actualResult ->
+      assertTrue { actualResult.textContent.text?.contains("x".repeat(MAX_USAGE_TEXT_CHARS) + "||SEARCH_TARGET||" + "y".repeat(MAX_USAGE_TEXT_CHARS)) ?: false }
+    }
+  }
+
+  @Test
+  fun replace_text_in_file_with_empty_old_text_should_not_hang() = runBlocking {
+    // This test should fail with the current implementation due to endless loop
+    // when oldText is empty
+    testMcpTool(
+      TextToolset::replace_text_in_file.name,
+      buildJsonObject {
+        put("pathInProject", JsonPrimitive(testJavaFile.canonicalPath))
+        put("oldText", JsonPrimitive(""))  // Empty string causes endless loop
+        put("newText", JsonPrimitive("prefix"))
+        put("replaceAll", JsonPrimitive(true))
+      }
+    ) { actualResult ->
+      // Should fail with an error instead of hanging
+      assertTrue { actualResult.isError == true && actualResult.textContent.text?.contains("empty") ?: false }
+    }
   }
 }

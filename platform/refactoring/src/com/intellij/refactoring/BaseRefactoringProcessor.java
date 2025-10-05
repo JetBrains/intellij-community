@@ -56,8 +56,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -67,6 +68,82 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
+/**
+ * Provides common infrastructure for building refactorings.
+ * <p>
+ * It's heavy machinery from the early days of IntelliJ. Implementations often end up complex, mixing UI with business logic.
+ * If possible, please do not create new classes that inherit from this class.
+ *
+ * <h3>Typical behavior</h3>
+ *
+ * <p>Once started (usually with {@link #run()}), a typical behavior of a subclass of {@link BaseRefactoringProcessor} looks as follows:</p>
+ * <ol>
+ *   <li>Finds usages</li>
+ *   <li>If there are conflicts, presents them to the user in the {@link com.intellij.refactoring.ui.ConflictsDialog ConflictsDialog} and asks for confirmation</li>
+ *   <li>Once confirmed (or there were no conflicts), performs the refactoring</li>
+ * </ol>
+ *
+ * <h3>Typical behavior - code perspective</h3>
+ *
+ * <ol>
+ *   <li>
+ *     <b>{@link #run()}</b>
+ *     <p>The main entry point.</p>
+ *   </li>
+ *   <li>
+ *     <b>{@link #doRun()}</b>
+ *     <p>Called on EDT, outside a Write Action.</p>
+ *     <ul>
+ *       <li>Collects usages relevant to the refactoring by calling {@link #findUsages()}.</li>
+ *       <li>Calls {@link #preprocessUsages} for any preliminary processing. If this method returns false, the refactoring is aborted.</li>
+ *       <li>Decides whether to show a preview of the changes via {@link #previewRefactoring(UsageInfo[] usages)}, or to proceed directly to {@link #execute(UsageInfo[])}.</li>
+ *     </ul>
+ *   </li>
+ *   <li>
+ *     <b>{@link #execute(UsageInfo[] usages)}</b>
+ *     <p>Wraps the core refactoring logic in a command by calling {@link CommandProcessor#executeCommand(Project, Runnable, String, Object) CommandProcessor.executeCommand()},
+ *     with the command name provided by {@link #getCommandName()}.</p>
+ *   </li>
+ *   <li>
+ *     <b>{@link #doRefactoring(Collection usageInfoSet)}</b>
+ *     <p>This is where the main refactoring work happens.
+ *     It calls {@link #performRefactoring} inside a Write Action and under a cancelable modal progress indicator.</p>
+ *   </li>
+ *   <li>
+ *     <b>{@link #performRefactoring(UsageInfo[] usages)}</b>
+ *     <p>The core refactoring logic is implemented in this method. All code modifications should be performed here –
+ *     since we are in a command, the changes made to the code can be reverted with a single CTRL+Z.</p>
+ *   </li>
+ * </ol>
+ *
+ * <h3>Subclassing</h3>
+ * <p>
+ * The basics:
+ *
+ * <ol>
+ *   <li>Implement {@link #findUsages()}</li>
+ *   <li>(Optional) Implement {@link #preprocessUsages}. If it returns false, the refactoring doesn't proceed further.</li>
+ *   <li>Implement {@link #performRefactoring}</li>
+ * </ol>
+ *
+ * <p>
+ * Once you instantiate a refactoring processor, call {@link #run()} to start it.
+ * This method starts the machinery, and ends up calling {@link #doRun()}, which in turn does more work: finds usages, possibly showing conflicts.
+ * Finally, {@link #performRefactoring(UsageInfo[]) performRefactoring()} is called.
+ * <p>
+ * Generally, you shouldn't override {@link #doRun()}, but if you need to, make sure to call {@code super.doRun()}.
+ *
+ * <h3>General notes / trivia</h3>
+ * <p>
+ * Subclasses of {@link BaseRefactoringProcessor}s are often used to implement more-complex quick-fixes
+ * (ones that aren't "local", i.e., can possibly touch many files).
+ * In such cases, they are created and run inside {@link com.intellij.codeInspection.LocalQuickFix#applyFix}.
+ * <p>
+ * {@link BaseRefactoringProcessor} is not compatible with the {@link com.intellij.modcommand.ModCommand ModCommand API}.
+ * More specifically, it is not compatible with the {@link com.intellij.modcommand.ModCommandQuickFix ModCommandQuickFix},
+ * because {@link com.intellij.modcommand.ModCommandQuickFix#perform ModCommandQuickFix.perform()} is executed in a background read action,
+ * but {@link #run() BaseRefactoringProcessor.run()} acquires a Write Intent Lock.
+ */
 public abstract class BaseRefactoringProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance(BaseRefactoringProcessor.class);
   private static boolean PREVIEW_IN_TESTS = true;
@@ -170,12 +247,15 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   /**
-   * Is called in a command and inside atomic action.
-   * <p>
-   * It is called by {@link #doRefactoring}.
+   * Called by {@link #doRefactoring} in a command, on EDT, inside a Write Action, under a cancelable modal progress indicator.
    */
+  @RequiresEdt
+  @RequiresWriteLock
   protected abstract void performRefactoring(UsageInfo @NotNull [] usages);
 
+  /**
+   * @return Name of the command inside which {@link #performRefactoring} is called.
+   */
   protected abstract @NotNull @Command String getCommandName();
 
   /**
@@ -190,7 +270,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
     final Ref<UsageInfo[]> refUsages = new Ref<>();
     final Ref<Language> refErrorLanguage = new Ref<>();
-    final Ref<Boolean> refProcessCanceled = new Ref<>();
+    final Ref<ProcessCanceledException> refProcessCanceled = new Ref<>();
     final Ref<Boolean> anyException = new Ref<>();
     final Ref<Boolean> indexNotReadyException = new Ref<>();
 
@@ -204,7 +284,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         refErrorLanguage.set(e.getElementLanguage());
       }
       catch (ProcessCanceledException e) {
-        refProcessCanceled.set(Boolean.TRUE);
+        // PCE is expected here if the user actually has pressed the "Cancel" button in the modal progress.
+        // Let's save it for debugging purposes.
+        refProcessCanceled.set(e);
       }
       catch (IndexNotReadyException e) {
         indexNotReadyException.set(Boolean.TRUE);
@@ -234,6 +316,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (!refProcessCanceled.isNull()) {
+      // wrapping the PCE to ISE as our logging infrastructure doesn't allow logging PCEs.
+      IllegalStateException exception = new IllegalStateException(refProcessCanceled.get());
+      LOG.error("PCE was not expected here", exception);
+
       MessagesService.getInstance().showErrorDialog(myProject, RefactoringBundle.message("refactoring.index.corruption.notifiction"), RefactoringBundle.message("error.title"));
       return;
     }
@@ -492,6 +578,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
                                         RefactoringBundle.message("usageView.doAction"), false);
   }
 
+  /**
+   * Starts {@link #performRefactoring} on EDT, inside a Write Action, under a cancelable modal progress indicator.
+   */
   private void doRefactoring(final @NotNull Collection<UsageInfo> usageInfoSet) {
    for (Iterator<UsageInfo> iterator = usageInfoSet.iterator(); iterator.hasNext();) {
       UsageInfo usageInfo = iterator.next();
@@ -605,14 +694,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
+  /**
+   * The main entry point to the refactoring process. It calls {@link #doRun}.
+   */
   @Override
   public final void run() {
-    Runnable baseRunnable = () -> {
+    final Runnable baseRunnable = () -> {
       try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
         doRun();
       }
     };
-    Runnable runnable = shouldDisableAccessChecks() ?
+    final Runnable runnable = shouldDisableAccessChecks() ?
                         () -> NonProjectFileWritingAccessProvider.disableChecksDuring(baseRunnable) :
                         baseRunnable;
     if (ApplicationManager.getApplication().isUnitTestMode()) {

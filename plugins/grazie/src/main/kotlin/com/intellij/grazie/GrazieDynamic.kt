@@ -3,7 +3,8 @@ package com.intellij.grazie
 
 import com.intellij.DynamicBundle
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.grazie.remote.GrazieRemote
+import com.intellij.grazie.remote.GrazieRemote.isJLangAvailableLocally
+import com.intellij.grazie.remote.GrazieRemote.isValidBundleForLanguage
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
@@ -18,19 +19,14 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
-import kotlin.io.path.isRegularFile
 
 @ApiStatus.Internal
 object GrazieDynamic : DynamicPluginListener {
   private val myDynClassLoaders by lazy {
-    val oldFiles = Files.walk(dynamicFolder).filter { file ->
-      file.isRegularFile() && Lang.values().all { it.remote.file.toAbsolutePath() != file.toAbsolutePath() }
-    }
 
-    for (file in oldFiles) {
-      file.delete()
+    for (file in getOldFiles()) {
+      file.delete(true)
     }
 
     ApplicationManager.getApplication().messageBus.connect()
@@ -39,16 +35,26 @@ object GrazieDynamic : DynamicPluginListener {
     hashSetOf<ClassLoader>(
       UrlClassLoader.build()
         .parent(GraziePlugin.classLoader)
-        .files(collectValidLocalBundles()).get()
+        .files(collectValidLocalBundles())
+        .get()
     )
   }
 
+  /**
+   * Function that collects outdated directories that needs to be deleted.
+   */
+  private fun getOldFiles(): List<Path> {
+    return Files.list(dynamicFolder)
+      .filter { file -> Lang.entries.none { file.fileName.toString() == getStorageDescriptor(it) } }
+      .toList()
+  }
+
   private fun collectValidLocalBundles(): List<Path> {
-    val languages = GrazieRemote.allAvailableLocally()
+    val languages = Lang.entries.filter { isJLangAvailableLocally(it) }
     val bundles = buildSet {
       for (language in languages) {
-        val path = language.remote.file
-        if (language.isEnglish() || GrazieRemote.isValidBundleForLanguage(language, path)) {
+        val path = getLangDynamicFolder(language).resolve(language.ltRemote!!.file)
+        if (language.isEnglish() || isValidBundleForLanguage(language, path)) {
           add(path)
         } else {
           thisLogger().error("""
@@ -62,7 +68,7 @@ object GrazieDynamic : DynamicPluginListener {
   }
 
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-    if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
+    if (pluginDescriptor.pluginId.idString == GraziePlugin.id) {
       myDynClassLoaders.clear()
     }
   }
@@ -77,7 +83,19 @@ object GrazieDynamic : DynamicPluginListener {
     if (customFolder != null) {
       return Path.of(customFolder)
     }
-    return Paths.get(PathManager.getSystemPath(), "grazie")
+    return PathManager.getConfigDir().resolve("grazie")
+  }
+
+  fun getLangDynamicFolder(lang: Lang): Path = dynamicFolder.resolve(getStorageDescriptor(lang))
+
+  /**
+   * Creates a storage descriptor (directory name) for downloader.
+   */
+  private fun getStorageDescriptor(lang: Lang): String {
+    if (lang.hunspellRemote != null) {
+      return "${lang.iso}-LT${GraziePlugin.LanguageTool.version}-HN${GraziePlugin.Hunspell.version}"
+    }
+    return "${lang.iso}-LT${GraziePlugin.LanguageTool.version}"
   }
 
   val dynamicFolder: Path
@@ -88,7 +106,8 @@ object GrazieDynamic : DynamicPluginListener {
     }
 
   fun loadLang(lang: Lang): Language? {
-    for (className in lang.remote.langsClasses) {
+    val remote = lang.ltRemote ?: return null
+    for (className in remote.langsClasses) {
       try {
         Languages.getOrAddLanguageByClassName("org.languagetool.language.$className")
       }
@@ -106,7 +125,7 @@ object GrazieDynamic : DynamicPluginListener {
       try {
         Class.forName(className, true, it)
       }
-      catch (e: ClassNotFoundException) {
+      catch (_: ClassNotFoundException) {
         null
       }
     }
@@ -122,7 +141,7 @@ object GrazieDynamic : DynamicPluginListener {
 
   fun getResources(path: String): List<URL> {
     return forClassLoader { loader ->
-      loader.getResources(path.removePrefix("/")).toList().takeIf<List<URL>> { it.isNotEmpty<URL?>() }
+      loader.getResources(path.removePrefix("/")).toList().takeIf { it.isNotEmpty<URL?>() }
     }.orEmpty()
   }
 

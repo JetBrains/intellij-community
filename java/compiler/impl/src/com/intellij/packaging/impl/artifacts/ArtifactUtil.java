@@ -519,7 +519,7 @@ public final class ArtifactUtil {
               }
 
               if (!parents.isEmpty()) {
-                CompositePackagingElement<?> lastParent = parents.get(parents.size() - 1);
+                CompositePackagingElement<?> lastParent = parents.getLast();
                 if (lastParent instanceof ArtifactRootElement<?> && !processor.process(lastParent, currentPath, anArtifact)) {
                   return false;
                 }

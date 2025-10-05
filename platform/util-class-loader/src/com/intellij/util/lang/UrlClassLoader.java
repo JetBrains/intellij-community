@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,15 +47,19 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
-  @ApiStatus.Internal
+  @Internal
   protected final ClassPath classPath;
   private final ClassLoadingLocks classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
   private final boolean isSystemClassLoader;
 
-  @ApiStatus.Internal
+  @Internal
   protected final @NotNull ClassPath.ClassDataConsumer classDataConsumer =
     ClassPath.recordLoadingTime ? new ClassPath.MeasuringClassDataConsumer(this) : this;
+
+  @VisibleForTesting
+  @Internal
+  public static final Long MULTI_ROUTING_FILE_SYSTEM_PACKAGE_HASH = -7145863745123536181L;
 
   /**
    * Called by the VM to support dynamic additions to the class path.
@@ -71,7 +77,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * and another one from the core class loader produced as a result of creating a plugin class loader.
    * The core class loader doesn't use bootstrap class loader as a parent - instead, only platform classloader is used (only JRE classes).
    */
-  @ApiStatus.Internal
+  @Internal
   public final @NotNull ClassPath getClassPath() {
     return classPath;
   }
@@ -90,7 +96,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   public static @NotNull UrlClassLoader.Builder build() {
-    return new Builder();
+    return new Builder(false);
+  }
+
+  @Internal
+  public static @NotNull UrlClassLoader.Builder buildAsSystemClassLoader(@NotNull List<Path> paths) {
+    return new Builder(true).files(paths);
   }
 
   /** @deprecated use {@link #build()} (left for compatibility with `java.system.class.loader` setting) */
@@ -115,7 +126,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   protected static @NotNull UrlClassLoader.Builder createDefaultBuilderForJdk(@NotNull ClassLoader parent) {
     FileSystem fileSystem = getPlatformDefaultFileSystem();
-    Builder configuration = new Builder();
+    Builder configuration = new Builder(true);
 
     if (parent instanceof URLClassLoader) {
       URL[] urls = ((URLClassLoader)parent).getURLs();
@@ -135,7 +146,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       configuration.files = files;
     }
 
-    configuration.isSystemClassLoader = true;
     configuration.parent = parent.getParent();
     configuration.useCache = true;
     configuration.isClassPathIndexEnabled = isClassPathIndexEnabledGlobalValue;
@@ -160,7 +170,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     classLoadingLocks = isParallelCapable ? new ClassLoadingLocks() : null;
   }
 
-  @ApiStatus.Internal
+  @Internal
   protected UrlClassLoader(@NotNull ClassPath classPath) {
     super(null);
 
@@ -180,7 +190,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * @deprecated Do not use.
    * Internal method, used via method handle by `configureUsingIdeaClassloader` (see ClassLoaderConfigurator).
    */
-  @ApiStatus.Internal
+  @Internal
   @Deprecated
   public final void addFiles(@NotNull List<Path> files) {
     classPath.addFiles(files);
@@ -225,6 +235,19 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       return appClassLoader.loadClass(name);
     }
 
+    // The same problem as above happens with MultiRoutingFileSystem, which is already loaded in the boot class path.
+    // Without this code there are many ClassCastException.
+    // However, it's not obligatory to include MultiRoutingFileSystem in the boot classpath in case of tests, helper apps, etc.
+    // Therefore, this code falls back to `classPath` if the class isn't loaded.
+    if (isSystemClassLoader && packageNameHash == MULTI_ROUTING_FILE_SYSTEM_PACKAGE_HASH) {
+      try {
+        return Objects.requireNonNull(appClassLoader.loadClass(name));
+      }
+      catch (ClassNotFoundException ignored) {
+        // Nothing.
+      }
+    }
+
     Class<?> aClass;
     try {
       aClass = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
@@ -238,7 +261,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return aClass;
   }
 
-  @ApiStatus.Internal
+  @Internal
   public @Nullable Class<?> loadClassWithPrecomputedMeta(String name,
                                                          String fileName,
                                                          String fileNameWithoutExtension,
@@ -383,7 +406,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return classLoadingLocks == null ? this : classLoadingLocks.getOrCreateLock(className);
   }
 
-  @ApiStatus.Internal
+  @Internal
   public @Nullable BiFunction<String, Boolean, String> resolveScopeManager;
 
   private static boolean isNotExcludedLangClasses(String fileNameWithoutExtension) {
@@ -403,14 +426,14 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * @see #createCachePool()
    * @see Builder#useCache
    */
-  @ApiStatus.Internal
+  @Internal
   public interface CachePool { }
 
   /**
    * @return a new pool to be able to share internal caches between different class loaders if they contain the same URLs
    * in their class paths.
    */
-  @ApiStatus.Internal
+  @Internal
   public static @NotNull CachePool createCachePool() {
     return new CachePoolImpl();
   }
@@ -588,13 +611,16 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     ClassLoader parent;
     boolean lockJars = true;
     boolean useCache = true;
-    boolean isSystemClassLoader;
+    final boolean isSystemClassLoader;
+
     boolean isClassPathIndexEnabled = isClassPathIndexEnabledGlobalValue;
     boolean isBootstrapResourcesAllowed;
     @Nullable CachePoolImpl cachePool;
     Predicate<? super Path> cachingCondition;
 
-    Builder() { }
+    Builder(boolean isSystemClassLoader) {
+      this.isSystemClassLoader = isSystemClassLoader;
+    }
 
     /**
      * @deprecated Use {@link #files(List)}. Using of {@link URL} is discouraged in favor of modern {@link Path}.
@@ -666,7 +692,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * @param pool      cache pool
      * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
      */
-    @ApiStatus.Internal
+    @Internal
     public @NotNull UrlClassLoader.Builder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<? super Path> condition) {
       useCache = true;
       cachePool = (CachePoolImpl)pool;
@@ -703,7 +729,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * Also, loading nio classes might not work during `#appendToClassPathForInstrumentation`.
    * Because for some versions of JBR, it leads to NPE during initialization of ZipFile through FileSystems.getDefault.
    */
-  private static FileSystem getPlatformDefaultFileSystem() {
+  static FileSystem getPlatformDefaultFileSystem() {
     if (theFileSystem != null) {
       return theFileSystem;
     }

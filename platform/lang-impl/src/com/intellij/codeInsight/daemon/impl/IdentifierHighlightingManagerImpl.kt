@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManagerImpl.Companion.EDITOR_IDENT_RESULTS
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -42,6 +46,12 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class IdentifierHighlightingManagerImpl(private val myProject: Project) : IdentifierHighlightingManager, Disposable {
+  /**
+   * the (fake)pass id needed for [com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil.setHighlightersToSingleEditor]
+   * in [com.intellij.codeInsight.highlighting.BackgroundHighlighter.updateHighlighted]
+   */
+  @Volatile
+  private var passId:Int = 0
   init {
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
@@ -60,13 +70,33 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
     }, this)
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(object : PsiTreeChangeAdapter() {
       override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
-        val psiFile = event.file
-        val document = psiFile?.getViewProvider()?.getDocument()
+        val virtualFile = event.file?.getViewProvider()?.virtualFile
+        // clear cache only when the document is already loaded, otherwise getting document maybe expensive, e.g. in case of decompiling large file
+        val document = virtualFile?.let { FileDocumentManager.getInstance().getCachedDocument(virtualFile) }
         if (document != null) {
           clearCache(document)
         }
       }
     }, this)
+    setId(myProject)
+  }
+  private fun setId(project: Project): Int {
+    var resultId: Int = passId
+    if (resultId == 0) {
+      val registrar =
+        TextEditorHighlightingPassRegistrar.getInstance(project) as TextEditorHighlightingPassRegistrarImpl
+      synchronized(IdentifierHighlighterUpdater::class.java) {
+        resultId = passId
+        if (resultId == 0) {
+          resultId = registrar.nextAvailableId
+          passId = resultId
+        }
+      }
+    }
+    return resultId
+  }
+  internal fun getPassId() : Int {
+    return passId
   }
 
   private fun clearCache(document: Document) {
@@ -91,6 +121,8 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
   }
 
   override suspend fun getMarkupData(editor: Editor, visibleRange: ProperTextRange): IdentifierHighlightingResult {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    val start = System.currentTimeMillis()
     val document = editor.getDocument()
     val modStamp = (document as DocumentEx).modificationSequence
     var result: IdentifierHighlightingResult? = null
@@ -127,33 +159,43 @@ class IdentifierHighlightingManagerImpl(private val myProject: Project) : Identi
       }
       else {
         val hostRes = IdentifierHighlightingAccessor.getInstance(myProject).getMarkupData(psiFile, editor, visibleRange, offset)
-        result = readAction {
-          if (document.modificationSequence != modStamp) {
-            throw ProcessCanceledException(RuntimeException("document changed during RPC call. modStamp before=$modStamp; mod stamp after=${document.modificationSequence}"))
+        if (hostRes == WRONG_DOCUMENT_VERSION) {
+          result = WRONG_DOCUMENT_VERSION
+        }
+        else {
+          result = readAction {
+            if (document.modificationSequence != modStamp) {
+              throw ProcessCanceledException(RuntimeException("document changed during RPC call. modStamp before=$modStamp; mod stamp after=${document.modificationSequence}"))
+            }
+            val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
+            val occurrenceRangeMarkers = ArrayList<RangeMarker>(hostRes.occurrences.size)
+            val cache = mutableMapOf<TextRange, RangeMarker>()
+            val rangeMarkerOccurrences = hostRes.occurrences.map { o: IdentifierOccurrence ->
+              val marker = createMarker(hostDocument, o.range, cache)
+              occurrenceRangeMarkers.add(marker)
+              IdentifierOccurrence(marker, o.highlightInfoType)
+            }
+            val rangeMarkerTargets = hostRes.targets.map { r ->
+              createMarker(hostDocument, r, cache)
+            }
+            val rangeMarkerResult = IdentifierHighlightingResult(rangeMarkerOccurrences, rangeMarkerTargets)
+            for (marker in cache.values) {
+              marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
+            }
+            val editorResults = ConcurrencyUtil.computeIfAbsent(editor, EDITOR_IDENT_RESULTS) {
+              ConcurrentCollectionFactory.createConcurrentSet()
+            }
+            editorResults.add(rangeMarkerResult)
+            rangeMarkerResult
           }
-          val hostDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
-          val occurrenceRangeMarkers = ArrayList<RangeMarker>(hostRes.occurrences.size)
-          val cache = mutableMapOf<TextRange, RangeMarker>()
-          val rangeMarkerOccurrences = hostRes.occurrences.map { o: IdentifierOccurrence ->
-            val marker = createMarker(hostDocument, o.range, cache)
-            occurrenceRangeMarkers.add(marker)
-            IdentifierOccurrence(marker, o.highlightInfoType)
-          }
-          val rangeMarkerTargets = hostRes.targets.map { r ->
-            createMarker(hostDocument, r, cache)
-          }
-          val rangeMarkerResult = IdentifierHighlightingResult(rangeMarkerOccurrences, rangeMarkerTargets)
-          for (marker in cache.values) {
-            marker.putUserData(IDENT_MARKUP, rangeMarkerResult)
-          }
-          val editorResults = ConcurrencyUtil.computeIfAbsent(editor, EDITOR_IDENT_RESULTS) {
-            ConcurrentCollectionFactory.createConcurrentSet()
-          }
-          editorResults.add(rangeMarkerResult)
-          rangeMarkerResult
         }
       }
     }
+    val end = System.currentTimeMillis()
+    val file = readAction {
+      FileDocumentManager.getInstance().getFile(editor.document)
+    }
+    IdentifierHighlightingFUSReporter.report(myProject, file, offset, result, bestMarker != null, end-start)
     return result
   }
 

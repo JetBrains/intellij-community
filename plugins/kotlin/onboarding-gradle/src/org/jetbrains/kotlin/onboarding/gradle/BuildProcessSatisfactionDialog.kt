@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.onboarding.gradle
 
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -13,6 +16,8 @@ import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -106,52 +111,63 @@ internal class BuildProcessSatisfactionDialog(
         )
     }
 
-    override val mySystemInfoData: BuildProcessSatisfactionDialogData by lazy {
-        collectData()
-    }
+    override suspend fun computeSystemInfoData(): BuildProcessSatisfactionDialogData =
+        withContext(Dispatchers.EDT) { // collectData is rather complicated, and may need WIL and/or EDT
+            collectData()
+        }
 
     override val zendeskTicketTitle: String = "Kotlin Build Process in-IDE Feedback"
     override val zendeskFeedbackType: String = "Kotlin Build Process Feedback"
     override val myFeedbackReportId: String = "kotlin_gradle_build_process_feedback"
     override fun shouldAutoCloseZendeskTicket(): Boolean = false
 
-    override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-        showFeedbackSystemInfoDialog(myProject, mySystemInfoData.commonData) {
+    override fun showFeedbackSystemInfoDialog(systemInfoData: BuildProcessSatisfactionDialogData) {
+        showFeedbackSystemInfoDialog(myProject, systemInfoData.commonData) {
             row(GradleFeedbackBundle.message("build.process.info.gradle.version")) {
-                label(mySystemInfoData.gradleVersion)
+                label(systemInfoData.gradleVersion)
             }
             row(GradleFeedbackBundle.message("build.process.info.kotlin.version")) {
-                label(mySystemInfoData.kotlinVersion)
+                label(systemInfoData.kotlinVersion)
             }
             row(GradleFeedbackBundle.message("build.process.info.groovy.build.file.count")) {
-                label(mySystemInfoData.groovyBuildFileCount.toString())
+                label(systemInfoData.groovyBuildFileCount.toString())
             }
             row(GradleFeedbackBundle.message("build.process.info.kts.build.file.count")) {
-                label(mySystemInfoData.ktsBuildFileCount.toString())
+                label(systemInfoData.ktsBuildFileCount.toString())
             }
             row(GradleFeedbackBundle.message("build.process.info.days.of.kotlin.usage")) {
-                label(mySystemInfoData.daysOfKotlinUsage.toString())
+                label(systemInfoData.daysOfKotlinUsage.toString())
             }
             row(GradleFeedbackBundle.message("build.process.info.days.of.idea.usage")) {
-                label(mySystemInfoData.daysOfIdeaUsage.toString())
+                label(systemInfoData.daysOfIdeaUsage.toString())
             }
             row(GradleFeedbackBundle.message("build.process.info.days.of.gradle.usage")) {
-                label(mySystemInfoData.daysOfGradleUsage.toString())
+                label(systemInfoData.daysOfGradleUsage.toString())
             }
             row(GradleFeedbackBundle.message("build.process.info.days.of.kotlin.gradle.usage")) {
-                label(mySystemInfoData.daysOfKotlinWithGradleUsage.toString())
+                label(systemInfoData.daysOfKotlinWithGradleUsage.toString())
             }
         }
     }
+
     override val myTitle: String = GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.top.title")
 
     override val myBlocks: List<FeedbackBlock> = listOf(
         TopLabelBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.title")),
         DescriptionBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.description")),
-        RatingBlock(
-            GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.rating.label"),
-            "rating"
-        ),
+        SegmentedButtonBlock(GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.rating.label", ApplicationInfo.getInstance().versionName),
+                             List(5) { (it + 1).toString() },
+                             "csat_rating",
+                             listOf(
+                                 AllIcons.Survey.VeryDissatisfied,
+                                 AllIcons.Survey.Dissatisfied,
+                                 AllIcons.Survey.Neutral,
+                                 AllIcons.Survey.Satisfied,
+                                 AllIcons.Survey.VerySatisfied
+                             ))
+            .addLeftBottomLabel(GradleFeedbackBundle.message("dialog.rating.leftHint"))
+            .addMiddleBottomLabel(GradleFeedbackBundle.message("dialog.rating.middleHint"))
+            .addRightBottomLabel(GradleFeedbackBundle.message("dialog.rating.rightHint")),
         TextAreaBlock(
             GradleFeedbackBundle.message("dialog.build.process.gradle.satisfaction.improve.label"),
             "improvements"

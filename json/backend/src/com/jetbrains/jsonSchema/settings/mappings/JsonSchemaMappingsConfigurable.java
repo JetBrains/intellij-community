@@ -180,7 +180,7 @@ public final class JsonSchemaMappingsConfigurable extends MasterDetailsComponent
       final JsonSchemaService service = JsonSchemaService.Impl.get(project);
       if (service != null) service.reset();
     }
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    DaemonCodeAnalyzer.getInstance(myProject).restart(this);
     EditorNotifications.getInstance(myProject).updateAllNotifications();
   }
 

@@ -5,6 +5,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.EditorHyperlinkListener
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.execution.impl.ExpirableTokenProvider
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -21,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
@@ -49,7 +51,8 @@ class TerminalHyperlinkHighlighter private constructor(
   private val document: Document
     get() = editor.document
 
-  private val hyperlinkSupport: EditorHyperlinkSupport
+  @get:VisibleForTesting
+  val hyperlinkSupport: EditorHyperlinkSupport
     get() = EditorHyperlinkSupport.get(editor, true)
 
   init {
@@ -127,27 +130,24 @@ class TerminalHyperlinkHighlighter private constructor(
   }
 
   @TestOnly
-  internal suspend fun awaitInitialized() {
+  suspend fun awaitInitialized() {
     filterWrapper.awaitFiltersComputed()
   }
 
   @TestOnly
-  internal suspend fun awaitDelayedHighlightings() {
+  suspend fun awaitDelayedHighlightings() {
     delayedHighlightingJob?.join()
   }
-
-  @TestOnly
-  internal fun getHyperlinkSupport(): EditorHyperlinkSupport = hyperlinkSupport
 
   companion object {
     fun install(project: Project, model: TerminalOutputModel, editor: Editor, coroutineScope: CoroutineScope): TerminalHyperlinkHighlighter {
       val hyperlinkHighlighter = TerminalHyperlinkHighlighter(project, editor, coroutineScope)
       model.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-        override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
+        override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
           hyperlinkHighlighter.highlightHyperlinks(startOffset)
         }
       })
-      if (Registry.`is`("terminal.generic.hyperlinks", false)) {
+      if (Registry.`is`("terminal.generic.hyperlinks", false) && AppModeAssertions.isMonolith()) {
         hyperlinkHighlighter.addFilter(GenericFileFilter(project, LocalFileSystem.getInstance()))
       }
       return hyperlinkHighlighter

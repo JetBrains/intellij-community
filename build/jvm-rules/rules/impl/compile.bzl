@@ -21,11 +21,12 @@ load(
     _KtCompilerPluginInfo = "KtCompilerPluginInfo",
     _KtPluginConfiguration = "KtPluginConfiguration",
 )
-load("@rules_kotlin//kotlin/internal:opts.bzl", "JavacOptions")
 load("//:rules/common-attrs.bzl", "add_dicts")
 load("//:rules/impl/associates.bzl", "get_associates")
 load("//:rules/impl/builder-args.bzl", "init_builder_args")
+load("//:rules/impl/javac-options.bzl", "JavacOptions")
 load("//:rules/impl/kotlinc-options.bzl", "KotlincOptions")
+load("//:rules/resource.bzl", "ResourceGroupInfo")
 
 visibility("private")
 
@@ -79,7 +80,7 @@ def _jvm_deps(ctx, associated_targets, deps, runtime_deps):
 
     # reduced classpath, exclude transitive deps from compilation
     #prune_transitive_deps = toolchains.kt.experimental_prune_transitive_deps and "kt_experimental_prune_transitive_deps_incompatible" not in ctx.attr.tags
-    prune_transitive_deps = False and "kt_experimental_prune_transitive_deps_incompatible" not in ctx.attr.tags
+    prune_transitive_deps = True and "kt_experimental_prune_transitive_deps_incompatible" not in ctx.attr.tags
     transitive = _compute_transitive_jars(dep_infos, prune_transitive_deps)
 
     return struct(
@@ -212,6 +213,7 @@ def kt_jvm_produce_jar_actions(ctx, isTest = False):
         ctx = ctx,
         output_jar = output_jar,
         srcs = srcs,
+        resources = [r[ResourceGroupInfo] for r in ctx.attr.resources],
         associates = associates,
         compile_deps = compile_deps,
         transitiveInputs = transitiveInputs,
@@ -261,6 +263,7 @@ def _run_jvm_builder(
         ctx,
         output_jar,
         srcs,
+        resources,
         associates,
         compile_deps,
         transitiveInputs,
@@ -277,7 +280,7 @@ def _run_jvm_builder(
         kotlin_inc_threshold = kotlinc_options.inc_threshold
     java_inc_threshold = ctx.attr._java_inc_threshold[BuildSettingInfo].value
 
-    args = init_builder_args(ctx, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
+    args = init_builder_args(ctx, srcs, resources, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
     args.add("--out", output_jar)
 
     outputs = [output_jar]
@@ -289,6 +292,8 @@ def _run_jvm_builder(
     javac_opts = ctx.attr.javac_opts[JavacOptions] if ctx.attr.javac_opts else None
     if javac_opts and javac_opts.add_exports:
         args.add_all("--add-export", javac_opts.add_exports)
+    if javac_opts and javac_opts.no_proc:
+        args.add("--no-proc")
 
     isIncremental = (kotlin_inc_threshold != -1 and len(srcs.kt) >= kotlin_inc_threshold) or (java_inc_threshold != -1 and len(srcs.java) >= java_inc_threshold)
     if not isIncremental:
@@ -296,15 +301,20 @@ def _run_jvm_builder(
 
     javaCount = len(srcs.java)
     args.add("--java-count", javaCount)
+
+    all_resources = [f for r in resources for f in r.files]
+
+    java_runtime = ctx.attr._tool_java_runtime[java_common.JavaRuntimeInfo]
+
     ctx.actions.run(
         mnemonic = "JvmCompile",
         env = {
             "MALLOC_ARENA_MAX": "2",
         },
-        inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
-        use_default_shell_env = True,
+        inputs = depset(srcs.all_srcs + all_resources, transitive = transitiveInputs),
         outputs = outputs,
-        executable = ctx.attr._jvm_builder.files_to_run.executable,
+        tools = [ctx.file._jvm_builder_launcher, ctx.file._jvm_builder],
+        executable = java_runtime.java_executable_exec_path,
         execution_requirements = {
             "supports-workers": "1",
             "supports-multiplex-workers": "1",
@@ -312,7 +322,11 @@ def _run_jvm_builder(
             "supports-path-mapping": "1",
             "supports-multiplex-sandboxing": "1",
         },
-        arguments = [args],
+        arguments = ctx.attr._jvm_builder_jvm_flags[BuildSettingInfo].value + [
+            ctx.file._jvm_builder_launcher.path,
+            ctx.file._jvm_builder.path,
+            args,
+        ],
         progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, "" if isIncremental else ", non-incremental"),
     )
 

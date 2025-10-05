@@ -43,11 +43,11 @@ import org.jetbrains.kotlin.idea.caches.project.isLibraryClasses
 import org.jetbrains.kotlin.idea.caches.resolve.util.GlobalFacadeModuleFilters
 import org.jetbrains.kotlin.idea.caches.resolve.util.contextWithCompositeExceptionTracker
 import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
-import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
-import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
-import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesSourceInfo
-import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptAdditionalIdeaDependenciesProvider
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesSourceInfo
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms

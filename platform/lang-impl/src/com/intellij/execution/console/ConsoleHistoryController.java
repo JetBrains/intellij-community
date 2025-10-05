@@ -46,6 +46,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -93,6 +94,7 @@ public class ConsoleHistoryController implements Disposable {
   /**
    * @deprecated use {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView)} or {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView, ConsoleHistoryModel)}
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
     this(new ConsoleRootType(type, null) { }, persistenceId, console);

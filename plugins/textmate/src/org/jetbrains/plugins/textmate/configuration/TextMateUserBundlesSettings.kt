@@ -22,6 +22,10 @@ class TextMateUserBundlesSettings : SerializablePersistentStateComponent<TextMat
     }
   }
 
+  override fun noStateLoaded() {
+    loadState(TextMateUserBundleServiceState())
+  }
+
   fun addBundle(path: String, name: String) {
     val normalizedPath = FileUtil.toSystemIndependentName(path)
     updateState { state ->

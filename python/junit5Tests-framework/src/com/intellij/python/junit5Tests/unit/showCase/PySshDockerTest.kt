@@ -22,8 +22,8 @@ class PySshDockerTest {
     val client = SshClient.setUpDefaultClient()
     client.start()
     try {
-      val sessionFuture = client.connect("user", InetSocketAddress("127.0.0.1", sshContainer.firstMappedPort))
-      Assertions.assertTrue(sessionFuture.await(10_000), "Failed to connect to ${sshContainer.firstMappedPort}")
+      val sessionFuture = client.connect("user", InetSocketAddress("127.0.0.1", sshContainer.sshPort.toInt()))
+      Assertions.assertTrue(sessionFuture.await(10_000), "Failed to connect to ${sshContainer.sshPort}")
       val session = sessionFuture.session
       session.addPasswordIdentity("123")
       Assertions.assertTrue(session.auth().verify().isSuccess, "failed to authenticate")

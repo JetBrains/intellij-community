@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.diagnostic.Logger
@@ -24,10 +24,6 @@ class CoroutineExceptionHandlerImpl : AbstractCoroutineContextElement(CoroutineE
     val effectiveContext = context
       .minusKey(kotlinx.coroutines.CoroutineId) // unstable: prevents persistent Throwable hash for reporting on TC
       .minusKey(Job) // contains `CoroutineId` as well
-    try {
-      LOG.error("Unhandled exception in $effectiveContext", exception)
-    }
-    catch (ignored: Throwable) {
-    }
+    processUnhandledException(exception, effectiveContext)
   }
 }

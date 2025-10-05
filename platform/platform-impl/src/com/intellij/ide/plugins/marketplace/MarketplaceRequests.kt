@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -25,14 +25,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TimeoutCachedValue
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
@@ -61,6 +59,7 @@ import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLConnection
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -91,9 +90,10 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
     @Suppress("HttpUrlsUsage")
     @JvmStatic
-    fun parsePluginList(input: InputStream): List<PluginUiModel> {
+    @JvmOverloads
+    fun parsePluginList(input: InputStream, pluginBuilderFactory: PluginUiModelBuilderFactory = PluginUiModelBuilderFactory.getInstance()): List<PluginUiModel> {
       try {
-        val handler = RepositoryContentHandler(PluginUiModelBuilderFactory.getInstance())
+        val handler = RepositoryContentHandler(pluginBuilderFactory)
 
         val spf = SAXParserFactory.newDefaultInstance()
         spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
@@ -149,17 +149,14 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
     }
 
-    @RequiresBackgroundThread
-    @RequiresReadLockAbsence
-    @JvmStatic
-    @JvmOverloads
-    fun getLastCompatiblePluginUpdate(
+    private fun loadLastCompatiblePluginUpdate(
       allIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
+      updateCheck: Boolean = false
     ): List<IdeCompatibleUpdate> {
       val chunks = mutableListOf<MutableList<PluginId>>()
-      chunks.add(mutableListOf())
+      chunks.add(ArrayList(100))
 
       val maxLength = 3500 // 4k minus safety gap
       var currentLength = 0
@@ -179,14 +176,38 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       }
 
       return chunks.flatMap {
-        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions)
+        loadLastCompatiblePluginsUpdate(it, buildNumber, throwExceptions, updateCheck)
       }
+    }
+
+    /**
+     * Must be used only from [com.intellij.openapi.updateSettings.impl.UpdateChecker].
+     */
+    fun checkLastCompatiblePluginUpdate(
+      allIds: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false,
+    ): List<IdeCompatibleUpdate> {
+      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions, updateCheck = true)
+    }
+
+    @RequiresBackgroundThread
+    @RequiresReadLockAbsence
+    @JvmStatic
+    @JvmOverloads
+    fun getLastCompatiblePluginUpdate(
+      allIds: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false,
+    ): List<IdeCompatibleUpdate> {
+      return loadLastCompatiblePluginUpdate(allIds, buildNumber, throwExceptions)
     }
 
     private fun loadLastCompatiblePluginsUpdate(
       ids: Collection<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
+      updateCheck: Boolean = false,
     ): List<IdeCompatibleUpdate> {
       try {
         if (ids.isEmpty()) {
@@ -194,20 +215,20 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         }
 
         val url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
-        val os = URLEncoder.encode(OS.CURRENT.name + " " + OS.CURRENT.version, CharsetToolkit.UTF8)
+        val os = URLEncoder.encode("${OS.CURRENT} ${OS.CURRENT.version()}", StandardCharsets.UTF_8)
         val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
-            .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
+            .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateCheckerFacade.MACHINE_ID_DISABLED_PROPERTY, false) }
         } else null
 
         val query = buildString {
           append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
           append("&os=$os")
-          if (machineId != null) {
+          if (machineId != null && updateCheck) {
             append("&mid=$machineId")
           }
           for (id in ids) {
-            append("&pluginXmlId=${URLEncoder.encode(id.idString, CharsetToolkit.UTF8)}")
+            append("&pluginXmlId=${URLEncoder.encode(id.idString, StandardCharsets.UTF_8)}")
           }
         }
 
@@ -571,7 +592,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   private fun getTagsForUi(pluginUiModel: PluginUiModel): Collection<String> {
     if (pluginUiModel.suggestedCommercialIde != null) {
-      // drop Paid in a Community edition if it is Ultimate-only plugin
+      // drop Paid in a Community edition if it is an Ultimate-only plugin
       val newTags = (pluginUiModel.tags ?: emptyList()).toMutableList()
 
       if (PlatformUtils.isIdeaCommunity()) {
@@ -959,8 +980,7 @@ private data class CompatibleUpdateForModuleRequest(
   )
 }
 
-@ApiStatus.Internal
-fun Logger.infoOrDebug(
+private fun Logger.infoOrDebug(
   message: String,
   throwable: Throwable,
 ) {

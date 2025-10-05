@@ -1,26 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PageContainer
-import com.intellij.ide.plugins.PluginManagementPolicy
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.PluginManagerCore.getUnfulfilledOsRequirement
-import com.intellij.ide.plugins.PluginNode
-import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer
-import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * A temporary class used to eliminate "runtime" PluginDescriptor usages in the UI. It will later be replaced with frontend and backend implementations.
  */
 @ApiStatus.Internal
+@IntellijInternalApi
 class PluginUiModelAdapter(
   val pluginDescriptor: IdeaPluginDescriptor,
 ) : PluginUiModel {
@@ -74,6 +67,8 @@ class PluginUiModelAdapter(
     get() = pluginDescriptor.releaseVersion
   override val displayCategory: String?
     get() = pluginDescriptor.displayCategory
+  override val isImplementationDetail: Boolean
+    get() = pluginDescriptor.isImplementationDetail
   override var forumUrl: String?
     get() = if (pluginDescriptor is PluginNode) pluginDescriptor.forumUrl else null
     set(value) {
@@ -307,8 +302,13 @@ class PluginUiModelAdapter(
   override val sinceBuild: String?
     get() = pluginDescriptor.sinceBuild
 
+  override val isBundledUpdate: Boolean
+    get() = DefaultUiPluginManagerController.isBundledUpdate(pluginDescriptor)
+
   override val untilBuild: String?
     get() = pluginDescriptor.untilBuild
+  override val isDisableAllowed: Boolean
+    get() = PluginManagerCore.isDisableAllowed(pluginDescriptor)
 
   override fun getDescriptor(): IdeaPluginDescriptor = pluginDescriptor
 
@@ -327,4 +327,6 @@ class PluginUiModelAdapter(
   override fun hashCode(): Int {
     return pluginDescriptor.hashCode()
   }
+
+  override fun toString(): String = "PluginUiModelAdapter($pluginDescriptor)"
 }

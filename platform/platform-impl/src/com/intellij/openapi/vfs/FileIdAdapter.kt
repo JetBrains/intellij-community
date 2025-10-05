@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs
 
 import com.intellij.openapi.components.service
+import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 
@@ -12,8 +13,18 @@ interface FileIdAdapter {
     fun getInstance(): FileIdAdapter = application.service()
   }
 
-  fun getFile(id: Int): VirtualFile?
+  fun getFile(id: Int, fileEntry: FileEntry?): VirtualFile?
+
+  @ApiStatus.Experimental
+  fun getFileWithTimestamp(id: Int, fileEntry: FileEntry?, managingFsCreationTimestamp: Long): VirtualFile? = getFile(id, fileEntry)
 
   fun getId(file: VirtualFile): Int?
+  fun getManagingFsCreationTimestamp(file: VirtualFile): Long
+
+  fun getProtocol(file: VirtualFile): String?
+
+  fun getFile(protocol: String, path: String, fileEntry: FileEntry?): VirtualFile?
+
+  fun shouldSaveEditorState(file: VirtualFile): Boolean
 
 }

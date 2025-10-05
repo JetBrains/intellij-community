@@ -81,7 +81,8 @@ class MavenDependenciesGradleCompletionContributor : AbstractGradleCompletionCon
             MavenVersionNegatingWeigher()))
           waitAndAdd(searchPromise, cld) { repo ->
             repo.items.forEach {
-              newResult.addElement(MavenDependencyCompletionUtil.lookupElement(it, it.version))
+              val version = it.version ?: return@forEach
+              newResult.addElement(MavenDependencyCompletionUtil.lookupElement(it, version))
             }
           }
         }

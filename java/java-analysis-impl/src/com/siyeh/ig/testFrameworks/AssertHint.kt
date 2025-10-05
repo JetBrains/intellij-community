@@ -38,8 +38,8 @@ private fun PsiParameter.isAssertionMessage(): Boolean {
     CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER + "<" + CommonClassNames.JAVA_LANG_STRING + ">")
 }
 
-abstract class AbstractAssertHint<E> {
-  enum class ParameterOrder {
+public abstract class AbstractAssertHint<E> {
+  public enum class ParameterOrder {
     /** JUnit 3/JUnit 4 */
     MESSAGE_EXPECTED_ACTUAL,
 
@@ -50,52 +50,52 @@ abstract class AbstractAssertHint<E> {
     ACTUAL_EXPECTED_MESSAGE
   }
 
-  abstract val parameterOrder: ParameterOrder
+  public abstract val parameterOrder: ParameterOrder
 
-  abstract val method: PsiMethod
+  public abstract val method: PsiMethod
 
   /** Expression this [AbstractAssertHint] was created from. */
-  abstract val originalExpression: E
+  public abstract val originalExpression: E
 
   /** Message argument */
-  abstract val message: E?
+  public abstract val message: E?
 
   /** First argument index, excluding [message]. */
-  abstract val argIndex: Int
+  public abstract val argIndex: Int
 
   /** First argument, excluding [message]. */
-  abstract val firstArgument: E
+  public abstract val firstArgument: E
 
   /** Second argument, excluding [message]. */
-  abstract val secondArgument: E
+  public abstract val secondArgument: E
 
-  val isAssertTrue: Boolean get() = "assertTrue" == method.name
+  public val isAssertTrue: Boolean get() = "assertTrue" == method.name
 
-  val expected: E get() = if (parameterOrder != ParameterOrder.ACTUAL_EXPECTED_MESSAGE) firstArgument else secondArgument
+  public val expected: E get() = if (parameterOrder != ParameterOrder.ACTUAL_EXPECTED_MESSAGE) firstArgument else secondArgument
 
-  val actual: E get() = if (parameterOrder == ParameterOrder.ACTUAL_EXPECTED_MESSAGE) firstArgument else secondArgument
+  public val actual: E get() = if (parameterOrder == ParameterOrder.ACTUAL_EXPECTED_MESSAGE) firstArgument else secondArgument
 
-  val isMessageOnFirstPosition: Boolean get() = parameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL
+  public val isMessageOnFirstPosition: Boolean get() = parameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL
 
-  val isExpectedActualOrder: Boolean
+  public val isExpectedActualOrder: Boolean
     get() = parameterOrder == ParameterOrder.EXPECTED_ACTUAL_MESSAGE || parameterOrder == ParameterOrder.MESSAGE_EXPECTED_ACTUAL
 
   /** Get actual argument from expected argument and vice versa. */
-  fun getOtherExpression(expression: E): E? = when (expression) {
+  public fun getOtherExpression(expression: E): E? = when (expression) {
     firstArgument -> secondArgument
     secondArgument -> firstArgument
     else -> null
   }
 
 
-  companion object {
+  public companion object {
     @JvmField
-    val ASSERT_METHOD_2_PARAMETER_COUNT: @NonNls Map<String, Int> = mapOf("assertArrayEquals" to 2, "assertEquals" to 2,
-                                                                          "assertNotEquals" to 2, "assertFalse" to 1, "assumeFalse" to 1,
-                                                                          "assertNotNull" to 1, "assertNotSame" to 2, "assertNull" to 1,
-                                                                          "assertSame" to 2, "assertThat" to 2, "assertTrue" to 1,
-                                                                          "assumeTrue" to 1, "fail" to 0,
-                                                                          "assertEqualsNoOrder" to 2 //testng
+    public val ASSERT_METHOD_2_PARAMETER_COUNT: @NonNls Map<String, Int> = mapOf("assertArrayEquals" to 2, "assertEquals" to 2,
+                                                                                 "assertNotEquals" to 2, "assertFalse" to 1, "assumeFalse" to 1,
+                                                                                 "assertNotNull" to 1, "assertNotSame" to 2, "assertNull" to 1,
+                                                                                 "assertSame" to 2, "assertThat" to 2, "assertTrue" to 1,
+                                                                                 "assumeTrue" to 1, "fail" to 0,
+                                                                                 "assertEqualsNoOrder" to 2 //testng
     )
   }
 }
@@ -121,48 +121,48 @@ else {
   else null
 }
 
-class AssertHint private constructor(override val argIndex: Int,
-                                     override val parameterOrder: ParameterOrder,
-                                     override val message: PsiExpression?,
-                                     override val method: PsiMethod,
-                                     override val originalExpression: PsiExpression) : AbstractAssertHint<PsiExpression>() {
+public class AssertHint private constructor(override val argIndex: Int,
+                                            override val parameterOrder: ParameterOrder,
+                                            override val message: PsiExpression?,
+                                            override val method: PsiMethod,
+                                            override val originalExpression: PsiExpression) : AbstractAssertHint<PsiExpression>() {
   override val firstArgument: PsiExpression get() = getArgument(argIndex)
 
   override val secondArgument: PsiExpression get() = getArgument(argIndex + 1)
 
   private fun getArgument(index: Int): PsiExpression = (originalExpression as PsiMethodCallExpression).argumentList.expressions[index] as PsiExpression
 
-  companion object {
+  public companion object {
     @JvmStatic
-    fun createAssertEqualsHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
+    public fun createAssertEqualsHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
       if ("assertEquals" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun createAssertNotEqualsHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
+    public fun createAssertNotEqualsHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
       if ("assertNotEquals" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun createAssertTrueFalseHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
+    public fun createAssertTrueFalseHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
       if ("assertTrue" == methodName || "assertFalse" == methodName) 1 else null
     }
 
     @JvmStatic
-    fun createAssertSameHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
+    public fun createAssertSameHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
       if ("assertSame" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun createAssertNotSameHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
+    public fun createAssertNotSameHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
       if ("assertNotSame" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun createAssertEqualsLikeHintForCompletion(call: PsiMethodCallExpression?,
-                                                args: Array<PsiExpression?>,
-                                                method: PsiMethod,
-                                                index: Int): AssertHint? {
+    public fun createAssertEqualsLikeHintForCompletion(call: PsiMethodCallExpression?,
+                                                       args: Array<PsiExpression?>,
+                                                       method: PsiMethod,
+                                                       index: Int): AssertHint? {
       if (call == null) return null
       val name = method.name
       if (args.isEmpty()) return null
@@ -184,7 +184,7 @@ class AssertHint private constructor(override val argIndex: Int,
     }
 
     @JvmStatic
-    fun create(expression: PsiMethodCallExpression, methodNameToParamCount: (String) -> Int?): AssertHint? {
+    public fun create(expression: PsiMethodCallExpression, methodNameToParamCount: (String) -> Int?): AssertHint? {
       val methodExpression = expression.methodExpression
       val methodName = methodExpression.referenceName ?: return null
       val minimumParamCount = methodNameToParamCount(methodName) ?: return null
@@ -203,7 +203,7 @@ class AssertHint private constructor(override val argIndex: Int,
     }
 
     @JvmStatic
-    fun create(methodExpression: PsiMethodReferenceExpression, methodNameToParamCount: (String) -> Int?): AssertHint? {
+    public fun create(methodExpression: PsiMethodReferenceExpression, methodNameToParamCount: (String) -> Int?): AssertHint? {
       val methodName = methodExpression.referenceName ?: return null
       val minimumParamCount = methodNameToParamCount(methodName) ?: return null
       val resolveResult = methodExpression.advancedResolve(false)
@@ -219,40 +219,40 @@ class AssertHint private constructor(override val argIndex: Int,
   }
 }
 
-class UAssertHint private constructor(override val argIndex: Int,
-                                      override val parameterOrder: ParameterOrder,
-                                      override val message: UExpression?,
-                                      override val method: PsiMethod,
-                                      override val originalExpression: UExpression) : AbstractAssertHint<UExpression>() {
+public class UAssertHint private constructor(override val argIndex: Int,
+                                             override val parameterOrder: ParameterOrder,
+                                             override val message: UExpression?,
+                                             override val method: PsiMethod,
+                                             override val originalExpression: UExpression) : AbstractAssertHint<UExpression>() {
   override val firstArgument: UExpression get() = getArgument(argIndex)
 
   override val secondArgument: UExpression get() = getArgument(argIndex + 1)
 
   private fun getArgument(index: Int): UExpression = (originalExpression as UCallExpression).valueArguments[index]
 
-  companion object {
+  public companion object {
     @JvmStatic
-    fun createAssertEqualsHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+    public fun createAssertEqualsHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
       if ("assertEquals" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun createAssertNotEqualsHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+    public fun createAssertNotEqualsHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
       if ("assertNotEquals" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun createAssertSameHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+    public fun createAssertSameHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
       if ("assertSame" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun createAssertNotSameHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+    public fun createAssertNotSameHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
       if ("assertNotSame" == methodName) 2 else null
     }
 
     @JvmStatic
-    fun create(expression: UCallExpression, methodNameToParamCount: (String) -> Int?): UAssertHint? {
+    public fun create(expression: UCallExpression, methodNameToParamCount: (String) -> Int?): UAssertHint? {
       val methodName = expression.methodName ?: return null
       val minimumParamCount = methodNameToParamCount(methodName) ?: return null
       val method = expression.resolve() ?: return null
@@ -268,7 +268,7 @@ class UAssertHint private constructor(override val argIndex: Int,
     }
 
     @JvmStatic
-    fun create(refExpression: UCallableReferenceExpression, methodNameToParamCount: (String) -> Int?): UAssertHint? {
+    public fun create(refExpression: UCallableReferenceExpression, methodNameToParamCount: (String) -> Int?): UAssertHint? {
       val methodName = refExpression.callableName
       val minimumParamCount = methodNameToParamCount(methodName) ?: return null
       val method = refExpression.resolve() ?: return null

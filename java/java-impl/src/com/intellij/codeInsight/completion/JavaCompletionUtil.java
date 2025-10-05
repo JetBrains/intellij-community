@@ -862,7 +862,7 @@ public final class JavaCompletionUtil {
     }
 
     if (completionChar == '.') {
-      AutoPopupController.getInstance(file.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+      AutoPopupController.getInstance(file.getProject()).scheduleAutoPopup(context.getEditor());
     } else if (completionChar == ',') {
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }

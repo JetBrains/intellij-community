@@ -63,7 +63,7 @@ fun getGradleScriptInputsStamp(
     }
 }
 
-const val minimal_gradle_version_supported = "6.0"
+const val minimal_gradle_version_supported: String = "6.0"
 
 fun kotlinDslScriptsModelImportSupported(gradleVersion: String): Boolean {
     return GradleVersionUtil.isGradleAtLeast(gradleVersion, minimal_gradle_version_supported)

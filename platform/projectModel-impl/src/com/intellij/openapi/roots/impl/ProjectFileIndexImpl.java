@@ -6,32 +6,30 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.*;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl;
 import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
+
+import static com.intellij.openapi.roots.impl.FileSet2RootDescriptor.findFileSetDescriptor;
 
 /**
  * This is an internal class, {@link ProjectFileIndex} must be used instead.
@@ -80,6 +78,11 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public @NotNull Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir) {
     return myWorkspaceFileIndex.findContainingEntities(fileOrDir, LibraryEntity.class, true, false, false, true, true, false);
+  }
+
+  @Override
+  public @NotNull @Unmodifiable Collection<@NotNull SdkEntity> findContainingSdks(@NotNull VirtualFile fileOrDir) {
+    return myWorkspaceFileIndex.findContainingEntities(fileOrDir, SdkEntity.class, true, false, false, true, true, false);
   }
 
   @Override
@@ -168,7 +171,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
                                                      ModuleContentOrSourceRootData.class);
     if (fileSet == null) {
       if (!honorExclusion) {
-        WorkspaceFileSetWithCustomData<UnloadedModuleContentRootData> unloadedFileSet = 
+        WorkspaceFileSetWithCustomData<UnloadedModuleContentRootData> unloadedFileSet =
           myWorkspaceFileIndex.findFileSetWithCustomData(file, false, true, true, false, false, false,
                                                          UnloadedModuleContentRootData.class);
         if (unloadedFileSet != null) return unloadedFileSet.getRoot();
@@ -248,30 +251,9 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
     ImmutableEntityStorage snapshot = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
     for (WorkspaceFileSetWithCustomData<?> set : fileSets) {
-      if (set instanceof StoredFileSet) {
-        WorkspaceFileSetData data = set.getData();
-        WorkspaceEntity entity = ((StoredFileSet)set).getEntityPointer().resolve(snapshot);
-        if (entity instanceof LibraryEntity) {
-          Library library = LibraryEntityUtils.findLibraryBridge((LibraryEntity)entity, snapshot);
-          if (library != null) {
-            result.add(new LibraryRootDescriptor(set.getRoot(), library));
-          }
-        }
-        else if (data instanceof ModuleSourceRootData) {
-          Module module = ((ModuleSourceRootData)data).getModule();
-          result.add(new ModuleRootDescriptor(set.getRoot(), module));
-        }
-        else {
-          Sdk sdk = SdkBridgeImpl.Companion.findSdk(snapshot, set);
-          if (sdk != null) {
-            result.add(new SdkRootDescriptor(set.getRoot(), sdk));
-          }
-
-          Library globalLibrary = LibrariesAndSdkContributors.Companion.getGlobalLibrary$intellij_platform_projectModel_impl(set);
-          if (globalLibrary != null) {
-            result.add(new LibraryRootDescriptor(set.getRoot(), globalLibrary));
-          }
-        }
+      RootDescriptor descriptor = findFileSetDescriptor(set, snapshot);
+      if (descriptor != null) {
+        result.add(descriptor);
       }
     }
     if (result.size() != 1) {
@@ -306,22 +288,6 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     if (fileSet == null) return false;
     JpsModuleSourceRootType<?> type = SourceRootTypeRegistry.getInstance().findTypeById(fileSet.getData().getRootTypeId());
     return type != null && rootTypes.contains(type);
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public @Nullable SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
-    WorkspaceFileSetWithCustomData<ModuleSourceRootData> fileSet =
-      myWorkspaceFileIndex.findFileSetWithCustomData(fileOrDir, true, true, true, false, false, false, ModuleSourceRootData.class);
-    if (fileSet == null) return null;
-    for (ContentEntry contentEntry : ModuleRootManager.getInstance(fileSet.getData().getModule()).getContentEntries()) {
-      for (SourceFolder folder : contentEntry.getSourceFolders()) {
-        if (fileSet.getRoot().equals(folder.getFile())) {
-          return folder;
-        }
-      }
-    }
-    return null;
   }
 
   @Override

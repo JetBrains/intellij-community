@@ -13,3 +13,7 @@ print("")
 # one more comment
 #
 #</fold>
+
+
+def normal_foldable_element_to_ensure_two_step_folding() :<fold text='...'>
+    pass</fold>

@@ -8,6 +8,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.pycharm.community.ide.impl.promo.javaScriptPromoFeatureList
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProjectWizard.promotion.PromoProjectGenerator
 import javax.swing.Icon
@@ -25,7 +26,6 @@ internal class JavaScriptPromoProjectGenerator : PromoProjectGenerator(isPython 
     return AllIcons.Ultimate.PycharmLock
   }
 
-
   override fun createPromoPanel(): JPanel {
     return PromoPages.buildWithTryUltimate(
       PromoFeaturePage(
@@ -33,7 +33,6 @@ internal class JavaScriptPromoProjectGenerator : PromoProjectGenerator(isPython 
         PluginAdvertiserService.pyCharmProfessional,
         FeaturePromoBundle.message("feature.javascript.description.html",
                                    "https://www.jetbrains.com/help/idea/javascript-specific-guidelines.html"),
-
         javaScriptPromoFeatureList,
         FeaturePromoBundle.message("free.trial.hint"),
         null,

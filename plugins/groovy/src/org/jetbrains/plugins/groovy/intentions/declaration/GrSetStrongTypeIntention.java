@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.declaration;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -13,11 +13,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
@@ -40,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * @author Max Medvedev
@@ -80,8 +79,13 @@ public final class GrSetStrongTypeIntention extends Intention {
 
     ArrayList<TypeConstraint> types = new ArrayList<>();
 
-    if (parent.getParent() instanceof GrForInClause) {
-      types.add(SupertypeConstraint.create(PsiUtil.extractIteratedType((GrForInClause)parent.getParent())));
+    if (parent.getParent() instanceof GrForInClause clause) {
+      GrVariable indexVariable = clause.getIndexVariable();
+      if (indexVariable == parent) {
+        types.add(SupertypeConstraint.create(Objects.requireNonNull(indexVariable.getTypeGroovy())));
+      } else {
+        types.add(SupertypeConstraint.create(PsiUtil.extractIteratedType((GrForInClause)parent.getParent())));
+      }
     }
     else {
       for (GrVariable variable : variables) {
@@ -122,6 +126,9 @@ public final class GrSetStrongTypeIntention extends Intention {
 
     TextRange range = afterPostprocess.getTextRange();
     document.deleteString(range.getStartOffset(), range.getEndOffset());
+    if (rangeMarker.isValid()) {
+      editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+    }
 
     TemplateManager templateManager = TemplateManager.getInstance(project);
     templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
@@ -230,10 +237,10 @@ public final class GrSetStrongTypeIntention extends Intention {
           return false;
         }
 
-        if (pparent instanceof GrVariableDeclaration) {
-          if (((GrVariableDeclaration)pparent).getTypeElementGroovy() != null) return false;
+        if (pparent instanceof GrVariableDeclaration declaration) {
+          if (declaration.getTypeElementGroovy() != null || declaration.isTuple()) return false;
 
-          GrVariable[] variables = ((GrVariableDeclaration)pparent).getVariables();
+          GrVariable[] variables = declaration.getVariables();
           for (GrVariable variable : variables) {
             if (isVarDeclaredWithInitializer(variable)) return true;
           }

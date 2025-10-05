@@ -1,13 +1,12 @@
 import enum
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from typing import Any, Generic, Literal, TypeVar, type_check_only
+from typing import Any, ClassVar, Generic, Literal, TypeAlias, TypeVar, cast, overload, type_check_only
 
 from django import forms
 from django.contrib.admin.filters import FieldListFilter, ListFilter
 from django.contrib.admin.models import LogEntry
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.views.main import ChangeList
-from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.contenttypes.models import ContentType
 from django.core.checks.messages import CheckMessage
 from django.core.paginator import Paginator
@@ -26,7 +25,7 @@ from django.forms.models import (
     ModelForm,
     ModelMultipleChoiceField,
 )
-from django.forms.widgets import Media
+from django.forms.widgets import Media, MediaDefiningClass
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse, HttpResponseBase, HttpResponseRedirect
 from django.template.response import _TemplateForResponseT
@@ -34,7 +33,7 @@ from django.urls.resolvers import URLPattern
 from django.utils.datastructures import _ListOrTuple
 from django.utils.functional import _StrOrPromise
 from django.utils.safestring import SafeString
-from typing_extensions import Self, TypeAlias, TypedDict
+from typing_extensions import Self, TypedDict, deprecated
 
 IS_POPUP_VAR: str
 TO_FIELD_VAR: str
@@ -45,9 +44,9 @@ VERTICAL: Literal[2]
 _Direction: TypeAlias = Literal[1, 2]
 
 class ShowFacets(enum.Enum):
-    NEVER: str
-    ALLOW: str
-    ALWAYS: str
+    NEVER = cast(str, ...)
+    ALLOW = cast(str, ...)
+    ALWAYS = cast(str, ...)
 
 def get_content_type_for_model(obj: type[Model] | Model) -> ContentType: ...
 def get_ul_class(radio_style: int) -> str: ...
@@ -57,7 +56,7 @@ class IncorrectLookupParameters(Exception): ...
 FORMFIELD_FOR_DBFIELD_DEFAULTS: Any
 csrf_protect_m: Any
 
-_FieldGroups: TypeAlias = Sequence[str | Sequence[str]]
+_FieldGroups: TypeAlias = _ListOrTuple[str | _ListOrTuple[str]]
 
 @type_check_only
 class _OptionalFieldOpts(TypedDict, total=False):
@@ -68,9 +67,6 @@ class _OptionalFieldOpts(TypedDict, total=False):
 class _FieldOpts(_OptionalFieldOpts, total=True):
     fields: _FieldGroups
 
-# Workaround for mypy issue, a Sequence type should be preferred here.
-# https://github.com/python/mypy/issues/8921
-# _FieldsetSpec = Sequence[Tuple[Optional[str], _FieldOpts]]
 _FieldsetSpec: TypeAlias = _ListOrTuple[tuple[_StrOrPromise | None, _FieldOpts]]
 _ListFilterT: TypeAlias = (
     type[ListFilter]
@@ -83,25 +79,28 @@ _ListFilterT: TypeAlias = (
 # Generic type specifically for models, for use in BaseModelAdmin and subclasses
 # https://github.com/typeddjango/django-stubs/issues/482
 _ModelT = TypeVar("_ModelT", bound=Model)
-_DisplayT: TypeAlias = _ListOrTuple[str | Callable[[_ModelT], str | bool]]
+_DisplayT: TypeAlias = str | Callable[[_ModelT], str | bool]
+_ListDisplayT: TypeAlias = _ListOrTuple[_DisplayT[_ModelT]]
 
-class BaseModelAdmin(Generic[_ModelT]):
-    autocomplete_fields: _ListOrTuple[str]
-    raw_id_fields: _ListOrTuple[str]
-    fields: _FieldGroups | None
-    exclude: _ListOrTuple[str] | None
-    fieldsets: _FieldsetSpec | None
+# Options `form`, `list_display`, `list_display_links` and `actions` are not marked as `ClassVar` due to the
+# limitations of the current type system: `ClassVar` cannot contain type variables.
+class BaseModelAdmin(Generic[_ModelT], metaclass=MediaDefiningClass):
+    autocomplete_fields: ClassVar[_ListOrTuple[str]]
+    raw_id_fields: ClassVar[_ListOrTuple[str]]
+    fields: ClassVar[_FieldGroups | None]
+    exclude: ClassVar[_ListOrTuple[str] | None]
+    fieldsets: ClassVar[_FieldsetSpec | None]
     form: type[forms.ModelForm[_ModelT]]
-    filter_vertical: _ListOrTuple[str]
-    filter_horizontal: _ListOrTuple[str]
-    radio_fields: Mapping[str, _Direction]
-    prepopulated_fields: dict[str, Sequence[str]]
-    formfield_overrides: Mapping[type[Field], Mapping[str, Any]]
-    readonly_fields: _ListOrTuple[str]
-    ordering: _ListOrTuple[str] | None
-    sortable_by: _ListOrTuple[str] | None
-    show_full_result_count: bool
-    checks_class: Any
+    filter_vertical: ClassVar[_ListOrTuple[str]]
+    filter_horizontal: ClassVar[_ListOrTuple[str]]
+    radio_fields: ClassVar[Mapping[str, _Direction]]
+    prepopulated_fields: ClassVar[dict[str, Sequence[str]]]
+    formfield_overrides: ClassVar[Mapping[type[Field], Mapping[str, Any]]]
+    readonly_fields: ClassVar[_ListOrTuple[str]]
+    ordering: ClassVar[_ListOrTuple[str] | None]
+    sortable_by: ClassVar[_ListOrTuple[str] | None]
+    show_full_result_count: ClassVar[bool]
+    checks_class: ClassVar[Any]
     model: type[_ModelT]
     opts: Options[_ModelT]
     admin_site: AdminSite
@@ -124,13 +123,17 @@ class BaseModelAdmin(Generic[_ModelT]):
     def get_exclude(self, request: HttpRequest, obj: _ModelT | None = ...) -> _ListOrTuple[str] | None: ...
     def get_fields(self, request: HttpRequest, obj: _ModelT | None = ...) -> _FieldGroups: ...
     def get_fieldsets(self, request: HttpRequest, obj: _ModelT | None = ...) -> _FieldsetSpec: ...
-    def get_inlines(self, request: HttpRequest, obj: _ModelT | None) -> list[type[InlineModelAdmin]]: ...
+    def get_inlines(self, request: HttpRequest, obj: _ModelT | None) -> _ListOrTuple[type[InlineModelAdmin]]: ...
     def get_ordering(self, request: HttpRequest) -> _ListOrTuple[str]: ...
     def get_readonly_fields(self, request: HttpRequest, obj: _ModelT | None = ...) -> _ListOrTuple[str]: ...
     def get_prepopulated_fields(self, request: HttpRequest, obj: _ModelT | None = ...) -> dict[str, Sequence[str]]: ...
     def get_queryset(self, request: HttpRequest) -> QuerySet[_ModelT]: ...
-    def get_sortable_by(self, request: HttpRequest) -> _DisplayT[_ModelT]: ...
-    def lookup_allowed(self, lookup: str, value: str, request: HttpRequest | None = ...) -> bool: ...
+    def get_sortable_by(self, request: HttpRequest) -> _ListDisplayT[_ModelT]: ...
+    @overload
+    @deprecated("None value for the request parameter will be removed in Django 6.0.")
+    def lookup_allowed(self, lookup: str, value: str, request: None = None) -> bool: ...
+    @overload
+    def lookup_allowed(self, lookup: str, value: str, request: HttpRequest) -> bool: ...
     def to_field_allowed(self, request: HttpRequest, to_field: str) -> bool: ...
     def has_add_permission(self, request: HttpRequest) -> bool: ...
     def has_change_permission(self, request: HttpRequest, obj: _ModelT | None = ...) -> bool: ...
@@ -145,35 +148,35 @@ _ModelAdmin = TypeVar("_ModelAdmin", bound=ModelAdmin[Any])
 _ActionCallable: TypeAlias = Callable[[_ModelAdmin, HttpRequest, QuerySet[_ModelT]], HttpResponseBase | None]
 
 class ModelAdmin(BaseModelAdmin[_ModelT]):
-    list_display: _DisplayT[_ModelT]
-    list_display_links: _DisplayT[_ModelT] | None
-    list_filter: _ListOrTuple[_ListFilterT]
-    list_select_related: bool | _ListOrTuple[str]
-    list_per_page: int
-    list_max_show_all: int
-    list_editable: _ListOrTuple[str]
-    search_fields: _ListOrTuple[str]
-    search_help_text: _StrOrPromise | None
-    date_hierarchy: str | None
-    save_as: bool
-    save_as_continue: bool
-    save_on_top: bool
-    paginator: type
-    preserve_filters: bool
-    show_facets: ShowFacets
-    inlines: _ListOrTuple[type[InlineModelAdmin]]
-    add_form_template: _TemplateForResponseT | None
-    change_form_template: _TemplateForResponseT | None
-    change_list_template: _TemplateForResponseT | None
-    delete_confirmation_template: _TemplateForResponseT | None
-    delete_selected_confirmation_template: _TemplateForResponseT | None
-    object_history_template: _TemplateForResponseT | None
-    popup_response_template: _TemplateForResponseT | None
+    list_display: _ListDisplayT[_ModelT]
+    list_display_links: _ListDisplayT[_ModelT] | None
+    list_filter: ClassVar[_ListOrTuple[_ListFilterT]]
+    list_select_related: ClassVar[bool | _ListOrTuple[str]]
+    list_per_page: ClassVar[int]
+    list_max_show_all: ClassVar[int]
+    list_editable: ClassVar[_ListOrTuple[str]]
+    search_fields: ClassVar[_ListOrTuple[str]]
+    search_help_text: ClassVar[_StrOrPromise | None]
+    date_hierarchy: ClassVar[str | None]
+    save_as: ClassVar[bool]
+    save_as_continue: ClassVar[bool]
+    save_on_top: ClassVar[bool]
+    paginator: ClassVar[type]
+    preserve_filters: ClassVar[bool]
+    show_facets: ClassVar[ShowFacets]
+    inlines: ClassVar[_ListOrTuple[type[InlineModelAdmin]]]
+    add_form_template: ClassVar[_TemplateForResponseT | None]
+    change_form_template: ClassVar[_TemplateForResponseT | None]
+    change_list_template: ClassVar[_TemplateForResponseT | None]
+    delete_confirmation_template: ClassVar[_TemplateForResponseT | None]
+    delete_selected_confirmation_template: ClassVar[_TemplateForResponseT | None]
+    object_history_template: ClassVar[_TemplateForResponseT | None]
+    popup_response_template: ClassVar[_TemplateForResponseT | None]
     actions: Sequence[_ActionCallable[Self, _ModelT] | str] | None
-    action_form: Any
-    actions_on_top: bool
-    actions_on_bottom: bool
-    actions_selection_counter: bool
+    action_form: ClassVar[Any]
+    actions_on_top: ClassVar[bool]
+    actions_on_bottom: ClassVar[bool]
+    actions_selection_counter: ClassVar[bool]
     model: type[_ModelT]
     opts: Options[_ModelT]
     admin_site: AdminSite
@@ -206,15 +209,19 @@ class ModelAdmin(BaseModelAdmin[_ModelT]):
     ) -> Paginator: ...
     def log_addition(self, request: HttpRequest, obj: _ModelT, message: Any) -> LogEntry: ...
     def log_change(self, request: HttpRequest, obj: _ModelT, message: Any) -> LogEntry: ...
+    @deprecated("log_deletion() is deprecated and will be removed in Django 6.0. Use log_deletions() instead.")
     def log_deletion(self, request: HttpRequest, obj: _ModelT, object_repr: str) -> LogEntry: ...
+    def log_deletions(self, request: HttpRequest, queryset: QuerySet[_ModelT]) -> list[LogEntry] | LogEntry: ...
     def action_checkbox(self, obj: _ModelT) -> SafeString: ...
     def get_actions(self, request: HttpRequest) -> dict[str, tuple[Callable[..., str], str, str] | None]: ...
     def get_action_choices(
         self, request: HttpRequest, default_choices: list[tuple[str, str]] = ...
     ) -> list[tuple[str, str]]: ...
     def get_action(self, action: Callable | str) -> tuple[Callable[..., str], str, str] | None: ...
-    def get_list_display(self, request: HttpRequest) -> _DisplayT[_ModelT]: ...
-    def get_list_display_links(self, request: HttpRequest, list_display: _DisplayT[_ModelT]) -> _DisplayT[_ModelT]: ...
+    def get_list_display(self, request: HttpRequest) -> _ListDisplayT[_ModelT]: ...
+    def get_list_display_links(
+        self, request: HttpRequest, list_display: _ListDisplayT[_ModelT]
+    ) -> _ListDisplayT[_ModelT]: ...
     def get_list_filter(self, request: HttpRequest) -> _ListOrTuple[_ListFilterT]: ...
     def get_list_select_related(self, request: HttpRequest) -> bool | _ListOrTuple[str]: ...
     def get_search_fields(self, request: HttpRequest) -> _ListOrTuple[str]: ...
@@ -225,7 +232,7 @@ class ModelAdmin(BaseModelAdmin[_ModelT]):
     def _get_edited_object_pks(self, request: HttpRequest, prefix: str) -> list[str]: ...
     def _get_list_editable_queryset(self, request: HttpRequest, prefix: str) -> QuerySet[_ModelT]: ...
     def construct_change_message(
-        self, request: HttpRequest, form: AdminPasswordChangeForm, formsets: Iterable[BaseFormSet], add: bool = ...
+        self, request: HttpRequest, form: forms.Form, formsets: Iterable[BaseFormSet], add: bool = ...
     ) -> list[dict[str, dict[str, list[str]]]]: ...
     def message_user(
         self,

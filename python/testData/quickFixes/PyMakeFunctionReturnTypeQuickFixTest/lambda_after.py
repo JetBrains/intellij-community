@@ -1,5 +1,5 @@
-from typing import Callable, Any
+from typing import Callable
 
 
-def func() -> Callable[[Any], int]:
+def func() -> Callable[..., int]:
     return lambda x: 42<caret>

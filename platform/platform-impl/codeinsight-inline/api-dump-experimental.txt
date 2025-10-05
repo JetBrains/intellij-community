@@ -24,9 +24,11 @@ f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$LookupChange
 - *:getEditor():com.intellij.openapi.editor.Editor
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$ManualCall
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+- *sf:Companion:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$ManualCall$Companion
 - *f:getAdditionalData():com.intellij.openapi.util.UserDataHolder
 - f:getEditor():com.intellij.openapi.editor.Editor
 - toRequest():com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+*f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$ManualCall$Companion
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$SuggestionInserted
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - f:getEditor():com.intellij.openapi.editor.Editor

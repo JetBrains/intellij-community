@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jetbrains.compose.components.ui.tooling.preview.desktop" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-ui-tooling-preview-desktop:1.9.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-ui-tooling-preview-desktop/1.9.0/components-ui-tooling-preview-desktop-1.9.0.jar">
+          <sha256sum>ca0857dcde7cffff8eea3cce2940a285f219f673829f7f9a3381f767d224f411</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-ui-tooling-preview-desktop/1.9.0/components-ui-tooling-preview-desktop-1.9.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-ui-tooling-preview-desktop/1.9.0/components-ui-tooling-preview-desktop-1.9.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

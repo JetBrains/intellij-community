@@ -118,15 +118,15 @@ public final class DfaPsiUtil {
     if (DumbService.isDumb(owner.getProject())) return Nullability.UNKNOWN;
     NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
     if (fromAnnotation != null) {
-      if (fromAnnotation.getNullability() != Nullability.NOT_NULL) {
+      if (resultType != null && fromAnnotation.getNullability() != Nullability.NOT_NULL) {
         PsiType type = PsiUtil.getTypeByPsiElement(owner);
         if (type != null) {
           PsiAnnotationOwner annotationOwner = fromAnnotation.getAnnotation().getOwner();
-          if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter &&
-              annotationOwner instanceof PsiType && annotationOwner != type) {
+          if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter tp &&
+              annotationOwner instanceof PsiType && annotationOwner != type &&
+              !tp.equals(PsiUtil.resolveClassInClassTypeOnly(resultType))) {
             // Nullable/Unknown from type hierarchy: should check the instantiation, as it could be more concrete
-            Nullability fromType = getNullabilityFromType(resultType, owner);
-            if (fromType != null) return fromType;
+            return resultType.getNullability().nullability();
           }
         }
       }
@@ -163,14 +163,14 @@ public final class DfaPsiUtil {
   }
 
   private static @Nullable Nullability getNullabilityFromType(@Nullable PsiType resultType, @NotNull PsiModifierListOwner owner) {
-    Nullability fromType = getTypeNullability(resultType);
-    if (fromType != Nullability.UNKNOWN) {
-      if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
-        return Nullability.UNKNOWN;
-      }
-      return fromType;
+    if (resultType == null) return null;
+    TypeNullability typeNullability = resultType.getNullability();
+    if (typeNullability.equals(TypeNullability.UNKNOWN)) return null;
+    Nullability fromType = typeNullability.nullability();
+    if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
+      return Nullability.UNKNOWN;
     }
-    return null;
+    return fromType;
   }
 
   private static boolean hasNullContract(@NotNull PsiModifierListOwner owner) {
@@ -245,19 +245,7 @@ public final class DfaPsiUtil {
 
   public static @Nullable NullabilityAnnotationInfo getTypeNullabilityInfo(@Nullable PsiType type) {
     if (type == null || type instanceof PsiPrimitiveType) return null;
-
-    TypeNullability nullability = type.getNullability();
-    NullabilitySource source = nullability.source();
-    if (source instanceof NullabilitySource.ExtendsBound extendsBound) {
-      source = extendsBound.boundSource();
-    }
-    if (source instanceof NullabilitySource.ExplicitAnnotation ea) {
-      return new NullabilityAnnotationInfo(ea.annotation(), nullability.nullability(), false);
-    }
-    if (source instanceof NullabilitySource.ContainerAnnotation ca) {
-      return new NullabilityAnnotationInfo(ca.annotation(), nullability.nullability(), true);
-    }
-    return null;
+    return type.getNullability().toNullabilityAnnotationInfo();
   }
 
   private static boolean shouldIgnoreAnnotation(PsiAnnotation annotation) {

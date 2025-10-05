@@ -24,9 +24,7 @@ class SimplifyCallChainFix(
 ) : KotlinModCommandQuickFix<KtQualifiedExpression>() {
     private val shortenedText = conversion.replacement.substringAfterLast(".")
 
-    override fun getName(): String = KotlinBundle.message("simplify.call.chain.fix.text", shortenedText)
-
-    override fun getFamilyName(): String = name
+    override fun getFamilyName(): String = KotlinBundle.message("simplify.call.chain.fix.text", shortenedText)
 
     fun apply(qualifiedExpression: KtQualifiedExpression) {
         val psiFactory = KtPsiFactory(qualifiedExpression.project)

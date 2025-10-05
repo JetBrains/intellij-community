@@ -13,7 +13,8 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-private inline fun <T> withSpan(span: CompletableSpan, body: (Span) -> T): T =
+@PublishedApi
+internal inline fun <T> withSpan(span: CompletableSpan, body: (Span) -> T): T =
   runCatching { body(span) }.also { span.completeWithResult(it) }.getOrThrow()
 
 fun CompletableSpan.completeWithResult(result: Result<*>) {
@@ -28,7 +29,7 @@ fun CompletableSpan.completeWithResult(result: Result<*>) {
     }
 }
 
-fun <T> withCurrentSpan(span: Span, body: () -> T): T =
+inline fun <T> withCurrentSpan(span: Span, body: () -> T): T =
   currentSpanThreadLocal.get().let { oldSpan ->
     try {
       currentSpanThreadLocal.set(span)
@@ -39,7 +40,7 @@ fun <T> withCurrentSpan(span: Span, body: () -> T): T =
     }
   }
 
-fun <T> span(name: String, info: SpanInfoBuilder.() -> Unit = {}, body: () -> T): T =
+inline fun <T> span(name: String, info: SpanInfoBuilder.() -> Unit = {}, body: () -> T): T =
   currentSpan.let { span ->
     when (span) {
       is Span.Noop -> body()
@@ -63,6 +64,7 @@ suspend fun <T> spannedScope(
     withContext(span.asContextElement(), body)
   }
 
+@PublishedApi
 internal inline fun spanInfo(name: String, job: Any, isScope: Boolean, builder: SpanInfoBuilder.() -> Unit = {}): SpanInfo {
   return SpanInfoBuilder(name, job, isScope).apply(builder).build()
 }

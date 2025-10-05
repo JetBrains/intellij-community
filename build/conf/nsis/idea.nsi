@@ -24,12 +24,11 @@ RequestExecutionLevel user
 
 ; `StrFunc.nsh` requires priming the commands which actually get used later
 ${StrStr}
-${UnStrStr}
-${StrLoc}
+${StrTok}
 ${UnStrRep}
+${UnStrStr}
 
 !include "log.nsi"
-!include "registry.nsi"
 !include "config.nsi"
 !include "customInstallActions.nsi"
 
@@ -58,7 +57,8 @@ VIProductVersion ${PRODUCT_VERSION_NUM}
 
 Var startMenuFolder
 Var productLauncher
-Var baseRegKey
+Var rootRegKey
+Var productRegKey
 Var silentMode
 
 ; position of controls for Uninstall Old Installations dialog
@@ -66,7 +66,7 @@ Var control_fields
 Var max_fields
 Var bottom_position
 Var max_length
-Var line_width
+Var line_height
 Var extra_space
 
 ; position of controls for Installation Options dialog
@@ -85,80 +85,6 @@ ReserveFile "UninstallOldVersions.ini"
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_HEADER_FILE}"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_LOGO_FILE}"
-
-
-!macro INST_UNINST_SWITCH un
-  Function ${un}SplitStr
-    Exch $0 ; str
-    Push $1 ; inQ
-    Push $3 ; idx
-    Push $4 ; tmp
-    StrCpy $1 0
-    StrCpy $3 0
-  loop:
-    StrCpy $4 $0 1 $3
-    ${If} $4 == '"'
-      ${If} $1 <> 0
-        StrCpy $0 $0 "" 1
-        IntOp $3 $3 - 1
-      ${EndIf}
-      IntOp $1 $1 !
-    ${EndIf}
-    ${If} $4 == '' ; The end?
-      StrCpy $1 0
-      StrCpy $4 ','
-    ${EndIf}
-    ${If} $4 == ','
-    ${AndIf} $1 = 0
-      StrCpy $4 $0 $3
-      StrCpy $1 $4 "" -1
-      ${IfThen} $1 == '"' ${|} StrCpy $4 $4 -1 ${|}
-  killspace:
-      IntOp $3 $3 + 1
-      StrCpy $0 $0 "" $3
-      StrCpy $1 $0 1
-      StrCpy $3 0
-      StrCmp $1 ',' killspace
-      Push $0 ; Remaining
-      Exch 4
-      Pop $0
-      ${If} $4 == ""
-        Pop $4
-        Pop $3
-        Pop $1
-        Return
-      ${EndIf}
-      Exch $4
-      Exch 2
-      Pop $1
-      Pop $3
-      Return
-    ${EndIf}
-    IntOp $3 $3 + 1
-    Goto loop
-  FunctionEnd
-
-  Function ${un}adjustLanguage
-    ${If} $Language == ${LANG_SIMPCHINESE}
-      System::Call 'kernel32::GetUserDefaultUILanguage() h .r10'
-      ${If} $R0 != ${LANG_SIMPCHINESE}
-        ${LogText} "Language override: $R0 != ${LANG_SIMPCHINESE}"
-        StrCpy $Language ${LANG_ENGLISH}
-      ${EndIf}
-    ${EndIf}
-  FunctionEnd
-
-  Function ${un}postEnvChangeEvent
-    DetailPrint "Notifying applications about environment changes..."
-    ; SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)"Environment", SMTO_ABORTIFHUNG, 5000, &dwResult)
-    System::Call 'user32::SendMessageTimeout(i 0xFFFF, i 0x1A, i 0, t "Environment", i 0x2, i 1000, *i .r1) i .r0'
-    IntFmt $0 "0x%x" $0
-    DetailPrint "  SendMessageTimeout(): $0, $1"
-  FunctionEnd
-!macroend
-
-!insertmacro INST_UNINST_SWITCH ""
-!insertmacro INST_UNINST_SWITCH "un."
 
 
 ; checking whether there are files in the $INSTDIR
@@ -229,43 +155,42 @@ Function ConfirmDesktopShortcut
 
   Call customPreInstallActions
 
-  StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
-  StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
-  ; start position for association checkboxes
-  StrCpy $R1 0
-  ; space between checkboxes
-  StrCpy $R3 5
-  ; space for one symbol
-  StrCpy $R5 4
-  push "${ASSOCIATION}"
-loop:
-  ; get an association from list of associations
-  call SplitStr
-  Pop $0
-  StrCmp $0 "" done
-  ; get length of an association text
-  StrLen $R4 $0
-  IntOp $R4 $R4 * $R5
-  IntOp $R4 $R4 + 20
-  ; increase field number
-  IntOp $R0 $R0 + 1
-  StrCmp $R1 0 first_association 0
-  ; calculate  start position for next checkbox of an association using end of previous one.
-  IntOp $R1 $R1 + $R3
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Left" "$R1"
-  Goto calculate_shift
-first_association:
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $R0" "Left"
-  StrCpy $R1 $R2
-calculate_shift:
-  IntOp $R1 $R1 + $R4
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Right" "$R1"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
-  goto loop
-skip_association:
-  IntOp $R0 ${INSTALL_OPTION_ELEMENTS} - 1
-done:
+  ${If} "${ASSOCIATION}" == "NoAssociation"
+    IntOp $R0 ${INSTALL_OPTION_ELEMENTS} - 1
+  ${Else}
+    StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
+    StrCpy $R1 0  ; start position for association checkboxes
+    StrCpy $R3 5  ; space between checkboxes
+    StrCpy $R5 4  ; space for one symbol
+
+    StrCpy $9 0
+    ${Do}
+      ${StrTok} $0 "${ASSOCIATION}" "," $9 1
+      ${If} $0 == ""
+        ${Break}
+      ${EndIf}
+      ; get length of an association text
+      StrLen $R4 $0
+      IntOp $R4 $R4 * $R5
+      IntOp $R4 $R4 + 20
+      ; calculate the start position for next checkbox of an association using end of previous one
+      IntOp $R0 $R0 + 1
+      ${If} $R1 = 0
+        !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $R0" "Left"
+        StrCpy $R1 $R2
+      ${Else}
+        IntOp $R1 $R1 + $R3
+        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Left" "$R1"
+      ${EndIf}
+      IntOp $R1 $R1 + $R4
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Right" "$R1"
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
+
+      IntOp $9 $9 + 1
+    ${Loop}
+  ${EndIf}
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
+
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
 FunctionEnd
 
@@ -289,7 +214,7 @@ Page custom uninstallOldVersionDialog
 Page custom ConfirmDesktopShortcut
 
 !define MUI_PAGE_HEADER_TEXT "$(choose_start_menu_folder)"
-!define MUI_STARTMENUPAGE_DEFAULTFOLDER "JetBrains"
+!define MUI_STARTMENUPAGE_DEFAULTFOLDER "${MANUFACTURER}"
 !insertmacro MUI_PAGE_STARTMENU Application $startMenuFolder
 
 !define MUI_PAGE_HEADER_TEXT "$(installing_product)"
@@ -314,9 +239,6 @@ Function PageFinishRun
   ${EndIf}
 FunctionEnd
 
-;------------------------------------------------------------------------------
-; languages
-;------------------------------------------------------------------------------
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "SimpChinese"
 !insertmacro MUI_LANGUAGE "Japanese"
@@ -337,6 +259,8 @@ Function silentConfigReader
   ${LogText} ""
   ${LogText} "Silent installation, options"
   ${GetParameters} $R0
+
+  StrCpy $startMenuFolder "${MANUFACTURER}"
 
   ClearErrors
   ${GetOptions} $R0 /CONFIG= $R1
@@ -388,10 +312,9 @@ Function silentConfigReader
 
   ${If} "${ASSOCIATION}" != "NoAssociation"
     !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Settings" "NumFields"
-    Push "${ASSOCIATION}"
+    StrCpy $9 0
     ${Do}
-      Call SplitStr
-      Pop $0
+      ${StrTok} $0 "${ASSOCIATION}" "," $9 1
       ${If} $0 == ""
         ${Break}
       ${EndIf}
@@ -404,6 +327,7 @@ Function silentConfigReader
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "State" $R3
       !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
       ${LogText} "  association: $0, state: $R3"
+      IntOp $9 $9 + 1
     ${Loop}
     !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
   ${EndIf}
@@ -431,340 +355,310 @@ continue:
 FunctionEnd
 
 
-Function uninstallOldVersion
-  ;uninstallation mode
-  !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
-  ${LogText} ""
-  ${LogText} "Uninstall old installation: $3"
-
-  ;do copy for unistall.exe
-  CopyFiles "$3\bin\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
-
-  ${If} $9 == "1"
-    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S /NO_UNINSTALL_FEEDBACK=true _?=$3\bin'
-  ${else}
-    ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /NO_UNINSTALL_FEEDBACK=true _?=$3\bin'
-  ${EndIf}
-  IfFileExists $3\bin\${PRODUCT_EXE_FILE} 0 uninstall
-  goto complete
-uninstall:
-  ;previous installation has been removed
-  ;customer has decided to keep properties?
-  Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
-complete:
-FunctionEnd
-
-
-Function checkProductVersion
-;$8 - count of already added fields to the dialog
-;$3 - an old version which will be checked if the one should be added too
-  StrCpy $7 $control_fields
-  StrCpy $6 ""
-loop:
-  IntOp $7 $7 + 1
-  ${If} $8 >= $7
-    !insertmacro INSTALLOPTIONS_READ $6 "UninstallOldVersions.ini" "Field $7" "Text"
-    ${If} $6 == $3
-      ;found the same value in list of installations
-      StrCpy $6 "duplicated"
-      Goto finish
-    ${EndIf}
-    Goto loop
-  ${EndIf}
-finish:
-FunctionEnd
-
-
 Function getUninstallOldVersionVars
   !insertmacro INSTALLOPTIONS_READ $max_fields "UninstallOldVersions.ini" "Settings" "NumFields"
   !insertmacro INSTALLOPTIONS_READ $control_fields "UninstallOldVersions.ini" "Settings" "ControlFields"
   !insertmacro INSTALLOPTIONS_READ $bottom_position "UninstallOldVersions.ini" "Settings" "BottomPosition"
   !insertmacro INSTALLOPTIONS_READ $max_length "UninstallOldVersions.ini" "Settings" "MaxLength"
-  !insertmacro INSTALLOPTIONS_READ $line_width "UninstallOldVersions.ini" "Settings" "LineWidth"
+  !insertmacro INSTALLOPTIONS_READ $line_height "UninstallOldVersions.ini" "Settings" "LineHeight"
   !insertmacro INSTALLOPTIONS_READ $extra_space "UninstallOldVersions.ini" "Settings" "ExtraSpace"
 FunctionEnd
 
-
-Function getPosition
-; return:
-;    0 if it is first checkbox which do not require special position
-;    Bottom position of previous checkbox which equals for Top position of current one.
-  IntOp $R8 $8 - 1
-  !insertmacro INSTALLOPTIONS_READ $R7 "UninstallOldVersions.ini" "Field $R8" "Bottom"
-  !insertmacro INSTALLOPTIONS_READ $7  "UninstallOldVersions.ini" "Field $8"  "Top"
-  StrCmp $R8 $control_fields noCheckboxesFound 0
-    Push $R7
-    Goto done
-noCheckboxesFound:
-    Push $7
-done:
-FunctionEnd
-
-
-Function getAdditionalSpaceForCheckbox
-; $3 - a path to an old installation
-; return
-;   - 0 for 1-line checkbox
-;   - a value for additional space for multi-line checkbox
-  StrLen $9 $3
-  ${If} $9 >= $max_length
-    ; installation path is long
-    Push $extra_space
-    Goto done
-  ${Else}
-    Push 0
-  ${EndIf}
-done:
-FunctionEnd
-
-
-Function haveSpaceForTheCheckbox
-  ; check if dialog has space for current checkbox
-  !insertmacro INSTALLOPTIONS_READ $7 "UninstallOldVersions.ini" "Field $8" "Bottom"
-  IntOp $7 $bottom_position - $7
-  ${If} $7 >= 0
-    Push 0
-    Goto done
-  ${Else}
-    IntOp $8 $8 - 1
-    Push 1
-  ${EndIf}
-done:
-FunctionEnd
-
-
 Function uninstallOldVersionDialog
-  StrCpy $0 "HKLM"
-  StrCpy $4 0
-  StrCpy $8 $control_fields
+  StrCpy $R8 $control_fields
   !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 2" "State" "0"
 
-get_installation_info:
-  StrCpy $1 "Software\${MANUFACTURER}\${MUI_PRODUCT}"
-  StrCpy $2 ""
-  Call getInstallationPath
-  StrCmp $3 "complete" next_registry_root
-  ;check if the old installation could be uninstalled
-  IfFileExists $3\bin\Uninstall.exe uninstall_dialog get_next_key
-uninstall_dialog:
-  Call checkProductVersion
-  ${If} $6 != "duplicated"
-    IntOp $8 $8 + 1
-    Call getPosition
-    Pop $7
-    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Top" "$7"
-    IntOp $R7 $7 + $line_width
-    Call getAdditionalSpaceForCheckbox
-    Pop $R9
-    IntOp $R7 $R7 + $R9
-    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Bottom" "$R7"
-    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "State" "0"
-    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $8" "Text" "$3"
-    Call haveSpaceForTheCheckbox
-    Pop $9
-    StrCmp $9 0 0 complete
-  ${EndIf}
-get_next_key:
-  IntOp $4 $4 + 1 ;next record from registry
-  goto get_installation_info
+  StrCpy $R0 0  ; HKLM
+  StrCpy $R1 "Software"
+  Call enumerateInstalledVersions
 
-next_registry_root:
-  ${If} $0 == "HKLM"
-    StrCpy $0 "HKCU"
-    StrCpy $4 0
-    Goto get_installation_info
-  ${EndIf}
+  StrCpy $R0 0  ; HKLM
+  StrCpy $R1 "Software\Wow6432Node"
+  Call enumerateInstalledVersions
 
-complete:
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Settings" "NumFields" "$8"
-  ${If} $8 > $control_fields
-    ;$2 used in prompt text
-    StrCpy $2 "s"
-    StrCpy $7 $control_fields
-    IntOp $7 $7 + 1
-    StrCmp $8 $7 0 +2
-    StrCpy $2 ""
+  StrCpy $R0 1  ; HKCU
+  StrCpy $R1 "Software"
+  Call enumerateInstalledVersions
+
+  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Settings" "NumFields" "$R8"
+  ${If} $R8 > $control_fields
     !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" ""
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 2" "Text" "$(uninstall_previous_installations_silent)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
     !insertmacro INSTALLOPTIONS_DISPLAY_RETURN "UninstallOldVersions.ini"
-    Pop $9
-    ${If} $9 == "success"
-    loop:
-      ;uninstall chosen installation(s)
-      !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
-      !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
-      ${If} $0 == "1"
-        Call uninstallOldVersion
-      ${EndIf}
-      IntOp $8 $8 - 1
-      StrCmp $8 $control_fields finish loop
+    Pop $R9
+    ${If} $R9 == "success"
+      ; uninstall chosen installation in the chosen mode
+      !insertmacro INSTALLOPTIONS_READ $R1 "UninstallOldVersions.ini" "Field 2" "State"
+      ${DoWhile} $R8 > $control_fields
+        !insertmacro INSTALLOPTIONS_READ $R9 "UninstallOldVersions.ini" "Field $R8" "State"
+        ${If} $R9 == "1"
+          !insertmacro INSTALLOPTIONS_READ $R0 "UninstallOldVersions.ini" "Field $R8" "Text"
+          Call uninstallOldVersion
+        ${EndIf}
+        IntOp $R8 $R8 - 1
+      ${Loop}
     ${EndIf}
   ${EndIf}
-finish:
 FunctionEnd
 
-Function getInstallationPath
-loop:
-  Call OMEnumRegKey
-  StrCmp $3 "" 0 getPath
-  StrCpy $3 "complete"
-  goto done
-getPath:
-  Push $1
-  StrCpy $1 "$1\$3"
-  Call OMReadRegStr
-  Pop $1
-  IfFileExists "$3\bin\${PRODUCT_EXE_FILE}" done 0
-  IntOp $4 $4 + 1
-  goto loop
-done:
+; $R0 - root key (`0` = HKLM, `1` = HKCU)
+; $R1 - subkey
+; $R8(in,out) - a counter of fields added to the dialog
+Function enumerateInstalledVersions
+  StrCpy $R2 0
+
+  ${Do}
+    ${If} $R0 = 0
+      EnumRegKey $R3 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $R2
+    ${Else}
+      EnumRegKey $R3 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $R2
+    ${EndIf}
+    ${If} $R3 == ""
+      ${Break}
+    ${EndIf}
+
+    ${If} $R0 = 0
+      ReadRegStr $R3 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$R3" ""
+    ${Else}
+      ReadRegStr $R3 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$R3" ""
+    ${EndIf}
+    ${If} $R3 != ""
+    ${AndIf} ${FileExists} "$R3\bin\${PRODUCT_EXE_FILE}"
+    ${AndIf} ${FileExists} "$R3\bin\Uninstall.exe"
+      Call checkProductVersion
+
+      ${If} $R6 != "duplicated"
+        IntOp $R8 $R8 + 1
+        Call getTopPosition
+
+        IntOp $R7 $R6 + $line_height
+        StrLen $R9 $R3
+        ${If} $R9 >= $max_length
+          IntOp $R7 $R7 + $extra_space
+        ${EndIf}
+        ${If} $R7 > $bottom_position
+          ; the dialog is full
+          IntOp $R8 $R8 - 1
+          ${Break}
+        ${EndIf}
+
+        !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $R8" "Top" "$R6"
+        !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $R8" "Bottom" "$R7"
+        !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $R8" "State" "0"
+        !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field $R8" "Text" "$R3"
+      ${EndIf}
+    ${EndIf}
+
+    IntOp $R2 $R2 + 1
+  ${Loop}
 FunctionEnd
 
+; $R3 - a path to the version to be checked
+; $R8 - a counter of fields added to the dialog
+; $R6(out) - "duplicated" if the path is already added
+Function checkProductVersion
+  StrCpy $R6 ""
+  StrCpy $R7 $control_fields
+  IntOp $R7 $R7 + 1
+  ${DoWhile} $R7 <= $R8
+    !insertmacro INSTALLOPTIONS_READ $R6 "UninstallOldVersions.ini" "Field $R7" "Text"
+    ${If} $R6 == $R3
+      ; found the same path in the list of installations
+      StrCpy $R6 "duplicated"
+      Return
+    ${EndIf}
+    IntOp $R7 $R7 + 1
+  ${Loop}
+FunctionEnd
 
-Function ProductRegistration
+; $R8 - a counter of fields added to the dialog
+; $R6(out) - the 'Top' position for the new checkbox
+Function getTopPosition
+  IntOp $R9 $R8 - 1
+  ${If} $R9 = $control_fields 
+    !insertmacro INSTALLOPTIONS_READ $R6 "UninstallOldVersions.ini" "Field $R8" "Top"
+  ${Else}
+    !insertmacro INSTALLOPTIONS_READ $R6 "UninstallOldVersions.ini" "Field $R9" "Bottom"
+  ${EndIf}
+FunctionEnd
+
+; $R0 - a path to the version to uninstall
+; $R1 - mode ("1" = silent)
+Function uninstallOldVersion
   ${LogText} ""
-  ${LogText} "Do registration ${MUI_PRODUCT} ${VER_BUILD}"
-  StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" eapInfo releaseInfo
-eapInfo:
-  StrCpy $3 "${PRODUCT_WITH_VER}(EAP)"
-  goto createRegistration
-releaseInfo:
-  StrCpy $3 "${PRODUCT_WITH_VER}"
-createRegistration:
-  StrCpy $0 "HKCR"
-  StrCpy $1 "Applications\${PRODUCT_EXE_FILE}\shell\open"
-  StrCpy $2 "FriendlyAppName"
-  call OMWriteRegStr
-  StrCpy $1 "Applications\${PRODUCT_EXE_FILE}\shell\open\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%1"'
-  call OMWriteRegStr
+  ${LogText} "Uninstalling: $R0"
+
+  StrCpy $R9 "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  CopyFiles "$R0\bin\Uninstall.exe" $R9
+
+  ${If} $R1 == "1"
+    ExecWait '"$R9" /S /NO_UNINSTALL_FEEDBACK=true _?=$R0\bin'
+  ${Else}
+    ExecWait '"$R9" /NO_UNINSTALL_FEEDBACK=true _?=$R0\bin'
+  ${EndIf}
+
+  Delete $R9
 FunctionEnd
 
+
+Section "IDEA Files" CopyIdeaFiles
+  CreateDirectory $INSTDIR
+
+  Call customInstallActions
+
+  StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+  ${LogText} "Default launcher: $productLauncher"
+  DetailPrint "Default launcher: $productLauncher"
+
+  ; main part (read-only section)
+  ${LogText} ""
+  ${LogText} "Copy files to $INSTDIR"
+  SectionIn RO
+  !include "idea_win.nsh"
+
+  WriteUninstaller "$INSTDIR\bin\Uninstall.exe"
+  Call UninstallRecord
+
+  Call UpdateContextMenu
+  Call ProductAssociation
+  Call ProductRegistration
+  Call UpdatePathEnvVar
+  Call StartMenuShortcut
+  Call DesktopShortcut
+  Call JavaAssist
+
+  Call customPostInstallActions
+
+  ${RefreshShellIcons}
+SectionEnd
+
+Function UninstallRecord
+  WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "" "$INSTDIR"
+  ${If} $startMenuFolder != ""
+    WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder" "$startMenuFolder"
+  ${EndIf}
+  WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "AssociationKey" "${PRODUCT_PATHS_SELECTOR}"
+
+  StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
+  WriteRegStr SHCTX $0 "DisplayName" "${INSTALL_DIR_AND_SHORTCUT_NAME}"
+  WriteRegStr SHCTX $0 "UninstallString" '"$INSTDIR\bin\Uninstall.exe"'
+  WriteRegStr SHCTX $0 "QuietUninstallString" '"$INSTDIR\bin\Uninstall.exe" /S'
+  WriteRegStr SHCTX $0 "InstallLocation" "$INSTDIR"
+  WriteRegStr SHCTX $0 "DisplayIcon" "$productLauncher"
+  WriteRegStr SHCTX $0 "DisplayVersion" "${VER_BUILD}"
+  WriteRegStr SHCTX $0 "Publisher" "JetBrains s.r.o."
+  WriteRegStr SHCTX $0 "URLInfoAbout" "https://www.jetbrains.com/products"
+  WriteRegDWORD SHCTX $0 "NoModify" 1
+  WriteRegDWORD SHCTX $0 "NoRepair" 1
+FunctionEnd
 
 Function UpdateContextMenu
-  ${LogText} ""
-  ${LogText} "Update Context Menu - Open with PRODUCT action for folders"
+  ${If} $updateContextMenu > 0
+    !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $updateContextMenu" "State"
+    ${If} $R0 == 1
+      ${LogText} ""
+      ${LogText} "Update Context Menu - 'Open with ...' action for folders"
+      DetailPrint "Update Context Menu - 'Open with ...' action for folders"
 
-; add "Open with PRODUCT" action for folders to Windows context menu
-  StrCpy $0 "SHCTX"
-  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
-  StrCpy $2 ""
-  StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
-  call OMWriteRegStr
+      StrCpy $0 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+      WriteRegStr SHCTX $0 "" "Open Folder as ${MUI_PRODUCT} Project"
+      WriteRegStr SHCTX $0 "Icon" "$productLauncher"
+      WriteRegStr SHCTX "$0\command" "" '"$productLauncher" "%1"'
 
-  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
-  StrCpy $2 "Icon"
-  StrCpy $3 "$productLauncher"
-  call OMWriteRegStr
+      StrCpy $0 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+      WriteRegStr SHCTX $0 "" "Open Folder as ${MUI_PRODUCT} Project"
+      WriteRegStr SHCTX $0 "Icon" "$productLauncher"
+      WriteRegStr SHCTX "$0\command" "" '"$productLauncher" "%V"'
 
-  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%1"'
-  call OMWriteRegStr
+      ${LogText} "Update Context Menu - 'Edit with ...' action for files"
+      DetailPrint "Update Context Menu - 'Edit with ...' action for files"
 
-  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
-  StrCpy $2 ""
-  StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
-  call OMWriteRegStr
-
-  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
-  StrCpy $2 "Icon"
-  StrCpy $3 "$productLauncher"
-  call OMWriteRegStr
-
-  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%V"'
-  call OMWriteRegStr
+      StrCpy $0 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+      WriteRegStr SHCTX $0 "" "Edit with ${MUI_PRODUCT}"
+      WriteRegStr SHCTX $0 "Icon" "$productLauncher"
+      WriteRegStr SHCTX "$0\command" "" '"$productLauncher" "%1"'
+    ${EndIf}
+  ${EndIf}
 FunctionEnd
-
 
 Function ProductAssociation
   ${LogText} ""
-  ${LogText} "Do associations ${MUI_PRODUCT} ${VER_BUILD}"
-  push $0
-  push $1
-  push $2
-  push $3
-  StrCpy $2 ""
-  StrCmp $baseRegKey "HKLM" admin user
-admin:
-  StrCpy $0 HKCR
-  StrCpy $R5 ${PRODUCT_PATHS_SELECTOR}
-  goto back_up
-user:
-  StrCpy $0 HKCU
-  StrCpy $R4 "Software\Classes\$R4"
-  StrCpy $R5 "Software\Classes\${PRODUCT_PATHS_SELECTOR}"
-back_up:
- ; back up old value of an association
-  StrCpy $1 $R4
-call OMReadRegStr
-  StrCmp $3 "" skip_backup
-  StrCmp $3 ${PRODUCT_PATHS_SELECTOR} skip_backup
-  StrCpy $2 "backup_val"
-  Call OMWriteRegStr
-skip_backup:
-  StrCpy $2 ""
-  StrCpy $3 ${PRODUCT_PATHS_SELECTOR}
-  Call OMWriteRegStr
-  StrCpy $1 $R5
-  StrCpy $2 ""
-  Call OMReadRegStr
-  StrCmp $3 "" 0 command_exists
-  StrCpy $2 ""
-  StrCpy $3 "${PRODUCT_FULL_NAME}"
-  Call OMWriteRegStr
-  StrCpy $1 "$R5\shell"
-  StrCpy $2 ""
-  StrCpy $3 "open"
-  Call OMWriteRegStr
-  StrCpy $1 "$R5\DefaultIcon"
-  StrCpy $2 ""
-  StrCpy $3 "$productLauncher,0"
-  Call OMWriteRegStr
-command_exists:
-  StrCpy $1 "$R5\DefaultIcon"
-  StrCpy $2 ""
-  StrCpy $3 "$productLauncher,0"
-  Call OMWriteRegStr
-  StrCpy $1 "$R5\shell\open\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%1"'
-  Call OMWriteRegStr
+  ${LogText} "Setting up file associations"
 
-  ; add "Edit with PRODUCT" action for files to Windows context menu
-  ${LogText} ""
-  ${LogText} "Update Context Menu - Edit with PRODUCT"
+  !insertmacro INSTALLOPTIONS_READ $R9 "Desktop.ini" "Settings" "NumFields"
+  ${If} $R9 > ${INSTALL_OPTION_ELEMENTS}
+    StrCpy $R8 ${INSTALL_OPTION_ELEMENTS}
+    StrCpy $R1 "${PRODUCT_PATHS_SELECTOR}"
+    StrCpy $R2 "${PRODUCT_FULL_NAME}"
+    ${DoWhile} $R8 < $R9
+      !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R8" "State"
+      ${If} $R3 == 1
+        !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $R8" "Text"
+        Call DoProductAssociation
+      ${EndIf}
+      IntOp $R8 $R8 + 1
+    ${Loop}
+  ${EndIf}
 
-  StrCpy $0 "SHCTX"
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
-  StrCpy $2 "Icon"
-  StrCpy $3 "$productLauncher"
-  call OMWriteRegStr
-
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}\command"
-  StrCpy $2 ""
-  StrCpy $3 '"$productLauncher" "%1"'
-  call OMWriteRegStr
-
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
-  StrCpy $2 ""
-  StrCpy $3 "Edit with ${MUI_PRODUCT}"
-  call OMWriteRegStr
-
-  pop $3
-  pop $2
-  pop $1
-  pop $0
+  ${If} ${IPR} == "true"
+    StrCpy $R0 ".ipr"
+    StrCpy $R1 "IntelliJIdeaProjectFile"
+    StrCpy $R2 "IntelliJ IDEA Project File"
+    Call DoProductAssociation
+  ${EndIf}
 FunctionEnd
 
+; $R0 - extension
+; $R1 - association key
+; $R2 - association display name
+Function DoProductAssociation
+  ${LogText} "  associating '$R2' ($R1) with $R0 files"
+  DetailPrint "Associating '$R2' with $R0 files"
 
-Function updatePathEnvVar
+  StrCpy $0 "Software\Classes\$R0"
+  StrCpy $1 "Software\Classes\$R1"
+
+  ReadRegStr $2 SHCTX $0 ""
+  ${If} $2 != ""
+  ${AndIf} $2 != $R1
+    WriteRegStr SHCTX $0 "backup_val" $2
+  ${EndIf}
+  WriteRegStr SHCTX $0 "" $R1
+
+  WriteRegStr SHCTX $1 "" $R2
+  WriteRegStr SHCTX "$1\DefaultIcon" "" "$productLauncher,0"
+  WriteRegStr SHCTX "$1\shell" "" "open"
+  WriteRegStr SHCTX "$1\shell\open\command" "" '"$productLauncher" "%1"'
+FunctionEnd
+
+Function ProductRegistration
+  ${If} "${PRODUCT_WITH_VER}" == "${MUI_PRODUCT} ${VER_BUILD}"
+    StrCpy $3 "${PRODUCT_WITH_VER}(EAP)"
+  ${Else}
+    StrCpy $3 "${PRODUCT_WITH_VER}"
+  ${EndIf}
+
+  ${LogText} ""
+  ${LogText} "Registering '$3' in the application list"
+  DetailPrint "Registering '$3' in the application list"
+
+  WriteRegStr SHCTX "Software\Classes\Applications\${PRODUCT_EXE_FILE}\shell\open" "FriendlyAppName" "$3"
+  WriteRegStr SHCTX "Software\Classes\Applications\${PRODUCT_EXE_FILE}\shell\open\command" "" '"$productLauncher" "%1"'
+FunctionEnd
+
+Function UpdatePathEnvVar
   Var /GLOBAL pathEnvVar
+
+  !insertmacro INSTALLOPTIONS_READ $0 "Desktop.ini" "Field $addToPath" "State"
+  ${If} $0 != 1
+    Return
+  ${EndIf}
+
+  ${LogText} ""
+  ${LogText} "Updating the 'Path' env var"
+  DetailPrint "Updating the 'Path' env var"
 
   ClearErrors
   ReadRegStr $pathEnvVar HKCU "Environment" "Path"
@@ -780,15 +674,15 @@ Function updatePathEnvVar
     Return
   ${EndIf}
 
-  ${StrStr} $R0 $pathEnvVar "%${MUI_PRODUCT}%"
-  ${If} $R0 != ""
+  ${StrStr} $0 $pathEnvVar "%${MUI_PRODUCT}%"
+  ${If} $0 != ""
     ${LogText} "  '${MUI_PRODUCT}' is already on the path"
     Return
   ${EndIf}
 
   ${If} $pathEnvVar != ""
-    StrCpy $R0 $pathEnvVar 1 -1
-    ${If} $R0 != ';'
+    StrCpy $0 $pathEnvVar 1 -1
+    ${If} $0 != ';'
       StrCpy $pathEnvVar "$pathEnvVar;"
     ${EndIf}
   ${EndIf}
@@ -798,105 +692,34 @@ Function updatePathEnvVar
     Return
   ${EndIf}
 
-  Call postEnvChangeEvent
+  Call PostEnvChangeEvent
 FunctionEnd
 
-
-;------------------------------------------------------------------------------
-; Installer sections
-;------------------------------------------------------------------------------
-Section "IDEA Files" CopyIdeaFiles
-  CreateDirectory $INSTDIR
-
-  Call customInstallActions
-
-  StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
-  ${LogText} "Default launcher: $productLauncher"
-  DetailPrint "Default launcher: $productLauncher"
-
-  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
-  ${If} $R0 == 1
-    ${LogText} "Updating the 'Path' env var"
-    CALL updatePathEnvVar
-  ${EndIf}
-
-  ${If} $updateContextMenu > 0
-    !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $updateContextMenu" "State"
-    ${If} $R0 == 1
-      Call UpdateContextMenu
-    ${EndIf}
-  ${EndIf}
-
-  !insertmacro INSTALLOPTIONS_READ $R1 "Desktop.ini" "Settings" "NumFields"
-  IntCmp $R1 ${INSTALL_OPTION_ELEMENTS} do_association done do_association
-do_association:
-  StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}
-get_user_choice:
-  !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R2" "State"
-  StrCmp $R3 1 "" next_association
-  !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $R2" "Text"
-  call ProductAssociation
-next_association:
-  IntOp $R2 $R2 + 1
-  IntCmp $R1 $R2 get_user_choice done get_user_choice
-done:
-  StrCmp ${IPR} "false" skip_ipr
-
-  ; back up old value of .ipr
-  !define Index "Line${__LINE__}"
-  ReadRegStr $1 HKCR ".ipr" ""
-  StrCmp $1 "" "${Index}-NoBackup"
-    StrCmp $1 "IntelliJIdeaProjectFile" "${Index}-NoBackup"
-    WriteRegStr HKCR ".ipr" "backup_val" $1
-"${Index}-NoBackup:"
-  WriteRegStr HKCR ".ipr" "" "IntelliJIdeaProjectFile"
-  ReadRegStr $0 HKCR "IntelliJIdeaProjectFile" ""
-  StrCmp $0 "" 0 "${Index}-Skip"
-	WriteRegStr HKCR "IntelliJIdeaProjectFile" "" "IntelliJ IDEA Project File"
-	WriteRegStr HKCR "IntelliJIdeaProjectFile\shell" "" "open"
-"${Index}-Skip:"
-  WriteRegStr HKCR "IntelliJIdeaProjectFile\DefaultIcon" "" "$productLauncher,0"
-  WriteRegStr HKCR "IntelliJIdeaProjectFile\shell\open\command" "" '"$productLauncher" "%1"'
-!undef Index
-
-skip_ipr:
-  ; readonly section
-  ${LogText} ""
-  ${LogText} "Copy files to $INSTDIR"
-  SectionIn RO
-
-  ; main part
-  !include "idea_win.nsh"
-
-  ; registering the application for the "Open With" list
-  Call ProductRegistration
-
-  ; setting the working directory for subsequent `CreateShortCut` instructions
-  SetOutPath "$INSTDIR"
-
-  ; creating the desktop shortcut
-  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $launcherShortcut" "State"
-  ${If} $R0 == 1
-    ${LogText} "Creating shortcut: '$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk' -> '$productLauncher'"
-    CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$productLauncher" "" "" "" SW_SHOWNORMAL
-  ${EndIf}
-
-  ; creating the start menu shortcut and storing the start menu directory for the uninstaller
+Function StartMenuShortcut
   ${If} $startMenuFolder != ""
+    SetOutPath "$INSTDIR"  ; shortcut's working directory
+    ${LogText} "Creating shortcut: '$SMPROGRAMS\$startMenuFolder\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk'"
     !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     CreateDirectory "$SMPROGRAMS\$startMenuFolder"
     CreateShortCut "$SMPROGRAMS\$startMenuFolder\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$productLauncher" "" "" "" SW_SHOWNORMAL
-    StrCpy $0 $baseRegKey
-    StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
-    StrCpy $2 "MenuFolder"
-    StrCpy $3 "$startMenuFolder"
-    Call OMWriteRegStr
     !insertmacro MUI_STARTMENU_WRITE_END
   ${Else}
     DetailPrint "Skipping start menu shortcut."
+    ${LogText} "Skipping start menu shortcut."
   ${EndIf}
+FunctionEnd
 
-  ; enabling Java assistive technologies if a screen reader is active (0x0046 = SPI_GETSCREENREADER)
+Function DesktopShortcut
+  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $launcherShortcut" "State"
+  ${If} $R0 == 1
+    SetOutPath "$INSTDIR"  ; shortcut's working directory
+    ${LogText} "Creating shortcut: '$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk'"
+    CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$productLauncher" "" "" "" SW_SHOWNORMAL
+  ${EndIf}
+FunctionEnd
+
+; enabling Java assistive technologies if a screen reader is active (0x0046 = SPI_GETSCREENREADER)
+Function JavaAssist
   System::Call 'user32::SystemParametersInfo(i 0x0046, i 0, *i .r1, i 0) i .r0'
   ${LogText} "SystemParametersInfo(SPI_GETSCREENREADER): $0, value=$1"
   ${If} $0 <> 0
@@ -910,51 +733,43 @@ skip_ipr:
     ${If} ${FileExists} "$INSTDIR\jbr\bin\WindowsAccessBridge-64.dll"
     ${AndIfNot} ${FileExists} "$SYSDIR\WindowsAccessBridge-64.dll"
       ${LogText} "Copying '$INSTDIR\jbr\bin\WindowsAccessBridge-64.dll' into '$SYSDIR'"
-      ${DisableX64FSRedirection}
       CopyFiles /SILENT "$INSTDIR\jbr\bin\WindowsAccessBridge-64.dll" "$SYSDIR"
-      ${EnableX64FSRedirection}
     ${EndIf}
   ${EndIf}
-
-  Call customPostInstallActions
-
-  StrCpy $0 $baseRegKey
-  StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
-  StrCpy $2 ""
-  StrCpy $3 "$INSTDIR"
-  Call OMWriteRegStr
-
-  ; writing the uninstaller & creating the uninstall record
-  WriteUninstaller "$INSTDIR\bin\Uninstall.exe"
-  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "DisplayName" "${INSTALL_DIR_AND_SHORTCUT_NAME}"
-  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "UninstallString" "$INSTDIR\bin\Uninstall.exe"
-  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "InstallLocation" "$INSTDIR"
-  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "DisplayIcon" "$productLauncher"
-  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "DisplayVersion" "${VER_BUILD}"
-  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "Publisher" "JetBrains s.r.o."
-  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "URLInfoAbout" "https://www.jetbrains.com/products"
-  WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "InstallType" "$baseRegKey"
-  WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "NoModify" 1
-  WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" "NoRepair" 1
-
-  ; reset icon cache
-  ${LogText} "Reset icon cache"
-  System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0) v'
-SectionEnd
+FunctionEnd
 
 
 Function .onInit
   SetRegView 64
+  ${DisableX64FSRedirection}
   Call createLog
 
+  ${IfNot} ${AtLeastBuild} 14393  ; Windows 10 1607 / Windows Server 2016
+    MessageBox MB_OK "$(unsupported_win_version)"
+    Abort
+  ${EndIf}
+
   ${GetNativeMachineArchitecture} $R0
-  ${IfNot} $R0 == ${INSTALLER_ARCH}
-  ${OrIfNot} ${AtLeastBuild} 14393  ; Windows 10 1607 / Windows Server 2016
-    ${LogText} "Architecture: expected=${INSTALLER_ARCH} actual=$R0"
-    ReadEnvStr $R0 "TEAMCITY_VERSION"
-    ${If} $R0 == ""
-      MessageBox MB_OK "$(unsupported_win_version)"
-      Abort
+  ${If} $R0 <> ${INSTALLER_ARCH}
+    IntFmt $R0 "0x%04X" $R0
+    IntFmt $R1 "0x%04X" ${INSTALLER_ARCH}
+    ${LogText} "Architecture: expected=$R1 actual=$R0"
+    ReadEnvStr $0 "TEAMCITY_VERSION"
+    ${If} $0 == ""
+      ${GetParameters} $0
+      ClearErrors
+      ${GetOptions} $0 "/IGNORE_ARCH" $1
+      ${If} ${Errors}
+        ${If} ${INSTALLER_ARCH} = 0x8664
+          StrCpy $R1 "x64"
+        ${ElseIf} ${INSTALLER_ARCH} = 0xAA64
+          StrCpy $R1 "ARM64"
+        ${EndIf}
+        MessageBox MB_OK "$(arch_mismatch)"
+        Abort
+      ${Else}
+        ${LogText} "  ... overridden"
+      ${EndIf}
     ${Else}
       ${LogText} "  ... ignored on TeamCity"
     ${EndIf}
@@ -970,11 +785,11 @@ Function .onInit
   Call getUninstallOldVersionVars
 
   SetShellVarContext current
-  StrCpy $baseRegKey "HKCU"
+  StrCpy $rootRegKey 1
 
   IfSilent silent_mode uac_elevate
 silent_mode:
-  Call checkAvailableDiskSpace
+  Call CheckAvailableDiskSpace
 
   ${If} ${CUSTOM_SILENT_CONFIG} = 0
     Call silentConfigReader
@@ -1003,17 +818,17 @@ uac_success:
   goto uac_elevate
 uac_admin:
   SetShellVarContext all
-  StrCpy $baseRegKey "HKLM"
+  StrCpy $rootRegKey 0
 
 check_install_dir:
-  ${If} $baseRegKey == "HKCU"
+  ${If} $rootRegKey = 1
   ${AndIf} "$INSTDIR" == "${DEFAULT_INST_DIR}"
     StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${INSTALL_DIR_AND_SHORTCUT_NAME}"
   ${EndIf}
   ${If} ${Silent}
     Call OnDirectoryPageLeave ; in the silent mode, check if the installation folder is not empty
   ${EndIf}
-  ${LogText} "Root registry key: $baseRegKey"
+  ${LogText} "Root registry key: $rootRegKey (0 - HKLM, 1 - HKCU)"
   ${LogText} "Installation dir: $INSTDIR"
 
   ${IfNot} ${Silent}
@@ -1022,10 +837,9 @@ check_install_dir:
   ${EndIf}
 FunctionEnd
 
-
-Function checkAvailableDiskSpace
+Function CheckAvailableDiskSpace
   StrCpy $0 $INSTDIR 3  ; copying first 3 characters
-  Call getFreeDiskSpace
+  Call GetFreeDiskSpace
   ${LogText} "Space available: $1 MiB"
   ${If} $1 > 0
     SectionGetSize ${CopyIdeaFiles} $R0
@@ -1043,7 +857,7 @@ Function checkAvailableDiskSpace
 FunctionEnd
 
 ; returns the amount of free space on a disk $0, in MiBs, in $1
-Function getFreeDiskSpace
+Function GetFreeDiskSpace
   System::Call 'kernel32::GetDiskFreeSpaceEx(t "$0", *l .r1, *l .r2, *l .r3) i .r0'
   ${If} $0 <> 0
     System::Int64Op $1 >>> 20  ; converting bytes to MiBs
@@ -1055,32 +869,10 @@ Function getFreeDiskSpace
   ${EndIf}
 FunctionEnd
 
+
 ;------------------------------------------------------------------------------
 ; custom uninstall functions
 ;------------------------------------------------------------------------------
-
-Function un.getRegKey
-  ReadRegStr $R2 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
-  ${If} "$R2\bin" == $INSTDIR
-    StrCpy $baseRegKey "HKCU"
-  ${Else}
-    ReadRegStr $R2 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
-    ${If} "$R2\bin" == $INSTDIR
-      StrCpy $baseRegKey "HKLM"
-    ${Else}
-      ; registry key is missing; compare $INSTDIR with default user locations
-      ${UnStrStr} $R0 $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}"
-      ${UnStrStr} $R1 $INSTDIR "$LOCALAPPDATA\Programs"
-      ${If} $R0 == $INSTDIR
-      ${OrIf} $R1 == $INSTDIR
-        StrCpy $baseRegKey "HKCU"
-      ${Else}
-        StrCpy $baseRegKey "HKLM"  ; undefined location
-      ${EndIf}
-    ${EndIf}
-  ${EndIf}
-FunctionEnd
-
 
 Function un.onUninstSuccess
   SetErrorLevel 0
@@ -1100,16 +892,19 @@ FunctionEnd
 
 Function un.onInit
   SetRegView 64
+  ${DisableX64FSRedirection}
 
   ; checking that the uninstaller is in the expected location ("...\bin" subdirectory)
-  ${IfNot} ${FileExists} "$INSTDIR\fsnotifier.exe"
-  ${OrIfNot} ${FileExists} "$INSTDIR\${PRODUCT_EXE_FILE}"
+  ${IfNot} ${FileExists} "$INSTDIR\${PRODUCT_EXE_FILE}"
     MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
     Abort
   ${EndIf}
 
-  Call un.getRegKey
-  ${If} $baseRegKey == "HKLM"
+  SetShellVarContext current
+  StrCpy $rootRegKey 1
+
+  Call un.FindProductKey
+  ${If} $rootRegKey = 0
     ; checking that the uninstaller is running from the product location
     IfFileExists $LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate required_admin_perm
 
@@ -1122,13 +917,11 @@ Function un.onInit
     StrCpy $R0 "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
     CopyFiles "$OUTDIR\Uninstall.exe" "$R0"
     ${If} ${Silent}
-      ExecWait '$R0 /S _?=$INSTDIR'
+      ExecWait '"$R0" /S _?=$INSTDIR'
     ${Else}
-      ExecWait '$R0 _?=$INSTDIR'
+      ExecWait '"$R0" _?=$INSTDIR'
     ${EndIf}
     Delete "$R0"
-    RMDir "$INSTDIR\bin"
-    RMDir "$INSTDIR"
     Quit
 
   UAC_Elevate:
@@ -1146,7 +939,7 @@ Function un.onInit
     goto UAC_Elevate
   UAC_Admin:
     SetShellVarContext all
-    StrCpy $baseRegKey "HKLM"
+    StrCpy $rootRegKey 0
   ${EndIf}
 
   ${IfNot} ${Silent}
@@ -1158,46 +951,71 @@ Function un.onInit
   Call un.UninstallFeedback
 FunctionEnd
 
+Function un.FindProductKey
+  StrCpy $productRegKey ""
+  ${GetParent} $INSTDIR $R2
 
-Function un.RestoreBackupRegValue
-  ;replace Default str with the backup value (if there is the one) and then delete backup
-  ; $1 - key (for example ".java")
-  ; $2 - name (for example "backup_val")
-  Push $0
-  Push $3
+  StrCpy $R0 1  ; HKCU
+  StrCpy $R1 "Software"
+  Call un.DoFindProductKey
+  ${If} $productRegKey != ""
+    Return
+  ${EndIf}
 
-  StrCmp $baseRegKey "HKLM" admin user
-admin:
-  StrCpy $0 HKCR
-  goto read_backup_value
-user:
-  StrCpy $0 HKCU
-  StrCpy $1 "Software\Classes\$1"
+  StrCpy $R0 0  ; HKLM
+  StrCpy $R1 "Software"
+  Call un.DoFindProductKey
+  ${If} $productRegKey != ""
+    Return
+  ${EndIf}
 
-read_backup_value:
-  call un.OMReadRegStr
-  StrCmp $3 "" no_backup restore_backup
+  StrCpy $R0 0  ; HKLM
+  StrCpy $R1 "Software\Wow6432Node"
+  Call un.DoFindProductKey
+  ${If} $productRegKey != ""
+    Return
+  ${EndIf}
 
-no_backup:
-  ;clean default value if it contains current product info
-  StrCpy $2 ""
-  call un.OMReadRegStr
-  StrCmp $4 $3 0 done
-  call un.OMDeleteRegValue
-  goto done
+  ; registry key is missing; compare $INSTDIR with user locations
+  ${UnStrStr} $0 $INSTDIR "$LOCALAPPDATA"
+  ${UnStrStr} $1 $INSTDIR "$PROFILE"
+  ${IfNot} $0 == $INSTDIR
+  ${AndIfNot} $1 == $INSTDIR
+    ; unknown location
+    StrCpy $rootRegKey 0
+  ${EndIf}
+FunctionEnd
 
-restore_backup:
-  StrCmp $3 $4 remove_backup 0
-  push $2
-  StrCpy $2 ""
-  call un.OMWriteRegStr
-  pop $2
-remove_backup:
-  call un.OMDeleteRegValue
+; $R0 - root key (`0` = HKLM, `1` = HKCU)
+; $R1 - base key
+; $R2 - installation directory
+; $productRegKey(out) - product version key if found
+Function un.DoFindProductKey
+  StrCpy $9 0
 
-done:
-  Pop $3
-  Pop $0
+  ${Do}
+    ${If} $R0 = 0
+      EnumRegKey $0 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $9
+    ${Else}
+      EnumRegKey $0 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $9
+    ${EndIf}
+    ${If} $0 == ""
+      ${Break}
+    ${EndIf}
+
+    ${If} $R0 = 0
+      ReadRegStr $1 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$0" ""
+    ${Else}
+      ReadRegStr $1 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$0" ""
+    ${EndIf}
+    ${If} $1 == $R2
+      StrCpy $rootRegKey $R0
+      StrCpy $productRegKey "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$0"
+      ${Break}
+    ${EndIf}
+
+    IntOp $9 $9 + 1
+  ${Loop}
 FunctionEnd
 
 
@@ -1223,38 +1041,6 @@ check_processes:
   Abort
 FunctionEnd
 
-
-Function un.deleteDirectoryWithParent
-  RMDir /R "$0"
-  RMDir "$0\.."  ; delete a parent directory if empty
-FunctionEnd
-
-
-Function un.deleteShortcutIfRight
-  ${IfNot} ${FileExists} "$0"
-    DetailPrint "The $1 shortcut '$0' does does not exist."
-    Return
-  ${EndIf}
-
-  ClearErrors
-  ShellLink::GetShortCutTarget "$0"
-  Pop $R1
-  ${IfNot} ${Errors}
-  ${AndIf} $R1 == "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
-    DetailPrint "Deleting the $1 shortcut: $0"
-    Delete "$0"
-    ${If} $1 == "start menu"
-      RMDir "$0\.."  ; delete the parent group if empty
-    ${EndIf}
-  ${Else}
-    DetailPrint "The link '$0' does does not point to a valid launcher."
-  ${EndIf}
-FunctionEnd
-
-
-;------------------------------------------------------------------------------
-; custom uninstall pages
-;------------------------------------------------------------------------------
 
 Function un.ConfirmDeleteSettings
   !insertmacro MUI_HEADER_TEXT "$(uninstall_options)" ""
@@ -1287,7 +1073,8 @@ FunctionEnd
 
 
 Section "Uninstall"
-  DetailPrint "Root registry key: $baseRegKey"
+  DetailPrint "Root registry key: $rootRegKey (0 - HKLM, 1 - HKCU)"
+  DetailPrint "Product registry key: $productRegKey"
 
   ; the uninstaller is in the "...\bin" subdirectory; correcting
   ${GetParent} "$INSTDIR" $INSTDIR
@@ -1297,66 +1084,10 @@ Section "Uninstall"
 
   Call un.customUninstallActions
 
-  ; deleting the start menu shortcut
-  StrCpy $0 $baseRegKey
-  StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
-  StrCpy $2 "MenuFolder"
-  Call un.OMReadRegStr
-  ${If} $3 != ""
-    StrCpy $0 "$SMPROGRAMS\$3\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-    StrCpy $1 "start menu"
-    Call un.deleteShortcutIfRight
-  ${EndIf}
-
-  ; deleting the desktop shortcut
-  StrCpy $0 "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-  StrCpy $1 "desktop"
-  Call un.deleteShortcutIfRight
-
-  ; deleting the 'Path' record
-  ReadRegStr $R0 HKCU "Environment" "${MUI_PRODUCT}"
-  ${If} $R0 == "$INSTDIR\bin"
-    ReadRegStr $R1 HKCU "Environment" "Path"
-    ${UnStrRep} $R2 $R1 ";%${MUI_PRODUCT}%" ""
-    ${If} $R2 != $R1
-    ${AndIf} $R2 != ""
-      DetailPrint "Updating the 'Path' environment variable."
-      WriteRegExpandStr HKCU "Environment" "Path" "$R2"
-    ${EndIf}
-    DetailPrint "Deleting the '${MUI_PRODUCT}' environment variable."
-    DeleteRegValue HKCU "Environment" "${MUI_PRODUCT}"
-    Call un.postEnvChangeEvent
-  ${EndIf}
-
-  ; setting the context for `$APPDATA` and `$LOCALAPPDATA`
-  ${If} $baseRegKey == "HKLM"
-    SetShellVarContext current
-  ${EndIf}
-
-  ; deleting caches
-  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
-  ${If} $R2 == 1
-    StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
-    DetailPrint "Deleting caches: $0"
-    Call un.deleteDirectoryWithParent
-  ${Else}
-    DetailPrint "Keeping caches"
-  ${EndIf}
-
-  ; deleting settings
-  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 5" "State"
-  ${If} $R2 == 1
-    StrCpy $0 "$APPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
-    DetailPrint "Deleting settings: $0"
-    Call un.deleteDirectoryWithParent
-  ${Else}
-    DetailPrint "Keeping settings"
-  ${EndIf}
-
-  ; restoring the context
-  ${If} $baseRegKey == "HKLM"
-    SetShellVarContext all
-  ${EndIf}
+  Call un.StartMenuShortcut
+  Call un.DesktopShortcut
+  Call un.UpdatePathEnvVar
+  Call un.CachesAndSettings
 
   ; deleting the uninstaller itself and other cruft
   Delete "$INSTDIR\bin\Uninstall.exe"
@@ -1367,83 +1098,198 @@ Section "Uninstall"
   RMDir "$INSTDIR\bin"
   RMDir "$INSTDIR"
 
-  ; removing the directory context menu action
-  StrCpy $0 "SHCTX"
-  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
-  Call un.OMDeleteRegKey
-  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
-  Call un.OMDeleteRegKey
-  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
-  Call un.OMDeleteRegKey
+  Call un.UpdateContextMenu
+  Call un.ProductAssociation
+  Call un.ProductRegistration
+  Call un.UninstallRecord
 
-  ; restoring file associations
-  StrCpy $5 "Software\${MANUFACTURER}"
-  StrCmp "${ASSOCIATION}" "NoAssociation" finish_uninstall
-  push "${ASSOCIATION}"
-loop:
-  StrCpy $2 "backup_val"
-  StrCpy $4 "${PRODUCT_PATHS_SELECTOR}"
-  call un.SplitStr
-  Pop $0
-  StrCmp $0 "" finish_uninstall
+  ${RefreshShellIcons}
 
-  ;restore backup association(s)
-  StrCpy $1 $0
-  Call un.RestoreBackupRegValue
-  goto loop
+  Call un.OpenUninstallFeedbackPage
+SectionEnd
 
-finish_uninstall:
-  StrCpy $0 $baseRegKey
-  StrCpy $1 "$5\${PRODUCT_REG_VER}"
-  StrCpy $4 0
+Function un.StartMenuShortcut
+  StrCpy $0 ""
+  ${If} $productRegKey != ""
+    ReadRegStr $0 SHCTX $productRegKey "MenuFolder"
+  ${EndIf}
+  ${If} $0 == ""
+    StrCpy $0 "${MANUFACTURER}"
+  ${EndIf}
+  StrCpy $R0 "$SMPROGRAMS\$0"
+  ${If} ${FileExists} $R0
+    Call un.DeleteShortcuts
+    RMDir $R0  ; if empty
+  ${EndIf}
+FunctionEnd
 
-getValue:
-  Call un.OMEnumRegValue
-  IfErrors finish delValue
-delValue:
-  StrCpy $2 $3
-  Call un.OMDeleteRegValue
-  IfErrors 0 +2
-  IntOp $4 $4 + 1
-  goto getValue
+Function un.DesktopShortcut
+  StrCpy $R0 "$DESKTOP"
+  Call un.DeleteShortcuts
+FunctionEnd
 
-finish:
-  StrCpy $1 "$5\${PRODUCT_REG_VER}"
-  Call un.OMDeleteRegKeyIfEmpty
-  StrCpy $1 "$5"
-  Call un.OMDeleteRegKeyIfEmpty
+; $R0 - path to a shortcut directory
+Function un.DeleteShortcuts
+  FindFirst $0 $1 "$R0\*.lnk"
+  ${DoWhile} $1 != ""
+    StrCpy $2 "$R0\$1"
+    ClearErrors
+    ShellLink::GetShortCutTarget "$2"
+    Pop $3
+    ${IfNot} ${Errors}
+    ${AndIf} $3 == "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+      DetailPrint "Deleting shortcut: $2"
+      Delete "$2"
+    ${EndIf}
+    FindNext $0 $1
+  ${Loop}
+  FindClose $0
+FunctionEnd
 
-  StrCpy $0 "HKCR"
-  StrCpy $1 "Applications\${PRODUCT_EXE_FILE}"
-  Call un.OMDeleteRegKey
+Function un.UpdatePathEnvVar
+  ReadRegStr $0 HKCU "Environment" "${MUI_PRODUCT}"
+  ${If} $0 == "$INSTDIR\bin"
+    ReadRegStr $1 HKCU "Environment" "Path"
+    ${UnStrRep} $2 $1 ";%${MUI_PRODUCT}%" ""
+    ${If} $2 != $1
+    ${AndIf} $2 != ""
+      DetailPrint "Updating the 'Path' environment variable."
+      WriteRegExpandStr HKCU "Environment" "Path" "$2"
+    ${EndIf}
+    DetailPrint "Deleting the '${MUI_PRODUCT}' environment variable."
+    DeleteRegValue HKCU "Environment" "${MUI_PRODUCT}"
+    Call un.PostEnvChangeEvent
+  ${EndIf}
+FunctionEnd
 
-  StrCpy $0 $baseRegKey
-  StrCmp $baseRegKey "HKLM" admin user
-admin:
-  StrCpy $1 "${PRODUCT_PATHS_SELECTOR}"
-  goto delete_association
-user:
-  StrCpy $1 "Software\Classes\${PRODUCT_PATHS_SELECTOR}"
-delete_association:
-  ; remove product information which was used for association(s)
-  Call un.OMDeleteRegKey
-
-  ; dropping the .ipr association
-  StrCpy $0 "HKCR"
-  StrCpy $1 "IntelliJIdeaProjectFile\DefaultIcon"
-  StrCpy $2 ""
-  Call un.OMReadRegStr
-  ${If} $3 == "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
-    StrCpy $1 "IntelliJIdeaProjectFile"
-    Call un.OMDeleteRegKey
+Function un.CachesAndSettings
+  StrCpy $9 "$LOCALAPPDATA"
+  StrCpy $8 "$APPDATA"
+  ${If} $rootRegKey = 0
+    SetShellVarContext current
+    StrCpy $9 "$LOCALAPPDATA"
+    StrCpy $8 "$APPDATA"
+    SetShellVarContext all
   ${EndIf}
 
-  ; deleting the uninstall record
-  StrCpy $0 $baseRegKey
-  StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
-  Call un.OMDeleteRegKey
+  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
+  ${If} $R2 == 1
+    StrCpy $0 "$9\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+    DetailPrint "Deleting caches: $0"
+    RMDir /R "$0"
+    RMDir "$0\.."  ; delete a parent directory if empty
+  ${Else}
+    DetailPrint "Keeping caches"
+  ${EndIf}
 
-  ; opening the uninstall feedback page
+  !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 5" "State"
+  ${If} $R2 == 1
+    StrCpy $0 "$8\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+    DetailPrint "Deleting settings: $0"
+    RMDir /R "$0"
+    RMDir "$0\.."  ; delete a parent directory if empty
+  ${Else}
+    DetailPrint "Keeping settings"
+  ${EndIf}
+FunctionEnd
+
+Function un.UpdateContextMenu
+  DeleteRegKey SHCTX "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  DeleteRegKey SHCTX "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  DeleteRegKey SHCTX "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+FunctionEnd
+
+Function un.ProductAssociation
+  ; looking for the product association key
+  StrCpy $R0 ""
+  ${If} $productRegKey != ""
+    ReadRegStr $R0 SHCTX $productRegKey "AssociationKey"
+  ${EndIf}
+  ${If} $R0 == ""
+    StrCpy $9 0
+    ${Do}
+      EnumRegKey $0 SHCTX "Software\Classes" $9
+      ${If} $0 == ""
+        ${Break}
+      ${EndIf}
+      ReadRegStr $1 SHCTX "Software\Classes\$0\DefaultIcon" ""
+      ${If} $1 == "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+        StrCpy $R0 $0
+        ${Break}
+      ${EndIf}
+      IntOp $9 $9 + 1
+    ${Loop}
+  ${EndIf}
+
+  ; deleting all associations for the key
+  ${If} $R0 != ""
+    StrCpy $9 0
+    ${Do}
+      EnumRegKey $0 SHCTX "Software\Classes" $9
+      ${If} $0 == ""
+        ${Break}
+      ${EndIf}
+      ReadRegStr $1 SHCTX "Software\Classes\$0" ""
+      ${If} $1 == $R0
+        DetailPrint "De-associating from $0"
+        ReadRegStr $1 SHCTX "Software\Classes\$0" "backup_val"
+        WriteRegStr SHCTX "Software\Classes\$0" "" $1  ; either a previous association or an empty string
+        DeleteRegValue SHCTX "Software\Classes\$0" "backup_val"
+      ${EndIf}
+      IntOp $9 $9 + 1
+    ${Loop}
+
+    DeleteRegKey SHCTX "Software\Classes\$R0"
+  ${EndIf}
+
+  ; dropping the .ipr association
+  ReadRegStr $0 SHCTX "Software\Classes\IntelliJIdeaProjectFile\DefaultIcon" ""
+  ${If} $0 == "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+    ReadRegStr $0 SHCTX "Software\Classes\.ipr" ""
+    ${If} $0 == "IntelliJIdeaProjectFile"
+      WriteRegStr SHCTX "Software\Classes\.ipr" "" ""
+    ${EndIf}
+    DeleteRegKey SHCTX "Software\Classes\IntelliJIdeaProjectFile"
+  ${EndIf}
+FunctionEnd
+
+Function un.ProductRegistration
+  ReadRegStr $0 SHCTX "Software\Classes\Applications\${PRODUCT_EXE_FILE}\shell\open\command" ""
+  ${If} $0 == '"$INSTDIR\bin\${PRODUCT_EXE_FILE}" "%1"'
+    DetailPrint "Unregistering '${PRODUCT_EXE_FILE}' from the application list"
+    DeleteRegKey SHCTX "Software\Classes\Applications\${PRODUCT_EXE_FILE}"
+  ${EndIf}
+FunctionEnd
+
+Function un.UninstallRecord
+  StrCpy $R0 "Software"
+  Call un.DoUninstallRecord
+  StrCpy $R0 "Software\WOW6432Node"
+  Call un.DoUninstallRecord
+
+  ${If} $productRegKey != ""
+    DeleteRegKey SHCTX $productRegKey
+  ${EndIf}
+FunctionEnd
+
+; $R0 - base key
+Function un.DoUninstallRecord
+  StrCpy $9 0
+  ${Do}
+    EnumRegKey $0 SHCTX "$R0\Microsoft\Windows\CurrentVersion\Uninstall" $9
+    ${If} $0 == ""
+      ${Break}
+    ${EndIf}
+    ReadRegStr $1 SHCTX "$R0\Microsoft\Windows\CurrentVersion\Uninstall\$0" "InstallLocation"
+    ${If} $1 == $INSTDIR
+      DeleteRegKey SHCTX "$R0\Microsoft\Windows\CurrentVersion\Uninstall\$0"
+      ${Break}
+    ${EndIf}
+    IntOp $9 $9 + 1
+  ${Loop}
+FunctionEnd
+
+Function un.OpenUninstallFeedbackPage
   ${IfNot} ${Silent}
   ${AndIfNot} "${UNINSTALL_WEB_PAGE}" == ""
     !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 6" "State"
@@ -1451,4 +1297,32 @@ delete_association:
       ExecShell "" "${UNINSTALL_WEB_PAGE}"
     ${EndIf}
   ${EndIf}
-SectionEnd
+FunctionEnd
+
+
+;------------------------------------------------------------------------------
+; shared code
+;------------------------------------------------------------------------------
+
+!macro BLOCK_SWITCH un
+  Function ${un}adjustLanguage
+    ${If} $Language == ${LANG_SIMPCHINESE}
+      System::Call 'kernel32::GetUserDefaultUILanguage() h .r10'
+      ${If} $R0 != ${LANG_SIMPCHINESE}
+        ${LogText} "Language override: $R0 != ${LANG_SIMPCHINESE}"
+        StrCpy $Language ${LANG_ENGLISH}
+      ${EndIf}
+    ${EndIf}
+  FunctionEnd
+
+  Function ${un}PostEnvChangeEvent
+    DetailPrint "Notifying applications about environment changes"
+    ; SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)"Environment", SMTO_ABORTIFHUNG, 5000, &dwResult)
+    System::Call 'user32::SendMessageTimeout(i 0xFFFF, i 0x1A, i 0, t "Environment", i 0x2, i 1000, *i .r1) i .r0'
+    IntFmt $0 "0x%x" $0
+    DetailPrint "  SendMessageTimeout(): $0, $1"
+  FunctionEnd
+!macroend
+
+!insertmacro BLOCK_SWITCH ""
+!insertmacro BLOCK_SWITCH "un."

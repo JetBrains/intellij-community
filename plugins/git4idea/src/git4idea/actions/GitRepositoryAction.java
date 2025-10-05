@@ -114,9 +114,6 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     }
     GitVcs vcs = GitVcs.getInstance(project);
     final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
-    if (roots == null || roots.length == 0) {
-      return false;
-    }
-    return true;
+    return roots.length != 0;
   }
 }

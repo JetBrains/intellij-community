@@ -1,15 +1,14 @@
 ### auto-generated section `build kotlin.gradle.gradle-tooling.impl` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "impl_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_provided_library(
-  name = "extensions_provided",
+  name = "platform_extensions_provided",
   lib = "//platform/extensions"
 )
 
@@ -17,7 +16,8 @@ jvm_library(
   name = "impl",
   module_name = "kotlin.gradle.gradle-tooling.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
@@ -30,15 +30,14 @@ jvm_library(
     "//plugins/kotlin/base/project-model",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    ":extensions_provided",
-  ],
-  runtime_deps = [":impl_resources"]
+    ":platform_extensions_provided",
+  ]
 )
 
 jvm_library(
   name = "impl_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
   associates = [":impl"],
   deps = [
@@ -56,12 +55,15 @@ jvm_library(
     "@lib//:kotlin-test-junit",
     "@lib//:kotlin-test",
     "//platform/extensions",
-  ],
-  runtime_deps = [":impl_resources"]
+  ]
 )
+### auto-generated section `build kotlin.gradle.gradle-tooling.impl` end
+
+### auto-generated section `test kotlin.gradle.gradle-tooling.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "impl_test",
   runtime_deps = [":impl_test_lib"]
 )
-### auto-generated section `build kotlin.gradle.gradle-tooling.impl` end
+### auto-generated section `test kotlin.gradle.gradle-tooling.impl` end

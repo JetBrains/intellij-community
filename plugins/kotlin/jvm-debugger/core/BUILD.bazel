@@ -1,16 +1,19 @@
 ### auto-generated section `build kotlin.jvm-debugger.core` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  name = "custom_core",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ],
+  x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "core_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -19,7 +22,8 @@ jvm_library(
   module_name = "kotlin.jvm-debugger.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  resources = [":core_resources"],
+  kotlinc_opts = ":custom_core",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -61,12 +65,11 @@ jvm_library(
     "//platform/statistics",
     "//platform/util",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
-    "@lib//:gson",
+    "//libraries/gson",
     "//java/debugger/shared",
     "//platform/util/jdom",
     "//java/java-runtime:rt",
     "@lib//:kotlin-metadata",
-  ],
-  runtime_deps = [":core_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.core` end

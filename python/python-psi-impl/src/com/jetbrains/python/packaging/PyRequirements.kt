@@ -2,8 +2,6 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 
@@ -14,10 +12,36 @@ import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
  * @see PyRequirementParser.fromText
  * @see PyRequirementParser.fromFile
  */
-fun pyRequirement(name: String, versionSpec: PyRequirementVersionSpec? = null): PyRequirement = PyRequirementImpl(name,
-                                                                                                                  listOfNotNull(versionSpec),
-                                                                                                                  listOf(name),
-                                                                                                                  "")
+
+fun pyRequirement(
+  name: String,
+  versionSpecs: List<PyRequirementVersionSpec>,
+  extras: List<String>,
+): PyRequirement {
+  val extrasString = extras.joinToString(prefix = "[", postfix = "]", separator = ",") { it }
+  return PyRequirementImpl(name,
+                           versionSpecs,
+                           listOf(name),
+                           extrasString)
+}
+
+
+fun pyRequirement(
+  name: String,
+  versionSpec: PyRequirementVersionSpec? = null,
+): PyRequirement = PyRequirementImpl(name,
+                                     listOfNotNull(versionSpec),
+                                     listOf(name),
+                                     "")
+
+fun pyRequirement(
+  name: String,
+  versionSpec: PyRequirementVersionSpec?,
+  extras: String,
+): PyRequirement = PyRequirementImpl(name,
+                                     listOfNotNull(versionSpec),
+                                     listOf(name),
+                                     extras)
 
 /**
  * This helper is not an API, consider using methods listed below.
@@ -45,14 +69,13 @@ fun pyRequirement(name: String, relation: PyRequirementRelation, version: String
   return PyRequirementImpl(name, listOf(versionSpec), listOf(name + relation.presentableText + version), extras)
 }
 
-
-fun pyRequirementVersionSpec(relationWithVersion: @NlsSafe String): PyResult<PyRequirementVersionSpec> {
+fun pyRequirementVersionSpec(relationWithVersion: @NlsSafe String): PyRequirementVersionSpec {
   val value = relationWithVersion.trim()
-  val relation = PyRequirementRelation.entries.lastOrNull { value.startsWith(it.presentableText) }
-                 ?: return PyResult.localizedError(PyPsiBundle.message("packaging.could.not.parse.relation", value))
+  val relation =
+    PyRequirementRelation.entries.lastOrNull { value.startsWith(it.presentableText) } ?: PyRequirementRelation.EQ
 
   val version = value.removePrefix(relation.presentableText)
-  return PyResult.success(pyRequirementVersionSpec(relation, version))
+  return pyRequirementVersionSpec(relation, version)
 }
 
 /**

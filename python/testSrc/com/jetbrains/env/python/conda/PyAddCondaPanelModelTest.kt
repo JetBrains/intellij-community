@@ -4,7 +4,6 @@ package com.jetbrains.env.python.conda
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.getPythonVersion
@@ -160,13 +159,4 @@ class PyAddCondaPanelModelTest {
     Assert.assertNull("Unexpected error", model.getValidationError())
   }
 
-  /**
-   * Mock doesn't work with Kotlin, hence mock manually
-   */
-  private class MockReporter : RawProgressReporter {
-    val out = StringBuilder()
-    override fun text(text: String?) {
-      text?.let { out.append(it) }
-    }
-  }
 }

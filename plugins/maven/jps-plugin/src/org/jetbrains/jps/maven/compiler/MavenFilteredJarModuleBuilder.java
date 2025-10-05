@@ -52,7 +52,7 @@ public final class MavenFilteredJarModuleBuilder extends ModuleLevelBuilder {
       @Override
       public void filesGenerated(@NotNull FileGeneratedEvent event) {
         for (Pair<String, String> pair : event.getPaths()) {
-          var configs = filter(jarsConfig, c -> c.originalOutput.equals(pair.first));
+          var configs = filter(jarsConfig, c -> c.originalOutput.equals(FileUtilRt.toSystemDependentName(pair.first)));
           configs.forEach(config -> {
             copyCreatedFileIfNeeded(pair, config, context);
           });

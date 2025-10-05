@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.eelHelper` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "eel-helper_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,19 +11,19 @@ jvm_library(
   name = "eel-helper",
   module_name = "intellij.platform.eelHelper",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":eel-helper_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:jackson",
-    "@lib//:jackson-module-kotlin",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
+    "//libraries/jackson/databind",
     "@lib//:kotlin-reflect",
     "//platform/util-rt",
     "@lib//:jetbrains-annotations",
     "@lib//:platform-eel_helper-jline-terminal",
     "@lib//:jline-terminal-jansi",
     "@lib//:jline-terminal-jna",
-  ],
-  runtime_deps = [":eel-helper_resources"]
+  ]
 )
 ### auto-generated section `build intellij.platform.eelHelper` end

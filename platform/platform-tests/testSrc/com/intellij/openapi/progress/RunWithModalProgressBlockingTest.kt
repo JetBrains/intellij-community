@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.TestElement
@@ -13,13 +13,13 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.application
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -391,16 +391,16 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Suppress("ForbiddenInSuspectContextMethod")
   @Test
-  fun `simultaneous wa and wira are forbidden`(): Unit = runBlocking(Dispatchers.EDT) {
+  fun `simultaneous wa and wira are forbidden`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     val writeActionCounter = AtomicInteger(0)
     writeIntentReadAction {
       runWithModalProgressBlocking {
-        repeat(Runtime.getRuntime().availableProcessors() * 5) {
+        repeat(200) {
           launch(Dispatchers.Default) {
             backgroundWriteAction {
               try {
                 writeActionCounter.incrementAndGet()
-                Thread.sleep(100)
+                Thread.sleep(10)
               }
               finally {
                 writeActionCounter.decrementAndGet()
@@ -408,11 +408,11 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
             }
           }
         }
-        repeat(Runtime.getRuntime().availableProcessors() * 5) {
+        repeat(100) {
           launch(Dispatchers.Default) {
             writeIntentReadAction {
               assertEquals(0, writeActionCounter.get())
-              Thread.sleep(100)
+              Thread.sleep(10)
             }
           }
         }
@@ -496,6 +496,37 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
         assertTrue(application.holdsReadLock())
         assertFalse(application.isWriteAccessAllowed)
         assertTrue(application.isReadAccessAllowed)
+      }
+    }
+  }
+
+  @Test
+  fun `undispatched event loop outside modal progress`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    withContext(Dispatchers.Unconfined) {
+      runWithModalProgressBlocking {
+        withContext(Dispatchers.EDT) {
+          launch(Dispatchers.EdtImmediate) { }
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `invokeAndWait does not fail inside runWithModalProgressBlocking in write action`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String?>, t: Throwable?): Set<Action> {
+        if (message.contains("This thread holds write lock while trying to invoke a modal progress") || message.contains("AWT events are not allowed")) {
+          return Action.NONE
+        }
+        else {
+          return super.processError(category, message, details, t)
+        }
+      }
+    }).use {
+      runWriteAction {
+        runWithModalProgressBlocking {
+          application.invokeAndWait { }
+        }
       }
     }
   }

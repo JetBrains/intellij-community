@@ -15,7 +15,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.annotations.ApiStatus
 
-class RedundantScheduledForRemovalAnnotationInspection : LocalInspectionTool() {
+public class RedundantScheduledForRemovalAnnotationInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (!PsiUtil.isLanguageLevel9OrHigher(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
       
@@ -49,7 +49,7 @@ class RedundantScheduledForRemovalAnnotationInspection : LocalInspectionTool() {
     }
   }
 
-  class ReplaceAnnotationByForRemovalAttributeFix : PsiUpdateModCommandQuickFix() {
+  public class ReplaceAnnotationByForRemovalAttributeFix : PsiUpdateModCommandQuickFix() {
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
       val forRemovalAnnotation = element as? PsiAnnotation ?: return
       val deprecatedAnnotation = forRemovalAnnotation.owner?.findAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED) ?: return

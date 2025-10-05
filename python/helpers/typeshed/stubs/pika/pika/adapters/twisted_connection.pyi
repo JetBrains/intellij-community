@@ -2,6 +2,7 @@
 # We don't want to force it as a dependency but that means we also can't test it with type-checkers given the current setup.
 
 from _typeshed import Incomplete
+from logging import Logger
 from typing import Generic, NamedTuple, TypeVar
 
 import pika.connection
@@ -17,7 +18,7 @@ from twisted.python.failure import Failure  # type: ignore[import-not-found]  # 
 
 _T = TypeVar("_T")
 
-LOGGER: Incomplete
+LOGGER: Logger
 
 class ClosableDeferredQueue(DeferredQueue[_T], Generic[_T]):  # pyright: ignore[reportUntypedBaseClass]  # noqa: Y060
     closed: Failure | BaseException | None

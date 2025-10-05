@@ -9,7 +9,6 @@ import com.intellij.openapi.util.registry.Registry
  * Represents a context in which a code insight session runs for a given file or a set of files.
  * Is guaranteed to exist during one read action (to keep consistent PSI)
  *
- * @see CodeInsightSession
  * @see CodeInsightContextManager
  */
 interface CodeInsightContext
@@ -18,13 +17,16 @@ fun anyContext(): CodeInsightContext = AnyContext
 
 fun defaultContext(): CodeInsightContext = DefaultContext
 
-private object AnyContext : CodeInsightContext
-
-private object DefaultContext : CodeInsightContext
-
-fun isSharedSourceSupportEnabled(project: Project): Boolean {
-  return CodeInsightContextManager.getInstance(project).isSharedSourceSupportEnabled
+private object AnyContext : CodeInsightContext {
+  override fun toString(): String = "AnyContext"
 }
+
+private object DefaultContext : CodeInsightContext {
+  override fun toString(): String = "DefaultContext"
+}
+
+fun isSharedSourceSupportEnabled(project: Project): Boolean =
+  isSharedSourceSupportEnabledImpl(project)
 
 interface MultiverseEnabler {
   fun enableMultiverse(project: Project) : Boolean

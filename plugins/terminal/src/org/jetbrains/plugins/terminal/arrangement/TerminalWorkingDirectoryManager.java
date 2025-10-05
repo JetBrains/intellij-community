@@ -14,8 +14,10 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
+import com.jediterm.terminal.TtyConnector;
 import kotlinx.coroutines.CompletableDeferred;
 import kotlinx.coroutines.future.FutureKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
@@ -105,11 +107,19 @@ public final class TerminalWorkingDirectoryManager {
   }
 
   public static @Nullable String getWorkingDirectory(@NotNull TerminalWidget widget) {
-    ProcessTtyConnector connector = ShellTerminalWidget.getProcessTtyConnector(widget.getTtyConnector());
+    TtyConnector connector = widget.getTtyConnector();
     if (connector == null) return null;
+    return getWorkingDirectory(connector);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable String getWorkingDirectory(@NotNull TtyConnector connector) {
+    ProcessTtyConnector processConnector = ShellTerminalWidget.getProcessTtyConnector(connector);
+    if (processConnector == null) return null;
     try {
       long startNano = System.nanoTime();
-      CompletableDeferred<String> cwdDeferred = ProcessInfoUtil.getInstance().getCurrentWorkingDirectoryDeferred(connector.getProcess());
+      CompletableDeferred<String> cwdDeferred =
+        ProcessInfoUtil.getInstance().getCurrentWorkingDirectoryDeferred(processConnector.getProcess());
       CompletableFuture<String> cwdFuture = FutureKt.asCompletableFuture(cwdDeferred);
       String result = cwdFuture.get(FETCH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
       boolean exists = checkDirectory(result);
@@ -121,7 +131,7 @@ public final class TerminalWorkingDirectoryManager {
     catch (InterruptedException ignored) {
     }
     catch (ExecutionException e) {
-      String message = "Failed to fetch cwd for " + widget.getTerminalTitle().buildTitle();
+      String message = "Failed to fetch cwd for " + connector;
       if (LOG.isDebugEnabled()) {
         LOG.warn(message, e);
       }
@@ -130,7 +140,7 @@ public final class TerminalWorkingDirectoryManager {
       }
     }
     catch (TimeoutException e) {
-      LOG.warn("Timeout fetching cwd for " + widget.getTerminalTitle().buildTitle(), e);
+      LOG.warn("Timeout fetching cwd for " + connector, e);
     }
     return null;
   }

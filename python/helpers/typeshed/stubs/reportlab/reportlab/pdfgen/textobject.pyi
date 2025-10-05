@@ -1,16 +1,36 @@
+from _typeshed import Incomplete, Unused
+from collections.abc import Callable
 from typing import Final, Literal
 from typing_extensions import TypeAlias
 
 from reportlab.lib.colors import Color
+from reportlab.pdfbase.ttfonts import ShapedStr
 from reportlab.pdfgen.canvas import Canvas
 
 # NOTE: This is slightly different from what toColor accepts and interprets
 _Color: TypeAlias = Color | tuple[float, float, float, float] | tuple[float, float, float] | list[float] | str
 
 __version__: Final[str]
-log2vis: None
+log2vis: Callable[..., str | None]
+BidiStr: type[str]
+BidiList: type[list[Incomplete]]
+BidiIndex: Incomplete
 
-def fribidiText(text: str, direction: str) -> str: ...
+def bidiText(text: str, direction: str | None) -> str: ...
+def bidiShapedText(
+    text: str, direction: str = "RTL", clean: bool = True, fontName: str = "Helvetica", fontSize: int = 10, shaping: bool = False
+) -> tuple[ShapedStr | str, float]: ...
+def isBidiStr(_: Unused) -> bool: ...
+def isBidiList(_: Unused) -> bool: ...
+def innerBidiStrWrap(s: str, bidiV: int = -1, bidiL: int = -1) -> str: ...
+def bidiStrWrap(s: str, orig: str) -> str: ...
+def bidiListWrap(L, orig) -> list[Incomplete]: ...
+def bidiFragWord(w: str, direction: str | None = None, bidiV: int = -1, bidiL: int = -1, clean: bool = True): ...
+def bidiWordList(
+    words: list[str] | tuple[str], direction: str = "RTL", clean: bool = True, wx: bool = False
+) -> list[Incomplete]: ...
+
+rtlSupport: bool
 
 class _PDFColorSetter:
     def setFillColorCMYK(self, c: float, m: float, y: float, k: float, alpha: float | None = None) -> None: ...

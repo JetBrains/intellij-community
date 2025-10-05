@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.documentation.mdn
 
 import com.fasterxml.jackson.core.JsonParser
@@ -19,14 +19,14 @@ import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
+import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolsBundle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlSymbolDeclaration
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import com.intellij.util.asSafely
-import com.intellij.polySymbols.PolySymbolApiStatus
-import com.intellij.polySymbols.PolySymbolsBundle
-import com.intellij.xml.frontback.impl.icons.XmlFrontbackImplIcons
+import com.intellij.xml.psi.impl.icons.XmlPsiImplIcons
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -282,7 +282,7 @@ class MdnSymbolDocumentationAdapter(
       result.append("<div>\n")
     }
     result.append("<table class='mdn-baseline'><tr><td width=2 valign=top class='mdn-baseline-icon'>" +
-                  "<icon src='" + XmlFrontbackImplIcons::class.java.name + ".Baseline${baseline.level.name.lowercase().capitalize()}'></icon>\n" +
+                  "<icon src='" + XmlPsiImplIcons::class.java.name + ".Baseline${baseline.level.name.lowercase().capitalize()}'></icon>\n" +
                   "<td class='mdn-baseline-info'>")
     when (baseline.level) {
       BaselineLevel.NONE -> {
@@ -325,7 +325,7 @@ class MdnSymbolDocumentationAdapter(
                                         notSupportedEngines.map { it.displayName }.sorted().joinToString(", ")))
       }
       else {
-        (baseline.highDate ?: baseline.lowDate)?.dropWhile { !it.isDigit() }?.let { date ->
+        (baseline.lowDate ?: baseline.highDate )?.dropWhile { !it.isDigit() }?.let { date ->
           result.append("<p class='grayed'>")
           result.append(MdnBundle.message("mdn.documentation.baseline.since", date.takeWhile { it.isDigit() }))
         }
@@ -647,7 +647,7 @@ private class CompatibilityMapDeserializer : JsonDeserializer<CompatibilityMap>(
       .asSafely<ObjectNode>()
       ?.let {
         if (it.firstOrNull() is ObjectNode) {
-          it.fields().asSequence()
+          it.properties().asSequence()
             .map { (key, value) -> Pair(key, (value as ObjectNode).toBcdMap()) }
             .toMap()
         }
@@ -658,7 +658,7 @@ private class CompatibilityMapDeserializer : JsonDeserializer<CompatibilityMap>(
     ?: emptyMap()
 
   private fun ObjectNode.toBcdMap(): Map<MdnJavaScriptRuntime, String> =
-    this.fields().asSequence().map { (key, value) ->
+    this.properties().asSequence().map { (key, value) ->
       Pair(MdnJavaScriptRuntime.valueOf(key), (value as TextNode).asText())
     }.toMap()
 

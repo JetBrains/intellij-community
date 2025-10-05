@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>com.intellij.tasks</id>
   <name>Task Management</name>
   <category>Other Tools</category>
@@ -17,6 +17,7 @@
     <plugin id="com.intellij.modules.xml" />
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.tasks.impl"/>
+    <module name="intellij.regexp"/>
   </dependencies>
   <depends optional="true" config-file="java-contexts.xml">com.intellij.java</depends>
   <!--
@@ -154,5 +155,9 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.tasks.impl.TaskManagementUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.impl.TaskManagementConfigurationCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.core.fus.TasksStateCollector"/>
+
+    <registryKey key="tasks.jira.use.rest.api.version" defaultValue="" restartRequired="true"
+                 description="Use &quot;2&quot; for REST API version 2,
+                              &quot;3&quot; for REST API version 3 in Cloud, leave empty for autodetection (legacy non-REST API included)"/>
   </extensions>
 </idea-plugin>

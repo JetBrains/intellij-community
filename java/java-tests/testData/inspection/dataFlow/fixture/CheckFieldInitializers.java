@@ -12,5 +12,5 @@ class Bar {
 
 }
 class Baz {
-  @NotNull public static Object o = <warning descr="Expression 'Foo.foo()' might evaluate to null but is assigned to a variable that is annotated with @NotNull">Foo.foo()</warning>;
+  @NotNull public static Object o = <warning descr="Expression 'Foo.foo()' might evaluate to null but is assigned to a non-null variable">Foo.foo()</warning>;
 }

@@ -2,12 +2,12 @@ load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag")
 load("@rules_java//java:defs.bzl", "java_import")
 load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
-load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_kotlinc_options")
-load("//:rules/strange-module.bzl", "create_strange_kotlinc_options")
+load("//:jvm.bzl", "jvm_import", "jvm_provided_library", "kt_javac_options", "kt_kotlinc_options")
 
-create_strange_kotlinc_options(
-    name = "strange-module-8",
-    jvm_target = 17,
+label_flag(
+    name = "default-javac-opts",
+    build_setting_default = ":default-javac-opts-value",
+    visibility = ["//visibility:public"],
 )
 
 label_flag(
@@ -18,13 +18,36 @@ label_flag(
 
 label_flag(
     name = "resource-packager",
-    build_setting_default = "//src/misc:worker-jvm",
+    build_setting_default = "//src/misc:worker-jvm_deploy.jar",
+    visibility = ["//visibility:public"],
+)
+
+label_flag(
+    name = "resource-packager-jvm_flags",
+    build_setting_default = "//src/misc:worker-jvm-jvm_flags",
     visibility = ["//visibility:public"],
 )
 
 label_flag(
     name = "jvm-builder",
-    build_setting_default = "//src/jvm-builder",
+    build_setting_default = "//jvm-inc-builder:jvm-inc-builder_deploy.jar",
+    visibility = ["//visibility:public"],
+)
+
+label_flag(
+    name = "jvm-builder-jvm_flags",
+    build_setting_default = "//jvm-inc-builder:jvm-inc-builder-jvm_flags",
+    visibility = ["//visibility:public"],
+)
+
+# used by _jvm_builder_launcher attribute in jvm_library rule and _worker_launcher attribute in jvm_resources rule
+exports_files(
+  ["rules/impl/MemoryLauncher.java"],
+  visibility = ["//visibility:private"],
+)
+
+kt_javac_options(
+    name = "default-javac-opts-value",
     visibility = ["//visibility:public"],
 )
 
@@ -54,13 +77,7 @@ _kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
     include_stdlibs = "none",
     jvm_target = "17",
-    visibility = [
-        "//src:__subpackages__",
-        "//zip:__pkg__",
-        "//jvm-inc-builder:__subpackages__",
-        "//jps-builders-6:__subpackages__",
-        "//dependency-graph:__subpackages__",
-    ],
+    visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
     x_jdk_release = "17",
 )
 

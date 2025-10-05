@@ -3,7 +3,6 @@ package  com.jetbrains.python.sdk.poetry.ui
 
 import com.intellij.application.options.ModuleListCellRenderer
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -23,12 +22,13 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onSuccess
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addInterpretersAsync
@@ -38,11 +38,11 @@ import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.ui.pyModalBlocking
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
+import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComboBox
 import javax.swing.event.DocumentEvent
@@ -77,7 +77,7 @@ class PyAddNewPoetryPanel(
 
 
   private val installPackagesCheckBox = JBCheckBox(PyBundle.message("python.sdk.poetry.install.packages.from.toml.checkbox.text")).apply {
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(project) {
       isVisible = projectPath?.let {
         withContext(Dispatchers.IO) {
           StandardFileSystems.local().findFileByPath(it)?.findChild(PY_PROJECT_TOML)?.let { file -> getPyProjectTomlForPoetry(file) }
@@ -90,7 +90,7 @@ class PyAddNewPoetryPanel(
   private val poetryPathField = TextFieldWithBrowseButton().apply {
     addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileDescriptor())
     val field = textField as? JBTextField ?: return@apply
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(project) {
       detectPoetryExecutable().getOrNull()?.let { field.emptyText.text = "Auto-detected: ${it.absolutePathString()}" }
       PropertiesComponent.getInstance().poetryPath?.let {
         field.text = it
@@ -140,8 +140,11 @@ class PyAddNewPoetryPanel(
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().poetryPath = poetryPathField.text.nullize()
     return pyModalBlocking {
-      setupPoetrySdk(project, selectedModule, existingSdks, newProjectPath,
-                     baseSdkField.selectedSdk.homePath, installPackagesCheckBox.isSelected).onSuccess {
+      val moduleBasePath = selectedModule?.basePath?.let { Path.of(it) }
+                           ?: error("select module base path is invalid: ${selectedModule?.basePath}")
+      val basePythonBinaryPath = baseSdkField.selectedSdk.homePath?.let { Path.of(it) }
+
+      createNewPoetrySdk(moduleBasePath, existingSdks, basePythonBinaryPath, installPackagesCheckBox.isSelected).onSuccess {
         PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk.homePath
       }
     }.getOrNull()
@@ -171,7 +174,7 @@ class PyAddNewPoetryPanel(
    * Updates the view according to the current state of UI controls.
    */
   private fun update() {
-    service<PythonSdkCoroutineService>().cs.launch {
+    PyPackageCoroutine.launch(project) {
       selectedModule?.let {
         installPackagesCheckBox.isEnabled = PyProjectToml.findFile(it) != null
       }

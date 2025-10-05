@@ -23,7 +23,7 @@
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
 
-    <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used, better to preload it -->
+    <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used better to preload it -->
     <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
                         serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="notLightEdit"/>
     <vfs.asyncListener implementation="com.intellij.util.indexing.events.ChangedFilesCollector"/>
@@ -80,8 +80,6 @@
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
     <registryKey defaultValue="20" key="scanning.dumb.mode.threshold" restartRequired="true"
                  description="Dumb mode during scanning will be triggered as soon as IDE discovers this count of unindexed files."/>
-    <registryKey defaultValue="true" key="scanning.trust.indexing.flag" restartRequired="true"
-                 description="Use previously stored 'indexed flag' while scanning. To store 'indexing flag' please set registry option 'indexing.disable.virtual.file.system.entry.is.file.indexed=false'."/>
     <registryKey defaultValue="true" key="full.scanning.on.startup.can.be.skipped" restartRequired="false"
                  description="Full scanning on startup will be skipped when possible."/>
     <registryKey defaultValue="1000000" key="maximum.size.of.orphan.dirty.files.queue" restartRequired="false"
@@ -92,20 +90,41 @@
                  description="Check if files found during scanning are still in the project during indexing, and skip excluded files."/>
     <registryKey defaultValue="true" key="vfs.try.eel.for.content.loading"
                  description="Use specialized Eel API for working with remote filesystems. This may result in a significant performance improvement and better CPU utilization"/>
-    <registryKey defaultValue="false" description="Use EEL for file watching." key="use.eel.file.watcher" restartRequired="true"/>
+    <registryKey defaultValue="true" description="Use EEL for file watching." key="use.eel.file.watcher" restartRequired="true"/>
     <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
-    <registryKey defaultValue="true" key="use.workspace.file.index.to.generate.iterators" restartRequired="true"
-                 description="Use WorkspaceFileIndex instead of IndexableFileIndex to generate IndexingIterators"/>
     <registryKey defaultValue="false" key="search.in.non.indexable" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFileNavigationContributor"/>
     <registryKey defaultValue="false"
                  description="Enable reformat action execution on frontend in remote development"
                  key="reformat.action.execute.on.frontend"
                  restartRequired="false"/>
+    <registryKey defaultValue="" description="Default SDK name for new projects (legacy)"
+                 key="default.project.jdk.name" />
+    <registryKey defaultValue="" description="Default language level name for new projects (legacy)"
+                 key="default.language.level.name" />
+    <!-- region IJPL-179136 -->
+    <registryKey defaultValue="true"
+                 description="Enable sending codeStyleSettingsChanged events when settings finish computing"
+                 key="code.style.cache.enable.change.events.on.settings.cached" />
+    <registryKey defaultValue="true"
+                 description="Enable detection of and automatic recovery from too high eviction rate in code style settings cache."
+                 key="code.style.cache.high.eviction.rate.automatic.recovery.enabled" />
+    <registryKey defaultValue="10000"
+                 description="Minimum duration of time in milliseconds of high code style cache eviction rate to trigger automatic recovery."
+                 key="code.style.cache.high.eviction.rate.automatic.recovery.threshold.duration" />
+    <registryKey defaultValue="250"
+                 description="Minimum code style cache evictions per second to trigger automatic recovery."
+                 key="code.style.cache.high.eviction.rate.automatic.recovery.threshold.frequency" />
+    <registryKey defaultValue="250"
+                 description="Maximum size of the code style settings cache (>= 1)."
+                 key="code.style.cache.maximum.size"
+                 restartRequired="true" />
+    <registryKey defaultValue="true"
+                 description="Include code style settings in change events if the reason is computation of the settings has just finished."
+                 key="code.style.cache.change.events.include.settings" />"
+    <!-- endregion -->
 
-    <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
-                    serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexingIteratorsProvider"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexingIteratorsProviderImpl"/>
     <postStartupActivity implementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheckStarter"/>
@@ -115,7 +134,7 @@
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
 
-    <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManager$MyActionTuner"/>
+    <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManagerActionTuner"/>
 
     <projectService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
                     serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
@@ -173,6 +192,7 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingSettings"
                         serviceImplementation="com.intellij.codeInsight.folding.CodeFoldingSettingsImpl"/>
+    <applicationSettings service="com.intellij.codeInsight.folding.CodeFoldingSettingsImpl"/>
     <postStartupActivity implementation="com.intellij.codeInsight.folding.impl.FoldingHintPostStartupActivity"/>
     <projectService serviceInterface="com.intellij.codeInsight.folding.CodeFoldingManager"
                     serviceImplementation="com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl"/>
@@ -189,6 +209,7 @@
 
     <applicationService serviceInterface="com.intellij.find.FindSettings"
                         serviceImplementation="com.intellij.find.impl.LangFindSettingsImpl"/>
+    <applicationInitializedListener implementation="com.intellij.find.impl.FindSettingsInitializer"/>
     <projectService serviceInterface="com.intellij.find.FindInProjectSettings"
                     serviceImplementation="com.intellij.find.impl.FindInProjectRecents"/>
 
@@ -281,6 +302,8 @@
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"
                     preload="notHeadless"/>
 
+    <projectService serviceImplementation="com.intellij.ide.util.TreeFileChooserSupport"/>
+
     <projectService serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
     <projectService serviceImplementation="com.intellij.find.replaceInProject.ReplaceInProjectManager"/>
     <projectService serviceInterface="com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar"
@@ -362,6 +385,8 @@
     <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
                         serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
     <treeStructureProvider implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider" order="last"/>
+    <advancedSetting id="project.view.show.scratches.and.consoles" groupKey="group.advanced.settings.project.view" default="true"/>
+
     <uiDataRule implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider$DataRule"/>
 
     <postStartupActivity implementation="com.intellij.ide.scratch.workspace.ScratchWorkspaceStartupActivity"/>
@@ -488,7 +513,7 @@
     <applicationConfigurable groupId="editor" groupWeight="130" instance="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"
                              id="editing.templates"
                              key="templates.settings.page.title" bundle="messages.CodeInsightBundle"/>
-    <registryKey defaultValue="true" description="Use subfolders for live template setttings" key="live.templates.separated.group"
+    <registryKey defaultValue="true" description="Use subfolders for live template settings" key="live.templates.separated.group"
                  restartRequired="false"/>
     <search.optionContributor implementation="com.intellij.codeInsight.template.impl.TemplateSearchableOptionContributor"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplateLookupActionProvider"/>
@@ -558,7 +583,6 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$LowercaseAndDash"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SpaceSeparated"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConcatMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ShowParameterInfoMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteSmartMacro"/>
@@ -593,10 +617,6 @@
                  restartRequired="false"/>
     <registryKey key="logical.structure.actions.enabled"
                  description="Show action icons for logical structure nodes"
-                 defaultValue="false"
-                 restartRequired="false"/>
-    <registryKey key="logical.structure.actions.on.hover"
-                 description="Show action icons on hover instead of on selection"
                  defaultValue="false"
                  restartRequired="false"/>
 
@@ -667,7 +687,8 @@
     <codeInsight.completion.command.provider language="" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
     <platform.backend.documentation.lookupElementTargetProvider
       implementation="com.intellij.codeInsight.completion.command.CommandCompletionDocumentationProvider"/>
-
+    <lookup.may.have.custom.preview.provider
+      implementation="com.intellij.codeInsight.completion.command.CommandCompletionLookupMayHaveCustomPreviewProvider"/>
     <nonWriteAccessTypedHandler implementation="com.intellij.codeInsight.completion.command.CommandCompletionNonWriteAccessTypedHandler" id="commandCompletion"/>
 
     <searchEverywhereClassifier implementation="com.intellij.ide.actions.DefaultSearchEverywhereClassifier"/>
@@ -964,6 +985,8 @@
                  description="Use the new experimental coroutine-based Project View implementation"/>
     <registryKey defaultValue="true" description="Show the new file or directory button in the project view title"
                  key="ide.project.view.show.new.element.button" />
+    <registryKey defaultValue="[Off|RemDev*|On]" description="Show the new file or directory button in the project view title"
+                 key="ide.project.view.preload.mode" />
     <pathMacroFilter implementation="com.intellij.ide.projectView.impl.ProjectViewPathMacroFilter"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewState"/>
 
@@ -1092,9 +1115,11 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.usages.impl.UsageViewStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileTypes.impl.FileTypeConfigurableInteractions"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.DaemonFusCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.IdentifierHighlightingFUSCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInspection.ex.GlobalInspectionContextImpl$InspectionPerformanceCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.projectFilter.IndexableFilesFilterHealthCheckCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.completion.command.CommandCompletionCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.codeInsight.completion.command.CommandCompletionStateCollector"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
     <statistics.validation.customValidationRule
@@ -1170,7 +1195,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbarCollector" />
     <textEditorCustomizer implementation="com.intellij.ui.codeFloatingToolbar.FloatingCodeToolbarEditorCustomizer" />
     <customizableActionGroupProvider implementation="com.intellij.ui.codeFloatingToolbar.FloatingCodeToolbarGroupCustomizer"/>
-    <refactoring.elementListenerProvider implementation="com.intellij.ui.EditorNotificationsImpl$RefactoringListenerProvider"/>
+    <refactoring.elementListenerProvider implementation="com.intellij.ui.RefactoringListenerProvider"/>
 
     <keymapExtension implementation="com.intellij.tools.ToolKeymapExtension"/>
 
@@ -1228,7 +1253,7 @@
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.richcopy.settings.RichCopySettings"/>
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor"/>
-    <!--the following binding uses 'first' order to make sure it captures raw text before any other processor modifies it -->
+    <!--the following binding uses 'first' to make sure it captures raw text before any other processor modifies it -->
     <copyPastePreProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor$RawTextSetter" order="first"
                            id="richcopy"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.LineCommentCopyPastePreProcessor"/>
@@ -1381,6 +1406,8 @@
                     testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
     <projectService serviceInterface="com.intellij.build.BuildWorkspaceConfiguration"
                     serviceImplementation="com.intellij.build.BuildWorkspaceConfigurationImpl"/>
+    <applicationService serviceInterface="com.intellij.build.events.BuildEvents"
+                        serviceImplementation="com.intellij.build.events.impl.BuildEventsImpl"/>
 
     <moveLeftRightHandler language=""
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.DefaultMoveElementLeftRightHandler"
@@ -1550,10 +1577,14 @@
                  key="ide.completion.auto.insert.item.timeout"/>
     <registryKey key="ide.completion.command.force.enabled" defaultValue="false"
                  description="Enable experimental support command completion" restartRequired="false"/>
+    <registryKey key="ide.completion.command.faster.paint" defaultValue="true"
+                 description="Enable experimental support to show lookup as soon as possible without waiting command completion" restartRequired="false"/>
     <registryKey key="ide.completion.command.enabled" defaultValue="true"
                  description="Enable experimental support command completion for internal mode" restartRequired="false"/>
-    <registryKey key="ide.completion.command.support.read.only.files" defaultValue="false"
-                 description="Enable experimental support command completion for read-only files" restartRequired="false"/>
+    <registryKey key="ide.completion.group.enabled" defaultValue="true"
+                 description="Enable groups in completions" restartRequired="false"/>
+    <registryKey key="ide.completion.group.mode.enabled" defaultValue="false"
+                 description="Enable groups in completions for any mode. ide.completion.group.enabled should be enabled" restartRequired="false"/>
 
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SyntheticLibraryIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.ExternalEntityIndexableIteratorHandler"/>
@@ -1692,7 +1723,11 @@
                  description="Replaces Indexing progress with Analyzing during dumb mode"/>
 
     <saveAndSyncHandlerListener implementation="com.intellij.codeInsight.daemon.impl.EssentialHighlightingRestarter" />
-    <experiment.abExperimentOption implementation="com.intellij.ide.util.gotoByName.FuzzyFileSearchExperimentOption"/>
+
+    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl"/>
+
+    <defaultHighlightingSettingProvider id="SyntheticSourcesHighlightingSettingProvider"
+                                        implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileHighlightingSettingProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.platform.backend">
@@ -1727,6 +1762,10 @@
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
     <listener class="com.intellij.codeInsight.completion.command.CommandCompletionListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+    <listener class="com.intellij.codeInsight.completion.command.CustomLookupIntentionPreviewListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+    <listener class="com.intellij.util.indexing.ProjectEntityIndexingService"
+              topic="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener"/>
   </projectListeners>
   <actions>
     <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>

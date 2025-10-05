@@ -185,9 +185,23 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                 )
 
                 consumer.renameStandardOption("FIELD_ANNOTATION_WRAP", KotlinBundle.message("formatter.title.property.annotations"))
+                showCustomOption(
+                    KotlinCodeStyleSettings::PROPERTY_CONTEXT_PARAMETERS_WRAP,
+                    KotlinBundle.message("formatter.title.property.context.parameters"),
+                    null,
+                    CodeStyleSettingsCustomizableOptions.getInstance().WRAP_OPTIONS,
+                    CodeStyleSettingsCustomizable.WRAP_VALUES
+                )
                 consumer.renameStandardOption(
                     "METHOD_PARAMETERS_WRAP",
                     KotlinBundle.message("formatter.title.function.declaration.parameters")
+                )
+                showCustomOption(
+                    KotlinCodeStyleSettings::FUNCTION_CONTEXT_PARAMETERS_WRAP,
+                    KotlinBundle.message("formatter.title.function.context.parameters"),
+                    null,
+                    CodeStyleSettingsCustomizableOptions.getInstance().WRAP_OPTIONS,
+                    CodeStyleSettingsCustomizable.WRAP_VALUES
                 )
 
                 consumer.renameStandardOption("CALL_PARAMETERS_WRAP", KotlinBundle.message("formatter.title.function.call.arguments"))
@@ -331,7 +345,7 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                    val test =
                        12
 
-                   @Deprecated("Foo") fun foo1(i1: Int, i2: Int, i3: Int, a: Any) : Int {
+                   @Deprecated("Foo") context(ctx: String) fun foo1(i1: Int, i2: Int, i3: Int, a: Any) : Int {
                        when (i1) {
                            is Number -> 0
                            else -> 1

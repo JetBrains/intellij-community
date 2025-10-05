@@ -51,6 +51,20 @@ public final class Flake8InspectionSuppressor implements InspectionSuppressor {
       .put("F831", "PyUnusedLocal")
       .put("F841", "PyUnusedLocal")
       .put("C90", "PyUnusedLocal")
+      .put("N801", "PyPep8Naming")  // class names should use CapWords convention
+      .put("N802", "PyPep8Naming")  // function name should be lowercase
+      .put("N803", "PyPep8Naming")  // argument name should be lowercase
+      .put("N804", "PyPep8Naming")  // first argument of a classmethod should be named 'cls'
+      .put("N805", "PyPep8Naming")  // first argument of a method should be named 'self'
+      .put("N806", "PyPep8Naming")  // variable in function should be lowercase
+      .put("N807", "PyPep8Naming")  // function name should not start and end with '__'
+      .put("N811", "PyPep8Naming")  // constant imported as non constant
+      .put("N812", "PyPep8Naming")  // lowercase imported as non lowercase
+      .put("N813", "PyPep8Naming")  // camelcase imported as lowercase
+      .put("N814", "PyPep8Naming")  // camelcase imported as constant
+      .put("N815", "PyPep8Naming")  // mixedCase variable in class scope
+      .put("N816", "PyPep8Naming")  // mixedCase variable in global scope
+      .put("N817", "PyPep8Naming")  // camelcase imported as acronym
       // pycodestyle.py specific code
       .put("E711", "PyComparisonWithNone")
       .build()

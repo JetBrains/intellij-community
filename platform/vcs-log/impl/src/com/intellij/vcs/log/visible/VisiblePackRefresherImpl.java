@@ -20,10 +20,7 @@ import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import kotlin.Pair;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -493,11 +490,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     }
   }
 
-  public static class VisiblePackProgressKey extends VcsLogProgress.ProgressKey {
+  private static class VisiblePackProgressKey extends VcsLogProgress.ProgressKey {
     private final @NotNull String myLogId;
     private final boolean myVisible;
 
-    public VisiblePackProgressKey(@NotNull String logId, boolean visible) {
+    VisiblePackProgressKey(@NotNull String logId, boolean visible) {
       super("visible pack for " + logId);
       myLogId = logId;
       myVisible = visible;
@@ -527,6 +524,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     }
   }
 
+  @ApiStatus.Internal
   public static boolean isVisibleKeyFor(@NotNull VcsLogProgress.ProgressKey key, @NotNull String logId) {
     if (key instanceof VisiblePackProgressKey visiblePackProgressKey) {
       return visiblePackProgressKey.getLogId().equals(logId) && visiblePackProgressKey.isVisible();

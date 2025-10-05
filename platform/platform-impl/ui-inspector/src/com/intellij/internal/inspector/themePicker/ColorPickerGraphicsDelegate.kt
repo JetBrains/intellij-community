@@ -208,7 +208,8 @@ internal class ColorPickerGraphicsDelegate private constructor(
    *           as an ad-hoc 'repaint' listener.
    */
   private fun markUsedColor(drawRectangle: Rectangle, color: Any?, erase: Boolean = false) {
-    val rectangle = drawRectangle.intersection(clipBounds)
+    val clipBounds = clipBounds
+    val rectangle = if (clipBounds != null) drawRectangle.intersection(clipBounds) else drawRectangle
     if (rectangle.width <= 0 || rectangle.height <= 0) return
 
     if (color !is Color) return

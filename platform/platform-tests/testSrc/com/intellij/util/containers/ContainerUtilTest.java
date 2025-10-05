@@ -10,6 +10,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import junit.framework.TestCase;
 import one.util.streamex.IntStreamEx;
@@ -18,11 +19,12 @@ import org.junit.Assert;
 import org.junit.function.ThrowingRunnable;
 
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 public class ContainerUtilTest extends TestCase {
@@ -117,13 +119,13 @@ public class ContainerUtilTest extends TestCase {
      });
   }
 
-  private static List<Integer> createFilledList(int size) {
+  private static List<Integer> createSequentialList(int size) {
     return ContainerUtil.createLockFreeCopyOnWriteList(IntStream.range(0, size).boxed().toList());
   }
 
   public void testConcatenatedDynamicListsAreIterableEvenWhenTheyAreChangingDuringIteration() throws Exception {
-    List<Integer> list1 = createFilledList(32);
-    List<Integer> list2 = createFilledList(32);
+    List<Integer> list1 = createSequentialList(32);
+    List<Integer> list2 = createSequentialList(32);
     List<Integer> concat = ContainerUtil.concat(list1, list2);
 
     AtomicBoolean stop = new AtomicBoolean(false);
@@ -139,7 +141,6 @@ public class ContainerUtilTest extends TestCase {
         // must work on streams (even parallel), too.
         count += concat.parallelStream().count();
       }
-      stop.set(true);
     }
     finally {
       stop.set(true); // finally stop even in case of an error
@@ -213,8 +214,7 @@ public class ContainerUtilTest extends TestCase {
     List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
 
     for (int i = 0; i < 2; i++) {
-      @SuppressWarnings("unchecked")
-      Object[] array = ((AtomicReference<Object @NotNull []>)my).get();
+      Object[] array = ReflectionUtil.getField(my.getClass(), my, Object[].class, "array");
       assertSame(ArrayUtilRt.EMPTY_OBJECT_ARRAY, array);
       assertReallyEmpty(my);
       my.add(this);
@@ -364,14 +364,14 @@ public class ContainerUtilTest extends TestCase {
       range(6, 6)
     ), target);
     target = mergeSegmentLists(target, Arrays.asList(
-      range(-1, -1),
+      range(-2, -3),
       range(-1, -2),
-      range(-2, -3)
+      range(-1, -1)
     ));
     assertEquals(Arrays.asList(
-      range(-1, -1),
-      range(-1, -2),
       range(-2, -3),
+      range(-1, -2),
+      range(-1, -1),
       range(0, 0),
       range(1, 1),
       range(2, 2),
@@ -396,6 +396,14 @@ public class ContainerUtilTest extends TestCase {
     assertEquals(Arrays.asList(0, 4), m);
     m = ContainerUtil.mergeSortedLists(list2, list1, Comparator.naturalOrder(), true);
     assertEquals(Arrays.asList(0, 4), m);
+  }
+  public void testWhenMergeSortedArraysButTheyAreActuallyUnsortedTheExceptionMustBeThrown() {
+    List<Integer> list1 = Arrays.asList(5, 4);
+    List<Integer> list2 = Arrays.asList(4, 5);
+    Assert.assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(list1, list2, Comparator.naturalOrder(), true));
+    Assert.assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(list2, list1, Comparator.naturalOrder(), true));
+    Assert.assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(list1, List.of(), Comparator.naturalOrder(), true));
+    Assert.assertThrows(IllegalArgumentException.class, ()->ContainerUtil.mergeSortedLists(List.of(), list1, Comparator.naturalOrder(), true));
   }
 
   public void testMergeSortedArrays2() {

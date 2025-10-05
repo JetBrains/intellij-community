@@ -1,19 +1,16 @@
 import datetime
-from collections.abc import Iterable, Mapping
-from io import BytesIO
+from collections.abc import Awaitable, Callable, Iterable, Iterator, Mapping, Sequence
 from re import Pattern
-from typing import Any, Awaitable, BinaryIO, Callable, Literal, NoReturn, TypeVar, overload, type_check_only
+from typing import Any, BinaryIO, Literal, NoReturn, TypeAlias, TypeVar, overload, type_check_only
 
-from django.contrib.auth.base_user import _UserModel
-from django.contrib.auth.base_user import UserModel1
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import _AnyUser
 from django.contrib.sessions.backends.base import SessionBase
 from django.contrib.sites.models import Site
 from django.core.files import uploadedfile, uploadhandler
 from django.urls import ResolverMatch
 from django.utils.datastructures import CaseInsensitiveMapping, ImmutableList, MultiValueDict
 from django.utils.functional import cached_property
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self
 
 RAISE_ERROR: object
 host_validation_re: Pattern[str]
@@ -38,7 +35,7 @@ class HttpHeaders(CaseInsensitiveMapping[str]):
     @classmethod
     def to_asgi_names(cls, headers: Mapping[str, Any]) -> dict[str, Any]: ...
 
-class HttpRequest(BytesIO):
+class HttpRequest:
     GET: _ImmutableQueryDict
     POST: _ImmutableQueryDict
     COOKIES: dict[str, str]
@@ -56,9 +53,9 @@ class HttpRequest(BytesIO):
     # django.contrib.admin views:
     current_app: str
     # django.contrib.auth.middleware.AuthenticationMiddleware:
-    user: _UserModel | AnonymousUser
+    user: _AnyUser
     # django.contrib.auth.middleware.AuthenticationMiddleware:
-    auser: Callable[[], Awaitable[_UserModel | AnonymousUser]]
+    auser: Callable[[], Awaitable[_AnyUser]]
     # django.middleware.locale.LocaleMiddleware:
     LANGUAGE_CODE: str
     # django.contrib.sites.middleware.CurrentSiteMiddleware
@@ -95,6 +92,10 @@ class HttpRequest(BytesIO):
     def upload_handlers(self, upload_handlers: _UploadHandlerList) -> None: ...
     @cached_property
     def accepted_types(self) -> list[MediaType]: ...
+    @cached_property
+    def accepted_types_by_precedence(self) -> list[MediaType]: ...
+    def accepted_type(self, media_type: str) -> MediaType | None: ...
+    def get_preferred_type(self, media_types: Sequence[str]) -> str | None: ...
     def parse_file_upload(
         self, META: Mapping[str, Any], post_data: BinaryIO
     ) -> tuple[QueryDict, MultiValueDict[str, uploadedfile.UploadedFile]]: ...
@@ -104,7 +105,12 @@ class HttpRequest(BytesIO):
     def body(self) -> bytes: ...
     def _load_post_and_files(self) -> None: ...
     def accepts(self, media_type: str) -> bool: ...
-    def readlines(self) -> list[bytes]: ...  # type: ignore[override]
+    def close(self) -> None: ...
+    # File-like and iterator interface, a minimal subset of BytesIO.
+    def read(self, n: int | None = -1, /) -> bytes: ...
+    def readline(self, limit: int | None = -1, /) -> bytes: ...
+    def __iter__(self) -> Iterator[bytes]: ...
+    def readlines(self) -> list[bytes]: ...
 
 @type_check_only
 class _MutableHttpRequest(HttpRequest):
@@ -113,36 +119,49 @@ class _MutableHttpRequest(HttpRequest):
 
 _Z = TypeVar("_Z")
 
-class QueryDict(MultiValueDict[str, str]):
+# mypy uses mro to pick between `__init__` and `__new__` for return types and will prefers `__init__` over `__new__`
+# in case of a tie. So to be able to specialize type via `__new__` (which is required for pyright to work),
+# we need to use an intermediary class for the `__init__` method.
+# See https://github.com/python/mypy/issues/17251
+# https://github.com/python/mypy/blob/c724a6a806655f94d0c705a7121e3d671eced96d/mypy/typeops.py#L148-L149
+class _QueryDictMixin:
+    def __init__(
+        self,
+        query_string: str | bytes | None = ...,
+        mutable: bool = ...,
+        encoding: str | None = ...,
+    ) -> None: ...
+
+class QueryDict(_QueryDictMixin, MultiValueDict[str, str]):
     _mutable: bool
     # We can make it mutable only by specifying `mutable=True`.
     # It can be done a) with kwarg and b) with pos. arg. `overload` has
     # some problems with args/kwargs + Literal, so two signatures are required.
     # ('querystring', True, [...])
     @overload
-    def __init__(
-        self: QueryDict,
+    def __new__(
+        cls,
         query_string: str | bytes | None,
         mutable: Literal[True],
         encoding: str | None = ...,
-    ) -> None: ...
+    ) -> QueryDict: ...
     # ([querystring='string',] mutable=True, [...])
     @overload
-    def __init__(
-        self: QueryDict,
+    def __new__(
+        cls,
         *,
-        mutable: Literal[True],
         query_string: str | bytes | None = ...,
+        mutable: Literal[True],
         encoding: str | None = ...,
-    ) -> None: ...
+    ) -> QueryDict: ...
     # Otherwise it's immutable
     @overload
-    def __init__(  # type: ignore[misc]
-        self: _ImmutableQueryDict,
+    def __new__(
+        cls,
         query_string: str | bytes | None = ...,
-        mutable: bool = ...,
+        mutable: Literal[False] = ...,
         encoding: str | None = ...,
-    ) -> None: ...
+    ) -> _ImmutableQueryDict: ...
     @classmethod
     def fromkeys(  # type: ignore[override]
         cls,
@@ -161,11 +180,11 @@ class QueryDict(MultiValueDict[str, str]):
     def setlistdefault(self, key: str | bytes, default_list: list[str] | None = ...) -> list[str]: ...
     def appendlist(self, key: str | bytes, value: str | bytes) -> None: ...
     # Fake signature (because *args is used in source, but it fails with more that 1 argument)
+    @overload  # type:ignore[override]
+    def pop(self, key: str | bytes, /) -> list[str]: ...
     @overload
-    def pop(self, key: str | bytes, /) -> str: ...
-    @overload
-    def pop(self, key: str | bytes, default: str | _Z = ..., /) -> str | _Z: ...
-    def popitem(self) -> tuple[str, str]: ...
+    def pop(self, key: str | bytes, default: str | _Z = ..., /) -> list[str] | _Z: ...
+    def popitem(self) -> tuple[str, list[str]]: ...  # type:ignore[override]
     def clear(self) -> None: ...
     def setdefault(self, key: str | bytes, default: str | bytes | None = ...) -> str: ...
     def copy(self) -> QueryDict: ...
@@ -174,9 +193,6 @@ class QueryDict(MultiValueDict[str, str]):
 @type_check_only
 class _ImmutableQueryDict(QueryDict):
     _mutable: Literal[False]
-    # def __init__(
-    #     self, query_string: Optional[Union[str, bytes]] = ..., mutable: bool = ..., encoding: Optional[str] = ...
-    # ) -> None: ...
     def __setitem__(self, key: str | bytes, value: str | bytes) -> NoReturn: ...
     def __delitem__(self, key: str | bytes) -> NoReturn: ...
     def setlist(self, key: str | bytes, list_: Iterable[str | bytes]) -> NoReturn: ...
@@ -203,9 +219,13 @@ class MediaType:
     sub_type: str
     params: dict[str, bytes]
     def __init__(self, media_type_raw_line: str) -> None: ...
-    @property
-    def is_all_types(self) -> bool: ...
     def match(self, other: str) -> bool: ...
+    @cached_property
+    def quality(self) -> float: ...
+    @property
+    def specificity(self) -> int: ...
+    @cached_property
+    def range_params(self) -> dict[str, bytes]: ...
 
 @overload
 def bytes_to_text(s: None, encoding: str) -> None: ...
@@ -213,4 +233,3 @@ def bytes_to_text(s: None, encoding: str) -> None: ...
 def bytes_to_text(s: bytes | str, encoding: str) -> str: ...
 def split_domain_port(host: str) -> tuple[str, str]: ...
 def validate_host(host: str, allowed_hosts: Iterable[str]) -> bool: ...
-def parse_accept_header(header: str) -> list[MediaType]: ...

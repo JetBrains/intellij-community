@@ -1,24 +1,24 @@
 ### auto-generated section `build intellij.java.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "tests_test_resources",
-  files = glob(["testData/inspection/**/*"]),
+  srcs = glob(["testData/inspection/**/*"]),
   strip_prefix = "testData/inspection"
 )
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.java.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData/**/*"]),
-  associates = ["//java/java-impl:impl"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form", "testGen/**/*.kt", "testGen/**/*.java"], allow_empty = True, exclude = ["testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData/**/*"]),
+  resources = [":tests_test_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -38,6 +38,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
+    "//java/java-impl:impl",
     "//java/java-impl-inspections:impl-inspections",
     "//platform/platform-impl/concurrency",
     "//java/idea-ui:ui",
@@ -50,6 +51,7 @@ jvm_library(
     "//platform/diff-api:diff",
     "//platform/usageView",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//java/java-runtime:rt",
     "//platform/platform-api:ide",
     "//plugins/java-i18n",
@@ -85,7 +87,7 @@ jvm_library(
     "//plugins/groovy:groovy_test_lib",
     "//platform/lang-impl:lang-tests_test_lib",
     "//platform/platform-impl/internal",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "@lib//:assert_j",
     "//xml/xml-analysis-impl:analysis-impl",
     "//xml/xml-psi-api:psi",
@@ -104,9 +106,9 @@ jvm_library(
     "//plugins/coverage",
     "//plugins/coverage:coverage_test_lib",
     "//platform/workspace/jps",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
-    "@lib//:jackson-module-kotlin",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
+    "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "@lib//:stream_ex",
     "@lib//:kotlinx-coroutines-core",
     "//platform/statistics",
@@ -153,17 +155,29 @@ jvm_library(
     "//java/java-syntax:syntax",
     "//platform/lang-impl",
     "//xml/impl",
+    "//platform/syntax/syntax-scripts:scripts",
+    "@lib//:byte-buddy",
+    "//plugins/grazie/src:core",
+  ],
+  exports = [
+    "//plugins/java-i18n",
+    "//plugins/java-i18n:java-i18n_test_lib",
+    "//plugins/coverage",
+    "//plugins/coverage:coverage_test_lib",
   ],
   runtime_deps = [
-    ":tests_test_resources",
     "//community-resources:customization",
-    "//plugins/IntelliLang/java-support:java-langInjection",
-    "//plugins/IntelliLang/xml-support:xml-langInjection",
+    "//java/langInjection",
+    "//xml/langInjection",
   ]
 )
+### auto-generated section `build intellij.java.tests` end
+
+### auto-generated section `test intellij.java.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.java.tests` end
+### auto-generated section `test intellij.java.tests` end

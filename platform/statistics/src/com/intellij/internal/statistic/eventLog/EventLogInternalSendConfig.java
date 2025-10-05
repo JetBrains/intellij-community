@@ -62,7 +62,6 @@ public class EventLogInternalSendConfig implements EventLogSendConfig {
   @Override
   public @NotNull FilesToSendProvider getFilesToSendProvider() {
     int maxFilesToSend = EventLogConfiguration.getInstance().getOrCreate(myRecorderId).getMaxFilesToSend();
-    EventLogFilesProvider logFilesProvider = StatisticsEventLogProviderUtil.getEventLogProvider(myRecorderId).getLogFilesProvider();
-    return new DefaultFilesToSendProvider(logFilesProvider, maxFilesToSend, myFilterActiveFile);
+    return new DefaultFilesToSendProvider(myRecorderId, maxFilesToSend, myFilterActiveFile);
   }
 }

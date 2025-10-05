@@ -12,6 +12,10 @@ object PluginXmlConst {
   const val PLUGIN_DEPENDENT_ON_CORE_ATTR: String = "dependent-on-core"
   const val PLUGIN_IS_SEPARATE_JAR_ATTR: String = "separate-jar"
   const val PLUGIN_VERSION_ATTR: String = "version"
+  const val CONTENT_MODULE_VISIBILITY_ATTR: String = "visibility"
+  const val CONTENT_MODULE_VISIBILITY_PRIVATE_VALUE: String = "private"
+  const val CONTENT_MODULE_VISIBILITY_INTERNAL_VALUE: String = "internal"
+  const val CONTENT_MODULE_VISIBILITY_PUBLIC_VALUE: String = "public"
 
   const val ID_ELEM: String = "id"
   const val NAME_ELEM: String = "name"
@@ -51,7 +55,7 @@ object PluginXmlConst {
   const val CONTENT_MODULE_LOADING_REQUIRED_VALUE: String = "required"
   const val CONTENT_MODULE_LOADING_EMBEDDED_VALUE: String = "embedded"
   const val CONTENT_MODULE_LOADING_ON_DEMAND_VALUE: String = "on-demand"
-  const val CONTENT_MODULE_OS_ATTR: String = "os"
+  const val CONTENT_MODULE_NAMESPACE_ATTR: String = "namespace"
 
   const val DEPENDS_ELEM: String = "depends"
   const val DEPENDS_OPTIONAL_ATTR: String = "optional"

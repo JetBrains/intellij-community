@@ -21,6 +21,8 @@ open class KotlinCompilerReferenceMultiModuleTest : KotlinCompilerReferenceTestB
         get() = KotlinPluginMode.K1
 
     fun `test sub and super types`() {
+        if (!isCompatibleVersions) return
+
         val m1 = createModule("m1")
         myFixture.addFileToProject("m1/k.kt", "package one\nopen class K")
         myFixture.addFileToProject("m1/kk.kt", "package one\nopen class KK : K()")
@@ -103,9 +105,11 @@ open class KotlinCompilerReferenceMultiModuleTest : KotlinCompilerReferenceTestB
     }
 
     /**
-     * [org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService.buildScopeWithReferences]
+     * [KotlinCompilerReferenceIndexService.buildScopeWithReferences]
      */
     fun `test dirty scope`() {
+        if (!isCompatibleVersions) return
+
         val m1 = createModule("m1")
         val f1 = myFixture.addFileToProject("m1/f1.java", "package one;\nclass JavaClass {}")
         val f2 = myFixture.addFileToProject("m1/f2.kt", "package one\nclass KotlinClass")

@@ -3,9 +3,11 @@ package org.jetbrains.plugins.terminal.block.completion.ml
 
 import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.lang.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 
-internal class ShMLRankingProvider : CatBoostJarCompletionModelProvider(
+@ApiStatus.Internal
+class ShMLRankingProvider : CatBoostJarCompletionModelProvider(
   TerminalBundle.message("settings.shell.language"), "sh_features", "sh_model") {
 
   override fun isEnabledByDefault(): Boolean = true

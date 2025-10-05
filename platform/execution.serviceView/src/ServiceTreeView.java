@@ -2,19 +2,14 @@
 package com.intellij.platform.execution.serviceView;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.services.ServiceEventListener;
-import com.intellij.execution.services.ServiceViewContributor;
-import com.intellij.execution.services.ServiceViewDescriptor;
-import com.intellij.execution.services.ServiceViewManager;
+import com.intellij.execution.services.*;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.AppUIExecutor;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -24,7 +19,6 @@ import com.intellij.platform.execution.serviceView.ServiceViewNavBarService.Serv
 import com.intellij.platform.navbar.frontend.vm.NavBarVm;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
@@ -47,8 +41,7 @@ import javax.swing.*;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
@@ -58,8 +51,6 @@ import java.util.concurrent.CancellationException;
 import static com.intellij.platform.execution.serviceView.ServiceViewDragHelper.getTheOnlyRootContributor;
 
 final class ServiceTreeView extends ServiceView {
-  private static final String ADD_SERVICE_ACTION_ID = "ServiceView.AddService";
-
   private final ServiceViewTree myTree;
   private final ServiceViewTreeModel myTreeModel;
   private final ServiceViewModel.ServiceViewModelListener myListener;
@@ -459,39 +450,35 @@ final class ServiceTreeView extends ServiceView {
   }
 
   private static void setEmptyText(JComponent component, StatusText emptyText) {
+    emptyText.withUnscaledGapAfter(5);
     emptyText.setText(ExecutionBundle.message("service.view.empty.tree.text"));
-    emptyText.appendSecondaryText(ExecutionBundle.message("service.view.add.service.action.name"),
-                                  SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                                  new ActionListener() {
-                                    @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                      ActionGroup addActionGroup = ObjectUtils.tryCast(
-                                        ActionManager.getInstance().getAction(ADD_SERVICE_ACTION_ID), ActionGroup.class);
-                                      if (addActionGroup == null) return;
 
-                                      Point position = component.getMousePosition();
-                                      if (position == null) {
-                                        Rectangle componentBounds = component.getBounds();
-                                        Rectangle textBounds = emptyText.getComponent().getBounds();
-                                        position = new Point(componentBounds.width / 2,
-                                                             componentBounds.height / (emptyText.isShowAboveCenter() ? 3 : 2) +
-                                                             textBounds.height / 4);
-
-                                      }
-                                      DataContext dataContext = DataManager.getInstance().getDataContext(component);
-                                      JBPopupFactory.getInstance().createActionGroupPopup(
-                                        addActionGroup.getTemplatePresentation().getText(), addActionGroup, dataContext,
-                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                                        false, null, -1, null, ActionPlaces.getActionGroupPopupPlace(ADD_SERVICE_ACTION_ID))
-                                        .show(new RelativePoint(component, position));
-                                    }
-                                  });
-    AnAction addAction = ActionManager.getInstance().getAction(ADD_SERVICE_ACTION_ID);
-    ShortcutSet shortcutSet = addAction == null ? null : addAction.getShortcutSet();
-    Shortcut shortcut = shortcutSet == null ? null : ArrayUtil.getFirstElement(shortcutSet.getShortcuts());
-    if (shortcut != null) {
-      emptyText.appendSecondaryText(" (" + KeymapUtil.getShortcutText(shortcut) + ")", StatusText.DEFAULT_ATTRIBUTES, null);
+    var sortedSuggestions = getEmptyTreeSuggestions();
+    for (int i = 0; i < sortedSuggestions.size(); i++) {
+      ServiceViewEmptyTreeSuggestion suggestion = sortedSuggestions.get(i);
+      String suggestionText = suggestion.getText();
+      Icon icon = suggestion.getIcon();
+      emptyText.appendText(0, i + 1, icon, suggestionText, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> {
+        InputEvent inputEvent = e.getSource() instanceof InputEvent ie ? ie : null;
+        DataContext dataContext = DataManager.getInstance().getDataContext(component);
+        suggestion.onActivate(dataContext, inputEvent);
+      });
+      String shortcutText = suggestion.getShortcutText();
+      if (shortcutText != null) {
+        String paddedText = " " + shortcutText;
+        emptyText.appendText(0, i + 1, icon, paddedText, SimpleTextAttributes.GRAYED_ATTRIBUTES, null);
+      }
     }
+  }
+
+  @NotNull
+  private static List<ServiceViewEmptyTreeSuggestion> getEmptyTreeSuggestions() {
+    List<ServiceViewEmptyTreeSuggestion> externalSuggestions =
+      ContainerUtil.mapNotNull(ServiceViewContributor.CONTRIBUTOR_EP_NAME.getExtensionList(),
+                               ServiceViewContributor::getEmptyTreeSuggestion);
+    var allSuggestions = ContainerUtil.append(externalSuggestions, new AddServiceEmptyTreeSuggestion());
+    var highWeightFirst = Comparator.comparingInt(ServiceViewEmptyTreeSuggestion::getWeight).reversed();
+    return ContainerUtil.sorted(allSuggestions, highWeightFirst);
   }
 
   private static List<TreePath> adjustPaths(List<? extends TreePath> paths, Collection<? extends ServiceViewItem> roots, Object treeRoot) {

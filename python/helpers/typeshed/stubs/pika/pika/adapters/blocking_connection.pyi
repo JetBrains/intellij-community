@@ -1,5 +1,6 @@
 from _typeshed import Incomplete, Unused
 from collections.abc import Generator, Sequence
+from logging import Logger
 from types import TracebackType
 from typing import NamedTuple
 from typing_extensions import Self
@@ -9,10 +10,11 @@ from ..data import _ArgumentMapping
 from ..exchange_type import ExchangeType
 from ..spec import BasicProperties
 
-LOGGER: Incomplete
+LOGGER: Logger
 
 class _CallbackResult:
-    def __init__(self, value_class: Incomplete | None = None) -> None: ...
+    __slots__ = ("_value_class", "_ready", "_values")
+    def __init__(self, value_class=None) -> None: ...
     def reset(self) -> None: ...
     def __bool__(self) -> bool: ...
     __nonzero__: Incomplete
@@ -36,11 +38,13 @@ class _IoloopTimerContext:
     def is_ready(self): ...
 
 class _TimerEvt:
+    __slots__ = ("timer_id", "_callback")
     timer_id: Incomplete
     def __init__(self, callback) -> None: ...
     def dispatch(self) -> None: ...
 
 class _ConnectionBlockedUnblockedEvtBase:
+    __slots__ = ("_callback", "_method_frame")
     def __init__(self, callback, method_frame) -> None: ...
     def dispatch(self) -> None: ...
 
@@ -55,9 +59,7 @@ class BlockingConnection:
     class _OnChannelOpenedArgs(NamedTuple):
         channel: Incomplete
 
-    def __init__(
-        self, parameters: Parameters | Sequence[Parameters] | None = None, _impl_class: Incomplete | None = None
-    ) -> None: ...
+    def __init__(self, parameters: Parameters | Sequence[Parameters] | None = None, _impl_class=None) -> None: ...
     def __enter__(self) -> Self: ...
     def __exit__(
         self, exc_type: type[BaseException] | None, value: BaseException | None, traceback: TracebackType | None
@@ -92,18 +94,21 @@ class BlockingConnection:
 class _ChannelPendingEvt: ...
 
 class _ConsumerDeliveryEvt(_ChannelPendingEvt):
+    __slots__ = ("method", "properties", "body")
     method: Incomplete
     properties: Incomplete
     body: Incomplete
     def __init__(self, method, properties, body) -> None: ...
 
 class _ConsumerCancellationEvt(_ChannelPendingEvt):
+    __slots__ = ("method_frame",)
     method_frame: Incomplete
     def __init__(self, method_frame) -> None: ...
     @property
     def method(self): ...
 
 class _ReturnedMessageEvt(_ChannelPendingEvt):
+    __slots__ = ("callback", "channel", "method", "properties", "body")
     callback: Incomplete
     channel: Incomplete
     method: Incomplete
@@ -113,12 +118,14 @@ class _ReturnedMessageEvt(_ChannelPendingEvt):
     def dispatch(self) -> None: ...
 
 class ReturnedMessage:
+    __slots__ = ("method", "properties", "body")
     method: Incomplete
     properties: Incomplete
     body: Incomplete
     def __init__(self, method, properties, body) -> None: ...
 
 class _ConsumerInfo:
+    __slots__ = ("consumer_tag", "auto_ack", "on_message_callback", "alternate_event_sink", "state")
     SETTING_UP: int
     ACTIVE: int
     TEARING_DOWN: int
@@ -128,13 +135,7 @@ class _ConsumerInfo:
     on_message_callback: Incomplete
     alternate_event_sink: Incomplete
     state: Incomplete
-    def __init__(
-        self,
-        consumer_tag,
-        auto_ack,
-        on_message_callback: Incomplete | None = None,
-        alternate_event_sink: Incomplete | None = None,
-    ) -> None: ...
+    def __init__(self, consumer_tag, auto_ack, on_message_callback=None, alternate_event_sink=None) -> None: ...
     @property
     def setting_up(self): ...
     @property
@@ -145,6 +146,7 @@ class _ConsumerInfo:
     def cancelled_by_broker(self): ...
 
 class _QueueConsumerGeneratorInfo:
+    __slots__ = ("params", "consumer_tag", "pending_events")
     params: Incomplete
     consumer_tag: Incomplete
     pending_events: Incomplete
@@ -187,24 +189,13 @@ class BlockingChannel:
     def add_on_cancel_callback(self, callback) -> None: ...
     def add_on_return_callback(self, callback): ...
     def basic_consume(
-        self,
-        queue,
-        on_message_callback,
-        auto_ack: bool = False,
-        exclusive: bool = False,
-        consumer_tag: Incomplete | None = None,
-        arguments: Incomplete | None = None,
+        self, queue, on_message_callback, auto_ack: bool = False, exclusive: bool = False, consumer_tag=None, arguments=None
     ): ...
     def basic_cancel(self, consumer_tag): ...
     def start_consuming(self) -> None: ...
-    def stop_consuming(self, consumer_tag: Incomplete | None = None) -> None: ...
+    def stop_consuming(self, consumer_tag=None) -> None: ...
     def consume(
-        self,
-        queue,
-        auto_ack: bool = False,
-        exclusive: bool = False,
-        arguments: Incomplete | None = None,
-        inactivity_timeout: Incomplete | None = None,
+        self, queue, auto_ack: bool = False, exclusive: bool = False, arguments=None, inactivity_timeout=None
     ) -> Generator[Incomplete, None, None]: ...
     def get_waiting_message_count(self): ...
     def cancel(self): ...
@@ -234,14 +225,8 @@ class BlockingChannel:
         arguments: _ArgumentMapping | None = None,
     ): ...
     def exchange_delete(self, exchange: str | None = None, if_unused: bool = False): ...
-    def exchange_bind(self, destination, source, routing_key: str = "", arguments: Incomplete | None = None): ...
-    def exchange_unbind(
-        self,
-        destination: Incomplete | None = None,
-        source: Incomplete | None = None,
-        routing_key: str = "",
-        arguments: Incomplete | None = None,
-    ): ...
+    def exchange_bind(self, destination, source, routing_key: str = "", arguments=None): ...
+    def exchange_unbind(self, destination=None, source=None, routing_key: str = "", arguments=None): ...
     def queue_declare(
         self,
         queue,
@@ -249,18 +234,12 @@ class BlockingChannel:
         durable: bool = False,
         exclusive: bool = False,
         auto_delete: bool = False,
-        arguments: Incomplete | None = None,
+        arguments=None,
     ): ...
     def queue_delete(self, queue, if_unused: bool = False, if_empty: bool = False): ...
     def queue_purge(self, queue): ...
-    def queue_bind(self, queue, exchange, routing_key: Incomplete | None = None, arguments: Incomplete | None = None): ...
-    def queue_unbind(
-        self,
-        queue,
-        exchange: Incomplete | None = None,
-        routing_key: Incomplete | None = None,
-        arguments: Incomplete | None = None,
-    ): ...
+    def queue_bind(self, queue, exchange, routing_key=None, arguments=None): ...
+    def queue_unbind(self, queue, exchange=None, routing_key=None, arguments=None): ...
     def tx_select(self): ...
     def tx_commit(self): ...
     def tx_rollback(self): ...

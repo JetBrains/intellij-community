@@ -8,8 +8,7 @@ import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
 import org.jetbrains.annotations.ApiStatus
 
-// todo IJPL-339 mark experimental
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class ProblemsContextGroupNode (val parent: ProblemsContextNode, val group: String, val problems: Collection<Problem>) : Node(parent) {
 
   override fun getLeafState(): LeafState = LeafState.NEVER

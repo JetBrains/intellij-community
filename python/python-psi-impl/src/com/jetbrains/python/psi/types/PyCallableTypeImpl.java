@@ -140,6 +140,11 @@ public class PyCallableTypeImpl implements PyCallableType {
   }
 
   @Override
+  public @Nullable PyQualifiedNameOwner getDeclarationElement() {
+    return myCallable;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

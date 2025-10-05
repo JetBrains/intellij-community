@@ -101,8 +101,6 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
                     }
                 }
 
-                is JsPlatform -> AdvancedSettings.getBoolean("kotlin.mpp.experimental")
-
                 else -> true
             }
         }

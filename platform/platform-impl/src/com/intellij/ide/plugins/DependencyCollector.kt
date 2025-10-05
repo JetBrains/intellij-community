@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollector>() {
   @Attribute("kind")
@@ -43,11 +45,25 @@ internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollect
 interface DependencyCollector {
   /**
    * Returns the list of dependencies for the given project. Each element in the returned list is the name/coordinate of a dependency.
-   * The specific format of returned strings depends on the dependency kind. For Java, the format is Maven group ID and artifact ID
-   * separated by a colon.
+   * See [DependencyInformation] for more details on how to describe a dependency.
    */
-  suspend fun collectDependencies(project: Project): Collection<String>
+  suspend fun collectDependencies(project: Project): Collection<DependencyInformation>
 }
+
+/**
+ * Describes existing dependencies of the give project or the user environment.
+ * The [coordinate] is a name or the coordinate of the dependency. The specific format depends on the dependency kind.
+ *   For Java, the format is Maven group ID and artifact ID separated by a colon.
+ *
+ * The [reason] is the user-visible reason why the plugin is suggested to the user.
+ *   The rule is to use "This plugin is suggested because XYZ" format, where XYZ is the reason why the plugin is suggested.
+ *   For example, "This plugin is suggested because you have docker installed".
+ *   If null, the reason defaults to "This plugin is suggested because your project uses [coordinate] library"
+ */
+data class DependencyInformation(
+  val coordinate: String,
+  @param:Nls val reason: String? = IdeBundle.message("plugins.configurable.suggested.features.dependency", coordinate),
+)
 
 /**
  * Marks a plugin as supporting a given dependency. The `coordinate` attribute specifies the name or coordinate of the supported

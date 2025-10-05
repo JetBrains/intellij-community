@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -21,6 +20,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSync
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -62,7 +62,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   override fun addNewSdk(sdk: Sdk) {
     val delegateSdk = (sdk as ProjectJdkImpl).delegate as SdkBridgeImpl
     val descriptor = delegateSdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor.machine)
     val existingSdkEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(sdk)
 
     if (existingSdkEntity != null) {
@@ -74,7 +74,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     val homePathVfu = delegateSdk.homePath?.let { virtualFileUrlManager.getOrCreateFromUrl(it) }
 
     val roots = mutableListOf<SdkRoot>()
-    for (type in OrderRootType.getAllPersistentTypes()) {
+    for (type in OrderRootType.getSortedRootTypes()) {
       sdk.rootProvider.getUrls(type).forEach { url ->
         roots.add(SdkRoot(virtualFileUrlManager.getOrCreateFromUrl(url), rootTypes[type.customName]!!))
       }
@@ -93,7 +93,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
   override fun removeSdk(sdk: Sdk) {
     val descriptor = sdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor.machine)
 
     // It's absolutely OK if we try to remove what does not yet exist in `ProjectJdkTable` SDK
     // E.g. org.jetbrains.idea.maven.actions.AddMavenDependencyQuickFixTest
@@ -107,7 +107,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     modifiedSdk as ProjectJdkImpl
     originalSdk as ProjectJdkImpl
     val descriptor = modifiedSdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(descriptor.machine)
     val sdkEntity = (globalWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java)
                            .firstOrNull { it.name == originalSdk.name && it.type == originalSdk.sdkType.name }
                      ?: error("SDK entity for bridge `${originalSdk.name}` `${originalSdk.sdkType.name}` doesn't exist"))
@@ -127,10 +127,8 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   @TestOnly
   @Suppress("RAW_RUN_BLOCKING")
   override fun saveOnDisk() {
-    runBlocking {
-      resetThreadContext().use {
-        (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
-      }
+    runBlocking(Dispatchers.Default) {
+      (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveSdkEntities()
     }
   }
 }

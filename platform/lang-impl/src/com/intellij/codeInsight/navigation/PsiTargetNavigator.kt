@@ -131,8 +131,11 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
           ItemWithPresentation(SmartPointerManager.createPointer(it),
                                presentationProvider.getPresentation(it))
         }
-        val selected = if (selection == null) null
-        else list[elements.indexOf(selection)]
+        val selected = if (selection == null) {
+          null
+        } else {
+          list.getOrNull(elements.indexOf(selection))
+        }
         Pair(list, selected)
       }
     }

@@ -17,33 +17,21 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters
 import com.intellij.execution.util.ProgramParametersUtil
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.project.Project
 import com.intellij.util.ArrayUtil
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
-import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.Test
 import java.io.File
 import java.io.IOException
-import java.util.function.Consumer
-import kotlin.io.path.exists
 
-class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
-
-  override fun setUp() {
-    super.setUp()
-    projectsManager.initForTests()
-    projectsManager.listenForExternalChanges()
-  }
+class FoldersImportingTest : FoldersImportingTestCase() {
 
   @Test
   fun testSimpleProjectStructure() = runBlocking {
@@ -140,6 +128,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testClearParentAndSubFoldersOfNewlyImportedFolders() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -170,6 +160,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSourceFoldersOnReimport() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createProjectSubDirs("src1", "src2")
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -337,471 +329,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testSourceFolderPointsToProjectRootParent() = runBlocking {
-    createStdProjectFolders()
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>org.codehaus.mojo</groupId>
-                          <artifactId>build-helper-maven-plugin</artifactId>
-                          <version>1.3</version>
-                          <executions>
-                            <execution>
-                              <id>someId</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>${'$'}{basedir}/..</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                          </executions>
-                        </plugin>
-                      </plugins>
-                    </build>
-                    """.trimIndent())
-    assertModules("project")
-    assertContentRoots("project", projectPath)
-    assertSources("project", "src/main/java")
-    assertTestSources("project", "src/test/java")
-    assertDefaultResources("project")
-    assertDefaultTestResources("project")
-  }
-
-  @Test
-  fun testPluginSources() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("src1", "src2")
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>org.codehaus.mojo</groupId>
-                          <artifactId>build-helper-maven-plugin</artifactId>
-                          <version>1.3</version>
-                          <executions>
-                            <execution>
-                              <id>someId</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>${'$'}{basedir}/src1</source>
-                                  <source>${'$'}{basedir}/src2</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                          </executions>
-                        </plugin>
-                      </plugins>
-                    </build>
-                    """.trimIndent())
-    resolveFoldersAndImport()
-    assertModules("project")
-    assertSources("project", "src/main/java", "src1", "src2")
-    assertDefaultResources("project")
-  }
-
-  @Test
-  fun testPluginSourceDuringGenerateResourcesPhase() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("extraResources")
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>org.codehaus.mojo</groupId>
-                          <artifactId>build-helper-maven-plugin</artifactId>
-                          <version>1.3</version>
-                          <executions>
-                            <execution>
-                              <id>someId</id>
-                              <phase>generate-resources</phase>
-                              <goals>
-                                <goal>add-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>${'$'}{basedir}/extraResources</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                          </executions>
-                        </plugin>
-                      </plugins>
-                    </build>
-                    """.trimIndent())
-    resolveFoldersAndImport()
-    assertModules("project")
-    assertSources("project", "extraResources", "src/main/java")
-    assertDefaultResources("project")
-  }
-
-  @Test
-  fun testPluginTestSourcesDuringGenerateTestResourcesPhase() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("extraTestResources")
-    mavenImporterSettings.updateFoldersOnImportPhase = "generate-test-resources"
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>org.codehaus.mojo</groupId>
-                          <artifactId>build-helper-maven-plugin</artifactId>
-                          <version>1.3</version>
-                          <executions>
-                            <execution>
-                              <id>someId</id>
-                              <phase>generate-test-resources</phase>
-                              <goals>
-                                <goal>add-test-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>${'$'}{basedir}/extraTestResources</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                          </executions>
-                        </plugin>
-                      </plugins>
-                    </build>
-                    """.trimIndent())
-    resolveFoldersAndImport()
-    assertModules("project")
-    assertTestSources("project", "extraTestResources", "src/test/java")
-    assertDefaultTestResources("project")
-  }
-
-  @Test
-  fun testPluginSourcesWithRelativePath() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("relativePath")
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>org.codehaus.mojo</groupId>
-                          <artifactId>build-helper-maven-plugin</artifactId>
-                          <version>1.3</version>
-                          <executions>
-                            <execution>
-                              <id>someId</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>relativePath</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                          </executions>
-                        </plugin>
-                      </plugins>
-                    </build>
-                    """.trimIndent())
-    resolveFoldersAndImport()
-    assertModules("project")
-    assertSources("project", "relativePath", "src/main/java")
-    assertDefaultResources("project")
-  }
-
-  @Test
-  fun testPluginSourcesWithVariables() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("target/src")
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>org.codehaus.mojo</groupId>
-                          <artifactId>build-helper-maven-plugin</artifactId>
-                          <version>1.3</version>
-                          <executions>
-                            <execution>
-                              <id>someId</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>${'$'}{project.build.directory}/src</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                          </executions>
-                        </plugin>
-                      </plugins>
-                    </build>
-                    """.trimIndent())
-    resolveFoldersAndImport()
-    assertModules("project")
-    assertSources("project", "src/main/java", "target/src")
-    assertDefaultResources("project")
-  }
-
-  @Test
-  fun testPluginSourcesWithIntermoduleDependency() = runBlocking {
-    createStdProjectFolders("m1")
-    createProjectSubDirs("m1/src/foo")
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <packaging>pom</packaging>
-                       <modules>
-                         <module>m1</module>
-                         <module>m2</module>
-                       </modules>
-                       """.trimIndent())
-    createModulePom("m1",
-                    """
-                      <groupId>test</groupId>
-                      <artifactId>m1</artifactId>
-                      <version>1</version>
-                      <dependencies>
-                        <dependency>
-                          <groupId>test</groupId>
-                          <artifactId>m2</artifactId>
-                          <version>1</version>
-                        </dependency>
-                      </dependencies>
-                      <build>
-                        <plugins>
-                          <plugin>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>build-helper-maven-plugin</artifactId>
-                            <version>1.3</version>
-                            <executions>
-                              <execution>
-                                <id>someId</id>
-                                <phase>generate-sources</phase>
-                                <goals>
-                                  <goal>add-source</goal>
-                                </goals>
-                                <configuration>
-                                  <sources>
-                                    <source>src/foo</source>
-                                  </sources>
-                                </configuration>
-                              </execution>
-                            </executions>
-                          </plugin>
-                        </plugins>
-                      </build>
-                      """.trimIndent())
-    createModulePom("m2",
-                    """
-                      <groupId>test</groupId>
-                      <artifactId>m2</artifactId>
-                      <version>1</version>
-                      """.trimIndent())
-    importProjectAsync()
-    assertModules("project", "m1", "m2")
-    resolveFoldersAndImport()
-    assertSources("m1", "src/foo", "src/main/java")
-    assertDefaultResources("m1")
-  }
-
-  @Test
-  fun testPluginExtraFilesInMultipleExecutions() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("src1", "src2")
-    createProjectSubDirs("resources1", "resources2")
-    createProjectSubDirs("test1", "test2")
-    createProjectSubDirs("test-resources1", "test-resources2")
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>org.codehaus.mojo</groupId>
-                          <artifactId>build-helper-maven-plugin</artifactId>
-                          <version>1.3</version>
-                          <executions>
-                            <execution>
-                              <id>add-src1</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>${'$'}{basedir}/src1</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                            <execution>
-                              <id>add-src2</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>${'$'}{basedir}/src2</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                            <execution>
-                              <id>add-resources1</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-resource</goal>
-                              </goals>
-                              <configuration>
-                                <resources>
-                                  <resource><directory>${'$'}{basedir}/resources1</directory></resource>
-                                </resources>
-                              </configuration>
-                            </execution>
-                            <execution>
-                              <id>add-resources2</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-resource</goal>
-                              </goals>
-                              <configuration>
-                                <resources>
-                                  <resource><directory>${'$'}{basedir}/resources2</directory></resource>
-                                </resources>
-                              </configuration>
-                            </execution>
-                            <execution>
-                              <id>add-test1</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-test-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>${'$'}{basedir}/test1</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                            <execution>
-                              <id>add-test2</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-test-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>${'$'}{basedir}/test2</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                            <execution>
-                              <id>add-test-resources1</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-test-resource</goal>
-                              </goals>
-                              <configuration>
-                                <resources>
-                                  <resource><directory>${'$'}{basedir}/test-resources1</directory></resource>
-                                </resources>
-                              </configuration>
-                            </execution>
-                            <execution>
-                              <id>add-test-resources2</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-test-resource</goal>
-                              </goals>
-                              <configuration>
-                                <resources>
-                                  <resource><directory>${'$'}{basedir}/test-resources2</directory></resource>
-                                </resources>
-                              </configuration>
-                            </execution>
-                          </executions>
-                        </plugin>
-                      </plugins>
-                    </build>
-                    """.trimIndent())
-    resolveFoldersAndImport()
-    assertModules("project")
-    assertSources("project", "src/main/java", "src1", "src2")
-    assertDefaultResources("project", "resources1", "resources2")
-    assertTestSources("project", "src/test/java", "test1", "test2")
-    assertDefaultTestResources("project", "test-resources1", "test-resources2")
-  }
-
-  @Test
-  fun testDownloadingNecessaryPlugins() = runBlocking {
-    try {
-      val helper = MavenCustomRepositoryHelper(dir, "local1")
-      repositoryPath = helper.getTestData("local1")
-      val pluginFile = repositoryPath.resolve("org/codehaus/mojo/build-helper-maven-plugin/1.2/build-helper-maven-plugin-1.2.jar")
-      assertFalse(pluginFile.exists())
-      importProjectAsync("""
-                      <groupId>test</groupId>
-                      <artifactId>project</artifactId>
-                      <version>1</version>
-                      <build>
-                        <plugins>
-                          <plugin>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>build-helper-maven-plugin</artifactId>
-                            <version>1.2</version>
-                            <executions>
-                              <execution>
-                                <id>someId</id>
-                                <phase>generate-sources</phase>
-                                <goals>
-                                  <goal>add-source</goal>
-                                </goals>
-                                <configuration>
-                                  <sources>
-                                    <source>src</source>
-                                  </sources>
-                                </configuration>
-                              </execution>
-                            </executions>
-                          </plugin>
-                        </plugins>
-                      </build>
-                      """.trimIndent())
-      resolveFoldersAndImport()
-      assertTrue(pluginFile.exists())
-    }
-    finally {
-      // do not lock files by maven process
-      MavenServerManager.getInstance().closeAllConnectorsAndWait()
-    }
-  }
-
-  @Test
   fun testAddingExistingGeneratedSources() = runBlocking {
     createStdProjectFolders()
     createProjectSubFile("target/generated-sources/src1/com/A.java", "package com; class A {}")
@@ -850,52 +377,33 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     assertTestSources("project")
     assertTestResources("project")
     assertExcludes("project", "target")
-    val mainResources = "$projectPath/src/main/resources"
-    val mainResourcesFiltered = "$projectPath/src/main/resources-filtered"
+
     val mainSources = arrayOfNotNull(
       "$projectPath/src/main/java",
-      mainResources,
-      if (isMaven4) mainResourcesFiltered else null,
       "$projectPath/target/generated-sources/src1",
       "$projectPath/target/generated-sources/src2"
     )
-    val testResources = "$projectPath/src/test/resources"
-    val testResourcesFiltered = "$projectPath/src/test/resources-filtered"
     val testSources = arrayOfNotNull(
       "$projectPath/src/test/java",
-      testResources,
-      if (isMaven4) testResourcesFiltered else null,
       "$projectPath/target/generated-test-sources/test1",
       "$projectPath/target/generated-test-sources/test2"
     )
-    assertContentRoots("project.main", *mainSources)
-    assertContentRoots("project.test", *testSources)
-    for (main in mainSources) {
-      if (main == mainResources || main == mainResourcesFiltered) {
-        assertContentRootResources("project.main", main, "")
-      }
-      else {
-        assertContentRootSources("project.main", main, "")
-      }
-      assertContentRootTestSources("project.main", main)
-      assertContentRootTestResources("project.main", main)
-      assertContentRootExcludes("project.main", main)
-    }
-    for (test in testSources) {
-      assertContentRootResources("project.test", test)
-      assertContentRootSources("project.test", test)
-      if (test == testResources || test == testResourcesFiltered) {
-        assertContentRootTestResources("project.test", test, "")
-      }
-      else {
-        assertContentRootTestSources("project.test", test, "")
-      }
-      assertContentRootExcludes("project.test", test)
-    }
+
+    assertSources("project.main", *mainSources)
+    assertDefaultResources("project.main")
+    assertTestSources("project.main")
+    assertTestResources("project.main")
+
+    assertSources("project.test")
+    assertResources("project.test")
+    assertTestSources("project.test", *testSources)
+    assertDefaultTestResources("project.test")
   }
 
   @Test
   fun testContentRootOutsideOfModuleDirInPerSourceTypeImport() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createModulePom("m1",
                     """
                       <groupId>test</groupId>
@@ -931,17 +439,14 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                   mn("project", "m1"),
                   mn("project", "m1.main"),
                   mn("project", "m1.test"))
-    val expectedRoots = ArrayList<String>()
-    expectedRoots.add("$projectPath/custom-sources")
-    expectedRoots.add("$projectPath/m1/src/main/resources")
-    if (isMaven4) {
-      expectedRoots.add("$projectPath/m1/src/main/resources-filtered")
-    }
-    assertContentRoots(mn("project", "m1.main"), *ArrayUtil.toStringArray(expectedRoots))
+    assertSources("m1.main", "../custom-sources")
+    assertDefaultResources("m1.main")
   }
 
   @Test
   fun testAddingExistingGeneratedSources2() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
     importProjectAsync("""
@@ -992,6 +497,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testOverrideAnnotationSourcesWhenAutodetect() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT)
@@ -1010,6 +517,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testOverrideTestAnnotationSourcesWhenAutodetect() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT)
@@ -1045,6 +554,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingExistingGeneratedSources4() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     createProjectSubFile("target/generated-sources/A1/B1/com/A1.java", "package com; class A1 {}")
     createProjectSubFile("target/generated-sources/A1/B2/com/A2.java", "package com; class A2 {}")
@@ -1064,6 +575,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testAddingExistingGeneratedSources5() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createStdProjectFolders()
     createProjectSubFile("target/generated-sources/A1/B1/com/A1.java", "package com; class A1 {}")
     createProjectSubFile("target/generated-sources/A2.java", "class A2 {}")
@@ -1098,62 +611,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     assertTestSources("project",
                       "src/test/java",
                       "targetCustom/generated-test-sources/test")
-    assertDefaultTestResources("project")
-  }
-
-  @Test
-  fun testDoesNotAddAlreadyRegisteredSourcesUnderGeneratedDir() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("target/generated-sources/main/src",
-                         "target/generated-test-sources/test/src")
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                      <plugins>
-                        <plugin>
-                          <groupId>org.codehaus.mojo</groupId>
-                          <artifactId>build-helper-maven-plugin</artifactId>
-                          <version>1.3</version>
-                          <executions>
-                            <execution>
-                              <id>id1</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>target/generated-sources/main/src</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                            <execution>
-                              <id>id2</id>
-                              <phase>generate-sources</phase>
-                              <goals>
-                                <goal>add-test-source</goal>
-                              </goals>
-                              <configuration>
-                                <sources>
-                                  <source>target/generated-test-sources/test/src</source>
-                                </sources>
-                              </configuration>
-                            </execution>
-                          </executions>
-                        </plugin>
-                      </plugins>
-                    </build>
-                    """.trimIndent())
-    resolveFoldersAndImport()
-    assertSources("project",
-                  "src/main/java",
-                  "target/generated-sources/main/src")
-    assertDefaultResources("project")
-    assertTestSources("project",
-                      "src/test/java",
-                      "target/generated-test-sources/test/src")
     assertDefaultTestResources("project")
   }
 
@@ -1389,35 +846,32 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     assertContentRootSources(m1_pom_module, m1_pom_root, "src/main/java")
     val expectedResources = ArrayList<String>()
     expectedResources.add("src/main/resources")
-    if (isMaven4) {
+    if (isModel410()) {
       expectedResources.add("src/main/resources-filtered")
     }
     assertContentRootResources(m1_pom_module, m1_pom_root, *ArrayUtil.toStringArray(expectedResources))
     assertContentRootTestSources(m1_pom_module, m1_pom_root, "src/test/java")
     val expectedTestResources = ArrayList<String>()
     expectedTestResources.add("src/test/resources")
-    if (isMaven4) {
+    if (isModel410()) {
       expectedTestResources.add("src/test/resources-filtered")
     }
     assertContentRootTestResources(m1_pom_module, m1_pom_root, *ArrayUtil.toStringArray(expectedTestResources))
     val m1_custom_sources_root = "$projectPath/m1/sources"
     val m1_custom_tests_root = "$projectPath/m1/tests"
     val m1_standard_test_resources = "$projectPath/m1/src/test/resources"
-    val m1_content_roots = ArrayList<String>()
-    m1_content_roots.add(m1_custom_sources_root)
-    m1_content_roots.add(m1_custom_tests_root)
+    val m1_standard_test_resources_list = ArrayList<String>()
 
     // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
     // but I'm testing the behavior as is in order to preserve it in the new Workspace import
-    m1_content_roots.add(m1_standard_test_resources)
-    if (isMaven4) {
-      m1_content_roots.add("$m1_standard_test_resources-filtered")
+    m1_standard_test_resources_list.add(m1_standard_test_resources)
+    if (isModel410()) {
+      m1_standard_test_resources_list.add("$m1_standard_test_resources-filtered")
     }
-    assertContentRoots(m1_custom_module, *ArrayUtil.toStringArray(m1_content_roots))
-    assertContentRootSources(m1_custom_module, m1_custom_sources_root, "")
-    assertContentRootResources(m1_custom_module, m1_custom_sources_root)
-    assertContentRootTestSources(m1_custom_module, m1_custom_tests_root, "")
-    assertContentRootTestResources(m1_custom_module, m1_standard_test_resources, "")
+    assertSources(m1_custom_module, m1_custom_sources_root)
+    assertResources(m1_custom_module)
+    assertTestSources(m1_custom_module, m1_custom_tests_root)
+    assertTestResources(m1_custom_module, *m1_standard_test_resources_list.toTypedArray())
   }
 
   @Test
@@ -1467,23 +921,14 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     assertContentRootTestSources(mn("project", "m1-pom"), "$projectPath/m1", "src/test/java")
     assertContentRootSources(mn("project", "m1-pom"), "$projectPath/pom-sources", "")
     assertContentRootTestSources(mn("project", "m1-pom"), "$projectPath/pom-sources")
-    val expectedRoots = arrayOfNotNull(
-      "$projectPath/custom-sources",
-      "$projectPath/m1/src/main/resources",
-      maven4orNull("$projectPath/m1/src/main/resources-filtered"),
-      "$projectPath/m1/src/test/java",
-      "$projectPath/m1/src/test/resources",
-      maven4orNull("$projectPath/m1/src/test/resources-filtered")
-    )
-    assertContentRoots(mn("project", "m1-custom"), *expectedRoots)
 
     // this is not quite correct behavior, since we have both modules (m1-pom and m2-custom) pointing at the same folders
     // (Though, it somehow works in IJ, and it's a rare case anyway).
     // The assertions are only to make sure the behavior is 'stable'. Should be updates once the behavior changes intentionally
-    assertContentRootSources(mn("project", "m1-custom"), "$projectPath/custom-sources", "")
-    assertContentRootTestSources(mn("project", "m1-custom"), "$projectPath/m1/src/test/java", "")
-    assertContentRootResources(mn("project", "m1-custom"), "$projectPath/m1/src/main/resources", "")
-    assertContentRootTestResources(mn("project", "m1-custom"), "$projectPath/m1/src/test/resources", "")
+    assertSources("m1-custom", "$projectPath/custom-sources")
+    assertTestSources("m1-custom", "$projectPath/m1/src/test/java")
+    assertDefaultResources("m1-custom")
+    assertDefaultTestResources("m1-custom")
   }
 
   @Test
@@ -1591,80 +1036,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testSourceFoldersOrder() = runBlocking {
-    createStdProjectFolders()
-    val target = createProjectSubDir("target")
-    createProjectSubDirsWithFile("anno",
-                                 "test-anno",
-                                 "target/generated-sources/foo",
-                                 "target/generated-sources/annotations",
-                                 "target/generated-sources/test-annotations",
-                                 "target/generated-test-sources/foo")
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                     <plugins>
-                      <plugin>
-                       <groupId>org.apache.maven.plugins</groupId>
-                       <artifactId>maven-compiler-plugin</artifactId>
-                       <version>2.3.2</version>
-                       <configuration>
-                         <generatedSourcesDirectory>${'$'}{basedir}/anno</generatedSourcesDirectory>
-                         <generatedTestSourcesDirectory>${'$'}{basedir}/test-anno</generatedTestSourcesDirectory>
-                       </configuration>
-                      </plugin>
-                     </plugins>
-                    </build>
-                    """.trimIndent())
-    val testAssertions = Consumer { shouldKeepGeneratedFolders: Boolean ->
-      if (shouldKeepGeneratedFolders) {
-        assertSources("project",
-                      "anno",
-                      "src/main/java",
-                      "target/generated-sources/annotations",
-                      "target/generated-sources/foo",
-                      "target/generated-sources/test-annotations")
-      }
-      else {
-        assertSources("project",
-                      "anno",
-                      "src/main/java")
-      }
-      assertDefaultResources("project")
-      if (shouldKeepGeneratedFolders) {
-        assertTestSources("project",
-                          "src/test/java",
-                          "target/generated-test-sources/foo",
-                          "test-anno")
-      }
-      else {
-        assertTestSources("project",
-                          "src/test/java",
-                          "test-anno")
-      }
-      assertDefaultTestResources("project")
-    }
-    testAssertions.accept(true)
-    edtWriteAction {
-      try {
-        target.delete(this)
-      }
-      catch (e: IOException) {
-        fail("Unable to delete the file: " + e.message)
-      }
-    }
-    testAssertions.accept(true)
-
-    // incremental sync doesn't support updating source folders if effective pom dependencies haven't changed
-    updateAllProjectsFullSync()
-    testAssertions.accept(false)
-    resolveFoldersAndImport()
-    testAssertions.accept(false)
-  }
-
-  @Test
   fun testUnexcludeNewSources() = runBlocking {
     createProjectSubDirs("target/foo")
     createProjectSubDirs("target/src")
@@ -1693,6 +1064,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUnexcludeNewSourcesUnderCompilerOutputDir() = runBlocking {
+    assumeOnLocalEnvironmentOnly("IDEA-378277")
+
     createProjectSubDirs("target/classes/src")
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1738,84 +1111,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
                       "target/generated-test-sources/foo",
                       "target/generated-test-sources/test-annotations")
     assertDefaultTestResources("project")
-  }
-
-  @Test
-  fun testCustomAnnotationProcessorSources() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirsWithFile("custom-annotations",
-                                 "custom-test-annotations",
-                                 "target/generated-sources/foo",
-                                 "target/generated-sources/annotations",
-                                 "target/generated-sources/test-annotations",
-                                 "target/generated-test-sources/foo")
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                     <plugins>
-                      <plugin>
-                       <groupId>org.apache.maven.plugins</groupId>
-                       <artifactId>maven-compiler-plugin</artifactId>
-                       <version>2.3.2</version>
-                       <configuration>
-                         <generatedSourcesDirectory>${'$'}{basedir}/custom-annotations</generatedSourcesDirectory>
-                         <generatedTestSourcesDirectory>${'$'}{basedir}/custom-test-annotations</generatedTestSourcesDirectory>
-                       </configuration>
-                      </plugin>
-                     </plugins>
-                    </build>
-                    """.trimIndent())
-    assertSources("project",
-                  "custom-annotations",
-                  "src/main/java",
-                  "target/generated-sources/annotations",
-                  "target/generated-sources/foo",
-                  "target/generated-sources/test-annotations")
-    assertTestSources("project",
-                      "src/test/java",
-                      "target/generated-test-sources/foo",
-                      "custom-test-annotations")
-  }
-
-  @Test
-  fun testCustomAnnotationProcessorSourcesUnderMainGeneratedFolder() = runBlocking {
-    createProjectSubDirsWithFile("target/generated-sources/foo",
-                                 "target/generated-sources/annotations",
-                                 "target/generated-sources/custom-annotations",  // this and...
-                                 "target/generated-sources/custom-test-annotations",  // this, are explicitly specified as annotation folders
-                                 "target/generated-test-sources/foo",
-                                 "target/generated-test-sources/test-annotations"
-    )
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <build>
-                     <plugins>
-                      <plugin>
-                       <groupId>org.apache.maven.plugins</groupId>
-                       <artifactId>maven-compiler-plugin</artifactId>
-                       <version>2.3.2</version>
-                       <configuration>
-                         <generatedSourcesDirectory>${'$'}{basedir}/target/generated-sources/custom-annotations</generatedSourcesDirectory>
-                         <generatedTestSourcesDirectory>${'$'}{basedir}/target/generated-sources/custom-test-annotations</generatedTestSourcesDirectory>
-                       </configuration>
-                      </plugin>
-                     </plugins>
-                    </build>
-                    """.trimIndent())
-    assertSources("project",
-                  "src/main/java",
-                  "target/generated-sources/foo",
-                  "target/generated-sources/annotations",
-                  "target/generated-sources/custom-annotations")
-    assertTestSources("project",
-                      "src/test/java",
-                      "target/generated-sources/custom-test-annotations",
-                      "target/generated-test-sources/foo",
-                      "target/generated-test-sources/test-annotations")
   }
 
   @Test
@@ -1907,13 +1202,45 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
     assertExcludes("project", "target")
   }
 
-  private suspend fun resolveFoldersAndImport() {
-    MavenFolderResolver(projectsManager.project).resolveFoldersAndImport(projectsManager.projects)
-  }
 
-  private fun createProjectSubDirsWithFile(vararg dirs: String) {
-    for (dir in dirs) {
-      createProjectSubFile("$dir/a.txt")
-    }
+  @Test
+  fun testImportingSourcesTag() = runBlocking {
+    assumeMaven4()
+    useModel410()
+    createProjectSubDirs("my/src", "my/res", "my/testsrc", "my/testres")
+    importProjectAsync("""
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <build>
+        <sources>
+            <source>
+                <directory>my/src</directory>
+                <lang>java</lang>
+                <scope>main</scope>
+            </source>
+            <source>
+                <directory>my/res</directory>
+                <lang>resources</lang>
+                <scope>main</scope>
+            </source>
+            <source>
+                <directory>my/testsrc</directory>
+                <lang>java</lang>
+                <scope>test</scope>
+            </source>
+             <source>
+                <directory>my/testres</directory>
+                <lang>resources</lang>
+                <scope>test</scope>
+            </source>
+        </sources>
+      </build>
+      """);
+    assertModules("project")
+    assertSources("project", "my/src")
+    assertTestSources("project", "my/testsrc")
+    assertResources("project", "my/res")
+    assertTestResources("project", "my/testres")
   }
 }

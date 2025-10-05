@@ -107,7 +107,7 @@ public class PyGenericType implements PyTypeVarType {
     if (myIsDefinition) {
       return PyTypeUtil.toStream(type)
         .map(t -> t instanceof PyInstantiableType ? ((PyInstantiableType<?>)t).toClass() : t)
-        .collect(PyTypeUtil.toUnion());
+        .collect(PyTypeUtil.toUnion(type));
     }
     return type;
   }

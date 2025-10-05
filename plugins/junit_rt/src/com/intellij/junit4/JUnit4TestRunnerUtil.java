@@ -16,6 +16,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -177,7 +178,7 @@ public final class JUnit4TestRunnerUtil {
               if (description.isTest() && description.getDisplayName().startsWith("warning(junit.framework.TestSuite$")) {
                 return true;
               }
-              
+
               if (description.isTest() && isParameterizedMethodName(description.getMethodName(), methodName)) {
                 return true;
               }
@@ -236,6 +237,29 @@ public final class JUnit4TestRunnerUtil {
     return false;
   }
 
+  public static boolean hasAnnotatedPublicMethod(Class<?> clazz,
+                                                 String name,
+                                                 Class<?>[] parameterTypes,
+                                                 Class<? extends Annotation> annotationClass) {
+    try {
+      if (clazz.getMethod(name, parameterTypes).isAnnotationPresent(annotationClass)) {
+        return true;
+      }
+    }
+    catch (NoSuchMethodException ignore) {
+    }
+    Class<?> sc = clazz.getSuperclass();
+    if (sc != null && hasAnnotatedPublicMethod(sc, name, parameterTypes, annotationClass)) {
+      return true;
+    }
+    for (Class<?> intf : clazz.getInterfaces()) {
+      if (hasAnnotatedPublicMethod(intf, name, parameterTypes, annotationClass)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static Request getParameterizedRequest(final String parameterString,
                                                  final String methodName,
                                                  Class<?> clazz,
@@ -248,11 +272,12 @@ public final class JUnit4TestRunnerUtil {
         if (methodName != null) {
           try {
             final Method method = clazz.getMethod(methodName);
-            if (!method.isAnnotationPresent(Test.class) && TestCase.class.isAssignableFrom(clazz)) {
+            if (!hasAnnotatedPublicMethod(clazz, methodName, method.getParameterTypes(), Test.class) && TestCase.class.isAssignableFrom(clazz)) {
               return Request.runner(JUnit45ClassesRequestBuilder.createIgnoreAnnotationAndJUnit4ClassRunner(clazz));
             }
           }
-          catch (NoSuchMethodException ignore) { }
+          catch (NoSuchMethodException ignore) {
+          }
         }
         Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore for junit4.4 and <
         final Constructor<? extends Runner> runnerConstructor = runnerClass.getConstructor(Class.class);
@@ -296,7 +321,7 @@ public final class JUnit4TestRunnerUtil {
   private static boolean isParameterizedMethodName(String parameterizedMethodName, String baseMethodName) {
     return parameterizedMethodName.startsWith(baseMethodName) &&
            //methodName[ valid for any parameter for the current method.
-           parameterizedMethodName.length() > baseMethodName.length() && 
+           parameterizedMethodName.length() > baseMethodName.length() &&
            parameterizedMethodName.substring(baseMethodName.length()).trim().startsWith("[");
   }
 
@@ -307,7 +332,7 @@ public final class JUnit4TestRunnerUtil {
       allClasses = JUnit4ClassesRequestBuilder.getClassesRequest(suiteName, classes);
     }
     catch (ClassNotFoundException e1) {
-      allClasses  = JUnit45ClassesRequestBuilder.getClassesRequest(suiteName, classes);
+      allClasses = JUnit45ClassesRequestBuilder.getClassesRequest(suiteName, classes);
     }
     return allClasses;
   }

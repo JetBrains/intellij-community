@@ -1,6 +1,9 @@
-// FIR_IDENTICAL
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY
+// ALLOW_ERRORS
 interface <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>ArcadeGame<!><<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TYPE_PARAMETER'")!>T1<!>> {
     fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>load<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>x<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TYPE_PARAMETER'")!>T1 & Any<!>): <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TYPE_PARAMETER'")!>T1 & Any<!>
 }
+
+fun <<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TYPE_PARAMETER'")!>T<!>> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TYPE_PARAMETER'")!>(T & Any)<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>bar<!>() {}
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TYPE_PARAMETER'")!>(<!HIGHLIGHTING("severity='ERROR'; descr='[INCORRECT_LEFT_COMPONENT_OF_INTERSECTION] Intersection types are only supported for definitely non-nullable types: left part should be a type parameter with nullable bounds'; textAttributesKey='ERRORS_ATTRIBUTES'; highlightingTextAttributesKey='ERRORS_ATTRIBUTES'")!>String<!> & Any)<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {}

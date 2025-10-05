@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -23,7 +23,7 @@ class SystemGetPropertyInspection : AbstractBaseUastLocalInspectionTool() {
                             session: LocalInspectionToolSession): PsiElementVisitor = UastHintedVisitorAdapter.create(
     holder.file.language, SystemGetPropertyVisitor(holder), arrayOf(UCallExpression::class.java), true)
 
-  private inner class SystemGetPropertyVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
+  private class SystemGetPropertyVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
     override fun visitCallExpression(node: UCallExpression): Boolean {
       if (!SYSTEM_GET_PROPERTY.uCallMatches(node)) return true
       val propertyValue = node.getArgumentForParameter(0)?.evaluate() as? String ?: return true

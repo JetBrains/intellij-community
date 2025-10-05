@@ -21,7 +21,11 @@ kotlin [branch = master]
 └── ...
 ```
 
-4. Build compiler for IDE: run `Kotlin Coop: Publish compiler-for-ide JARs` run configuration in `intellij` repository.
+4. Build compiler for IDE: run `Kotlin Coop: Publish Compiler JARs` run configuration in `intellij` repository.
    This configuration will compile Analysis API and related compilers and put them into jars.
    Those jars are used to build `intellij`.
    You should execute this task every time you update the code inside `kotlin` repository.
+
+**Pro tip**: `intellij` repository doesn't have to be put into `kotlin` repository. You can create `local.properties` next to the `model.properties` file
+(from `plugins/kotlin/util/project-model-updater/resources` folder) and add a path to `kotlin` repository as `kotlinCompilerRepoPath` property there.  
+See [project-model-updater](../../util/project-model-updater/README.md) for more info.

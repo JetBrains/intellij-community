@@ -18,6 +18,8 @@ class TextIcon(val text: String, component: Component, val fontSize: Float) : JB
   private var metrics: FontMetrics? = null
   private val componentRef = WeakReference(component)
 
+  var highlight: Boolean = true
+
   init {
     isIconPreScaled = false
     scaleContext.addUpdateListener { update() }
@@ -30,12 +32,19 @@ class TextIcon(val text: String, component: Component, val fontSize: Float) : JB
     try {
       GraphicsUtil.setupAntialiasing(customG)
       customG.font = font
-      UIUtil.drawStringWithHighlighting(customG,
-                                        this.text,
-                                        scaleVal(x.toDouble(), ScaleType.OBJ_SCALE).toInt() + scaleVal(2.0).toInt(),
-                                        scaleVal(y.toDouble(), ScaleType.OBJ_SCALE).toInt() + iconHeight - scaleVal(1.0).toInt(),
-                                        JBColor.foreground(),
-                                        JBColor.background())
+      val strX = scaleVal(x.toDouble(), ScaleType.OBJ_SCALE).toInt() + scaleVal(2.0).toInt()
+      val strY = scaleVal(y.toDouble(), ScaleType.OBJ_SCALE).toInt() + iconHeight - metrics!!.descent - scaleVal(1.0).toInt()
+      if (highlight) {
+        UIUtil.drawStringWithHighlighting(customG,
+                                          this.text,
+                                          strX,
+                                          strY,
+                                          JBColor.foreground(),
+                                          JBColor.background())
+      } else {
+        customG.color = JBColor.foreground()
+        customG.drawString(this.text, strX, strY)
+      }
     }
     finally {
       customG.dispose()

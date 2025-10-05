@@ -5,11 +5,11 @@ jvm_library(
   name = "ide-util-netty",
   module_name = "intellij.platform.ide.util.netty",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:fastutil-min",
     "@lib//:netty-buffer",
     "//platform/util",

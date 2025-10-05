@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
@@ -48,6 +49,7 @@ import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContrib
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.PyTypeRenderer.Feature;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
@@ -91,7 +93,9 @@ public abstract class PyTestCase extends UsefulTestCase {
   protected void tearDown() throws Exception {
     try {
       if (myFixture != null) {
-        PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+        if (myFixture.getModule() != null) {
+          PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+        }
         PyModuleNameCompletionContributor.ENABLED = true;
         setLanguageLevel(null);
 
@@ -321,8 +325,11 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   private void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
-    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
+    Project project = myFixture.getProject();
+    if (project != null) {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(project, languageLevel);
+      IndexingTestUtil.waitUntilIndexesAreReady(project);
+    }
   }
 
   protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable runnable) {
@@ -360,7 +367,12 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected static void assertNotParsed(PsiFile file) {
     assertInstanceOf(file, PyFileImpl.class);
-    assertNull("Operations should have been performed on stubs but caused file to be parsed: " + file.getVirtualFile().getPath(),
+    VirtualFile virtualFile = file.getVirtualFile();
+    String path = virtualFile.getPath();
+    String name = virtualFile.getName();
+    String errorMessage = "Operations should have been performed on stubs but caused file to be parsed: " + path;
+    String tip = "As a starting point for an investigation, a breakpoint can be set in com.intellij.psi.impl.source.PsiFileImpl#loadTreeElement with a condition `getName().equals(\"" + name + "\")`.\nThen the stacktrace can be investigated to find the root cause.";
+    assertNull(errorMessage + "\n" + tip,
                ((PyFileImpl)file).getTreeElement());
   }
 
@@ -575,7 +587,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                 @NotNull PyTypedElement element,
                                 @NotNull TypeEvalContext context) {
     final PyType actual = context.getType(element);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context, Feature.UNSAFE_UNION);
     assertEquals(message, expectedType, actualType);
   }
 
@@ -602,6 +614,21 @@ public abstract class PyTestCase extends UsefulTestCase {
         prevIndex = nextIndex;
       }
     }
+  }
+
+  public static void fixme(@NotNull String comment, @NotNull Class<? extends Throwable> c, @NotNull Runnable test) {
+    try {
+      test.run();
+    }
+    catch (Throwable failedError) {
+      if (c.isInstance(failedError)) {
+        // fix-me tests are supposed to fail
+        return;
+      }
+      throw failedError;
+    }
+    // the fix-me test passed -> the bug/feature was fixed!
+    fail("Test (" + comment + ") FIXED!");
   }
 }
 

@@ -37,3 +37,27 @@ class AyrGoldCup:
 
 # Names in __all__ with no definition:
 #   VictoriaDayTuesdayAfterFirstMondayMay
+
+__all__ = [
+    "AyrGoldCup",
+    "SpringHolidayFirstMondayApril",
+    "SpringHolidaySecondMondayApril",
+    "SpringHolidayTuesdayAfterFirstMondayMay",
+    "SpringHolidayLastMondayMay",
+    "SpringHolidayFirstMondayJune",
+    "VictoriaDayFourthMondayMay",
+    "VictoriaDayLastMondayMay",
+    "VictoriaDayTuesdayAfterFirstMondayMay",  # noqa: F822 # pyright: ignore[reportUnsupportedDunderAll] see https://github.com/workalendar/workalendar/pull/778
+    "VictoriaDayFirstMondayJune",
+    "FairHolidayLastMondayJune",
+    "FairHolidayFirstMondayJuly",
+    "FairHolidaySecondMondayJuly",
+    "FairHolidayThirdMondayJuly",
+    "FairHolidayLastMondayJuly",
+    "FairHolidayFourthFridayJuly",
+    "FairHolidayFirstMondayAugust",
+    "AutumnHolidayLastMondaySeptember",
+    "AutumnHolidayFirstMondayOctober",
+    "AutumnHolidaySecondMondayOctober",
+    "AutumnHolidayThirdMondayOctober",
+]

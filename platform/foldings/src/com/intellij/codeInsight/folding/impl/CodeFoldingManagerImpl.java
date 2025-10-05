@@ -44,12 +44,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.CAN_BE_REMOVED_WHEN_COLLAPSED;
+
 @ApiStatus.Internal
 public final class CodeFoldingManagerImpl extends CodeFoldingManager implements Disposable {
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");
   private static final Key<Boolean> ASYNC_FOLDING_UPDATE = Key.create("ASYNC_FOLDING_UPDATE");
   private static final Key<Map<TextRange, Boolean>> ASYNC_FOLDING_CACHE = Key.create("ASYNC_FOLDING_CACHE");
   private static final Key<Boolean> AUTO_CREATED = Key.create("AUTO_CREATED");
+  private static final Key<Boolean> FRONTEND_CREATED = Key.create("FRONTEND_CREATED");
   private static final Key<Boolean> NOT_PERSISTENT = Key.create("NOT_PERSISTENT");
 
   private final Project myProject;
@@ -159,7 +162,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     };
   }
 
-  private void updateAndInitFolding(Editor editor, FoldingModelEx foldingModel, PsiFile file, List<RegionInfo> regionInfos) {
+  private void updateAndInitFolding(Editor editor, @NotNull FoldingModelEx foldingModel, PsiFile file, List<RegionInfo> regionInfos) {
     foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
                                                                                            UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
                                                                                            false, false));
@@ -170,11 +173,12 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   @Override
   public @Nullable Boolean isCollapsedByDefault(@NotNull FoldRegion region) {
-    return region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
+    return getCollapsedByDef(region);
   }
 
-  public void setCollapsedByDefault(@NotNull FoldRegion region, boolean isCollapsed) {
-    region.putUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT, isCollapsed);
+  @Override
+  public @Nullable Boolean keepExpandedOnFirstCollapseAll(@NotNull FoldRegion region) {
+    return region.getUserData(UpdateFoldRegionsOperation.KEEP_EXPANDED_ON_FIRST_COLLAPSE_ALL);
   }
 
   public void markForUpdate(FoldRegion region) {
@@ -189,8 +193,36 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
     AUTO_CREATED.set(region, true);
   }
 
+  /**
+   * Returns true if the region was created by the code folding manager automatically without user activity.
+   * Used to determine whether the region expansion state should be stored in the editor state or not.
+   */
   public static boolean isAutoCreated(@Nullable FoldRegion region) {
     return AUTO_CREATED.isIn(region);
+  }
+
+  public static void markAsFrontendCreated(@NotNull FoldRegion region) {
+    FRONTEND_CREATED.set(region, true);
+  }
+
+  public static boolean isFrontendCreated(@Nullable FoldRegion region) {
+    return FRONTEND_CREATED.isIn(region);
+  }
+
+  public static void markAsCanBeRemovedWhenCollapsed(@NotNull FoldRegion region) {
+    CAN_BE_REMOVED_WHEN_COLLAPSED.set(region, true);
+  }
+
+  public static boolean canBeRemovedWhenCollapsed(@Nullable FoldRegion region) {
+    return CAN_BE_REMOVED_WHEN_COLLAPSED.get(region) == Boolean.TRUE;
+  }
+
+  public static Boolean getCollapsedByDef(@NotNull FoldRegion region) {
+    return UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT.get(region);
+  }
+  
+  public static void setCollapsedByDef(@NotNull FoldRegion region, boolean isCollapsed) {
+    UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT.set(region, isCollapsed);
   }
 
   /// Do not store the folding region in user config

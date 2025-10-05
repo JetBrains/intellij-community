@@ -28,6 +28,9 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.syncContributor"
                     interface="org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.syncExtension"
+                    interface="org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension"
+                    dynamic="true"/>
     <extensionPoint qualifiedName= "org.jetbrains.plugins.gradle.taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.settingsControlProvider" interface="org.jetbrains.plugins.gradle.service.settings.GradleSettingsControlProvider"
@@ -60,8 +63,12 @@
     <taskManager implementation="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtensionResolverBridge"/>
     <taskManager implementation="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtensionDebuggerBridge"/>
 
-    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleProjectRootSyncContributor"/>
-    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleContentRootSyncContributor"/>
+    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleProjectRootSyncContributor"/>
+    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleContentRootSyncContributor"/>
+    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.contributors.GradleVersionCatalogSyncContributor"/>
+    <syncExtension implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleJpsSyncExtension"/>
+    <syncExtension implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleBaseSyncExtension"/>
+    <syncExtension implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.extensions.GradleDependencySubstitutionSyncExtension"/>
 
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseResolverExtension"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension"/>
@@ -95,7 +102,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
 
-    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.syncContributor.bridge.GradleBridgeProjectDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeProjectDataService"/>
+    <externalWorkspaceDataService implementation="org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeModuleDataService"/>
 
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleVersionUpdateStartupActivity"/>
@@ -208,6 +216,8 @@
                  description="Enable to allow new projects to be created with the Gradle Daemon JVM criteria"/>
     <registryKey key="gradle.phased.sync.enabled" defaultValue="true"
                  description="Enable the phased Gradle sync execution"/>
+    <registryKey key="gradle.phased.sync.bridge.disabled" defaultValue="false"
+                 description="Disable bridges for the phased Gradle sync execution"/>
     <registryKey defaultValue="https://download.jetbrains.com/resources/intellij/plugins/gradle/v1/compatibility.json"
                  description="URL to get updates for gradle/jvm compatibility matrix" key="gradle.compatibility.config.url"/>
     <registryKey defaultValue="86400"
@@ -244,6 +254,7 @@
     <!--advanced settings-->
     <advancedSetting id="gradle.run.using.gradle" default="true" bundle="messages.GradleBundle" groupKey="advanced.settings.gradle"/>
     <advancedSetting id="gradle.download.sources" default="false" bundle="messages.GradleBundle" groupKey="advanced.settings.gradle"/>
+    <advancedSetting id="gradle.attach.scripts.dependencies.sources" default="false" bundle="messages.GradleBundle" groupKey="advanced.settings.gradle"/>
     <advancedSetting id="gradle.download.sources.automatically" default="true" bundle="messages.GradleBundle" groupKey="advanced.settings.gradle"/>
     <experimentalFeature id="gradle.parallel.model.fetch" percentOfUsers="0">
       <description>

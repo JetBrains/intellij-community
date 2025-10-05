@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
+import com.intellij.internal.statistic.eventLog.validator.DictionaryStorage;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
@@ -81,7 +82,7 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
     final GroupRemoteRule rules = merge(groups.rules, productionRules);
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(rules);
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.getInstance().getBuild());
-    return ValidationRulesPersistedStorage.createValidators(build, groups, globalRulesHolder, myRecorderId);
+    return ValidationRulesPersistedStorage.createValidators(build, groups, globalRulesHolder, myRecorderId, getDictionaryStorage());
   }
 
   public void addTestGroup(@NotNull GroupValidationTestRule group) throws IOException {
@@ -117,6 +118,15 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
   public void updateTestGroups(@NotNull List<GroupValidationTestRule> groups) throws IOException {
     myTestMetadataPersistence.updateTestGroups(groups);
     updateValidators();
+  }
+
+  @Override
+  public @Nullable DictionaryStorage getDictionaryStorage() {
+    try {
+      return myTestMetadataPersistence.getDictionaryStorage();
+    } catch (IOException e) {
+      return null;
+    }
   }
 
   private static @Nullable GroupRemoteRule merge(@Nullable GroupRemoteRule testRules, @Nullable GroupRemoteRule productionTestRules) {

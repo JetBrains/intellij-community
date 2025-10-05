@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.blobstorage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +20,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
 
-import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.ActualRecords.*;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.ActualRecords.recordLayoutForType;
+import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.ActualRecords.recordSizeTypeByCapacity;
 import static com.intellij.platform.util.io.storages.blobstorage.RecordLayout.OFFSET_BUCKET;
 import static com.intellij.util.io.IOUtil.magicWordToASCII;
 
@@ -451,7 +452,8 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
           case RecordLayout.RECORD_TYPE_MOVED -> {
             int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
             if (!isValidRecordId(redirectToId)) {
-              throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted");
+              throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted "+
+                                                      "(wasClosedProperly: " + wasClosedProperly() + ")");
             }
 
             // (redirectToId=NULL) <=> 'record deleted' ('moved nowhere')

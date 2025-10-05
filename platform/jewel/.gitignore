@@ -108,3 +108,4 @@ $RECYCLE.BIN/
 /buildSrc/.kotlin
 /foundation/bin/*
 /samples/showcase/bin/*
+/new_release_notes.md

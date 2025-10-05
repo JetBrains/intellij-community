@@ -11,6 +11,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.rename.ResolveSnapshotProvider
@@ -241,6 +242,10 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
             if (usageInfo is KotlinEnumEntryWithoutSuperCallUsage) {
                 usageInfo.preprocess(kotlinChangeInfo, usageInfo.element as KtElement)
+            }
+            if (usageInfo is KotlinContextParameterUsage && (changeInfo.method as? KtCallableDeclaration)?.valueParameterList?.let { PsiTreeUtil.isAncestor(it, element, true) } == true ) {
+                //wrap default parameters which would be invalidated after updatePrimaryMethod call
+                usageInfo.processUsage(kotlinChangeInfo, element as KtElement, usages)
             }
             if (usageInfo is KotlinOverrideUsageInfo && element is KtCallableDeclaration) {
                 val baseElement = usageInfo.baseMethod

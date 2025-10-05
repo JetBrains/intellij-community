@@ -36,12 +36,14 @@
     <extensionPoint name="xdebugger.customMuteBreakpointHandler"
                     interface="com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomMuteBreakpointHandler" dynamic="true"/>
 
-    <extensionPoint name="xdebugger.xValueCustomDescriptorSerializerProvider"
-                    interface="com.intellij.xdebugger.frame.XValueCustomDescriptorSerializerProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.customXDescriptorSerializerProvider"
+                    interface="com.intellij.xdebugger.frame.CustomXDescriptorSerializerProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.managerProxy" interface="com.intellij.xdebugger.impl.frame.XDebugManagerProxy"
                     dynamic="true"/>
-    <extensionPoint name="xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.impl.XDebuggerSplitModeEnabler"
+    <extensionPoint name="xdebugger.splitDebuggerModeEnabler" interface="com.intellij.xdebugger.XDebuggerSplitModeEnabler"
                     dynamic="false"/>
+    <extensionPoint name="xdebugger.xTextValueModificationPreparatorProvider" interface="com.intellij.xdebugger.frame.XValueTextModificationPreparatorProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -157,7 +159,6 @@
     <xdebugger.textValueVisualizer implementation="com.intellij.xdebugger.impl.ui.visualizedtext.common.UrlEncodedTextVisualizer"/>
 
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
-    <platform.entityTypes implementation="com.intellij.xdebugger.impl.evaluate.XDebuggerValueLookupEntityTypesProvider"/>
     <xdebugger.managerProxy implementation="com.intellij.xdebugger.impl.MonolithXDebugManagerProxy" order="last"/>
 
     <registryKey defaultValue="false"
@@ -176,6 +177,10 @@
     <registryKey defaultValue="false"
                  description="Throw warnings and errors about misusages of frontend components on the backend (and vice versa)"
                  key="xdebugger.toolwindow.split.warnings"/>
+
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.RunContentDescriptorKeySerializer"/>
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.ExecutionEnvironmentKeySerializer"/>
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.XDebuggerTreeSelectedValuesSerializer"/>
 
     <intentionAction>
       <language>UAST</language>
@@ -232,6 +237,7 @@
     <group id="XDebugger.Hover.Breakpoint.Context.Menu">
       <action id="AddBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction"/>
       <action id="AddConditionalBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction$WithCondition"/>
+      <action id="AddLoggingBreakpoint" class="com.intellij.xdebugger.impl.actions.handlers.AddLineBreakpointAction$WithLogging"/>
     </group>
 
     <group id="XDebugger.Attach.Dialog.Settings" class="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogSettings" popup="true"/>
@@ -252,8 +258,6 @@
   <projectListeners>
     <listener class="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardUpdater"
               topic="com.intellij.execution.ExecutionListener"/>
-    <listener class="com.intellij.xdebugger.impl.ui.XDebugRunContentListener"
-              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     <listener class="com.intellij.xdebugger.impl.MonolithListenerAdapter"
               topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
   </projectListeners>

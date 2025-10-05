@@ -2,11 +2,12 @@
 package com.intellij.json.intentions
 
 import com.intellij.json.JsonTestCase
+import com.intellij.json.JsonBundle
 
 class JsonSortPropertiesIntentionTest : JsonTestCase() {
   private fun doTest() {
     myFixture.testHighlighting("/intention/" + getTestName(false) + ".json")
-    myFixture.launchAction(myFixture.getAvailableIntention(JsonSortPropertiesIntention().text)!!)
+    myFixture.launchAction(myFixture.getAvailableIntention(JsonBundle.message("json.intention.sort.properties"))!!)
     myFixture.checkResultByFile("/intention/" + getTestName(false) + "_after.json")
   }
 

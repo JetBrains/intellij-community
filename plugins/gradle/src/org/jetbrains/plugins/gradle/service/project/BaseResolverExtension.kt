@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
-import com.amazon.ion.IonType
-import com.google.gson.GsonBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.openapi.externalSystem.model.project.ModuleData
@@ -12,7 +10,6 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.net.HttpConfigurable
-import org.gradle.internal.impldep.com.google.common.collect.Multimap
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
@@ -36,14 +33,7 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
   override fun populateModuleTasks(gradleModule: IdeaModule,
                                    ideModule: DataNode<ModuleData>,
                                    ideProject: DataNode<ProjectData>): Collection<TaskData> = emptyList()
-
-  override fun getToolingExtensionsClasses(): Set<Class<*>> {
-    return linkedSetOf(
-      Multimap::class.java, // repacked gradle guava
-      GsonBuilder::class.java,
-      IonType::class.java,  // ion-java jar
-    )
-  }
+  override fun getToolingExtensionsClasses(): Set<Class<*>> = linkedSetOf()
 
   override fun getExtraJvmArgs(): List<Pair<String, String>> {
     val extraJvmArgs = mutableListOf<Pair<String, String>>()

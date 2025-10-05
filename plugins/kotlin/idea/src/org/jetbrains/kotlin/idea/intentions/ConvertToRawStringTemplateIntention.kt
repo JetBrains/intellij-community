@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 class ConvertToRawStringTemplateIntention : ConvertToStringTemplateIntention() {
     init {
-        setTextGetter(KotlinBundle.lazyMessage("convert.concatenation.to.raw.string"))
+        setTextGetter(KotlinBundle.messagePointer("convert.concatenation.to.raw.string"))
     }
 
     override fun isApplicableTo(element: KtBinaryExpression): Boolean {

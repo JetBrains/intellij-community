@@ -41,16 +41,18 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
     }
   }
 
+  @JvmOverloads
   protected fun <T : Any> dumpInlayHints(sourceText: String,
                                          provider: InlayHintsProvider<T>,
-                                         settings: T = provider.createSettings()): String {
+                                         settings: T = provider.createSettings(),
+                                         renderBelowLineBlockInlaysBelowTheLine: Boolean = false): String {
     val file = myFixture.file!!
     val editor = myFixture.editor
     val sink = InlayHintsSinkImpl(editor)
     val collector = provider.getCollectorFor(file, editor, settings, sink) ?: error("Collector is expected")
     val collectorWithSettings = CollectorWithSettings(collector, provider.key, file.language, sink)
     collectorWithSettings.collectTraversingAndApply(editor, file, true)
-    return InlayDumpUtil.dumpInlays(sourceText, editor = myFixture.editor, renderer = { renderer, _ ->
+    return InlayDumpUtil.dumpInlays(sourceText, editor = myFixture.editor, renderBelowLineBlockInlaysBelowTheLine = renderBelowLineBlockInlaysBelowTheLine, renderer = { renderer, _ ->
       if (renderer !is PresentationRenderer && renderer !is LinearOrderInlayRenderer<*>) error("renderer not supported")
       renderer.toString()
     })

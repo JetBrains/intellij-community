@@ -14,6 +14,15 @@ import javax.swing.*;
 import java.util.function.Supplier;
 
 public interface FindPopupScopeUI {
+  @ApiStatus.Internal
+  String PROJECT_SCOPE_NAME = "Project";
+  @ApiStatus.Internal
+  String MODULE_SCOPE_NAME = "Module";
+  @ApiStatus.Internal
+  String DIRECTORY_SCOPE_NAME = "Directory";
+  @ApiStatus.Internal
+  String CUSTOM_SCOPE_SCOPE_NAME = "Scope";
+
   Pair<ScopeType, JComponent> @NotNull [] getComponents();
 
   @NotNull
@@ -24,6 +33,11 @@ public interface FindPopupScopeUI {
   @ApiStatus.Internal
   default boolean isDirectoryScope(ScopeType scopeType) {
     return false;
+  }
+
+  @ApiStatus.Internal
+  default @Nullable ScopeType getScopeTypeByModel(@NotNull FindModel findModel) {
+    return null;
   }
 
   default @Nullable("null means OK") ValidationInfo validate(@NotNull FindModel model, FindPopupScopeUI.ScopeType selectedScope) {

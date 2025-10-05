@@ -1,8 +1,8 @@
 package com.intellij.terminal.backend
 
 import com.intellij.idea.AppMode
-import com.intellij.terminal.session.*
-import com.intellij.terminal.session.dto.toTermSize
+import com.intellij.openapi.diagnostic.trace
+import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -11,6 +11,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.ui.withLock
+import org.jetbrains.plugins.terminal.session.*
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 import java.util.concurrent.CancellationException
@@ -49,6 +50,8 @@ private suspend fun handleInputEvents(channel: ReceiveChannel<TerminalInputEvent
 }
 
 private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServices) {
+  BackendTerminalSession.LOG.trace { "Input event received: $event" }
+
   val terminalStarter = services.terminalStarter
 
   TerminalActivityTracker.getInstance().registerActivity()
@@ -71,7 +74,8 @@ private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServic
       }
     }
     is TerminalResizeEvent -> {
-      terminalStarter.postResize(event.newSize.toTermSize(), RequestOrigin.User)
+      val termSize = TermSize(event.newSize.columns, event.newSize.rows)
+      terminalStarter.postResize(termSize, RequestOrigin.User)
     }
     is TerminalCloseEvent -> {
       terminalStarter.close()
@@ -100,6 +104,7 @@ private fun handleInputEvent(event: TerminalInputEvent, services: JediTermServic
         }
       }
     }
+    is TerminalHyperlinkClickedEvent -> { } // handled by BackendTerminalHyperlinkFacade
   }
 }
 

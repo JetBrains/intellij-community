@@ -1,5 +1,6 @@
 package com.intellij.openapi.externalSystem.service.remote;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,7 +22,7 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
     @Override public void onStart(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {}
     @Override public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {}
     @Override public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {}
-    @Override public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {}
+    @Override public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) {}
     @Override public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {}
     @Override public void onSuccess(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {}
     @Override public void onFailure(@NotNull String projectPath, @NotNull ExternalSystemTaskId id, @NotNull Exception exception) {}
@@ -36,7 +37,7 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
 
   void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) throws RemoteException;
 
-  void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) throws RemoteException;
+  void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType processOutputType) throws RemoteException;
 
   void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) throws RemoteException;
 

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.grazie.spellcheck.suggestion.SpellcheckingNameSuggestionProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.NameSuggestionProvider

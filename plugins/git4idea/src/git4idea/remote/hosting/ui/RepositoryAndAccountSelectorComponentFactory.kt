@@ -2,6 +2,7 @@
 package git4idea.remote.hosting.ui
 
 import com.intellij.collaboration.async.mapState
+import com.intellij.collaboration.auth.DefaultAccountHolder
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
@@ -44,7 +45,6 @@ import javax.swing.*
 class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMapping, A : ServerAccount>(
   private val vm: RepositoryAndAccountSelectorViewModel<M, A>
 ) {
-
   fun create(
     scope: CoroutineScope,
     repoNamer: (M) -> @Nls String,
@@ -53,8 +53,18 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
     submitActionText: @Nls String,
     loginButtons: List<JButton>,
     errorPresenter: ErrorStatusPresenter<RepositoryAndAccountSelectorViewModel.Error>
-  ): JComponent {
+  ): JComponent = create(scope,null, repoNamer, detailsProvider,accountsPopupActionsSupplier,submitActionText,loginButtons,errorPresenter)
 
+  fun create(
+    scope: CoroutineScope,
+    defaultAccountHolder: DefaultAccountHolder<A>?,
+    repoNamer: (M) -> @Nls String,
+    detailsProvider: LoadingAccountsDetailsProvider<A, *>,
+    accountsPopupActionsSupplier: (M) -> List<Action>,
+    submitActionText: @Nls String,
+    loginButtons: List<JButton>,
+    errorPresenter: ErrorStatusPresenter<RepositoryAndAccountSelectorViewModel.Error>
+  ): JComponent {
     val repoCombo = SimpleComboboxWithActionsFactory(vm.repositoriesState, vm.repoSelectionState).create(scope, { mapping ->
       SimpleComboboxWithActionsFactory.Presentation(
         repoNamer(mapping),
@@ -67,6 +77,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
 
     val accountCombo = AccountSelectorComponentFactory(vm.accountsState, vm.accountSelectionState).create(
       scope,
+      defaultAccountHolder,
       detailsProvider,
       Avatar.Sizes.BASE,
       Avatar.Sizes.ACCOUNT,

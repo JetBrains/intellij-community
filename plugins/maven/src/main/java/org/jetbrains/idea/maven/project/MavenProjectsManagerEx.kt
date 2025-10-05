@@ -486,7 +486,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
     // plugins and artifacts can be resolved in parallel with import
     return coroutineScope {
-      val pluginResolutionJob = launch(CoroutineName("pluginResolutionJob")) {
+      val pluginResolutionJob = launchTracked(CoroutineName("pluginResolutionJob")) {
         val pluginResolver = MavenPluginResolver(projectsTree)
         withBackgroundProgressTraced(myProject, "resolveMavenPlugins", MavenProjectBundle.message("maven.downloading.plugins"), true) {
           reportRawProgress { reporter ->
@@ -661,8 +661,8 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     sources: Boolean,
     docs: Boolean,
   ) {
-    coroutineScope.launch(CoroutineName("doScheduleDownloadArtifacts")) {
-      if (!sources && !docs) return@launch
+    coroutineScope.launchTracked(CoroutineName("doScheduleDownloadArtifacts")) {
+      if (!sources && !docs) return@launchTracked
 
       project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingScheduled()
 

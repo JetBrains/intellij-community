@@ -5,15 +5,25 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.ORDER_AWARE_COMPARATOR
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
+inline fun <Extension : Any, R> Extension.runExtensionSafe(block: Extension.() -> R): R? =
+  runCatching(block)
+    .getOrLogException(logger<ExtensionPointImpl<*>>())
 
 @ApiStatus.Internal
-inline fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeAsync(
-  action: (Extension) -> Unit
-) {
-  for (extension in extensionList) {
-    runCatching { action(extension) }
-      .getOrLogException(logger<ExtensionPointImpl<*>>())
-  }
-}
+inline fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeAsync(action: (Extension) -> Unit): Unit =
+  extensionList.asSequence()
+    .forEach { it.runExtensionSafe(action) }
+
+@ApiStatus.Internal
+inline fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeOrdered(action: (Extension) -> Unit): Unit =
+  extensionList.asSequence()
+    .sortedWith(ORDER_AWARE_COMPARATOR)
+    .forEach { it.runExtensionSafe(action) }
+
+@ApiStatus.Internal
+inline fun <Extension : Any, R : Any> ExtensionPointName<Extension>.mapExtensionSafe(action: (Extension) -> R): List<R> =
+  extensionList.mapNotNull { it.runExtensionSafe(action) }

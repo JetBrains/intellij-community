@@ -7,6 +7,7 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,8 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -35,6 +37,8 @@ import java.util.*;
 public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public static final String DEFAULT_PLUGINS_HOST = "https://plugins.jetbrains.com";
   public static final String IDEA_PLUGINS_HOST_PROPERTY = "idea.plugins.host";
+  public static final String FREE_MODE_SPLASH_MARKER_FILE_NAME = "splash-free-mode.txt";
+  public static final String SIMPLIFIED_SPLASH_MARKER_FILE_NAME = "splash-simplified.txt";
 
   private static final String IDEA_APPLICATION_INFO_DEFAULT_DARK_LAF = "idea.application.info.default.dark.laf";
   private static final String IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF = "idea.application.info.default.classic.dark.laf";
@@ -50,6 +54,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myPatchVersion;
   private String myFullVersionFormat;
   private String myBuildNumber;
+  private @Nullable String myBuildBranchName;
   private String myApiVersion;
   private String myVersionSuffix;
   private String myCompanyName = "JetBrains s.r.o.";
@@ -57,12 +62,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private @Nullable String splashImageUrl;
+  private @Nullable String freeModeSplashImageUrl;
+  private @Nullable String simplifiedSplashImageUrl;
   private @Nullable String eapSplashImageUrl;
   private String svgIconUrl;
   private String mySvgEapIconUrl;
   private String mySmallSvgIconUrl;
   private String mySmallSvgEapIconUrl;
-  private String myWelcomeScreenLogoUrl;
 
   private ZonedDateTime buildTime;
   private ZonedDateTime majorReleaseBuildDate;
@@ -145,6 +151,16 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         }
         break;
 
+        case "logo-free-mode": {
+          freeModeSplashImageUrl = getAttributeValue(child, "url");
+        }
+        break;
+
+        case "logo-simplified": {
+          simplifiedSplashImageUrl = getAttributeValue(child, "url");
+        }
+        break;
+
         case "icon": {
           svgIconUrl = child.getAttributeValue("svg");
           mySmallSvgIconUrl = child.getAttributeValue("svg-small");
@@ -154,11 +170,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         case "icon-eap": {
           mySvgEapIconUrl = child.getAttributeValue("svg");
           mySmallSvgEapIconUrl = child.getAttributeValue("svg-small");
-        }
-        break;
-
-        case "welcome-screen": {
-          myWelcomeScreenLogoUrl = child.getAttributeValue("logo-url");
         }
         break;
 
@@ -206,7 +217,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         }
         break;
 
-        //noinspection SpellCheckingInspection
         case "whatsnew": {
           myWhatsNewUrl = child.getAttributeValue("url");
           myShowWhatsNewOnUpdate = Boolean.parseBoolean(child.getAttributeValue("show-on-update"));
@@ -273,7 +283,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     if (myPluginManagerUrl == null) {
       readPluginInfo(null);
     }
-    
+
     Objects.requireNonNull(svgIconUrl, "Missing attribute: //icon@svg");
     Objects.requireNonNull(mySmallSvgIconUrl, "Missing attribute: //icon@svg-small");
 
@@ -343,6 +353,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @NotNull BuildNumber getBuild() {
     return Objects.requireNonNull(BuildNumber.fromString(myBuildNumber));
+  }
+
+  @Override
+  public @Nullable String getBuildBranchName() {
+    return myBuildBranchName;
   }
 
   @Override
@@ -434,16 +449,23 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @Nullable String getSplashImageUrl() {
-    if (getVersionName().equals("IntelliJ IDEA")) {
-      LocalDate startDate = LocalDate.of(2025, 5, 22);
-      LocalDate endDate = LocalDate.of(2025, 5, 31);
-      LocalDate nowDate = LocalDate.now();
-      String splashUrl = splashImageUrl;
-      if (splashUrl != null && nowDate.isAfter(startDate) && nowDate.isBefore(endDate)) {
-        return splashUrl.replace(".png", "_java_30.png");
+    if (isEap && eapSplashImageUrl != null) return eapSplashImageUrl;
+
+    if (freeModeSplashImageUrl != null) {
+      Path markerFile = PathManager.getConfigDir().resolve(FREE_MODE_SPLASH_MARKER_FILE_NAME);
+      if (Files.exists(markerFile)) {
+        return freeModeSplashImageUrl;
       }
     }
-    return isEap && eapSplashImageUrl != null ? eapSplashImageUrl : splashImageUrl;
+
+    if (simplifiedSplashImageUrl != null) {
+      Path markerFile = PathManager.getConfigDir().resolve(SIMPLIFIED_SPLASH_MARKER_FILE_NAME);
+      if (Files.exists(markerFile)) {
+        return simplifiedSplashImageUrl;
+      }
+    }
+
+    return splashImageUrl;
   }
 
   @Override
@@ -626,6 +648,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private void readBuildInfo(XmlElement element) {
     myBuildNumber = getAttributeValue(element, "number");
     myApiVersion = getAttributeValue(element, "apiVersion");
+    myBuildBranchName = getAttributeValue(element, "branchName");
 
     String dateString = element.getAttributeValue("date");
     if (dateString != null && !dateString.equals("__BUILD_DATE__")) {
@@ -642,6 +665,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     String pluginManagerUrl = DEFAULT_PLUGINS_HOST;
     String pluginListUrl = null;
     pluginDownloadUrl = null;
+
     if (element != null) {
       String url = element.getAttributeValue("url");
       if (url != null) {
@@ -750,6 +774,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public @Nullable String getDefaultClassicDarkLaf() {
     String override = System.getProperty(IDEA_APPLICATION_INFO_DEFAULT_CLASSIC_DARK_LAF);
     return override != null ? override : myDefaultClassicDarkLaf;
+  }
+
+  @Override
+  public boolean isSimplifiedSplashSupported() {
+    return simplifiedSplashImageUrl != null;
   }
 
   private static final class UpdateUrlsImpl implements UpdateUrls {

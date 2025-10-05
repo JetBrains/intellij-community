@@ -47,7 +47,7 @@ internal fun readSegmentedControlButtonStyle(): SegmentedControlButtonStyle {
                 SolidColor(JBUI.CurrentTheme.SegmentedButton.FOCUSED_SELECTED_BUTTON_COLOR.toComposeColor()),
             content = retrieveColorOrUnspecified("Button.foreground"),
             contentDisabled = retrieveColorOrUnspecified("Label.disabledForeground"),
-            border = normalBorder,
+            border = SolidColor(Color.Transparent),
             borderSelected = normalBorder,
             borderSelectedDisabled = selectedDisabledBorder,
             borderSelectedFocused = SolidColor(JBUI.CurrentTheme.Button.focusBorderColor(false).toComposeColor()),

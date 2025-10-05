@@ -1,10 +1,9 @@
 ### auto-generated section `build kotlin.code-insight.live-templates.k1` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-code-insight-live-templates-k1_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -12,7 +11,8 @@ jvm_library(
   name = "kotlin-code-insight-live-templates-k1",
   module_name = "kotlin.code-insight.live-templates.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":kotlin-code-insight-live-templates-k1_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -30,14 +30,13 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
-  ],
-  runtime_deps = [":kotlin-code-insight-live-templates-k1_resources"]
+  ]
 )
 
 jvm_library(
   name = "kotlin-code-insight-live-templates-k1_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   associates = [":kotlin-code-insight-live-templates-k1"],
   deps = [
     "//platform/analysis-api:analysis",
@@ -67,12 +66,15 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
-  ],
-  runtime_deps = [":kotlin-code-insight-live-templates-k1_resources"]
+  ]
 )
+### auto-generated section `build kotlin.code-insight.live-templates.k1` end
+
+### auto-generated section `test kotlin.code-insight.live-templates.k1` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "kotlin-code-insight-live-templates-k1_test",
   runtime_deps = [":kotlin-code-insight-live-templates-k1_test_lib"]
 )
-### auto-generated section `build kotlin.code-insight.live-templates.k1` end
+### auto-generated section `test kotlin.code-insight.live-templates.k1` end

@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from collections import defaultdict as defaultdict
 from contextlib import contextmanager as contextmanager
 from functools import partial as partial, update_wrapper as update_wrapper

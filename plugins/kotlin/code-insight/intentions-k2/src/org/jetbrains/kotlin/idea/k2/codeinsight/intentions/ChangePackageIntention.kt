@@ -27,7 +27,7 @@ private const val PACKAGE_NAME_VAR = "PACKAGE_NAME"
 
 internal class ChangePackageIntention : SelfTargetingOffsetIndependentIntention<KtPackageDirective>(
     KtPackageDirective::class.java,
-    KotlinBundle.lazyMessage("intention.change.package.text")
+    KotlinBundle.messagePointer("intention.change.package.text")
 ) {
 
     override fun isApplicableTo(element: KtPackageDirective): Boolean = element.packageNameExpression != null

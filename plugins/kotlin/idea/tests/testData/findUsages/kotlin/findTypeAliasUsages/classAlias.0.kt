@@ -7,6 +7,8 @@ open class OOO {
 
     companion object {
         const val CONST = ""
+
+        operator fun invoke(i: Int) {}
     }
 
 }
@@ -34,6 +36,9 @@ fun f2(par: Alias, par2: OOO) : Alias {
 
     Alias.CONST //not found in K1, found in K2
     OOO.CONST
+
+    Alias(10)
+    OOO(10)
 
     if (par2 is Alias) {}
     if (par2 is OOO) {}

@@ -21,7 +21,6 @@ import java.util.stream.Stream;
  * @see CollectionFactory
  * @see com.intellij.concurrency.ConcurrentCollectionFactory
  */
-@SuppressWarnings("UnstableApiUsage")
 public final class ContainerUtil {
   @ApiStatus.Internal
   public static final class Options {
@@ -99,6 +98,7 @@ public final class ContainerUtil {
    * DO NOT REMOVE this method until {@link ContainerUtil#newLinkedList(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @Contract(pure = true)
   @ApiStatus.ScheduledForRemoval
   @Deprecated
@@ -285,6 +285,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #newHashSet(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
@@ -455,6 +456,7 @@ public final class ContainerUtil {
    * DO NOT REMOVE this method until {@link ContainerUtil#immutableList(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @Contract(pure = true)
   @ApiStatus.ScheduledForRemoval
   @Deprecated
@@ -671,16 +673,22 @@ public final class ContainerUtil {
     while (index1 < list1.size() || index2 < list2.size()) {
       T e;
       if (index1 >= list1.size()) {
-        e = list2.get(index2++);
+        e = list2.get(index2);
+        checkElementsAreSorted(list2, comparator, index2, e);
         processor.consume(e, MergeResult.COPIED_FROM_LIST2);
+        index2++;
       }
       else if (index2 >= list2.size()) {
-        e = list1.get(index1++);
+        e = list1.get(index1);
+        checkElementsAreSorted(list1, comparator, index1, e);
         processor.consume(e, MergeResult.COPIED_FROM_LIST1);
+        index1++;
       }
       else {
         T element1 = list1.get(index1);
         T element2 = list2.get(index2);
+        checkElementsAreSorted(list1, comparator, index1, element1);
+        checkElementsAreSorted(list2, comparator, index2, element2);
         int c = comparator.compare(element1, element2);
         if (c == 0) {
           index1++;
@@ -706,6 +714,13 @@ public final class ContainerUtil {
           processor.consume(e, MergeResult.COPIED_FROM_LIST2);
         }
       }
+    }
+  }
+
+  private static <T> void checkElementsAreSorted(@NotNull List<? extends T> list, @NotNull Comparator<? super T> comparator, int index, T element) {
+    if (index > 0 && comparator.compare(list.get(index - 1), element) > 0) {
+      throw new IllegalArgumentException("List is not sorted according to the comparator: list[" + (index - 1) + "]=" +
+                                         list.get(index - 1) + " > list[" + index + "]=" + element + "; all results are invalid. list=" + list);
     }
   }
 
@@ -1546,8 +1561,40 @@ public final class ContainerUtil {
     };
   }
 
+  private static class SubList<T> extends AbstractList<T> implements RandomAccess {
+    private final int myFinalSize;
+    @NotNull @Unmodifiable List<? extends T> @NotNull [] lists;
+
+    private SubList(@NotNull @Unmodifiable List<? extends T> @NotNull [] lists, int totalSize) {
+      this.lists = lists;
+      assert lists.length > 1;
+      myFinalSize = totalSize;
+    }
+    @Override
+    public T get(int index) {
+      if (index >= 0 && index < myFinalSize) {
+        int from = 0;
+        for (List<? extends T> each : lists) {
+          if (from <= index && index < from + each.size()) {
+            return each.get(index - from);
+          }
+          from += each.size();
+        }
+        if (from != myFinalSize) {
+          throw new ConcurrentModificationException("The list has changed. Its size was " + myFinalSize + "; now it's " + from);
+        }
+      }
+      throw new IndexOutOfBoundsException("index: " + index + "; size: " + size());
+    }
+    @Override
+    public int size() {
+      return myFinalSize;
+    }
+  }
+
   /**
-   * @return read-only list consisting of the lists added together
+   * @return read-only list consisting of the lists added together.
+   * It's assumed the {@code lists} are all {@link RandomAccess} and not modified after this method called, otherwise the result is undefined.
    */
   @SafeVarargs
   @Contract(pure = true)
@@ -1562,29 +1609,7 @@ public final class ContainerUtil {
     }
     if (size == 0) return emptyList();
     int finalSize = size;
-    return new AbstractList<T>() {
-      @Override
-      public T get(int index) {
-        if (index >= 0 && index < finalSize) {
-          int from = 0;
-          for (List<? extends T> each : lists) {
-            if (from <= index && index < from + each.size()) {
-              return each.get(index - from);
-            }
-            from += each.size();
-          }
-          if (from != finalSize) {
-            throw new ConcurrentModificationException("The list has changed. Its size was " + finalSize + "; now it's " + from);
-          }
-        }
-        throw new IndexOutOfBoundsException("index: " + index + "; size: " + size());
-      }
-
-      @Override
-      public int size() {
-        return finalSize;
-      }
-    };
+    return new SubList<>(lists, finalSize);
   }
 
   /**
@@ -1725,6 +1750,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #iterateAndGetLastItem(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
@@ -1821,7 +1847,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] toArray(@NotNull Collection<T> c, @NotNull ArrayFactory<? extends T> factory) {
+  public static <T> T @NotNull [] toArray(@NotNull Collection<? extends T> c, @NotNull ArrayFactory<? extends T> factory) {
     T[] a = factory.create(c.size());
     return c.toArray(a);
   }
@@ -2162,6 +2188,7 @@ public final class ContainerUtil {
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
@@ -2175,6 +2202,7 @@ public final class ContainerUtil {
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   @Contract(pure = true)
@@ -2408,8 +2436,9 @@ public final class ContainerUtil {
   /**
    * @return read-only list consisting of the elements from all collections in order
    */
+  @SafeVarargs
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <E> List<E> flatten(Collection<E>... collections) {
+  public static @Unmodifiable @NotNull <E> List<E> flatten(@NotNull Collection<E> @NotNull ... collections) {
     return flatten(Arrays.asList(collections));
   }
 
@@ -2448,7 +2477,7 @@ public final class ContainerUtil {
    * @return read-only list consisting of the elements from all collections in order
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T> List<T> flatten(@NotNull Iterable<? extends Collection<? extends T>> collections) {
+  public static @Unmodifiable @NotNull <T> List<T> flatten(@NotNull Iterable<? extends @NotNull Collection<? extends T>> collections) {
     int totalSize = 0;
     for (Collection<? extends T> list : collections) {
       totalSize += list.size();
@@ -2668,11 +2697,12 @@ public final class ContainerUtil {
   /**
    * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentIntObjectMap()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(value = " -> new", pure = true)
   public static @NotNull <V> ConcurrentIntObjectMap<@NotNull V> createConcurrentIntObjectMap() {
-    return new ConcurrentIntObjectHashMap<>();
+    return Java11Shim.Companion.createConcurrentIntObjectMap();
   }
 
   @Contract(value = " -> new", pure = true)
@@ -2797,7 +2827,8 @@ public final class ContainerUtil {
    * @return read-only set consisting of not null results of {@code mapper.fun} for each element in {@code collection}
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T, V> Set<@NotNull V> map2SetNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
+  public static @Unmodifiable @NotNull <T, V> Set<@NotNull V> map2SetNotNull(@NotNull Collection<? extends T> collection,
+                                                                             @NotNull Function<? super T, ? extends @Nullable V> mapper) {
     if (collection.isEmpty()) return Collections.emptySet();
     Set <V> set = new HashSet<>(collection.size());
     for (T t : collection) {
@@ -2843,6 +2874,7 @@ public final class ContainerUtil {
 
   /**
    * @return read-only list consisting of elements in the input collection
+   * TODO replace with {@link List#copyOf(Collection)} when the language level allow
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> copyList(@NotNull List<? extends T> list) {
@@ -2867,6 +2899,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #toCollection(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)

@@ -48,6 +48,8 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered.BulletCharStyles
 import org.jetbrains.jewel.ui.component.styling.DividerMetrics
 import org.jetbrains.jewel.ui.component.styling.DividerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalDividerStyle
@@ -694,6 +696,7 @@ public class ScrollingSynchronizerTest {
         doTest(yieldBlocks = { processMarkdownDocument(markdown) }, action = action)
     }
 
+    @Suppress("ImplicitUnitReturnType")
     @OptIn(ExperimentalTestApi::class)
     private fun doTest(
         yieldBlocks: MarkdownProcessor.() -> List<MarkdownBlock>,
@@ -786,8 +789,10 @@ public class ScrollingSynchronizerTest {
                             normal = Color.Black,
                             selected = Color.Black,
                             disabled = Color.Black,
+                            disabledSelected = Color.Black,
                             info = Color.Black,
                             error = Color.Black,
+                            warning = Color.Black,
                         ),
                     panelBackground = Color.White,
                 ),
@@ -878,6 +883,8 @@ public class ScrollingSynchronizerTest {
                             itemVerticalSpacing = 4.dp,
                             itemVerticalSpacingTight = 2.dp,
                             padding = PaddingValues(4.dp),
+                            numberFormatStyles =
+                                MarkdownStyling.List.Ordered.NumberFormatStyles(firstLevel = NumberFormatStyle.Decimal),
                         ),
                     unordered =
                         MarkdownStyling.List.Unordered(
@@ -887,6 +894,8 @@ public class ScrollingSynchronizerTest {
                             itemVerticalSpacing = 4.dp,
                             itemVerticalSpacingTight = 2.dp,
                             padding = PaddingValues(4.dp),
+                            markerMinWidth = 16.dp,
+                            bulletCharStyles = BulletCharStyles(),
                         ),
                 ),
             image =

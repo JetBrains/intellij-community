@@ -1,27 +1,25 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel.rete
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.rete.impl.*
-import fleet.kernel.rete.impl.DummyQueryScope
-import fleet.kernel.rete.impl.distinct
 import fleet.util.async.firstNotNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlin.jvm.JvmName
 
 /**
- * There is always a match in Single, run with it. If the match is invalidate while the body is running, cancel everything. 
+ * There is always a match in Single, run with it. If the match is invalidate while the body is running, cancel everything.
  */
 suspend fun <T, R> StateQuery<T>.withCurrentMatch(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
-  return matchesFlow().first().withMatch(f)
+  return matchesFlow().firstNotNull { it.withMatch(f) }
 }
 
 /**
  * Will wait until Maybe emits a match and then run with it once.
  */
 suspend fun <T, R> Query<Maybe, T>.withFirstMatch(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
-  return matchesFlow().first().withMatch(f)
+  return matchesFlow().firstNotNull { it.withMatch(f) }
 }
 
 /**
@@ -63,18 +61,24 @@ fun <T> Query<Maybe, T>.orNull(): StateQuery<T?> =
 
 
 @Suppress("UNCHECKED_CAST")
-fun <T> Query<Many, T>.singleOrNone(): Query<Maybe, T> = checkMatchesCount(0..1) as Query<Maybe, T>
-
-@Suppress("UNCHECKED_CAST")
-fun <T> Query<Many, T>.single(): StateQuery<T> = checkMatchesCount(1..1) as Query<Single, T>
-
-private fun <T> Query<*, T>.checkMatchesCount(range: IntRange): Query<*, T> =
-  run {
-    var count = 0
-    transform { token, emit ->
-      count += if (token.added) 1 else -1
-      check(count in range) { "Query produced $count matches while it was supposed to have only $range" }
-      emit(token)
+fun <T> Query<Many, T>.singleOrNone(msg: ((List<T>) -> String)? = null): Query<Maybe, T> =
+  let { source ->
+    Query {
+      val none = Any()
+      val producer = source.producer()
+      Producer { emit ->
+        val marker = Any()
+        var value: Any? = none
+        producer.collect { token ->
+          when {
+            token.added && value != none -> error("More than one match, ${listOf(value, token.value).let { msg?.invoke(it as List<T>) ?: "values: ${it}" }}")
+            token.added && value == none -> value = token.value as Any?
+            !token.added && value == none -> error("Nothing to retract")
+            !token.added && value != none -> value = none
+          }
+          emit(token)
+        }
+      }
     }
   }
 
@@ -108,6 +112,19 @@ fun <E : Entity> EntityType<E>.each(): SetQuery<E> = let { entityType ->
       (entity(eid.value) as? E) ?: error("entity does not exist for ${entityType.entityTypeIdent}")
     }
     .intern("each", entityType)
+}
+
+/**
+ * Provides a match for every [EntityType].
+ */
+fun EntityType.Companion.each(): SetQuery<EntityType<*>> = let { entityType ->
+  @Suppress("UNCHECKED_CAST")
+  queryOf(entityType.eid)
+    .lookupAttribute(Entity.Type.attr as Attribute<EID>)
+    .mapNotNull { // entity type might not yet be registered
+      entity(it) as EntityType<*>?
+    }
+    .intern("eachEntityType", entityType)
 }
 
 /**
@@ -505,6 +522,18 @@ fun <T> Query<Many, T>.matches(): Set<T> =
         hs.add(token.match.value)
       }
       hs
+    }
+  }
+
+fun <T> StateQuery<T>.match(): T =
+  let { query ->
+    DummyQueryScope.run {
+      val hs = HashSet<T>()
+      query.producer().collect { token ->
+        require(token.added)
+        hs.add(token.match.value)
+      }
+      hs.single()
     }
   }
 

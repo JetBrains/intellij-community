@@ -25,12 +25,13 @@
   <xi:include href="jvm-debugger.xml"/>
   <xi:include href="jvm-debugger-k2.xml"/>
   <xi:include href="dep-spellchecker.xml"/>
-  <xi:include href="scripting-base.xml"/>
+  <xi:include href="scripting-v1.xml"/>
   <xi:include href="native.xml"/>
   <xi:include href="native-k2.xml"/>
   <xi:include href="facets-base.xml"/>
   <xi:include href="jvm.xml"/>
   <xi:include href="searching-k2.xml"/>
+  <xi:include href="kotlin.base.code-insight.minimal.xml"/>
 
   <xi:include href="extensions.xml"/>
 
@@ -43,8 +44,6 @@
   </xi:include>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.ModuleScriptAdditionalIdeaDependenciesProvider"/>
-
     <bundledFirCompilerPluginProvider
             implementation="org.jetbrains.kotlin.idea.fir.extensions.MainByRegistrarContentBundledFirCompilerPluginProvider"
             order="first"/>
@@ -107,9 +106,9 @@
                  restartRequired="false"/>
 
     <!-- shared completion -->
-    <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService"/>
     <!-- k2 completion -->
+    <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionCharFilter"/>
     <completion.contributor language="kotlin"
                             id="KotlinCompletionContributor"
                             order="first"
@@ -124,10 +123,25 @@
                  defaultValue="true"
                  restartRequired="true"/>
 
+    <registryKey key="kotlin.k2.dot.add.enabled"
+                 description="Allow adding '.' to completion lookup"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
     <registryKey key="kotlin.k2.smart.completion.enabled"
                  description="Enable smart completion for Kotlin in K2 mode"
                  defaultValue="true"
                  restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.parallel.completion.enabled"
+                 description="Allow Kotlin contributors to run in parallel"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
+    <registryKey key="kotlin.k2.complete.top.level.packages"
+                 description="Allows completion of top level packages"
+                 defaultValue="true"
+                 restartRequired="false"/>
 
     <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
              id="kotlin.preferKotlinx"
@@ -194,20 +208,13 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker"
             serviceImplementation="org.jetbrains.kotlin.idea.inspections.suppress.KotlinK2SuppressionChecker"/>
-
-    <applicationService
-            serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompilationInterceptor"
-            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.K2KotlinBuiltInDecompilationInterceptor"
-    />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
     <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
-    <configurationType implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationType"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
-    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
   </extensions>
 
   <content>
@@ -255,6 +262,7 @@
     <module name="kotlin.jvm.k2"/>
 
     <module name="kotlin.base.scripting.k2"/>
+    <module name="kotlin.base.scripting.shared"/>
 
     <module name="kotlin.code-insight.intentions.shared"/>
     <module name="kotlin.code-insight.inspections.shared"/>

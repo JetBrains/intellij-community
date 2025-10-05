@@ -35,7 +35,7 @@ class GradleDaemonToolchainMigrationHelperTest: GradleProjectSdkResolverTestCase
                 loadProject()
                 check(GradleDaemonJvmPropertiesFile.getProperties(Path(projectPath)) == null)
 
-                GradleDaemonJvmCriteriaMigrationHelper.migrateToDaemonJvmCriteria(project, projectPath)
+                GradleDaemonJvmCriteriaMigrationHelper.migrateToDaemonJvmCriteria(myProject, projectPath)
                     .get(1, TimeUnit.MINUTES)
 
                 assertFoojayPluginIsApplied()
@@ -46,7 +46,7 @@ class GradleDaemonToolchainMigrationHelperTest: GradleProjectSdkResolverTestCase
 
     private suspend fun assertFoojayPluginIsApplied() {
         readAction {
-            val settingsFile = getTopLevelBuildScriptSettingsPsiFile(project, projectPath)!!
+            val settingsFile = getTopLevelBuildScriptSettingsPsiFile(myProject, projectPath)!!
             settingsFile.text.contains("org.gradle.toolchains.foojay-resolver-convention")
         }
     }

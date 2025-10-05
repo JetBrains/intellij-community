@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import org.jetbrains.annotations.ApiStatus;
@@ -61,6 +60,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   /**
    * @deprecated use {@link #isInnerClass(VirtualFile)} or {@link #isInnerClass(VirtualFile, ClassReader)} 
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isInnerClass(@NotNull VirtualFile file, byte @NotNull [] content) {

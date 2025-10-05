@@ -34,8 +34,8 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
-import com.intellij.openapi.ui.validation.CHECK_DIRECTORY
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
+import com.intellij.openapi.ui.validation.CHECK_READABLE_DIRECTORY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
@@ -78,11 +78,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
-  final override val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent?> = propertyGraph.property(null)
+  final override val jdkIntentProperty: GraphProperty<ProjectWizardJdkIntent> = propertyGraph.property(ProjectWizardJdkIntent.NoJdk)
   final override val gradleDslProperty: GraphProperty<GradleDsl> = propertyGraph.property(GradleDsl.KOTLIN)
     .bindEnumStorage("NewProjectWizard.gradleDslState")
 
-  final override var jdkIntent: ProjectWizardJdkIntent? by jdkIntentProperty
+  final override var jdkIntent: ProjectWizardJdkIntent by jdkIntentProperty
   final override var gradleDsl: GradleDsl by gradleDslProperty
 
   private val distributionTypeProperty = propertyGraph.lazyProperty { suggestDistributionType() }
@@ -122,8 +122,8 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       projectWizardJdkComboBox(this, jdkIntentProperty)
         .validationOnInput { validateJavaSdk(withDialog = false) }
         .validationOnApply { validateJavaSdk(withDialog = true) }
-        .whenItemSelectedFromUi { jdkIntent?.javaVersion?.let { logSdkChanged(it.feature) } }
-        .onApply { jdkIntent?.javaVersion?.let { logSdkFinished(it.feature) } }
+        .whenItemSelectedFromUi { jdkIntent.javaVersion?.let { logSdkChanged(it.feature) } }
+        .onApply { jdkIntent.javaVersion?.let { logSdkFinished(it.feature) } }
     }.bottomGap(BottomGap.SMALL)
   }
 
@@ -187,7 +187,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
               textFieldWithBrowseButton(fileChooserDescriptor, context.project)
                 .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
                 .bindText(gradleHomeProperty.toUiPathProperty())
-                .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
+                .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_READABLE_DIRECTORY)
                 .validationOnInput { validateGradleHome(withDialog = false) }
                 .validationOnApply { validateGradleHome(withDialog = true) }
                 .align(AlignX.FILL)
@@ -416,7 +416,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun getJdkVersion(): JavaVersion? {
-    return JavaVersion.tryParse(jdkIntent?.versionString)
+    return JavaVersion.tryParse(jdkIntent.versionString)
   }
 
   private fun suggestDistributionType(): DistributionTypeItem {
@@ -456,7 +456,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun startJdkDownloadIfNeeded(module: Module) {
-    val sdkDownloadTask = jdkIntent?.downloadTask
+    val sdkDownloadTask = jdkIntent.downloadTask
     if (sdkDownloadTask is JdkDownloadTask) {
       // Download the SDK on project creation
       module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
@@ -493,8 +493,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   fun setupProjectFromBuilder(project: Project) {
     val builder = object : AbstractGradleModuleBuilder() {}
 
-    builder.moduleJdk = jdkIntent?.prepareJdk()
-    builder.sdkDownloadTask = jdkIntent?.downloadTask
+    val sdk = if (context.isCreatingNewProject) { context.projectJdk } else { jdkIntent.prepareJdk() }
+    builder.moduleJdk = sdk
+    builder.sdkDownloadTask = jdkIntent.downloadTask
 
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name

@@ -1,5 +1,4 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
-// IGNORE_K2
 
 interface Foo {
     fun String.foo(<caret>p1: Int) {}

@@ -466,44 +466,44 @@ public class PythonLexerTest extends PyLexerTestCase {
   public void testTripleSingleQuotedStringWithEscapedSlashAfterOneQuote() {
     doTest("""
              s = '''
-             '\\\\'''
+             '\\'''
              '''
              """,
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
-           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
   }
   
   // PY-21697
   public void testTripleSingleQuotedStringWithEscapedSlashAfterTwoQuotes() {
     doTest("""
              s = '''
-             ''\\\\'''
+             ''\\'''
              '''
              """,
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
-           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
   }
   
   // PY-21697
   public void testTripleDoubleQuotedStringWithEscapedSlashAfterOneQuote() {
         doTest("""
                  s = ""\"
-                 "\\\\""\"
+                 "\\""\"
                  ""\"
                  """,
                "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
-               "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+               "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
   }
   
   // PY-21697
   public void testTripleDoubleQuotedStringWithEscapedSlashAfterTwoQuotes() {
         doTest("""
                  s = ""\"
-                 ""\\\\""\"
+                 ""\\""\"
                  ""\"
                  """,
                "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
-               "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+               "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:STATEMENT_BREAK");
   }
 
   // PY-40757

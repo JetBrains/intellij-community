@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,19 +40,30 @@ public final class TextIcon implements Icon {
   private List<String> myTextsForMinimumBounds;
   private Rectangle myMinimumTextBounds;
   private Rectangle myCurrentTextBounds;
+  private int myFontSize;
+  private @MagicConstant(intValues = {Font.PLAIN, Font.BOLD, Font.ITALIC}) int myFontStyle;
 
   private Rectangle getTextBounds() {
+    if (myStabilizedTextBounds != null && myFont != null) {
+      if (myFontSize != myFont.getSize() || myFontStyle != myFont.getStyle()) {
+        myMinimumTextBounds = null;
+        myCurrentTextBounds = null;
+        myStabilizedTextBounds = null;
+      }
+    }
     if (myStabilizedTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
+      myFontSize = myFont.getSize();
+      myFontStyle = myFont.getStyle();
       myContext = createContext();
       Font fnt = myFontTransform == null ? myFont : myFont.deriveFont(myFontTransform);
-      myCurrentTextBounds = getPixelBounds(fnt, myText, myContext);
+      myCurrentTextBounds = getPixelBoundsWithPadding(fnt, myText, myContext);
       myStabilizedTextBounds = myCurrentTextBounds;
 
       if (myTextsForMinimumBounds != null) {
         boolean debug = LOG.isDebugEnabled();
         if (myMinimumTextBounds == null) {
           for (String text : myTextsForMinimumBounds) {
-            Rectangle bounds = getPixelBounds(fnt, text, myContext);
+            Rectangle bounds = getPixelBoundsWithPadding(fnt, text, myContext);
             if (debug) {
               LOG.debug("Bounds for text \"" + text + "\" are: " + bounds);
             }
@@ -215,6 +228,11 @@ public final class TextIcon implements Icon {
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      g = customization.preserveGraphics(g);
+    }
+
     if (g instanceof Graphics2D) {
       if (myBackground != null) {
         g.setColor(myBackground);
@@ -228,9 +246,11 @@ public final class TextIcon implements Icon {
     Rectangle bounds = getTextBounds();
     Rectangle currentTextBounds = myCurrentTextBounds;
     if (myForeground != null && bounds != null) {
-      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x - 1 + (bounds.width - currentTextBounds.width) / 2,
-                                            myInsets.top + y - 1 + (bounds.height - currentTextBounds.height) / 2,
-                                            currentTextBounds.width + 2, currentTextBounds.height + 2);
+      int widthDelta = (bounds.width - currentTextBounds.width) / 2;
+      int heightDelta = (bounds.height - currentTextBounds.height) / 2 ;
+      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x + widthDelta,
+                                            myInsets.top + y + heightDelta,
+                                            currentTextBounds.width, currentTextBounds.height);
       try {
         Object textLcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
         if (textLcdContrast == null) textLcdContrast = getLcdContrastValue(); // L&F is not properly updated
@@ -239,7 +259,7 @@ public final class TextIcon implements Icon {
         g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myContext.getFractionalMetricsHint());
         g2d.setColor(myForeground);
         g2d.setFont(myFont);
-        g2d.drawString(myText, -bounds.x + 1, -bounds.y + 1);
+        g2d.drawString(myText, -bounds.x, -bounds.y);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Drawing \"" + myText + "\" at " + x + ", " + y + ", insets " + myInsets + "," +
                     " with bounds " + bounds + " and currentTextBounds " + currentTextBounds);
@@ -284,10 +304,12 @@ public final class TextIcon implements Icon {
     return new Rectangle(left, top, right - left, bottom - top);
   }
 
-  private static Rectangle getPixelBounds(Font font, String text, FontRenderContext context) {
-    return font.hasLayoutAttributes()
-           ? new TextLayout(text, font, context).getPixelBounds(context, 0, 0)
-           : font.createGlyphVector(context, text).getPixelBounds(context, 0, 0);
+  // Returns rectangle with 1 padding around the text
+  private static Rectangle getPixelBoundsWithPadding(Font font, String text, FontRenderContext context) {
+    Rectangle rectangle = font.hasLayoutAttributes()
+                          ? new TextLayout(text, font, context).getPixelBounds(context, 0, 0)
+                          : font.createGlyphVector(context, text).getPixelBounds(context, 0, 0);
+    return new Rectangle(rectangle.x - 1, rectangle.y - 1, rectangle.width + 2, rectangle.height + 2);
   }
 
   private static FontRenderContext createContext() {

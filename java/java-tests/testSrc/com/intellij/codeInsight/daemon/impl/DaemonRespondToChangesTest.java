@@ -340,7 +340,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     consoleView.getComponent(); //create editor
     consoleView.print("haha", ConsoleViewContentType.NORMAL_OUTPUT);
-    UIUtil.dispatchAllInvocationEvents();
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
     try {
       checkDaemonReaction(false, () -> {
@@ -351,7 +351,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         catch (InterruptedException e) {
           LOG.error(e);
         }
-        UIUtil.dispatchAllInvocationEvents(); //flush
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); //flush
       });
       checkDaemonReaction(false, () -> {
         consoleView.print("sss", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -361,7 +361,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         catch (InterruptedException e) {
           LOG.error(e);
         }
-        UIUtil.dispatchAllInvocationEvents(); //flush
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); //flush
       });
       checkDaemonReaction(false, () -> {
         consoleView.setOutputPaused(true);
@@ -401,6 +401,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
             });
     try {
       while (true) {
+        Thread.onSpinWait();
         try {
           int[] toIgnore = new int[0];
           Runnable callbackWhileWaiting = () -> {
@@ -1197,7 +1198,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
         while (wait.get()) {
-          Thread.yield();
+          Thread.onSpinWait();
         }
         holder.newAnnotation(HighlightSeverity.ERROR, SWEARING).range(element).create();
         iDidIt();
@@ -1230,6 +1231,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Disposer.register(getTestRootDisposable(), () -> EditorFactory.getInstance().releaseEditor(editor2));
     TextEditor textEditor1 = new PsiAwareTextEditorProvider().getTextEditor(editor1);
     TextEditor textEditor2 = new PsiAwareTextEditorProvider().getTextEditor(editor2);
+    assertNotNull(textEditor1);
+    assertNotNull(textEditor2);
     EditorTracker.getInstance(getProject()).setActiveEditors(List.of(editor1, editor2));
 
     // check that 'MySingletonAnnotator' is run only once for two editors for the same document
@@ -1238,9 +1241,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         MySingletonAnnotator.wait.set(true);
         type("/");
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
-          MySingletonAnnotator.wait.set(false);
-        }, 1000, TimeUnit.MILLISECONDS);
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> MySingletonAnnotator.wait.set(false), 1000, TimeUnit.MILLISECONDS);
         waitForDaemonToFinish(getProject(), editor1.getDocument());
 
         // revert back
@@ -1324,7 +1325,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         EditorTracker editorTracker = EditorTracker.Companion.getInstance(myProject);
         setActiveEditors(editor);
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         type("xxx"); // restart daemon
         assertTrue(editorTracker.getActiveEditors().contains(editor));
@@ -1334,7 +1335,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         // wait for the first pass to complete
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
           if (System.currentTimeMillis() - start > 1000000) {
             fail("Too long waiting for daemon (" +(System.currentTimeMillis() - start)+"ms) ");
           }
@@ -1344,11 +1345,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         ApplicationManager.getApplication().executeOnPooledThread(() ->
           HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Processing, "my own heavy op", ()-> {
             while (runHeavyProcessing) {
+              Thread.onSpinWait();
             }
           })
         );
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         applied.clear();
         collected.clear();
@@ -1359,7 +1361,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         while (System.currentTimeMillis() < start + 5000) {
           assertEmpty(applied);  // it should not restart
           assertEmpty(collected);
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
       }
       finally {
@@ -1381,7 +1383,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         EditorTracker editorTracker = EditorTracker.Companion.getInstance(myProject);
         setActiveEditors(editor);
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         type("xxx"); // restart daemon
         assertTrue(editorTracker.getActiveEditors().contains(editor));
@@ -1391,7 +1393,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         // wait for the first pass to complete
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
           if (System.currentTimeMillis() - start > 1000000) {
             fail("Too long waiting for daemon (" +(System.currentTimeMillis() - start)+"ms) ");
           }
@@ -1401,12 +1403,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
           HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, "my own vfs refresh", () -> {
             while (runHeavyProcessing) {
-              Thread.yield();
+              Thread.onSpinWait();
             }
           })
         );
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         applied.clear();
         collected.clear();
@@ -1454,7 +1456,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         while (System.currentTimeMillis() < start + 5000) {
           assertEmpty(applied);  // it must not restart
           assertEmpty(collected);
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
       });
 
@@ -1465,7 +1467,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       long start = System.currentTimeMillis();
       while (System.currentTimeMillis() < start + 5000 && applied.isEmpty()) {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
       }
       assertNotEmpty(applied);  // it must restart outside bulk
       assertNotEmpty(collected);
@@ -1965,7 +1967,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiComment && element.getText().equals("//XXX")) {
         while (wait.get()) {
-          Thread.yield();
+          Thread.onSpinWait();
         }
         holder.newAnnotation(HighlightSeverity.ERROR, SWEARING).range(element).create();
         iDidIt();
@@ -1979,11 +1981,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         .filter(info -> SWEARING.equals(info.getDescription())).toList();
     }
     static List<HighlightInfo> syntaxHighlights(MarkupModel markupModel, String description) {
-      List<HighlightInfo> errors = Arrays.stream(markupModel.getAllHighlighters())
+      return Arrays.stream(markupModel.getAllHighlighters())
             .map(highlighter -> HighlightInfo.fromRangeHighlighter(highlighter))
             .filter(Objects::nonNull)
             .filter(info -> description.equals(info.getDescription())).toList();
-      return errors;
     }
   }
 
@@ -2036,7 +2037,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       // register very slow annotator and make sure the invalid PSI highlighting was removed before this annotator finished
       TestTimeOut n = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
       Runnable checkHighlighted = () -> {
-        UIUtil.dispatchAllInvocationEvents();
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         if (MyVerySlowAnnotator.syntaxHighlights(markupModel, errorDescription).isEmpty() && MyVerySlowAnnotator.wait.get()) {
           // removed before highlighting is finished
           MyVerySlowAnnotator.wait.set(false);
@@ -2061,8 +2062,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
+  @SuppressWarnings("FieldMayBeStatic")
   @Language(value = "JAVA", prefix="class X { void foo() {\n", suffix = "\n}\n}")
-  String MANY_LAMBDAS_TEXT_TO_TYPE = """
+  private final String MANY_LAMBDAS_TEXT_TO_TYPE = """
     if (i(()->{
             i(()-> {
               System.out.println("vFile = ");
@@ -2080,8 +2082,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
     """;
 
+  @SuppressWarnings("FieldMayBeStatic")
   @Language("JAVA")
-  String MANY_LAMBDAS_INITIAL = """
+  private final String MANY_LAMBDAS_INITIAL = """
     class X {
       void invokeLater(Runnable r) {}
       boolean i(Runnable r) { return true;}
@@ -2092,12 +2095,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testDaemonDoesRestartDuringMadMonkeyTyping/*Stress*/() {
     assertDaemonRestartsAndLeavesNoErrorElementsInTheEnd(MANY_LAMBDAS_INITIAL, MANY_LAMBDAS_TEXT_TO_TYPE, null);
   }
+  @SuppressWarnings("FieldMayBeStatic")
   @Language(value = "JAVA", prefix="class X { void foo() {\n", suffix = "\n}\n}")
-  String LONG_LINE_WITH_PARENS_TEXT_TO_TYPE = """
+  private final String LONG_LINE_WITH_PARENS_TEXT_TO_TYPE = """
     if (highlighter != null) highlighter += " text='" + StringUtil.first(getText(), 40, true) + "'";
     """;
+  @SuppressWarnings("FieldMayBeStatic")
   @Language("JAVA")
-  String LONG_LINE_WITH_PARENS_INITIAL_TEXT = """
+  private final String LONG_LINE_WITH_PARENS_INITIAL_TEXT = """
     class X {
       static String getText() { return ""; }
       static class StringUtil {
@@ -2154,7 +2159,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
               }
             });
             //updater.assertNoDuplicates(myFile, getErrorsFromMarkup(markupModel), "errors from markup ");
-            myDaemonCodeAnalyzer.restart(myFile);
+            myDaemonCodeAnalyzer.restart(myFile, this);
             List<HighlightInfo> errorsFromMarkup = getErrorsFromMarkup(markupModel);
             //updater.assertNoDuplicates(myFile, errorsFromMarkup, "errors from markup ");
             //((HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject())).assertMarkupDataConsistent(myFile);
@@ -2314,7 +2319,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           //System.out.println(edtTrace+"\n  delay ="+delay+"  --------------------------------");
         }, delay, TimeUnit.MILLISECONDS);
         while (!future.isDone()) {
-          UIUtil.dispatchAllInvocationEvents();
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         }
         try {
           future.get();
@@ -2368,7 +2373,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         {
           long deadline = System.currentTimeMillis() + 10; // do something for awhile
           while (System.currentTimeMillis() < deadline) {
-            UIUtil.dispatchAllInvocationEvents();
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
           }
         }
 
@@ -2430,8 +2435,29 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
     while (!t.isTimedOut()) {
       assertTrue(restarts.toString(), restarts.get() < 10);
-      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     }
   }
 
+
+  public void testStartingTypingCommentMustExtendExistingHighlighterButShrinkItBackAfterRehighlighting() {
+    @Language("JAVA")
+    String text = """
+      class X {
+         void foo() {
+           Str/*ing xxx;
+         }
+      }""";
+
+    configureByText(JavaFileType.INSTANCE, text);
+    List<HighlightInfo> errs = highlightErrors();
+    HighlightInfo info = ContainerUtil.find(errs, e -> "Cannot resolve symbol 'Str'".equals(e.getDescription()));
+    assertTrue(errs.toString(), info != null && info.getText().equals("Str"));
+
+    int i = getEditor().getDocument().getText().indexOf("/*");
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().insertString(i, "/*"));
+    errs = highlightErrors();
+    info = ContainerUtil.find(errs, e -> "Cannot resolve symbol 'Str'".equals(e.getDescription()));
+    assertTrue(errs.toString(), info != null && info.getText().equals("Str"));
+  }
 }

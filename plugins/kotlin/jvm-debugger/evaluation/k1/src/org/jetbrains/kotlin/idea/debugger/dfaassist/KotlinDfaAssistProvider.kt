@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import java.util.*
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 private class KotlinDfaAssistProvider : DfaAssistProvider {
@@ -92,10 +93,11 @@ private class KotlinDfaAssistProvider : DfaAssistProvider {
                 }
             }
             return null
-        }
-        else if (descriptor is KtVariableDescriptor) {
-            val psiVariable = readAction { descriptor.psiElement }
-            val name = readAction { (psiVariable as KtNamedDeclaration).name }
+        } else if (descriptor is KtVariableDescriptor) {
+            val name = readAction {
+                val psiVariable = descriptor.psiElement as? KtNamedDeclaration ?: return@readAction null
+                psiVariable.name
+            }
             val variable = proxy.visibleVariableByName(name)
             if (variable != null) {
                 return postprocess(proxy.getVariableValue(variable))
@@ -104,23 +106,22 @@ private class KotlinDfaAssistProvider : DfaAssistProvider {
         return null
     }
 
-    override suspend fun getJdiValueForDfaVariable(
+    override suspend fun getJdiValuesForQualifier(
         proxy: StackFrameProxyEx,
         qualifier: Value,
         descriptors: List<VariableDescriptor>,
         anchor: PsiElement
     ): Map<VariableDescriptor, Value> {
         if (qualifier !is ObjectReference) return emptyMap()
-        val map = hashMapOf<VariableDescriptor, Value>()
+        // Avoid relying on hashCode/equals, as descriptors are known to be deduplicated here
+        val map = IdentityHashMap<VariableDescriptor, Value>()
         for (descriptor in descriptors) {
-            val psiVariable = readAction { descriptor.psiElement }
-            if (psiVariable is KtCallableDeclaration) {
-                val name = readAction { psiVariable.name }
-                val field = name?.let { DebuggerUtils.findField(qualifier.referenceType(), it) }
-                if (field != null) {
-                    map[descriptor] = postprocess(qualifier.getValue(field))
-                }
-            }
+            val name = readAction {
+                val psiVariable = descriptor.psiElement as? KtCallableDeclaration ?: return@readAction null
+                psiVariable.name
+            } ?: continue
+            val field = DebuggerUtils.findField(qualifier.referenceType(), name) ?: continue
+            map[descriptor] = postprocess(qualifier.getValue(field))
         }
         return map
     }

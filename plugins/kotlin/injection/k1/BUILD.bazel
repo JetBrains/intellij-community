@@ -1,15 +1,15 @@
 ### auto-generated section `build kotlin.injection.k1` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True
+  name = "custom_k1",
+  x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "k1_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -17,8 +17,9 @@ jvm_library(
   name = "k1",
   module_name = "kotlin.injection.k1",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":k1_resources"],
+  kotlinc_opts = ":custom_k1",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -34,7 +35,7 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//plugins/IntelliLang:langInjection",
     "//platform/lang-impl",
-  ],
-  runtime_deps = [":k1_resources"]
+    "//java/java-psi-api:psi",
+  ]
 )
 ### auto-generated section `build kotlin.injection.k1` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -30,7 +30,9 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.components.JBHtmlPaneConfiguration;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.svg.AdaptiveImageView;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StyleSheetUtil;
 import com.intellij.util.ui.UIUtil;
@@ -65,8 +67,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static final DocRendererMemoryManager MEMORY_MANAGER = new DocRendererMemoryManager();
   private static final DocRenderImageManager IMAGE_MANAGER = new DocRenderImageManager();
 
-  private static final int MIN_WIDTH = 350;
-  private static final int MAX_WIDTH = 680;
   private static final int LEFT_INSET = 14;
   private static final int RIGHT_INSET = 12;
   private static final int TOP_BOTTOM_INSETS = 2;
@@ -206,7 +206,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     if (toggleRenderAllAction != null) {
       group.add(toggleRenderAllAction);
     }
-    group.add(new ChangeFontSize());
+    group.add(new DocRendererAppearanceSettingsAction());
 
     PsiDocCommentBase comment = getComment();
     for (DocumentationActionProvider provider : DocumentationActionProvider.EP_NAME.getExtensions()) {
@@ -236,9 +236,9 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     if (availableWidth <= 0) {
       // if editor is not shown yet, we create the inlay with maximum possible width,
       // assuming that there's a higher probability that editor will be shown with larger width than with smaller width
-      return MAX_WIDTH;
+      return DocRendererAppearanceSettings.getMaxWidth();
     }
-    return Math.max(scale(MIN_WIDTH), Math.min(scale(MAX_WIDTH), availableWidth));
+    return Math.clamp(availableWidth, scale(DocRendererAppearanceSettings.MIN_WIDTH), scale(DocRendererAppearanceSettings.getMaxWidth()));
   }
 
   private int calcInlayStartX() {
@@ -335,6 +335,9 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       }
     });
     pane.getDocument().putProperty("imageCache", IMAGE_MANAGER.getImageProvider());
+    if (CachingAdaptiveImageManagerService.isEnabled()) {
+      pane.getDocument().putProperty(AdaptiveImageView.ADAPTIVE_IMAGES_MANAGER_PROPERTY, CachingAdaptiveImageManagerService.getInstance());
+    }
     return pane;
   }
 
@@ -388,19 +391,6 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
            itemImpl.isZombie();
   }
 
-  private static final class ChangeFontSize extends DumbAwareAction {
-    ChangeFontSize() {
-      super(CodeInsightBundle.messagePointer("javadoc.adjust.font.size"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != null) {
-        DocFontSizePopup.show(editor.getContentComponent(), () -> DocRenderItemUpdater.updateRenderers(editor, true));
-      }
-    }
-  }
 
   final class EditorInlineHtmlPane extends JBHtmlPane {
     private final List<Image> myImages = new ArrayList<>();
@@ -416,32 +406,70 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         return true;
       }
     };
+
+    private boolean initialized;
+
+    private int repaintTracking = 0;
+
     private boolean myRepaintRequested;
     private float myScaleFactor = 1f;
 
-    EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
+    EditorInlineHtmlPane(boolean trackMemory, @NotNull Editor editor) {
       super(
         QuickDocHighlightingHelper.getDefaultDocStyleOptions(() -> editor.getColorsScheme(), true),
-        JBHtmlPaneConfiguration.builder()
-          .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
-          .customStyleSheetProvider(pane -> getStyleSheet(pane, editor))
-          .fontResolver(EditorCssFontResolver.getInstance(editor))
-          .build()
+        buildConfiguration(editor)
       );
       if (trackMemory) {
         MEMORY_MANAGER.register(DocRenderer.this, 50 /* rough size estimation */);
       }
+
+      initialized = true;
+    }
+
+    private static @NotNull JBHtmlPaneConfiguration buildConfiguration(@NotNull Editor editor) {
+      var builder = JBHtmlPaneConfiguration.builder()
+        .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
+        .customStyleSheetProvider(pane -> getStyleSheet(pane, editor))
+        .fontResolver(EditorCssFontResolver.getInstance(editor));
+      if (CachingAdaptiveImageManagerService.isEnabled()) {
+        builder = builder.extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_ADAPTIVE_IMAGE_EXTENSION);
+      }
+      return builder.build();
     }
 
     @Override
     public void repaint(long tm, int x, int y, int width, int height) {
-      myRepaintRequested = true;
+      if (!CachingAdaptiveImageManagerService.isEnabled()) {
+        myRepaintRequested = true;
+        return;
+      }
+
+      if (!initialized) {
+        return;
+      }
+
+      if (repaintTracking > 0) {
+        myRepaintRequested = true;
+      } else {
+        scheduleRepaint();
+      }
     }
 
     void doWithRepaintTracking(Runnable task) {
-      myRepaintRequested = false;
-      task.run();
-      if (myRepaintRequested) repaintRenderer();
+      if (!CachingAdaptiveImageManagerService.isEnabled()) {
+        myRepaintRequested = false;
+        task.run();
+        if (myRepaintRequested) repaintRenderer();
+        return;
+      }
+
+      repaintTracking++;
+      try {
+        task.run();
+        if (myRepaintRequested) repaintRenderer();
+      } finally {
+        repaintTracking--;
+      }
     }
 
     private void repaintRenderer() {
@@ -509,10 +537,20 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
     @Override
     public void revalidate() {
-      super.revalidate();
+      if (!CachingAdaptiveImageManagerService.isEnabled()) {
+        super.revalidate();
+        myCachedHeight = -1;
+        myCachedWidth = -1;
+        scheduleUpdate();
+        return;
+      }
+
       myCachedHeight = -1;
       myCachedWidth = -1;
-      scheduleUpdate();
+      super.revalidate();
+      if (initialized) {
+        scheduleUpdate();
+      }
     }
 
     private void scheduleUpdate() {

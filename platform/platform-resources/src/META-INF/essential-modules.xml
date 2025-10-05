@@ -1,10 +1,9 @@
-<idea-plugin>
-  <content>
-    <module name="intellij.platform.settings.local"/>
-    <module name="intellij.libraries.ktor.client"/>
-    <module name="intellij.libraries.ktor.client.cio"/>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="/META-INF/essential-libs.xml"/>
+  <xi:include href="/META-INF/ktor-libs.xml"/>
 
-    <module name="intellij.libraries.kotlinx.io"/>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.settings.local"/>
 
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc.backend"/>
@@ -12,6 +11,17 @@
     <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.project.backend"/>
     <module name="intellij.platform.progress.backend"/>
+    <module name="intellij.platform.lang.impl.backend"/>
+
+    <!--
+    The loading="embedded" attribute is required here because the intellij.platform.find module (which is loaded
+    in embedded mode) has a compile dependency on intellij.platform.scopes. Without marking scopes as embedded,
+    this would cause NoClassDefFoundError at runtime when classes from find try to use classes from scopes.
+    This ensures proper classloader hierarchy is maintained for modules that depend on intellij.platform.scopes.
+    This attribute should be removed once the find module no longer needs to be embedded.
+    -->
+    <module name="intellij.platform.scopes" loading="embedded"/>
+    <module name="intellij.platform.scopes.backend"/>
 
     <!-- todo navbar is not essential-->
     <module name="intellij.platform.navbar"/>
@@ -22,6 +32,7 @@
 
     <module name="intellij.platform.execution.serviceView"/>
     <module name="intellij.platform.execution.serviceView.frontend"/>
+    <module name="intellij.platform.execution.serviceView.backend"/>
     <module name="intellij.platform.execution.dashboard"/>
     <module name="intellij.platform.execution.dashboard.frontend"/>
     <module name="intellij.platform.execution.dashboard.backend"/>
@@ -73,5 +84,8 @@
     <module name="intellij.platform.identifiers.highlighting.backend"/>
 
     <module name="intellij.platform.polySymbols" loading="embedded"/>
+    <module name="intellij.platform.rpc.topics" loading="embedded"/>
+    <module name="intellij.platform.rpc.topics.backend"/>
+    <module name="intellij.platform.rpc.topics.frontend"/>
   </content>
 </idea-plugin>

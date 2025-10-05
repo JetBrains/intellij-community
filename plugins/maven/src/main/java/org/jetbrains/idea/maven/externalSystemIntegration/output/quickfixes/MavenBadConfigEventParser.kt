@@ -63,7 +63,7 @@ class MavenImportBadConfigEventParser : MavenImportLoggedEventParser {
 
   override fun processLogLine(project: Project,
                               logLine: String,
-                              reader: BuildOutputInstantReader,
+                              reader: BuildOutputInstantReader?,
                               messageConsumer: Consumer<in BuildEvent>): Boolean {
     if (logLine.startsWith(MavenConfigBuildIssue.CONFIG_PARSE_ERROR)) {
       val buildIssue = MavenConfigBuildIssue.getIssue(

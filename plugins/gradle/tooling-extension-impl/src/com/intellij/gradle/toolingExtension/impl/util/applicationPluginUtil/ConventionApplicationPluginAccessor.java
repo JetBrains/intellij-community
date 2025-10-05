@@ -2,8 +2,11 @@
 package com.intellij.gradle.toolingExtension.impl.util.applicationPluginUtil;
 
 import org.gradle.api.Project;
-import org.gradle.api.plugins.ApplicationPluginConvention;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.gradle.toolingExtension.impl.util.GradleConventionUtil.*;
+import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.getValue;
 
 public class ConventionApplicationPluginAccessor implements ApplicationPluginAccessor {
 
@@ -15,8 +18,15 @@ public class ConventionApplicationPluginAccessor implements ApplicationPluginAcc
 
   @Override
   public @Nullable String getMainClass() {
-    ApplicationPluginConvention applicationPluginConvention = myGradleProject.getConvention().findPlugin(ApplicationPluginConvention.class);
-    if (applicationPluginConvention == null) return null;
-    return applicationPluginConvention.getMainClassName();
+    if (isGradleConventionsSupported()) {
+      Object applicationPlugin = findConventionPlugin(myGradleProject, APPLICATION_PLUGIN_CONVENTION_CLASS_FQDN);
+      if (applicationPlugin == null) {
+        return null;
+      }
+      return getValue(applicationPlugin, "getMainClassName", String.class);
+    }
+    throw new IllegalStateException(
+      "ConventionApplicationPluginAccessor shouldn't be used for Gradle " + GradleVersion.current().getBaseVersion()
+    );
   }
 }

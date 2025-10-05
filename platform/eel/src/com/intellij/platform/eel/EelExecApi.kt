@@ -5,6 +5,7 @@ import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
@@ -40,7 +41,8 @@ sealed interface EelExecApi {
 
     try {
       return Ok(spawnProcess(generatedBuilder))
-    } catch (e: ExecuteProcessException) {
+    }
+    catch (e: ExecuteProcessException) {
       return Error(ExecuteProcessErrorImpl(e.errno, e.message))
     }
   }
@@ -49,6 +51,11 @@ sealed interface EelExecApi {
   interface ExecuteProcessOptions {
     @get:ApiStatus.Experimental
     val args: List<String> get() = listOf()
+
+    /**
+     * Scope this process is bound to. Once scope dies -- this process dies as well.
+     */
+    val scope: CoroutineScope? get() = null
 
     /**
      * By default, environment is always inherited, which may be unwanted. [ExecuteProcessOptions.env] allows
@@ -230,10 +237,23 @@ sealed interface EelExecApi {
   }
 
   /**
-   * Do not use pty, but redirect `stderr` to `stdout` much like `redirectErrorStream` in JVM
+   * Do not use pty, but redirect `stderr` to [to]
    */
   @ApiStatus.Experimental
-  data object RedirectStdErr : InteractionOptions
+  class RedirectStdErr(val to: RedirectTo) : InteractionOptions
+
+  @ApiStatus.Experimental
+  enum class RedirectTo {
+    /**
+     * `/dev/null`, much like `DISCARD` in JVM
+     */
+    NULL,
+
+    /**
+     * `stdout` much like `redirectErrorStream` in JVM
+     */
+    STDOUT
+  }
 }
 
 @ApiStatus.Experimental
@@ -254,6 +274,10 @@ interface EelExecWindowsApi : EelExecApi {
 suspend fun EelExecApi.where(exe: String): EelPath? {
   return this.findExeFilesInPath(exe).firstOrNull()
 }
+
+@ApiStatus.Experimental
+fun EelExecApi.spawnProcess(exe: EelPath, vararg args: String): EelExecApiHelpers.SpawnProcess =
+  spawnProcess(exe.toString()).args(*args)
 
 @ApiStatus.Experimental
 fun EelExecApi.spawnProcess(exe: String, vararg args: String): EelExecApiHelpers.SpawnProcess =

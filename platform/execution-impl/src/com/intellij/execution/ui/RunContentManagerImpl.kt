@@ -3,14 +3,11 @@
 
 package com.intellij.execution.ui
 
-import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.Executor
-import com.intellij.execution.KillableProcess
-import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.*
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.dashboard.RunDashboardManager
+import com.intellij.execution.dashboard.RunDashboardManagerProxy
+import com.intellij.execution.dashboard.RunDashboardUiManager
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
@@ -23,7 +20,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -44,20 +42,29 @@ import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.SmartList
-import com.intellij.util.application
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NotNull
 import java.awt.KeyboardFocusManager
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Predicate
 import javax.swing.Icon
 import kotlin.concurrent.Volatile
 
-private val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
+@ApiStatus.Internal
+@JvmField
+val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
 
 @Suppress("LiftReturnOrAssignment")
 class RunContentManagerImpl(private val project: Project) : RunContentManager {
+  private val descriptors: MutableMap<RunContentDescriptorId, RunContentDescriptor> = ConcurrentHashMap()
+
   private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
   private val toolWindowIdZBuffer = ConcurrentLinkedDeque<String>()
 
@@ -143,6 +150,22 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   @ApiStatus.Internal
+  override fun registerRunContentDescriptor(@NotNull descriptor: RunContentDescriptor) {
+    val runContentDescriptorId = descriptor.id
+    if (runContentDescriptorId == null) {
+      thisLogger().warn("ContentDescriptorId was not assigned to descriptor $descriptor")
+      return
+    }
+    descriptors[runContentDescriptorId] = descriptor
+    Disposer.register(descriptor, Disposable { descriptors.remove(runContentDescriptorId) })
+  }
+
+  @ApiStatus.Internal
+  override fun getRunContentDescriptors(): Collection<RunContentDescriptor> {
+    return descriptors.values
+  }
+
+  @ApiStatus.Internal
   fun registerToolWindow(executor: Executor): ContentManager {
     val toolWindowManager = getToolWindowManager()
     val toolWindowId = executor.toolWindowId
@@ -158,7 +181,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     ))
     toolWindow.setToHideOnEmptyContent(true)
     if (DefaultRunExecutor.EXECUTOR_ID == executor.id || Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
-      toolWindow.component.putClientProperty(ToolWindowContentUi.ALLOW_DND_FOR_TABS, true)
+      ToolWindowContentUi.setAllowTabsReordering(toolWindow, true)
     }
     val contentManager = toolWindow.contentManager
     contentManager.addUiDataProvider { sink ->
@@ -254,6 +277,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       return
     }
 
+    registerRunContentDescriptor(descriptor)
+
     val contentManager = getContentManagerForRunner(executor, descriptor)
     val toolWindowId = getToolWindowIdForRunner(executor, descriptor)
     val oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.displayName, getReuseCondition(toolWindowId))
@@ -274,9 +299,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     content.putUserData(EXECUTOR_KEY, executor)
     content.displayName = descriptor.displayName
 
-    descriptor.displayNameProperty.afterChange(descriptor) {
-      application.invokeLater {
-        content.displayName = it
+    descriptor.coroutineScope.launch {
+      descriptor.displayNameProperty.collect {
+        withContext(Dispatchers.EDT) {
+          content.displayName = it
+        }
       }
     }
 
@@ -293,7 +320,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         var processTerminated = false
 
         override fun startNotified(event: ProcessEvent) {
-          val pid = getPid(processHandler)
           UIUtil.invokeLaterIfNeeded {
             if (!processTerminated) {
               content.icon = getLiveIndicator(descriptor.icon)
@@ -303,13 +329,20 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
               }
               toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
             }
-            if (pid != null) {
+          }
+
+          descriptor.coroutineScope.launch {
+            val pid = processHandler.nativePid?.await() ?: return@launch
+            withContext(Dispatchers.EDT) {
               content.description = ExecutionBundle.message("process.id.tooltip", pid)
             }
           }
-          descriptor.iconProperty.afterChange(descriptor) {
-            UIUtil.invokeLaterIfNeeded {
-              content.icon = getLiveIndicator(it)
+
+          descriptor.coroutineScope.launch {
+            descriptor.iconProperty.collect {
+              withContext(Dispatchers.EDT) {
+                content.icon = getLiveIndicator(it)
+              }
             }
           }
         }
@@ -332,10 +365,13 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       if (disposer != null) {
         Disposer.register(disposer, Disposable { processHandler.removeProcessListener(processAdapter) })
       }
-    } else {
-      descriptor.iconProperty.afterChange(descriptor) {
-        application.invokeLater {
-          content.icon = it ?: executor.toolWindowIcon
+    }
+    else {
+      descriptor.coroutineScope.launch {
+        descriptor.iconProperty.collect {
+          withContext(Dispatchers.EDT) {
+            content.icon = it ?: executor.toolWindowIcon
+          }
         }
       }
     }
@@ -343,6 +379,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     if (oldDescriptor == null) {
       contentManager.addContent(content)
       content.putUserData(CLOSE_LISTENER_KEY, CloseListener(content, executor))
+    }
+    else if (RunDashboardUiManager.getInstance(project).toolWindowId == toolWindowId) {
+      RunDashboardUiManager.getInstance(project).contentReused(content, oldDescriptor)
     }
     if (descriptor.isSelectContentWhenAdded /* also update selection when reused content is already selected  */
         || oldDescriptor != null && content.manager!!.isSelected(content)) {
@@ -373,7 +412,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getContentManagerByToolWindowId(toolWindowId: String): ContentManager? {
-    project.serviceIfCreated<RunDashboardManager>()?.let {
+    val manager = RunDashboardUiManager.getInstanceIfCreated(project)
+    manager?.let {
       if (it.toolWindowId == toolWindowId) {
         return if (toolWindowIdToBaseIcon.contains(toolWindowId)) it.dashboardContentManager else null
       }
@@ -406,7 +446,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getReuseCondition(toolWindowId: String): Predicate<Content>? {
-    val runDashboardManager = RunDashboardManager.getInstance(project)
+    val runDashboardManager = RunDashboardUiManager.getInstance(project)
     return if (runDashboardManager.toolWindowId == toolWindowId) runDashboardManager.reuseCondition else null
   }
 
@@ -420,11 +460,12 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun getContentManagerForRunner(executor: Executor, descriptor: RunContentDescriptor?): ContentManager {
-    return descriptor?.attachedContent?.manager ?: getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
+    return descriptor?.attachedContent?.manager
+           ?: getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
   }
 
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
-    val dashboardManager = RunDashboardManager.getInstance(project) // initialize RunDashboardManager before getting content manger
+    val dashboardManager = RunDashboardUiManager.getInstance(project) // initialize RunDashboardContentManager before getting content manger
     val contentManager = getContentManagerByToolWindowId(id)
     if (contentManager != null) {
       updateToolWindowDecoration(id, executor)
@@ -453,7 +494,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   private fun updateToolWindowDecoration(id: String, executor: Executor) {
-    if (project.serviceIfCreated<RunDashboardManager>()?.toolWindowId == id) {
+    if (RunDashboardUiManager.getInstanceIfCreated(project)?.toolWindowId == id) {
       return
     }
 
@@ -475,7 +516,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
 
-    project.serviceIfCreated<RunDashboardManager>()?.let {
+    RunDashboardUiManager.getInstanceIfCreated(project)?.let {
       val toolWindowId = it.toolWindowId
       if (toolWindowIdToBaseIcon.contains(toolWindowId)) {
         processor(toolWindowManager.getToolWindow(toolWindowId) ?: return, it.dashboardContentManager)
@@ -508,9 +549,10 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   override fun getContentDescriptorToolWindowId(configuration: RunConfiguration?): String? {
     if (configuration != null) {
-      val runDashboardManager = RunDashboardManager.getInstance(project)
-      if (runDashboardManager.isShowInDashboard(configuration)) {
-        return runDashboardManager.toolWindowId
+      val runDashboardContentManager = RunDashboardManagerProxy.getInstance(project)
+      if (runDashboardContentManager.isShowInDashboard(configuration)) {
+        // see ServiceViewManagerImpl#eventHandled()
+        return RunDashboardUiManager.getInstance(project).toolWindowId
       }
     }
     return null
@@ -541,7 +583,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     find(getContentManagerForRunner(runnerInfo, null))?.let {
       return it
     }
-    find(getContentManagerByToolWindowId(project.serviceIfCreated<RunDashboardManager>()?.toolWindowId ?: return null) ?: return null)?.let {
+    find(getContentManagerByToolWindowId(RunDashboardUiManager.getInstanceIfCreated(project)?.toolWindowId ?: return null) ?: return null)?.let {
       return it
     }
     return null
@@ -621,15 +663,6 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
       return askUserAndWait(processHandler, sessionName, task)
     }
-  }
-}
-
-private fun getPid(processHandler: ProcessHandler): Long? {
-  try {
-    return (processHandler as? BaseProcessHandler<*>)?.process?.pid()
-  }
-  catch (_: UnsupportedOperationException) {
-    return null
   }
 }
 

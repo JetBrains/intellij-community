@@ -9,7 +9,7 @@ key1: 1
   # comment2 line 2
   # comment2 line 3</fold>
   - item 4
-  <fold text='- <3 keys>'>- item 5:
+  <fold text='- {3 keys}'>- item 5:
     <fold text='# ...'># comment 3 1
     # comment 3 2
     # comment 3 3</fold>

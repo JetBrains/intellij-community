@@ -2,7 +2,6 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
-import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,11 +9,9 @@ import java.io.IOException;
 
 public class JavaAbiFilter implements ZipOutputBuilder {
   private @NotNull final ZipOutputBuilder myDelegate;
-  private @NotNull final InstrumentationClassFinder myClassFinder;
 
-  public JavaAbiFilter(@NotNull ZipOutputBuilder delegate, @NotNull InstrumentationClassFinder classFinder) {
+  public JavaAbiFilter(@NotNull ZipOutputBuilder delegate) {
     myDelegate = delegate;
-    myClassFinder = classFinder;
   }
 
   @Override
@@ -55,17 +52,17 @@ public class JavaAbiFilter implements ZipOutputBuilder {
     myDelegate.close(saveChanges);
   }
 
-  private byte @Nullable [] filterAbiJarContent(String entryName, byte[] content) {
+  private static byte @Nullable [] filterAbiJarContent(String entryName, byte[] content) {
     if (content == null || !entryName.endsWith(".class")) {
       if (entryName.endsWith(".java")) {
         // do not save annotation processors (AP)-produced sources in abi jar
         // AP generate sources that we must store somewhere during the compilation to give them back to javac, if it needs them.
-        // Eventually those sources are deleted from the output. With this check the JavaAbiFilter filter ensures that no sources get into the ABI output.
+        // Eventually, those sources are deleted from the output. With this check the JavaAbiFilter filter ensures that no sources get into the ABI output.
         return null;
       }
       return content; // no instrumentation, if the entry is not a class file, or the class finder is not specified
     }
-    return JavaAbiClassFilter.filter(content, myClassFinder); // also strips debug-info and code data
+    return JavaAbiClassFilter.filter(content); // also strips debug-info and code data
   }
 
 }

@@ -20,6 +20,7 @@
     <plugin id="com.intellij.java"/>
     <module name="intellij.platform.ml.impl"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.scriptDebugger.ui"/>
   </dependencies>
 
   <extensionPoints>

@@ -14,9 +14,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -172,7 +172,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
     try {
       WriteCommandAction.writeCommandAction(getProject()).run(() -> {
         final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-        moduleModel.newModule("independent/independent.iml", StdModuleTypes.JAVA.getId());
+        moduleModel.newModule("independent/independent.iml", JavaModuleType.getModuleType().getId());
         moduleModel.commit();
 
         tdf.createFile("plugin.xml", """

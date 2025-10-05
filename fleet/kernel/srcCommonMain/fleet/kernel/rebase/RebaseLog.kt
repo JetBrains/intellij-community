@@ -4,11 +4,11 @@ package fleet.kernel.rebase
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
 import fleet.rpc.core.AssumptionsViolatedException
-import fleet.util.BifurcanVector
-import fleet.util.IBifurcanVector
 import fleet.util.UID
 import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import fleet.fastutil.ints.IntMap
+import fleet.bifurcan.BifurcanVector
+import fleet.bifurcan.IBifurcanVector
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -323,7 +323,7 @@ internal fun RebaseLogEntry.replay(base: DB): RebaseLogEntry? = let { logEntry -
                       idMapping = mutableIdMapping,
                       replayFailed = false)
       }
-      catch (x: AssumptionsViolatedException) {
+      catch (_: AssumptionsViolatedException) {
         null
       }
       catch (x: Throwable) {

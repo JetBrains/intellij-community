@@ -1,18 +1,27 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.showYesNoCancelDialog
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
+import com.intellij.refactoring.rename.RenamerFactory
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
+import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -33,6 +42,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
  * Computes [block] and removes any possible redundant imports that would be added during this operation, not touching any existing
@@ -129,7 +139,7 @@ fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
     val symbol = receiverValue.symbol
@@ -160,7 +170,7 @@ fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
  *
  * @return The matching callable symbol if found, null otherwise.
  */
-context(KaSession)
+context(_: KaSession)
 fun KaDeclarationContainerSymbol.findCallableMemberBySignature(
     callableSignature: KaCallableSignature<KaCallableSymbol>,
     ignoreReturnType: Boolean = false,
@@ -175,7 +185,7 @@ fun KaDeclarationContainerSymbol.findCallableMemberBySignature(
  *
  * @return The matching callable symbol if found, null otherwise.
  */
-context(KaSession)
+context(_: KaSession)
 fun KaScope.findCallableMemberBySignature(
     callableSignature: KaCallableSignature<KaCallableSymbol>,
     ignoreReturnType: Boolean = false,
@@ -206,7 +216,7 @@ fun KaScope.findCallableMemberBySignature(
 /**
  * Returns the owner symbol of the given receiver value, or null if no owner could be found.
  */
-context(KaSession)
+context(_: KaSession)
 fun KaReceiverValue.getThisReceiverOwner(): KaSymbol? {
     val symbol = when (this) {
         is KaExplicitReceiverValue -> {
@@ -217,4 +227,19 @@ fun KaReceiverValue.getThisReceiverOwner(): KaSymbol? {
         is KaSmartCastedReceiverValue -> original.getThisReceiverOwner()
     }
     return symbol?.containingSymbol
+}
+
+/**
+ * Rename a [KtParameter] (value or context parameter).
+ * The parameter should belong to a file open in the editor.
+ * A replacement via a modal dialog can happen if an attempt for inline replacement didn't succeed or is forbidden.
+ * For example, if inline replacement is disabled in the editor settings.
+ */
+fun renameParameter(ktParameter: KtParameter, editor: Editor) {
+    val pointer = ktParameter.createSmartPointer()
+    PsiDocumentManager.getInstance(ktParameter.project).doPostponedOperationsAndUnblockDocument(editor.document)
+    val param = pointer.element ?: return
+    editor.caretModel.moveToOffset(param.startOffset)
+    val dataContext = DataManager.getInstance().getDataContext(editor.component)
+    RenamerFactory.EP_NAME.extensionList.flatMap { it.createRenamers(dataContext) }.firstOrNull()?.performRename()
 }

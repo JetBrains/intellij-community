@@ -21,6 +21,9 @@ interface PluginDescriptorBuilder {
   var `package`: String?
   var isSeparateJar: Boolean
 
+  var visibility: ModuleVisibility
+  var namespace: String?
+
   var url: String?
   var vendor: String?
   var vendorEmail: String?
@@ -58,8 +61,8 @@ interface PluginDescriptorBuilder {
   fun addExtension(qualifiedExtensionPointName: String, extension: ExtensionElement)
   val extensions: Map<String, List<ExtensionElement>>
 
-  fun addContentModule(contentModule: ContentElement)
-  val contentModules: List<ContentElement>
+  fun addContentModule(contentModule: ContentModuleElement)
+  val contentModules: List<ContentModuleElement>
 
   fun addDependency(dependency: DependenciesElement)
   val dependencies: List<DependenciesElement>

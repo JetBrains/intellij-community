@@ -10,20 +10,25 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 
-class KotlinRenameActionCommandProvider: AbstractRenameActionCommandProvider() {
+internal class KotlinRenameActionCommandProvider: AbstractRenameActionCommandProvider() {
   override fun findRenameOffset(offset: Int, psiFile: PsiFile): Int? {
       var currentOffset = offset
       if (currentOffset == 0) return null
       var element = getCommandContext(currentOffset, psiFile) ?: return null
       if (element is PsiWhiteSpace) {
           element = PsiTreeUtil.prevVisibleLeaf(element) ?: return null
-          currentOffset = element.textRange.startOffset
+          currentOffset = element.textRange.endOffset
       }
 
+      // fun some..(arg: String)..{
+      // }..
+      // fun some..(arg: String)..=
+      // <..> place to call 'rename'
       val method = element.parentOfType<KtFunction>()
-      if (method != null && ((method.valueParameterList?.textRange?.endOffset ?: 0) >= currentOffset ||
-                  method.textRange?.endOffset == currentOffset
-                  )
+      if (method != null &&
+          (method.identifyingElement?.textRange?.endOffset == currentOffset ||
+                  method.valueParameterList?.textRange?.endOffset == currentOffset ||
+                  method.bodyBlockExpression?.textRange?.endOffset == currentOffset)
       ) return method.identifyingElement?.textRange?.endOffset
 
       val psiClass = element.parentOfType<KtClass>()

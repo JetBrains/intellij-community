@@ -9,8 +9,12 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.warmup.util.OpenProjectArgs
 import com.intellij.warmup.util.importOrOpenProjectAsync
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 object ProjectOpeningUtils {
 
@@ -30,15 +34,32 @@ object ProjectOpeningUtils {
     }
   }
 
-  fun open(projectPath: String): Project {
+  fun open(projectPath: String, timeoutForOneAttempt: Duration = 20.minutes): Project {
     println("Open and load project $projectPath. Operation may take a few minutes.")
-    @Suppress("DEPRECATION")
-    val project = runUnderModalProgressIfIsEdt {
-      importOrOpenProjectAsync(OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)))
-    }
-    println("Project loaded!")
+    return tryToOpenProject(OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)), timeoutForOneAttempt)
+  }
 
-    return project
+  private fun tryToOpenProject(openProjectArgsData: OpenProjectArgsData, timeoutForOneAttempt: Duration): Project {
+    repeat(3) { iteration ->
+      if (iteration > 0) {
+        println("Retry to open project. attempt ${iteration + 1}")
+      }
+      @Suppress("DEPRECATION")
+      val project = runUnderModalProgressIfIsEdt {
+        try {
+          withTimeout(timeoutForOneAttempt) {
+            importOrOpenProjectAsync(openProjectArgsData)
+          }
+        } catch (_: TimeoutCancellationException) {
+          null
+        }
+      }
+      if (project != null) {
+        println("Project loaded!")
+        return project
+      }
+    }
+    error("Failed to open project ${openProjectArgsData.projectDir}")
   }
 }
 

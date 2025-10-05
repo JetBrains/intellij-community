@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import com.intellij.ide.ui.UITheme
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.ui.NewUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.painter.PainterHint
@@ -20,6 +21,7 @@ import org.jetbrains.jewel.ui.util.toRgbaHexString
  *
  * This is an internal Jewel API and should not be used directly.
  */
+@ApiStatus.Internal
 @InternalJewelApi
 public class BridgePainterHintsProvider
 private constructor(
@@ -113,7 +115,7 @@ private constructor(
                 (bean.colorPalette as Map<String, Any?>).mapValues {
                     when (val value = it.value) {
                         is String -> value
-                        is java.awt.Color -> value.toRgbaHexString()
+                        is java.awt.Color -> value.toRgbaHexString(omitAlphaWhenFullyOpaque = true)
                         else -> null
                     }
                 }

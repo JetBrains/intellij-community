@@ -151,6 +151,7 @@ f:com.intellij.execution.configurations.PathEnvironmentVariableUtil
 - s:getPathDirs(java.lang.String):java.util.List
 - s:getPathVariableValue():java.lang.String
 - s:getWindowsExecutableFileExtensions():java.util.List
+- s:isOnPath(java.lang.String):Z
 c:com.intellij.execution.configurations.PtyCommandLine
 - com.intellij.execution.configurations.GeneralCommandLine
 - com.intellij.execution.configurations.CommandLineWithSuspendedProcessCallback
@@ -173,9 +174,6 @@ c:com.intellij.execution.process.AnsiEscapeDecoder
 - <init>():V
 - escapeText(java.lang.String,com.intellij.openapi.util.Key,com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor):V
 - p:getCurrentOutputAttributes(com.intellij.openapi.util.Key):com.intellij.openapi.util.Key
-com.intellij.execution.process.AnsiEscapeDecoder$ColoredChunksAcceptor
-- com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
-- a:coloredChunksAvailable(java.util.List):V
 com.intellij.execution.process.AnsiEscapeDecoder$ColoredTextAcceptor
 - a:coloredTextAvailable(java.lang.String,com.intellij.openapi.util.Key):V
 c:com.intellij.execution.process.CapturingProcessAdapter
@@ -242,6 +240,7 @@ c:com.intellij.execution.process.KillableColoredProcessHandler$Silent
 c:com.intellij.execution.process.KillableProcessHandler
 - com.intellij.execution.process.OSProcessHandler
 - com.intellij.execution.KillableProcess
+- com.intellij.execution.process.SoftlyKillableProcessHandler
 - <init>(com.intellij.execution.configurations.GeneralCommandLine):V
 - p:<init>(java.lang.Process,com.intellij.execution.configurations.GeneralCommandLine):V
 - <init>(java.lang.Process,java.lang.String):V
@@ -257,7 +256,6 @@ c:com.intellij.execution.process.KillableProcessHandler
 - shouldKillProcessSoftly():Z
 f:com.intellij.execution.process.LocalPtyOptions
 - sf:Companion:com.intellij.execution.process.LocalPtyOptions$Companion
-- sf:DEFAULT:com.intellij.execution.process.LocalPtyOptions
 - f:builder():com.intellij.execution.process.LocalPtyOptions$Builder
 - sf:defaults():com.intellij.execution.process.LocalPtyOptions
 - f:getConsoleMode():Z

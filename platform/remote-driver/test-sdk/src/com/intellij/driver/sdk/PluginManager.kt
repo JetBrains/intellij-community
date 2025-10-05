@@ -2,10 +2,15 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.utility
 
-fun Driver.getPlugin(id: String) = utility(PluginManagerCore::class).getPlugin(utility(PluginId::class).getId(id))
+fun Driver.getPlugin(id: String): PluginDescriptor? {
+  return utility<PluginManagerCore>().getPlugin(utility(PluginId::class).getId(id))
+}
 
-fun Driver.getEnabledPlugins() = utility(PluginManagerCore::class).getLoadedPlugins()
+fun Driver.getEnabledPlugins(): Array<PluginDescriptor> {
+  return utility<PluginManagerCore>().getLoadedPlugins()
+}
 
 fun Driver.getDisabledPlugins(enabledPlugins: Set<String>): List<String> {
   val actual = getEnabledPluginsIds()
@@ -18,8 +23,13 @@ fun Driver.getDisabledPlugins(enabledPlugins: Set<String>): List<String> {
 }
 
 fun Driver.getEnabledPluginsIds(): Set<String> {
-  return getEnabledPlugins().filter { it.isBundled() }.map { it.getPluginId().getIdString() }.toSet()
+  return getEnabledPlugins()
+    .filter { it.isBundled() }
+    .map { it.getPluginId().getIdString() }
+    .toSet()
 }
+
+fun Driver.arePluginsInitialized(): Boolean = utility<PluginManagerCore>().arePluginsInitialized()
 
 @Remote("com.intellij.openapi.extensions.PluginId")
 interface PluginId {
@@ -31,6 +41,7 @@ interface PluginId {
 interface PluginManagerCore {
   fun getPlugin(pluginId: PluginId): PluginDescriptor?
   fun getLoadedPlugins(): Array<PluginDescriptor>
+  fun arePluginsInitialized(): Boolean
 }
 
 @Remote("com.intellij.openapi.extensions.PluginDescriptor")
@@ -39,4 +50,5 @@ interface PluginDescriptor {
   fun isBundled(): Boolean
   fun isEnabled(): Boolean
   fun getName(): String
+  fun getVersion(): String
 }

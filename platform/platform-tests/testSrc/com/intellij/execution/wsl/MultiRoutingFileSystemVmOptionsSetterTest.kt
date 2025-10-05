@@ -33,7 +33,7 @@ class MultiRoutingFileSystemVmOptionsSetterTest {
     changedOptions shouldMatch listOf(
       "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
       "-Dwsl.use.remote.agent.for.nio.filesystem=true",
-      "-Xbootclasspath/a:out/tests/classes/production/intellij.platform.core.nio.fs",
+      "-Xbootclasspath/a:out/classes/production/intellij.platform.core.nio.fs",
     )
   }
 
@@ -104,13 +104,13 @@ class MultiRoutingFileSystemVmOptionsSetterTest {
     )
   }
 
-  private fun vmOptionsReader(data: String): (String) -> String? {
+  private fun vmOptionsReader(data: String): (String) -> List<String> {
     val lines = data.lines()
     withClue("Improving test readability: vm options should be sorted") {
       lines should be(lines.sorted())
     }
     return { prefix ->
-      lines.map(String::trim).firstNotNullOfOrNull { line ->
+      lines.map(String::trim).mapNotNull { line ->
         if (line.startsWith(prefix))
           line.substring(prefix.length)
         else

@@ -27,49 +27,49 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
         private val LOG = Logger.getInstance(ParcelMigrateToParcelizeQuickFixApplicator::class.java)
     }
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtClass.findParcelerCompanionObject(): KtObjectDeclaration? = with(resolver) {
         companionObjects.firstOrNull { obj -> ParcelizeNames.PARCELER_CLASS_IDS.any { obj.hasSuperClass(it) } }
     }
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtNamedFunction.doesLookLikeWriteToParcelOverride(): Boolean =
         looksLikeOverrideOf(
             ParcelizeNames.WRITE_TO_PARCEL_NAME,
             ParcelizeNames.PARCEL_ID, StandardClassIds.Int)
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtNamedFunction.doesLookLikeDescribeContentsOverride(): Boolean =
         looksLikeOverrideOf(
             ParcelizeNames.DESCRIBE_CONTENTS_NAME,
             returnType = StandardClassIds.Int)
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtNamedFunction.doesLookLikeNewArrayOverride(): Boolean =
         looksLikeOverrideOf(
             ParcelizeNames.NEW_ARRAY_NAME,
             StandardClassIds.Int,
             returnType = StandardClassIds.Array)
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtNamedFunction.doesLookLikeCreateFromParcelOverride(): Boolean =
         looksLikeOverrideOf(
             ParcelizeNames.CREATE_FROM_PARCEL_NAME,
             ParcelizeNames.PARCEL_ID)
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtClass.findWriteToParcelOverride() = findFunction { doesLookLikeWriteToParcelOverride() }
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtClass.findDescribeContentsOverride() = findFunction { doesLookLikeDescribeContentsOverride() }
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtObjectDeclaration.findNewArrayOverride() = findFunction { doesLookLikeNewArrayOverride() }
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtClassOrObject.findCreateFromParcel() = findFunction { doesLookLikeCreateFromParcelOverride() }
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtClass.findCreatorClass(): KtClassOrObject? = with(resolver) {
         for (companion in companionObjects) {
             if (companion.name == ParcelizeNames.CREATOR_NAME.identifier) {
@@ -93,7 +93,7 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
         return null
     }
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtNamedFunction.doesLookLikeWriteImplementation(): Boolean = with(resolver) {
         val containingParcelableClassFqName = containingClassOrObject?.containingClass()?.fqName ?: return false
 
@@ -103,19 +103,19 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
             receiverTypeFqName = containingParcelableClassFqName)
     }
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtNamedFunction.doesLookLikeCreateImplementation(): Boolean =
         looksLikeOverrideOf(
             PARCELER_CREATE_FUNCTION_NAME,
             ParcelizeNames.PARCEL_ID)
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtObjectDeclaration.findCreateImplementation() = findFunction { doesLookLikeCreateImplementation() }
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtObjectDeclaration.findWriteImplementation() = findFunction { doesLookLikeWriteImplementation() }
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     private fun KtNamedFunction.looksLikeOverrideOf(
         functionName: Name,
         vararg valueParameterClassIds: ClassId,
@@ -152,7 +152,7 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
     private fun KtClassOrObject.findFunction(f: KtNamedFunction.() -> Boolean) =
         declarations.asSequence().filterIsInstance<KtNamedFunction>().firstOrNull(f)
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     fun prepare(parcelableClass: KtClass): PreparedAction = with(resolver) {
         val parcelerObject = parcelableClass.findParcelerCompanionObject()
         val parcelerOrCompanion = parcelerObject ?: parcelableClass.companionObjects.firstOrNull()
@@ -307,27 +307,27 @@ class ParcelMigrateToParcelizeQuickFixApplicator<CONTEXT>(
 }
 
 interface ParcelMigrateToParcelizeResolver<CONTEXT> {
-    context(CONTEXT)
+    context(_: CONTEXT)
     val KtCallableDeclaration.returnTypeClassId: ClassId?
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     val KtCallableDeclaration.receiverTypeClassId: ClassId?
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     val KtCallableDeclaration.overrideCount: Int
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     val KtProperty.isJvmField: Boolean
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     fun KtClassOrObject.hasSuperClass(superTypeClassId: ClassId): Boolean
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     fun KtTypeReference.hasSuperClass(superTypeClassId: ClassId): Boolean
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     fun KtCallExpression.resolveToConstructedClass(): KtClassOrObject?
 
-    context(CONTEXT)
+    context(_: CONTEXT)
     fun KtExpression.evaluateAsConstantInt(): Int?
 }

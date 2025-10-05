@@ -347,18 +347,9 @@ public class KotlinBreakpointFiltersPanel<T extends KotlinPropertyBreakpointProp
     }
 
     protected com.intellij.ide.util.ClassFilter createClassConditionFilter() {
-        com.intellij.ide.util.ClassFilter classFilter;
-        if (myBreakpointPsiClass != null) {
-            classFilter = new com.intellij.ide.util.ClassFilter() {
-                @Override
-                public boolean isAccepted(PsiClass aClass) {
-                    return myBreakpointPsiClass == aClass || aClass.isInheritor(myBreakpointPsiClass, true);
-                }
-            };
-        } else {
-            classFilter = null;
-        }
-        return classFilter;
+        return myBreakpointPsiClass == null
+               ? null
+               : (aClass -> myBreakpointPsiClass == aClass || aClass.isInheritor(myBreakpointPsiClass, true));
     }
 
     protected void updateCheckboxes() {

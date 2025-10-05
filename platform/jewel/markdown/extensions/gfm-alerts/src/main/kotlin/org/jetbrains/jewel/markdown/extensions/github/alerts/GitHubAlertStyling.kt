@@ -6,10 +6,21 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.icon.IconKey
 
+/**
+ * Styling for the different types of GFM alerts.
+ *
+ * @param note Styling for the "note" alert.
+ * @param tip Styling for the "tip" alert.
+ * @param important Styling for the "important" alert.
+ * @param warning Styling for the "warning" alert.
+ * @param caution Styling for the "caution" alert.
+ */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class AlertStyling(
@@ -56,6 +67,20 @@ public class AlertStyling(
     public companion object
 }
 
+/**
+ * Base styling for a GFM alert.
+ *
+ * @property padding The padding to apply to the entire alert.
+ * @property lineWidth The width of the vertical line on the side of the alert.
+ * @property lineColor The color of the vertical line on the side of the alert.
+ * @property pathEffect The path effect to apply to the vertical line, e.g., for dashed lines.
+ * @property strokeCap The stroke cap to use for the vertical line.
+ * @property titleTextStyle The text style for the alert's title.
+ * @property titleIconKey The icon to use in the title.
+ * @property titleIconTint The tint to apply to the title icon.
+ * @property textColor The text color for the body of the alert.
+ */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public sealed interface BaseAlertStyling {
     public val padding: PaddingValues
@@ -69,6 +94,8 @@ public sealed interface BaseAlertStyling {
     public val textColor: Color
 }
 
+/** Styling for a "note" GFM alert. */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class NoteAlertStyling(
@@ -131,6 +158,8 @@ public class NoteAlertStyling(
     public companion object
 }
 
+/** Styling for a "tip" GFM alert. */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class TipAlertStyling(
@@ -193,6 +222,8 @@ public class TipAlertStyling(
     public companion object
 }
 
+/** Styling for an "important" GFM alert. */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class ImportantAlertStyling(
@@ -255,6 +286,8 @@ public class ImportantAlertStyling(
     public companion object
 }
 
+/** Styling for a "warning" GFM alert. */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class WarningAlertStyling(
@@ -317,6 +350,8 @@ public class WarningAlertStyling(
     public companion object
 }
 
+/** Styling for a "caution" GFM alert. */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 @GenerateDataFunctions
 public class CautionAlertStyling(

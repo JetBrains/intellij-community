@@ -4,11 +4,16 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
-import com.intellij.terminal.session.StyleRange
-import com.intellij.terminal.session.TerminalOutputModelState
+import com.intellij.openapi.editor.impl.FrozenDocument
+import com.intellij.openapi.util.Key
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
+import org.jetbrains.plugins.terminal.session.StyleRange
+import org.jetbrains.plugins.terminal.session.TerminalContentUpdatedEvent
+import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
+import org.jetbrains.plugins.terminal.session.dto.toStyleRange
 
 /**
  * Model that should manage the terminal output content: text, highlightings, and cursor position.
@@ -20,26 +25,49 @@ interface TerminalOutputModel {
   /**
    * Offset in the document where the cursor is located now.
    */
-  val cursorOffsetState: StateFlow<Int>
+  val cursorOffsetState: StateFlow<TerminalOffset>
+
+  fun freeze(): FrozenTerminalOutputModel
+
+  fun getAbsoluteLineIndex(documentOffset: Int): Long
+  
+  fun relativeOffset(offset: Int): TerminalOffset
+
+  fun absoluteOffset(offset: Long): TerminalOffset
+
+  fun relativeLine(line: Int): TerminalLine
+
+  fun absoluteLine(line: Long): TerminalLine
 
   /**
    * Returns document ranges with corresponding text attributes.
    */
   fun getHighlightings(): TerminalOutputHighlightingsSnapshot
 
+  /** Returns null if there is no specific highlighting range at [documentOffset] */
+  fun getHighlightingAt(documentOffset: Int): HighlightingInfo?
+
+  /**
+   * Executes the given block with the model in the type-ahead mode.
+   *
+   * In this mode, document changes are reported with to [TerminalOutputModelListener.afterContentChanged]
+   * with `isTypeAhead == true`.
+   */
+  fun withTypeAhead(block: () -> Unit)
+
   /**
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
    */
   fun updateContent(absoluteLineIndex: Long, text: String, styles: List<StyleRange>)
+
+  fun replaceContent(offset: TerminalOffset, length: Int, text: String, newStyles: List<StyleRange>)
 
   /**
    * [absoluteLineIndex] is the index of the line from the start of the terminal output.
    */
   fun updateCursorPosition(absoluteLineIndex: Long, columnIndex: Int)
   
-  fun insertAtCursor(text: String)
-  
-  fun backspace()
+  fun updateCursorPosition(offset: TerminalOffset)
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
 
@@ -48,6 +76,37 @@ interface TerminalOutputModel {
   fun restoreFromState(state: TerminalOutputModelState)
 
   companion object {
-    val KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
+    val KEY: Key<TerminalOutputModel> = Key.create("TerminalOutputModel")
+    val DATA_KEY: DataKey<TerminalOutputModel> = DataKey.create("TerminalOutputModel")
   }
+}
+
+@ApiStatus.Internal
+interface FrozenTerminalOutputModel {
+  val document: FrozenDocument
+
+  val cursorOffset: TerminalOffset
+
+  fun relativeOffset(offset: Int): TerminalOffset
+  fun absoluteOffset(offset: Long): TerminalOffset
+  fun relativeLine(line: Int): TerminalLine
+  fun absoluteLine(line: Long): TerminalLine
+}
+
+@ApiStatus.Internal
+sealed interface TerminalOffset : Comparable<TerminalOffset> {
+  fun toAbsolute(): Long
+  fun toRelative(): Int
+}
+
+@ApiStatus.Internal
+sealed interface TerminalLine : Comparable<TerminalLine> {
+  fun toAbsolute(): Long
+  fun toRelative(): Int
+}
+
+@ApiStatus.Internal
+fun TerminalOutputModel.updateContent(event: TerminalContentUpdatedEvent) {
+  val styles = event.styles.map { it.toStyleRange() }
+  updateContent(event.startLineLogicalIndex, event.text, styles)
 }

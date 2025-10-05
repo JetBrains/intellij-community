@@ -29,9 +29,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
@@ -55,18 +55,18 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ModalityUiUtil
+import com.intellij.util.application
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.net.URL
 import javax.swing.Icon
-import kotlin.Throws
 
 abstract class StarterModuleBuilder : ModuleBuilder() {
   companion object {
     @JvmField
-    val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z\\d_.]")
+    val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("^\\d|[^a-zA-Z\\d_.]")
 
     @JvmStatic
     private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> = ExtensionPointName("com.intellij.starter.moduleImporter")
@@ -95,10 +95,13 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
     @JvmStatic
     fun importModule(module: Module) {
-      if (module.isDisposed) return
-      val moduleBuilderPostTasks = IMPORTER_EP_NAME.extensions
-      for (task in moduleBuilderPostTasks) {
-        if (!task.runAfterSetup(module)) break
+      application.invokeAndWait {
+        if (module.isDisposed) return@invokeAndWait
+
+        val moduleBuilderPostTasks = IMPORTER_EP_NAME.extensionList
+        for (task in moduleBuilderPostTasks) {
+          if (!task.runAfterSetup(module)) break
+        }
       }
     }
 
@@ -118,16 +121,20 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
     @JvmStatic
     fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
-      val contentRoot = module.rootManager.contentRoots.firstOrNull()
-      if (contentRoot != null) {
-        val fileEditorManager = FileEditorManager.getInstance(module.project)
-        for (filePath in filePathsToOpen) {
-          val fileToOpen = VfsUtil.findRelativeFile(filePath, contentRoot)
-          if (fileToOpen != null) {
-            fileEditorManager.openTextEditor(OpenFileDescriptor(module.project, fileToOpen), true)
-          }
-          else {
-            logger<StarterModuleBuilder>().debug("Unable to find sample file $filePath in module: ${module.name}")
+      application.invokeAndWait {
+        if (module.isDisposed) return@invokeAndWait
+
+        val contentRoot = module.rootManager.contentRoots.firstOrNull()
+        if (contentRoot != null) {
+          val fileEditorManager = FileEditorManager.getInstance(module.project)
+          for (filePath in filePathsToOpen) {
+            val fileToOpen = VfsUtil.findRelativeFile(filePath, contentRoot)
+            if (fileToOpen != null) {
+              fileEditorManager.openTextEditor(OpenFileDescriptor(module.project, fileToOpen), true)
+            }
+            else {
+              logger<StarterModuleBuilder>().debug("Unable to find sample file $filePath in module: ${module.name}")
+            }
           }
         }
       }
@@ -136,6 +143,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     @TestOnly
     fun StarterModuleBuilder.setupTestModule(module: Module, starterId: String? = null, consumer: StarterContext.() -> Unit) {
       this.apply {
+        starterContext.language = getLanguages().first()
         starterContext.starterPack = getStarterPack()
         moduleJdk = ModuleRootManager.getInstance(module).sdk
 
@@ -169,7 +177,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   protected val starterContext: StarterContext = StarterContext()
   private val starterSettings: StarterWizardSettings by lazy { createSettings() }
 
-  override fun getModuleType(): ModuleType<*> = StdModuleTypes.JAVA
+  override fun getModuleType(): ModuleType<*> = JavaModuleType.getModuleType()
   override fun getWeight(): Int = JVM_WEIGHT
   open fun getHelpId(): String? = null
 
@@ -380,17 +388,21 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), module.disposed, Runnable {
           if (module.isDisposed) return@Runnable
 
-          ReformatCodeProcessor(module.project, module, false).run()
-          // import of module may dispose it and create another. open samples first.
-          openSampleFiles(module, getFilePathsToOpen())
+          val processor = ReformatCodeProcessor(module.project, module, false)
+          processor.setPostRunnable {
+            // import of module may dispose it and create another. open samples first.
+            openSampleFiles(module, getFilePathsToOpen())
 
-          if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
-            runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
-              GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
+            if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
+              runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
+                GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
+              }
             }
+
+            importModule(module)
           }
 
-          importModule(module)
+          processor.runBackground()
         })
       }
     }
@@ -409,7 +421,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
 
   override fun doAddContentEntry(modifiableRootModel: ModifiableRootModel): ContentEntry? {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      // do not create new content entry
+      // do not create a new content entry
       return modifiableRootModel.contentEntries.first { it.sourceFolders.isNotEmpty() }
     }
     return super.doAddContentEntry(modifiableRootModel)

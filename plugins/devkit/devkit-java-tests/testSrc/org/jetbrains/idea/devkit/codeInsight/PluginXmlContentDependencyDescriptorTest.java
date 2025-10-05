@@ -6,8 +6,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -113,7 +113,7 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
     final VirtualFile dependencyModuleRoot =
       myFixture.copyDirectoryToProject("/" + testName + "/" + moduleName, "/" + moduleName);
 
-    Module dependencyModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, moduleName, dependencyModuleRoot);
+    Module dependencyModule = PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), moduleName, dependencyModuleRoot);
     PsiTestUtil.addLibrary(dependencyModule, "editor-ui-api", PathUtil.getJarPathForClass(AnAction.class));
   }
 

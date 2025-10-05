@@ -12,6 +12,10 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.toml.lang.psi.TomlFile
 
+/**
+ * Currently, this test does not trigger Gradle sync. So, version catalogs are determined relying on settings.gradle parsing.
+ * If Gradle sync would be done, version catalog locations would be determined by GradleVersionCatalogEntity, willed with data from sync.
+*/
 class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
 
   private fun testVersionCatalogFindUsages(version: GradleVersion, versionCatalogText: String, buildGradleText: String,

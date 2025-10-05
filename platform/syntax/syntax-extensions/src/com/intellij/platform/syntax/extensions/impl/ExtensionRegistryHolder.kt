@@ -3,8 +3,11 @@ package com.intellij.platform.syntax.extensions.impl
 
 import com.intellij.platform.syntax.extensions.ExtensionRegistry
 import com.intellij.platform.syntax.extensions.ExtensionSupport
+import com.intellij.platform.syntax.extensions.currentExtensionSupport
 import com.intellij.platform.syntax.extensions.StaticExtensionSupport
 import fleet.util.multiplatform.linkToActual
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 internal val registry: ExtensionSupport
   get() {
@@ -26,7 +29,7 @@ internal val staticRegistryHolder: RegistryHolder by lazy {
 
 /**
  * Tries to find [com.intellij.platform.syntax.psi.IntelliJExtensionSupport] in the class path.
- * If it succeeds, it means we are running in IntelliJ, and we must use IJ plugin model as the [ExtensionSupport] backend.
+ * If it succeeds, it means we are running in IntelliJ, and we must use IJ plugin model as the [currentExtensionSupport] backend.
  * Otherwise, returning [ExtensionRegistryImpl].
  *
  * @See instantiateExtensionRegistryJvm
@@ -36,7 +39,12 @@ internal fun instantiateExtensionRegistry(): ExtensionSupport = linkToActual()
 
 internal val threadLocalRegistry: RegistryHolder = instantiateThreadLocalRegistry()
 
+@OptIn(ExperimentalContracts::class)
 internal fun <T> performWithExtensionSupportImpl(support: ExtensionSupport, action: (ExtensionSupport) -> T): T {
+  contract {
+    callsInPlace(action, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
+  }
+
   val oldRegistry = threadLocalRegistry.registry
   try {
     threadLocalRegistry.installRegistry(support)

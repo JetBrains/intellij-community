@@ -137,7 +137,7 @@ public final class IdeaProjectSettingsService extends ProjectSettingsService imp
   public Sdk chooseAndSetSdk() {
     Logger
       .getInstance(getClass())
-      .warn("Call to the deprecated ProjectSettingsService#chooseAndSetSdk method. Please use new API instead");
+      .error("Call to the deprecated ProjectSettingsService#chooseAndSetSdk method. Please use new API instead");
 
     if (myDeprecatedChosenSdk != null) {
       Sdk chosenSdk = myDeprecatedChosenSdk;

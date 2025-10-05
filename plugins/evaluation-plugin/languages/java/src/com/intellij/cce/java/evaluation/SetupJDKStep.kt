@@ -58,7 +58,7 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
         val projectRootManager = ProjectRootManager.getInstance(project)
         val projectSdk = projectRootManager.projectSdk
         if (projectSdk != null) {
-          println("Project JDK already configured")
+          println("Project JDK already configured: ${projectSdk.name} (${projectSdk.homePath})")
         }
         else {
           println("Project JDK not configured")

@@ -50,7 +50,9 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
 
   public abstract ASTNode createDot();
 
-  public abstract PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral);
+  public abstract PyBinaryExpression createBinaryExpression(@NotNull String operator,
+                                                            @NotNull PyExpression leftOperand,
+                                                            @NotNull PyExpression rightOperand);
 
   @Override
   public @NotNull PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException {

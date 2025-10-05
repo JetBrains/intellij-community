@@ -17,16 +17,18 @@ import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.FinishEvaluationStep
+import com.intellij.cce.evaluation.allPreliminarySteps
+import com.intellij.cce.evaluation.step.ReportGenerationStep
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.ide.commandNameFromExtension
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.ex.ApplicationEx.FORCE_EXIT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.currentClassLogger
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -38,8 +40,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     get() = ApplicationStarter.NOT_IN_EDT
 
   override fun main(args: List<String>) {
-
-    fun run() = MainEvaluationCommand()
+    fun run() = MainEvaluationCommand("ml-evaluate")
       .subcommands(
         FullCommand(),
         GenerateActionsCommand(),
@@ -55,7 +56,6 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         }
       }
       .main(args.toList().subList(1, args.size))
-
 
     val startTimestamp = System.currentTimeMillis()
     try {
@@ -92,14 +92,14 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     }
 
     protected fun runPreliminarySteps(feature: EvaluableFeature<*>, workspace: EvaluationWorkspace) {
-      for (step in feature.getPreliminaryEvaluationSteps()) {
+      for (step in allPreliminarySteps(feature)) {
         println("Starting preliminary step: ${step.name}")
         step.runInIntellij(null, workspace)
       }
     }
   }
 
-  inner class MainEvaluationCommand : EvaluationCommand(commandNameFromExtension!!, "Evaluate code completion quality in headless mode") {
+  class MainEvaluationCommand(name: String) : EvaluationCommand(name, "Evaluate code completion quality in headless mode") {
     override fun run() = Unit
   }
 
@@ -214,26 +214,45 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
         feature.getStrategySerializer()
       )
       val outputWorkspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
-      val datasetContext = DatasetContext(outputWorkspace, null, null)
       for (workspacePath in workspacesToMerge) {
         val workspace = EvaluationWorkspace.open(workspacePath, SetupStatsCollectorStep.statsCollectorLogsDirectory)
         workspace.readAdditionalStats(LAYOUT_NAME)?.let {
           outputWorkspace.saveAdditionalStats(LAYOUT_NAME, it)
         }
-        val sessionFiles = workspace.sessionsStorage.getSessionFiles()
+        val sessionFiles = workspace.getSessionFilesSafe()
         for (sessionFile in sessionFiles) {
           outputWorkspace.sessionsStorage.saveSessions(workspace.sessionsStorage.getSessions(sessionFile.first))
         }
       }
       outputWorkspace.saveMetadata()
-      feature.prepareEnvironment(config, outputWorkspace).use { environment ->
-        val stepFactory = BackgroundStepFactory(feature, config, environment, null, datasetContext)
-        val process = EvaluationProcess.build(environment, stepFactory) {
-          shouldGenerateReports = true
-        }
-        process.start(outputWorkspace)
-      }
+
+      val step = ReportGenerationStep(
+        null,
+        config.reports.sessionsFilters,
+        config.reports.comparisonFilters,
+        config.reports.lookupFilters,
+        feature,
+      )
+
+      step.runInIntellij(null, outputWorkspace)
     }
+
+    /**
+     * Let's not fail the aggregation of the evaluation report if some
+     * child builds failed (and so some files are missing).
+     */
+    private fun EvaluationWorkspace.getSessionFilesSafe(): List<Pair<String, String>> =
+      try {
+        sessionsStorage.getSessionFiles()
+      }
+      catch (_: Throwable) {
+        logger.warn("Failed to get session files from workspace ${this.path()}. Probably some evaluation builds failed")
+        emptyList()
+      }
+  }
+
+  companion object {
+    val logger = currentClassLogger()
   }
 }
 

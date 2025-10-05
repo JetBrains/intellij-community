@@ -198,7 +198,8 @@ class KotlinParameterInfo(
             newParameter.typeReference = psiFactory.createType(typeText, inheritedCallable, baseFunction, Variance.IN_VARIANCE)
         }
 
-        if (!isInherited) {
+        if (!isInherited && isNewParameter) {
+            // don't override unchanged default values
             defaultValue?.let { newParameter.setDefaultValue(it) }
         }
 

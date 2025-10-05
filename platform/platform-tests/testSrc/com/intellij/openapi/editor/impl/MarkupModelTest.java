@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -153,4 +154,26 @@ public class MarkupModelTest extends AbstractEditorTest {
     highlighter.dispose();
     assertEquals(1, fired.get());
   }
+
+  public void testOverlappingIteratorMustThrowOnModificationDuringIteration() {
+    ThreadingAssertions.assertEventDispatchThread();
+    initText(" ");
+    Document document = getDocument(getFile());
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+
+    RangeHighlighter highlighter = markupModel.addRangeHighlighter(0, 1, 1, null, HighlighterTargetArea.EXACT_RANGE);
+    try (var it = markupModel.overlappingIterator(0, document.getTextLength())) {
+      ContainerUtil.process(it, h->{
+        assertThrows(IllegalStateException.class, () -> h.setTextAttributes(TextAttributes.ERASE_MARKER));
+        assertThrows(IllegalStateException.class, () -> h.setGreedyToLeft(true));
+        assertThrows(IllegalStateException.class, () -> h.dispose());
+        assertThrows(IllegalStateException.class, () -> markupModel.addRangeHighlighter(0, 1, 1, null, HighlighterTargetArea.EXACT_RANGE));
+        return true;
+      });
+    }
+    finally {
+      highlighter.dispose();
+    }
+  }
+
 }

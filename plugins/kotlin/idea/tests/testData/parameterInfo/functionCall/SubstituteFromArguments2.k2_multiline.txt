@@ -1,0 +1,3 @@
+Text: (<highlight>p: Int</highlight>,
+t1: String,
+t2: Int), Disabled: false, Strikeout: false, Green: true

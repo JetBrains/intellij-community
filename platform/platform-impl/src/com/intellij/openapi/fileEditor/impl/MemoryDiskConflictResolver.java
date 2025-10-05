@@ -65,7 +65,7 @@ public class MemoryDiskConflictResolver {
     }
   }
 
-  boolean hasConflict(VirtualFile file) {
+  boolean hasConflict(@NotNull VirtualFile file) {
     return myConflicts.contains(file);
   }
 
@@ -83,7 +83,7 @@ public class MemoryDiskConflictResolver {
   }
 
   @VisibleForTesting
-  protected boolean askReloadFromDisk(VirtualFile file, Document document) {
+  protected boolean askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
     if (myConflictAppeared != null) {
       Throwable trace = myConflictAppeared;
       myConflictAppeared = null;

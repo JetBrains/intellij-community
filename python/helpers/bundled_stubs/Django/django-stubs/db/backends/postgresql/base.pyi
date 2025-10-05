@@ -12,9 +12,7 @@ from .features import DatabaseFeatures
 from .introspection import DatabaseIntrospection
 from .operations import DatabaseOperations
 
-def psycopg2_version() -> tuple[int, ...]: ...
-
-PSYCOPG2_VERSION: tuple[int, ...]
+def psycopg_version() -> tuple[int, int, int]: ...
 
 class DatabaseWrapper(BaseDatabaseWrapper):
     client: DatabaseClient

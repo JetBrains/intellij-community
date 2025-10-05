@@ -7,5 +7,3 @@ fun foo(c: C) {
 }
 
 // TYPE: "1, "
-
-//Text: (pInt: Int, <highlight>pString: String</highlight>), Disabled: false, Strikeout: false, Green: true

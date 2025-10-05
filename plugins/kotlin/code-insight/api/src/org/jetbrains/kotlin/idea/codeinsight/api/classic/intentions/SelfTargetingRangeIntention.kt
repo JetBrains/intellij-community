@@ -5,11 +5,12 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import java.util.function.Supplier
 
 abstract class SelfTargetingRangeIntention<TElement : PsiElement>(
-  elementType: Class<TElement>,
-  textGetter: () -> @IntentionName String,
-  familyNameGetter: () -> @IntentionFamilyName String = textGetter,
+    elementType: Class<TElement>,
+    textGetter: Supplier<@IntentionName String>,
+    familyNameGetter: Supplier<@IntentionFamilyName String> = textGetter,
 ) : SelfTargetingIntention<TElement>(elementType, textGetter, familyNameGetter) {
 
     @Deprecated(
@@ -17,10 +18,18 @@ abstract class SelfTargetingRangeIntention<TElement : PsiElement>(
         ReplaceWith("SelfTargetingRangeIntention<TElement>(elementType, { text }, { familyName })")
     )
     constructor(
-      elementType: Class<TElement>,
-      text: @IntentionName String,
-      familyName: @IntentionFamilyName String = text,
-    ) : this(elementType, { text }, { familyName })
+        elementType: Class<TElement>,
+        text: @IntentionName String,
+        familyName: @IntentionFamilyName String = text,
+    ) : this(elementType, Supplier { text }, Supplier { familyName })
+
+    @Suppress("HardCodedStringLiteral")
+    @Deprecated("Replace with primary constructor")
+    constructor(
+        elementType: Class<TElement>,
+        textGetter: () -> @IntentionName String,
+        familyNameGetter: () -> @IntentionFamilyName String = textGetter,
+    ) : this(elementType, Supplier { textGetter() }, Supplier { familyNameGetter() })
 
     abstract fun applicabilityRange(element: TElement): TextRange?
 

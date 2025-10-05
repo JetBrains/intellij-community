@@ -1,15 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace.statistics.features
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.round
 
 @ApiStatus.Internal
+@IntellijInternalApi
 object PluginManagerSearchResultFeatureProvider {
   private val NAME_LENGTH_DATA_KEY = EventFields.Int("nameLength")
   private val DEVELOPED_BY_JETBRAINS_DATA_KEY = EventFields.Boolean("byJetBrains")

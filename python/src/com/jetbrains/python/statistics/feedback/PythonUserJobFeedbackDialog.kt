@@ -2,9 +2,7 @@
 package com.jetbrains.python.statistics.feedback
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
-import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
-import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.dialog.CommonBlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxGroupBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData
 import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
@@ -14,7 +12,7 @@ import com.jetbrains.python.PyBundle.message
 class PythonUserJobFeedbackDialog(
   project: Project?,
   forTest: Boolean,
-) : BlockBasedFeedbackDialog<CommonFeedbackSystemData>(project, forTest) {
+) : CommonBlockBasedFeedbackDialog(project, forTest) {
 
   override val myFeedbackReportId: String
     get() = "python_user_job_survey"
@@ -37,13 +35,6 @@ class PythonUserJobFeedbackDialog(
       .addOtherTextField(message("python.survey.user.job.dialog.blocks.checkbox.other"))
       .requireAnswer(),
   )
-
-  override val mySystemInfoData: CommonFeedbackSystemData
-    get() = CommonFeedbackSystemData.getCurrentData()
-
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
-  }
 
   override fun sendFeedbackData() {
     super.sendFeedbackData()

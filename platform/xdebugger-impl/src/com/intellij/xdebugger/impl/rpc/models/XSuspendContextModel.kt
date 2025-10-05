@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.rpc.models
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.platform.debugger.impl.rpc.XSuspendContextId
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
@@ -10,7 +11,6 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rpc.XSuspendContextId
 import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus

@@ -19,6 +19,7 @@ import com.intellij.platform.eel.EelExecApi.ExternalCliEntrypoint
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentProcessInfo
+import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentTunnelsPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.testFramework.junit5.TestApplication
@@ -485,7 +486,7 @@ class WSLDistributionTest {
           @DelicateCoroutinesApi
           override val processAdapterScope: CoroutineScope = scope
 
-          override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
+          override suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi {
             require(wslDistribution == mockWslDistribution) { "$wslDistribution != $mockWslDistribution" }
             return MockIjentApi(adapter, rootUser)
           }
@@ -522,11 +523,13 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
   override val descriptor: EelDescriptor
     get() = object : EelDescriptor {
-      override val userReadableDescription: @NonNls String = "mock"
-      override val osFamily: EelOsFamily = this@MockIjentApi.platform.osFamily
+      override val machine: EelMachine = object : EelMachine {
+        override val name: @NonNls String = "mock"
+        override val osFamily: EelOsFamily = this@MockIjentApi.platform.osFamily
 
-      override suspend fun toEelApi(): EelApi {
-        throw UnsupportedOperationException()
+        override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
+          throw UnsupportedOperationException()
+        }
       }
     }
 

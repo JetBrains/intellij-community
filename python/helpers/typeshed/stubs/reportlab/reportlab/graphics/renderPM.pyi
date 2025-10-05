@@ -32,27 +32,31 @@ BEZIER_ARC_MAGIC: float
 class PMCanvas:
     ctm: Incomplete
     def __init__(
-        self,
-        w,
-        h,
-        dpi: int = 72,
-        bg: int = 16777215,
-        configPIL: Incomplete | None = None,
-        backend: Incomplete | None = None,
-        backendFmt: str = "RGB",
+        self, w, h, dpi: int = 72, bg: int = 16777215, configPIL=None, backend=None, backendFmt: str = "RGB"
     ) -> None: ...
     def toPIL(self): ...
-    def saveToFile(self, fn, fmt: Incomplete | None = None): ...
+    def saveToFile(self, fn, fmt=None): ...
     def saveToString(self, fmt: str = "GIF"): ...
-    def setFont(self, fontName, fontSize, leading: Incomplete | None = None) -> None: ...
+    def setFont(self, fontName, fontSize, leading=None) -> None: ...
     def __setattr__(self, name, value) -> None: ...
     def __getattr__(self, name): ...
     def fillstrokepath(self, stroke: int = 1, fill: int = 1) -> None: ...
     def bezierArcCCW(self, cx, cy, rx, ry, theta0, theta1): ...
     def addEllipsoidalArc(self, cx, cy, rx, ry, ang1, ang2) -> None: ...
-    def drawCentredString(self, x, y, text, text_anchor: str = "middle") -> None: ...
-    def drawRightString(self, text, x, y) -> None: ...
-    def drawString(self, x, y, text, _fontInfo: Incomplete | None = None, text_anchor: str = "left") -> None: ...
+    def drawCentredString(
+        self, x: float, y: float, text: str, text_anchor: str = "middle", direction: str | None = None, shaping: bool = False
+    ) -> None: ...
+    def drawRightString(self, text: str, x: float, y: float, direction: str | None = None) -> None: ...
+    def drawString(
+        self,
+        x: float,
+        y: float,
+        text: str,
+        _fontInfo=None,
+        text_anchor: str = "left",
+        direction: str | None = None,
+        shaping: bool = False,
+    ) -> None: ...
     def line(self, x1, y1, x2, y2) -> None: ...
     def rect(self, x, y, width, height, stroke: int = 1, fill: int = 1) -> None: ...
     def roundRect(self, x, y, width, height, rx, ry) -> None: ...
@@ -72,12 +76,13 @@ class PMCanvas:
     def setLineJoin(self, join) -> None: ...
     strokeWidth: Incomplete
     def setLineWidth(self, width) -> None: ...
+    def stringWidth(self, text, fontName=None, fontSize=None): ...
 
 def drawToPMCanvas(
     d: Drawing,
     dpi: float = 72,
     bg: int = 0xFFFFFF,
-    configPIL: Incomplete | None = None,
+    configPIL=None,
     showBoundary=...,
     backend="rlPyCairo",
     backendFmt: str = "RGB",
@@ -86,7 +91,7 @@ def drawToPIL(
     d: Drawing,
     dpi: float = 72,
     bg: int = 0xFFFFFF,
-    configPIL: Incomplete | None = None,
+    configPIL=None,
     showBoundary=...,
     backend="rlPyCairo",
     backendFmt: str = "RGB",
@@ -95,7 +100,7 @@ def drawToPILP(
     d: Drawing,
     dpi: float = 72,
     bg: int = 0xFFFFFF,
-    configPIL: Incomplete | None = None,
+    configPIL=None,
     showBoundary=...,
     backend="rlPyCairo",
     backendFmt: str = "RGB",
@@ -106,7 +111,7 @@ def drawToFile(
     fmt: str = "GIF",
     dpi: float = 72,
     bg: int = 0xFFFFFF,
-    configPIL: Incomplete | None = None,
+    configPIL=None,
     showBoundary=...,
     backend="rlPyCairo",
     backendFmt: str = "RGB",
@@ -116,7 +121,7 @@ def drawToString(
     fmt: str = "GIF",
     dpi: float = 72,
     bg: int = 0xFFFFFF,
-    configPIL: Incomplete | None = None,
+    configPIL=None,
     showBoundary=...,
     backend="rlPyCairo",
     backendFmt: str = "RGB",

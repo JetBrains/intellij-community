@@ -10,7 +10,8 @@ package com.intellij.util;
 @FunctionalInterface
 public interface Processor<T> {
   /**
-   * @param t consequently takes value of each element of the set this processor is passed to for processing.
+   * @param t sequentially each element of the set this processor is passed
+   *
    * @return {@code true} to continue processing or {@code false} to stop.
    */
   boolean process(T t);

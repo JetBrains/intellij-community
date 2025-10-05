@@ -1,0 +1,21 @@
+# See: https://cibuildwheel.readthedocs.io/en/stable/options/
+
+[tool.cibuildwheel]
+# Customize what to build
+# build="cp36-manylinux_x86_64"
+
+before-build = """
+pydevd_attach_to_process/linux_and_mac/compile_linux.sh
+pip install cython
+pip install setuptools
+python build_tools/build.py
+"""
+
+[tool.ruff]
+line-length = 140
+exclude = [
+    "tests_python/resources/*", 
+    "tests_python/my_django_proj*", 
+    "tests_python/test_collect_bytecode_info.py",
+    "tests_python/test_smart_step_into_bytecode.py"
+]

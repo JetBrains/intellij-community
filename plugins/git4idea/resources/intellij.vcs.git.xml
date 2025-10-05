@@ -1,8 +1,11 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
 <idea-plugin package="git4idea">
   <resource-bundle>messages.GitBundle</resource-bundle>
 
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
+    <module name="intellij.platform.vcs.dvcs"/>
+    <module name="intellij.platform.vcs.log.graph.impl"/>
     <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 
@@ -34,6 +37,15 @@
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
+
+    <action id="Git.Drop.Selected.Changes" class="git4idea.rebase.log.changes.GitDropSelectedChangesAction">
+      <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
+    </action>
+
+    <action id="Git.InMemory.Extract.Selected.Changes" class="git4idea.inMemory.rebase.log.changes.GitExtractSelectedChangesAction">
+      <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
+    </action>
+
     <action id="Git.New.Branch.In.Log" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NewBranchAction"/>
     <action id="Git.Log.Branches.Change.Branch.Filter"
             class="git4idea.ui.branch.dashboard.BranchesDashboardActions$UpdateBranchFilterInLogAction">
@@ -188,7 +200,7 @@
       <reference ref="Git.Rebase.Skip"/>
     </group>
 
-    <group id="Git.Compare.With.Branch.Popup.Settings" class="com.intellij.vcs.git.shared.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+    <group id="Git.Compare.With.Branch.Popup.Settings" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
       <reference ref="git.branches.group.by.prefix"/>
       <reference ref="git.branches.show.recent"/>
       <reference ref="git.branches.show.tags"/>
@@ -340,7 +352,7 @@
     <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitStageAcceptYoursAction"/>
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitStageMergeConflictAction" icon="AllIcons.Vcs.Merge"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
-    <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
+    <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction" icon="AllIcons.Actions.ToggleVisibility"/>
     <action id="Git.Stage.ToggleCommitAll" class="git4idea.index.actions.GitToggleCommitAllAction">
       <add-to-group group-id="CommitView.GearActions"/>
     </action>
@@ -369,7 +381,7 @@
       <separator key="separator.Git.Stage.Configure.display.as"/>
       <reference ref="Git.Stage.Enable"/>
       <reference ref="Git.Stage.Disable"/>
-      <add-to-group group-id="CommitView.GearActions"/>
+      <add-to-group group-id="CommitView.GearActions" anchor="after" relative-to-action="CommitView.ShowOnDoubleClick"/>
     </group>
 
     <group id="Git.Stage.Toolbar">
@@ -466,9 +478,6 @@
       <separator/>
     </group>
 
-    <action id="main.toolbar.git.backend.Branches" class="git4idea.ui.toolbar.GitBackendToolbarWidgetAction">
-      <add-to-group group-id="MainToolbarVCSGroup"/>
-    </action>
     <action id="main.toolbar.git.MergeRebase" class="git4idea.ui.toolbar.GitMergeRebaseWidget">
       <add-to-group group-id="MainToolbarVCSGroup"/>
     </action>
@@ -585,7 +594,7 @@
                  description="Search for available executables in WSL on Windows"/>
     <registryKey key="git.enable.stash.toolwindow" defaultValue="true"
                  description="Show toolwindow tab with stashes"/>
-    <registryKey defaultValue="false" description="Use the new API for OS abstraction for non-local projects."
+    <registryKey defaultValue="true" description="Use the new API for OS abstraction for non-local projects."
                  key="git.use.eel.for.non.local.projects"/>
     <registryKey defaultValue="false" description="Use the new API for OS abstraction for local projects."
                  key="git.use.eel.for.local.projects"/>
@@ -614,6 +623,12 @@
                  description="When enabled, read the '.git/refs' directory contents. When disabled, delegate to 'git branch' call."/>
     <registryKey key="git.tracked.branch.actions.in.widget" defaultValue="true"
                  description="Show actions for a tracked branch as a sub-popup in the local branch actions popup in Git branches popup."/>
+    <registryKey key="git.drop.selected.changes.enabled" defaultValue="true"
+                 description="Enables the 'Drop Selected Changes' action in Git log changes tree context menu."/>
+    <registryKey key="git.in.memory.commit.editing.operations.enabled" defaultValue="false"
+                 description="Starts in-memory variants of interactive rebase operations in suitable scenarios, leading to better performance"/>
+    <registryKey key="git.in.memory.interactive.rebase.notify.errors" defaultValue="false"
+                 description="Show notification when in-memory interactive rebase fails and fallbacks to the regular one"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
@@ -667,6 +682,8 @@
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl"/>
+    <projectService serviceInterface="git4idea.branch.GitBranchesUIHandler"
+                    serviceImplementation="git4idea.branch.GitBranchesUIHandlerImpl"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
@@ -841,7 +858,6 @@
                  restartRequired="true"
                  description="Amount of time in minutes to check new Git version after IDE inactivity.\n
                              -1 to disable check."/>
-    <postStartupActivity os="windows" implementation="git4idea.config.GitNewVersionChecker$Starter"/>
     <settingsEntryPointActionProvider os="windows" implementation="git4idea.config.GitVersionUpdateSettingsEntryProvider"/>
 
     <history.activityPresentationProvider implementation="git4idea.GitActivityPresentationProvider"/>
@@ -911,5 +927,7 @@
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="git4idea.config.GitBackendVcsSettingsListener"
               topic="git4idea.config.GitVcsSettings$GitVcsSettingsListener"/>
+    <listener os="windows" class="git4idea.config.GitNewVersionCheckerStarter"
+              topic="com.intellij.openapi.vcs.VcsMappingListener"/>
   </projectListeners>
 </idea-plugin>

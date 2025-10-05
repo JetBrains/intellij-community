@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<KtClassOrObject>(
     KtClassOrObject::class.java,
-    KotlinBundle.lazyMessage("intention.extract.declarations.from.file.text")
+    KotlinBundle.messagePointer("intention.extract.declarations.from.file.text")
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtClassOrObject): TextRange? {
         if (element.name == null) return null
@@ -48,7 +48,7 @@ class ExtractDeclarationFromCurrentFileIntention : SelfTargetingRangeIntention<K
         val endOffset = element.nameIdentifier?.endOffset ?: return null
 
         setTextGetter(
-            KotlinBundle.lazyMessage(
+            KotlinBundle.messagePointer(
                 "intention.extract.declarations.from.file.text.details",
                 element.name.toString(),
                 0

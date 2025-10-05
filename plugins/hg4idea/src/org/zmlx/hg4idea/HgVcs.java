@@ -289,9 +289,6 @@ public final class HgVcs extends AbstractVcs {
       return null;
     }
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    if (vcsManager == null) {
-      return null;
-    }
     return (HgVcs)vcsManager.findVcsByName(VCS_NAME);
   }
 

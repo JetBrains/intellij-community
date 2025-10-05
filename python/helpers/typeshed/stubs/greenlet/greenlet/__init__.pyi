@@ -11,3 +11,4 @@ from ._greenlet import (
 )
 
 __version__: Final[str]
+__all__ = ["__version__", "_C_API", "GreenletExit", "error", "getcurrent", "greenlet", "gettrace", "settrace"]

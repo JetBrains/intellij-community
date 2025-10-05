@@ -47,7 +47,7 @@ public final class NewExceptionWithoutArgumentsInspection extends BaseInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NewExceptionWithoutArgumentsVisitor();
   }
 

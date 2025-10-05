@@ -181,6 +181,60 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/evaluation/singleBreakpoint/contextParameters")
+        public static class ContextParameters extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("contextParametersInFunction.kt")
+            public void testContextParametersInFunction() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/contextParametersInFunction.kt");
+            }
+
+            @TestMetadata("contextParametersInInlineFunction.kt")
+            public void testContextParametersInInlineFunction() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/contextParametersInInlineFunction.kt");
+            }
+
+            @TestMetadata("contextParametersInLambdas.kt")
+            public void testContextParametersInLambdas() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/contextParametersInLambdas.kt");
+            }
+
+            @TestMetadata("contextParametersInSamLambdas.kt")
+            public void testContextParametersInSamLambdas() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/contextParametersInSamLambdas.kt");
+            }
+
+            @TestMetadata("contextParametersInSuspendFunction.kt")
+            public void testContextParametersInSuspendFunction() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/contextParametersInSuspendFunction.kt");
+            }
+
+            @TestMetadata("functionCallWithImplicitContextParameterCapturing.kt")
+            public void testFunctionCallWithImplicitContextParameterCapturing() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/functionCallWithImplicitContextParameterCapturing.kt");
+            }
+
+            @TestMetadata("unnamedContextParameters.kt")
+            public void testUnnamedContextParameters() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/unnamedContextParameters.kt");
+            }
+
+            @TestMetadata("valContextParameter.kt")
+            public void testValContextParameter() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/contextParameters/valContextParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/contextReceivers")
         public static class ContextReceivers extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
             @java.lang.Override
@@ -1498,6 +1552,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/singleBreakpoint/reifiedTypeParameters/crossfileInlining.kt");
             }
 
+            @TestMetadata("multistatementLine.kt")
+            public void testMultistatementLine() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/reifiedTypeParameters/multistatementLine.kt");
+            }
+
             @TestMetadata("properties.kt")
             public void testProperties() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/reifiedTypeParameters/properties.kt");
@@ -1778,6 +1837,16 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/singleBreakpoint/callableBug.kt");
             }
 
+            @TestMetadata("captureContextFileWithValueClass.kt")
+            public void testCaptureContextFileWithValueClass() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/captureContextFileWithValueClass.kt");
+            }
+
+            @TestMetadata("captureLocalDataClass.kt")
+            public void testCaptureLocalDataClass() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/captureLocalDataClass.kt");
+            }
+
             @TestMetadata("capturedVariablesInSamLambda.kt")
             public void testCapturedVariablesInSamLambda() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/capturedVariablesInSamLambda.kt");
@@ -1948,6 +2017,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("../testData/evaluation/singleBreakpoint/importsLambdaContext.kt");
             }
 
+            @TestMetadata("inlineFromOtherFileInContextFile.kt")
+            public void testInlineFromOtherFileInContextFile() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/inlineFromOtherFileInContextFile.kt");
+            }
+
             @TestMetadata("inlineFunInMultiFilePackage.kt")
             public void testInlineFunInMultiFilePackage() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/inlineFunInMultiFilePackage.kt");
@@ -2116,6 +2190,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @TestMetadata("ktij26694.kt")
             public void testKtij26694() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/ktij26694.kt");
+            }
+
+            @TestMetadata("lambdaCapturingOuterLambdaParam.kt")
+            public void testLambdaCapturingOuterLambdaParam() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/lambdaCapturingOuterLambdaParam.kt");
             }
 
             @TestMetadata("lambdaRightBrace.kt")
@@ -2509,6 +2588,268 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
     @TestMetadata("../testData/evaluation/multipleBreakpoints")
     public abstract static class MultipleBreakpoints extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda")
+        public abstract static class InlineLambda extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing")
+            public static class Capturing extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("captureBackingFieldGetter.kt")
+                public void testCaptureBackingFieldGetter() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureBackingFieldGetter.kt");
+                }
+
+                @TestMetadata("captureBackingFieldSetter.kt")
+                public void testCaptureBackingFieldSetter() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureBackingFieldSetter.kt");
+                }
+
+                @TestMetadata("captureCoroutineContext.kt")
+                public void testCaptureCoroutineContext() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureCoroutineContext.kt");
+                }
+
+                @TestMetadata("captureDispatchReceiver.kt")
+                public void testCaptureDispatchReceiver() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureDispatchReceiver.kt");
+                }
+
+                @TestMetadata("captureExtensionReceiver.kt")
+                public void testCaptureExtensionReceiver() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureExtensionReceiver.kt");
+                }
+
+                @TestMetadata("captureLocalDelegatedVal.kt")
+                public void testCaptureLocalDelegatedVal() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureLocalDelegatedVal.kt");
+                }
+
+                @TestMetadata("captureLocalDelegatedVar.kt")
+                public void testCaptureLocalDelegatedVar() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureLocalDelegatedVar.kt");
+                }
+
+                @TestMetadata("captureLocalFun.kt")
+                public void testCaptureLocalFun() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureLocalFun.kt");
+                }
+
+                @TestMetadata("captureLocalVal.kt")
+                public void testCaptureLocalVal() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureLocalVal.kt");
+                }
+
+                @TestMetadata("captureLocalVar.kt")
+                public void testCaptureLocalVar() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureLocalVar.kt");
+                }
+
+                @TestMetadata("captureParam.kt")
+                public void testCaptureParam() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureParam.kt");
+                }
+
+                @TestMetadata("captureProperty.kt")
+                public void testCaptureProperty() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/captureProperty.kt");
+                }
+
+                @TestMetadata("composite.kt")
+                public void testComposite() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/capturing/composite.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs")
+            public abstract static class FunctionTypeArgs extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences")
+                public static class FunReferences extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("companionObjFunRef.kt")
+                    public void testCompanionObjFunRef() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences/companionObjFunRef.kt");
+                    }
+
+                    @TestMetadata("constructorRef.kt")
+                    public void testConstructorRef() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences/constructorRef.kt");
+                    }
+
+                    @TestMetadata("inlineMemberFunRefBound.kt")
+                    public void testInlineMemberFunRefBound() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences/inlineMemberFunRefBound.kt");
+                    }
+
+                    @TestMetadata("inlineMemberFunRefUnbound.kt")
+                    public void testInlineMemberFunRefUnbound() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences/inlineMemberFunRefUnbound.kt");
+                    }
+
+                    @TestMetadata("inlineTopLevelFunRef.kt")
+                    public void testInlineTopLevelFunRef() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences/inlineTopLevelFunRef.kt");
+                    }
+
+                    @TestMetadata("lambdaWithParameters.kt")
+                    public void testLambdaWithParameters() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences/lambdaWithParameters.kt");
+                    }
+
+                    @TestMetadata("localFunRef.kt")
+                    public void testLocalFunRef() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences/localFunRef.kt");
+                    }
+
+                    @TestMetadata("topLevelExtensionFunRef.kt")
+                    public void testTopLevelExtensionFunRef() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/funReferences/topLevelExtensionFunRef.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs")
+                public static class Uncategorized extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K2;
+                    }
+
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("anonymousFun.kt")
+                    public void testAnonymousFun() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/anonymousFun.kt");
+                    }
+
+                    @TestMetadata("classWithInvokeOperator.kt")
+                    public void testClassWithInvokeOperator() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/classWithInvokeOperator.kt");
+                    }
+
+                    @TestMetadata("lambda.kt")
+                    public void testLambda() throws Exception {
+                        runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/functionTypeArgs/lambda.kt");
+                    }
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/lambdaContent")
+            public static class LambdaContent extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("composite.kt")
+                public void testComposite() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/lambdaContent/composite.kt");
+                }
+
+                @TestMetadata("lambdaWithClass.kt")
+                public void testLambdaWithClass() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/lambdaContent/lambdaWithClass.kt");
+                }
+
+                @TestMetadata("lambdaWithLambda.kt")
+                public void testLambdaWithLambda() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/lambdaContent/lambdaWithLambda.kt");
+                }
+
+                @TestMetadata("lambdaWithLocalFun.kt")
+                public void testLambdaWithLocalFun() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/lambdaContent/lambdaWithLocalFun.kt");
+                }
+
+                @TestMetadata("lambdaWithLocalVar.kt")
+                public void testLambdaWithLocalVar() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/lambdaContent/lambdaWithLocalVar.kt");
+                }
+
+                @TestMetadata("lambdaWithObject.kt")
+                public void testLambdaWithObject() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/lambdaContent/lambdaWithObject.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda/returns")
+            public static class Returns extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("nonLocalUpByStack.kt")
+                public void testNonLocalUpByStack() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/returns/nonLocalUpByStack.kt");
+                }
+
+                @TestMetadata("simplestNonLocalReturn.kt")
+                public void testSimplestNonLocalReturn() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/returns/simplestNonLocalReturn.kt");
+                }
+
+                @TestMetadata("variousLocalReturns.kt")
+                public void testVariousLocalReturns() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/returns/variousLocalReturns.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/evaluation/multipleBreakpoints/inlineLambda")
+            public static class Uncategorized extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("localInsideAndOutsideLambda.kt")
+                public void testLocalInsideAndOutsideLambda() throws Exception {
+                    runTest("../testData/evaluation/multipleBreakpoints/inlineLambda/localInsideAndOutsideLambda.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/multipleBreakpoints/library")
         public static class Library extends AbstractInlineScopesAndK2IdeK2CodeEvaluateExpressionTest {
             @java.lang.Override
@@ -2667,6 +3008,11 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
             @TestMetadata("inlineStackTraceWithNestedLambdas.kt")
             public void testInlineStackTraceWithNestedLambdas() throws Exception {
                 runTest("../testData/evaluation/multipleBreakpoints/inlineStackTraceWithNestedLambdas.kt");
+            }
+
+            @TestMetadata("inlineStackTraceWithTryFinally.kt")
+            public void testInlineStackTraceWithTryFinally() throws Exception {
+                runTest("../testData/evaluation/multipleBreakpoints/inlineStackTraceWithTryFinally.kt");
             }
 
             @TestMetadata("invisibleDeclarations.kt")

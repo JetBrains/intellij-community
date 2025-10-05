@@ -457,7 +457,7 @@ final class TerminalBlock {
     if (myStatements.length == 1) {
       return myStatements[0];
     }
-    PsiCodeBlock block = factory.createCodeBlock();
+    PsiCodeBlock block = factory.createCodeBlockFromText("{}", myVariable);
     for (PsiStatement statement : myStatements) {
       block.add(ct.markUnchanged(statement));
     }

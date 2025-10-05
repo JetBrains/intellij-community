@@ -83,11 +83,19 @@ public interface ExtendableTextComponent {
       return null;
     }
 
+    default boolean isFocusable() {
+      return false;
+    }
+
     static Extension create(@NotNull Icon icon, @NlsContexts.Tooltip String tooltip, Runnable action) {
       return create(icon, icon, tooltip, action);
     }
 
     static Extension create(@NotNull Icon defaultIcon, @NotNull Icon hoveredIcon, @NlsContexts.Tooltip String tooltip, Runnable action) {
+      return create(defaultIcon, hoveredIcon, tooltip, false, action);
+    }
+
+    static Extension create(@NotNull Icon defaultIcon, @NotNull Icon hoveredIcon, @NlsContexts.Tooltip String tooltip, boolean focusable, Runnable action) {
       return new Extension() {
         @Override
         public Icon getIcon(boolean hovered) {
@@ -102,6 +110,11 @@ public interface ExtendableTextComponent {
         @Override
         public Runnable getActionOnClick() {
           return action;
+        }
+
+        @Override
+        public boolean isFocusable() {
+          return focusable;
         }
       };
     }

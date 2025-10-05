@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.fir.testGenerator
 
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.fir.uast.test.*
 import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
 import org.jetbrains.kotlin.fir.testGenerator.gradle.generateK2GradleTests
@@ -38,9 +39,11 @@ import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.imports.AbstractK2JvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.fir.kmp.AbstractK2KmpLightFixtureHighlightingTest
 import org.jetbrains.kotlin.idea.fir.navigation.*
+import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirMultilineParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.projectView.AbstractK2ProjectViewTest
 import org.jetbrains.kotlin.idea.fir.resolve.*
+import org.jetbrains.kotlin.idea.fir.run.AbstractKotlinTestNavigationTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractKotlinBuiltInsResolveScopeEnlargerTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractScopeEnlargerTest
@@ -73,7 +76,6 @@ fun assembleK2Workspace(): TWorkspace = assembleWorkspace()
 
 fun generateK2Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
-    TestGenerator.writeLibrariesVersion(isUpToDateCheck)
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
 }
 
@@ -143,6 +145,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     }
 
     testGroup("fir/tests", testDataPath = "../../idea/tests/testData", category = CODE_INSIGHT) {
+        testClass<AbstractKotlinTestNavigationTest>(indexingMode = listOf(IndexingMode.DUMB_FULL_INDEX, IndexingMode.SMART)) {
+            model("navigation/navigateToTestFromView", pattern = Patterns.forRegex("^([^.]+)\\.(kt|java)$"))
+        }
+
         testClass<AbstractK2AddImportActionTest> {
             model("idea/actions/kotlinAddImportAction", pattern = KT_WITHOUT_DOTS)
         }
@@ -209,12 +215,21 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("shortenRefs/this", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
         }
 
-        testClass<AbstractFirParameterInfoTest> {
-            model(
-                "parameterInfo", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|java)$"), isRecursive = true,
-                excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib", "withLib4/sharedLib")
-            )
+        run {
+            fun MutableTSuite.parameterInfoModel() {
+                model(
+                    "parameterInfo", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|java)$"), isRecursive = true,
+                    excludedDirectories = listOf("withLib1/sharedLib", "withLib2/sharedLib", "withLib3/sharedLib", "withLib4/sharedLib")
+                )
+            }
+            testClass<AbstractFirParameterInfoTest> {
+                parameterInfoModel()
+            }
+            testClass<AbstractFirMultilineParameterInfoTest> {
+                parameterInfoModel()
+            }
         }
+
 
         testClass<AbstractK2AutoImportTest> {
             model(
@@ -258,7 +273,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
             model("navigation/moveToNextMethod", pattern = TEST, testMethodName = "doTest")
         }
 
-        testClass<AbstractFirGotoTest> {
+        testClass<AbstractFirGotoTest>(indexingMode = listOf(IndexingMode.DUMB_FULL_INDEX, IndexingMode.SMART)) {
             model("navigation/gotoClass", testMethodName = "doClassTest")
             model("navigation/gotoSymbol", testMethodName = "doSymbolTest")
         }

@@ -7,6 +7,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -94,18 +95,24 @@ internal object KotlinChangeSignatureUsageSearcher {
         if (oldContextParameters.isEmpty()) return
         val preservedContextParameters = changeInfo.newParameters.filter { it.isContextParameter }
         analyze(ktCallableDeclaration) {
+            val declarationSymbol = ktCallableDeclaration.symbol as KaCallableSymbol
             ktCallableDeclaration.accept(object : KtTreeVisitorVoid() {
                 override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                     val memberCall = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()
                     val partiallyAppliedSymbol = memberCall?.partiallyAppliedSymbol ?: return
 
-                    if (partiallyAppliedSymbol.symbol is KaContextParameterSymbol) {
-                        val contextParameter = partiallyAppliedSymbol.symbol.psi as? KtParameter ?: return
+                    val symbol = partiallyAppliedSymbol.symbol
+                    if (symbol is KaContextParameterSymbol) {
+                        val contextParameter = symbol.psi as? KtParameter ?: return
                         val parameterInfo =
                             oldContextParameters.find { it.oldIndex == contextParameter.parameterIndex() } ?: return
                         if (parameterInfo == changeInfo.receiverParameterInfo) {
                             result.add(KotlinParameterUsage(expression, parameterInfo))
                         }
+                        return
+                    }
+
+                    if (symbol == declarationSymbol || symbol in declarationSymbol.allOverriddenSymbols) {
                         return
                     }
 

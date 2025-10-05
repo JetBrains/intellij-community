@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
@@ -6,10 +6,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.system.OS
 import java.nio.file.Path
-import java.nio.file.Paths
 
 @Service(Service.Level.APP)
 internal class RuntimeChooserDownloader {
@@ -36,16 +34,15 @@ internal object RuntimeChooserJbrInstaller : JdkInstallerBase() {
     // TODO Use osAbstractionForJdkInstaller
     val explicitHome = System.getProperty("jbr.downloader.home")
     if (explicitHome != null) {
-      return Paths.get(explicitHome)
+      return Path.of(explicitHome)
     }
 
-    val home = Paths.get(FileUtil.toCanonicalPath(System.getProperty("user.home") ?: "."))
-    return when {
-      SystemInfo.isLinux   -> home.resolve(".jbr")
-      //see https://youtrack.jetbrains.com/issue/IDEA-206163#focus=streamItem-27-3270022.0-0
-      SystemInfo.isMac     -> home.resolve("Library/Java/JetBrainsRuntime")
-      SystemInfo.isWindows -> home.resolve(".jbr")
-      else -> error("Unsupported OS: ${SystemInfo.getOsNameAndVersion()}")
+    val home = Path.of(System.getProperty("user.home") ?: ".")
+    return when (OS.CURRENT) {
+      OS.Windows -> home.resolve(".jbr")
+      OS.macOS -> home.resolve("Library/Java/JetBrainsRuntime")
+      OS.Linux -> home.resolve(".jbr")
+      else -> error("Unsupported OS: ${OS.CURRENT}")
     }
   }
 }

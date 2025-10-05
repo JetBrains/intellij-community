@@ -3,6 +3,7 @@ package com.intellij.find.findInProject;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.find.FindUsagesCollector;
 import com.intellij.find.impl.FindAndReplaceExecutor;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
@@ -15,6 +16,8 @@ import com.intellij.usages.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class FindInProjectManager {
   private final Project myProject;
@@ -35,15 +38,19 @@ public class FindInProjectManager {
   public void findInProject(@NotNull DataContext dataContext, @Nullable FindModel model) {
     FindManager findManager = FindManager.getInstance(myProject);
     FindModel findModel;
+    boolean stringToFindChanged = false;
     if (model != null) {
       findModel = model.clone();
     }
     else {
       findModel = findManager.getFindInProjectModel().clone();
+      String initString = findModel.getStringToFind();
       findModel.setReplaceState(false);
       initModel(findModel, dataContext);
+      stringToFindChanged = !Objects.equals(initString, findModel.getStringToFind());
     }
 
+    FindUsagesCollector.findPopupShown(dataContext, findModel, stringToFindChanged);
     findManager.showFindDialog(findModel, () -> {
       FindAndReplaceExecutor.getInstance().performFindAllOrReplaceAll(findModel, myProject);
     });

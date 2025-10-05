@@ -16,18 +16,18 @@ import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiPackageAccessibilityStatement
 import com.intellij.psi.util.PsiUtil
 
-abstract class AddModuleDirectiveFix(module: PsiJavaModule) : PsiUpdateModCommandAction<PsiJavaModule>(module) {
+public abstract class AddModuleDirectiveFix(module: PsiJavaModule) : PsiUpdateModCommandAction<PsiJavaModule>(module) {
   override fun getFamilyName(): String = QuickFixBundle.message("module.info.add.directive.family.name")
 
   @IntentionName
-  abstract fun getText(): String
+  public abstract fun getText(): String
 
   override fun getPresentation(context: ActionContext, module: PsiJavaModule): Presentation? {
     return if (PsiUtil.isAvailable(JavaFeature.MODULES, module)) Presentation.of(getText()) else null
   }
 }
 
-class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: String) : AddModuleDirectiveFix(module) {
+public class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: String) : AddModuleDirectiveFix(module) {
   override fun getText(): String {
     return QuickFixBundle.message("module.info.add.requires.name", requiredName)
   }
@@ -37,7 +37,7 @@ class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: S
   }
 }
 
-class AddExportsDirectiveFix(
+public class AddExportsDirectiveFix(
   module: PsiJavaModule,
   private val packageName: String,
   targetName: String
@@ -49,7 +49,7 @@ class AddExportsDirectiveFix(
   }
 }
 
-class AddOpensDirectiveFix(
+public class AddOpensDirectiveFix(
   module: PsiJavaModule,
   private val packageName: String,
   targetName: String
@@ -61,7 +61,7 @@ class AddOpensDirectiveFix(
   }
 }
 
-abstract class AddPackageAccessibilityFix(
+public abstract class AddPackageAccessibilityFix(
   private val directive: String,
   module: PsiJavaModule,
   private val packageName: String,
@@ -85,7 +85,7 @@ abstract class AddPackageAccessibilityFix(
   }
 }
 
-class AddUsesDirectiveFix(module: PsiJavaModule, private val svcName: String) : AddModuleDirectiveFix(module) {
+public class AddUsesDirectiveFix(module: PsiJavaModule, private val svcName: String) : AddModuleDirectiveFix(module) {
   override fun getText(): String = QuickFixBundle.message("module.info.add.uses.name", svcName)
 
   override fun invoke(context: ActionContext, module: PsiJavaModule, updater: ModPsiUpdater) {

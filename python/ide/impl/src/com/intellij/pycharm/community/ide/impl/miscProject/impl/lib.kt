@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
+import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.EDT
@@ -9,6 +10,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,6 +34,7 @@ import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
@@ -39,7 +42,14 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.time.Duration.Companion.milliseconds
 
-internal val miscProjectDefaultPath: Lazy<Path> = lazy { Path.of(SystemProperties.getUserHome()).resolve("PyCharmMiscProject") }
+internal const val MISC_PROJECT_NAME: String = "Welcome"
+
+internal val miscProjectDefaultPath: Path
+  get() {
+    val default = GeneralLocalSettings.getInstance().defaultProjectDirectory
+    val directory = if (default.isEmpty()) Path.of(SystemProperties.getUserHome()) else Path.of(default)
+    return directory.resolve("PyCharmMiscProject")
+  }
 
 /**
  * Creates a project in [projectPath] in a modal window.
@@ -48,26 +58,27 @@ internal val miscProjectDefaultPath: Lazy<Path> = lazy { Path.of(SystemPropertie
  *
  * Pythons are obtained with [systemPythonService]
  */
-@RequiresEdt
-fun createMiscProject(
+@ApiStatus.Internal
+suspend fun createMiscProject(
   miscFileType: MiscFileType,
   scopeProvider: (Project) -> CoroutineScope,
   confirmInstallation: suspend () -> Boolean,
-  projectPath: Path = miscProjectDefaultPath.value,
+  projectPath: Path = miscProjectDefaultPath,
   systemPythonService: SystemPythonService = SystemPythonService(),
-): PyResult<Job> =
-  runWithModalProgressBlocking(ModalTaskOwner.guess(),
-                               PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
-                               TaskCancellation.cancellable()) {
-    createProjectAndSdk(projectPath, confirmInstallation = confirmInstallation, systemPythonService = systemPythonService)
-  }.mapResult { (project, sdk) ->
+  currentProject: Project? = null,
+): PyResult<Job> {
+  return createProjectAndSdk(projectPath,
+                             confirmInstallation = confirmInstallation,
+                             systemPythonService = systemPythonService,
+                             currentProject = currentProject,
+  ).mapResult { (project, sdk) ->
     Result.Success(scopeProvider(project).launch {
       withBackgroundProgress(project, PyCharmCommunityCustomizationBundle.message("misc.project.filling.file")) {
         generateAndOpenFile(projectPath, project, miscFileType, sdk)
       }
     })
   }
-
+}
 
 private suspend fun generateAndOpenFile(projectPath: Path, project: Project, fileType: MiscFileType, sdk: Sdk): PsiFile {
   val generateFile = generateFile(projectPath, fileType.fileName)
@@ -132,10 +143,27 @@ private suspend fun createProjectAndSdk(
   projectPath: Path,
   confirmInstallation: suspend () -> Boolean,
   systemPythonService: SystemPythonService,
+  currentProject: Project?,
 ): PyResult<Pair<Project, Sdk>> {
+  val isCurrentProjectIsAlreadyMiscProject = currentProject?.name == MISC_PROJECT_NAME
+  val project = if (isCurrentProjectIsAlreadyMiscProject) {
+    currentProject
+  } else {
+    openProject(projectPath)
+  }
+
   val vfsProjectPath = createProjectDir(projectPath).getOr { return it }
-  val project = openProject(projectPath)
-  val sdk = createVenvAndSdk(project, confirmInstallation, systemPythonService, vfsProjectPath).getOr(PyBundle.message("project.error.cant.venv")) { return it }
+  // Even if the misc project might be already opened, it might not have sdk (if it was opened as a welcome project)
+  val sdkResult = withContext(Dispatchers.EDT) {
+    runWithModalProgressBlocking(
+      owner = ModalTaskOwner.guess(),
+      title = PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
+      cancellation = TaskCancellation.cancellable()
+    ) {
+      createVenvAndSdk(project, confirmInstallation, systemPythonService, vfsProjectPath)
+    }
+  }
+  val sdk = sdkResult.getOr(PyBundle.message("project.error.cant.venv")) { return it }
   return Result.success(Pair(project, sdk))
 }
 
@@ -146,6 +174,7 @@ private suspend fun openProject(projectPath: Path): Project {
   val project = projectManager.openProjectAsync(projectPath, OpenProjectTask {
     runConfigurators = false
     isProjectCreatedWithWizard = true
+    projectName = MISC_PROJECT_NAME
 
   }) ?: error("Failed to open project in $projectPath, check logs")
   // There are countless numbers of reasons `openProjectAsync` might return null

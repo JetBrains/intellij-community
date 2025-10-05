@@ -3,31 +3,33 @@ package com.intellij.platform.buildScripts.testFramework.pluginModel
 
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
+import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.util.JpsPathUtil
 import java.io.InputStream
 import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.pathString
 
 fun createLayoutProviderForProductWithModuleBasedLoader(
   project: JpsProject,
+  runtimeModuleRepository: RuntimeModuleRepository,
   productRootModuleName: String,
   productMode: ProductMode,
   corePluginDescriptorPath: String,
 ): PluginLayoutProvider {
-  return ModuleBasedPluginLayoutProvider(project, productRootModuleName, productMode, corePluginDescriptorPath)
+  return ModuleBasedPluginLayoutProvider(project, runtimeModuleRepository, productRootModuleName, productMode, corePluginDescriptorPath)
 }
 
 private class ModuleBasedPluginLayoutProvider(
   private val project: JpsProject,
+  private val runtimeModuleRepository: RuntimeModuleRepository,
   private val productRootModuleName: String,
   productMode: ProductMode,
   private val corePluginDescriptorPath: String,
@@ -36,13 +38,6 @@ private class ModuleBasedPluginLayoutProvider(
   private val mainModulesOfBundledPlugins: Set<String>
 
   init {
-    val projectOutputDir = JpsPathUtil.urlToNioPath(JpsJavaExtensionService.getInstance().getProjectExtension(project)!!.outputUrl)
-    val runtimeModuleRepositoryPath = projectOutputDir.resolve("module-descriptors.jar")
-    assert(runtimeModuleRepositoryPath.exists()) {
-      """|$runtimeModuleRepositoryPath doesn't exists; it should be generated during compilation by DevKit plugin for JPS process,
-         |so check that DevKit plugin is enabled.""".trimMargin()
-    }
-    val runtimeModuleRepository = RuntimeModuleRepository.create(runtimeModuleRepositoryPath)
     val productRootModule = project.findModuleByName(productRootModuleName) ?: error("Cannot find module '$productRootModuleName'")
     val productModulesPath = productRootModule.findProductionFile("META-INF/$productRootModuleName/product-modules.xml")
                              ?: error("Cannot find product-modules.xml in '$productRootModuleName' module")
@@ -65,9 +60,23 @@ private class ModuleBasedPluginLayoutProvider(
   private fun JpsModule.findProductionFile(relativePath: String): Path? = JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(this, relativePath)
 
   override fun loadCorePluginLayout(): PluginLayoutDescription {
-    val mainGroupModules = productModules.mainModuleGroup.includedModules
+    val rootEmbeddedModules = productModules.mainModuleGroup.includedModules
       .asSequence()
-      .map { it.moduleDescriptor.moduleId.stringId }
+      .filter { it.loadingRule == RuntimeModuleLoadingRule.EMBEDDED }
+      .map { it.moduleDescriptor }
+    val embeddedModulesWithDependencies = LinkedHashSet<RuntimeModuleDescriptor>()
+    fun collectDependencies(descriptor: RuntimeModuleDescriptor, result: MutableSet<RuntimeModuleDescriptor>) {
+      if (result.add(descriptor)) {
+        descriptor.dependencies.forEach { collectDependencies(it, result) }
+      }
+    }
+    for (descriptor in rootEmbeddedModules) {
+      collectDependencies(descriptor, embeddedModulesWithDependencies)
+    }
+    
+    val mainGroupModules = embeddedModulesWithDependencies
+      .asSequence()
+      .map { it.moduleId.stringId }
       .filterNot { it.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
       .mapNotNull { 
         project.findModuleByName(it)

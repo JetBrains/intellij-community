@@ -16,8 +16,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.vcs.git.shared.actions.GitSingleRefActions
-import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
+import com.intellij.vcs.git.actions.GitSingleRefActions
+import com.intellij.vcs.git.branch.GitInOutCountersInProject
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys

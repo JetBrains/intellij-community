@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -13,15 +13,25 @@ public final class UnknownFeature {
   private final @Nls @Nullable String myFeatureDisplayName;
   private final @NonNls @NotNull String myImplementationName;
   private final @Nls @Nullable String myImplementationDisplayName;
+  private final @Nls @Nullable String mySuggestionReason;
+
+  public UnknownFeature(@NonNls @NotNull String featureType,
+                        @Nls @Nullable String featureDisplayName,
+                        @NonNls @NotNull String implementationName,
+                        @Nls @Nullable String implementationDisplayName,
+                        @Nls @Nullable String suggestionReason) {
+    myFeatureType = featureType;
+    myFeatureDisplayName = featureDisplayName;
+    myImplementationName = implementationName;
+    myImplementationDisplayName = implementationDisplayName;
+    mySuggestionReason = suggestionReason;
+  }
 
   public UnknownFeature(@NonNls @NotNull String featureType,
                         @Nls @Nullable String featureDisplayName,
                         @NonNls @NotNull String implementationName,
                         @Nls @Nullable String implementationDisplayName) {
-    myFeatureType = featureType;
-    myFeatureDisplayName = featureDisplayName;
-    myImplementationName = implementationName;
-    myImplementationDisplayName = implementationDisplayName;
+    this(featureType, featureDisplayName, implementationName, implementationDisplayName, null);
   }
 
   public UnknownFeature(@NonNls @NotNull String featureType,
@@ -55,9 +65,16 @@ public final class UnknownFeature {
     return myImplementationDisplayName;
   }
 
+  public @Nls @Nullable String getSuggestionReason() {
+    return mySuggestionReason;
+  }
+
   public UnknownFeature withImplementationDisplayName(@NotNull @Nls String implementationDisplayName) {
-    return new UnknownFeature(myFeatureType, myFeatureDisplayName, myImplementationName,
-                              myImplementationDisplayName == null ? implementationDisplayName : myImplementationDisplayName);
+    return new UnknownFeature(myFeatureType,
+                              myFeatureDisplayName,
+                              myImplementationName,
+                              myImplementationDisplayName == null ? implementationDisplayName : myImplementationDisplayName,
+                              mySuggestionReason);
   }
 
   @Override
@@ -83,6 +100,7 @@ public final class UnknownFeature {
            ", myFeatureDisplayName='" + myFeatureDisplayName + '\'' +
            ", myImplementationName='" + myImplementationName + '\'' +
            ", myImplementationDisplayName='" + myImplementationDisplayName + '\'' +
+           ", mySuggestionReason='" + mySuggestionReason + '\'' +
            '}';
   }
 }

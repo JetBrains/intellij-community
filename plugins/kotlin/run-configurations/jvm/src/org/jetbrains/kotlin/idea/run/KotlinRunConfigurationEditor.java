@@ -21,12 +21,10 @@ import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.asJava.classes.KtLightClass;
 
 import javax.swing.*;
@@ -35,7 +33,7 @@ import java.awt.event.ActionListener;
 
 public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfiguration> implements PanelWithAnchor {
   private JPanel mainPanel;
-  private LabeledComponent<ClassEditorField> mainClass;
+  private LabeledComponent<ClassEditorField> mainClassEditorField;
 
   private CommonJavaParametersPanel commonProgramParameters;
   private LabeledComponentNoThrow<ModuleDescriptionsComboBox> moduleChooser;
@@ -52,17 +50,11 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
             Computable<? extends Module> moduleSelector,
             LabeledComponent<ModuleDescriptionsComboBox> moduleChooser
     ) {
-        ClassFilter applicationClass = new ClassFilter() {
-            @Override
-            public boolean isAccepted(PsiClass aClass) {
-                return aClass instanceof KtLightClass && ConfigurationUtil.MAIN_CLASS.value(aClass) && findMainMethod(aClass) != null;
-            }
-
-            private static @Nullable PsiMethod findMainMethod(PsiClass aClass) {
-                return ReadAction.compute(() -> PsiMethodUtil.findMainMethod(aClass));
-            }
-        };
-        return new ClassBrowser.MainClassBrowser(project, moduleSelector, ExecutionBundle.message("choose.main.class.dialog.title")) {
+        ClassFilter applicationClass =
+                aClass -> aClass instanceof KtLightClass &&
+                          ConfigurationUtil.MAIN_CLASS.value(aClass) &&
+                          ReadAction.compute(() -> PsiMethodUtil.findMainMethod(aClass)) != null;
+        return new ClassBrowser.MainClassBrowser<>(project, moduleSelector, ExecutionBundle.message("choose.main.class.dialog.title")) {
             @Override
             protected ClassFilter createFilter(Module module) {
                 return applicationClass;
@@ -95,7 +87,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
                 commonProgramParameters.setModuleContext(moduleSelector.getModule());
             }
         });
-        anchor = UIUtil.mergeComponentsWithAnchor(mainClass, commonProgramParameters, jrePathEditor, jrePathEditor, moduleChooser,
+        anchor = UIUtil.mergeComponentsWithAnchor(mainClassEditorField, commonProgramParameters, jrePathEditor, jrePathEditor, moduleChooser,
                                                   shortenClasspathModeCombo);
         shortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(project, jrePathEditor, moduleChooser.getComponent()));
     }
@@ -105,7 +97,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
         commonProgramParameters.applyTo(configuration);
         moduleSelector.applyTo(configuration);
 
-        configuration.setRunClass(mainClass.getComponent().getClassName());
+        configuration.setMainClassName(mainClassEditorField.getComponent().getText());
         configuration.setAlternativeJrePath(jrePathEditor.getJrePathOrName());
         configuration.setAlternativeJrePathEnabled(jrePathEditor.isAlternativeJreSelected());
         configuration.setShortenCommandLine(shortenClasspathModeCombo.getComponent().getSelectedItem());
@@ -115,8 +107,8 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
     protected void resetEditorFrom(@NotNull KotlinRunConfiguration configuration) {
         commonProgramParameters.reset(configuration);
         moduleSelector.reset(configuration);
-        String runClass = configuration.getRunClass();
-        mainClass.getComponent().setText(runClass != null ? runClass.replaceAll("\\$", "\\.") : "");
+        String mainClassName = configuration.getMainClassName();
+        mainClassEditorField.getComponent().setText(mainClassName != null ? mainClassName.replaceAll("\\$", ".") : "");
         jrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
         shortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     }
@@ -127,17 +119,9 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
     }
 
     private void createUIComponents() {
-        mainClass = new LabeledComponent<>();
-        mainClass.setComponent(ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), (declaration, place) -> {
-            if (declaration instanceof KtLightClass aClass) {
-              if (ConfigurationUtil.MAIN_CLASS.value(aClass)
-                    && (PsiMethodUtil.findMainMethod(aClass) != null || place.getParent() != null)
-                    && moduleSelector.findClass(((PsiClass)declaration).getQualifiedName()) != null) {
-                    return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
-                }
-            }
-            return JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE;
-        },  createApplicationClassBrowser(project, () -> moduleSelector.getModule(), moduleChooser)));
+        mainClassEditorField = new LabeledComponent<>();
+        mainClassEditorField.setComponent(ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), VISIBILITY_CHECKER,
+                                                                            createApplicationClassBrowser(project, () -> moduleSelector.getModule(), moduleChooser)));
     }
 
     @Override
@@ -148,10 +132,21 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
     @Override
     public void setAnchor(JComponent anchor) {
         this.anchor = anchor;
-        mainClass.setAnchor(anchor);
+        mainClassEditorField.setAnchor(anchor);
         commonProgramParameters.setAnchor(anchor);
         jrePathEditor.setAnchor(anchor);
         moduleChooser.setAnchor(anchor);
         shortenClasspathModeCombo.setAnchor(anchor);
     }
+
+    public static final JavaCodeFragment.VisibilityChecker VISIBILITY_CHECKER = (declaration, place) -> {
+        if (declaration instanceof KtLightClass aClass) {
+            if (ConfigurationUtil.MAIN_CLASS.value(aClass)
+                    && (PsiMethodUtil.findMainMethod(aClass) != null || place.getParent() != null)
+                    && ModuleUtilCore.findModuleForPsiElement(declaration) != null) {
+                return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
+            }
+        }
+        return JavaCodeFragment.VisibilityChecker.Visibility.NOT_VISIBLE;
+    };
 }

@@ -40,6 +40,6 @@ public class JBDefaultTreeCellRenderer extends DefaultTreeCellRenderer {
   }
 
   protected Color getSelectionForeground(final @NotNull JTree tree) {
-    return myWideSelection && !tree.hasFocus() ? UIUtil.getTreeForeground() : UIUtil.getTreeSelectionForeground();
+    return myWideSelection && tree.hasFocus() ? UIUtil.getTreeSelectionForeground(true) : UIUtil.getTreeForeground();
   }
 }

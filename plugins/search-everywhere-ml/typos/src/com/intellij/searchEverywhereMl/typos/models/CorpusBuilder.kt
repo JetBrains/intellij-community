@@ -25,14 +25,13 @@ import com.intellij.searchEverywhereMl.typos.splitText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlin.text.lowercase
 import java.util.regex.Pattern
 
 @Service(Service.Level.APP)
 internal class CorpusBuilder(coroutineScope: CoroutineScope) {
   companion object {
     /**
-     * Returns null if the application is not in an internal mode
+     * Returns null if typo-tolerant search is disabled in the Advanced Settings
      */
     fun getInstance(): CorpusBuilder? {
       if (!isTypoFixingEnabled) {

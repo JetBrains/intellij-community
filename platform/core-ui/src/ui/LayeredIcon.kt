@@ -9,6 +9,7 @@ import com.intellij.ui.icons.CompositeIcon
 import com.intellij.ui.icons.DarkIconProvider
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.IconWithToolTip
+import com.intellij.ui.icons.deferredMask
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.scale.UserScaleContext
 import com.intellij.util.ArrayUtilRt
@@ -42,6 +43,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
   private var width = 0
   private var height = 0
 
+  private var deferredMask = 0
   private var sizeIsDirty = true
 
   init {
@@ -269,9 +271,18 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
     }
   }
 
+  private fun isSizeDirty(): Boolean {
+    if (sizeIsDirty) return true
+    if (deferredMask(this) != deferredMask) {
+      sizeIsDirty = true
+      return true
+    }
+    return false
+  }
+
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     scaleContext.update()
-    if (sizeIsDirty) {
+    if (isSizeDirty()) {
       updateSize(allLayers)
     }
 
@@ -300,7 +311,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
 
   override fun getIconWidth(): Int {
     scaleContext.update()
-    if (sizeIsDirty) {
+    if (isSizeDirty()) {
       updateSize(allLayers)
     }
     return ceil(scaleVal(width.toDouble(), ScaleType.OBJ_SCALE)).toInt()
@@ -308,7 +319,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
 
   override fun getIconHeight(): Int {
     scaleContext.update()
-    if (sizeIsDirty) {
+    if (isSizeDirty()) {
       updateSize(allLayers)
     }
     return ceil(scaleVal(height.toDouble(), ScaleType.OBJ_SCALE)).toInt()
@@ -324,6 +335,7 @@ open class LayeredIcon : JBCachingScalableIcon<LayeredIcon>, DarkIconProvider, C
 
   private fun updateSize(allLayers: Array<Icon?>) {
     sizeIsDirty = false
+    deferredMask = deferredMask(this)
 
     var minX = Int.MAX_VALUE
     var maxX = Int.MIN_VALUE

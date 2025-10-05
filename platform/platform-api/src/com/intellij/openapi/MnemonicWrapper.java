@@ -10,6 +10,8 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.ClientProperty;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,6 +21,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 abstract class MnemonicWrapper<T extends JComponent> implements Runnable, PropertyChangeListener {
+
   public static MnemonicWrapper<?> getWrapper(Component component) {
     if (component == null || ClientProperty.isTrue(component, MnemonicHelper.DISABLE_MNEMONIC_PROCESSING)) {
       return null;
@@ -41,7 +44,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     return null;
   }
 
-  final T myComponent; // direct access from inner classes
+  final @NotNull T myComponent; // direct access from inner classes
   private final String myTextProperty;
   private final String myCodeProperty;
   private final String myIndexProperty;
@@ -49,9 +52,9 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
   private boolean myFocusable;
   private boolean myEvent;
   private boolean myMnemonicChanged;
-  private Runnable myRunnable;
+  private boolean myRunScheduled;
 
-  private MnemonicWrapper(T component, String text, String code, String index) {
+  private MnemonicWrapper(@NotNull T component, String text, String code, String index) {
     myComponent = component;
     myTextProperty = text;
     myCodeProperty = code;
@@ -113,7 +116,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     finally {
       myEvent = false;
       myMnemonicChanged = false;
-      myRunnable = null;
+      myRunScheduled = false;
     }
   }
 
@@ -155,8 +158,8 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
   }
 
   private void updateRequest() {
-    if (myRunnable == null) {
-      myRunnable = this; // run once
+    if (!myRunScheduled) {
+      myRunScheduled = true; // run once
       SwingUtilities.invokeLater(this);
     }
   }
@@ -166,7 +169,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     return component == null || component.isFocusable();
   }
 
-  Component getFocusableComponent() {
+  @Nullable Component getFocusableComponent() {
     return myComponent;
   }
 
@@ -199,7 +202,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
   private static final class MenuWrapper extends AbstractButtonWrapper {
     private KeyStroke myStrokePressed;
 
-    private MenuWrapper(AbstractButton component) {
+    private MenuWrapper(@NotNull AbstractButton component) {
       super(component);
     }
 
@@ -213,7 +216,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     private KeyStroke myStrokePressed;
     private KeyStroke myStrokeReleased;
 
-    private ButtonWrapper(AbstractButton component) {
+    private ButtonWrapper(@NotNull AbstractButton component) {
       super(component);
     }
 
@@ -225,7 +228,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
   }
 
   private abstract static class AbstractButtonWrapper extends MnemonicWrapper<AbstractButton> {
-    private AbstractButtonWrapper(AbstractButton component) {
+    private AbstractButtonWrapper(@NotNull AbstractButton component) {
       super(component, "text", "mnemonic", "displayedMnemonicIndex");
     }
 
@@ -264,7 +267,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     private KeyStroke myStrokePress;
     private KeyStroke myStrokeRelease;
 
-    private LabelWrapper(JLabel component) {
+    private LabelWrapper(@NotNull JLabel component) {
       super(component, "text", "displayedMnemonic", "displayedMnemonicIndex");
     }
 
@@ -305,7 +308,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     }
 
     @Override
-    Component getFocusableComponent() {
+    @Nullable Component getFocusableComponent() {
       return myComponent.getLabelFor();
     }
   }

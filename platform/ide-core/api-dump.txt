@@ -9,6 +9,12 @@ com.intellij.ide.AppLifecycleListener
 - projectFrameClosed():V
 - projectOpenFailed():V
 - welcomeScreenDisplayed():V
+f:com.intellij.ide.IdeCoreBundle
+- sf:BUNDLE:java.lang.String
+- <init>():V
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messageOrNull(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 com.intellij.ide.RecentProjectsManager
 - sf:Companion:com.intellij.ide.RecentProjectsManager$Companion
 - addGroup(com.intellij.ide.ProjectGroup):V
@@ -26,6 +32,10 @@ com.intellij.ide.RecentProjectsManager
 - a:suggestNewProjectLocation():java.lang.String
 - a:updateLastProjectPath():V
 - willReopenProjectOnStart(kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.ide.RecentProjectsManager$Companion
+- f:getLAST_PROJECTS_TOPIC():com.intellij.util.messages.Topic
+com.intellij.ide.RecentProjectsManager$LastProjectsListener
+- a:lastProjectsReopened(com.intellij.openapi.project.Project):V
 com.intellij.ide.dnd.DnDDropHandler
 - a:drop(com.intellij.ide.dnd.DnDEvent):V
 com.intellij.ide.dnd.DnDDropHandler$WithResult
@@ -105,6 +115,7 @@ com.intellij.ide.wizard.Step
 com.intellij.ide.wizard.StepListener
 - java.util.EventListener
 - a:stateChanged():V
+c:com.intellij.notification.Notification
 com.intellij.notification.NotificationGroupManager
 - s:getInstance():com.intellij.notification.NotificationGroupManager
 - a:getNotificationGroup(java.lang.String):com.intellij.notification.NotificationGroup
@@ -122,6 +133,9 @@ com.intellij.notification.Notifications
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z):V
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,Z):V
 - register(java.lang.String,com.intellij.notification.NotificationDisplayType,Z,Z,java.lang.String):V
+a:com.intellij.openapi.actionSystem.ActionPlaces
+- sf:FIND_IN_FILES_POPUP:java.lang.String
+- sf:XDEBUGGER_TREE_POPUP:java.lang.String
 com.intellij.openapi.actionSystem.ActionWithDelegate
 - a:getDelegate():java.lang.Object
 - getPresentableName():java.lang.String
@@ -446,7 +460,6 @@ com.intellij.openapi.application.ApplicationStarter
 - sf:NON_MODAL:I
 - sf:NOT_IN_EDT:I
 - canProcessExternalCommandLine():Z
-- getCommandName():java.lang.String
 - getRequiredModality():I
 - isHeadless():Z
 - main(java.util.List):V

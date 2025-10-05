@@ -1,19 +1,23 @@
-from _typeshed import Incomplete
-
 from networkx.classes.graph import Graph, _Edge, _Node
-from networkx.utils.backends import _dispatch
+from networkx.utils.backends import _dispatchable
 from numpy.random import RandomState
 
-@_dispatch
+__all__ = ["betweenness_centrality", "edge_betweenness_centrality"]
+
+@_dispatchable
 def betweenness_centrality(
     G: Graph[_Node],
     k: int | None = None,
-    normalized: bool = True,
+    normalized: bool | None = True,
     weight: str | None = None,
-    endpoints: bool = False,
+    endpoints: bool | None = False,
     seed: int | RandomState | None = None,
 ) -> dict[_Node, float]: ...
-@_dispatch
+@_dispatchable
 def edge_betweenness_centrality(
-    G: Graph[_Node], k: int | None = None, normalized: bool = True, weight: str | None = None, seed: Incomplete | None = None
+    G: Graph[_Node],
+    k: int | None = None,
+    normalized: bool | None = True,
+    weight: str | None = None,
+    seed: int | RandomState | None = None,
 ) -> dict[_Edge[_Node], float]: ...

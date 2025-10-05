@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.JavaTestUtil;
@@ -49,7 +49,10 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.search.scope.packageSet.ParsingException;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.DumbModeTestUtils;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
@@ -309,12 +312,12 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testFindInOpenedFilesIncludesNoneProjectButOpenedFile() throws IOException {
-    File dir = createTempDirectory();
-    File file = new File(dir.getPath(), "A.test1234");
-    assertTrue(file.createNewFile());
-    FileUtil.writeToFile(file, "foo fo foo");
-    VirtualFile nonProjectFile = VfsUtil.findFileByIoFile(file, true);
-    assertNotNull(nonProjectFile);
+    File tempDir = createTempDirectory();
+    File nonProjectFile = new File(tempDir.getPath(), "A.test1234");
+    assertTrue(nonProjectFile.createNewFile());
+    FileUtil.writeToFile(nonProjectFile, "foo fo foo");
+    VirtualFile nonProjectVFile = VfsUtil.findFileByIoFile(nonProjectFile, true);
+    assertNotNull(nonProjectVFile);
 
     FindModel findModel = new FindModel();
     findModel.setStringToFind("fo");
@@ -323,7 +326,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setGlobal(true);
     findModel.setMultipleFiles(true);
     findModel.setCustomScope(true);
-    findModel.setCustomScope(GlobalSearchScope.filesScope(myProject, Arrays.asList(nonProjectFile)));
+    findModel.setCustomScope(GlobalSearchScope.filesScope(myProject, Arrays.asList(nonProjectVFile)));
 
     assertSize(1, findInProject(findModel));
   }
@@ -606,10 +609,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
     String text = "\"done done done\" /* done done done */";
-    FindManagerTestUtils.runFindInCommentsAndLiterals(myFindManager, findModel, text);
+    FindManagerTestUtils.runFindInCommentsAndLiterals(myFindManager, findModel, text, "java");
 
     findModel.setRegularExpressions(true);
-    FindManagerTestUtils.runFindInCommentsAndLiterals(myFindManager, findModel, text);
+    FindManagerTestUtils.runFindInCommentsAndLiterals(myFindManager, findModel, text, "java");
   }
 
   public void testFindWholeWords() {
@@ -701,10 +704,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     String text = "/** done done done */";
 
     findModel.setSearchContext(FindModel.SearchContext.IN_COMMENTS);
-    FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text);
+    FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text, "java");
 
     findModel.setRegularExpressions(true);
-    FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text);
+    FindManagerTestUtils.runFindForwardAndBackward(myFindManager, findModel, text, "java");
   }
 
   public void testFindInCommentsProperlyWorksWithOffsets() {

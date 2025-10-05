@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,9 +21,11 @@ final class DefaultUndoReportHandler implements UndoReportHandler {
 
   @Override
   public boolean reportNonUndoable(@Nullable Project project,
+                                   @Nls @NotNull String operationName,
                                    @NotNull Collection<? extends DocumentReference> problemFiles,
                                    boolean isUndo) {
-    return reportGeneric(project, IdeBundle.message("cannot.undo.error.contains.nonundoable.changes.message"), problemFiles);
+    String message = IdeBundle.message("cannot.undo.error.contains.nonundoable.changes.message", operationName);
+    return reportGeneric(project, message, problemFiles);
   }
 
   @Override

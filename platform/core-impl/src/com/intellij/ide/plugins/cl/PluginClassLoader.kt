@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ide.plugins.cl
@@ -8,12 +8,12 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginModuleDescriptor
-import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.plugins.contentModuleId
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.ShutDownTracker
-import com.intellij.util.Java11Shim
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ClassPath
 import com.intellij.util.lang.ClasspathCache
 import com.intellij.util.lang.Resource
@@ -471,7 +471,7 @@ ${if (exception == null) "" else exception.message}""")
 
   override fun getPluginId(): PluginId = pluginId
 
-  override fun getModuleId(): String? = (pluginDescriptor as IdeaPluginDescriptorImpl).contentModuleName
+  override fun getModuleId(): String? = (pluginDescriptor as IdeaPluginDescriptorImpl).contentModuleId
 
   override fun getPluginDescriptor(): PluginDescriptor = pluginDescriptor
 

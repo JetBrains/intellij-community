@@ -4,7 +4,6 @@ package com.intellij.diff.util
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import com.intellij.util.containers.Enumerator
 import com.intellij.util.containers.Interner
 import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException

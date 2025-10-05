@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
+import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -121,7 +124,20 @@ public final class IdeaTextPatchBuilder {
   public static boolean isBinaryRevision(@Nullable ContentRevision cr) {
     if (cr == null) return false;
     if (cr instanceof BinaryContentRevision) return true;
-    return cr.getFile().getFileType().isBinary();
+
+    FilePath file = cr.getFile();
+    FileType type = file.getFileType();
+    if (type instanceof UnknownFileType && cr instanceof ByteBackedContentRevision byteBasedContentRevision) {
+      try {
+        byte[] bytes = byteBasedContentRevision.getContentAsBytes();
+        if (bytes != null) {
+          return DiffContentFactoryImpl.isBinaryContent(bytes, type);
+        }
+      }
+      catch (VcsException ignored) {
+      }
+    }
+    return type.isBinary();
   }
 
   private static @Nullable AirContentRevision convertRevision(@Nullable ContentRevision cr, @Nullable String actualTextContent) {

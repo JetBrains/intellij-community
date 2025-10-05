@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,6 +36,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,10 +46,8 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance(AddImportAction.class);
@@ -68,12 +68,15 @@ public class AddImportAction implements QuestionAction {
   }
 
   @RequiresReadLock
+  @RequiresBackgroundThread
   public static @Nullable AddImportAction create(
     @NotNull Editor editor,
     @NotNull Module module,
     @NotNull PsiReference reference,
     @NotNull String className
   ) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = module.getProject();
     return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
       GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(module);
@@ -109,24 +112,14 @@ public class AddImportAction implements QuestionAction {
   private void chooseClassAndImport() {
     CodeInsightUtil.sortIdenticalShortNamedMembers(myTargetClasses, myReference);
 
-    class Maps {
-      final Map<PsiClass, String> names;
-      final Map<PsiClass, Icon> icons;
-
-      Maps(Map<PsiClass, String> names, Map<PsiClass, Icon> icons) {
-        this.names = names;
-        this.icons = icons;
-      }
+    record Maps(@NotNull Map<PsiClass, String> names, @NotNull Map<PsiClass, Icon> icons) {
     }
 
     Maps maps = ReadAction.compute(() -> {
       try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346760, EA-1028089")) {
-        return new Maps(
-          Arrays.stream(myTargetClasses)
-            .collect(Collectors.toMap(o -> o, t -> StringUtil.notNullize(t.getQualifiedName()))),
-          Arrays.stream(myTargetClasses)
-            .collect(Collectors.toMap(o -> o, t -> t.getIcon(0)))
-        );
+        Map<PsiClass, String> names = ContainerUtil.map2Map(myTargetClasses, t->Pair.create(t, StringUtil.notNullize(t.getQualifiedName())));
+        Map<PsiClass, Icon> icons = ContainerUtil.map2Map(myTargetClasses,t->Pair.create(t, t.getIcon(0)));
+        return new Maps(names, icons);
       }
     });
 
@@ -170,8 +163,8 @@ public class AddImportAction implements QuestionAction {
         }
 
         @Override
-        public Icon getIconFor(PsiClass value) {
-          return maps.icons.get(value);
+        public Icon getIconFor(PsiClass aClass) {
+          return maps.icons.get(aClass);
         }
 
         @Override

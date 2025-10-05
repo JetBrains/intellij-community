@@ -14,4 +14,6 @@ interface Module {
   fun getName(): String
 }
 
-fun Driver.getModules(project: Project? = null) = service<ModuleManager>(project ?: singleProject()).getModules().toList()
+fun Driver.getModules(project: Project? = null): List<Module> {
+  return service<ModuleManager>(project ?: singleProject()).getModules().toList()
+}

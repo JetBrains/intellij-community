@@ -121,7 +121,7 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
       return true;
     }
     var factory = TestRunnerService.getInstance(module).getSelectedFactory();
-    return factory.onlyClassesAreSupported(sdk);
+    return factory.onlyClassesAreSupported(module.getProject(), sdk);
   }
 
   private static boolean isTestCaseClassRequired(final @NotNull PsiElement anchor, final @NotNull ThreeState userProvidedValue) {

@@ -30,7 +30,7 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
      * So we have to allow the resolve from under write action and from EDT.
      */
     @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
-    private fun <T> analyzeForImportOptimization(file: KtFile, action: KaSession.() -> T): T =
+    private fun <T> analyzeForImportOptimization(file: KtFile, action: context(KaSession) () -> T): T =
         allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(file) {
@@ -44,7 +44,7 @@ internal class K2OptimizeImportsFacility : KotlinOptimizeImportsFacility {
 
         val importAnalysis = analyzeForImportOptimization(file) {
             val referenceCollector = UsedReferencesCollector(file)
-            referenceCollector.run { collectUsedReferences() }
+            referenceCollector.collectUsedReferences()
         }
 
         val unusedImports = computeUnusedImports(file, importAnalysis)

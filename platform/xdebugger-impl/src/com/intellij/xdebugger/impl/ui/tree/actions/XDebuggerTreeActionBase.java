@@ -13,6 +13,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * Base class for actions that operate on [XValueNodeImpl] tree nodes.
+ *
+ * Important: This action uses frontend node instances ([XValueNodeImpl]) which are only available on the frontend.
+ * In Split mode, backend-only actions cannot access these frontend nodes. For backend actions,
+ * use [XDebuggerTreeBackendOnlyActionBase] instead, which works with backend [XValue] instances.
+ *
+ * Use this class if the logic of the action is split and needs to operate on the frontend.
+ */
 public abstract class XDebuggerTreeActionBase extends AnAction {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {

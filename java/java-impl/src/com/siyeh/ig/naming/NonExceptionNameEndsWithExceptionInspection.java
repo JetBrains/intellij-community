@@ -58,7 +58,7 @@ public final class NonExceptionNameEndsWithExceptionInspection extends BaseInspe
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NonExceptionNameEndsWithExceptionVisitor();
   }
 

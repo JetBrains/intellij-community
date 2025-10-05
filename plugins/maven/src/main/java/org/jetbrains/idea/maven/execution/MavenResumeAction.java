@@ -215,7 +215,7 @@ public class MavenResumeAction extends AnAction {
     try {
       MavenRunConfiguration runConfiguration = ((MavenRunConfiguration)myEnvironment.getRunProfile()).clone();
 
-      List<String> goals = runConfiguration.getRunnerParameters().getGoals();
+      List<String> goals = new ArrayList<>(runConfiguration.getRunnerParameters().getGoals());
 
       if (goals.size() > 2 && "-rf".equals(goals.get(goals.size() - 2))) { // This runConfiguration was created by other MavenResumeAction.
         goals.set(goals.size() - 1, myResumeModuleId);

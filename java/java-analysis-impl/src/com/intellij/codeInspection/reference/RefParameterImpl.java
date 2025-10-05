@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,29 +191,23 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
              : convertToStringRepresentation(value);
     }
     Object value = expression.evaluate();
+    if (value instanceof PsiClassType type) {
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+      if (aClass == null || PsiUtil.isLocalClass(aClass)) return VALUE_IS_NOT_CONST;
+    }
     return value == null ? VALUE_IS_NOT_CONST : convertToStringRepresentation(value);
   }
 
-  private static @Nullable Object convertToStringRepresentation(Object value) {
-    if (value instanceof Long) {
-      return value + "L";
-    }
-    else if (value instanceof Short) {
-      return "(short)" + value;
-    }
-    else if (value instanceof Byte) {
-      return "(byte)" + value;
-    }
-    else if (value instanceof String string) {
-      return "\"" + StringUtil.escapeStringCharacters(string) + "\"";
-    }
-    else if (value instanceof Character) {
-      return "'" + StringUtil.escapeCharCharacters(String.valueOf(value)) + "'";
-    }
-    else if (value instanceof PsiType type) {
-      return new ConstValue(type.getCanonicalText() + ".class", type.getPresentableText() + ".class");
-    }
-    return value;
+  private static @NotNull Object convertToStringRepresentation(@NotNull Object value) {
+    return switch (value) {
+      case Long aLong -> aLong + "L";
+      case Short aShort -> "(short)" + aShort;
+      case Byte aByte -> "(byte)" + aByte;
+      case String string -> "\"" + StringUtil.escapeStringCharacters(string) + "\"";
+      case Character character -> "'" + StringUtil.escapeCharCharacters(String.valueOf(character)) + "'";
+      case PsiType type -> new ConstValue(type.getCanonicalText() + ".class", type.getPresentableText() + ".class");
+      default -> value;
+    };
   }
 
   private static boolean isAccessible(@NotNull UField field, @NotNull PsiElement place) {

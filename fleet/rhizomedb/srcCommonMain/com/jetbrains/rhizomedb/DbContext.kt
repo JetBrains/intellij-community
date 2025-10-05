@@ -22,13 +22,14 @@ class DbContext<out QQ : Q>(
   val impl: QQ
     get() {
       return when (val q = privateValue) {
+        CloseMarker -> throw Throwable("change closed")
         is CancellationException -> throw CancellationException("DBContext is poisoned", q)
         is Throwable -> throw RuntimeException("DBContext is poisoned", q)
         else -> q as QQ
       }
     }
-  
-  val poison: Throwable?  
+
+  val poison: Throwable?
     get() = privateValue as? Throwable
 
   fun set(q: Q) {
@@ -40,7 +41,13 @@ class DbContext<out QQ : Q>(
     privateValue = x
   }
 
+  fun markClosed() {
+    privateValue = CloseMarker
+  }
+
   companion object {
+    internal val CloseMarker = Any()
+
     @JvmStatic
     val threadLocal: ThreadLocal<DbContext<*>?> = ThreadLocal()
 

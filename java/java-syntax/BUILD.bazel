@@ -1,19 +1,22 @@
 ### auto-generated section `build intellij.java.syntax` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  jvm_target = 8,
+  name = "custom_syntax",
+  jvm_target = "8",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-  ]
+  ],
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "syntax_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -21,8 +24,9 @@ jvm_library(
   name = "syntax",
   module_name = "intellij.java.syntax",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":syntax_resources"],
+  kotlinc_opts = ":custom_syntax",
   deps = [
     "//platform/syntax/syntax-api:syntax",
     "@lib//:kotlin-stdlib",
@@ -36,7 +40,6 @@ jvm_library(
   exports = [
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-util:util",
-  ],
-  runtime_deps = [":syntax_resources"]
+  ]
 )
 ### auto-generated section `build intellij.java.syntax` end

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.DeferredIcon;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.icons.CompositeIcon;
@@ -19,8 +20,8 @@ import java.util.concurrent.ExecutionException;
 public final class TestLookupElementPresentation extends LookupElementPresentation {
   public static @NotNull TestLookupElementPresentation renderReal(@NotNull LookupElement e) {
     TestLookupElementPresentation p = new TestLookupElementPresentation();
-    try {
-      ReadAction.nonBlocking(()-> {
+    PlatformTestUtil.waitForFuture(
+      ReadAction.nonBlocking(() -> {
         //noinspection rawtypes
         LookupElementRenderer renderer = e.getExpensiveRenderer();
         if (renderer == null) {
@@ -30,11 +31,7 @@ public final class TestLookupElementPresentation extends LookupElementPresentati
           //noinspection unchecked
           renderer.renderElement(e, p);
         }
-      }).submit(AppExecutorUtil.getAppExecutorService()).get();
-    }
-    catch (InterruptedException | ExecutionException ex) {
-      throw new RuntimeException(ex);
-    }
+      }).submit(AppExecutorUtil.getAppExecutorService()));
     return p;
   }
 

@@ -74,7 +74,7 @@ import java.util.function.Supplier
 import javax.swing.*
 import kotlin.math.abs
 
-internal class ToolWindowImpl(
+@ApiStatus.Internal class ToolWindowImpl(
   @JvmField val toolWindowManager: ToolWindowManagerImpl,
   private val id: String,
   private val canCloseContent: Boolean,
@@ -486,6 +486,8 @@ internal class ToolWindowImpl(
     toolWindowManager.stretchHeight(this, value)
   }
 
+  internal fun getNullableDecorator() = decorator
+
   override fun getDecorator(): InternalDecoratorImpl = decorator!!
 
   override fun setAdditionalGearActions(value: ActionGroup?) {
@@ -720,7 +722,7 @@ internal class ToolWindowImpl(
 
   fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
     return object : ActionGroupWrapper(GearActionGroup()) {
-      override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+      override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         val result = mutableListOf<AnAction>()
         result.addAll(super.getChildren(e))
         if (!skipHideAction) {
@@ -772,7 +774,7 @@ internal class ToolWindowImpl(
       templatePresentation.text = IdeBundle.message("show.options.menu")
     }
 
-    override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       val group = DefaultActionGroup()
       val additionalGearActions = additionalGearActions
       if (additionalGearActions != null) {

@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// NO_TEMPLATE_TESTING
 // AFTER-WARNING: Parameter 'args' is never used
 // AFTER-WARNING: Variable 't' is never used
 var a: String? = "A"

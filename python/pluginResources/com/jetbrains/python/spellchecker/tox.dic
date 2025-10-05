@@ -1,0 +1,6 @@
+envlist
+rrequirements
+skipsdist
+posargs
+toxinidir
+basepython

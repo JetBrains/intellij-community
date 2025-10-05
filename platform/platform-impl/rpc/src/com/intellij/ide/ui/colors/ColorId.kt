@@ -14,9 +14,16 @@ import java.awt.Color
 private val LOG = fileLogger()
 
 /**
- * Converts an [Color] instance into a [ColorId] which can be used in RPC calls and stored in Rhizome.
+ * Converts a [Color] instance into a [ColorId] which can be used in RPC calls and stored in Rhizome.
+ *
+ * **WARNING: This API is experimental and should be used with care.**
+ *
+ * In the monolith version of the IDE, this essentially stores a reference to the original Color object.
+ * In Remote Development scenarios, the Color is serialized for transmission to the frontend.
+ *
+ * @return A [ColorId] that can be used in RPC calls
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun Color.rpcId(): ColorId {
   val color = this
   val serializedColor = serializeToRpc(color)
@@ -26,8 +33,16 @@ fun Color.rpcId(): ColorId {
 
 /**
  * Retrieves the [Color] associated with the given [ColorId].
+ *
+ * **WARNING: This API is experimental and should be used with care.**
+ *
+ * In the monolith version of the IDE, this method essentially does nothing - it just reuses the original
+ * Color object that was passed to [rpcId]. However, in distributed scenarios (Remote Development), this
+ * function attempts to deserialize a Color from RPC data.
+ *
+ * @return The [Color] if available, or [JBColor.BLACK] if deserialization fails
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun ColorId.color(): Color {
   if (localColor != null) {
     return localColor
@@ -39,7 +54,7 @@ fun ColorId.color(): Color {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @Serializable
 class ColorId internal constructor(
   @Serializable @JvmField internal val serializedValue: SerializedValue? = null,

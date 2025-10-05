@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInsight.Nullability;
@@ -54,12 +54,12 @@ public enum SpecialField implements DerivedVariableDescriptor {
     @NotNull
     DfType fromInitializer(PsiExpression initializer) {
       if (initializer instanceof PsiArrayInitializerExpression) {
-        return DfTypes.intValue(((PsiArrayInitializerExpression)initializer).getInitializers().length);
+        return DfTypes.intValue(((PsiArrayInitializerExpression)initializer).getInitializerCount());
       }
       if (initializer instanceof PsiNewExpression) {
         PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
         if (arrayInitializer != null) {
-          return DfTypes.intValue(arrayInitializer.getInitializers().length);
+          return DfTypes.intValue(arrayInitializer.getInitializerCount());
         }
         PsiExpression[] dimensions = ((PsiNewExpression)initializer).getArrayDimensions();
         if (dimensions.length > 0) {
@@ -234,6 +234,9 @@ public enum SpecialField implements DerivedVariableDescriptor {
         TypeConstraint constraint = TypeConstraint.fromDfType(qualifier.getDfType());
         if (constraint.isExact()) {
           PsiClass cls = PsiUtil.resolveClassInClassTypeOnly(constraint.getPsiType(qualifier.getFactory().getProject()));
+          if (cls instanceof PsiEnumConstantInitializer) {
+            cls = cls.getSuperClass();
+          }
           if (cls != null) {
             long count = Arrays.stream(cls.getFields()).filter(field -> field instanceof PsiEnumConstant).count();
             // Keep +1 ordinal for possible enum changes

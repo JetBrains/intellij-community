@@ -11,13 +11,21 @@ import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.util.CanonicalTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.functionTypeKind
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
+ import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
@@ -92,8 +100,7 @@ object ChangeSignatureFixFactory {
     }
 
     val removeParameterFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NoValueForParameter ->
-        if (!isWritable(diagnostic.violatedParameter)) return@IntentionBased emptyList()
-        createRemoveParameterFix(diagnostic.violatedParameter, diagnostic.psi)
+        createRemoveParameterFix(diagnostic.psi, diagnostic.violatedParameter.asString())
     }
 
     val typeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
@@ -154,7 +161,7 @@ object ChangeSignatureFixFactory {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun prepareChangeInfo(psi: PsiElement, input: Input): ChangeInfo? {
         if (input.type == ChangeType.CHANGE_FUNCTIONAL) {
@@ -285,7 +292,7 @@ object ChangeSignatureFixFactory {
         return changeInfo
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun prepareFunctionalLiteralChangeInfo(psi: KtLambdaExpression, input: Input): KotlinChangeInfo? {
         val callable = psi.functionLiteral
         val descriptor = KotlinMethodDescriptor(callable)
@@ -319,7 +326,7 @@ object ChangeSignatureFixFactory {
         return changeInfo
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getNameValidator(
         callable: KtNamedDeclaration, usedNames: MutableSet<String> = mutableSetOf<String>()
     ): (String) -> Boolean {
@@ -332,17 +339,24 @@ object ChangeSignatureFixFactory {
         return { name -> usedNames.add(name) && nameValidator.validate(name) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun getKtType(argumentExpression: KtExpression?): KaType? {
-        var ktType = argumentExpression?.expressionType
-        val typeKind = ktType?.functionTypeKind
+        val ktType = argumentExpression?.expressionType
+        return ktType?.toFunctionType() ?: ktType
+    }
+
+
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    fun KaType.toFunctionType(): KaType? {
+        val typeKind = functionTypeKind
         when (typeKind) {
             FunctionTypeKind.KFunction -> typeKind.nonReflectKind()
             FunctionTypeKind.KSuspendFunction -> typeKind.nonReflectKind()
             else -> null
         }?.let {
-            val functionalType = ktType as KaFunctionType
+            val functionalType = this as KaFunctionType
             return buildClassType(it.numberedClassId((functionalType).arity)) {
                 functionalType.parameterTypes.forEach { arg ->
                     argument(arg)
@@ -350,10 +364,10 @@ object ChangeSignatureFixFactory {
                 argument(functionalType.returnType)
             }
         }
-        return ktType
+        return null
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getNewArgumentName(argument: ValueArgument, validator: (String) -> Boolean): String {
         val expression = KtPsiUtil.deparenthesize(argument.getArgumentExpression())
         val argumentName = argument.getArgumentName()?.asName?.asString() ?: (expression as? KtNameReferenceExpression)?.getReferencedName()
@@ -385,7 +399,7 @@ object ChangeSignatureFixFactory {
         return name == IMPLICIT_LAMBDA_PARAMETER_NAME.identifier || name == "field"
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createAddParameterFix(
         ktCallableSymbol: KaCallableSymbol,
         element: PsiElement,
@@ -412,35 +426,37 @@ object ChangeSignatureFixFactory {
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun createRemoveParameterFix(
-        symbol: KaSymbol,
-        element: PsiElement,
+        element: KtElement,
+        parameterName: String,
     ): List<ParameterQuickFix> {
-        if (symbol !is KaParameterSymbol) return emptyList()
-        val containingSymbol = symbol.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
-        if (containingSymbol is KaNamedFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
-            containingSymbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED ||
-            containingSymbol.origin == KaSymbolOrigin.LIBRARY
+        val functionLikeSymbol =
+            ((element.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)?.symbol as? KaFunctionSymbol
+                ?: return emptyList()
+
+        if (!isWritable(functionLikeSymbol)) return emptyList()
+        if (functionLikeSymbol is KaNamedFunctionSymbol && functionLikeSymbol.valueParameters.any { it.isVararg } ||
+            functionLikeSymbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED ||
+            functionLikeSymbol.origin == KaSymbolOrigin.LIBRARY
         ) return emptyList()
 
-        val name = (symbol as? KaNamedSymbol)?.name?.asString() ?: return emptyList()
         val callee = (element as? KtDotQualifiedExpression)?.selectorExpression ?: element
         if (callee.parentOfType<KtCallElement>(true) == null) return emptyList()
 
         val input = Input(
             type = ChangeType.REMOVE,
-            name = name,
-            isConstructor = containingSymbol is KaConstructorSymbol,
-            idx = containingSymbol.valueParameters.indexOf<Any>(symbol),
-            parameterCount = containingSymbol.valueParameters.size,
+            name = parameterName,
+            isConstructor = functionLikeSymbol is KaConstructorSymbol,
+            idx = functionLikeSymbol.valueParameters.indexOfFirst { it.name.asString() == parameterName },
+            parameterCount = functionLikeSymbol.valueParameters.size,
         )
         return listOf(
             ParameterQuickFix(callee, input),
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createMismatchParameterTypeFix(
         element: PsiElement,
@@ -486,7 +502,7 @@ object ChangeSignatureFixFactory {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun getDeclarationName(functionLikeSymbol: KaFunctionSymbol): String? {
     return when(functionLikeSymbol) {
         is KaConstructorSymbol -> {

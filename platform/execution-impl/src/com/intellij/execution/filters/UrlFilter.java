@@ -56,11 +56,11 @@ public class UrlFilter implements Filter, DumbAware {
     List<ResultItem> resultList = new ArrayList<>();
 
     if (line.contains(LocalFileSystem.PROTOCOL_PREFIX)) {
-      resultList.addAll(findMatchingItems(line, URLUtil.FILE_URL_PATTERN, textStartOffset));
+      resultList.addAll(findMatchingItems(line, URLUtil.FILE_URL_PATTERN_OPTIMIZED, textStartOffset));
     }
 
     if (isPotentialUrl(line)) {
-      resultList.addAll(findMatchingItems(line, URLUtil.URL_PATTERN, textStartOffset));
+      resultList.addAll(findMatchingItems(line, URLUtil.URL_PATTERN_OPTIMIZED, textStartOffset));
     }
 
     if (resultList.isEmpty()) {

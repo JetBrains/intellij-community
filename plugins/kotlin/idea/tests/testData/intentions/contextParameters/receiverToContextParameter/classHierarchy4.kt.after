@@ -1,7 +1,8 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 
 interface IFace {
-    context(string: String) fun foo()
+    context(string: String)
+    fun foo()
 
     private fun usage1(s: String) {
         with(s) {
@@ -20,7 +21,8 @@ interface IFace {
 }
 
 open class OpenClass : IFace {
-    context(string: String) override fun foo() {}
+    context(string: String)
+    override fun foo() {}
 
     private fun usage1(s: String) {
         with(s) {
@@ -39,7 +41,8 @@ open class OpenClass : IFace {
 }
 
 class FinalClass : OpenClass(), IFace {
-    context(string: String) override fun foo() {}
+    context(string: String)
+    override fun foo() {}
 
     private fun usage1(s: String) {
         with(s) {

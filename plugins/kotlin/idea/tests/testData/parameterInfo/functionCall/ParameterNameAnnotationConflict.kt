@@ -6,6 +6,3 @@ fun f() {
     v(<caret>)
 }
 
-/*
-Text: (<highlight>pickMe: String</highlight>), Disabled: false, Strikeout: false, Green: true
-*/

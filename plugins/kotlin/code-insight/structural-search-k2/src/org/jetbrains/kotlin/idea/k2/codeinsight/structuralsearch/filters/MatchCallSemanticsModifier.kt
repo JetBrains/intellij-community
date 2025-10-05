@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class MatchCallSemanticsModifier : OneStateFilter(
-    KotlinBundle.lazyMessage("ssr.modifier.match.call.semantically"),
+    KotlinBundle.messagePointer("ssr.modifier.match.call.semantically"),
     KotlinBundle.message("ssr.modifier.match.call.semantically"),
     CONSTRAINT_NAME
 ) {

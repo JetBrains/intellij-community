@@ -14,9 +14,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.observation.launchTracked
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asNioPath
@@ -28,7 +31,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.maven.dom.MavenDomUtil
@@ -44,6 +46,7 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
 import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.trigger
+import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.NioFiles
@@ -66,6 +69,12 @@ open class MavenModuleBuilderHelper(
   private class CoroutineService(val coroutineScope: CoroutineScope)
 
   open fun configure(project: Project, root: VirtualFile, isInteractive: Boolean) {
+    project.trackActivityBlocking(MavenActivityKey) {
+      doConfigure(project, root, isInteractive)
+    }
+  }
+
+  open fun doConfigure(project: Project, root: VirtualFile, isInteractive: Boolean) {
     trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT)
 
     val psiFiles = if (myAggregatorProject != null) arrayOf(getPsiFile(project, myAggregatorProject.file)) else PsiFile.EMPTY_ARRAY
@@ -123,7 +132,7 @@ open class MavenModuleBuilderHelper(
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
     val cs = project.service<CoroutineService>().coroutineScope
-    cs.launch {
+    cs.launchTracked {
       // execute when current dialog is closed (e.g. Project Structure)
       withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         if (!pom.isValid) {
@@ -216,9 +225,12 @@ open class MavenModuleBuilderHelper(
       return
     }
 
+    val mavenVersion = MavenUtil.getMavenVersion(project)
+    val archetypePluginVersion = if (StringUtil.compareVersionNumbers(mavenVersion, "3.6.3") >= 0) "RELEASE" else "3.1.2"
+
     val params = MavenRunnerParameters(
       false, workingDir.pathString, null as String?,
-      listOf("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
+      listOf("org.apache.maven.plugins:maven-archetype-plugin:$archetypePluginVersion:generate"),
       emptyList())
 
     val runner = MavenRunner.getInstance(project)

@@ -2,8 +2,8 @@
 package git4idea.ignore
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -35,7 +35,6 @@ import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.SystemIndependent
@@ -52,11 +51,7 @@ private class GitIgnoreInStoreDirGeneratorActivity : ProjectActivity {
       return
     }
 
-    val completableDeferred = CompletableDeferred<Unit>()
-    project.serviceAsync<ProjectLevelVcsManager>().runAfterInitialization {
-      completableDeferred.complete(Unit)
-    }
-    completableDeferred.join()
+    project.serviceAsync<ProjectLevelVcsManager>().awaitInitialization()
     project.service<GitIgnoreInStoreDirGenerator>().run()
   }
 }

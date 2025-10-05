@@ -2,11 +2,9 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -306,24 +304,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testArrayTypeParameterInference() {
     setupTypeUseAnnotations("typeUse", myFixture);
-    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
-    nnnManager.setDefaultNotNull("typeUse.NotNull");
-    nnnManager.setDefaultNullable("typeUse.Nullable");
-    Disposer.register(getTestRootDisposable(), () -> {
-      nnnManager.setDefaultNotNull(AnnotationUtil.NOT_NULL);
-      nnnManager.setDefaultNullable(AnnotationUtil.NULLABLE);
-    });
     doTest();
   }
   public void testArrayTypeParameterInferenceAmbiguous() {
     setupAmbiguousAnnotations("ambiguous", myFixture);
-    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
-    nnnManager.setDefaultNotNull("ambiguous.NotNull");
-    nnnManager.setDefaultNullable("ambiguous.Nullable");
-    Disposer.register(getTestRootDisposable(), () -> {
-      nnnManager.setDefaultNotNull(AnnotationUtil.NOT_NULL);
-      nnnManager.setDefaultNullable(AnnotationUtil.NULLABLE);
-    });
     doTest();
   }
   public void testGuavaFunction() {

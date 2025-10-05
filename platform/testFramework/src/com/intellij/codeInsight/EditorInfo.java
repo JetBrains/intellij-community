@@ -19,10 +19,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.common.EditorCaretTestUtil;
 
 public class EditorInfo {
   private final String newFileText;
-  public EditorTestUtil.CaretAndSelectionState caretState;
+  public EditorCaretTestUtil.CaretAndSelectionState caretState;
 
   public EditorInfo(final String fileText) {
     Document document = EditorFactory.getInstance().createDocument(fileText);

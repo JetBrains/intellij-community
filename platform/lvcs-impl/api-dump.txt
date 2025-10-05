@@ -55,7 +55,6 @@ a:com.intellij.history.core.changes.Change
 - p:<init>(java.io.DataInput):V
 - accept(com.intellij.history.core.changes.ChangeVisitor):V
 - a:affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
-- a:affectsMatching(java.util.regex.Pattern):Z
 - a:affectsPath(java.lang.String):Z
 - a:affectsProject(java.lang.String):Z
 - f:equals(java.lang.Object):Z
@@ -339,7 +338,6 @@ a:com.intellij.history.integration.revertion.Reverter
 - p:myVcs:com.intellij.history.core.LocalHistoryFacade
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,java.util.function.Supplier):V
 - p:askForReadOnlyStatusClearing():Z
-- askUserForProceeding():java.util.List
 - checkCanRevert():java.util.List
 - pa:doRevert():V
 - getCommandName():java.lang.String

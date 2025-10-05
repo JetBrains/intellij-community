@@ -10,6 +10,6 @@ internal object RequirementsUtil {
     val ext = FileUtilRt.getExtension(sequence)
     if (ext != "txt" && ext != "in") return false
     val path = file.path
-    return path.contains("/requirements/")
+    return path.contains("/requirements/") || sequence.contains("requirements")
   }
 }

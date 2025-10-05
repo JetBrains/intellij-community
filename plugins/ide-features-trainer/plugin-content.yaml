@@ -6,8 +6,7 @@
 - name: lib/assertj.jar
   library: assertJ
   files:
-  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/3/assertj-core-3.jar
-  - name: $MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1/byte-buddy-1.jar
+  - name: $MAVEN_REPOSITORY$/org/assertj/assertj-core/4/assertj-core-4.jar
   reason: <- intellij.featuresTrainer
 - name: lib/featuresTrainer.jar
   modules:

@@ -72,7 +72,7 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
   }
 
   @Override
-  public void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
+  protected void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
     super.correctMax(node, deltaUpToRoot);
     ((Node<T>)node).recalculateSubTreeSum();
   }
@@ -92,17 +92,17 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
     }
 
     @Override
-    public Node<T> getLeft() {
+    protected Node<T> getLeft() {
       return (Node<T>)super.getLeft();
     }
 
     @Override
-    public Node<T> getRight() {
+    protected Node<T> getRight() {
       return (Node<T>)super.getRight();
     }
 
     @Override
-    public Node<T> getParent() {
+    protected Node<T> getParent() {
       return (Node<T>)super.getParent();
     }
 
@@ -137,8 +137,8 @@ public class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> 
     }
 
     @Override
-    public void removeIntervalInternal(int i) {
-      super.removeIntervalInternal(i);
+    public void removeIntervalInternal(int i, T oldInterval) {
+      super.removeIntervalInternal(i, oldInterval);
       recalculateSubTreeSumUp();
     }
   }

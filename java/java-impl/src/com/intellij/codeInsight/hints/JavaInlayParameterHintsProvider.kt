@@ -9,11 +9,11 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 
-class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
+public class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
 
-  object Utils {
+  public object Utils {
     @JvmStatic
-    fun getInstance(): JavaInlayParameterHintsProvider = InlayParameterHintsExtension.forLanguage(JavaLanguage.INSTANCE) as JavaInlayParameterHintsProvider
+    public fun getInstance(): JavaInlayParameterHintsProvider = InlayParameterHintsExtension.forLanguage(JavaLanguage.INSTANCE) as JavaInlayParameterHintsProvider
   }
   
   override fun getHintInfo(element: PsiElement): MethodInfo? {
@@ -98,41 +98,41 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "*.Arrays.asList"
   )
   
-  val showIfMethodNameContainsParameterName: Option = Option("java.method.name.contains.parameter.name",
-                                                             JavaBundle.messagePointer(
+  public val showIfMethodNameContainsParameterName: Option = Option("java.method.name.contains.parameter.name",
+                                                                    JavaBundle.messagePointer(
                                                                "settings.inlay.java.parameters.with.names.that.are.contained.in.the.method.name"),
-                                                             false)
+                                                                    false)
   
-  val showForParamsWithSameType: Option = Option("java.multiple.params.same.type",
-                                                 JavaBundle.messagePointer(
+  public val showForParamsWithSameType: Option = Option("java.multiple.params.same.type",
+                                                        JavaBundle.messagePointer(
                                                    "settings.inlay.java.non.literals.in.case.of.multiple.parameters.with.the.same.type"),
-                                                 false)
+                                                        false)
   
-  val showForBuilderLikeMethods: Option = Option("java.build.like.method",
-                                                 JavaBundle.messagePointer("settings.inlay.java.builder.like.methods"),
-                                                 false)
+  public val showForBuilderLikeMethods: Option = Option("java.build.like.method",
+                                                        JavaBundle.messagePointer("settings.inlay.java.builder.like.methods"),
+                                                        false)
 
 
-  val ignoreOneCharOneDigitHints: Option = Option("java.simple.sequentially.numbered",
-                                                  JavaBundle.messagePointer(
+  public val ignoreOneCharOneDigitHints: Option = Option("java.simple.sequentially.numbered",
+                                                         JavaBundle.messagePointer(
                                                     "settings.inlay.java.methods.with.same.named.numbered.parameters"),
-                                                  false)
+                                                         false)
 
-  val isShowHintWhenExpressionTypeIsClear: Option = Option("java.clear.expression.type",
-                                                           JavaBundle.messagePointer(
+  public val isShowHintWhenExpressionTypeIsClear: Option = Option("java.clear.expression.type",
+                                                                  JavaBundle.messagePointer(
                                                              "settings.inlay.java.complex.expressions.binary.functional.array.access.and.other"),
-                                                           false).also {
+                                                                  false).also {
     it.extendedDescriptionSupplier = JavaBundle.messagePointer(
       "settings.inlay.java.show.parameter.hints.when.expression.type.is.clear.description")
   }
 
-  val isShowHintsForEnumConstants: Option = Option("java.enums",
-                                                   JavaBundle.messagePointer("settings.inlay.java.enum.constants"),
-                                                   true)
+  public val isShowHintsForEnumConstants: Option = Option("java.enums",
+                                                          JavaBundle.messagePointer("settings.inlay.java.enum.constants"),
+                                                          true)
 
-  val isShowHintsForNewExpressions: Option = Option("java.new.expr",
-                                                    JavaBundle.messagePointer("settings.inlay.java.new.expressions"),
-                                                    true)
+  public val isShowHintsForNewExpressions: Option = Option("java.new.expr",
+                                                           JavaBundle.messagePointer("settings.inlay.java.new.expressions"),
+                                                           true)
 
   override fun getSupportedOptions(): List<Option> {
     return listOf(

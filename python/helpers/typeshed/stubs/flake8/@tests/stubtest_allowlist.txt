@@ -1,4 +1,1 @@
 flake8.__main__
-
-# Can't reconcile @cached_property with @property.
-flake8.processor.FileProcessor.file_tokens

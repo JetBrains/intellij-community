@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.TestFrameworks
@@ -6,7 +6,7 @@ import com.intellij.codeInspection.*
 import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.codeInspection.HamcrestCommonClassNames.ORG_HAMCREST_MATCHER_ASSERT
 import com.intellij.execution.junit.isJUnit4InScope
-import com.intellij.execution.junit.isJUnit5InScope
+import com.intellij.execution.junit.isJUnit5Or6InScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
@@ -25,7 +25,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 class JUnit5AssertionsConverterInspection(val frameworkName: @NonNls String = "JUnit5") : AbstractBaseUastLocalInspectionTool() {
   private fun shouldInspect(file: PsiFile): Boolean =
     JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)
-    && isJUnit4InScope(file) && isJUnit5InScope(file)
+    && isJUnit4InScope(file) && isJUnit5Or6InScope(file)
     && (file as? PsiClassOwner)?.classes?.all {  TestFrameworks.detectFramework(it)?.name != frameworkName } == false
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {

@@ -7,7 +7,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.contentModuleName
+import com.intellij.ide.plugins.contentModuleId
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.application.ApplicationManager
@@ -30,6 +30,7 @@ import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -43,19 +44,20 @@ import kotlin.io.path.name
  * Currently, updates are pushed here from UpdateChecker and related code
  */
 @Service(Service.Level.APP)
-internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
+@Internal
+class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
   private val updatesState: MutableMap<PluginId, DownloadedUpdate> = ConcurrentHashMap()
   private val pendingDownloads: Channel<List<PluginDownloader>> = Channel(capacity = Channel.UNLIMITED)
   private var downloadManagerJob: Job? = null
 
-  fun isAutoUpdateEnabled(): Boolean = Companion.isAutoUpdateEnabled()
+  fun isAutoUpdateEnabled(): Boolean = com.intellij.openapi.updateSettings.impl.isAutoUpdateEnabled()
 
   private fun setupDownloadManager() {
     synchronized(this) {
       if (isAutoUpdateEnabled()) {
         if (downloadManagerJob?.isActive != true) {
           LOG.debug { "setting up download manager" }
-          downloadManagerJob = cs.launchDownloadManager()
+          downloadManagerJob = coroutineScope.launchDownloadManager()
         }
       } else {
         val job = downloadManagerJob
@@ -63,7 +65,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
         while (true) { // drain pending downloads
           pendingDownloads.tryReceive().getOrNull() ?: break
         }
-        cs.launch(Dispatchers.IO) { // TODO this coroutine might race with next downloadManagerJob
+        coroutineScope.launch(Dispatchers.IO) { // TODO this coroutine might race with next downloadManagerJob
           job?.join()
           dropDownloadedUpdates()
         }
@@ -111,7 +113,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
   private suspend fun downloadUpdates(downloaders: List<PluginDownloader>): List<PluginDownloader> {
     val downloadedList = mutableListOf<PluginDownloader>()
     val enabledPluginsAndModules: Set<String> = PluginManagerCore.getPluginSet().getEnabledModules().flatMap {
-      listOf(it.contentModuleName ?: it.pluginId.idString) + it.pluginAliases.map { id -> id.idString }
+      listOf(it.contentModuleId ?: it.pluginId.idString) + it.pluginAliases.map { id -> id.idString }
     }.toSet()
     val downloaders = downloaders.filter { downloader ->
       val existingUpdateState = updatesState[downloader.id]
@@ -188,13 +190,13 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
     setupDownloadManager()
   }
 
-  internal fun onSettingsChanged() {
+  fun onSettingsChanged() {
     LOG.debug { "onSettingsChanged: " +
                 "allowed=${PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()} " +
                 "enabled=${UpdateSettings.getInstance().isPluginsAutoUpdateEnabled} " }
     // should erase already downloaded updates if the setting gets disabled
     // TODO this thing is not bullet-proof, only explicit setting change from the UI is tracked
-    cs.launch {
+    coroutineScope.launch {
       setupDownloadManager()
     }
 
@@ -220,20 +222,19 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
       }
     }
   }
-
-
-  private companion object {
-    fun isAutoUpdateEnabled(): Boolean = PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() &&
-                                         UpdateSettings.getInstance().isPluginsAutoUpdateEnabled
-  }
 }
 
-internal interface PluginAutoUpdateListener {
+private fun isAutoUpdateEnabled(): Boolean {
+  return PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() && UpdateSettings.getInstance().isPluginsAutoUpdateEnabled
+}
+
+@Internal
+interface PluginAutoUpdateListener {
   fun settingsChanged()
 
   companion object {
     @Topic.AppLevel
-    val TOPIC: Topic<PluginAutoUpdateListener> = Topic<PluginAutoUpdateListener>(PluginAutoUpdateListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
+    val TOPIC: Topic<PluginAutoUpdateListener> = Topic(PluginAutoUpdateListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
   }
 }
 
@@ -247,7 +248,7 @@ private val LOG
 /**
  * @returns a list of unmet dependencies
  */
-@ApiStatus.Internal
+@Internal
 fun findUnsatisfiedDependencies(
   updateDescriptor: Collection<IdeaPluginDependency>,
   enabledPluginsAndModulesIds: Collection<String>,
@@ -261,7 +262,7 @@ fun findUnsatisfiedDependencies(
   }
 }
 
-internal class PluginAutoUpdateOptionsProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
+private class PluginAutoUpdateOptionsProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
   override fun getId() = "PluginAutoUpdate"
 
   override fun getOptions(): List<BooleanOptionDescription> {

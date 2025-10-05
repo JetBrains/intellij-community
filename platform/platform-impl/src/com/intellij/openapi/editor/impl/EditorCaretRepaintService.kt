@@ -6,7 +6,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +56,7 @@ internal class EditorCaretRepaintService(coroutineScope: CoroutineScope) {
         if (editor != null) {
           runCatching {
             blink(editor)
-          }.getOrLogException { e ->
+          }.getOrHandleException { e ->
             LOG.error("An exception occurred while blinking the active caret", e)
           }
         }

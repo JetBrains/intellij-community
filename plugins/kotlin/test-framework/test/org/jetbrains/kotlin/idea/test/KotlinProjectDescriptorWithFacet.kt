@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
+import java.nio.file.Path
 
 class KotlinProjectDescriptorWithFacet(
     private val languageVersion: LanguageVersion,
@@ -76,3 +78,19 @@ fun configureKotlinFacet(module: Module, configureCallback: KotlinFacetConfigura
     return facet
 }
 
+/**
+ * Allows enabling a compiler plugin via [pluginJar] in a [KotlinFacetConfiguration] and specifying additional [options] for it.
+ * 
+ * @see org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts for the list of bundled compiler plugins.
+ */
+fun KotlinFacetConfiguration.configureKotlinCompilerPlugin(pluginJar: Path, options: List<String> = emptyList()) {
+    settings.updateCompilerArguments {
+        val existingClasspaths = pluginClasspaths.orEmpty().toMutableList()
+        existingClasspaths += pluginJar.toString()
+        pluginClasspaths = existingClasspaths.toTypedArray()
+        
+        val existingOptions = pluginOptions.orEmpty().toMutableList()
+        existingOptions += options
+        pluginOptions = existingOptions.toTypedArray()
+    }
+}

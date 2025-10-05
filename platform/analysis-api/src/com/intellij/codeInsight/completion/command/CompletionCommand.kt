@@ -87,6 +87,11 @@ abstract class CompletionCommand : UserDataHolderBase() {
    * @return a list of strings representing synonyms. If no synonyms are found, returns an empty list.
    */
   open val synonyms: List<String> = emptyList()
+
+  /**
+   * Retrieves a preview for the command.
+   */
+  open fun getPreview(): IntentionPreviewInfo = IntentionPreviewInfo.EMPTY
 }
 
 /**
@@ -106,14 +111,6 @@ data class HighlightInfoLookup(
   val attributesKey: TextAttributesKey,
   val priority: Int, //higher is on the top
 )
-
-
-/**
- * Represents a command for code completion with a preview feature.
- */
-interface CompletionCommandWithPreview {
-  fun getPreview(): IntentionPreviewInfo?
-}
 
 @JvmField
 val KEY_FORCE_CARET_OFFSET: Key<ForceOffsetData> = Key.create("completion.command.force.caret.offset")

@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.ui.component
 
+import androidx.compose.foundation.ContextMenuArea
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
@@ -17,18 +18,26 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import java.awt.Cursor
+import java.awt.datatransfer.StringSelection
+import java.io.IOException
+import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
@@ -40,6 +49,7 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.JewelTheme.Companion.isSwingCompatMode
+import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.styling.LinkStyle
 import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior.ShowAlways
 import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior.ShowOnHover
@@ -49,7 +59,9 @@ import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stateful
+import org.jetbrains.jewel.ui.util.LocalMessageResourceResolverProvider
 
 /**
  * A clickable text link that follows the standard visual styling with customizable appearance.
@@ -89,14 +101,14 @@ public fun Link(
 ) {
     LinkImpl(
         text = text,
+        style = style,
         onClick = onClick,
-        modifier = modifier,
         enabled = enabled,
+        textStyle = textStyle,
         overflow = overflow,
         interactionSource = interactionSource,
-        style = style,
-        textStyle = textStyle,
         icon = null,
+        modifier = modifier,
     )
 }
 
@@ -112,8 +124,8 @@ public fun Link(
  * **Usage example:**
  * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Links.kt)
  *
- * **Swing equivalent:** [`JLabel`](https://docs.oracle.com/javase/tutorial/uiswing/components/label.html) with HTML
- * link styling and external link icon
+ * **Swing equivalent:**
+ * [`BrowserLink`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/BrowserLink.kt)
  *
  * @param text The text to be displayed as a link
  * @param onClick Called when the link is clicked
@@ -136,17 +148,129 @@ public fun ExternalLink(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: LinkStyle = LocalLinkStyle.current,
 ) {
-    LinkImpl(
+    ExternalLinkImpl(
         text = text,
         onClick = onClick,
-        modifier = modifier,
+        uri = "",
         enabled = enabled,
         overflow = overflow,
         interactionSource = interactionSource,
         style = style,
         textStyle = textStyle,
-        icon = style.icons.externalLink,
+        modifier = modifier,
     )
+}
+
+/**
+ * An external link that follows the standard visual styling, including an external link icon.
+ *
+ * Please be aware that this ExternalLink will automatically open a link on click, unlike the other overloads.
+ *
+ * Provides a text link with an external link icon that indicates the link leads to external content. The link supports
+ * various states including enabled/disabled, focused, and hovered, with optional underline behavior based on the style
+ * configuration.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/link.html#external-link-icon)
+ *
+ * **Usage example:**
+ * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Links.kt)
+ *
+ * **Swing equivalent:**
+ * [`BrowserLink`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/BrowserLink.kt)
+ *
+ * @param text The text to be displayed as a link
+ * @param uri The actual uri that will be used to open in the browser. If it fails to open, the error is suppressed and
+ *   the error is logged.
+ * @param modifier Modifier to be applied to the link
+ * @param enabled Controls whether the link can be interacted with
+ * @param textStyle The typography style to be applied to the link text
+ * @param overflow How the text should handle overflow
+ * @param interactionSource Source of interactions for this link
+ * @param style The visual styling configuration for the link
+ * @see javax.swing.JLabel
+ */
+@Composable
+public fun ExternalLink(
+    text: String,
+    uri: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    overflow: TextOverflow = TextOverflow.Clip,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: LinkStyle = LocalLinkStyle.current,
+) {
+    val uriHandler = LocalUriHandler.current
+
+    ExternalLinkImpl(
+        text = text,
+        onClick = { openUri(uriHandler, uri) },
+        uri = uri,
+        enabled = enabled,
+        overflow = overflow,
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun ExternalLinkImpl(
+    text: String,
+    onClick: () -> Unit,
+    uri: String,
+    enabled: Boolean,
+    overflow: TextOverflow,
+    interactionSource: MutableInteractionSource,
+    style: LinkStyle,
+    textStyle: TextStyle,
+    modifier: Modifier = Modifier,
+) {
+    val clipboard = LocalClipboard.current
+    val stringProvider = LocalMessageResourceResolverProvider.current
+    val scope = rememberCoroutineScope()
+
+    ContextMenuArea(
+        items = {
+            listOf(
+                ContextMenuItemOption(
+                    label = stringProvider.resolveIdeBundleMessage("action.text.open.link.in.browser"),
+                    action = { onClick() },
+                    icon = AllIconsKeys.Nodes.PpWeb,
+                ),
+                ContextMenuItemOption(
+                    label = stringProvider.resolveIdeBundleMessage("action.text.copy.link.address"),
+                    action = { scope.launch { clipboard.setClipEntry(ClipEntry(StringSelection(uri))) } },
+                    icon = AllIconsKeys.Actions.Copy,
+                ),
+            )
+        },
+        enabled = enabled,
+        content = {
+            LinkImpl(
+                text = text,
+                style = style,
+                onClick = onClick,
+                enabled = enabled,
+                textStyle = textStyle,
+                overflow = overflow,
+                interactionSource = interactionSource,
+                icon = style.icons.externalLink,
+                modifier = modifier,
+            )
+        },
+    )
+}
+
+private fun openUri(uriHandler: UriHandler, link: String) {
+    try {
+        uriHandler.openUri(link)
+    } catch (e: IllegalArgumentException) {
+        JewelLogger.getInstance("ExternalLink").error("Unable to open link ($link). Error: $e")
+    } catch (e: IOException) {
+        JewelLogger.getInstance("ExternalLink").error("Unable to open link ($link). Error: $e")
+    }
 }
 
 /**
@@ -176,6 +300,7 @@ public fun ExternalLink(
  * @param menuContent The content to be displayed in the popup menu when the link is clicked
  * @see com.intellij.ui.components.DropDownLink
  */
+@Suppress("ComposableParamOrder") // To fix in JEWEL-928
 @Composable
 public fun DropdownLink(
     text: String,
@@ -194,21 +319,22 @@ public fun DropdownLink(
     var skipNextClick by remember { mutableStateOf(false) }
 
     Box(Modifier.onHover { hovered = it }) {
+        @Suppress("ModifierNotUsedAtRoot") // This is intentional
         LinkImpl(
             text = text,
+            style = style,
             onClick = {
                 if (!skipNextClick) {
                     expanded = !expanded
                 }
                 skipNextClick = false
             },
-            modifier = modifier,
             enabled = enabled,
+            textStyle = textStyle,
             overflow = overflow,
             interactionSource = interactionSource,
-            style = style,
-            textStyle = textStyle,
             icon = style.icons.dropdownChevron,
+            modifier = modifier,
         )
 
         if (expanded) {
@@ -234,18 +360,17 @@ private fun LinkImpl(
     text: String,
     style: LinkStyle,
     onClick: () -> Unit,
-    modifier: Modifier,
     enabled: Boolean,
     textStyle: TextStyle,
     overflow: TextOverflow,
     interactionSource: MutableInteractionSource,
     icon: IconKey?,
+    modifier: Modifier = Modifier,
 ) {
     var linkState by remember(interactionSource, enabled) { mutableStateOf(LinkState.of(enabled = enabled)) }
-    remember(enabled) { linkState = linkState.copy(enabled = enabled) }
 
     val inputModeManager = LocalInputModeManager.current
-    LaunchedEffect(interactionSource) {
+    LaunchedEffect(interactionSource, enabled, inputModeManager) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is PressInteraction.Press -> linkState = linkState.copy(pressed = true)

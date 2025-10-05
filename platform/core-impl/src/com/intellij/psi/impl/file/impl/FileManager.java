@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.file.impl;
 
@@ -18,14 +18,11 @@ import java.util.List;
  * @see PsiManagerEx#getFileManager()
  */
 public interface FileManager {
+  // todo IJPL-339 mark deprecated?
   @RequiresReadLock
   @Nullable PsiFile findFile(@NotNull VirtualFile vFile);
 
-  /**
-   * @deprecated this method is a temporary solution, don't use it explicitly unless you consulted with Maksim Medvedev
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @RequiresReadLock
   @Nullable
   PsiFile findFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
@@ -37,42 +34,32 @@ public interface FileManager {
   @RequiresWriteLock
   void reloadFromDisk(@NotNull PsiFile psiFile); //Q: move to PsiFile(Impl)?
 
+  // todo IJPL-339 mark deprecated?
   @RequiresReadLock
   @Nullable
   PsiFile getCachedPsiFile(@NotNull VirtualFile vFile);
 
-  /**
-   * @deprecated this method is a temporary solution, don't use it explicitly unless you consulted with Maksim Medvedev
-   * see IJPL-339
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Nullable
   PsiFile getCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
 
   @TestOnly
   void cleanupForNextTest();
 
+  // todo IJPL-339 mark deprecated?
   FileViewProvider findViewProvider(@NotNull VirtualFile vFile);
 
-  /**
-   * @deprecated this method is a temporary solution, don't use it explicitly unless you consulted with Maksim Medvedev
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   FileViewProvider findViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
 
+  // todo IJPL-339 mark deprecated?
   @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile);
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @NotNull @Unmodifiable
   List<@NotNull FileViewProvider> findCachedViewProviders(@NotNull VirtualFile vFile);
 
-  /**
-   * @deprecated this method is a temporary solution, don't use it explicitly unless you consulted with Maksim Medvedev
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Nullable
   FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
 
@@ -84,14 +71,11 @@ public interface FileManager {
   @NotNull
   List<PsiFile> getAllCachedFiles();
 
+  // todo IJPL-339 mark deprecated?
   @NotNull
   FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, boolean eventSystemEnabled);
 
-  /**
-   * @deprecated this method is a temporary solution, don't use it explicitly unless you consulted with Maksim Medvedev
-   */
-  @Deprecated
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @NotNull
   FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context, boolean eventSystemEnabled);
 }

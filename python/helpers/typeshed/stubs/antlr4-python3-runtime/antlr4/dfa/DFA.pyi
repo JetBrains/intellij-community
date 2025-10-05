@@ -6,6 +6,7 @@ from antlr4.dfa.DFAState import DFAState as DFAState
 from antlr4.error.Errors import IllegalStateException as IllegalStateException
 
 class DFA:
+    __slots__ = ("atnStartState", "decision", "_states", "s0", "precedenceDfa")
     atnStartState: Incomplete
     decision: Incomplete
     s0: Incomplete

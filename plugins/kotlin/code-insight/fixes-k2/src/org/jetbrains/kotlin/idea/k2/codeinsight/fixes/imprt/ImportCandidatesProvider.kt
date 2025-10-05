@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.name.Name
 
 internal interface ImportCandidatesProvider {
-    context(KaSession)
+    context(_: KaSession)
     fun collectCandidates(
         name: Name,
         indexProvider: KtSymbolFromIndexProvider,

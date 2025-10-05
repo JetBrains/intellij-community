@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.StorageException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
@@ -29,7 +30,8 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
    * @deprecated Use {@link #CompilerReferenceReader(Path, CompilerReferenceIndex)}
    */
   @SuppressWarnings("IO_FILE_USAGE")
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public CompilerReferenceReader(@NotNull File buildDir, Index index) {
     myIndex = index;
     this.buildDir = buildDir.toPath();

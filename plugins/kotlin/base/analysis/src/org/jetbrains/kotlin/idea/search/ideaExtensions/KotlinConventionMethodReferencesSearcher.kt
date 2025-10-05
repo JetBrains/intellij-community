@@ -14,6 +14,11 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.operators.OperatorReference
 
 class KotlinConventionMethodReferencesSearcher : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>() {
     override fun processQuery(queryParameters: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
+        if (queryParameters is KotlinMethodReferencesSearchParameters &&
+            !queryParameters.kotlinOptions.searchForComponentConventions &&
+            !queryParameters.kotlinOptions.searchForOperatorConventions) {
+            return
+        }
         runReadAction {
             val method = queryParameters.method
 

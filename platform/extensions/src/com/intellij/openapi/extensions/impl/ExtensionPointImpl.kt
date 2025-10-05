@@ -13,7 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.Java11Shim
+import com.intellij.util.containers.Java11Shim
 import com.intellij.util.ThreeState
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf

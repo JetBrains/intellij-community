@@ -15,6 +15,7 @@ import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildChildren
@@ -36,7 +37,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineCom
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineThreadComponentFactory
-import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import org.jetbrains.plugins.github.ui.util.handleGithubHyperlink
 import javax.swing.JComponent
@@ -73,12 +74,16 @@ internal class GHPRTimelineItemComponentFactory(private val project: Project,
     val commitsPanels = commits.asSequence()
       .map { it.commit }
       .map {
+        @NlsSafe
+        val htmlMessage = it.messageHeadline.convertToHtml(project)
+          .removePrefix("<body>").removeSuffix("</body>")
+          .removePrefix("<p>").removeSuffix("</p>")
         val builder = HtmlBuilder()
           .append(HtmlChunk.p()
                     .children(
                       HtmlChunk.link("$COMMIT_HREF_PREFIX${it.oid}", it.abbreviatedOid),
                       HtmlChunk.nbsp(),
-                      HtmlChunk.raw(it.messageHeadline.convertToHtml(project))
+                      HtmlChunk.raw(htmlMessage)
                     ))
 
         val author = it.author

@@ -3,6 +3,7 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.project.Project;
+import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.FileStructureGroupRuleProvider;
 import com.intellij.usages.rules.UsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,11 @@ import org.jetbrains.annotations.NotNull;
 final class FileGroupingRuleProvider implements FileStructureGroupRuleProvider {
   @Override
   public UsageGroupingRule getUsageGroupingRule(@NotNull Project project) {
-    return new FileGroupingRule(project);
+    return new FileGroupingRule(project, UsageViewSettings.getInstance().getShowShortFilePath());
+  }
+
+  @Override
+  public UsageGroupingRule getUsageGroupingRule(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
+    return new FileGroupingRule(project, usageViewSettings.getShowShortFilePath());
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,8 @@ import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTO
 public class VirtualFileEvent extends EventObject {
   private final Object myRequestor;
   private final VirtualFile myFile;
+  /** == cached myFile.getPath() */
+  private transient String myFilePath = null;
   private final VirtualFile myParent;
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
@@ -33,11 +36,40 @@ public class VirtualFileEvent extends EventObject {
     myNewModificationStamp = newModificationStamp;
   }
 
+  @ApiStatus.Internal
+  public VirtualFileEvent(@Nullable Object requestor,
+                          @NotNull VirtualFile file,
+                          @NotNull String filePath,
+                          @Nullable VirtualFile parent,
+                          long oldModificationStamp,
+                          long newModificationStamp) {
+    super(file);
+    myRequestor = requestor;
+    myFile = file;
+    myFilePath = filePath;
+    myParent = parent;
+    myOldModificationStamp = oldModificationStamp;
+    myNewModificationStamp = newModificationStamp;
+  }
+
   /**
    * Returns the file to which the change happened.
    */
   public @NotNull VirtualFile getFile() {
     return myFile;
+  }
+
+
+  /** @return {@code getFile().getPath()}, but likely cache it, once calculated */
+  @ApiStatus.Internal
+  public @NotNull String getPath() {
+    String path = myFilePath;
+    if(path != null){
+      return path;
+    }
+    path = myFile.getPath();
+    myFilePath = path;
+    return path;
   }
 
   /**

@@ -7,7 +7,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -295,8 +294,7 @@ private suspend fun <T> instantiate(
 // we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
 // Only the context of the owner coroutine should be captured.
 // TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
-@ApiStatus.Internal
-suspend fun <T> withStoredTemporaryContext(parentScope: CoroutineScope, action: () -> T): T {
+internal suspend fun <T> withStoredTemporaryContext(parentScope: CoroutineScope, action: () -> T): T {
   val existingCoroutineContext = currentCoroutineContext()
   val scopeContext = parentScope.coroutineContext
   // `temporaryCoroutineContext` belongs to the initialization processes throughout the whole chain of initialization.

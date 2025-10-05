@@ -15,6 +15,9 @@ import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.find.usages.impl.Psi2UsageInfo2UsageAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.searcheverywhere.ExtendedInfo;
+import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent;
+import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.ide.util.scopeChooser.ScopeChooserGroup;
@@ -47,7 +50,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogPanel;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
@@ -62,12 +64,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FileRankerMlService;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.scale.JBUIScale;
@@ -83,7 +85,9 @@ import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
@@ -92,6 +96,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -115,6 +120,7 @@ import static com.intellij.find.actions.ResolverKt.findShowUsages;
 import static com.intellij.find.actions.SearchOptionsService.SearchVariant.SHOW_USAGES;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
+import static com.intellij.usageView.UsageViewUtil.FIND_OPTIONS_HREF_TARGET;
 import static com.intellij.util.FindUsagesScopeKt.FindUsagesScope;
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
@@ -146,31 +152,29 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return ActionUpdateThread.BGT;
   }
 
-  private static final class UsageNodeComparator implements Comparator<UsageNode> {
-    private final ShowUsagesTable myTable;
-
-    private UsageNodeComparator(@NotNull ShowUsagesTable table) {
-      this.myTable = table;
-    }
-
-    @Override
-    public int compare(UsageNode c1, UsageNode c2) {
-      if (c1 instanceof StringNode || c2 instanceof StringNode) {
-        if (c1 instanceof StringNode && c2 instanceof StringNode) {
-          return Comparing.compare(c1.toString(), c2.toString());
+  private record UsageNodeComparator(@NotNull ShowUsagesTable table) implements Comparator<UsageNode> {
+      @Override
+      public int compare(UsageNode c1, UsageNode c2) {
+        if (c1 instanceof StringNode sc1) {
+          return sc1.compareTo(c2);
         }
-        return c1 instanceof StringNode ? 1 : -1;
+        if (c2 instanceof StringNode sc2) {
+          return -sc2.compareTo(c1);
+        }
+
+        Usage o1 = c1.getUsage();
+        Usage o2 = c2.getUsage();
+        int weight1 = o1 == table.USAGES_FILTERED_OUT_SEPARATOR ? 3
+                      : o1 == table.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o1 == table.MORE_USAGES_SEPARATOR ? 1 : 0;
+        int weight2 = o2 == table.USAGES_FILTERED_OUT_SEPARATOR ? 3
+                      : o2 == table.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o2 == table.MORE_USAGES_SEPARATOR ? 1 : 0;
+        if (weight1 != weight2 || weight1 != 0) {
+          return weight1 - weight2;
+        }
+
+        return UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(o1, o2);
       }
-
-      Usage o1 = c1.getUsage();
-      Usage o2 = c2.getUsage();
-      int weight1 = o1 == myTable.USAGES_FILTERED_OUT_SEPARATOR ? 3 : o1 == myTable.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o1 == myTable.MORE_USAGES_SEPARATOR ? 1 : 0;
-      int weight2 = o2 == myTable.USAGES_FILTERED_OUT_SEPARATOR ? 3 : o2 == myTable.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o2 == myTable.MORE_USAGES_SEPARATOR ? 1 : 0;
-      if (weight1 != weight2) return weight1 - weight2;
-
-      return UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(o1, o2);
     }
-  }
 
   public static int getUsagesPageSize() {
     return Math.max(1, AdvancedSettings.getInt("ide.usages.page.size"));
@@ -537,7 +541,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   public static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
                                                                       @NotNull ShowUsagesActionHandler actionHandler,
                                                                       @NotNull UsageViewImpl usageView) {
-
     Span findUsageSpan = myFindUsagesTracer.spanBuilder("findUsages").startSpan();
     Scope opentelemetryScope = findUsageSpan.makeCurrent();
     Span popupSpan = myFindUsagesTracer.spanBuilder("findUsage_popup").startSpan();
@@ -579,6 +582,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         setPopupSize(table, popup, parameters.popupPosition, parameters.minWidth, properties.isValueSet(PREVIEW_PROPERTY_KEY), dataSize);
       }
     };
+
+    table.getAccessibleContext().setAccessibleName(UsageViewBundle.message("show.usages.table.accessible.name"));
 
     AbstractPopup popup = createUsagePopup(usageView, showUsagesPopupData, itemChosenCallback, tableResizer);
     popup.addResizeListener(() -> manuallyResized.set(true), popup);
@@ -787,6 +792,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         else { // firstUsageTimestamp == 0 means that no usage was found.
           durationFirstResults = -1;
         }
+        UsageViewManagerImpl.informRankerMlService(project, usages, FileRankerMlService.CallSource.SHOW_USAGES);
         UsageViewStatisticsCollector.logSearchFinished(project, usageView,
                                                        actionHandler.getTargetClass(), searchScope, actionHandler.getTargetLanguage(),
                                                        visibleUsages.size(),
@@ -860,66 +866,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return false;
   }
 
-  private static @NotNull JComponent createHintComponent(@NotNull @NlsContexts.HintText String secondInvocationTitle,
-                                                         boolean isWarning,
-                                                         @NotNull JComponent button) {
-    if (ExperimentalUI.isNewUI()) {
-      JPanel panel = new JPanel(new BorderLayout(6, 0));
-      panel.putClientProperty(HintHint.OVERRIDE_BORDER_KEY, JBUI.insets(10, 12, 12, 12));
-
-      JComponent label =
-        isWarning ? HintUtil.createWarningLabel(secondInvocationTitle) : HintUtil.createInformationLabel(secondInvocationTitle);
-      label.setBorder(JBUI.Borders.emptyTop(2));
-      panel.add(label, BorderLayout.CENTER);
-
-      panel.setBackground(label.getBackground());
-      button.setBackground(label.getBackground());
-      button.setPreferredSize(new JBDimension(22, 22));
-      button.setBackground(label.getBackground());
-
-      Wrapper buttonPanel = new Wrapper();
-      buttonPanel.add(button, BorderLayout.NORTH);
-      panel.add(buttonPanel, BorderLayout.EAST);
-
-      return panel;
-    }
-
-    JComponent label = HintUtil.createInformationLabel(secondInvocationTitle);
-    if (isWarning) {
-      label.setBackground(MessageType.WARNING.getPopupBackground());
-    }
-
-    JPanel panel = new JPanel(new BorderLayout());
-    button.setBackground(label.getBackground());
-    panel.setBackground(label.getBackground());
-    label.setOpaque(false);
-    label.setBorder(null);
-    panel.setBorder(HintUtil.createHintBorder());
-    panel.add(label, BorderLayout.CENTER);
-    panel.add(button, BorderLayout.EAST);
-    return panel;
-  }
-
-  private static @NotNull InplaceButton createSettingsButton(@NotNull Project project,
-                                                             @NotNull Runnable cancelAction,
-                                                             @NotNull Runnable showDialogAndFindUsagesRunnable) {
-    KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
-    String tooltip = shortcut == null
-                     ? FindBundle.message("show.usages.settings.tooltip")
-                     : FindBundle.message("show.usages.settings.tooltip.shortcut", KeymapUtil.getShortcutText(shortcut));
-    return new InplaceButton(tooltip, AllIcons.General.Settings, __ -> {
-      ApplicationManager.getApplication().invokeLater(showDialogAndFindUsagesRunnable, project.getDisposed());
-      cancelAction.run();
-    }) {
-      @Override
-      protected void paintHover(Graphics g) {
-        if (ExperimentalUI.isNewUI()) {
-          paintHover(g, JBUI.CurrentTheme.Editor.Tooltip.ICON_HOVER_BACKGROUND);
-        }
-      }
-    };
-  }
-
   private static @Nullable FindUsagesOptions showDialog(@NotNull FindUsagesHandlerBase handler) {
     UIEventLogger.ShowUsagesPopupShowSettings.log(handler.getProject());
     AbstractFindUsagesDialog dialog;
@@ -952,19 +898,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     @NotNull Project project = parameters.project;
     @NotNull DialogPanel headerPanel = showUsagesPopupData.header.panel;
 
-    SpeedSearchAdvertiser advertiser = new SpeedSearchAdvertiser();
-    String hint = getSecondInvocationHint(actionHandler);
-
-    JPanel advertiserComponent = null;
-    boolean hintAdded = advertiser.addAdvertisement(hint);
-    boolean speedSearchAdded = advertiser.addSpeedSearchAdvertisement() != null;
-    if (hintAdded || speedSearchAdded) {
-      advertiserComponent = advertiser.getComponent();
-    }
-
     PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table).
       setTitle(showUsagesPopupData.header.getTitle()).
-      setAdvertiser(advertiserComponent).
       setMovable(true).
       setResizable(true).
       setCancelKeyEnabled(true).
@@ -982,6 +917,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
 
     Disposable contentDisposable = Disposer.newDisposable();
+
+    JPanel extendedInfoContainer = new JPanel(new BorderLayout());
+    builder.setSouthComponent(extendedInfoContainer);
+    JPanel extendedInfoPanel = createExtendedInfo(project, table, contentDisposable);
+    extendedInfoContainer.add(extendedInfoPanel, BorderLayout.CENTER);
 
     KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
     if (shortcut != null) {
@@ -1006,7 +946,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     DefaultActionGroup filteringGroup = new DefaultActionGroup();
     usageView.addFilteringActions(filteringGroup);
     ActionManager actionManager = ActionManager.getInstance();
-    filteringGroup.add(actionManager.getAction("UsageGrouping.FileStructure"));
+
+    DefaultActionGroup showOptionsActionGroup = createShowOptionsActionGroup(properties, extendedInfoPanel);
+    filteringGroup.add(showOptionsActionGroup);
+    filteringGroup.add(Separator.getInstance());
+
     filteringGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), null, AllIcons.Actions.PreviewDetailsVertically) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
@@ -1083,8 +1027,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     builder.addListener(processor);
 
     if (addCodePreview) {
-      SimpleColoredComponent previewTitle = new SimpleColoredComponent();
-      PopupUtil.applyPreviewTitleInsets(previewTitle);
       UsagePreviewPanel usagePreviewPanel = new UsagePreviewPanel(project, usageView.getPresentation(), false) {
         @Override
         public Dimension getPreferredSize() {
@@ -1111,13 +1053,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       Disposer.register(contentDisposable, usagePreviewPanel);
 
       JPanel previewPanel = new JPanel(new BorderLayout());
-      previewPanel.add(previewTitle, BorderLayout.NORTH);
       previewPanel.add(usagePreviewPanel.createComponent(), BorderLayout.CENTER);
       contentSplitter.setSecondComponent(previewPanel);
 
       if (ExperimentalUI.isNewUI()) {
         previewPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
-        previewTitle.setOpaque(false);
       }
 
       new DoubleClickListener() {
@@ -1155,11 +1095,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
           ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages))
               .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
                 usagePreviewPanel.updateLayout(project, selectedUsages);
-                previewTitle.clear();
-
-                if (isOneAndOnlyOnePsiFileInUsages && selectedFile != null) {
-                  previewTitle.append(PathUtil.getFileName(selectedFile), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-                }
               })
             .expireWith(contentDisposable)
             .submit(AppExecutorUtil.getAppExecutorService());
@@ -1238,6 +1173,52 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return popup;
   }
 
+  private static DefaultActionGroup createShowOptionsActionGroup(PropertiesComponent properties, JPanel extendedInfoPanel) {
+    ActionManager actionManager = ActionManager.getInstance();
+    DefaultActionGroup showOptionsGroup = new DefaultActionGroup(UsageViewBundle.message("show.options.action.group.description"), null, AllIcons.Actions.Show);
+    showOptionsGroup.setPopup(true);
+
+    showOptionsGroup.add(Separator.create(UsageViewBundle.message("show.options.action.group.text")));
+    showOptionsGroup.add(actionManager.getAction("UsageGrouping.ShortFilePath"));
+    showOptionsGroup.add(actionManager.getAction("UsageGrouping.FileStructure"));
+
+    return showOptionsGroup;
+  }
+
+  private static JPanel createExtendedInfo(Project project, JTable table, Disposable parentDisposable) {
+    ExtendedInfo extendedInfo = ExtendedInfoImplKt.createPsiExtendedInfo((value) -> {
+      return project;
+    }, (value) -> {
+      if (value instanceof UsageNode) {
+        Usage usage = ((UsageNode)value).getUsage();
+        if (usage instanceof UsageInfoAdapter) {
+          UsageInfo[] infos = ((UsageInfoAdapter)usage).getMergedInfos();
+          if (infos.length > 0) {
+            return infos[0].getVirtualFile();
+          }
+        }
+      }
+      return null;
+    }, (value) -> {
+      return null;
+    }, false);
+
+    ExtendedInfoComponent extendedInfoComponent = new ExtendedInfoComponent(project, extendedInfo);
+    extendedInfoComponent.updateElement("", parentDisposable);
+
+    table.getSelectionModel().addListSelectionListener(e -> {
+      if (e.getValueIsAdjusting()) return;
+
+      int selectedIndex = table.getSelectionModel().getMinSelectionIndex();
+      if (selectedIndex >= 0 && selectedIndex < table.getModel().getRowCount()) {
+        Object value = table.getModel().getValueAt(selectedIndex, 0);
+        extendedInfoComponent.updateElement(value, parentDisposable);
+      }
+    });
+
+    return extendedInfoComponent.component;
+  }
+
   private static Border createComplexPopupToolbarBorder() {
     Insets lineInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
     //noinspection UseDPIAwareBorders
@@ -1291,16 +1272,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     });
 
     return result;
-  }
-
-  private static @Nls @NotNull String suggestSecondInvocation(@Nls(capitalization = Sentence) @NotNull String text,
-                                                              @Nls(capitalization = Sentence) @Nullable String hint) {
-    HtmlBuilder builder = new HtmlBuilder().append(text);
-    if (hint != null) {
-      HtmlChunk chunk = HtmlChunk.text(hint);
-      builder.br().append(ExperimentalUI.isNewUI() ? chunk.wrapWith("p").style("margin-top:5pt;") : chunk.wrapWith("small"));
-    }
-    return builder.wrapWithHtmlBody().toString();
   }
 
   static @Nullable KeyboardShortcut getShowUsagesShortcut() {
@@ -1467,7 +1438,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     if (isCodeWithMeClientInstance(popup)) return;
 
-    Component toolbarComponent = ((BorderLayout)popup.getComponent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
+    BorderLayout popupLayout = (BorderLayout)popup.getComponent().getLayout();
+    Component extendedInfoComponent = popupLayout.getLayoutComponent(BorderLayout.SOUTH);
+    Dimension extendedInfoSize = extendedInfoComponent != null ? extendedInfoComponent.getPreferredSize() : JBUI.emptySize();
+    Component toolbarComponent = popupLayout.getLayoutComponent(BorderLayout.NORTH);
     Dimension toolbarSize = toolbarComponent != null ? toolbarComponent.getPreferredSize() : JBUI.emptySize();
     Dimension headerSize = popup.getHeaderPreferredSize();
 
@@ -1478,7 +1452,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     minWidth.set(width);
 
-    int minHeight = headerSize.height + toolbarSize.height;
+    int minHeight = headerSize.height + toolbarSize.height + extendedInfoSize.height;
 
     Rectangle rectangle = getPreferredBounds(table, popupPosition.getScreenPoint(), width, minHeight, dataSize, showCodePreview);
     table.setSize(rectangle.width, rectangle.height - minHeight);
@@ -1554,38 +1528,54 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         return;
       }
 
-      ReadAction.nonBlocking(
-        () -> suggestSecondInvocation(hint, getSecondInvocationHint(actionHandler))
-      ).finishOnUiThread(ModalityState.nonModal(), (@NlsContexts.HintText String secondInvocationHintHtml) -> {
-        if (!actionHandler.isValid()) {
+      ReadAction.nonBlocking(() -> getSecondInvocationHint(actionHandler))
+        .finishOnUiThread(ModalityState.nonModal(), (@NlsContexts.HintText String restartHint) -> {
+          HtmlBuilder builder = new HtmlBuilder().append(hint);
+          if (restartHint != null) {
+            HtmlChunk chunk = HtmlChunk.text(restartHint);
+            builder.br().append(ExperimentalUI.isNewUI() ? chunk.wrapWith("p").style("margin-top:5pt;") : chunk.wrapWith("small"));
+          }
+          builder.br().appendLink(FIND_OPTIONS_HREF_TARGET, UsageViewBundle.message("link.display.name.find.options"));
+          KeyboardShortcut shortcut = UsageViewUtil.getShowUsagesWithSettingsShortcut();
+          if (shortcut != null) {
+            builder.nbsp().append("(" + KeymapUtil.getShortcutText(shortcut) + ")");
+          }
+          @NlsContexts.HintText String secondInvocationHintHtml = builder.toString();
+          if (!actionHandler.isValid()) {
+            cancel(popupToCancel);
+            return;
+          }
+
+          HyperlinkAdapter listener = new HyperlinkAdapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+              if (FIND_OPTIONS_HREF_TARGET.equals(e.getDescription())) {
+                showDialogAndRestart(parameters, actionHandler);
+              }
+            }
+          };
+
+          JComponent label;
+          if (isWarning) {
+            label = HintUtil.createWarningLabel(secondInvocationHintHtml, listener, null);
+          } else {
+            label = HintUtil.createInformationLabel(secondInvocationHintHtml, listener, null, null);
+          }
+
+          Runnable clearContinuation = actionHandler.enableMaximalScopeSearch(parameters);
+          // canceling here, as the action handler becomes not fully valid after the cancellation
+          // in case of rem-dev (FrontendShowUsagesActionHandler), and the above call won't work as expected
           cancel(popupToCancel);
-          return;
-        }
 
-        JComponent label = createHintComponent(
-          secondInvocationHintHtml,
-          isWarning,
-          createSettingsButton(
-            project,
-            ShowUsagesAction::hideHints,
-            showDialogAndRestartRunnable(parameters, actionHandler)
-          )
-        );
-
-        Runnable clearContinuation = actionHandler.enableMaximalScopeSearch(parameters);
-        // canceling here, as the action handler becomes not fully valid after the cancellation
-        // in case of rem-dev (FrontendShowUsagesActionHandler), and the above call won't work as expected
-        cancel(popupToCancel);
-
-        if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
-          label.setBorder(JBUI.Borders.empty(5));
-          int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-          HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
-        }
-        else {
-          HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
-        }
-      }).submit(AppExecutorUtil.getAppExecutorService());
+          if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
+            label.setBorder(JBUI.Borders.empty(5));
+            int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+            HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
+          }
+          else {
+            HintManager.getInstance().showInformationHint(editor, label, clearContinuation);
+          }
+        }).submit(AppExecutorUtil.getAppExecutorService());
     };
 
     if (editor == null) {
@@ -1609,7 +1599,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
   }
 
-  static final class StringNode extends UsageNode {
+  static final class StringNode extends UsageNode implements Comparable<UsageNode> {
     private final @Nls @NotNull String myString;
 
     private StringNode(@Nls @NotNull String string) {
@@ -1624,6 +1614,14 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     @Override
     public String toString() {
       return myString;
+    }
+
+    @Override
+    public int compareTo(@NotNull UsageNode otherNode) {
+      if (otherNode instanceof StringNode otherString) {
+        return Comparing.compare(myString, otherString.myString);
+      }
+      return 1;
     }
   }
 

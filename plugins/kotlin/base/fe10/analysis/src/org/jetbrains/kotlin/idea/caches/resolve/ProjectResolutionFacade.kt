@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderConten
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
-import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesInfo
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile

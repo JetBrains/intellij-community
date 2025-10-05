@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.util.EnvironmentUtil;
@@ -79,7 +78,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
       boolean shouldResetCredentialHelper = !useCredentialHelper &&
                                             GitVersionSpecialty.CAN_OVERRIDE_CREDENTIAL_HELPER_WITH_EMPTY.existsIn(version);
       if (shouldResetCredentialHelper) {
-        handler.overwriteConfig("credential.helper=");
+        handler.addConfigParameters("credential.helper=");
       }
     });
     return manager;
@@ -149,7 +148,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
                           GitVersionSpecialty.CAN_USE_SCHANNEL.existsIn(myVersion) &&
                           AdvancedSettings.getBoolean("git.use.schannel.on.windows");
     if (useSchannel) {
-      myHandler.overwriteConfig("http.sslBackend=schannel");
+      myHandler.addConfigParameters("http.sslBackend=schannel");
     }
   }
 
@@ -265,18 +264,6 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     VirtualFile root = myHandler.getExecutableContext().getRoot();
     if (root == null) return null;
 
-    GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
-    if (repo != null) {
-      return GitProjectConfigurationCache.getInstance(myProject).readRepositoryConfig(repo, GitConfigUtil.CORE_SSH_COMMAND);
-    }
-    else {
-      try {
-        return GitConfigUtil.getValue(myProject, root, GitConfigUtil.CORE_SSH_COMMAND);
-      }
-      catch (VcsException e) {
-        LOG.warn(e);
-        return null;
-      }
-    }
+    return GitProjectConfigurationCache.getInstance(myProject).readRepositoryConfig(root, GitConfigUtil.CORE_SSH_COMMAND);
   }
 }

@@ -71,6 +71,13 @@ class KotlinGradleVersionCatalogNavigationTest : AbstractGradleCodeInsightTest()
         verifyNavigationFromCaretToExpected(gradleVersion)
     }
 
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("subprojectIncludedDynamically/fromLibraryUsageToItsDeclarationInToml.test")
+    fun testSubprojectIncludedDynamicallyFromLibraryUsageToToml(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
+    }
+
     private fun verifyNavigationFromCaretToExpected(gradleVersion: GradleVersion) {
         test(gradleVersion, GRADLE_VERSION_CATALOGS_FIXTURE) {
             codeInsightFixture.configureFromExistingVirtualFile(mainTestDataPsiFile.virtualFile)

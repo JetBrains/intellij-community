@@ -3,9 +3,7 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +16,6 @@ import java.util.List;
  */
 @Deprecated(forRemoval = true)
 public abstract class PyPackageManager implements Disposable {
-  public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 
   public static final String USE_USER_SITE = "--user";
   @Topic.AppLevel
@@ -62,11 +59,7 @@ public abstract class PyPackageManager implements Disposable {
 
   public abstract boolean hasManagement() throws ExecutionException;
 
-  public abstract void install(@NotNull String requirementString) throws ExecutionException;
-
   public abstract void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException;
-
-  public abstract void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException;
 
   public abstract void refresh();
 
@@ -75,8 +68,6 @@ public abstract class PyPackageManager implements Disposable {
   public abstract @Nullable List<PyPackage> getPackages();
 
   public abstract @NotNull List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException;
-
-  public abstract @Nullable List<PyRequirement> getRequirements(@NotNull Module module);
 
   public interface Listener {
     void packagesRefreshed(@NotNull Sdk sdk);

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion.lookups
 
 import com.intellij.codeInsight.completion.InsertionContext
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -10,15 +11,26 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.idea.base.serialization.names.KotlinFqNameSerializer
 import org.jetbrains.kotlin.idea.completion.doPostponedOperationsAndUnblockDocument
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal
+@Serializable
 sealed class ImportStrategy {
+    @Serializable
     object DoNothing : ImportStrategy()
-    data class AddImport(val nameToImport: FqName) : ImportStrategy()
-    data class InsertFqNameAndShorten(val fqName: FqName) : ImportStrategy()
+
+    @Serializable
+    data class AddImport(
+        @Serializable(with = KotlinFqNameSerializer::class) val nameToImport: FqName
+    ) : ImportStrategy()
+
+    @Serializable
+    data class InsertFqNameAndShorten(
+        @Serializable(with = KotlinFqNameSerializer::class) val fqName: FqName
+    ) : ImportStrategy()
 }
 
 internal fun addImportIfRequired(

@@ -21,6 +21,7 @@ abstract class MavenRemoteConnectionCreator {
       return RemoteConnectionBuilder(false, DebuggerSettings.getInstance().transport, "")
         .asyncAgent(Registry.`is`("maven.use.scripts.debug.agent"))
         .project(project)
+        .matchWithExecutionTarget()
         .create(parameters)
     }
     catch (e: ExecutionException) {

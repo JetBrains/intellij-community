@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.paint
 
 import com.intellij.ui.JBColor
@@ -7,6 +7,7 @@ import com.intellij.ui.paint.PaintUtil.ParityMode.ODD
 import com.intellij.ui.paint.PaintUtil.RoundingMode.FLOOR
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.SmartList
+import com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle
 import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.NodePrintElement
 import com.intellij.vcs.log.graph.PrintElement
@@ -27,7 +28,7 @@ import kotlin.math.sqrt
 open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : GraphCellPainter {
   protected open val rowHeight: Int get() = PaintParameters.ROW_HEIGHT
 
-  override fun paint(g2: Graphics2D, printElements: Collection<PrintElement>) {
+  override fun paint(g2: Graphics2D, commitStyle: VcsCommitStyle, printElements: Collection<PrintElement>) {
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
     val painter = MyPainter(ScaleContext.create(g2), rowHeight)
@@ -37,17 +38,17 @@ open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : 
         selected.add(printElement) // to draw later
       }
       else {
-        painter.paintElement(g2, printElement, colorGenerator.getColor(printElement.colorId), false)
+        painter.paintElement(g2, printElement, commitStyle, colorGenerator.getColor(printElement.colorId), false)
       }
     }
 
     // draw selected elements
     for (printElement in selected) {
-      painter.paintElement(g2, printElement, MARK_COLOR, true)
+      painter.paintElement(g2, printElement, commitStyle, MARK_COLOR, true)
     }
 
     for (printElement in selected) {
-      painter.paintElement(g2, printElement, colorGenerator.getColor(printElement.colorId), false)
+      painter.paintElement(g2, printElement, commitStyle, colorGenerator.getColor(printElement.colorId), false)
     }
   }
 
@@ -90,6 +91,8 @@ open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : 
 
     private val ordinaryStroke = BasicStroke(lineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
     private val selectedStroke = BasicStroke(selectedLineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+
+    private val headNodePainter = HeadNodePainter(scaleContext, selectedLineThickness, lineThickness, rowHeight)
 
     private fun getDashedStroke(dash: FloatArray): Stroke {
       return BasicStroke(lineThickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0f, dash,
@@ -162,7 +165,7 @@ open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : 
       }
     }
 
-    private fun paintCircle(g2: Graphics2D, element: NodePrintElement, isSelected: Boolean) {
+    private fun paintCircle(g2: Graphics2D, element: NodePrintElement, isSelected: Boolean, commitStyle: VcsCommitStyle) {
       val x0 = elementWidth * element.positionInCurrentRow + elementCenter
       val y0 = rowCenter
       val radius = if (isSelected) selectedCircleRadius else circleRadius
@@ -171,6 +174,7 @@ open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : 
       val circle = Ellipse2D.Double(x0 - radius, y0 - radius, diameter, diameter)
       when (element.nodeType) {
         NodePrintElement.Type.FILL -> g2.fill(circle)
+        NodePrintElement.Type.OUTLINE_AND_FILL -> headNodePainter.paint(g2, x0, y0, isSelected, commitStyle)
         NodePrintElement.Type.OUTLINE -> {
           g2.color = NEUTRAL_COLOR
           g2.draw(circle)
@@ -178,11 +182,11 @@ open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : 
       }
     }
 
-    fun paintElement(g2: Graphics2D, element: PrintElement, color: Color, isSelected: Boolean) {
+    fun paintElement(g2: Graphics2D, element: PrintElement, commitStyle: VcsCommitStyle, color: Color, isSelected: Boolean) {
       g2.color = color
       when (element) {
         is EdgePrintElement -> paintEdge(g2, element, isSelected)
-        is NodePrintElement -> paintCircle(g2, element, isSelected)
+        is NodePrintElement -> paintCircle(g2, element, isSelected, commitStyle)
       }
     }
   }

@@ -1,25 +1,10 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
 <idea-plugin>
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.experiment.abExperimentOption"
-                    beanClass="com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionBean"
-                    dynamic="true">
-      <with attribute="implementation"
-            implements="com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption"/>
-    </extensionPoint>
-  </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
-    <experiment.abExperimentOption implementation="com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOption"/>
-
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.platform.experiment.ab.impl.statistic.ABExperimentOptionIdValidationRule"/>
-
-    <applicationService serviceInterface="com.intellij.platform.experiment.ab.impl.experiment.ABExperiment"
-                        serviceImplementation="com.intellij.platform.experiment.ab.impl.experiment.ABExperimentImpl"/>
-
-    <experiment.abExperimentOption implementation="com.intellij.platform.experiment.ab.temporary.ShowTrialSurveyOption"/>
   </extensions>
 
   <actions>

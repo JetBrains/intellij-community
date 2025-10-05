@@ -33,5 +33,5 @@ class MakeFieldPublicFix(property: KtProperty) : KotlinQuickFixAction<KtProperty
 
     override fun getText(): String = familyName
 
-    override fun getFamilyName(): String = element?.name?.let {  KotlinBundle.message("fix.make.field.public", it) } ?: ""
+    override fun getFamilyName(): String = element?.name?.let {  KotlinBundle.message("fix.make.field.public.text", it) } ?: ""
 }

@@ -1,149 +1,111 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.impl
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelProcess
-import com.intellij.platform.eel.ExecuteProcessException
-import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.EelPathException
-import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.utils.EelPathUtils
-import com.intellij.platform.eel.spawnProcess
-import com.intellij.python.community.execService.ArgsBuilder
-import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.ProcessInteractiveHandler
+import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.impl.processLaunchers.LaunchRequest
+import com.intellij.python.community.execService.impl.processLaunchers.ProcessLauncher
+import com.intellij.python.community.execService.impl.processLaunchers.createProcessLauncherOnEel
+import com.intellij.python.community.execService.impl.processLaunchers.createProcessLauncherOnTarget
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.ExecError
-import com.jetbrains.python.errorProcessing.ExecErrorReason
-import com.jetbrains.python.errorProcessing.PyExecResult
-import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.failure
-import kotlinx.coroutines.Dispatchers
+import com.jetbrains.python.errorProcessing.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeout
-import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
-import java.nio.file.Path
-import java.util.concurrent.CopyOnWriteArrayList
-import kotlin.io.path.exists
-import kotlin.io.path.pathString
-import kotlin.time.Duration
 
 
 internal object ExecServiceImpl : ExecService {
 
-  override suspend fun <T> executeAdvanced(binary: Path, argsBuilder: suspend ArgsBuilder.() -> Unit, options: ExecOptions, processInteractiveHandler: ProcessInteractiveHandler<T>): PyResult<T> {
-    val args = ArgsBuilderImpl(binary.getEelDescriptor().toEelApi()).apply { argsBuilder() }.args
-    val description = options.processDescription
-                      ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(binary.pathString) + args).joinToString(" "))
-
-    val eelPath = try {
-      binary.asEelPath()
+  override suspend fun executeGetProcess(binary: BinaryToExec, args: Args, scopeToBind: CoroutineScope?, options: ExecGetProcessOptions): Result<Process, ExecuteGetProcessError<*>> {
+    val launcher = create(binary, args, options, scopeToBind).getOr { return it }
+    val process = launcher.start().getOr {
+      val createExecError = launcher.createExecError(options.processDescription ?: "", it.error).error
+      return Result.failure(ExecuteGetProcessError.CanStart(createExecError))
     }
-    catch (e: EelPathException) {
-      return PyExecResult.localizedError(e.localizedMessage)
-    }
-    val executableProcess = EelExecutableProcess(eelPath, args, options.env, options.workingDirectory, description)
-    val eelProcess = executableProcess.run().getOr { return it }
+    return Result.success(process)
+  }
 
-    val result = try {
-      withTimeout(options.timeout) {
-        val interactiveResult = processInteractiveHandler.getResultFromProcess(binary, args, eelProcess)
-
-        val successResult = interactiveResult.getOr { failure ->
-          val (output, customErrorMessage) = failure.error
-          return@withTimeout executableProcess.failAsExecutionFailed(ExecErrorReason.UnexpectedProcessTermination(output), customErrorMessage)
+  private suspend fun create(binary: BinaryToExec, args: Args, options: ExecOptionsBase, scopeToBind: CoroutineScope? = null): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> {
+    val scope = scopeToBind ?: ApplicationManager.getApplication().service<MyService>().scope
+    val request = LaunchRequest(scope, args, options.env, options.tty)
+    return Result.success(
+      when (binary) {
+        is BinOnEel -> createProcessLauncherOnEel(binary, request)
+        is BinOnTarget -> createProcessLauncherOnTarget(binary, request).getOr {
+          options.processDescription?.let { message ->
+            it.error.pyError.addMessage(message) // TODO: 18n
+          }
+          return it
         }
-        Result.success(successResult)
+      })
+  }
+
+  override suspend fun <T> executeAdvanced(binary: BinaryToExec, args: Args, options: ExecOptions, processInteractiveHandler: ProcessInteractiveHandler<T>): PyResult<T> {
+    return coroutineScope {
+      val processLauncher = create(binary, args, options, this).getOr {
+        return@coroutineScope it.asPyError()
       }
+
+      val description = options.processDescription
+                        ?: PyExecBundle.message("py.exec.defaultName.process", (listOf(processLauncher.exeForError.toString()) + processLauncher.args).joinToString(" "))
+      val process = processLauncher.start().getOr {
+        val message = PyExecBundle.message("py.exec.start.error", description, it.error.cantExecProcessError, it.error.errNo
+                                                                                                              ?: "unknown")
+        return@coroutineScope processLauncher.createExecError(
+          messageToUser = message,
+          errorReason = it.error
+        )
+      }
+
+      val result = try {
+        withTimeout(options.timeout) {
+          val interactiveResult = processInteractiveHandler.getResultFromProcess(binary, processLauncher.args, process)
+
+          val successResult = interactiveResult.getOr { failure ->
+            val (output, customErrorMessage) = failure.error
+            val additionalMessage = customErrorMessage ?: run {
+              PyExecBundle.message("py.exec.exitCode.error", description, output.exitCode)
+            }
+            return@withTimeout processLauncher.createExecError(
+              messageToUser = additionalMessage,
+              errorReason = ExecErrorReason.UnexpectedProcessTermination(output)
+            )
+          }
+          Result.success(successResult)
+        }
+      }
+      catch (_: TimeoutCancellationException) {
+        processLauncher.killAndJoin()
+        processLauncher.createExecError(
+          messageToUser = PyExecBundle.message("py.exec.timeout.error", description, options.timeout),
+          errorReason = ExecErrorReason.Timeout
+        )
+      }
+      return@coroutineScope result
     }
-    catch (_: TimeoutCancellationException) {
-      executableProcess.killProcessAndFailAsTimeout(eelProcess, options.timeout)
-    }
-
-    return result
   }
 }
 
-private data class EelExecutableProcess(
-  val exe: EelPath,
-  val args: List<String>,
-  val env: Map<String, String>,
-  val workingDirectory: Path?,
-  val description: @Nls String,
-)
-
-@CheckReturnValue
-private suspend fun EelExecutableProcess.run(): PyExecResult<EelProcess> {
-  val workingDirectory = if (workingDirectory != null && !workingDirectory.isAbsolute) workingDirectory.toRealPath() else workingDirectory
-  try {
-    val executionResult = exe.descriptor.toEelApi().exec.spawnProcess(exe.toString())
-      .args(args)
-      .env(env)
-      .workingDirectory(workingDirectory?.asEelPath()).eelIt()
-
-    return Result.success(executionResult)
-  }
-  catch (e: ExecuteProcessException) {
-    return failAsCantStart(e)
-  }
-}
-
-private fun EelExecutableProcess.failAsCantStart(executeProcessError: ExecuteProcessException): Result.Failure<ExecError> {
-  return ExecError(
-    exe = exe,
+private fun <T : ExecErrorReason> ProcessLauncher.createExecError(messageToUser: @Nls String, errorReason: T): Result.Failure<ExecErrorImpl<T>> =
+  ExecErrorImpl(
+    exe = exeForError,
     args = args.toTypedArray(),
-    additionalMessageToUser = PyExecBundle.message("py.exec.start.error", description, executeProcessError.message, executeProcessError.errno),
-    errorReason = ExecErrorReason.CantStart(executeProcessError.errno, executeProcessError.message)
+    additionalMessageToUser = messageToUser,
+    errorReason = errorReason
   ).logAndFail()
-}
 
-private suspend fun EelExecutableProcess.killProcessAndFailAsTimeout(eelProcess: EelProcess, timeout: Duration): Result.Failure<ExecError> {
-  eelProcess.kill()
 
-  return ExecError(
-    exe = exe,
-    args = args.toTypedArray(),
-    additionalMessageToUser = PyExecBundle.message("py.exec.timeout.error", description, timeout),
-    errorReason = ExecErrorReason.Timeout
-  ).logAndFail()
-}
-
-private fun EelExecutableProcess.failAsExecutionFailed(processOutput: ExecErrorReason.UnexpectedProcessTermination, customMessage: @Nls String?): Result.Failure<ExecError> {
-  val additionalMessage = customMessage ?: run {
-    PyExecBundle.message("py.exec.exitCode.error", description, processOutput.exitCode)
-  }
-
-  return ExecError(
-    exe = exe,
-    args = args.toTypedArray(),
-    additionalMessageToUser = additionalMessage,
-    errorReason = processOutput
-  ).logAndFail()
-}
-
-private fun ExecError.logAndFail(): Result.Failure<ExecError> {
+private fun <T : ExecErrorReason> ExecErrorImpl<T>.logAndFail(): Result.Failure<ExecErrorImpl<T>> {
   fileLogger().warn(message)
   return failure(this)
 }
 
-private class ArgsBuilderImpl(private val eel: EelApi) : ArgsBuilder {
-  private val _args = CopyOnWriteArrayList<String>()
-  val args: List<String> = _args
-  override fun addArgs(vararg args: String) {
-    _args.addAll(args)
-  }
+@Service
+private class MyService(val scope: CoroutineScope)
 
-  override suspend fun addLocalFile(localFile: Path): Unit = withContext(Dispatchers.IO) {
-    assert(localFile.exists()) { "No file $localFile, be sure to check it before calling" }
-    val remoteFile = EelPathUtils.transferLocalContentToRemote(
-      source = localFile,
-      target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
-    ).asEelPath().toString()
-    _args.add(remoteFile)
-  }
-}
+private fun Result.Failure<ExecuteGetProcessError<*>>.asPyError(): Result.Failure<PyError> = PyResult.failure(this.error.pyError)

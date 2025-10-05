@@ -2,6 +2,7 @@
 package com.intellij.find
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
@@ -15,10 +16,13 @@ import com.intellij.util.containers.ContainerUtil
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.UnknownNullability
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
+
+private val LOG = Logger.getInstance(FindModel::class.java)
 
 @Serializable
 open class FindModel : UserDataHolder, Cloneable {
@@ -371,6 +375,15 @@ open class FindModel : UserDataHolder, Cloneable {
       }
     }
 
+  @ApiStatus.Internal
+  var customScopeId: String? = null
+    set(value) {
+      if (value != field) {
+        field = value
+        notifyObservers()
+      }
+    }
+
   @get:JvmName("isCustomScope")
   @set:JvmName("setCustomScope")
   var isCustomScope: Boolean = false
@@ -581,6 +594,7 @@ open class FindModel : UserDataHolder, Cloneable {
       moduleName = model.moduleName
       customScopeName = model.customScopeName
       customScope = model.customScope
+      customScopeId = model.customScopeId
       isCustomScope = model.isCustomScope
       isFindAll = model.isFindAll
       searchContext = model.searchContext
@@ -622,6 +636,7 @@ open class FindModel : UserDataHolder, Cloneable {
     if (isWholeWordsOnly != findModel.isWholeWordsOnly) return false
     if (isWithSubdirectories != findModel.isWithSubdirectories) return false
     if (if (customScope != null) (customScope != findModel.customScope) else findModel.customScope != null) return false
+    if (if (customScopeId != null) (customScopeId != findModel.customScopeId) else findModel.customScopeId != null) return false
     if (if (customScopeName != null) (customScopeName != findModel.customScopeName) else findModel.customScopeName != null) return false
     if (if (directoryName != null) (directoryName != findModel.directoryName) else findModel.directoryName != null) return false
     if (if (fileFilter != null) (fileFilter != findModel.fileFilter) else findModel.fileFilter != null) return false
@@ -663,6 +678,7 @@ open class FindModel : UserDataHolder, Cloneable {
     result = 31 * result + (fileFilter?.hashCode() ?: 0)
     result = 31 * result + (customScopeName?.hashCode() ?: 0)
     result = 31 * result + (customScope?.hashCode() ?: 0)
+    result = 31 * result + (customScopeId?.hashCode() ?: 0)
     result = 31 * result + (if (isCustomScope) 1 else 0)
     result = 31 * result + (if (isMultiline) 1 else 0)
     result = 31 * result + (if (isPreserveCase) 1 else 0)
@@ -694,7 +710,7 @@ open class FindModel : UserDataHolder, Cloneable {
            "moduleName = '" + moduleName + "'\n" +
            "customScopeName = '" + customScopeName + "'\n" +
            "searchInProjectFiles = " + mySearchInProjectFiles + "\n" +
-           "userDataMap = " + dataHolder.get() + "\n"
+           "userDataMap = " + dataHolder + "\n"
   }
 
   @Transient
@@ -731,9 +747,11 @@ open class FindModel : UserDataHolder, Cloneable {
     notifyObservers()
   }
 
-   private fun notifyObservers() {
+  private fun notifyObservers() {
     for (observer in myObservers) {
-      observer.findModelChanged(this)
+      LOG.runAndLogException {
+        observer.findModelChanged(this)
+      }
     }
   }
 
@@ -754,6 +772,28 @@ open class FindModel : UserDataHolder, Cloneable {
     ANY, IN_STRING_LITERALS, IN_COMMENTS, EXCEPT_STRING_LITERALS, EXCEPT_COMMENTS, EXCEPT_COMMENTS_AND_STRING_LITERALS
   }
 
+  /**
+   * Determines whether an already running or prepared search can be reused without a restart.
+   *
+   * Returns true when:
+   * - all settings are identical between the given [oldModel] and this model; or
+   * - the only differences are Preserve Case ([isPreserveCase]),
+   * Replace/Find mode ([isReplaceState]), and/or String to Replace ([myStringToReplace]).
+   *
+   * Any change to any other field requires a restart, and the method returns false.
+   *
+   * @param oldModel previously used FindModel to compare with
+   * @return true if no restart is needed (only Preserve Case, Replace State, and/or String to Replace may differ), false otherwise
+   */
+  @ApiStatus.Internal
+  fun noRestartSearchNeeded(oldModel: FindModel): Boolean {
+    if (oldModel == this) return true
+    val adjusted = this.clone()
+    adjusted.isPreserveCase = oldModel.isPreserveCase
+    adjusted.isReplaceState = oldModel.isReplaceState
+    adjusted.myStringToReplace = oldModel.myStringToReplace
+    return adjusted == oldModel
+  }
 
   override fun <T> getUserData(key: Key<T>): T? {
     return dataHolder.getUserData<T>(key)

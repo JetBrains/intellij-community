@@ -10,9 +10,10 @@ import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.repo.GitRepository
 
 internal class GitSquashOperation(repository: GitRepository) : GitCommitEditingOperation(repository) {
-  fun execute(commitsToSquash: List<VcsCommitMetadata>, newMessage: String): GitCommitEditingOperationResult {
+  @JvmOverloads
+  fun execute(commitsToSquash: List<VcsCommitMetadata>, newMessage: String, initialHead: String? = null): GitCommitEditingOperationResult {
     val rebaseEditor = SquashRebaseEditorHandler(repository, commitsToSquash, newMessage)
-    return rebase(commitsToSquash, rebaseEditor)
+    return rebase(commitsToSquash, rebaseEditor, false, initialHead)
   }
 
   private class SquashRebaseEditorHandler(

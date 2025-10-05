@@ -67,7 +67,7 @@ class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayMana
   }
 
   private fun updateMouseOverCell(e: MouseEvent) {
-    NotebookUiUtils.getEditorPoint(editor, e)?.let { (_, point) ->
+    NotebookUiUtils.getEditorPoint(editor, e)?.let { point ->
       updateMouseOverCell(point)
     }
   }

@@ -15,6 +15,7 @@ import com.intellij.debugger.streams.core.ui.ElementChooser
 import com.intellij.debugger.streams.core.ui.impl.ElementChooserImpl
 import com.intellij.debugger.streams.core.ui.impl.EvaluationAwareTraceWindow
 import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.debugger.streams.shared.ChainStatus
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction

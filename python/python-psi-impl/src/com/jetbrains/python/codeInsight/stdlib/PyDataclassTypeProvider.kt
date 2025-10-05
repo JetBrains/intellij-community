@@ -14,6 +14,7 @@ import com.jetbrains.python.codeInsight.PyDataclassNames.Attrs
 import com.jetbrains.python.codeInsight.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.*
@@ -76,13 +77,44 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
     return null
   }
 
+  override fun getMemberTypes(type: PyType, name: String, location: PyExpression?, direction: AccessDirection, context: PyResolveContext): List<PyTypedResolveResult>? {
+    if (type !is PyClassType) {
+      return null
+    }
+    if (PyNames.HASH == name) {
+      // See `unsafe_hash` section here https://docs.python.org/3/library/dataclasses.html
+      val dataclassParameters = parseDataclassParameters(type.pyClass, context.typeEvalContext)
+      if (dataclassParameters == null) return null
+
+      if (dataclassParameters.unsafeHash) {
+        return null
+      }
+
+      if (!dataclassParameters.eq) {
+        return null
+      }
+
+      if (dataclassParameters.frozen) {
+        return null
+      }
+
+      val resolvedMembers = type.resolveMember(name, location, direction, context, false)
+      if (resolvedMembers?.isNotEmpty() == true) {
+        return null
+      }
+      return listOf(PyTypedResolveResult(null, PyBuiltinCache.getInstance(type.pyClass).noneType))
+    }
+
+    return null
+  }
+
   companion object {
     @ApiStatus.Internal
     fun getInitVars(
       cls: PyClass,
       dataclassParams: PyDataclassParameters?,
       context: TypeEvalContext,
-    ): Sequence<InitVarInfo>? {
+    ): List<InitVarInfo>? {
       if (dataclassParams == null || !dataclassParams.init) {
         return null
       }
@@ -101,6 +133,7 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
             null
           }
         }
+        .toList()
     }
 
     @ApiStatus.Internal
@@ -199,8 +232,8 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
           fieldsInfo.forEachIndexed { index, (name, kwOnly, parameter) ->
             // note: attributes are visited from inheritors to ancestors, in reversed order for every of them
 
-            if ((seenKeywordOnlyClass && (parameters.type == PyDataclassParameters.PredefinedType.ATTRS || kwOnly != false) 
-                 || index < indexOfKeywordOnlyAttribute || kwOnly == true) 
+            if ((seenKeywordOnlyClass && (parameters.type == PyDataclassParameters.PredefinedType.ATTRS || kwOnly != false)
+                 || index < indexOfKeywordOnlyAttribute || kwOnly == true)
                 && name !in collected) {
               keywordOnly += name
             }

@@ -73,7 +73,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE);
+    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
   }
 
   public void testPreserveComments() {
@@ -128,7 +128,8 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                                                 f -> {
                                                   ProjectFileIndex projectFileIndex =
                                                     ProjectRootManager.getInstance(myFixture.getProject()).getFileIndex();
-                                                  return projectFileIndex.isInSource(f.getVirtualFile());
+                                                  return projectFileIndex.isInSource(f.getVirtualFile()) &&
+                                                         !f.getVirtualFile().getPath().contains("testData");
                                                 },
                                                 fileActions);
   }

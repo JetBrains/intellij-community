@@ -18,5 +18,5 @@ package org.jetbrains.idea.maven.server;
 import java.io.File;
 
 public interface MavenServerDownloadListener {
-  void artifactDownloaded(File file, String relativePath);
+  void artifactDownloaded(File file);
 }

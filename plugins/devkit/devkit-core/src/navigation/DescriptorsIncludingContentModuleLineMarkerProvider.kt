@@ -62,7 +62,7 @@ internal class DescriptorsIncludingContentModuleLineMarkerProvider : DevkitRelat
     return PluginIdDependenciesIndex.findDependsTo(element.project, moduleVirtualFile).flatMap { dependingFile ->
       val psiFile = psiManager.findFile(dependingFile) as? XmlFile ?: return@flatMap emptyList<PsiElement>()
       val plugin = DescriptorUtil.getIdeaPlugin(psiFile) ?: return@flatMap emptyList<PsiElement>()
-      plugin.content.moduleEntry.filter { it.name.stringValue == moduleName }
+      plugin.content.flatMap { it.moduleEntry }.filter { it.name.stringValue == moduleName }
     } as List<ModuleDescriptor>
   }
 
@@ -70,11 +70,12 @@ internal class DescriptorsIncludingContentModuleLineMarkerProvider : DevkitRelat
     leaf: PsiElement,
     contentEntries: List<ModuleDescriptor>,
   ): RelatedItemLineMarkerInfo<PsiElement> {
+    val moduleName = leaf.containingFile.virtualFile.nameWithoutExtension
     return NavigationGutterIconBuilder.create(AllIcons.Nodes.Module, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(contentEntries)
       .setTargetRenderer { TargetRenderer() }
       .setPopupTitle(DevKitBundle.message("line.marker.descriptors.including.content.module.popup.title"))
-      .setTooltipText(DevKitBundle.message("line.marker.descriptors.including.content.module.tooltip"))
+      .setTooltipText(DevKitBundle.message("line.marker.descriptors.including.content.module.tooltip", moduleName, contentEntries.size))
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
       .createLineMarkerInfo(leaf)
   }

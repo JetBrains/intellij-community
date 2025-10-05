@@ -1,14 +1,14 @@
 from collections.abc import Awaitable, Callable
-from typing import Any, Protocol, type_check_only
+from typing import Any, ClassVar, Protocol, TypeAlias, type_check_only
 
 from django.http.request import HttpRequest
 from django.http.response import HttpResponseBase
-from typing_extensions import TypeAlias
 
-class RemovedInNextVersionWarning(DeprecationWarning): ...
-class RemovedInDjango60Warning(PendingDeprecationWarning): ...
+class RemovedInDjango60Warning(DeprecationWarning): ...
+class RemovedInDjango61Warning(PendingDeprecationWarning): ...
 
-RemovedAfterNextVersionWarning: TypeAlias = RemovedInDjango60Warning
+RemovedInNextVersionWarning: TypeAlias = RemovedInDjango60Warning
+RemovedAfterNextVersionWarning: TypeAlias = RemovedInDjango61Warning
 
 class warn_about_renamed_method:
     class_name: str
@@ -24,11 +24,6 @@ class RenameMethodsBase(type):
     renamed_methods: Any
     def __new__(cls, name: Any, bases: Any, attrs: Any) -> type: ...
 
-class DeprecationInstanceCheck(type):
-    alternative: str
-    deprecation_warning: type[Warning]
-    def __instancecheck__(self, instance: Any) -> bool: ...
-
 @type_check_only
 class _GetResponseCallable(Protocol):
     def __call__(self, request: HttpRequest, /) -> HttpResponseBase: ...
@@ -38,8 +33,8 @@ class _AsyncGetResponseCallable(Protocol):
     def __call__(self, request: HttpRequest, /) -> Awaitable[HttpResponseBase]: ...
 
 class MiddlewareMixin:
-    sync_capable: bool
-    async_capable: bool
+    sync_capable: ClassVar[bool]
+    async_capable: ClassVar[bool]
 
     get_response: _GetResponseCallable | _AsyncGetResponseCallable
     def __init__(self, get_response: _GetResponseCallable | _AsyncGetResponseCallable) -> None: ...

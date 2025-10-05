@@ -9,7 +9,8 @@ import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.psi.util.JavaMainMethodSearcher;
+import com.intellij.psi.util.MainMethodSearcherBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,19 +35,20 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     }
 
     PsiElement parent = element.getParent();
+    MainMethodSearcherBase mainMethodUtil = getMainMethodUtil();
     if (parent instanceof PsiClass aClass) {
-      if (!PsiMethodUtil.hasMainInClass(aClass)) return null;
+      if (!mainMethodUtil.hasMainInClass(aClass)) return null;
       if (PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) != null) return null;
     }
     else if (parent instanceof PsiMethod method) {
-      if (!"main".equals(method.getName()) || !PsiMethodUtil.isMainMethod(method)) return null;
+      if (!"main".equals(method.getName()) || !mainMethodUtil.isMainMethod(method)) return null;
       PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return null;
       if (!(containingClass instanceof PsiImplicitClass) && PsiTreeUtil.getParentOfType(containingClass, PsiImplicitClass.class) != null) {
         return null;
       }
-      if (!PsiMethodUtil.MAIN_CLASS.value(containingClass)) return null;
-      PsiMethod candidateMainMethod = PsiMethodUtil.findMainMethodInClassOrParent(containingClass);
+      if (!MainMethodSearcherBase.MAIN_CLASS.value(containingClass)) return null;
+      PsiMethod candidateMainMethod = mainMethodUtil.findMainMethodInClassOrParent(containingClass);
       if (candidateMainMethod != method) return null;
     }
     else {
@@ -62,5 +64,9 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
 
   protected boolean isIdentifier(@NotNull PsiElement e) {
     return e instanceof PsiIdentifier;
+  }
+
+  protected MainMethodSearcherBase getMainMethodUtil() {
+    return JavaMainMethodSearcher.INSTANCE;
   }
 }

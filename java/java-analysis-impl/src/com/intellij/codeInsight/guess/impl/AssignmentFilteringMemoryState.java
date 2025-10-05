@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.guess.impl;
 
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -30,7 +29,7 @@ public class AssignmentFilteringMemoryState extends JvmDfaMemoryStateImpl {
 
   @Override
   protected DfType filterDfTypeOnAssignment(DfaVariableValue var, @NotNull DfType dfType) {
-    if (ControlFlow.isTempVariable(var) || (!(dfType instanceof DfReferenceType)) ||
+    if (DfaValueFactory.isTempVariable(var) || (!(dfType instanceof DfReferenceType)) ||
         var.getPsiVariable() instanceof PsiParameter && var.getPsiVariable().getParent().getParent() instanceof PsiLambdaExpression) {
       // Pass type normally for synthetic lambda parameter assignment
       return dfType;

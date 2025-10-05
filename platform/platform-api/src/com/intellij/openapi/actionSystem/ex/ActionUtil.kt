@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil.SHOW_TEXT_IN_TOOLBAR
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil.updateAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -56,7 +55,7 @@ private val InputEventDummyAction = EmptyAction.createEmptyAction(null, null, tr
  * Public Action System utility class.
  *
  * 1. Always use [updateAction] and [performAction] instead of [ApiStatus.OverrideOnly] [AnAction] methods
- * 2. Use presentation key constants like [SHOW_TEXT_IN_TOOLBAR] to further tweak an action presentations
+ * 2. Use presentation key constants like [SHOW_TEXT_IN_TOOLBAR] to further tweak an action presentation
  * 3. Avoid using deprecated methods
  */
 object ActionUtil {
@@ -147,7 +146,7 @@ object ActionUtil {
     /** No popup caption */
     NONE,
 
-    /** Use the text of ActionGroup presentation as a popup caption */
+    /** Use the text of the ActionGroup presentation as a popup caption */
     FROM_ACTION_TEXT,
   }
 
@@ -193,19 +192,16 @@ object ActionUtil {
   @JvmStatic
   fun getUnavailableMessage(action: String, plural: Boolean): @NlsContexts.PopupContent String {
     if (plural) {
-      return IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action,
-                               ApplicationNamesInfo.getInstance().productName)
+      return IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action)
     }
-    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action,
-                             ApplicationNamesInfo.getInstance().productName)
+    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action)
   }
 
   @ApiStatus.Internal
   @JvmStatic
   fun getActionUnavailableMessage(@ActionText action: String?): @NlsContexts.PopupContent String {
-    val productName = ApplicationNamesInfo.getInstance().productName
-    if (action == null) return IdeBundle.message("popup.content.this.action.not.available.while.updating.indices", productName)
-    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action, productName)
+    if (action == null) return IdeBundle.message("popup.content.this.action.not.available.while.updating.indices")
+    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action)
   }
 
   @JvmStatic
@@ -214,14 +210,13 @@ object ActionUtil {
       actionNames.isEmpty() -> getActionUnavailableMessage(null)
       actionNames.size == 1 -> getActionUnavailableMessage(actionNames[0])
       else -> IdeBundle.message("popup.content.none.of.following.actions.are.available.while.updating.indices",
-                                ApplicationNamesInfo.getInstance().productName,
                                 actionNames.joinToString(", "))
     }
   }
 
   /**
    * Calls [AnAction.update] with proper context, checks and notifications.
-   * Does nothing if [beforeActionPerformed] is true.]
+   * Does nothing if [beforeActionPerformed] is true.
    *
    * @return true if update tried to access indices in dumb mode
    */
@@ -316,7 +311,7 @@ object ActionUtil {
   }
 
   /**
-   * Show a cancellable modal progress running the given computation under read action with the same [DumbService.isAlternativeResolveEnabled]
+   * Show a cancellable modal progress bar running the given computation under read action with the same [DumbService.isAlternativeResolveEnabled]
    * as the caller. To be used in actions which need to perform potentially long-running computations synchronously without freezing UI.
    *
    * @throws ProcessCanceledException if the user has canceled the progress. If the action can be safely stopped at this point
@@ -600,7 +595,7 @@ object ActionUtil {
 
   /**
    * ActionManager.getInstance().getAction(id).registerCustomShortcutSet(shortcutSet, component) must not be used,
-   * because it erases shortcuts assigned to this action in keymap.
+   * because it erases shortcuts assigned to this action in the keymap.
    */
   @JvmStatic
   fun wrap(actionId: String): AnAction {

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.spellchecker"/>
@@ -94,7 +94,6 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaUsageTriggerCollector"/>
 
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
-    <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaBasedLanguageInjector"/>
     <gotoDeclarationHandler id="JsonSchemaGotoDeclarationHandler"
                             implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>

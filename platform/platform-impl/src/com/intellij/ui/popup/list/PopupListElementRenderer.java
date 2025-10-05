@@ -2,6 +2,7 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionHolder;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
@@ -22,13 +23,13 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
 import com.intellij.ui.popup.NumericMnemonicItem;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -114,16 +115,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected JComponent createItemComponent() {
     createLabel();
     JPanel panel = new JPanel(new BorderLayout()) {
-      private final AccessibleContext myAccessibleContext = myTextLabel.getAccessibleContext();
-
-      @Override
-      public AccessibleContext getAccessibleContext() {
-        if (myAccessibleContext == null) {
-          return super.getAccessibleContext();
-        }
-        return myAccessibleContext;
-      }
-
       @Override
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
@@ -288,6 +279,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (showNextStepLabel) {
       myNextStepLabel.setVisible(isSelectable);
       myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
+      myNextStepLabel.getAccessibleContext()
+        .setAccessibleName(isSelectable ? IdeBundle.message("popup.list.item.renderer.next.step.label.accessible.name") : null);
       if (ExperimentalUI.isNewUI()) {
         myNextStepLabel.setBorder(JBUI.Borders.emptyLeft(20));
       }
@@ -298,6 +291,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
     else {
       myNextStepLabel.setVisible(false);
+      myNextStepLabel.getAccessibleContext().setAccessibleName(null);
     }
 
     boolean hasNextIcon = myNextStepLabel.isVisible();
@@ -425,6 +419,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       selectablePanel.setSelectionColor(isSelected && isSelectable ? UIUtil.getListSelectionBackground(true) : null);
       setSelected(myMainPane, isSelected && isSelectable);
     }
+
+    if (myIconLabel != null && value instanceof PopupFactoryImpl.ActionItem actionItem) {
+      myIconLabel.getAccessibleContext().setAccessibleName(actionItem.getAccessibleIconDescription());
+    }
   }
 
   protected boolean isShowSecondaryText() {
@@ -522,7 +520,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (shortcutLabelAccessibleName != null) {
       shortcutLabelAccessibleName = shortcutLabelAccessibleName.trim();
     }
-    return AccessibleContextUtil.combineAccessibleStrings(textLabelAccessibleName, shortcutLabelAccessibleName);
+    String additionalLabels = AccessibleContextUtil.getCombinedName(", ", mySecondaryTextLabel, myIconLabel, myNextStepLabel);
+    return AccessibleContextUtil.combineAccessibleStrings(textLabelAccessibleName, " ", shortcutLabelAccessibleName, ", ",
+                                                          additionalLabels);
   }
 
   @TestOnly

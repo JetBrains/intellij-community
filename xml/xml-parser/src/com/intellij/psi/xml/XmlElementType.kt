@@ -109,7 +109,7 @@ object XmlElementType {
 
   @JvmField
   val HTML_RAW_TEXT: IElementType =
-    HtmlRawTextElementType
+    HtmlRawTextElementType()
 
   @JvmField
   val XML_TEXT: IElementType =
@@ -117,7 +117,7 @@ object XmlElementType {
 
   @JvmField
   val XML_FILE: IFileElementType =
-    IFileElementType(XMLLanguage.INSTANCE)
+    XmlFileElementType()
 
   @JvmField
   val XHTML_FILE: IElementType =

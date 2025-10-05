@@ -19,6 +19,10 @@ public abstract class StubPsiFactory {
   public abstract PsiImportStatementBase createImportStatement(PsiImportStatementStub stub);
 
   public abstract PsiMethod createMethod(PsiMethodStub stub);
+  
+  public PsiPackageStatement createPackageStatement(PsiPackageStatementStub stub) {
+    return null;
+  }
 
   public abstract PsiModifierList createModifierList(PsiModifierListStub stub);
 

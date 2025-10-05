@@ -6,7 +6,10 @@ sealed class Toolchain(
   val debugger: Debugger,
   val buildTool: Make
 ) {
-  override fun toString(): String = "${compiler}_$debugger"
+  override fun toString(): String {
+    return if (compiler == Compiler.DEFAULT) "$debugger"
+    else "${compiler}_$debugger"
+  }
 
   class Default(
     compiler: Compiler = Compiler.DEFAULT,
@@ -76,21 +79,25 @@ enum class Debugger {
   BUNDLED_GDB {
     override fun getDebuggerPath(): String = "Bundled GDB"
     override fun getDebuggerFieldName(): String = "Bundled GDB"
+    override fun toString(): String = "GDB"
   },
 
   BUNDLED_LLDB {
     override fun getDebuggerPath(): String = "Bundled LLDB"
     override fun getDebuggerFieldName(): String = "Bundled LLDB"
+    override fun toString(): String = "LLDB"
   },
 
   CUSTOM_GDB {
     override fun getDebuggerPath(): String = "/usr/bin/gdb"
     override fun getDebuggerFieldName(): String = "Custom GDB executable"
+    override fun toString(): String = "Custom GDB"
   },
 
   CUSTOM_LLDB {
     override fun getDebuggerPath(): String = "/usr/bin/lldb"
     override fun getDebuggerFieldName(): String = "Custom LLDB executable"
+    override fun toString(): String = "Custom LLDB"
   };
 
   abstract fun getDebuggerPath(): String

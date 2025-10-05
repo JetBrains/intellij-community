@@ -10,12 +10,12 @@ public final class EditorInputMethodSupport {
 
   private final InputMethodRequests myRequests;
   private final InputMethodListener myListener;
-  private final EditorImpl.MyInputMethodHandleSwingThreadWrapper myInputMethodRequestsSwingWrapper;
+  private final EditorInputMethodHandleSwingThreadWrapper myInputMethodRequestsSwingWrapper;
 
   public EditorInputMethodSupport(@NotNull InputMethodRequests requests, @NotNull InputMethodListener listener) {
     myRequests = requests;
     myListener = listener;
-    myInputMethodRequestsSwingWrapper = new EditorImpl.MyInputMethodHandleSwingThreadWrapper(requests);
+    myInputMethodRequestsSwingWrapper = new EditorInputMethodHandleSwingThreadWrapper(requests);
   }
 
   @NotNull InputMethodRequests getRequests() {
@@ -26,7 +26,7 @@ public final class EditorInputMethodSupport {
     return myListener;
   }
 
-  @NotNull EditorImpl.MyInputMethodHandleSwingThreadWrapper getInputMethodRequestsSwingWrapper() {
+  @NotNull EditorInputMethodHandleSwingThreadWrapper getInputMethodRequestsSwingWrapper() {
     return myInputMethodRequestsSwingWrapper;
   }
 }

@@ -83,9 +83,11 @@ public final class UnassignedVariableAccessInspection extends GroovyLocalInspect
   }
 
   private static boolean isLogicalExpression(PsiElement parent) {
-    return parent instanceof GrBinaryExpression &&
-           (((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mLAND ||
-            ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mLOR);
+    return parent instanceof GrBinaryExpression binaryExpression &&
+           (binaryExpression.getOperationTokenType() == GroovyTokenTypes.mLAND ||
+            binaryExpression.getOperationTokenType() == GroovyTokenTypes.mLOR ||
+            binaryExpression.getOperationTokenType() == GroovyTokenTypes.mIMPL
+           );
   }
 
   private static boolean isCheckForNull(PsiElement parent, PsiElement element) {

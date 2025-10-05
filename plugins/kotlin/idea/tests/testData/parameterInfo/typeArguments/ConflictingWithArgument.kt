@@ -22,6 +22,3 @@ class A {
     fun subscribe(listener: L) {}
 }
 
-/*
-Text: (<highlight>T</highlight>), Disabled: false, Strikeout: false, Green: false
-*/

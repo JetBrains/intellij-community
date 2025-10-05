@@ -13,7 +13,6 @@ from django.utils.safestring import SafeString
 from .base import InclusionAdminNode
 
 register: Any
-DOT: str
 
 def paginator_number(cl: ChangeList, i: int) -> SafeString: ...
 def pagination(cl: ChangeList) -> dict[str, Any]: ...

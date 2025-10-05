@@ -56,10 +56,10 @@ public final class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterM
         || method.hasModifierProperty(PsiModifier.SYNCHRONIZED)
         || method.hasModifierProperty(PsiModifier.NATIVE)
         || method.hasModifierProperty(PsiModifier.STRICTFP)
-        || method.getAnnotations().length != 0
+        || method.hasAnnotations()
         || PsiTypes.voidType().equals(returnType)
         || returnType == null
-        || returnType.getAnnotations().length != 0
+        || returnType.hasAnnotations()
         || !method.isWritable()) {
       return false;
     }

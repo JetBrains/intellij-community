@@ -4,6 +4,7 @@ package com.intellij.net.ssl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -26,8 +27,8 @@ import com.intellij.util.net.ssl.CertificateWrapper
 import com.intellij.util.net.ssl.CertificateWrapper.CommonField
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.tree.TreeUtil
-import fleet.util.logging.logger
 import java.awt.Color
 import java.awt.Component
 import java.awt.Point
@@ -102,11 +103,19 @@ internal class CertificateWarningDialog(
         icon(AllIcons.General.WarningDialog)
         val errorText = error?.let { IdeBundle.message("ssl.certificate.warning", it, if (hasUntrusted) IdeBundle.message("ssl.certificate.warning.plural") else IdeBundle.message("ssl.certificate.warning.singular")) }
                         ?: IdeBundle.message("ssl.certificate.warning.default")
-        text(HtmlChunk.text(errorText).bold().toString())
+        text(HtmlChunk.text(errorText).bold().toString()).applyToComponent {
+          if (ScreenReader.isActive()) {
+            isFocusable = true
+          }
+        }
       }
       if (remoteHost != null) {
         row(IdeBundle.message("ssl.certificate.server.address")) {
-          text(remoteHost).align(AlignX.LEFT)
+          text(remoteHost).align(AlignX.LEFT).applyToComponent {
+            if (ScreenReader.isActive()) {
+              isFocusable = true
+            }
+          }
         }
       }
       row {
@@ -176,7 +185,7 @@ internal class CertificateWarningDialog(
             myIgnoreInheritance = true
           }
 
-          override fun customizeRenderer(tree: JTree?, value: Any?, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean) {
+          override fun customizeRenderer(tree: JTree, value: Any, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean) {
             super.customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
             val textAndColor = getTreeCellTextAndColor(value)
             textRenderer.append(textAndColor.first, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, textAndColor.second))
@@ -233,6 +242,7 @@ internal class CertificateWarningDialog(
       RoundedLineBorder(JBColor.border(), 10),
       JBUI.Borders.empty(3)
     )
+    certificatesTree.accessibleContext.accessibleName = IdeBundle.message("ssl.certificate.tree.accessible.name")
     return certificatesTree
   }
 

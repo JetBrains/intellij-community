@@ -3,12 +3,12 @@ package com.jetbrains.python.sdk.add.v2.uv
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
 import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
@@ -19,6 +19,7 @@ import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.version
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.venvReader.tryResolvePath
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -32,7 +33,7 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
     val sdkHomePathString = selectedEnv.get()?.homePath
     val selectedInterpreterPath = tryResolvePath(sdkHomePathString)
                                   ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", sdkHomePathString))
-    val allSdk = ProjectJdkTable.getInstance().allJdks
+    val allSdk = PythonSdkUtil.getAllSdks()
     val existingSdk = allSdk.find { it.homePath == selectedInterpreterPath.pathString }
     val associatedModule = extractModule(moduleOrProject)
     val basePathString = associatedModule?.basePath ?: moduleOrProject.project.basePath
@@ -44,20 +45,22 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
       return Result.success(existingSdk)
     }
 
-    val existingWorkingDir = existingSdk?.associatedModulePath?.let { tryResolvePath(it) }
-    val usePip = existingWorkingDir != null && !existingSdk.isUv
+    val workingDirectory =
+      VirtualEnvReader().getVenvRootPath(selectedInterpreterPath)
+      ?: tryResolvePath(existingSdk?.associatedModulePath)
+      ?: projectDir
 
     return setupExistingEnvAndSdk(
       envExecutable = selectedInterpreterPath,
-      envWorkingDir = existingWorkingDir,
-      usePip = usePip,
+      envWorkingDir = workingDirectory,
+      usePip = existingSdk?.isUv == true,
       projectDir = projectDir,
       existingSdks = allSdk.toList()
     )
   }
 
   override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter> {
-    val existingEnvs = ProjectJdkTable.getInstance().allJdks.filter {
+    val existingEnvs = PythonSdkUtil.getAllSdks().filter {
       it.isUv && (it.associatedModulePath == modulePath.pathString || it.associatedModulePath == null)
     }.mapNotNull { env ->
       env.homePath?.let { path -> DetectedSelectableInterpreter(path, env.version, false) }

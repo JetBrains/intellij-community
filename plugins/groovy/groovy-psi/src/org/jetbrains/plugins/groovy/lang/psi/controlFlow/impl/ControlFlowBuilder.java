@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -668,7 +668,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
     }
 
-    if (opType != GroovyTokenTypes.mLOR && opType != GroovyTokenTypes.mLAND && opType != KW_IN && opType != T_NOT_IN) {
+    if (opType != GroovyTokenTypes.mLOR && opType != GroovyTokenTypes.mLAND && opType != GroovyTokenTypes.mIMPL && opType != KW_IN && opType != T_NOT_IN) {
       left.accept(this);
       if (right != null) {
         right.accept(this);
@@ -866,6 +866,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
     else if (clause instanceof GrForInClause forInClause) {
       acceptNullable(forInClause.getIteratedExpression());
+      GrVariable indexVariable = forInClause.getIndexVariable();
+      if (indexVariable != null) {
+        addNode(new ReadWriteVariableInstruction(getDescriptorId(createDescriptor(indexVariable)),
+                                                                indexVariable,
+                                                                ReadWriteVariableInstruction.WRITE));
+      }
       addNodeAndCheckPending(new ReadWriteVariableInstruction(
         getDescriptorId(new LoopIteratorVariableDescriptor(forInClause)),
         forInClause,

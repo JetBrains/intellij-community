@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 
 class AddForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
     KtForExpression::class.java,
-    KotlinBundle.lazyMessage("add.indices.to.for.loop"),
+    KotlinBundle.messagePointer("add.indices.to.for.loop"),
 ), LowPriorityAction {
     override fun applicabilityRange(element: KtForExpression): TextRange? {
         if (element.loopParameter == null) return null

@@ -104,6 +104,9 @@ internal class CompositeMarker(
 
   // TODO add this method to interface when it's required
   fun remapTokenType(newTokenType: SyntaxElementType) {
+    if (!isDone) {
+      builder.logger.error("Can't remap token type for non-done marker")
+    }
     type = newTokenType
   }
 

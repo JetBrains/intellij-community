@@ -97,7 +97,7 @@ internal abstract class GitApplyChangesProcess(
     LOG.info("${operationName}ing commits: " + toString(commitsInRoots))
 
     if (changesSaver != null) {
-      if (!trySaveChanges(commitsInRoots.map { (repo, _) -> repo.root }, changesSaver)) {
+      if (!changesSaver.trySaveLocalChanges(commitsInRoots.map { (repo, _) -> repo.root })) {
         return
       }
     }
@@ -124,16 +124,6 @@ internal abstract class GitApplyChangesProcess(
       LOG.info("Restoring saved changes after successful $operationName")
       changesSaver.load()
     }
-  }
-
-  fun trySaveChanges(roots: List<VirtualFile>, changesSaver: GitChangesSaver): Boolean {
-    val errorMessage = changesSaver.saveLocalChangesOrError(roots) ?: return true
-
-    VcsNotifier.getInstance(project)
-      .notifyError(VcsNotificationIdsHolder.UNCOMMITTED_CHANGES_SAVING_ERROR,
-                   VcsBundle.message("notification.title.couldn.t.save.uncommitted.changes"),
-                   errorMessage)
-    return false
   }
 
   /**

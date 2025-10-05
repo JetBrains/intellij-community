@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,5 +106,18 @@ public abstract class VcsRootChecker {
                                                                  @NotNull Collection<VirtualFile> projectRoots,
                                                                  @NotNull Set<VirtualFile> mappedDirs) throws VcsException {
     return null;
+  }
+
+  /**
+   * Return true if the checker should be run even if initial mapping detection already passed for the project.
+   * <p/>
+   * This is useful for VCSs that require always mapping detection, e.g., Perforce.
+   * <p/>
+   *
+   * @return true if the checker should be run even if initial mapping detection already passed for the project.
+   */
+  @ApiStatus.Experimental
+  public boolean shouldAlwaysRunInitialDetection() {
+    return false;
   }
 }

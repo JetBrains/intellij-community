@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Ascii;
+import com.intellij.execution.ijent.IjentChildPtyProcessAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -11,6 +12,7 @@ import com.pty4j.unix.UnixPtyProcess;
 import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,10 +23,12 @@ import java.util.concurrent.TimeUnit;
 public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
   private static final Logger LOG = Logger.getInstance(LocalTerminalTtyConnector.class);
   private final @NotNull PtyProcess myProcess;
+  private final @Nullable ShellProcessHolder myShellProcessHolder;
 
-  public LocalTerminalTtyConnector(@NotNull PtyProcess process, @NotNull Charset charset) {
+  public LocalTerminalTtyConnector(@NotNull PtyProcess process, @NotNull Charset charset, @Nullable ShellProcessHolder shellProcessHolder) {
     super(process, charset);
     myProcess = process;
+    myShellProcessHolder = shellProcessHolder;
   }
 
   @Override
@@ -37,6 +41,9 @@ public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
           myProcess.destroy();
         }
       }, 1000, TimeUnit.MILLISECONDS);
+    }
+    else if (myProcess instanceof IjentChildPtyProcessAdapter && myShellProcessHolder != null && myShellProcessHolder.isPosix()) {
+      myShellProcessHolder.terminatePosixShell();
     }
     else {
       if (myProcess instanceof WinConPtyProcess winConPtyProcess && !winConPtyProcess.isBundledConPtyLibrary()) {

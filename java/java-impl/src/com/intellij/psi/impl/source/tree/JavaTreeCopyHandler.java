@@ -18,6 +18,7 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Objects;
@@ -30,7 +31,7 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
   private static final Key<Boolean> INTERFACE_MODIFIERS_FLAG_KEY = Key.create("INTERFACE_MODIFIERS_FLAG_KEY");
 
   @Override
-  public TreeElement decodeInformation(TreeElement element, Map<Object, Object> decodingState) {
+  public TreeElement decodeInformation(@NotNull TreeElement element, @NotNull Map<Object, Object> decodingState) {
     boolean shallDecodeEscapedTexts = shallEncodeEscapedTexts(element, decodingState);
     if (element instanceof CompositeElement) {
       IElementType elementType = element.getElementType();
@@ -122,7 +123,7 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
     return null;
   }
 
-  private static boolean conversionMayApply(ASTNode element) {
+  private static boolean conversionMayApply(@NotNull ASTNode element) {
     PsiElement psi = element.getPsi();
     if (psi == null || !psi.isValid()) return false;
 
@@ -132,7 +133,7 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
   }
 
   @Override
-  public void encodeInformation(TreeElement element, ASTNode original, Map<Object, Object> encodingState) {
+  public void encodeInformation(@NotNull TreeElement element, @NotNull ASTNode original, @NotNull Map<Object, Object> encodingState) {
     boolean shallEncodeEscapedTexts = shallEncodeEscapedTexts(original, encodingState);
 
     if (original instanceof CompositeElement) {
@@ -169,7 +170,7 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
     }
   }
 
-  private static Boolean shallEncodeEscapedTexts(ASTNode original, Map<Object, Object> encodingState) {
+  private static Boolean shallEncodeEscapedTexts(@NotNull ASTNode original, @NotNull Map<Object, Object> encodingState) {
     Boolean shallEncodeEscapedTexts = (Boolean)encodingState.get(ESCAPEMENT_ENGAGED);
     if (shallEncodeEscapedTexts == null) {
       shallEncodeEscapedTexts = conversionMayApply(original);
@@ -191,7 +192,7 @@ public final class JavaTreeCopyHandler implements TreeCopyHandler {
     return false;
   }
 
-  private static void encodeInformationInRef(TreeElement ref, ASTNode original) {
+  private static void encodeInformationInRef(@NotNull TreeElement ref, @NotNull ASTNode original) {
     IElementType originalType = original.getElementType();
     if (originalType == JavaElementType.REFERENCE_EXPRESSION) {
       PsiJavaCodeReferenceElement javaRefElement = SourceTreeToPsiMap.treeToPsiNotNull(original);

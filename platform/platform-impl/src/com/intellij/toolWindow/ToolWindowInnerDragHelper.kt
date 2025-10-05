@@ -10,15 +10,18 @@ import com.intellij.openapi.wm.impl.content.SingleContentLayout
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropTargetHighlightComponent
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.content.Content.TEMPORARY_REMOVED_KEY
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
+import com.intellij.ui.drag.DialogDragImageView
+import com.intellij.ui.drag.DragImageView
+import com.intellij.ui.drag.GlassPaneDragImageView
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.Image
@@ -35,7 +38,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   private var myInitialIndex = -1
   private var myCurrentDecorator = null as InternalDecoratorImpl?
   private var myDraggingTab = null as ContentTabLabel?
-  private var myDialog = null as MyDialog?
+  private var dragImageView: DragImageView? = null
   private var currentDropSide = -1
   private var currentDropIndex = -1
   private val highlighter = createDropTargetHighlightComponent()
@@ -50,7 +53,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       val child = SwingUtilities.getDeepestComponentAt(pane, x, y)
       val decorator = InternalDecoratorImpl.findTopLevelDecorator(child)
       if (decorator != null &&
-          ClientProperty.isTrue(decorator.toolWindow.component, ToolWindowContentUi.ALLOW_DND_FOR_TABS) &&
+          ToolWindowContentUi.isTabsReorderingAllowed(decorator.toolWindow) &&
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
            Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&
@@ -83,7 +86,15 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     sourceTopDecorator = sourceDecorator?.let { findTopDecorator(it) }
     myInitialIndex = getInitialIndex(contentTabLabel)
     myCurrentDecorator = sourceDecorator
-    myDialog = MyDialog(pane, this, createThumbnailDragImage(contentTabLabel, -1))
+    val tabImage = createThumbnailDragImage(contentTabLabel, -1)
+    dragImageView = if (StartupUiUtil.isWaylandToolkit()) {
+      GlassPaneDragImageView(IdeGlassPaneUtil.find(pane)).apply {
+        image = tabImage
+      }
+    }
+    else {
+      DialogDragImageView(MyDialog(pane, this, tabImage))
+    }
   }
 
   private fun getInitialIndex(tabLabel: ContentTabLabel): Int {
@@ -194,7 +205,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     }
 
     if (contentManager.isEmpty) {
-      sourceDecorator.unsplit(null)
+      sourceDecorator.unsplit(content)
     }
   }
 
@@ -244,13 +255,13 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       parent.repaint()
     }
     @Suppress("SSBasedInspection")
-    myDialog?.dispose()
-    myDialog = null
+    dragImageView?.hide()
+    dragImageView = null
   }
 
   private fun startDrag() {
     val sourceDecorator = sourceDecorator
-    if (sourceDecorator == null || sourceDecorator.contentManager.contentCount == 0 || myDialog == null) {
+    if (sourceDecorator == null || sourceDecorator.contentManager.contentCount == 0 || dragImageView == null) {
       return
     }
 
@@ -296,8 +307,8 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     myCurrentDecorator = tmp
 
     val screenPoint = event.locationOnScreen
-    myDialog!!.setLocation(screenPoint.x - myInitialOffset.x, screenPoint.y - myInitialOffset.y)
-    myDialog?.isVisible = true
+    dragImageView!!.location = Point(screenPoint.x - myInitialOffset.x, screenPoint.y - myInitialOffset.y)
+    dragImageView!!.show()
 
     if (myCurrentDecorator != null) {
       currentDropSide = TabsUtil.getDropSideFor(relativePoint.getPoint(myCurrentDecorator), myCurrentDecorator)
@@ -306,7 +317,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       dropArea.bounds = SwingUtilities.convertRectangle(myCurrentDecorator!!, dropArea, pane.rootPane.glassPane)
       currentDropIndex = getTabIndex(relativePoint)
       if (currentDropIndex != -1) {
-        myCurrentDecorator!!.setDropInfoIndex(currentDropIndex, myDialog!!.width)
+        myCurrentDecorator!!.setDropInfoIndex(currentDropIndex, dragImageView!!.size.width)
         highlighter.bounds = Rectangle()
       }
       else {

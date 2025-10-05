@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
+        </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="apiVersion" arg="2.2" />
+            <stringArg name="languageVersion" arg="2.2" />
+          </stringArguments>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_17" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -13,16 +29,14 @@
     <orderEntry type="library" name="zstd-jni" level="project" />
     <orderEntry type="library" name="commons-io" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="ktor-client-auth" level="project" />
-    <orderEntry type="library" name="ktor-client-encoding" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="library" name="ktor-client-okhttp" level="project" />
     <orderEntry type="library" name="okhttp" level="project" />
-    <orderEntry type="library" name="ktor-client-core" level="project" />
-    <orderEntry type="library" name="hash4j" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="kotlinx-io-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.io" />
   </component>
 </module>

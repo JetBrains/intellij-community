@@ -5,7 +5,7 @@ jvm_library(
   name = "wsl-impl",
   module_name = "intellij.platform.wsl.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/execution",
@@ -15,8 +15,9 @@ jvm_library(
     "//platform/core-api:core",
     "@lib//:lz4-java",
     "//platform/util-ex",
-    "@lib//:ktor-network-tls",
-  ],
-  runtime_deps = ["@lib//:kotlinx-io-core"]
+    "//libraries/ktor/utils",
+    "//libraries/ktor/io",
+    "//libraries/ktor/network-tls:libraries-ktor-network-tls",
+  ]
 )
 ### auto-generated section `build intellij.platform.wsl.impl` end

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// K2_ERROR: 'infix' modifier is required on 'FirNamedFunctionSymbol kotlin/Any.hashCode'.
+// K2_ERROR: 'infix' modifier is required on 'fun hashCode(): Int'.
 // K2_ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'E (of fun <E> E.foo)'.
 // K2_ERROR: Too many arguments for 'fun hashCode(): Int'.
 package my.simple.name

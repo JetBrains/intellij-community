@@ -1,15 +1,16 @@
 0(1) element: null
 1(2) element: PyMatchStatement
-2(3,11) refutable pattern: [1 | x]
+2(3,12) refutable pattern: [1 | x]
 3(4) refutable pattern: 1 | x
 4(5,6) refutable pattern: 1
 5(7) matched pattern: 1
-6(7) WRITE ACCESS: x
+6(7,12) WRITE ACCESS: x
 7(8) matched pattern: 1 | x
 8(9) matched pattern: [1 | x]
-9(10) element: PyExpressionStatement
-10(12) READ ACCESS: y
-11(12) ASSERTTYPE ACCESS: null
-12(13) element: PyExpressionStatement
-13(14) READ ACCESS: z
-14() element: null
+9(10) element: PyStatementList
+10(11) element: PyExpressionStatement
+11(13) READ ACCESS: y
+12(13) ASSERTTYPE ACCESS: null
+13(14) element: PyExpressionStatement
+14(15) READ ACCESS: z
+15() element: null

@@ -1,9 +1,10 @@
 ### auto-generated section `build kotlin.fir-all-tests` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "fir-all-tests",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
     "//plugins/kotlin/plugin/common",
     "//plugins/kotlin/base/plugin",
@@ -42,7 +43,6 @@ java_library(
     "//plugins/kotlin/compiler-reference-index/tests.k2",
     "//plugins/kotlin/bundled-compiler-plugins-support",
     "//plugins/kotlin/uast/uast-kotlin-fir/tests",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/compiler-plugins/parcelize/tests",
     "//plugins/kotlin/compiler-plugins/parcelize/tests/k2",
     "//plugins/kotlin/copyright/fir-tests:kotlin-copyright-fir-tests",
@@ -64,6 +64,7 @@ java_library(
     "//plugins/kotlin/base/fir/project-structure",
     "//plugins/kotlin/gradle/code-insight-groovy/tests.k2",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting-k2",
+    "//plugins/kotlin/base/scripting/scripting.k2",
   ]
 )
 ### auto-generated section `build kotlin.fir-all-tests` end

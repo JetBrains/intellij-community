@@ -67,7 +67,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   @NotNull private final CoroutineScope myCoroutineScope;
   private final BackendBreakpointRequestCounter myRequestCounter = new BackendBreakpointRequestCounter();
   private long myTime;
-  private volatile String myDefaultGroup;
+  private volatile @Nullable String myDefaultGroup;
   private RemovedBreakpointData myLastRemovedBreakpoint = null;
   private volatile boolean myFirstLoadDone = false;
 
@@ -610,16 +610,11 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     myBreakpointsDialogSettings = breakpointsDialogSettings;
   }
 
-  public Set<String> getAllGroups() {
-    return withLockMaybeCancellable(myLock, () ->
-      StreamEx.of(myAllBreakpoints).map(XBreakpointBase::getGroup).nonNull().toSet());
-  }
-
-  public String getDefaultGroup() {
+  public @Nullable String getDefaultGroup() {
     return myDefaultGroup;
   }
 
-  public void setDefaultGroup(String defaultGroup) {
+  public void setDefaultGroup(@Nullable String defaultGroup) {
     myDefaultGroup = defaultGroup;
   }
 
@@ -638,9 +633,9 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   }
 
   @Nullable
-  <T extends XBreakpointProperties> XLineBreakpoint<T> copyLineBreakpoint(@NotNull XLineBreakpoint<T> source,
-                                                                          @NotNull String fileUrl,
-                                                                          int line) {
+  public <T extends XBreakpointProperties> XLineBreakpoint<T> copyLineBreakpoint(@NotNull XLineBreakpoint<T> source,
+                                                                                 @NotNull String fileUrl,
+                                                                                 int line) {
     return withLockMaybeCancellable(myLock, () -> {
       if (!(source instanceof XLineBreakpointImpl<?>)) {
         return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -9,6 +9,8 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
+import com.intellij.ide.plugins.newui.PluginManagerSession;
+import com.intellij.ide.plugins.newui.PluginManagerSessionService;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -21,14 +23,15 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,16 +39,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 import static com.intellij.ide.startup.StartupActionScriptManager.*;
@@ -203,26 +206,25 @@ public final class PluginInstaller {
   public static @NotNull Path unpackPlugin(@NotNull Path sourceFile, @NotNull Path targetPath) throws IOException {
     Path target;
     if (sourceFile.getFileName().toString().endsWith(".jar")) {
-      target = targetPath.resolve(sourceFile.getFileName());
-      FileUtilRt.copy(sourceFile.toFile(), target.toFile());
+      target = targetPath.resolve(sourceFile.getFileName().toString());
+      NioFiles.createDirectories(targetPath);
+      Files.copy(sourceFile, target, StandardCopyOption.REPLACE_EXISTING);
     }
     else {
       target = targetPath.resolve(rootEntryName(sourceFile));
       NioFiles.deleteRecursively(target);
-      new Decompressor.Zip(sourceFile).extract(targetPath);
+      new Decompressor.Zip(sourceFile).withZipExtensions().extract(targetPath);
     }
     return target;
   }
 
   public static String rootEntryName(@NotNull Path zip) throws IOException {
-    try (ZipFile zipFile = new ZipFile(zip.toFile())) {
-      var entries = zipFile.entries();
-      while (entries.hasMoreElements()) {
-        ZipEntry zipEntry = entries.nextElement();
+    try (var zipFile = new JBZipFile(Files.newByteChannel(zip, StandardOpenOption.READ), StandardCharsets.UTF_8, true, ThreeState.UNSURE)) {
+      for (var zipEntry : zipFile.getEntries()) {
         // we do not necessarily get a separate entry for the subdirectory when the file
         // in the ZIP archive is placed in a subdirectory, so we need to check if the slash is found anywhere in the path
-        String name = zipEntry.getName();
-        int i = name.indexOf('/');
+        var name = zipEntry.getName();
+        var i = name.indexOf('/');
         if (i > 0) {
           return name.substring(0, i);
         }
@@ -247,11 +249,12 @@ public final class PluginInstaller {
   ) {
     try {
       var pluginDescriptor = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(file, null);
+        return PluginDescriptorLoader.loadDescriptorFromArtifact(file, null);
       }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), true, project);
 
       if (pluginDescriptor == null) {
-        MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName()), CommonBundle.getErrorTitle());
+        MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName()),
+                                   CommonBundle.getErrorTitle());
         return;
       }
 
@@ -278,7 +281,8 @@ public final class PluginInstaller {
         return;
       }
       if (isBrokenPlugin(pluginDescriptor)) {
-        var message = CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
+        var message =
+          CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
         return;
       }
@@ -352,6 +356,12 @@ public final class PluginInstaller {
 
       PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginEnabler, installedPlugins);
 
+      if (!isRestartRequired) {
+        PluginManagerSession session = PluginManagerSessionService.getInstance().getSession(model.mySessionId.toString());
+        if (session != null) {
+          session.getDynamicPluginsToInstall().put(pluginDescriptor.getPluginId(), new PendingDynamicPluginInstall(file, pluginDescriptor));
+        }
+      }
       callback.accept(new PluginInstallCallbackData(file, pluginDescriptor, isRestartRequired));
       for (var callbackData : installedDependencies) {
         if (!callbackData.getPluginDescriptor().getPluginId().equals(pluginDescriptor.getPluginId())) {
@@ -402,8 +412,16 @@ public final class PluginInstaller {
       return false;
     }
 
+    var pluginSet = PluginManagerCore.getPluginSet();
+    var contentModuleIdMap = pluginSet.buildContentModuleIdMap();
+    var pluginMap = pluginSet.buildPluginIdMap();
+
+    if (PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled(targetDescriptor, pluginMap, contentModuleIdMap)) {
+      LOG.warn("Plugin " + targetPluginId + " requires Ultimate plugin, but it's disabled");
+      return false;
+    }
+
     if (DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS && PluginEnabler.HEADLESS.isDisabled(targetPluginId)) {
-      var pluginSet = PluginManagerCore.getPluginSet();
       var wasInstalledBefore = pluginSet.isPluginInstalled(targetPluginId);
       if (!wasInstalledBefore) {
         // FIXME can't drop the disabled flag first because it's implementation filters ids against the current plugin set;
@@ -452,14 +470,15 @@ public final class PluginInstaller {
 
   @RequiresEdt
   static void installPluginFromCallbackData(@NotNull PluginInstallCallbackData callbackData) {
-    var descriptor = callbackData.getPluginDescriptor();
-    if (callbackData.getRestartNeeded()) {
-      shutdownOrRestartAppAfterInstall(descriptor);
-    }
-    else {
-      var loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
-      if (!loaded) {
+    if (callbackData.getPluginDescriptor() instanceof IdeaPluginDescriptorImpl descriptor && callbackData.getFile() != null) {
+      if (callbackData.getRestartNeeded()) {
         shutdownOrRestartAppAfterInstall(descriptor);
+      }
+      else {
+        var loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
+        if (!loaded) {
+          shutdownOrRestartAppAfterInstall(descriptor);
+        }
       }
     }
   }
@@ -468,9 +487,9 @@ public final class PluginInstaller {
     PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(
       PluginManagerConfigurable.getUpdatesDialogTitle(),
       action -> IdeBundle.message("plugin.installed.ide.restart.required.message",
-                                                                                           descriptor.getName(),
-                                                                                           action,
-                                                                                           ApplicationNamesInfo.getInstance()
-                                                                                             .getFullProductName()));
+                                  descriptor.getName(),
+                                  action,
+                                  ApplicationNamesInfo.getInstance()
+                                    .getFullProductName()));
   }
 }

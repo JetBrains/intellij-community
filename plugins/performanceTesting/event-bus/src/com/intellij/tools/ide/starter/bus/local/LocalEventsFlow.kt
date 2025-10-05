@@ -29,16 +29,20 @@ class LocalEventsFlow : EventsFlow {
 
   override fun <EventType : Event> unsubscribe(eventClass: Class<EventType>, subscriber: Any) {
     subscribersLock.writeLock().withLock {
-      val eventClassName = eventClass.simpleName
-      val subscriberName = getSubscriberObject(subscriber)
-      subscribers[eventClassName]?.removeIf { it.subscriberName == subscriberName }
-      LOG.debug("Unsubscribing $subscriberName for $eventClassName")
+      unsubscribeNoLock(eventClass, subscriber)
     }
   }
+  private fun <EventType : Event> unsubscribeNoLock(eventClass: Class<EventType>, subscriber: Any) {
+    val eventClassName = eventClass.simpleName
+    val subscriberName = getSubscriberObject(subscriber)
+    subscribers[eventClassName]?.removeIf { it.subscriberName == subscriberName }
+    LOG.debug("Unsubscribing $subscriberName for $eventClassName")
+  }
 
-  override fun <EventType : Event> subscribe(
+  private fun <EventType : Event> subscribe(
     eventClass: Class<EventType>,
     subscriber: Any,
+    executeOnce: Boolean,
     timeout: Duration,
     callback: suspend (event: EventType) -> Unit,
   ): Boolean {
@@ -48,20 +52,40 @@ class LocalEventsFlow : EventsFlow {
       val subscriberObject = getSubscriberObject(subscriber)
       // To avoid double subscriptions
       if (subscribers[eventClassName]?.any { it.subscriberName == subscriberObject } == true) return false
-      val newSubscriber = Subscriber(subscriberObject, timeout, callback)
+      val newSubscriber = Subscriber(subscriberObject, timeout, executeOnce = executeOnce, callback)
       LOG.debug("New subscriber $newSubscriber for $eventClassName")
       subscribers.computeIfAbsent(eventClassName) { CopyOnWriteArrayList() }.add(newSubscriber)
       return true
     }
   }
 
+  override fun <EventType : Event> subscribeOnce(
+    eventClass: Class<EventType>,
+    subscriber: Any,
+    timeout: Duration,
+    callback: suspend (event: EventType) -> Unit,
+  ): Boolean = subscribe(eventClass, subscriber, true, timeout, callback)
+
+  override fun <EventType : Event> subscribe(
+    eventClass: Class<EventType>,
+    subscriber: Any,
+    timeout: Duration,
+    callback: suspend (event: EventType) -> Unit,
+  ): Boolean = subscribe(eventClass, subscriber, false, timeout, callback)
+
   override fun <T : Event> postAndWaitProcessing(event: T) {
     val eventClassName = event.javaClass.simpleName
-    val subscribersForEvent = subscribersLock.readLock().withLock {
-      subscribers[eventClassName]
+    val subscribersForEvent = subscribersLock.writeLock().withLock {
+      subscribers[eventClassName]?.toList().also { allSubscribersForEvent ->
+        allSubscribersForEvent?.forEach { subscriber ->
+          if (subscriber.executeOnce) {
+            unsubscribeNoLock(event.javaClass, subscriber.subscriberName)
+          }
+        }
+      }
     }
     val exceptions = CopyOnWriteArrayList<Throwable>()
-    (subscribersForEvent as? CopyOnWriteArrayList<Subscriber<T>>)
+    (subscribersForEvent as? List<Subscriber<T>>)
       ?.map { subscriber ->
         // In case the job is interrupted (e.g. due to timeout), the coroutine may enter Cancelling state
         // and finish before the 'catch' block is executed. Using CompletableDeferred ensures we wait

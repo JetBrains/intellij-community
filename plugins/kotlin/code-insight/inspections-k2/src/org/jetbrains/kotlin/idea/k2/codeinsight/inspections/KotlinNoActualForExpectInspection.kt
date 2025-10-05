@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -63,6 +64,11 @@ import javax.swing.JList
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
+/**
+ * Inspects expect declarations and reports missing actual declarations.
+ * - Regular expect declarations: highlighted as ERROR/WARNING 
+ * - Optional expect declarations (with @OptionalExpectation): highlighted as INFORMATION
+ */
 class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
 
     private fun Module.getLeaves(): Set<Module> {
@@ -110,7 +116,7 @@ class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
                 val expectModule = list.module ?: return
                 val expectModifier = list.getModifier(KtTokens.EXPECT_KEYWORD) ?: return
                 val parentDeclaration = list.findParentOfType<KtDeclaration>() ?: return
-                if (parentDeclaration.hasOptionalExpectationAnnotation()) return
+                val isOptionalExpectation = parentDeclaration.hasOptionalExpectationAnnotation()
 
                 val leaves = session.getLeaves(expectModule)
                 val foundActuals = parentDeclaration.findAllActualForExpect(session.getActualsSearchScope(expectModule))
@@ -160,7 +166,6 @@ class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
                     ActualDeclaration(actualModule, actualDeclaration, sourceSet)
                 }
 
-
                 // We only care about the name of the target, not the common submodule of the MPP module
                 val missingModulesWithActuals = missingActuals.joinToString { it.name.substringAfterLast('.') }
 
@@ -169,9 +174,19 @@ class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
                 } else {
                     emptyArray()
                 }
+                
+                // Use different highlight types: INFO for optional expectations, default (WARNING) for regular expectations
+                val highlightType = if (isOptionalExpectation) ProblemHighlightType.INFORMATION else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                val message = if (isOptionalExpectation) {
+                    KotlinBundle.message("fix.create.missing.actual.declarations")
+                } else {
+                    KotlinBundle.message("no.actual.for.expect.declaration", missingModulesWithActuals)
+                }
+                
                 holder.registerProblem(
                     expectModifier,
-                    KotlinBundle.message("no.actual.for.expect.declaration", missingModulesWithActuals),
+                    message,
+                    highlightType,
                     *fixes
                 )
             }
@@ -179,9 +194,9 @@ class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
     }
 }
 
-private data class ActualDeclaration(val module: Module, val declarationFromText: KtDeclaration, val sourceSet: KotlinBuildSystemSourceSet)
+data class ActualDeclaration(val module: Module, val declarationFromText: KtDeclaration, val sourceSet: KotlinBuildSystemSourceSet)
 
-private class CreateActualForExpectLocalQuickFix(
+internal class CreateActualForExpectLocalQuickFix(
     val actualDeclarations: List<ActualDeclaration>
 ) : LocalQuickFix {
 

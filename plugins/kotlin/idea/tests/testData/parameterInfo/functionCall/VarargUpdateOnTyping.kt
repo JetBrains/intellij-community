@@ -5,7 +5,3 @@ fun d() {
 }
 
 // TYPE: "true, "
-
-/*
-Text: (x: Boolean, <highlight>vararg y: Int</highlight>), Disabled: true, Strikeout: false, Green: true
-*/

@@ -150,7 +150,7 @@ interface Driver : AutoCloseable {
      */
     @JvmStatic
     @Contract(pure = true)
-    fun create(host: JmxHost? = JmxHost(null, null, "localhost:7777"), isRemDevMode: Boolean = false): Driver =
+    fun create(host: JmxHost, isRemDevMode: Boolean = false): Driver =
       DriverImpl(host, isRemDevMode)
   }
 }

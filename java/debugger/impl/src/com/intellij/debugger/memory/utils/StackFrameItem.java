@@ -326,9 +326,13 @@ public class StackFrameItem {
     }
 
     private void doCustomizePresentation(ColoredTextContainer component) {
-      component.setIcon(EmptyIcon.ICON_16);
-      component.append(myMethodName + ":" + myLineNumber, getAttributes());
       ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
+
+      component.setIcon(EmptyIcon.ICON_16);
+      component.append(myMethodName, getAttributes());
+      if (settings.SHOW_LINE_NUMBER) {
+        component.append(":" + myLineNumber, getAttributes());
+      }
       if (settings.SHOW_CLASS_NAME) {
         component.append(", " + StringUtil.getShortName(myPath), getAttributes());
         String packageName = StringUtil.getPackageName(myPath);

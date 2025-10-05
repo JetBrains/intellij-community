@@ -8,6 +8,7 @@ import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskListener;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -319,19 +320,17 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   }
 
   private void subscribeToProject() {
-    MessageBusConnection connection = myProject.getMessageBus().connect(getTestRootDisposable());
+    MessageBusConnection connection = getMyProject().getMessageBus().connect(getTestRootDisposable());
     connection.subscribe(ProjectTaskListener.TOPIC, new ProjectTaskListener() {
       @Override
       public void started(@NotNull ProjectTaskContext context) {
-        context.enableCollectionOfGeneratedFiles();
+        context.setCollectionOfGeneratedFilesEnabled(true);
       }
 
       @Override
       public void finished(@NotNull ProjectTaskManager.Result result) {
         result.getContext().getDirtyOutputPaths()
-          .ifPresent(paths -> paths
-            .map(path -> relativePath(path))
-            .forEach(dirtyOutputRoots::add));
+          .ifPresent(paths -> dirtyOutputRoots.addAll(ContainerUtil.map(paths, path -> relativePath(path))));
 
         result.getContext().getGeneratedFilesRoots()
           .forEach(generatedRoot -> {

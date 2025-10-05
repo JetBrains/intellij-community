@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.bridge.theme
 
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.ui.unit.dp
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.JBUI
 import kotlin.time.Duration.Companion.milliseconds

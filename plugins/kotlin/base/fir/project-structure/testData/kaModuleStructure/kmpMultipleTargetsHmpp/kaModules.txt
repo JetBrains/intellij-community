@@ -24,6 +24,19 @@ KaSourceModule:
     <empty>
 
 KaSourceModule:
+  description: Sources of common
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  name: common
+  sourceModuleKind: TEST
+  stableModuleName: <common>
+  regularDependencies:
+    KaSourceModule(common, production)
+  friendDependencies:
+    KaSourceModule(common, production)
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
   description: Sources of js
   targetPlatform: JS
   name: js
@@ -35,6 +48,22 @@ KaSourceModule:
     <empty>
   dependsOnDependencies:
     KaSourceModule(common, production)
+
+KaSourceModule:
+  description: Sources of js
+  targetPlatform: JS
+  name: js
+  sourceModuleKind: TEST
+  stableModuleName: <js>
+  regularDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(common, test)
+    KaSourceModule(js, production)
+  friendDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(js, production)
+  dependsOnDependencies:
+    KaSourceModule(common, test)
 
 KaSourceModule:
   description: Sources of jvm1
@@ -52,6 +81,26 @@ KaSourceModule:
     KaSourceModule(jvmCommon, production)
 
 KaSourceModule:
+  description: Sources of jvm1
+  targetPlatform: JVM (1.8)
+  name: jvm1
+  sourceModuleKind: TEST
+  stableModuleName: <jvm1>
+  regularDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(common, test)
+    KaSourceModule(jvm1, production)
+    KaSourceModule(jvmCommon, production)
+    KaSourceModule(jvmCommon, test)
+  friendDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(jvm1, production)
+    KaSourceModule(jvmCommon, production)
+  dependsOnDependencies:
+    KaSourceModule(common, test)
+    KaSourceModule(jvmCommon, test)
+
+KaSourceModule:
   description: Sources of jvm2
   targetPlatform: JVM (1.8)
   name: jvm2
@@ -67,6 +116,26 @@ KaSourceModule:
     KaSourceModule(jvmCommon, production)
 
 KaSourceModule:
+  description: Sources of jvm2
+  targetPlatform: JVM (1.8)
+  name: jvm2
+  sourceModuleKind: TEST
+  stableModuleName: <jvm2>
+  regularDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(common, test)
+    KaSourceModule(jvm2, production)
+    KaSourceModule(jvmCommon, production)
+    KaSourceModule(jvmCommon, test)
+  friendDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(jvm2, production)
+    KaSourceModule(jvmCommon, production)
+  dependsOnDependencies:
+    KaSourceModule(common, test)
+    KaSourceModule(jvmCommon, test)
+
+KaSourceModule:
   description: Sources of jvmCommon
   targetPlatform: JVM (1.8)
   name: jvmCommon
@@ -78,3 +147,19 @@ KaSourceModule:
     <empty>
   dependsOnDependencies:
     KaSourceModule(common, production)
+
+KaSourceModule:
+  description: Sources of jvmCommon
+  targetPlatform: JVM (1.8)
+  name: jvmCommon
+  sourceModuleKind: TEST
+  stableModuleName: <jvmCommon>
+  regularDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(common, test)
+    KaSourceModule(jvmCommon, production)
+  friendDependencies:
+    KaSourceModule(common, production)
+    KaSourceModule(jvmCommon, production)
+  dependsOnDependencies:
+    KaSourceModule(common, test)

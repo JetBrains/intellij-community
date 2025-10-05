@@ -83,12 +83,16 @@ fun CoroutineContext.internalCreateRawHandleFromContextStepIfExistsAndFresh(): R
 @Deprecated("To report use `reportProgress` or `reportSequentialProgress`. Don't pass as context.")
 fun ProgressReporter0.asContextElement(): CoroutineContext.Element = ProgressReporterElement.Step
 
+@get:ApiStatus.ScheduledForRemoval
 @get:Internal
+@get:Deprecated("To report use `reportProgress` or `reportSequentialProgress`. Don't pass as context.")
 @Deprecated("To report use `reportProgress` or `reportSequentialProgress`. Don't pass as context.")
 val CoroutineContext.progressReporter: ProgressReporter0? get() = null
 
 @get:Internal
 @Deprecated("To report use `reportProgress` or `reportSequentialProgress`. Don't pass as context.")
+@get:Deprecated("To report use `reportProgress` or `reportSequentialProgress`. Don't pass as context.")
+@get:ApiStatus.ScheduledForRemoval
 val CoroutineScope.progressReporter: ProgressReporter0? get() = null
 
 @Internal // clients are not supposed to put reporter into context

@@ -990,9 +990,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testInitializingTypeVar() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-    feignCtrlP(offset).check(Arrays.asList("self: TypeVar, name: str, *constraints, bound: Any | None = None, contravariant: bool = False, covariant: bool = False, infer_variance: bool = False, default=..."),
+    feignCtrlP(offset).check(Arrays.asList("cls: type[TypeVar], name: str, *constraints, bound: Any | None = None, contravariant: bool = False, covariant: bool = False, infer_variance: bool = False, default=..."),
                              Arrays.asList(new String[]{"name: str, "}, new String[]{"name: str, "}),
-                             Arrays.asList(new String[]{"self: TypeVar, "}, new String[]{"self: TypeVar, "}));
+                             Arrays.asList(new String[]{"cls: type[TypeVar], "}, new String[]{"cls: type[TypeVar], "}));
   }
 
   // PY-36008

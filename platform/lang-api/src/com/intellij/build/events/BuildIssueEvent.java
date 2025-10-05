@@ -2,14 +2,18 @@
 package com.intellij.build.events;
 
 import com.intellij.build.issue.BuildIssue;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
+@Experimental
 public interface BuildIssueEvent extends MessageEvent {
-  @NotNull
-  BuildIssue getIssue();
+
+  @Override
+  @Nullable String getDescription();
+
+  @NotNull BuildIssue getIssue();
 }

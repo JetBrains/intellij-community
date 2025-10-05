@@ -1,0 +1,11 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.rpc.topics"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceImplementation="com.intellij.platform.rpc.topics.frontend.FrontendRemoteTopicListenersRegistry"
+      preload="true"/>
+  </extensions>
+</idea-plugin>

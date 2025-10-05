@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.ide.FileIconUtil;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.INativeFileType;
@@ -74,7 +75,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     PsiElement psiElement = (PsiElement)this;
     if (!psiElement.isValid()) return null;
 
-    if (Registry.is("psi.deferIconLoading", true) && EDT.isCurrentThreadEdt()) {
+    if (shouldDeferIcon()) {
       Icon baseIcon = LastComputedIconCache.get(psiElement, flags);
       if (baseIcon == null) {
         baseIcon = AstLoadingFilter.disallowTreeLoading(() -> computeBaseIcon(flags));
@@ -87,6 +88,14 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
 
     return computeIconNow(psiElement, flags);
+  }
+
+  private static boolean shouldDeferIcon() {
+    if (!Registry.is("psi.deferIconLoading", true)) return false;
+    if (EDT.isCurrentThreadEdt()) return true;
+    // Unit tests often don't create actual UI, so the deferred icon is never resolved.
+    // Sometimes this causes tests to fail in really unpredictable ways.
+    return !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   private static @Nullable Icon computeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {

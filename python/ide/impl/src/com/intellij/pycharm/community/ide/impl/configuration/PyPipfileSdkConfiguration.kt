@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
@@ -23,16 +22,14 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
-import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.pipenv.*
 import com.jetbrains.python.sdk.pipenv.ui.PyAddNewPipEnvFromFilePanel
-import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.nio.file.Path
 import javax.swing.JComponent
@@ -42,18 +39,19 @@ import kotlin.io.path.pathString
 
 private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
 
-internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
+@ApiStatus.Internal
+class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override suspend fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, Source.CONFIGURATOR)
+  override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?> = createAndAddSDk(module, Source.CONFIGURATOR)
 
-  override suspend fun getIntention(module: Module): @IntentionName String? = findAmongRoots(module, PIP_FILE)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", it.name) }
+  override suspend fun getIntention(module: Module): @IntentionName String? = findAmongRoots(module, PipEnvFileHelper.PIP_FILE)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", it.name) }
 
-  override suspend fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSDk(module, Source.INSPECTION)
+  override suspend fun createAndAddSdkForInspection(module: Module): PyResult<Sdk?> = createAndAddSDk(module, Source.INSPECTION)
 
-  private suspend fun createAndAddSDk(module: Module, source: Source): Sdk? {
-    val pipEnvExecutable = askForEnvData(module, source) ?: return null
+  private suspend fun createAndAddSDk(module: Module, source: Source): PyResult<Sdk?> {
+    val pipEnvExecutable = askForEnvData(module, source) ?: return PyResult.success(null)
     PropertiesComponent.getInstance().pipEnvPath = pipEnvExecutable.pipEnvPath.pathString
-    return createPipEnv(module).getOrLogException(LOGGER)
+    return createPipEnv(module)
   }
 
   private suspend fun askForEnvData(module: Module, source: Source): PyAddNewPipEnvFromFilePanel.Data? {
@@ -108,7 +106,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
       LOGGER.debug("Setting up associated pipenv environment: $path, $basePath")
 
       val sdk = SdkConfigurationUtil.setupSdk(
-        ProjectJdkTable.getInstance().allJdks,
+        PythonSdkUtil.getAllSdks().toTypedArray(),
         file,
         PythonSdkType.getInstance(),
         PyPipEnvSdkAdditionalData(),

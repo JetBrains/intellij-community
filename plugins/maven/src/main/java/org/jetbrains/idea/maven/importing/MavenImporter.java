@@ -4,9 +4,9 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
@@ -102,7 +102,7 @@ public abstract class MavenImporter {
    */
   @Deprecated
   public @NotNull ModuleType<? extends ModuleBuilder> getModuleType() {
-    return StdModuleTypes.JAVA;
+    return JavaModuleType.getModuleType();
   }
 
   @SuppressWarnings("SpellCheckingInspection")

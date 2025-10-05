@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 
+@FunctionalInterface
 public interface ClassFilter {
   boolean isAccepted(PsiClass aClass);
 

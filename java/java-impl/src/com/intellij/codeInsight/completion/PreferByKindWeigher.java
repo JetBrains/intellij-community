@@ -356,7 +356,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       boolean expectsNotNull = ContainerUtil.exists(myExpectedTypes, PreferByKindWeigher::isEnumClass);
       return expectsNotNull ? ThreeState.NO : ThreeState.YES;
     }
-    if (JavaKeywordCompletion.PRIMITIVE_TYPES.contains(keyword) || JavaKeywords.VOID.equals(keyword)) {
+    if (PsiTypes.primitiveTypeNames().contains(keyword) || JavaKeywords.VOID.equals(keyword)) {
       boolean inCallArg = psiElement().withParents(PsiReferenceExpression.class, PsiExpressionList.class).accepts(myPosition);
       return inCallArg || isInMethodTypeArg(myPosition) ? ThreeState.NO : ThreeState.UNSURE;
     }

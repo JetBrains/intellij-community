@@ -32,6 +32,10 @@ public interface AttachSourcesProvider {
     @NotNull ActionCallback perform(@NotNull List<? extends LibraryOrderEntry> orderEntriesContainingFile);
   }
 
+  default boolean isApplicable(@NotNull List<? extends LibraryOrderEntry> orderEntries, PsiFile psiFile) {
+    return !orderEntries.isEmpty();
+  }
+
   /**
    * This marker interface means what this action will be shown only if it is single action.
    */

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.lookup.LookupBottomPanelProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupPositionStrategy;
 import com.intellij.icons.AllIcons;
@@ -111,17 +112,12 @@ final class LookupUi {
     LookupLayeredPane layeredPane = new LookupLayeredPane();
 
     if (showBottomPanel) {
-      myBottomPanel = new JPanel(new LookupBottomLayout());
-      myBottomPanel.add(myAdvertiser.getAdComponent());
-      myBottomPanel.add(processIcon);
-      myBottomPanel.add(hintButton);
-      myBottomPanel.add(myMenuButton);
-      if (ExperimentalUI.isNewUI()) {
-        myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
-        myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
+      var customPanel = LookupBottomPanelProvider.createPanel(lookup);
+      if (customPanel != null) {
+        myBottomPanel = customPanel;
       }
       else {
-        myBottomPanel.setOpaque(false);
+        myBottomPanel = createDefaultBottomPanel();
       }
       layeredPane.mainPanel.add(myBottomPanel, BorderLayout.SOUTH);
     }
@@ -147,6 +143,22 @@ final class LookupUi {
     addListeners();
 
     Disposer.register(lookup, processIcon);
+  }
+
+  private @NotNull JComponent createDefaultBottomPanel() {
+    var panel = new JPanel(new LookupBottomLayout());
+    panel.add(myAdvertiser.getAdComponent());
+    panel.add(processIcon);
+    panel.add(hintButton);
+    panel.add(myMenuButton);
+    if (ExperimentalUI.isNewUI()) {
+      panel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
+      panel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
+    }
+    else {
+      panel.setOpaque(false);
+    }
+    return panel;
   }
 
   private void addListeners() {

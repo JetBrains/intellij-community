@@ -52,7 +52,7 @@ public final class MissingFinalNewlineInspection extends LocalInspectionTool {
       if (text != null && !text.isEmpty() && !StringUtil.endsWith(text, "\n")) {
         List<Section> sections = ((ManifestFile)file).getSections();
         assert !sections.isEmpty() : text;
-        Section section = sections.get(sections.size() - 1);
+        Section section = sections.getLast();
         ModCommandAction action = new AddNewlineQuickFix(section);
         ProblemDescriptor descriptor = manager.createProblemDescriptor(
           section.getLastChild(), ManifestBundle.message("inspection.newline.message"),

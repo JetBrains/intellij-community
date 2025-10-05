@@ -21,7 +21,7 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val onLanguageRemoved: (lang: Lang) -> Unit) :
+class GrazieLanguagesList(private val download: suspend (Collection<Lang>) -> Unit, private val onLanguageRemoved: (lang: Lang) -> Unit) :
   AddDeleteListPanel<Lang>(null, emptyList()), GrazieUIComponent {
 
   private val decorator: ToolbarDecorator = MyToolbarDecorator(myList)
@@ -29,8 +29,9 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
     .setAddIcon(LayeredIcon.ADD_WITH_DROPDOWN)
     .setToolbarPosition(ActionToolbarPosition.BOTTOM)
     .setRemoveAction {
-      myList.selectedValuesList.forEach(onLanguageRemoved)
-      ListUtil.removeSelectedItems(myList)
+      val itemsToRemove = myList.selectedValuesList.filter { !it.isEnglish() }
+      itemsToRemove.forEach(onLanguageRemoved)
+      itemsToRemove.forEach { myListModel.removeElement(it) }
     }
 
   init {
@@ -78,8 +79,8 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
 
   /** Returns pair of (available languages, languages to download) */
   private fun getLangsForPopup(): Pair<List<Lang>, List<Lang>> {
-    val enabledLangs = myListModel.elements().asSequence().map { it.displayName }.toSet()
-    val (available, toDownload) = Lang.sortedValues().filter { it.displayName !in enabledLangs }.partition { it.isAvailable() }
+    val enabledLangs = myListModel.elements().asSequence().map { it.nativeName }.toSet()
+    val (available, toDownload) = Lang.sortedValues().filter { it.nativeName !in enabledLangs }.partition { it.isAvailable() }
     return available to toDownload
   }
 
@@ -114,7 +115,9 @@ class GrazieLanguagesList(private val download: (Lang) -> Boolean, private val o
     override fun updateButtons() {
       val (available, download) = getLangsForPopup()
       actionsPanel.setEnabled(Buttons.ADD, list.isEnabled && (available.isNotEmpty() || download.isNotEmpty()))
-      actionsPanel.setEnabled(Buttons.REMOVE, !list.isSelectionEmpty)
+      
+      val canRemove = !list.isSelectionEmpty && list.selectedValuesList.none { it.isEnglish() }
+      actionsPanel.setEnabled(Buttons.REMOVE, canRemove)
       updateExtraElementActions(!list.isSelectionEmpty)
     }
 

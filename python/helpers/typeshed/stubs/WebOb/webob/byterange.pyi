@@ -2,6 +2,8 @@ from collections.abc import Iterator
 from typing import overload
 from typing_extensions import Self
 
+__all__ = ["Range", "ContentRange"]
+
 class Range:
     start: int | None
     end: int | None

@@ -57,7 +57,7 @@ internal object TestJpsBuildWorker {
       val tracer = openTelemetryAndOnClose.first.getTracer("test-builder")
       configureGlobalJps(tracer, coroutineScope)
 
-      val args = parseArgs(testParams.lines().toTypedArray())
+      val args = parseArgs(testParams.lines().toTypedArray(), baseDir)
 
       println("out jar: " + baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize())
 

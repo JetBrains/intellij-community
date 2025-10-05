@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.java.jshell.console` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "console_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "console",
+  module_name = "intellij.java.jshell.console",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":console_resources"],
+  deps = [
+    "//platform/execution",
+    "//platform/core-api:core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/lang-impl",
+    "//plugins/jshell/protocol",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
+    "//java/openapi:java",
+    "//java/execution/impl",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/lang-core",
+  ]
+)
+### auto-generated section `build intellij.java.jshell.console` end

@@ -1,13 +1,12 @@
-from collections.abc import Mapping
+from collections.abc import Callable, Iterable, Mapping
 from datetime import timedelta
-from typing import Any, Callable, Iterable, Protocol, SupportsInt, overload, type_check_only
+from typing import Any, Protocol, SupportsInt, TypeAlias, overload, type_check_only
 
 from _typeshed import ReadableBuffer
 from django.core.cache.backends.base import BaseCache
 from redis._parsers import BaseParser
 from redis.client import Redis
 from redis.connection import ConnectionPool
-from typing_extensions import TypeAlias
 
 @type_check_only
 class _RedisCacheClientSerializer(Protocol):

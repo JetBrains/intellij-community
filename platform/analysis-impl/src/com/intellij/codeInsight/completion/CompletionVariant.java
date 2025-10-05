@@ -19,6 +19,7 @@ import java.util.*;
 /**
  * @deprecated use CompletionContributor
  */
+@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public class CompletionVariant {
   protected static final TailType DEFAULT_TAIL_TYPE = TailTypes.spaceType();

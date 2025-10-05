@@ -1,22 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy
+import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy.NEVER_AUTOCOMPLETE
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.Icon
 
 /**
@@ -26,26 +25,57 @@ import javax.swing.Icon
 class CommandCompletionLookupElement(
   lookupElement: LookupElement,
   val command: CompletionCommand,
-  val hostStartOffset: Int,
   val suffix: String,
   val icon: Icon?,
   val highlighting: HighlightInfoLookup?,
   val useLookupString: Boolean = true,
-) : LookupElementDecorator<LookupElement>(lookupElement) {
+  val currentTags: List<String> = emptyList(),
+  val otherTags: List<String> = emptyList(),
+) : LookupElementDecorator<LookupElement>(lookupElement), LookupElementInsertStopper, LookupElementCustomPreviewHolder {
   override fun isWorthShowingInAutoPopup(): Boolean {
     return true
   }
 
-  override fun getAutoCompletionPolicy(): AutoCompletionPolicy? {
+  override fun getAutoCompletionPolicy(): AutoCompletionPolicy {
     return NEVER_AUTOCOMPLETE
   }
 
-  @VisibleForTesting
-  val hasPreview: Boolean = command is CompletionCommandWithPreview
+  override val preview: IntentionPreviewInfo by lazy {
+    command.getPreview()
+  }
 
-  @get:VisibleForTesting
-  val preview: IntentionPreviewInfo? by lazy {
-    (command as? CompletionCommandWithPreview)?.getPreview()
+  override fun shouldStopLookupInsertion(): Boolean {
+    return !useLookupString
+  }
+
+  override fun renderElement(presentation: LookupElementPresentation) {
+    super.renderElement(presentation)
+    if (currentTags.isEmpty()) return
+    if (currentTags.contains(lookupString)) return
+    val itemText = presentation.itemText ?: ""
+    val tailText = presentation.getTailText() ?: ""
+    val tagMessage: String = CodeInsightBundle.message("command.completion.tag")
+    val fullItemText = "$itemText$tailText $tagMessage '${currentTags.first()}'"
+    presentation.setItemText(fullItemText)
+    presentation.decorateItemTextRange(TextRange(itemText.length, itemText.length + tailText.length + 1 + tagMessage.length),
+                                       LookupElementPresentation.LookupItemDecoration.GRAY)
+    presentation.tailText = ""
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    if (!super.equals(other)) return false
+
+    other as CommandCompletionLookupElement
+
+    return currentTags == other.currentTags
+  }
+
+  override fun hashCode(): Int {
+    var result = super.hashCode()
+    result = 31 * result + currentTags.hashCode()
+    return result
   }
 }
 

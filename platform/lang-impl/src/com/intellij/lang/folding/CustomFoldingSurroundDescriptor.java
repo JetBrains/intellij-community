@@ -6,7 +6,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.lang.surroundWith.ModCommandSurrounder;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
@@ -223,7 +222,8 @@ public final class CustomFoldingSurroundDescriptor implements SurroundDescriptor
     return false;
   }
 
-  private static final class CustomFoldingRegionSurrounder extends ModCommandSurrounder {
+  @ApiStatus.Internal
+  public static final class CustomFoldingRegionSurrounder extends ModCommandSurrounder {
 
     private final CustomFoldingProvider myProvider;
 

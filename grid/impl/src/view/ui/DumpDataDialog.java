@@ -12,7 +12,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -92,7 +92,7 @@ public abstract class DumpDataDialog extends DialogWrapper {
   }
 
   private String getDirPath() {
-    return FileUtil.expandUserHome(myForm.getOutputFileOrDirectoryField().getText().trim());
+    return OSAgnosticPathUtil.expandUserHome(myForm.getOutputFileOrDirectoryField().getText().trim());
   }
 
   private void addDocumentListener(JTextComponent component) {

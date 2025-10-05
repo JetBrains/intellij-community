@@ -5,7 +5,7 @@ jvm_library(
   name = "testFramework",
   module_name = "intellij.platform.plugins.testFramework",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -18,7 +18,9 @@ jvm_library(
     "//platform/util-ex",
     "//platform/platform-impl/bootstrap",
     "//platform/util/xmlDom",
+    "//libraries/aalto-xml",
     "//platform/runtime/product",
+    "//jps/model-api:model",
   ]
 )
 ### auto-generated section `build intellij.platform.plugins.testFramework` end

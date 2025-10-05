@@ -11,6 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
@@ -19,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -103,14 +107,14 @@ internal class SuspiciousImplicitCoroutineScopeReceiverAccessInspection() :
         return Context(receiverLabelName)
     }
 
-    context(KaSession) 
+    context(_: KaSession)
     private fun KaType.isCoroutineScopeType(acceptSubtypes: Boolean = true): Boolean {
         val coroutineScopeType = findClass(CoroutinesIds.COROUTINE_SCOPE_CLASS_ID)?.defaultType ?: return false
 
         return if (acceptSubtypes) {
-            this.isSubtypeOf(coroutineScopeType)
+            this@isCoroutineScopeType.isSubtypeOf(coroutineScopeType)
         } else {
-            this.semanticallyEquals(coroutineScopeType)
+            this@isCoroutineScopeType.semanticallyEquals(coroutineScopeType)
         }
     }
 

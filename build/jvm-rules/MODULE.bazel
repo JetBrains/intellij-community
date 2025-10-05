@@ -5,7 +5,7 @@ module(
 
 bazel_dep(name = "bazel_worker_api", version = "0.0.4")
 bazel_dep(name = "rules_java", version = "8.11.0")
-bazel_dep(name = "rules_kotlin", version = "2.0.0-jb.14")
+bazel_dep(name = "rules_kotlin", version = "2.1.3")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
@@ -21,13 +21,6 @@ use_repo(toolchains, "zig_sdk")
 register_toolchains(
     "@zig_sdk//toolchain/...",
     "@zig_sdk//libc_aware/toolchain/...",
-)
-
-# Kotlin Rules
-archive_override(
-    module_name = "rules_kotlin",
-    sha256 = "6a74d99eb899a3ca92576492fcff35d96c6a5836ab2c8be1e4e9c7c084b8edb6",
-    url = "https://github.com/develar/rules_kotlin/releases/download/v2.0.0-jb.14/rules_kotlin-v2.0.0-jb.14.tar.gz",
 )
 
 http_file(
@@ -60,96 +53,60 @@ http_archive(
 
 http_file(
     name = "kotlin-compiler-sources",
-    downloaded_file_path = "kotlin-compiler-2.2.20-sources.jar",
-    sha256 = "e452218e57b15f0654b1b9b3f378b9a9cad70002f0bd35bbc5b5570add317d51",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler/2.2.0-RC/kotlin-compiler-2.2.0-RC-sources.jar",
+    downloaded_file_path = "kotlin-compiler-2_2_21-RC-376-sources.jar",
+    sha256 = "e0baecdb4986d050d7ad5458d6b47edeaa059cffc901b918eef00d200b0974b6",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/2.2.21-RC-376/kotlin-compiler-2.2.21-RC-376-sources.jar",
 )
 
 # ------------------------patched kotlin compiler fork for jvm-inc-builder
 
-#http_file(
-#  name = "expects-compiler-plugin-2_1_20-0_2_http",
-#  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.1.20-0.2/expects-compiler-plugin-2.1.20-0.2.jar",
-#  sha256 = "53f345b9ec17aa821e8e4acce59b6584f55a2193f5c48dcea9ffc41eaac4add4",
-#  downloaded_file_path = "expects-compiler-plugin-2.1.20-0.2.jar"
-#)
-
 http_file(
-  name = "jvm-abi-gen-2_2_20-dev-4678_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/jvm-abi-gen/2.2.20-dev-4678/jvm-abi-gen-2.2.20-dev-4678.jar",
-  sha256 = "7db09f0d981f8b52e1a99cb6b895feb648645b9391a304534cf52af3ff21d247",
-  downloaded_file_path = "jvm-abi-gen-2.2.20-dev-4678.jar"
+  name = "jvm-abi-gen-2_2_21-RC-376_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/jvm-abi-gen/2.2.21-RC-376/jvm-abi-gen-2.2.21-RC-376.jar",
+  sha256 = "d7db57c3a4b01a09f3c8b4abe19d429ddc41a27278102258100074cc3df37ae3",
+  downloaded_file_path = "jvm-abi-gen-2.2.21-RC-376.jar"
 )
 
 http_file(
-  name = "expects-compiler-plugin-2_2_0-RC_0_1_http",
-  url = "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/expects-compiler-plugin/2.2.0-RC-0.1/expects-compiler-plugin-2.2.0-RC-0.1.jar",
-  sha256 = "0df587db8f155e132a7f6ac3e79e328fecbae62b15229a1c1b9baf176eb1455c",
-  downloaded_file_path = "expects-compiler-plugin-2.2.0-RC-0.1.jar"
+  name = "kotlin-compiler-2_2_21-RC-376_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/2.2.21-RC-376/kotlin-compiler-2.2.21-RC-376.jar",
+  sha256 = "ac13913c2c5b03f312a92b63c9b9cc5d23533a1272ddd7adc43c0d541a7dc623",
+  downloaded_file_path = "kotlin-compiler-2.2.21-RC-376.jar"
 )
 
 http_file(
-  name = "rhizomedb-compiler-plugin-2_2_0-RC2-0_2_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.2.0-RC2-0.2/rhizomedb-compiler-plugin-2.2.0-RC2-0.2.jar",
-  sha256 = "66d8ffd490115de8f698144e9e96c3edbeb6f7d54ecb5dca0b7e6ca2dcf38969",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.2.0-RC2-0.2.jar"
+  name = "kotlin-stdlib-jdk8-2_2_21-RC-376_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk8/2.2.21-RC-376/kotlin-stdlib-jdk8-2.2.21-RC-376.jar",
+  sha256 = "3256553ca14cbad9d2c44954950243cd48ccfbad045b4bfea66f93a63400682e",
+  downloaded_file_path = "kotlin-stdlib-jdk8-2.2.21-RC-376.jar"
 )
 
 http_file(
-  name = "rhizomedb-compiler-plugin-2_2_0-RC2-0_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/jetbrains/fleet/rhizomedb-compiler-plugin/2.2.0-RC2-0.2/rhizomedb-compiler-plugin-2.2.0-RC2-0.2-sources.jar",
-  sha256 = "d8d008d23a967785a1337837001d5f60d866986eb458d8d7e6237e10cd336b8c",
-  downloaded_file_path = "rhizomedb-compiler-plugin-2.2.0-RC2-0.2-sources.jar"
+  name = "kotlin-stdlib-2_2_21-RC-376_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib/2.2.21-RC-376/kotlin-stdlib-2.2.21-RC-376.jar",
+  sha256 = "5e9febe0ca21535f694efc5b2f4af640a9432943b031cf9f6911328b2da5265e",
+  downloaded_file_path = "kotlin-stdlib-2.2.21-RC-376.jar"
 )
 
 http_file(
-  name = "rpc-compiler-plugin-2_2_0-RC2-0_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.2.0-RC2-0.1/rpc-compiler-plugin-2.2.0-RC2-0.1.jar",
-  sha256 = "b11c852cb9063e04d50562c86cf9bcd331a6cd78446c5e3784041a67aa55877a",
-  downloaded_file_path = "rpc-compiler-plugin-2.2.0-RC2-0.1.jar"
-)
-
-
-http_file(
-  name = "kotlin-compiler-2_2_20-dev-4678_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/2.2.20-dev-4678/kotlin-compiler-2.2.20-dev-4678.jar",
-  sha256 = "5eb733316b16aa15757831f37ac4d2d8c1d916648b40898132ec4454a5b3de24",
-  downloaded_file_path = "kotlin-compiler-2.2.20-dev-4678.jar"
+  name = "kotlin-stdlib-jdk7-2_2_21-RC-376_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk7/2.2.21-RC-376/kotlin-stdlib-jdk7-2.2.21-RC-376.jar",
+  sha256 = "204b8276fb5d113c86b4e941aeb6af78a0a4b0838d6f5b6f8f9fe44271f966ad",
+  downloaded_file_path = "kotlin-stdlib-jdk7-2.2.21-RC-376.jar"
 )
 
 http_file(
-  name = "kotlin-stdlib-jdk8-2_2_20-dev-4678_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk8/2.2.20-dev-4678/kotlin-stdlib-jdk8-2.2.20-dev-4678.jar",
-  sha256 = "bb60f5fb88b8dd699a791cec1fd2fade97c15a54a24e43f1dd79a11159672d9d",
-  downloaded_file_path = "kotlin-stdlib-jdk8-2.2.20-dev-4678.jar"
+  name = "kotlin-script-runtime-2_2_21-RC-376_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.21-RC-376/kotlin-script-runtime-2.2.21-RC-376.jar",
+  sha256 = "8341abec1afa8fae89afa288ac083a9eaf3f09e1bd8b717bc481c697cf18ad68",
+  downloaded_file_path = "kotlin-script-runtime-2.2.21-RC-376.jar"
 )
 
 http_file(
-  name = "kotlin-stdlib-2_2_20-dev-4678_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib/2.2.20-dev-4678/kotlin-stdlib-2.2.20-dev-4678.jar",
-  sha256 = "09b4078b982700eaddbd5f11c5fd61bacfaffb31b6e29d656ab62ac18dcb66aa",
-  downloaded_file_path = "kotlin-stdlib-2.2.20-dev-4678.jar"
-)
-
-http_file(
-  name = "kotlin-stdlib-jdk7-2_2_20-dev-4678_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-stdlib-jdk7/2.2.20-dev-4678/kotlin-stdlib-jdk7-2.2.20-dev-4678.jar",
-  sha256 = "8df5d6d7a40511c89008b7e348bb36e311393842b3fa27fe0202b2f1ef106e2d",
-  downloaded_file_path = "kotlin-stdlib-jdk7-2.2.20-dev-4678.jar"
-)
-
-http_file(
-  name = "kotlin-script-runtime-2_2_20-dev-4678_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-script-runtime/2.2.20-dev-4678/kotlin-script-runtime-2.2.20-dev-4678.jar",
-  sha256 = "590dbf6588dbeca8563294aa660798a3b9b170d541f7657fb365367988b75811",
-  downloaded_file_path = "kotlin-script-runtime-2.2.20-dev-4678.jar"
-)
-
-http_file(
-  name = "kotlin-reflect-1_6_10_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-reflect/1.6.10/kotlin-reflect-1.6.10.jar",
-  sha256 = "3277ac102ae17aad10a55abec75ff5696c8d109790396434b496e75087854203",
-  downloaded_file_path = "kotlin-reflect-1.6.10.jar"
+  name = "kotlin-reflect-2_2_21-RC-376_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-reflect/2.2.21-RC-376/kotlin-reflect-2.2.21-RC-376.jar",
+  sha256 = "3ebd1bf64c9b9ec816fed99e4406e4ed290808d75ae11951d6f2267b2ec1dc36",
+  downloaded_file_path = "kotlin-reflect-2.2.21-RC-376.jar"
 )
 
 http_file(
@@ -249,16 +206,16 @@ http_file(
 
 http_file(
     name = "kotlin-metadata-jvm",
-    downloaded_file_path = "kotlin-metadata-jvm-2.2.0-RC.jar",
-    sha256 = "20f43af25341c67cc402af4339bab0a7581a17eb1eeafcd360fffa80caa438cd",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0-RC/kotlin-metadata-jvm-2.2.0-RC.jar",
+    downloaded_file_path = "kotlin-metadata-jvm-2.2.20.jar",
+    sha256 = "8524eac90f7e8e0f1366883f2c6c820c93bfa61df3d76857c8d3e803cf67315d",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.20/kotlin-metadata-jvm-2.2.20.jar",
 )
 
 http_file(
     name = "kotlin-metadata-jvm-sources",
-    downloaded_file_path = "kotlin-metadata-jvm-2.2.0-RC-sources.jar",
-    sha256 = "2ab97ab16e203e715633593c480bcf0ac1cc151e54cd2adaaa7dca1085835ede",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.0-RC/kotlin-metadata-jvm-2.2.0-RC-sources.jar",
+    downloaded_file_path = "kotlin-metadata-jvm-2.2.20-sources.jar",
+    sha256 = "c55bd0d04e6d796d7d2cf0711281989d5e06b7def07100f80640b98ae1ebb788",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.20/kotlin-metadata-jvm-2.2.20-sources.jar",
 )
 
 http_file(
@@ -277,30 +234,30 @@ http_file(
 
 http_file(
     name = "kotlin-serialization-compiler-plugin",
-    downloaded_file_path = "kotlin-serialization-compiler-plugin-2.2.0-RC.jar",
-    sha256 = "3a8e5dc06a9ba623ad6ea4ad8df1e5bf577f1df9f4629cd70cb79e0986afca90",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin/2.2.0-RC/kotlin-serialization-compiler-plugin-2.2.0-RC.jar",
+    downloaded_file_path = "kotlin-serialization-compiler-plugin-2.2.20.jar",
+    sha256 = "39101e52cfb7dedde81d03092d7133451c2ee7e2b3b70557f7280a37432ca559",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin/2.2.20/kotlin-serialization-compiler-plugin-2.2.20.jar",
 )
 
 http_file(
     name = "kotlin-serialization-compiler-plugin-sources",
-    downloaded_file_path = "kotlin-serialization-compiler-plugin-2.2.0-RC-sources.jar",
-    sha256 = "0cdc70f2dc6129c8aaab9b535885951a609242d380761e6196894a8e7d18a132",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin/2.2.0-RC/kotlin-serialization-compiler-plugin-2.2.0-RC-sources.jar",
+    downloaded_file_path = "kotlin-serialization-compiler-plugin-2.2.20-sources.jar",
+    sha256 = "bf8495404da23a48f82034842f98279d3ecf5e41b46712cec1a29c2192fde6aa",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin/2.2.20/kotlin-serialization-compiler-plugin-2.2.20-sources.jar",
 )
 
 http_file(
     name = "kotlin-compose-compiler-plugin",
-    downloaded_file_path = "kotlin-compose-compiler-plugin-2.2.0-RC.jar",
-    sha256 = "2c8356701353889587ee513e5e2d08f8149beec0381d41e40cd18704f900badd",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.0-RC/kotlin-compose-compiler-plugin-2.2.0-RC.jar",
+    downloaded_file_path = "kotlin-compose-compiler-plugin-2.2.20.jar",
+    sha256 = "d99052e257681e496590c5c724e1324eb511e4205f5fd413b5f503d8e932b698",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.20/kotlin-compose-compiler-plugin-2.2.20.jar",
 )
 
 http_file(
     name = "kotlin-compose-compiler-plugin-sources",
-    downloaded_file_path = "kotlin-compose-compiler-plugin-2.2.0-RC-sources.jar",
-    sha256 = "87554a12766e3af0520ed23cc2c6863add4739aa41d56bbab2d8dbb532c66d2d",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.0-RC/kotlin-compose-compiler-plugin-2.2.0-RC-sources.jar",
+    downloaded_file_path = "kotlin-compose-compiler-plugin-2.2.20-sources.jar",
+    sha256 = "0c1a7ad3991be34d03555140c304f15c67748f5be71a8e79dc393b745e442202",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.20/kotlin-compose-compiler-plugin-2.2.20-sources.jar",
 )
 
 http_file(
@@ -923,3 +880,5 @@ http_jar(
     integrity = "sha256-SOLfY2yrZWPO1k3N/4q7I1VifLI27wvzdZhoLd90Lxs=",
     url = "https://repo1.maven.org/maven2/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar",
 )
+
+bazel_dep(name = "rules_python", version = "1.6.3")

@@ -13,6 +13,14 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.defaultType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbols
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -23,6 +31,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.typeIfSafeToResolve
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.getThisLabelName
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.getThisWithLabel
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
@@ -80,6 +90,7 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
         ) return
 
         analyze(callableDeclaration) {
+            if (callableDeclaration.expectedType != null) return
             val usedTypeParametersInReceiver = callableDeclaration.collectDescendantsOfType<KtTypeReference>()
                 .mapNotNull { (it.typeIfSafeToResolve as? KaTypeParameterType)?.symbol }
                 .filterTo(mutableSetOf()) { it.isReified }
@@ -143,7 +154,7 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 fun isReceiverUsedInside(
     callableDeclaration: KtCallableDeclaration,
     usedTypeParametersInReceiver: Set<KaTypeParameterSymbol>
@@ -163,32 +174,6 @@ fun isReceiverUsedInside(
     return used
 }
 
-/**
- * Returns the label that can be used to refer to this declaration symbol.
- * In named functions it is the name of the function.
- * For an anonymous lambda argument it is the name of the function it is passed to.
- */
-private fun KaDeclarationSymbol.getThisLabelName(): String {
-    val name = name ?: return ""
-    if (!name.isSpecial) return name.asString()
-    if (this is KaAnonymousFunctionSymbol) {
-        val function = psi as? KtFunction
-        val argument = function?.parent as? KtValueArgument
-            ?: (function?.parent as? KtLambdaExpression)?.parent as? KtValueArgument
-        val callElement = argument?.getStrictParentOfType<KtCallElement>()
-        val callee = callElement?.calleeExpression as? KtSimpleNameExpression
-        if (callee != null) return callee.text
-    }
-    return ""
-}
-
-/**
- * Returns the `this` expression that can be used to refer to the given declaration symbol.
- */
-private fun KaDeclarationSymbol.getThisWithLabel(): String {
-    val labelName = getThisLabelName()
-    return if (labelName.isEmpty()) "this" else "this@$labelName"
-}
 
 /**
  * Returns all type parameters that are being referenced by the [typeReference].
@@ -243,17 +228,20 @@ private fun removeUnusedTypeParameters(typeParameters: List<KtTypeParameter>) {
  * We use this function to check if the callable symbol has a receiver that might potentially be used as a context receiver of this symbol.
  * This is needed because the analysis API does not expose passed context receivers yet: KT-73709
  */
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun KaCallableSymbol.hasContextReceiverOfType(type: KaType): Boolean {
-    return contextReceivers.any { type.isSubtypeOf(it.type) }
+private fun KaCallableMemberCall<*, *>.hasContextReceiverOfType(type: KaType): Boolean {
+    val substitutor = buildSubstitutor {
+        substitutions(typeArgumentsMapping)
+    }
+    return symbol.contextReceivers.any { type.isSubtypeOf(substitutor.substitute(it.type)) }
 }
 
 /**
  * Returns whether the [element] makes use of one of the [reifiedTypes].
  * This will only return true if the [element] is inside a function body or function expression.
  */
-context(KaSession)
+context(_: KaSession)
 private fun isUsageOfReifiedType(reifiedTypes: Set<KaTypeParameterSymbol>, element: KtElement): Boolean {
     val parentFunction = element.parentOfType<KtFunction>() ?: return false
     if (element !is KtExpression) return false
@@ -265,7 +253,7 @@ private fun isUsageOfReifiedType(reifiedTypes: Set<KaTypeParameterSymbol>, eleme
 /**
  * Returns whether the [symbol] is being used by the [element] by referencing it.
  */
-context(KaSession)
+context(_: KaSession)
 private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Boolean {
     if (element !is KtExpression) return false
 
@@ -276,7 +264,7 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
 
             partiallyAppliedSymbol.dispatchReceiver?.getThisReceiverOwner() == symbol ||
                     partiallyAppliedSymbol.extensionReceiver?.getThisReceiverOwner() == symbol ||
-                    (receiverType != null && resolvedCall.symbol.hasContextReceiverOfType(receiverType)) // potentially captured by context receiver
+                    (receiverType != null && resolvedCall.hasContextReceiverOfType(receiverType)) // potentially captured by context receiver
         }
 
         else -> false

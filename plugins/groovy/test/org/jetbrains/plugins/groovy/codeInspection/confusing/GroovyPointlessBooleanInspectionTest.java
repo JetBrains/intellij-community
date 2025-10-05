@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.util.ActionTest;
+import org.jetbrains.plugins.groovy.util.Groovy50Test;
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
 import org.junit.Test;
@@ -11,7 +12,8 @@ import org.junit.Test;
 import java.util.Collection;
 import java.util.List;
 
-public class GroovyPointlessBooleanInspectionTest extends GroovyLatestTest implements HighlightingTest, ActionTest {
+public class GroovyPointlessBooleanInspectionTest extends Groovy50Test implements HighlightingTest, ActionTest {
+
   @Override
   public @NotNull Collection<Class<? extends LocalInspectionTool>> getInspections() {
     return List.of(GroovyPointlessBooleanInspection.class);
@@ -33,6 +35,12 @@ public class GroovyPointlessBooleanInspectionTest extends GroovyLatestTest imple
   public void tripleNegationUnary() {
     doTest("!<caret><warning descr=\"Redundant boolean operations\">!!false</warning>", "!false");
     doTest( "!<caret><warning descr=\"Redundant boolean operations\">!!true</warning>", "!true");
+  }
+
+  @Test
+  public void implicationExpression() {
+    doTest("<warning descr=\"Redundant boolean operations\">false ==> (false)</warning>", "(false)");
+    doTest( "<warning descr=\"Redundant boolean operations\">(false) ==> true</warning>", "(false)");
   }
 
   @Test

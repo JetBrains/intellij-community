@@ -1,0 +1,11 @@
+class CrashTestDummy {
+  public CrashTestDummy() {
+      String bar = "bar".toString(); // inline the parameter
+    System.out.println(bar);
+    super();
+  }
+
+  public static void main(String[] args) {
+    new CrashTestDummy();
+  }
+}

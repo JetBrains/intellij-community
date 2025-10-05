@@ -115,7 +115,7 @@ class KtScratchExecutionSession(
         }) ?: return
 
         try {
-            val (environmentRequest, commandLine) = createCommandLine(psiFile, file.module, result.mainClassName, tempDir.path)
+            val (environmentRequest, commandLine) = createCommandLine(psiFile, file.currentModule, result.mainClassName, tempDir.path)
             val environment = environmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
 
             val commandLinePresentation = commandLine.getCommandPresentation(environment)
@@ -192,7 +192,7 @@ class KtScratchExecutionSession(
 
     private fun createCommandLine(originalFile: KtFile, module: Module?, mainClassName: String, tempOutDir: String): Pair<TargetEnvironmentRequest, TargetedCommandLine> {
         val javaParameters = JavaParametersBuilder(originalFile.project)
-            .withSdkFrom(module, true)
+            .withSdkFrom(module)
             .withMainClassName(mainClassName)
             .build()
 

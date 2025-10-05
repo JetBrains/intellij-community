@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
-import com.intellij.terminal.session.TerminalSessionTerminatedEvent
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
@@ -21,11 +20,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.session.TerminalSessionTerminatedEvent
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 
-internal fun startTerminalProcess(
+@ApiStatus.Internal
+fun startTerminalProcess(
   project: Project,
   options: ShellStartupOptions,
 ): Pair<TtyConnector, ShellStartupOptions> {
@@ -43,8 +45,9 @@ internal fun startTerminalProcess(
  * And if the process is terminated on its own, for example, if user executes `exit` or press Ctrl+D,
  * then the [coroutineScope] will be canceled as well.
  */
+@ApiStatus.Internal
 @OptIn(AwaitCancellationAndInvoke::class)
-internal fun createTerminalSession(
+fun createTerminalSession(
   project: Project,
   ttyConnector: TtyConnector,
   options: ShellStartupOptions,
@@ -107,6 +110,7 @@ private fun createJediTermServices(
   val textBuffer = TerminalTextBuffer(initialSize.columns, initialSize.rows, styleState, maxHistoryLinesCount)
   val terminalDisplay = TerminalDisplayImpl(settings)
   val controller = ObservableJediTerminal(terminalDisplay, textBuffer, styleState)
+
   val typeAheadManager = TerminalTypeAheadManager(JediTermTypeAheadModel(controller, textBuffer, settings))
   val executorService = TerminalExecutorServiceManagerImpl()
   val terminalStarter = TerminalStarterEx(

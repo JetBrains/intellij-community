@@ -1,0 +1,2 @@
+Text: (<highlight>keySelector: (IndexedValue<Int>) -> Int</highlight>), Disabled: false, Strikeout: false, Green: false
+Text: (<highlight>keySelector: (IndexedValue<Int>) -> Int</highlight>, valueTransform: (IndexedValue<Int>) -> Int), Disabled: false, Strikeout: false, Green: true

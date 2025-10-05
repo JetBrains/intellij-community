@@ -65,38 +65,7 @@ class KotlinStructureViewElement(
     }
 
     override fun getChildrenBase(): Collection<StructureViewTreeElement> {
-        val children = when (val element = element) {
-            is KtFile -> {
-                val declarations = element.declarations
-                if (element.isScript()) {
-                    (declarations.singleOrNull() as? KtScript) ?: element
-                } else {
-                    element
-                }.declarations
-            }
-            is KtClass -> element.getStructureDeclarations()
-            is KtClassOrObject -> element.declarations
-            is KtFunction, is KtClassInitializer, is KtProperty -> element.collectLocalDeclarations()
-            else -> emptyList()
-        }
-
-        return children.map { KotlinStructureViewElement(it, false) }
-    }
-
-    private fun PsiElement.collectLocalDeclarations(): List<KtDeclaration> {
-        val result = mutableListOf<KtDeclaration>()
-
-        acceptChildren(object : KtTreeVisitorVoid() {
-            override fun visitClassOrObject(classOrObject: KtClassOrObject) {
-                result.add(classOrObject)
-            }
-
-            override fun visitNamedFunction(function: KtNamedFunction) {
-                result.add(function)
-            }
-        })
-
-        return result
+        return element.getStructureViewChildren { KotlinStructureViewElement(it, false) }
     }
 
     private fun countDescriptor(): DeclarationDescriptor? {
@@ -142,6 +111,7 @@ private class AssignableLazyProperty<in R, T : Any>(val init: () -> T) : ReadWri
     }
 }
 
+@Deprecated("Use KotlinStructureViewUtilkt.getStructureDeclarations(KtClassOrObject) instead")
 fun KtClassOrObject.getStructureDeclarations() =
      buildList {
         primaryConstructor?.let { add(it) }

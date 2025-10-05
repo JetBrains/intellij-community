@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -103,7 +103,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  public boolean hasModifierProperty(@NotNull String name) {
+  public boolean hasModifierProperty(@PsiModifier.ModifierConstant @NotNull String name) {
     final PsiModifierList modifierList = getModifierList();
     return modifierList != null && modifierList.hasModifierProperty(name);
   }
@@ -150,7 +150,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(statement);
     final PsiElement[] variables = psiElement instanceof  PsiDeclarationStatement
                                    ? ((PsiDeclarationStatement)psiElement).getDeclaredElements() : PsiElement.EMPTY_ARRAY;
-    if (variables.length > 1) {
+    if (variables.length > 1 && !(statement.getTreeParent() instanceof PsiForStatement)) {
       final PsiModifierList modifierList = getModifierList();
       final PsiTypeElement typeElement = getTypeElement();
       assert modifierList != null : getText();
@@ -316,7 +316,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  public Icon getElementIcon(final int flags) {
+  public Icon getElementIcon(int flags) {
     IconManager iconManager = IconManager.getInstance();
     RowIcon baseIcon = iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Variable),
                                                      ElementPresentationUtil.getFlags(this, false));

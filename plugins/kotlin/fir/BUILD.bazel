@@ -3,20 +3,22 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
+  name = "custom_fir",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
-  ]
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
 )
 
 jvm_library(
   name = "fir",
   module_name = "kotlin.fir",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_fir",
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -25,7 +27,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-fir",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
@@ -47,7 +49,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/project-structure",
-    "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//plugins/kotlin/base/code-insight",

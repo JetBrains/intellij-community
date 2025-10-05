@@ -39,21 +39,21 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
   val listComponent: JListComponent get() = driver.cast(component, JListComponent::class)
 
-  val items: List<String>
+  open val items: List<String>
     get() = fixture.collectItems()
 
   val rawItems: List<String>
     get() = fixture.collectRawItems()
 
-  val selectedItems: List<String>
+  open val selectedItems: List<String>
     get() = fixture.collectSelectedItems()
 
   fun replaceCellRendererReader(readerSupplier: (JListFixtureRef) -> CellRendererReader) {
     cellRendererReaderSupplier = readerSupplier
   }
 
-  fun clickItem(itemText: String, fullMatch: Boolean = true, offset: Point? = null) {
-    findItemIndex(itemText, fullMatch)?.let { index ->
+  fun clickItem(itemText: String, fullMatch: Boolean = true, trimmed: Boolean = false, offset: Point? = null) {
+    findItemIndex(itemText, fullMatch, trimmed)?.let { index ->
       clickItemAtIndex(index, offset)
     } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
   }
@@ -65,8 +65,8 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun hoverItem(itemText: String, fullMatch: Boolean = true, offset: Point? = null) {
-    findItemIndex(itemText, fullMatch)?.let { index ->
+  fun hoverItem(itemText: String, fullMatch: Boolean = true, trimmed: Boolean = false, offset: Point? = null) {
+    findItemIndex(itemText, fullMatch, trimmed)?.let { index ->
       if (offset == null) {
         hoverItemAtIndex(index)
       } else {
@@ -94,7 +94,7 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun hoverItemAtIndex(index: Int) {
     val cellBounds = driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
-    moveMouse(Point(cellBounds.getX().toInt(), cellBounds.getY().toInt()))
+    moveMouse(cellBounds.center)
   }
 
   fun invokeSelectNextRowAction() {
@@ -112,14 +112,12 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getComponentAt(index: Int): Component = fixture.getComponentAtIndex(index)
 
-  protected fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =
+  protected fun findItemIndex(itemText: String, fullMatch: Boolean, trimmed: Boolean = false): Int? =
     fixture.collectItems().indexOfFirst {
-      if (fullMatch) it == itemText
-      else it.contains(itemText, true)
-    }.let {
-      if (it == -1) null
-      else it
-    }
+      val text = if (trimmed) it.trim() else it
+      if (fullMatch) text == itemText
+      else text.contains(itemText, true)
+    }.takeIf { it != -1 }
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JListTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)

@@ -19,7 +19,7 @@ import java.io.IOException
 @TestMetadata("testData/search/junit")
 @RunWith(JUnit38ClassRunner::class)
 class JUnitMembersSearcherTest : AbstractSearcherTest() {
-    override fun getProjectDescriptor() = KotlinJdkAndLibraryProjectDescriptor(getResourcePathForClass(Assert::class.java))
+    override fun getProjectDescriptor() = KotlinJdkAndLibraryProjectDescriptor(getResourcePathForClass(Assert::class.java).toPath())
 
     override val testDataDirectory: File
         get() = super.testDataDirectory

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.Name
@@ -11,22 +12,27 @@ import org.jetbrains.kotlin.name.Name
  *
  * It can be a single enum entry, or one of the auto-generated functions: `valueOf`, `values` or `entries`.
  */
-internal fun KaSession.isEnumStaticMember(symbol: KaCallableSymbol): Boolean =
+context(_: KaSession)
+internal fun isEnumStaticMember(symbol: KaCallableSymbol): Boolean =
     symbol is KaEnumEntrySymbol ||
             isEnumValues(symbol) ||
             isEnumValueOf(symbol) ||
             isEnumEntries(symbol)
 
-private fun KaSession.isEnumEntries(symbol: KaSymbol): Boolean =
+context(_: KaSession)
+private fun isEnumEntries(symbol: KaSymbol): Boolean =
     isEnumGeneratedStaticMember<KaPropertySymbol>(symbol, StandardNames.ENUM_ENTRIES)
 
-private fun KaSession.isEnumValues(symbol: KaSymbol): Boolean =
+context(_: KaSession)
+private fun isEnumValues(symbol: KaSymbol): Boolean =
     isEnumGeneratedStaticMember<KaFunctionSymbol>(symbol, StandardNames.ENUM_VALUE_OF)
 
-private fun KaSession.isEnumValueOf(symbol: KaSymbol): Boolean =
+context(_: KaSession)
+private fun isEnumValueOf(symbol: KaSymbol): Boolean =
     isEnumGeneratedStaticMember<KaFunctionSymbol>(symbol, StandardNames.ENUM_VALUES)
 
-private inline fun <reified EXPECTED_TYPE> KaSession.isEnumGeneratedStaticMember(symbol: KaSymbol, expectedName: Name): Boolean =
+context(_: KaSession)
+private inline fun <reified EXPECTED_TYPE> isEnumGeneratedStaticMember(symbol: KaSymbol, expectedName: Name): Boolean =
     symbol is EXPECTED_TYPE &&
             symbol.name == expectedName &&
             symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED &&

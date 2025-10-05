@@ -5,6 +5,3 @@ open class A(x: Int) {
         m(1, false,<caret>)
     }
 }
-/*
-Text: (x: Int, y: Boolean), Disabled: false, Strikeout: false, Green: true
-*/

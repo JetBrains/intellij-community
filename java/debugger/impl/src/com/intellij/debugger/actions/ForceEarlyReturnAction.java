@@ -2,6 +2,7 @@
 
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
@@ -18,6 +19,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
@@ -86,7 +88,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                                                   final JavaStackFrame frame,
                                                   final DebugProcessImpl debugProcess,
                                                   final @Nullable DialogWrapper dialog) {
-    SwingUtilities.invokeLater(() -> {
+    DebuggerInvocationUtil.invokeLaterAnyModality(() -> {
       if (JvmDropFrameActionHandler.evaluateFinallyBlocks(debugProcess.getProject(),
                                                UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
                                                frame,
@@ -123,7 +125,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
           showError(debugProcess.getProject(), JavaDebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
           return;
         }
-        SwingUtilities.invokeLater(() -> {
+        DebuggerInvocationUtil.invokeLaterAnyModality(() -> {
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }

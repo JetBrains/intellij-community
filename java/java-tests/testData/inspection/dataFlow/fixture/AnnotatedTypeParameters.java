@@ -21,7 +21,7 @@ class Test {
     if (<warning descr="Condition 'ref.value == null' is always 'false'">ref.value == null</warning>) {
       return;
     }
-    ref.value = <warning descr="'null' is assigned to a variable that is annotated with @NotNull">null</warning>;
+    ref.value = <warning descr="'null' is assigned to a non-null variable">null</warning>;
   }
 
 

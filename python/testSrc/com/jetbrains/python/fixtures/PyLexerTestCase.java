@@ -40,4 +40,5 @@ public abstract class PyLexerTestCase extends PlatformLiteFixture {
     String expectedTokensInCode = StringUtil.join(actualTokens, t -> '"' + t + '"', ", ");
     assertEquals("Token mismatch. Actual values: " + expectedTokensInCode, List.of(expectedTokens), actualTokens);
   }
+
 }

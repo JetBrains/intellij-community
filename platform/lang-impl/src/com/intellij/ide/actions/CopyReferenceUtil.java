@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public final class CopyReferenceUtil {
   static void highlight(Editor editor, Project project, List<? extends PsiElement> elements) {
@@ -49,7 +51,8 @@ public final class CopyReferenceUtil {
     }
   }
 
-  static @Unmodifiable @NotNull List<PsiElement> getElementsToCopy(final @Nullable Editor editor, final DataContext dataContext) {
+  @ApiStatus.Internal
+  public static @Unmodifiable @NotNull List<PsiElement> getElementsToCopy(final @Nullable Editor editor, final DataContext dataContext) {
     List<PsiElement> elements = new ArrayList<>();
     if (editor != null) {
       PsiReference reference = TargetElementUtil.findReference(editor);
@@ -71,6 +74,7 @@ public final class CopyReferenceUtil {
 
     if (elements.isEmpty() && editor == null) {
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+
       VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       if (project != null && files != null) {
         for (VirtualFile file : files) {
@@ -81,7 +85,7 @@ public final class CopyReferenceUtil {
 
     return ContainerUtil.mapNotNull(elements, element -> element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical()
                                                          ? null
-                                                         : adjustElement(element));
+                                                         : adjustElement(element)).stream().distinct().collect(Collectors.toList());
   }
 
   static PsiElement adjustElement(PsiElement element) {

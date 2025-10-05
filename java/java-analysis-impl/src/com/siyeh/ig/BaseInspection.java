@@ -28,10 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
@@ -131,7 +128,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     });
   }
 
-  public abstract BaseInspectionVisitor buildVisitor();
+  public abstract @NotNull BaseInspectionVisitor buildVisitor();
 
   @Override
   public final @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -156,6 +153,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    *
    * @deprecated use {@link #isAvailableForFile(PsiFile)} or {@link #requiredFeatures()}
    */
+  @ApiStatus.Internal
   @Deprecated
   public boolean shouldInspect(@NotNull PsiFile file) {
     return true;

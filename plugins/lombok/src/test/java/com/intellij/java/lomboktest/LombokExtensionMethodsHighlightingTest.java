@@ -25,7 +25,7 @@ public class LombokExtensionMethodsHighlightingTest extends LightDaemonAnalyzerT
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
   }
 
   private void doTest() {

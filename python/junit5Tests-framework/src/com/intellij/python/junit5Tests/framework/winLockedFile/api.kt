@@ -26,5 +26,5 @@ fun getProcessLockedPath(path: Path): Result<List<ProcessHandle>, @NlsSafe Strin
 fun deleteCheckLocking(path: Path, vararg processesToKillIfLocked: Regex = arrayOf(PYTHON)): Unit = deleteCheckLockingImpl(path, *processesToKillIfLocked)
 
 
-private val PYTHON = Regex("^python[0-9.]*\\.exe$")
+private val PYTHON = Regex("^(python|pip|conda)[0-9.]*\\.exe$")
 

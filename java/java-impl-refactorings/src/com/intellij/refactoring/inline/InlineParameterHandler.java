@@ -27,6 +27,7 @@ import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
+import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ public final class InlineParameterHandler extends JavaInlineActionHandler {
     }
     final int index = parameterList.getParameterIndex(psiParameter);
 
-    String errorMessage = getCannotInlineMessage(psiParameter, method);
+    String errorMessage = getCannotInlineMessage(method);
     if (errorMessage != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage, JavaRefactoringBundle.message("inline.parameter.refactoring"), null);
       return;
@@ -72,7 +73,7 @@ public final class InlineParameterHandler extends JavaInlineActionHandler {
         if (parent instanceof PsiCallExpression methodCall) {
           occurrences.add(psiReference);
           containingFiles.add(element.getContainingFile());
-          final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
+          final PsiExpression[] expressions = CommonJavaRefactoringUtil.getNonVarargArguments(methodCall);
           if (expressions.length <= index) return false;
           PsiExpression argument = expressions[index];
           if (!refInitializer.isNull()) {
@@ -251,10 +252,7 @@ public final class InlineParameterHandler extends JavaInlineActionHandler {
     return value1 != null && value1.equals(value2);
   }
 
-  private static @Nullable @NlsContexts.DialogMessage String getCannotInlineMessage(PsiParameter psiParameter, PsiMethod method) {
-    if (psiParameter.isVarArgs()) {
-      return JavaRefactoringBundle.message("inline.parameter.error.varargs");
-    }
+  private static @Nullable @NlsContexts.DialogMessage String getCannotInlineMessage(PsiMethod method) {
     if (method.findSuperMethods().length > 0 || OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY).length > 0) {
       return JavaRefactoringBundle.message("inline.parameter.error.hierarchy");
     }

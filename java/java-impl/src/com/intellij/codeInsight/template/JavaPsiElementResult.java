@@ -14,20 +14,15 @@ public class JavaPsiElementResult extends PsiElementResult {
   @Override
   public String toString() {
     PsiElement element = getElement();
-    if (element != null) {
-      if (element instanceof PsiVariable) {
-        return ((PsiVariable)element).getName();
+    return switch (element) {
+      case PsiVariable variable -> variable.getName();
+      case PsiMethod method -> method.getName() + "()";
+      case PsiClass aClass -> {
+        PsiIdentifier identifier = aClass.getNameIdentifier();
+        yield identifier == null ? "" : identifier.getText();
       }
-      else if (element instanceof PsiMethod) {
-        return ((PsiMethod)element).getName() + "()";
-      }
-      else if (element instanceof PsiClass) {
-        PsiIdentifier identifier = ((PsiClass)element).getNameIdentifier();
-        if (identifier == null) return "";
-        return identifier.getText();
-      }
-    }
-    return super.toString();
+      case null, default -> super.toString();
+    };
   }
 
   @Override

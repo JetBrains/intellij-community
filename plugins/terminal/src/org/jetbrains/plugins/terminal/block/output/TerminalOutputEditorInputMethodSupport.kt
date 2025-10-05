@@ -18,7 +18,7 @@ import com.intellij.openapi.editor.impl.InputMethodInlayRenderer
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
@@ -40,7 +40,7 @@ class TerminalOutputEditorInputMethodSupport(
   private val editor: EditorEx,
   private val coroutineScope: CoroutineScope,
   private val getCaretPosition: () -> LogicalPosition?,
-  private val cursorOffsetFlow: StateFlow<Int>?,
+  private val cursorOffsetFlow: Flow<Int>?,
   private val sendInputString: (String) -> Unit,
 ) {
 

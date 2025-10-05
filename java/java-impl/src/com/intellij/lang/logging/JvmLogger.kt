@@ -15,30 +15,30 @@ import org.jetbrains.annotations.ApiStatus
  * the way to generate a logger at the class. Please, don't use it now, this API will be rewritten in the future.
  */
 @ApiStatus.Internal
-interface JvmLogger {
+public interface JvmLogger {
   /**
    * This field represents id of the logger which is used to save the logger the settings
    */
-  val id : String
+  public val id : String
   /**
    * This field represents fully qualified name of the logger's type
    */
-  val loggerTypeName: String
+  public val loggerTypeName: String
 
   /**
    * This field is used to determine the order of loggers in the settings
    * @see com.intellij.ui.logging.JvmLoggingConfigurable
    */
-  val priority: Int
+  public val priority: Int
 
   /**
    * Determines if the logger should only be used when user didn't specify the preferred logger in the settings.
    * For example, it happens after creation of the new project.
    *
    * @return true if the logger should only be used during startup, false otherwise
-   * @see com.intellij.lang.logging.UnspecifiedLogger
+   * @see UnspecifiedLogger
    */
-  fun isOnlyOnStartup() = false
+  public fun isOnlyOnStartup(): Boolean = false
 
   /**
    * Method for inserting the logger at the specified class. Should only be invoked inside WriteAction.
@@ -46,7 +46,7 @@ interface JvmLogger {
    * @param clazz the class where the logger element will be inserted
    * @param logger PsiElement, corresponding to the logger to be inserted
    */
-  fun insertLoggerAtClass(project: Project, clazz: PsiClass, logger: PsiElement): PsiElement?
+  public fun insertLoggerAtClass(project: Project, clazz: PsiClass, logger: PsiElement): PsiElement?
 
   /**
    * Determines if the logger is available for the given project. Should only be invoked inside ReadAction.
@@ -54,7 +54,7 @@ interface JvmLogger {
    * @param project the project context
    * @return true if the logger is available, false otherwise
    */
-  fun isAvailable(project: Project?): Boolean
+  public fun isAvailable(project: Project?): Boolean
 
   /**
    * Determines if the logger is available for the given module. Should only be invoked inside ReadAction.
@@ -62,7 +62,7 @@ interface JvmLogger {
    * @param module the module context
    * @return true if the logger is available, false otherwise
    */
-  fun isAvailable(module: Module?): Boolean
+  public fun isAvailable(module: Module?): Boolean
 
   /**
    * Determines if it is possible to place a logger at the specified class.
@@ -70,7 +70,7 @@ interface JvmLogger {
    * @param clazz the class where the logger will be placed
    * @return true if it is possible to place a logger, false otherwise
    */
-  fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean
+  public fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean
 
   /**
    * Creates a logger element for inserting into a class.
@@ -79,14 +79,14 @@ interface JvmLogger {
    * @param clazz the class where the logger element will be inserted
    * @return the created logger element, or null if creation fails
    */
-  fun createLogger(project: Project, clazz: PsiClass): PsiElement?
+  public fun createLogger(project: Project, clazz: PsiClass): PsiElement?
 
   /**
    * @return the name of the log field for the class, or null if it is impossible to define
    */
-  fun getLogFieldName(clazz: PsiClass): String?
+  public fun getLogFieldName(clazz: PsiClass): String?
 
-  companion object {
+  public companion object {
     private val EP_NAME = ExtensionPointName<JvmLogger>("com.intellij.jvm.logging")
 
     /**
@@ -95,7 +95,7 @@ interface JvmLogger {
      * @param isOnlyOnStartup flag indicating whether to include only loggers that should be used on startup like [UnspecifiedLogger].
      * @return a list of JvmLogger instances sorted by priority
      */
-    fun getAllLoggers(isOnlyOnStartup: Boolean): List<JvmLogger> {
+    public fun getAllLoggers(isOnlyOnStartup: Boolean): List<JvmLogger> {
       return EP_NAME.extensionList.filter { if (!isOnlyOnStartup) !it.isOnlyOnStartup() else true }.sortedByDescending { it.priority }
     }
 
@@ -105,7 +105,7 @@ interface JvmLogger {
      * @param loggerId The ID of the logger to retrieve.
      * @return The logger with the specified ID, or null if not found.
      */
-    fun getLoggerById(loggerId: String?): JvmLogger? {
+    public fun getLoggerById(loggerId: String?): JvmLogger? {
       return EP_NAME.extensionList.find { loggerId == it.id }
     }
 
@@ -116,7 +116,7 @@ interface JvmLogger {
      * @param filterByImportExclusion indicates whether to filter loggers by import exclusion
      * @return a list of suitable loggers for the module
      */
-    fun findSuitableLoggers(module: Module?, filterByImportExclusion: Boolean = false): List<JvmLogger> {
+    public fun findSuitableLoggers(module: Module?, filterByImportExclusion: Boolean = false): List<JvmLogger> {
       val project = module?.project ?: return emptyList()
       return getAllLoggers(false).filter {
         it.isAvailable(module) && !(filterByImportExclusion && isLoggerExcluded(project, it))
@@ -135,7 +135,7 @@ interface JvmLogger {
      * @param element the [PsiElement] from which to retrieve the nested classes
      * @return [Sequence] of [PsiClass] representing the nested classes
      */
-    fun getAllNamedContainingClasses(element: PsiElement): List<PsiClass> = element.parentsOfType(PsiClass::class.java, true)
+    public fun getAllNamedContainingClasses(element: PsiElement): List<PsiClass> = element.parentsOfType(PsiClass::class.java, true)
       .filter { clazz -> clazz !is PsiAnonymousClass && clazz !is PsiImplicitClass }
       .toList()
 
@@ -147,7 +147,7 @@ interface JvmLogger {
      * @return a list of PsiClass objects representing the possible places for inserting a logger, in reversed order
      * @see isOnlyOnStartup
      */
-    fun getPossiblePlacesForLogger(element: PsiElement, loggerList: List<JvmLogger>): List<PsiClass> = getAllNamedContainingClasses(element)
+    public fun getPossiblePlacesForLogger(element: PsiElement, loggerList: List<JvmLogger>): List<PsiClass> = getAllNamedContainingClasses(element)
       .filter { clazz -> isPossibleToPlaceLogger(clazz, loggerList) }
       .reversed()
 

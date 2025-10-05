@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.project.Project
@@ -10,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -46,7 +48,7 @@ class GHPRInfoViewModel internal constructor(
         pullRequestUrl = details.url
         val currentVm = vm
         if (currentVm == null) {
-          val newVm = GHPRDetailsViewModelImpl(project, cs.childScope(), dataContext, dataProvider, details, openPullRequestDiff)
+          val newVm = GHPRDetailsViewModelImpl(project, cs.childScope(GHPRDetailsViewModelImpl::class), dataContext, dataProvider, details, openPullRequestDiff)
           vm = newVm
           ComputedResult.success(newVm)
         }
@@ -72,7 +74,7 @@ class GHPRInfoViewModel internal constructor(
     }
   }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
-  val detailsLoadingErrorHandler: GHApiLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
+  val detailsLoadingErrorHandler: GHApiLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account, GHLoginSource.PR_DETAILS) {
     cs.launch {
       dataProvider.detailsData.signalDetailsNeedReload()
       dataProvider.detailsData.signalMergeabilityNeedsReload()

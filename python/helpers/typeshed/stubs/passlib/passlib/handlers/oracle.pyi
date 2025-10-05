@@ -1,4 +1,5 @@
 from typing import ClassVar
+from typing_extensions import Self
 
 import passlib.utils.handlers as uh
 
@@ -17,4 +18,4 @@ class oracle11(uh.HasSalt, uh.GenericHandler):
     max_salt_size: ClassVar[int]
     salt_chars: ClassVar[str]
     @classmethod
-    def from_string(cls, hash): ...
+    def from_string(cls, hash) -> Self: ...  # type: ignore[override]

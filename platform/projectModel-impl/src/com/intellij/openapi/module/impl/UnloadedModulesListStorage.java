@@ -8,6 +8,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -27,6 +28,7 @@ public final class UnloadedModulesListStorage implements PersistentStateComponen
 
   // Do not call directly. Use ModuleManager
   @ApiStatus.Internal
+  @RequiresBlockingContext
   public static UnloadedModulesListStorage getInstance(@NotNull Project project) {
     return project.getService(UnloadedModulesListStorage.class);
   }

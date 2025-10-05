@@ -1,4 +1,5 @@
 // CONFIGURE_LIBRARY: JUnit
+// NO_TEMPLATE_TESTING
 import org.junit.Test
 
 class A {

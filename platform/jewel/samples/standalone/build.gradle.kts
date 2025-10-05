@@ -12,17 +12,18 @@ dependencies {
     implementation(projects.intUi.intUiDecoratedWindow)
     implementation(projects.intUi.intUiStandalone)
     implementation(projects.markdown.core)
+    implementation(projects.markdown.extensions.autolink)
     implementation(projects.markdown.extensions.gfmAlerts)
     implementation(projects.markdown.extensions.gfmStrikethrough)
     implementation(projects.markdown.extensions.gfmTables)
-    implementation(projects.markdown.extensions.autolink)
+    implementation(projects.markdown.extensions.images)
     implementation(projects.markdown.intUiStandaloneStyling)
     implementation(projects.samples.showcase)
 
     implementation(compose.components.resources)
     implementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 
-    implementation(libs.filePicker)
+    implementation(libs.jbr.api)
     implementation(libs.intellijPlatform.icons)
     implementation(libs.kotlin.reflect)
 

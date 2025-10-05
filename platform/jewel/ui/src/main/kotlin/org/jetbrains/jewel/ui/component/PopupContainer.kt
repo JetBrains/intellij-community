@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.foundation.Stroke
@@ -38,6 +37,7 @@ public fun PopupContainer(
         popupPositionProvider = popupPositionProvider,
         onDismissRequest = onDismissRequest,
         properties = popupProperties,
+        cornerSize = style.metrics.cornerSize,
     ) {
         OverrideDarkMode(style.isDark) {
             val colors = style.colors

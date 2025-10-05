@@ -17,11 +17,14 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.SmallBorderCheckboxAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.updateToolbar
 
 class ScratchTopPanel(val scratchFile: K1KotlinScratchFile) {
-    private val moduleChooserAction: ModulesComboBoxAction = ModulesComboBoxAction(scratchFile)
     val actionsToolbar: ActionToolbar
 
     init {
         setupTopPanelUpdateHandlers()
+
+        val modulesComboBoxAction = ModulesComboBoxAction(scratchFile) {
+            actionsToolbar.updateToolbar()
+        }
 
         val toolbarGroup = DefaultActionGroup().apply {
             add(RunScratchAction())
@@ -29,7 +32,7 @@ class ScratchTopPanel(val scratchFile: K1KotlinScratchFile) {
             addSeparator()
             add(ClearScratchAction())
             addSeparator()
-            add(moduleChooserAction)
+            add(modulesComboBoxAction)
             add(IsMakeBeforeRunAction(scratchFile))
             addSeparator()
             add(IsInteractiveCheckboxAction())
@@ -41,7 +44,6 @@ class ScratchTopPanel(val scratchFile: K1KotlinScratchFile) {
     }
 
     private fun setupTopPanelUpdateHandlers() {
-        scratchFile.addModuleListener { _, _ -> actionsToolbar.updateToolbar() }
 
         val toolbarHandler = createUpdateToolbarHandler()
         scratchFile.replScratchExecutor?.addOutputHandler(toolbarHandler)

@@ -35,6 +35,4 @@ internal object PipParseUtils {
     val isEditable: Boolean = editableProjectLocation.isNotEmpty()
   }
 
-  @Serializable
-  private data class CondaPackageInfo(val name: String, val version: String)
 }

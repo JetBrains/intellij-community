@@ -9,6 +9,7 @@
 
     <extensionPoint name="projectTypesProvider" interface="com.intellij.openapi.project.ProjectTypesProvider" dynamic="true"/>
     <extensionPoint name="errorHandler" interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter" dynamic="true"/>
+    <extensionPoint name="configFolderChangedListener" interface="com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener" dynamic="true"/>
 
     <extensionPoint name="jps.plugin"
                     beanClass="com.intellij.jps.impl.JpsPluginBean" dynamic="true"/>
@@ -149,7 +150,10 @@
     <extensionPoint name="ideStartupWizard" interface="com.intellij.platform.ide.bootstrap.IdeStartupWizard" dynamic="false"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
+    <!-- Please do not use this extension point. Consider using `nonLockedIdeEventQueueDispatcher` instead.-->
     <extensionPoint name="ideEventQueueDispatcher" interface="com.intellij.ide.IdeEventQueue$EventDispatcher" dynamic="true"/>
+    <extensionPoint name="nonLockedIdeEventQueueDispatcher" interface="com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher"
+                    dynamic="true"/>
 
     <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider" dynamic="true"/>
     <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider" dynamic="true"/>
@@ -165,6 +169,10 @@
 
     <extensionPoint name="editorFloatingToolbarProvider"
                     interface="com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="openInBrowserFloatingToolbarSuppressor"
+                    interface="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserFloatingToolbarSuppressor"
                     dynamic="true"/>
 
     <extensionPoint name="actionPromoter" interface="com.intellij.openapi.actionSystem.ActionPromoter" dynamic="true"/>
@@ -189,6 +197,10 @@
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="mouseWheelEventProcessor"
+                    interface="com.intellij.openapi.MouseWheelEventInterceptor"
+                    dynamic="true"/>
+
     <extensionPoint name="toolWindowAllowlist" beanClass="com.intellij.openapi.wm.ToolWindowAllowlistEP" dynamic="true"/>
     <extensionPoint name="statistics.gotItTooltipAllowlist" beanClass="com.intellij.internal.statistic.collectors.fus.ui.GotItTooltipAllowlistEP" dynamic="true"/>
     <extensionPoint name="dialogInvocationPlace" beanClass="com.intellij.internal.statistic.collectors.fus.ui.DialogInvocationPlaceEP" dynamic="true"/>
@@ -198,6 +210,9 @@
     </extensionPoint>
 
     <extensionPoint name="defaultToolWindowLayout" interface="com.intellij.toolWindow.DefaultToolWindowLayoutExtension" dynamic="true"/>
+    <extensionPoint name="toolWindow.splitContentProvider" beanClass="com.intellij.toolWindow.ToolWindowSplitContentProviderBean" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.toolWindow.ToolWindowSplitContentProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="welcomeScreen" interface="com.intellij.openapi.wm.WelcomeScreenProvider" dynamic="false"/>
     <extensionPoint name="welcomeFrameProvider" interface="com.intellij.openapi.wm.WelcomeFrameProvider" dynamic="true"/>
@@ -248,6 +263,9 @@
                     dynamic="true"/>
     <extensionPoint name="toolWindowExtractorMode"
                     beanClass="com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP"
+                    dynamic="true"/>
+
+    <extensionPoint name="projectViewPaneExtractor" interface="com.intellij.ui.viewModel.extraction.ProjectViewPaneModelExtractor"
                     dynamic="true"/>
 
     <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate" dynamic="true"/>
@@ -328,6 +346,11 @@
     <extensionPoint name="tipAndTrick" beanClass="com.intellij.ide.util.TipAndTrickBean" dynamic="true"/>
 
     <extensionPoint name="remote.pathMappingProvider" interface="com.intellij.remote.PathMappingProvider" dynamic="true"/>
+    <extensionPoint name="remote.targetAwarePathMappingProvider" interface="com.intellij.remote.TargetAwarePathMappingProvider" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.remote.customDataContextSerializer"
+                    interface="com.intellij.ide.CustomDataContextSerializer"
+                    dynamic="true"/>
 
     <extensionPoint name="colorAndFontOptionsImportHandler" interface="com.intellij.application.options.colors.ImportHandler" dynamic="true"/>
 
@@ -549,10 +572,6 @@
     <extensionPoint name="activityTracker" interface="com.intellij.platform.backend.observation.ActivityTracker"
                     dynamic="true"/>
 
-    <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.MLFeatureProvider"/>
-    </extensionPoint>
-
     <extensionPoint qualifiedName="com.intellij.platform.ml.environmentExtender"
                     interface="com.intellij.platform.ml.environment.EnvironmentExtender"
                     dynamic="true"/>
@@ -627,6 +646,10 @@
     <extensionPoint name="findInDirectoryScopeProvider" interface="com.intellij.find.impl.FindInDirectoryScopeProvider" dynamic="true"/>
 
     <extensionPoint name="customTypeRpcSerializer" interface="com.intellij.ide.rpc.CustomTypeRpcSerializer" dynamic="true"/>
+    <extensionPoint name="anActionSerializer" interface="com.intellij.ide.rpc.AnActionSerializer" dynamic="true"/>
+
+    <extensionPoint name="rpc.documentVersionAccessor"
+                    interface="com.intellij.ide.rpc.DocumentPatchVersionAccessor" dynamic="true"/>
 
     <extensionPoint name="frontendDocumentIdRegistry" interface="com.intellij.ide.rpc.FrontendDocumentIdRegistry"
                     dynamic="true"/>
@@ -673,5 +696,18 @@
     <extensionPoint name="managedCacheFactory" interface="com.intellij.util.io.cache.ManagedCacheFactory" dynamic="true" />
 
     <extensionPoint name="editorSkeletonPolicy" interface="com.intellij.openapi.fileEditor.impl.EditorSkeletonPolicy" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.frontend.splitComponentProvider" interface="com.intellij.ui.split.SplitComponentProvider"
+                    dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.ide.gdpr.traceConsentManager"
+                    interface="com.intellij.ide.gdpr.trace.TraceConsentManager"
+                    dynamic="true"/>
+
+    <extensionPoint name="projectStorePathCustomizer"
+                    interface="com.intellij.configurationStore.ProjectStorePathCustomizer"
+                    dynamic="true"/>
+
+    <extensionPoint name="openAnotherToolHandler" interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

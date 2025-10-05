@@ -1,6 +1,5 @@
 from collections.abc import Iterable, Sequence
 
-from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.models import Deferrable
 from django.db.models.base import Model
 from django.db.models.constraints import BaseConstraint
@@ -28,7 +27,8 @@ class ExclusionConstraint(BaseConstraint):
         violation_error_code: str | None = None,
         violation_error_message: _StrOrPromise | None = None,
     ) -> None: ...
-    def check_supported(self, schema_editor: BaseDatabaseSchemaEditor) -> None: ...
     def validate(
         self, model: type[Model], instance: Model, exclude: Iterable[str] | None = None, using: str = "default"
     ) -> None: ...
+
+__all__ = ["ExclusionConstraint"]

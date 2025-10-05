@@ -53,9 +53,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
                 targetFiles.add(file);
               }
               final Collection<XmlFile> files = ReadAction.compute(() -> XmlUtil.findNSFilesByURI(info.getNamespaceUri(), project, module));
-              if (files != null) {
-                targetFiles.addAll(files);
-              }
+              targetFiles.addAll(files);
               nsMap.put(info.getNamespaceUri(), targetFiles);
             }
             if (! targetFiles.isEmpty()) {
@@ -63,7 +61,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
                 ApplicationManager.getApplication().runReadAction(() -> {
                   final String prefixByURI = XmlUtil.findNamespacePrefixByURI(targetFile, info.getNamespaceUri());
                   if (prefixByURI == null) return;
-                  final PsiElementProcessor processor = new PsiElementProcessor() {
+                  final PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<>() {
                     @Override
                     public boolean execute(@NotNull PsiElement element) {
                       if (element instanceof XmlTag) {

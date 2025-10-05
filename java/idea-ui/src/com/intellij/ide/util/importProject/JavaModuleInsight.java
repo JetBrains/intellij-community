@@ -11,7 +11,7 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectManager;
@@ -247,7 +247,7 @@ public final class JavaModuleInsight extends ModuleInsight {
 
   @Override
   protected ModuleDescriptor createModuleDescriptor(final File moduleContentRoot, final Collection<DetectedSourceRoot> sourceRoots) {
-    return new ModuleDescriptor(moduleContentRoot, StdModuleTypes.JAVA, sourceRoots);
+    return new ModuleDescriptor(moduleContentRoot, JavaModuleType.getModuleType(), sourceRoots);
   }
 
   @Override

@@ -4,6 +4,7 @@ from antlr4.atn.LexerAction import LexerAction as LexerAction, LexerIndexedCusto
 from antlr4.InputStream import InputStream as InputStream
 
 class LexerActionExecutor:
+    __slots__ = ("lexerActions", "hashCode")
     lexerActions: Incomplete
     hashCode: Incomplete
     def __init__(self, lexerActions: list[LexerAction] = []) -> None: ...

@@ -7,13 +7,21 @@ import com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
 import com.intellij.platform.feedback.impl.DEFAULT_FEEDBACK_CONSENT_ID
 import com.intellij.platform.feedback.impl.FeedbackRequestDataWithDetailedAnswer
 import com.intellij.platform.feedback.impl.FeedbackRequestType
+import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.platform.feedback.impl.submitFeedback
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
 import kotlinx.serialization.json.JsonObject
 
 /** This number should be increased when [BlockBasedFeedbackDialogWithEmail] fields changing */
 const val BLOCK_BASED_FEEDBACK_WITH_EMAIL_VERSION = 1
 
+/**
+ * The base class for building feedback dialogs with e-mail.
+ *
+ * If your dialog doesn't need to provide any system data in addition to [CommonFeedbackSystemData],
+ * consider using [CommonBlockBasedFeedbackDialogWithEmail] instead.
+ */
 abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>(
   myProject: Project?, forTest: Boolean) : BlockBasedFeedbackDialog<T>(myProject, forTest) {
 
@@ -21,7 +29,13 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
   abstract val zendeskTicketTitle: String
   abstract val zendeskFeedbackType: String
 
-  protected val emailBlockWithAgreement = EmailBlock(myProject) { myShowFeedbackSystemInfoDialog() }
+  private val feedbackAgreementBlock: Row.(Project?) -> Unit = { project: Project? ->
+    feedbackAgreement(project, CommonFeedbackBundle.message("dialog.feedback.consent.withEmail")) {
+      showFeedbackSystemInfoDialog(mySystemInfoDataComputation.getComputationResult())
+    }
+  }
+
+  protected var emailBlockWithAgreement: EmailBlock = EmailBlock(myProject, feedbackAgreementBlock)
 
   /**
    * A Zendesk ticket will only be created if the user specifies an email.
@@ -81,7 +95,7 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
 
     stringBuilder.appendLine()
     stringBuilder.appendLine()
-    stringBuilder.appendLine(mySystemInfoData.toString())
+    stringBuilder.appendLine(mySystemInfoDataComputation.getComputationResult().toString())
     return stringBuilder.toString()
   }
 }

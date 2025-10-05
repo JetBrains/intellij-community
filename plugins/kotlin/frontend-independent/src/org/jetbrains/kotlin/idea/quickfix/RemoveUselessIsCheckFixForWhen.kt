@@ -16,7 +16,7 @@ class RemoveUselessIsCheckFixForWhen(
     element: KtWhenConditionIsPattern,
     val compileTimeCheckResult: Boolean? = null,
 ) : PsiUpdateModCommandAction<KtWhenConditionIsPattern>(element) {
-    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.useless.is.check")
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.is.check")
 
     override fun invoke(
         context: ActionContext,

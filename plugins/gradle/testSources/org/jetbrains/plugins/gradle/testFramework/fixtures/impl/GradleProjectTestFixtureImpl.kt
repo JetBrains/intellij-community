@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.externalSystem.util.awaitOpenProjectActivity
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
@@ -22,11 +23,10 @@ import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
-import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleOpenProjectConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
+import org.jetbrains.plugins.gradle.testFramework.util.withGradleWrapper
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
@@ -72,7 +72,7 @@ internal class GradleProjectTestFixtureImpl(
       fileFixture = FileTestFixtureImpl("GradleTestFixture/$gradleVersion/$projectName") {
         configureProject()
         excludeFiles(".gradle", "build")
-        withFiles { generateGradleWrapper(it.toNioPath(), gradleVersion) }
+        withGradleWrapper(gradleVersion)
         withFiles { createProjectCaches(it) }
       }
       fileFixture.setUp()
@@ -81,7 +81,7 @@ internal class GradleProjectTestFixtureImpl(
     installGradleProjectReloadWatcher()
 
     _project = runBlocking {
-      awaitGradleOpenProjectConfiguration {
+      awaitOpenProjectActivity {
         openProjectAsync(fileFixture.root)
       }
     }
@@ -112,7 +112,7 @@ internal class GradleProjectTestFixtureImpl(
     private suspend fun createProjectCaches(projectRoot: VirtualFile) {
       closeOpenedProjectsIfFailAsync {
         assertExecutionStatusIsSuccess {
-          awaitGradleOpenProjectConfiguration {
+          awaitOpenProjectActivity {
             openProjectAsync(projectRoot)
           }
         }

@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.DumbAwareAnnotationUtil
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiKeyword
 import com.intellij.psi.PsiModifierListOwner
@@ -13,11 +13,14 @@ import com.intellij.psi.formatter.FormatterUtil
 import com.intellij.psi.formatter.java.JavaFormatterAnnotationUtil.isFieldWithAnnotations
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 
 internal object JavaFormatterAnnotationUtil {
   private val KNOWN_TYPE_ANNOTATIONS: Set<String> = setOf(
-    "org.jetbrains.annotations.NotNull",
-    "org.jetbrains.annotations.Nullable"
+    AnnotationUtil.NOT_NULL,
+    AnnotationUtil.NULLABLE,
+    AnnotationUtil.J_SPECIFY_NON_NULL,
+    AnnotationUtil.J_SPECIFY_NULLABLE,
   )
 
   /**
@@ -31,8 +34,7 @@ internal object JavaFormatterAnnotationUtil {
   fun isTypeAnnotation(annotation: ASTNode): Boolean {
     val node = annotation.psi as? PsiAnnotation ?: return false
 
-    val languageLevel = LanguageLevelProjectExtension.getInstance(node.project).languageLevel
-    if (languageLevel.isLessThan(LanguageLevel.JDK_1_8)) return false
+    if (!PsiUtil.isAvailable(JavaFeature.TYPE_ANNOTATIONS, node)) return false
 
     val next = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace::class.java, PsiAnnotation::class.java)
     if (next is PsiKeyword) return false

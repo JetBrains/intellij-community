@@ -8,7 +8,6 @@ import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoice
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
-import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
@@ -27,19 +26,12 @@ import com.intellij.spellchecker.statistics.SpellcheckerRateTracker
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.concurrency.ThreadingAssertions
 
-internal class ChangeTo(
+internal class ChangeTo @JvmOverloads constructor(
   typo: String,
   element: PsiElement,
   private val range: TextRange,
-  private val tracker: SpellcheckerRateTracker?,
+  private val tracker: SpellcheckerRateTracker? = null,
 ) : DefaultIntentionActionWithChoice, LazySuggestions(typo) {
-  // To prevent API breakage
-  constructor(typo: String, element: PsiElement, range: TextRange) : this(
-    typo,
-    element,
-    range,
-    null,
-  )
 
   private val pointer = SmartPointerManager.getInstance(element.project).createSmartPsiElementPointer(element, element.containingFile)
 

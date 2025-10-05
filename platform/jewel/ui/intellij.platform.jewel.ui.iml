@@ -2,19 +2,19 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-receivers -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -Xexplicit-api=strict" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-parameters -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -Xexplicit-api=strict -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
-            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="jvmTarget" arg="21" />
             <stringArg name="apiVersion" arg="2.2" />
             <stringArg name="languageVersion" arg="2.2" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.0-RC2/kotlin-compose-compiler-plugin-2.2.0-RC2.jar</args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.20/kotlin-compose-compiler-plugin-2.2.20.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -36,44 +36,44 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.skiko" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.components.components.resources" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.8.0-alpha04">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.10.0-alpha01">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.8.0-alpha04/components-resources-1.8.0-alpha04.jar">
-              <sha256sum>7bc14c3ea620289907b3bc666999005ceda75c4da407bc8596d0965cf06990fe</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0-alpha01/components-resources-1.10.0-alpha01.jar">
+              <sha256sum>75ed361cabb9ed491c00dadd0784d329ea6433c39d8240df062778c31b509bdb</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.8.0-alpha04/components-resources-1.8.0-alpha04.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0-alpha01/components-resources-1.10.0-alpha01.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.8.0-alpha04/components-resources-1.8.0-alpha04-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources/1.10.0-alpha01/components-resources-1.10.0-alpha01-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.components.components.resources.desktop" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources-desktop:1.8.0-alpha04">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources-desktop:1.10.0-alpha01">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.8.0-alpha04/components-resources-desktop-1.8.0-alpha04.jar">
-              <sha256sum>1b58df32c67ffb4f0f3dbc15fda9b959e2ec3f43e0bc56ddb088be351237b9a0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0-alpha01/components-resources-desktop-1.10.0-alpha01.jar">
+              <sha256sum>efdd4db41e57baa5cd50d679be5a141ddf8ab9ed75f99fdaf9db7277343e3d96</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.8.0-alpha04/components-resources-desktop-1.8.0-alpha04.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0-alpha01/components-resources-desktop-1.10.0-alpha01.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.8.0-alpha04/components-resources-desktop-1.8.0-alpha04-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/components/components-resources-desktop/1.10.0-alpha01/components-resources-desktop-1.10.0-alpha01-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
   </component>
 </module>

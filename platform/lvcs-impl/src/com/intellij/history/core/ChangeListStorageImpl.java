@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
@@ -36,7 +36,8 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   private static final @NonNls String STORAGE_FILE = "changes";
 
   private final Path myStorageDir;
-  private LocalHistoryStorage myStorage;
+  //TODO RC: use mmapped storage instead of old-school? Less freezes, and also more reliability
+  private final LocalHistoryStorage myStorage;
   private long myLastId;
 
   private boolean isCompletelyBroken;
@@ -46,10 +47,10 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
     myStorageDir = storageDir;
     myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
-    initStorage(myStorageDir);
+    myStorage = initStorage(myStorageDir);
   }
 
-  private synchronized void initStorage(@NotNull Path storageDir) throws IOException {
+  private synchronized LocalHistoryStorage initStorage(@NotNull Path storageDir) throws IOException {
     Path path = storageDir.resolve(STORAGE_FILE);
 
     boolean fromScratch = myUnitTestMode && !Files.exists(path);
@@ -77,7 +78,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
     }
 
     myLastId = result.getLastId();
-    myStorage = result;
+    return result;
   }
 
   private static long getVFSTimestamp() {
@@ -121,7 +122,9 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
     }
     catch (Throwable ex) {
       LocalHistoryLog.LOG.error("cannot recreate storage", ex);
-      isCompletelyBroken = true;
+      synchronized (this){
+        isCompletelyBroken = true;
+      }
     }
 
     getLocalHistoryNotificationGroup()

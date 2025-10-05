@@ -6,10 +6,8 @@ import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
@@ -100,22 +98,12 @@ abstract class UastFakeSourceLightMethodBase<T : KtDeclaration>(
     }
 
     override fun computeAnnotations(annotations: SmartSet<PsiAnnotation>) {
-        original.annotationEntries.mapTo(annotations) { entry ->
+        original.annotationEntries.mapNotNullTo(annotations) { entry ->
             // Creation of PsiAnnotation may vary between frontends. For example,
             // SLC doesn't model a declaration with value class in its signature
             // and K2 UAST will fake it, while K1 doesn't need to.
             baseResolveProviderService.convertToPsiAnnotation(entry)
-                ?: entry.toPsiAnnotation()
         }
-    }
-
-    protected fun KtAnnotationEntry.toPsiAnnotation(): PsiAnnotation {
-        return KtLightAnnotationForSourceEntry(
-            name = shortName?.identifier,
-            lazyQualifiedName = { baseResolveProviderService.qualifiedAnnotationName(this) },
-            kotlinOrigin = this,
-            parent = original,
-        )
     }
 
     override fun isConstructor(): Boolean {

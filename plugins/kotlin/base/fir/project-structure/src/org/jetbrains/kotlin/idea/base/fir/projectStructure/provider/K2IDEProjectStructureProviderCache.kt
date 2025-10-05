@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.util.messages.MessageBus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.*
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLib
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibrarySdkModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSourceModuleImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
+import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleWithKind
 import java.util.concurrent.ConcurrentHashMap
 
 @RequiresOptIn("KaModule should be created only by K2IDEProjectStructureProviderCache")
@@ -30,8 +32,7 @@ internal annotation class InternalKaModuleConstructor
  *
  * The cache is invalidated by a `KotlinModificationEvent`.
  *
- * @see [isItSafeToCacheModules] for notes on cache invalidation order
- * @see KTIJ-33277
+ * See [isItSafeToCacheModules] for notes on cache invalidation order. Also see KTIJ-33277.
  */
 @Service(Service.Level.PROJECT)
 internal class K2IDEProjectStructureProviderCache(
@@ -168,6 +169,14 @@ internal class K2IDEProjectStructureProviderCache(
             KaSourceModuleKind.PRODUCTION -> productionSourceCache
             KaSourceModuleKind.TEST -> testSourceCache
         }
+    }
+
+    /**
+     * Registers [module] with the cache. This allows tests to register a specific [KaSourceModuleWithKind] for a given [moduleId].
+     */
+    @TestOnly
+    internal fun registerSourceModule(moduleId: ModuleId, module: KaSourceModuleWithKind) {
+        moduleCacheForKind(module.kind)[moduleId] = module
     }
 
     override fun dispose() {}

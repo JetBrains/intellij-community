@@ -23,7 +23,6 @@ val Finder.toolbar: UiComponent
 
 
 class MainToolbarUI(data: ComponentData) : UiComponent(data) {
-  val vcsWidget: UiComponent get() = x { and(byClass("ToolbarComboButton"), contains(byVisibleText("Version"))) }
   val buildButton: UiComponent get() = x("//div[@myicon='build.svg']")
   val runButton: UiComponent get() = x("//div[@myicon='run.svg']")
   val debugButton: UiComponent get() = x("//div[@myicon='debug.svg']")
@@ -36,6 +35,9 @@ class MainToolbarUI(data: ComponentData) : UiComponent(data) {
 
   fun projectWidget(projectName: String): AbstractToolbarComboUi =
     abstractToolbarCombo { and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byVisibleText(projectName))) }
+
+  fun vcsWidget(branchName: String = "Version"): AbstractToolbarComboUi =
+    abstractToolbarCombo { and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byVisibleText(branchName))) }
 }
 
 val MainToolbarUI.rerunButton get() = x { contains(byAccessibleName("Rerun")) }

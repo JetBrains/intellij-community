@@ -25,6 +25,7 @@ import git4idea.config.GitVersionSpecialty;
 import git4idea.index.GitFileStatus;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -127,15 +128,11 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
   }
 
   private static void restoreStagedAndWorktree(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<FilePath> filePaths) {
-    for (List<String> paths : VcsFileUtil.chunkPaths(root, filePaths)) {
-      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESTORE);
-      handler.addParameters("--staged", "--worktree", "--source=HEAD");
-      handler.endOptions();
-      handler.addParameters(paths);
-      GitCommandResult result = Git.getInstance().runCommand(handler);
-      if (!result.success()) {
-        LOG.warn("Can't restore changes:" + result.getErrorOutputAsJoinedString());
-      }
+    try {
+      GitFileUtils.restoreStagedAndWorktree(project, root, filePaths, "HEAD");
+    }
+    catch (VcsException e) {
+      LOG.warn("Can't restore changes:" + e.getMessage());
     }
   }
 

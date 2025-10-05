@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.FontInfoRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.lw.FontDescriptor;
@@ -26,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
+
+import static com.intellij.ui.render.RenderersKt.fontInfoRenderer;
 
 
 public class FontEditorDialog extends DialogWrapper {
@@ -50,7 +51,7 @@ public class FontEditorDialog extends DialogWrapper {
     init();
     setTitle(UIDesignerBundle.message("font.chooser.title", propertyName));
     myFontNameList.setModel(myModel);
-    myFontNameList.setCellRenderer(new FontInfoRenderer());
+    myFontNameList.setCellRenderer(fontInfoRenderer(false));
     myFontNameList.addListSelectionListener(new MyListSelectionListener(myFontNameEdit));
     myFontStyleList.setListData(new String[] {
       UIDesignerBundle.message("font.chooser.regular"),

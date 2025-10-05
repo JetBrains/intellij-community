@@ -15,6 +15,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
+import com.jetbrains.python.PYTHON_PROF_PLUGIN_ID
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.containerview.PyDataView.Companion.isAutoResizeEnabled
@@ -95,7 +96,7 @@ class PyDataViewDialog(private val myProject: Project, value: PyDebugValue) : Di
   private fun createJupyterSuggestionPanel(): JPanel? {
     if (!isRichTableAndJupyterCanBeEnabled()) return null
 
-    val requiredPluginIds = listOf(PluginId.getId("Pythonid"), PluginId.getId("intellij.jupyter"))
+    val requiredPluginIds = listOf(PluginId.getId(PYTHON_PROF_PLUGIN_ID), PluginId.getId("intellij.jupyter"))
 
     var needToInstallPlugin = false
     val toInstallOrEnable = mutableSetOf<PluginId>().apply {

@@ -11,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class DefaultGradleLightBuild implements GradleLightBuild, Serializable {
@@ -31,9 +31,10 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
     myName = rootGradleProject.getName();
     myBuildIdentifier = new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir());
 
-    Map<BasicGradleProject, DefaultGradleLightProject> projects = gradleBuild.getProjects().stream()
-      .map(it -> new Pair<>(it, new DefaultGradleLightProject(this, it, gradleVersion)))
-      .collect(Collectors.toMap(it -> it.getFirst(), it -> it.getSecond()));
+    Map<BasicGradleProject, DefaultGradleLightProject> projects = new LinkedHashMap<>();
+    for (BasicGradleProject project : gradleBuild.getProjects()) {
+      projects.put(project, new DefaultGradleLightProject(this, project, gradleVersion));
+    }
 
     replicateModelHierarchy(
       rootGradleProject,
@@ -116,25 +117,25 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
   /**
    * @return {@code gradleBuilds} converted to {@link DefaultGradleLightBuild} instances.
    * Original order is preserved: if a root build is a first element of {@code gradleBuilds},
-   * then the first element of returned list is also a root build.
+   * then the first element of the returned list is also a root build.
    */
   public static @NotNull List<DefaultGradleLightBuild> convertGradleBuilds(
     @NotNull Collection<? extends GradleBuild> gradleBuilds,
     @NotNull GradleVersion gradleVersion
   ) {
-    Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted = new HashMap<>();
-    List<DefaultGradleLightBuild> convertedBuilds = new ArrayList<>();
+    Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted = new LinkedHashMap<>();
     // TODO traverse builds via graph to avoid separated parent build field initialization
     for (GradleBuild gradleBuild : gradleBuilds) {
       DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild, gradleVersion);
       gradleBuildsToConverted.put(gradleBuild, build);
-      convertedBuilds.add(build);
     }
-    setHierarchy(gradleBuilds, gradleBuildsToConverted);
-    return convertedBuilds;
+    setIncludedBuildsHierarchy(gradleBuilds, gradleBuildsToConverted);
+    setBuildSrcHierarchy(gradleBuildsToConverted.values());
+    return new ArrayList<>(gradleBuildsToConverted.values());
   }
 
-  private static void setHierarchy(
+  /// Sets parent builds for included builds, relying on the data provided by Gradle.
+  private static void setIncludedBuildsHierarchy(
     @NotNull Collection<? extends GradleBuild> gradleBuilds,
     Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted
   ) {
@@ -147,6 +148,26 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
         assert buildToUpdate != null;
         buildToUpdate.setParentBuild(build);
       }
+    }
+  }
+
+  /// Sets parent builds for buildSrc builds if any of `convertedBuilds` is located in a parent directory for buildSrc.
+  private static void setBuildSrcHierarchy(@NotNull Collection<DefaultGradleLightBuild> convertedBuilds) {
+    Map<Path, DefaultGradleLightBuild> pathToBuild = new HashMap<>();
+    for (DefaultGradleLightBuild build : convertedBuilds) {
+      pathToBuild.put(build.getBuildIdentifier().getRootDir().toPath(), build);
+    }
+    for (DefaultGradleLightBuild build : convertedBuilds) {
+      if (!build.getName().equals("buildSrc")) continue;
+
+      Path buildSrcPath = build.getBuildIdentifier().getRootDir().toPath();
+      Path parentDirectory = buildSrcPath.getParent();
+      if (parentDirectory == null) continue;
+
+      DefaultGradleLightBuild parentBuild = pathToBuild.get(parentDirectory);
+      if (parentBuild == null) continue;
+
+      build.setParentBuild(parentBuild);
     }
   }
 }

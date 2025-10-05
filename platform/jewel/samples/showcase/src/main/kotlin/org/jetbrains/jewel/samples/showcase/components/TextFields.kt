@@ -38,8 +38,8 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.textFieldStyle
 
 @Composable
-public fun TextFields() {
-    VerticallyScrollableContainer(Modifier.fillMaxSize()) {
+public fun TextFields(modifier: Modifier = Modifier) {
+    VerticallyScrollableContainer(modifier.fillMaxSize()) {
         Column {
             TextFieldsRows(readOnly = false)
 
@@ -91,6 +91,15 @@ private fun TextFieldsRows(readOnly: Boolean) {
 
             val state2 = rememberTextFieldState("Disabled")
             TextField(state = state2, enabled = false, modifier = Modifier.width(200.dp), readOnly = readOnly)
+
+            val state3 = rememberTextFieldState("")
+            TextField(
+                state = state3,
+                placeholder = { Text("Undecorated") },
+                modifier = Modifier.width(200.dp),
+                readOnly = readOnly,
+                undecorated = true,
+            )
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
@@ -103,7 +112,6 @@ private fun TextFieldsRows(readOnly: Boolean) {
                     Icon(
                         key = AllIconsKeys.Actions.Find,
                         contentDescription = "SearchIcon",
-                        iconClass = ShowcaseIcons::class.java,
                         modifier = Modifier.size(16.dp),
                     )
                 },

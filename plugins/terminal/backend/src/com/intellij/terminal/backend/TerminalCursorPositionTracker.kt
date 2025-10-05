@@ -1,13 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.backend
 
-import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.util.CharUtils
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.ui.getLengthWithoutDwc
 import org.jetbrains.plugins.terminal.block.ui.withLock
+import org.jetbrains.plugins.terminal.session.TerminalCursorPositionChangedEvent
 
-internal class TerminalCursorPositionTracker(
+@ApiStatus.Internal
+class TerminalCursorPositionTracker(
   private val textBuffer: TerminalTextBuffer,
   private val discardedHistoryTracker: TerminalDiscardedHistoryTracker,
   terminalDisplay: TerminalDisplayImpl,
@@ -41,7 +45,7 @@ internal class TerminalCursorPositionTracker(
     else null
   }
 
-  private fun doGetCursorPositionUpdate(): TerminalCursorPositionChangedEvent? {
+  private fun doGetCursorPositionUpdate(): TerminalCursorPositionChangedEvent {
     check(cursorPositionChanged) { "It is expected that this method is called only if something is changed" }
 
     var line = cursorY
@@ -65,6 +69,13 @@ internal class TerminalCursorPositionTracker(
 
     cursorPositionChanged = false
 
+    LOG.debug {
+      "Terminal cursor position changed: line = $logicalLine, " +
+      "column = $column, " +
+      "discarded lines = ${discardedHistoryTracker.getDiscardedLogicalLinesCount()}"
+    }
     return TerminalCursorPositionChangedEvent(logicalLine, column)
   }
 }
+
+private val LOG = logger<TerminalCursorPositionTracker>()

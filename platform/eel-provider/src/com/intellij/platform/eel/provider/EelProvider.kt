@@ -91,30 +91,39 @@ val localEel: LocalEelApi by lazy {
 fun EelDescriptor.upgradeBlocking(): EelApi = toEelApiBlocking()
 
 @ApiStatus.Experimental
+fun EelMachine.toEelApiBlocking(descriptor: EelDescriptor): EelApi = runBlockingMaybeCancellable { toEelApi(descriptor) }
+
+@ApiStatus.Experimental
 fun EelDescriptor.toEelApiBlocking(): EelApi {
   if (this === LocalEelDescriptor) return localEel
   return runBlockingMaybeCancellable { toEelApi() }
 }
 
 @ApiStatus.Experimental
-data object LocalEelDescriptor : EelDescriptor {
+data object LocalEelMachine : EelMachine {
   private val LOG = logger<LocalEelDescriptor>()
-  override val userReadableDescription: @NonNls String = "Local: ${System.getProperty("os.name")}"
+  override val name: @NonNls String = "Local: ${System.getProperty("os.name")}"
 
   override val osFamily: EelOsFamily by lazy {
     when {
       SystemInfo.isWindows -> EelOsFamily.Windows
       SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isFreeBSD -> EelOsFamily.Posix
       else -> {
-        LOG.info("Eel is not supported on current platform")
+        LocalEelMachine.LOG.info("Eel is not supported on current platform")
         EelOsFamily.Posix
       }
     }
   }
 
-  override suspend fun toEelApi(): EelApi {
+  override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
+    check(descriptor === LocalEelDescriptor) { "Wrong descriptor: $descriptor for machine: $this" }
     return localEel
   }
+}
+
+@ApiStatus.Experimental
+data object LocalEelDescriptor : EelDescriptor {
+  override val machine: EelMachine = LocalEelMachine
 }
 
 @ApiStatus.Internal
@@ -146,10 +155,10 @@ interface EelProvider {
 
   // TODO Better name.
   // TODO Move it into the EelDescriptor?
-  fun getInternalName(eelDescriptor: EelDescriptor): String?
+  fun getInternalName(eelMachine: EelMachine): String?
 
   // TODO Better name.
-  fun getEelDescriptorByInternalName(internalName: String): EelDescriptor?
+  fun getEelMachineByInternalName(internalName: String): EelMachine?
 }
 
 @ApiStatus.Internal

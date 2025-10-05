@@ -7,10 +7,12 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.PathUtil
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
+import io.github.z4kn4fein.semver.Version
 import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.exists
@@ -18,10 +20,19 @@ import kotlin.io.path.pathString
 
 
 internal val Sdk.isUv: Boolean
-  get() = getOrCreateAdditionalData() is UvSdkAdditionalData
+  get() {
+    if (!PythonSdkUtil.isPythonSdk(this)) {
+      return false
+    }
+    return getOrCreateAdditionalData() is UvSdkAdditionalData
+  }
 
 internal val Sdk.uvUsePackageManagement: Boolean
   get() {
+    if (!PythonSdkUtil.isPythonSdk(this)) {
+      return false
+    }
+
     val data = getOrCreateAdditionalData() as? UvSdkAdditionalData ?: return false
     return data.usePip
   }
@@ -36,23 +47,23 @@ val UV_ICON: Icon = PythonIcons.UV
 suspend fun setupNewUvSdkAndEnv(
   workingDir: Path,
   existingSdks: List<Sdk>,
-  basePython: Path?,
+  version: Version?,
 ): PyResult<Sdk> {
   val toml = workingDir.resolve(PY_PROJECT_TOML)
   val init = !toml.exists()
 
   val uv = createUvLowLevel(workingDir, createUvCli())
-  val envExecutable = uv.initializeEnvironment(init, basePython)
+  val envExecutable = uv.initializeEnvironment(init, version)
     .getOr {
       return it
     }
 
-  return setupExistingEnvAndSdk(envExecutable, null, false, workingDir, existingSdks)
+  return setupExistingEnvAndSdk(envExecutable, workingDir, false, workingDir, existingSdks)
 }
 
 suspend fun setupExistingEnvAndSdk(
   envExecutable: Path,
-  envWorkingDir: Path?,
+  envWorkingDir: Path,
   usePip: Boolean,
   projectDir: Path,
   existingSdks: List<Sdk>,
@@ -61,7 +72,7 @@ suspend fun setupExistingEnvAndSdk(
     envExecutable,
     existingSdks,
     projectDir.toString(),
-    suggestedSdkName(projectDir),
+    suggestedSdkName(envWorkingDir),
     UvSdkAdditionalData(envWorkingDir, usePip))
 
   return sdk

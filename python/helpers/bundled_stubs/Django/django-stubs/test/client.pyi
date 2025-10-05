@@ -5,10 +5,10 @@ from io import BytesIO, IOBase
 from json import JSONEncoder
 from re import Pattern
 from types import TracebackType
-from typing import Any, Generic, Literal, NoReturn, TypedDict, TypeVar, type_check_only
+from typing import Any, Generic, Literal, NoReturn, TypeAlias, TypedDict, TypeVar, type_check_only
 
 from asgiref.typing import ASGIVersions
-from django.contrib.auth.base_user import _UserModel
+from django.contrib.auth.models import _User
 from django.contrib.sessions.backends.base import SessionBase
 from django.core.handlers.asgi import ASGIRequest
 from django.core.handlers.base import BaseHandler
@@ -18,7 +18,7 @@ from django.http.response import HttpResponseBase
 from django.template.base import Template
 from django.test.utils import ContextList
 from django.urls import ResolverMatch
-from typing_extensions import TypeAlias
+from django.utils.functional import cached_property
 
 BOUNDARY: str
 MULTIPART_CONTENT: str
@@ -35,9 +35,9 @@ class FakePayload(IOBase):
     read_started: bool
     def __init__(self, initial_bytes: bytes | str | None = ...) -> None: ...
     def __len__(self) -> int: ...
-    def read(self, size: int = ...) -> bytes: ...
+    def read(self, size: int = ..., /) -> bytes: ...
     def readline(self, size: int | None = ..., /) -> bytes: ...
-    def write(self, content: bytes | str) -> None: ...
+    def write(self, content: bytes | str, /) -> None: ...
 
 _T = TypeVar("_T")
 
@@ -78,7 +78,12 @@ class _RequestFactory(Generic[_T]):
     cookies: SimpleCookie
     errors: BytesIO
     def __init__(
-        self, *, json_encoder: type[JSONEncoder] = ..., headers: Mapping[str, Any] | None = ..., **defaults: Any
+        self,
+        *,
+        json_encoder: type[JSONEncoder] = ...,
+        headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
+        **defaults: Any,
     ) -> None: ...
     def request(self, **request: Any) -> _T: ...
     def get(
@@ -88,6 +93,7 @@ class _RequestFactory(Generic[_T]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
     def post(
@@ -98,12 +104,28 @@ class _RequestFactory(Generic[_T]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
     def head(
-        self, path: str, data: Any = ..., secure: bool = ..., *, headers: Mapping[str, Any] | None = ..., **extra: Any
+        self,
+        path: str,
+        data: Any = ...,
+        secure: bool = ...,
+        *,
+        headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
+        **extra: Any,
     ) -> _T: ...
-    def trace(self, path: str, secure: bool = ..., *, headers: Mapping[str, Any] | None = ..., **extra: Any) -> _T: ...
+    def trace(
+        self,
+        path: str,
+        secure: bool = ...,
+        *,
+        headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
+        **extra: Any,
+    ) -> _T: ...
     def options(
         self,
         path: str,
@@ -112,6 +134,7 @@ class _RequestFactory(Generic[_T]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
     def put(
@@ -122,6 +145,7 @@ class _RequestFactory(Generic[_T]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
     def patch(
@@ -132,6 +156,7 @@ class _RequestFactory(Generic[_T]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
     def delete(
@@ -142,6 +167,7 @@ class _RequestFactory(Generic[_T]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
     def generic(
@@ -153,6 +179,7 @@ class _RequestFactory(Generic[_T]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _T: ...
 
@@ -189,10 +216,21 @@ class _MonkeyPatchedWSGIResponse(_WSGIResponse):
     request: dict[str, Any]
     client: Client
     templates: list[Template]
+
+    # `context` and `context_data` are populated based on whether you use the standard template
+    # backend or a custom one respectively.
+    # `context_data` only exists if the response was successful too as the return type changes.
+    # `HTTPResponse` when API failed and `TemplateResponse` when successful.
+    # https://docs.djangoproject.com/en/stable/topics/testing/tools/#django.test.Response.context
     context: ContextList | dict[str, Any]
+    # Must match `django.template.response.SimpleTemplateResponse.context_data`
+    context_data: dict[str, Any] | None
+
     content: bytes
     resolver_match: ResolverMatch
     redirect_chain: list[tuple[str, int]]
+    @cached_property
+    def text(self) -> str: ...
 
 @type_check_only
 class _MonkeyPatchedASGIResponse(_ASGIResponse):
@@ -200,7 +238,16 @@ class _MonkeyPatchedASGIResponse(_ASGIResponse):
     request: dict[str, Any]
     client: AsyncClient
     templates: list[Template]
+
+    # `context` and `context_data` are populated based on whether you use the standard template
+    # backend or a custom one respectively.
+    # `context_data` only exists if the response was successful too as the return type changes.
+    # `HTTPResponse` when API failed and `TemplateResponse` when successful.
+    # https://docs.djangoproject.com/en/stable/topics/testing/tools/#django.test.Response.context
     context: ContextList | dict[str, Any]
+    # Must match `django.template.response.SimpleTemplateResponse.context_data`
+    context_data: dict[str, Any] | None
+
     content: bytes
     resolver_match: ResolverMatch
     redirect_chain: list[tuple[str, int]]
@@ -213,8 +260,8 @@ class ClientMixin:
     async def asession(self) -> SessionBase: ...
     def login(self, **credentials: Any) -> bool: ...
     async def alogin(self, **credentials: Any) -> bool: ...
-    def force_login(self, user: _UserModel, backend: str | None = ...) -> None: ...
-    async def aforce_login(self, user: _UserModel, backend: str | None = ...) -> None: ...
+    def force_login(self, user: _User, backend: str | None = ...) -> None: ...
+    async def aforce_login(self, user: _User, backend: str | None = ...) -> None: ...
     def logout(self) -> None: ...
     async def alogout(self) -> None: ...
 
@@ -230,6 +277,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         raise_request_exception: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **defaults: Any,
     ) -> None: ...
     def request(self, **request: Any) -> _MonkeyPatchedWSGIResponse: ...
@@ -241,6 +289,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
     def post(  # type: ignore[override]
@@ -252,6 +301,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
     def head(  # type: ignore[override]
@@ -262,6 +312,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
     def options(  # type: ignore[override]
@@ -273,6 +324,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
     def put(  # type: ignore[override]
@@ -284,6 +336,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
     def patch(  # type: ignore[override]
@@ -295,6 +348,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
     def delete(  # type: ignore[override]
@@ -306,6 +360,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
     def trace(  # type: ignore[override]
@@ -316,6 +371,7 @@ class Client(ClientMixin, _RequestFactory[_MonkeyPatchedWSGIResponse]):
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedWSGIResponse: ...
 
@@ -331,6 +387,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         raise_request_exception: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **defaults: Any,
     ) -> None: ...
     async def request(self, **request: Any) -> _MonkeyPatchedASGIResponse: ...
@@ -342,6 +399,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
     async def post(  # type: ignore[override]
@@ -353,6 +411,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
     async def head(  # type: ignore[override]
@@ -363,6 +422,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
     async def options(  # type: ignore[override]
@@ -374,6 +434,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
     async def put(  # type: ignore[override]
@@ -385,6 +446,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
     async def patch(  # type: ignore[override]
@@ -396,6 +458,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
     async def delete(  # type: ignore[override]
@@ -407,6 +470,7 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
     async def trace(  # type: ignore[override]
@@ -417,5 +481,16 @@ class AsyncClient(ClientMixin, _AsyncRequestFactory[Awaitable[_MonkeyPatchedASGI
         secure: bool = ...,
         *,
         headers: Mapping[str, Any] | None = ...,
+        query_params: Mapping[Any, Any] | None = ...,
         **extra: Any,
     ) -> _MonkeyPatchedASGIResponse: ...
+
+__all__ = (
+    "AsyncClient",
+    "AsyncRequestFactory",
+    "Client",
+    "RedirectCycleError",
+    "RequestFactory",
+    "encode_file",
+    "encode_multipart",
+)

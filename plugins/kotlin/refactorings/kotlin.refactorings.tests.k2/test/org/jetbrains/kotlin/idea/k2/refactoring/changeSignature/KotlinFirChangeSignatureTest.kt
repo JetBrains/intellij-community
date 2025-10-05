@@ -303,12 +303,22 @@ class KotlinFirChangeSignatureTest :
       newParameters[0].isContextParameter = false
     }
 
+    fun testFromContextParameterPreserveAnnotations() = doTest {
+      newParameters[0].isContextParameter = false
+    }
+
     fun testConvertToContextParameterInDeepHierarchy() = doTest {
       newParameters[1].isContextParameter = true
     }
 
     fun testFromContextParameterNormalParameterConflict() = doTest {
         newParameters[0].isContextParameter = false
+    }
+
+    fun testFromPropertyContextParameterToReceiver() = doTest {
+        val parameterInfo = newParameters[0]
+        parameterInfo.isContextParameter = false
+        receiverParameterInfo = parameterInfo
     }
 
     fun testContextParameterAndNewParameter() = doTest {

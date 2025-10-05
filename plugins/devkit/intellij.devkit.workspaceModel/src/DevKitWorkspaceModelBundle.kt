@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
+// lul
+
 @NonNls
 private const val BUNDLE_FQN = "messages.DevKitWorkspaceModelBundle"
 

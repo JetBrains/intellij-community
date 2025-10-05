@@ -9,6 +9,8 @@ import com.intellij.database.settings.DataGridSettings
 import com.intellij.database.util.DataGridUIUtil
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopup
@@ -16,7 +18,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.awt.Component
 import java.util.*
 import javax.swing.JComponent
@@ -27,15 +32,15 @@ private val SHOW_COUNT_ALL_ACTION_KEY = Key<Boolean?>("DATA_GRID_SHOW_COUNT_ALL_
 
 class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   init {
     isPopup = true
-    setActions(DEFAULT_PAGE_SIZES, false)
+    setActions(DEFAULT_PAGE_SIZES, false, GridPagingModel.UNLIMITED_PAGE_SIZE)
   }
 
-  private fun setActions(sizes: MutableList<Int>, isSinglePage: Boolean) {
+  private fun setActions(sizes: MutableList<Int>, isSinglePage: Boolean, defaultPageSize: Int) {
     removeAll()
 
     if (isSinglePage) {
@@ -43,11 +48,10 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
     }
 
     addSeparator(DataGridBundle.message("separator.page.size"))
-
     for (pageSize in sizes) {
-      add(ChangePageSizeAction(pageSize))
+      add(ChangePageSizeActionNew(pageSize, pageSize == defaultPageSize))
     }
-    add(ChangePageSizeAction(GridPagingModel.UNLIMITED_PAGE_SIZE))
+    add(ChangePageSizeActionNew(GridPagingModel.UNLIMITED_PAGE_SIZE, GridPagingModel.UNLIMITED_PAGE_SIZE == defaultPageSize))
     add(SetCustomPageSizeAction())
     add(Separator())
     add(SetDefaultPageSizeAction())
@@ -55,12 +59,12 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
 
   override fun update(e: AnActionEvent) {
     val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
-    if (grid == null || grid.getDataHookup() is DocumentDataHookUp) {
-      e.presentation.setEnabledAndVisible(false)
-      return
-    }
-
-    if ((grid.getDataHookup().getPageModel() as? NestedTableGridPagingModel<GridRow?, GridColumn?>)?.isStatic == true) {
+    val dataHookUp = grid?.getDataHookup()
+    if (
+      dataHookUp == null ||
+      dataHookUp is DocumentDataHookUp ||
+      (dataHookUp.pageModel as? NestedTableGridPagingModel<GridRow?, GridColumn?>)?.isStatic == true
+    ) {
       e.presentation.setEnabledAndVisible(false)
       return
     }
@@ -75,7 +79,15 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
     }
     else {
       e.presentation.setVisible(true)
-      updatePresentation(state, e.presentation, GridUtil.getSettings(grid))
+      val updateEdtJob = grid.coroutineScope.launch(Dispatchers.UI) {
+        updatePresentation(state, e.presentation, GridUtil.getSettings(grid))
+      }
+
+      // We wait for it because we need an updated presentation when the function returns,
+      // it's the contract of AnAction.update() method
+      runBlockingMaybeCancellable {
+        updateEdtJob.join()
+      }
     }
   }
 
@@ -93,6 +105,7 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
     return createCustomComponentForResultViewToolbar(this, presentation, place)
   }
 
+  @RequiresEdt
   private fun updatePresentation(state: ChangePageSizeActionState, presentation: Presentation, settings: DataGridSettings?) {
     val oldState = getActionState(presentation)
     if (oldState == state) return
@@ -105,10 +118,9 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
 
     val component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)
     if (component != null) {
-      component.setToolTipText(state.tooltip)
+      component.toolTipText = state.tooltip
       component.repaint()
     }
-
 
     val pageSizes: MutableList<Int> = ArrayList<Int>(DEFAULT_PAGE_SIZES)
     pageSizes.add(GridUtilCore.getPageSize(settings))
@@ -116,11 +128,12 @@ class ChangePageSizeActionGroup : DefaultActionGroup(), CustomComponentAction, D
       pageSizes.add(state.pageSize * 2)
       val halfSize = state.pageSize / 2
       if (halfSize > 0) pageSizes.add(halfSize)
-      ContainerUtil.removeAll(pageSizes, state.pageSize)
+      pageSizes.add(state.pageSize)
     }
     ContainerUtil.removeDuplicates(pageSizes)
     ContainerUtil.sort(pageSizes)
-    setActions(pageSizes, state.showCountAllAction)
+
+    setActions(pageSizes, state.showCountAllAction, state.defaultPageSize)
   }
 
 }
@@ -178,7 +191,7 @@ private fun getActionState(grid: DataGrid): ChangePageSizeActionState {
   }
 
   val showCountRowsAction = isSinglePage && pageModel.isTotalRowCountUpdateable() && !querying && grid.isReady()
-  return ChangePageSizeActionState(text, description, tooltip, enabled, pageModel.getPageSize(), showCountRowsAction)
+  return ChangePageSizeActionState(text, description, tooltip, enabled, pageModel.getPageSize(), showCountRowsAction, GridHelper.get(grid).getDefaultPageSize())
 }
 
 private fun updateIsTotalRowCountUpdateable(grid: DataGrid) {
@@ -192,6 +205,7 @@ private class ChangePageSizeActionState(
   val enabled: Boolean,
   val pageSize: Int,
   val showCountAllAction: Boolean,
+  val defaultPageSize: Int = GridPagingModel.UNLIMITED_PAGE_SIZE,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

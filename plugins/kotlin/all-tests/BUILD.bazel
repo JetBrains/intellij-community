@@ -1,9 +1,10 @@
 ### auto-generated section `build kotlin.all-tests` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "all-tests",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
   runtime_deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
@@ -23,6 +24,7 @@ java_library(
     "//plugins/kotlin/gradle/gradle-java/k1",
     "//plugins/kotlin/gradle/gradle/tests",
     "//plugins/kotlin/gradle/gradle-tooling/tests",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
     "//plugins/kotlin/compiler-reference-index/tests",
     "//plugins/kotlin/coverage/tests",
     "//plugins/kotlin/j2k/k1.new/tests",
@@ -66,8 +68,7 @@ java_library(
     "//plugins/kotlin/base/facet/tests",
     "//plugins/kotlin/injection/k1/tests",
     "//plugins/kotlin/base/indices/tests",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.k1",
     "//plugins/kotlin/onboarding",
     "//plugins/kotlin/onboarding-gradle",
     "//plugins/kotlin/highlighting/highlighting-shared/tests",

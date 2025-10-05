@@ -7,11 +7,11 @@ import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 
-class ImportedLibraryProperties(override var mavenCoordinates: MavenCoordinates?) : LibraryProperties<ImportedLibraryProperties.MavenCoordinatesState>(), LibraryWithMavenCoordinatesProperties  {
+public class ImportedLibraryProperties(override var mavenCoordinates: MavenCoordinates?) : LibraryProperties<ImportedLibraryProperties.MavenCoordinatesState>(), LibraryWithMavenCoordinatesProperties  {
 
   // required for serialization
   @Suppress("unused")
-  constructor() : this(null)
+  public constructor() : this(null)
   override fun equals(other: Any?): Boolean {
     if (other != null && other is ImportedLibraryProperties) {
       return mavenCoordinates == other.mavenCoordinates
@@ -36,8 +36,8 @@ class ImportedLibraryProperties(override var mavenCoordinates: MavenCoordinates?
     this.mavenCoordinates = MavenCoordinates(state.groupId, state.artifactId, state.version, state.baseVersion, state.packaging, state.classifier)
   }
 
-  class MavenCoordinatesState() {
-    constructor(coordinates: MavenCoordinates): this() {
+  public class MavenCoordinatesState() {
+    public constructor(coordinates: MavenCoordinates): this() {
       groupId = coordinates.groupId
       artifactId = coordinates.artifactId
       version = coordinates.version
@@ -46,16 +46,16 @@ class ImportedLibraryProperties(override var mavenCoordinates: MavenCoordinates?
       classifier = coordinates.classifier
     }
     @Attribute
-    var groupId: String = ""
+    public var groupId: String = ""
     @Attribute
-    var artifactId: String= ""
+    public var artifactId: String= ""
     @Attribute
-    var version: String = ""
+    public var version: String = ""
     @Attribute
-    var baseVersion: String = ""
+    public var baseVersion: String = ""
     @Attribute
-    var packaging: String = JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING
+    public var packaging: String = JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING
     @Attribute
-    var classifier: String? = null
+    public var classifier: String? = null
   }
 }

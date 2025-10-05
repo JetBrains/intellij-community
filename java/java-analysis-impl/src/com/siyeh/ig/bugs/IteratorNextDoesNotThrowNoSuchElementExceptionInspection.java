@@ -52,7 +52,7 @@ public final class IteratorNextDoesNotThrowNoSuchElementExceptionInspection exte
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new IteratorNextDoesNotThrowNoSuchElementExceptionVisitor();
   }
 

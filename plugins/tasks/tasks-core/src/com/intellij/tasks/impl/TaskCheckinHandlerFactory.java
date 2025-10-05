@@ -2,6 +2,7 @@
 package com.intellij.tasks.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -21,25 +22,33 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
 
   @Override
   public @NotNull CheckinHandler createHandler(final @NotNull CheckinProjectPanel panel, final @NotNull CommitContext commitContext) {
-    return new CheckinHandler() {
-      @Override
-      public void checkinSuccessful() {
-        final String message = panel.getCommitMessage();
-        final Project project = panel.getProject();
-        final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
-        if (manager.getState().saveContextOnCommit) {
-          Task task = findTaskInRepositories(message, manager);
-          if (task == null) {
-            task = manager.createLocalTask(message);
-            ((LocalTaskImpl)task).setClosed(true);
-          }
-          LocalTask localTask = manager.addTask(task);
-          localTask.setUpdated(new Date());
+    return new TaskCheckinHandler(panel);
+  }
 
-          ApplicationManager.getApplication().invokeLater(() -> WorkingContextManager.getInstance(project).saveContext(localTask), project.getDisposed());
+  private static class TaskCheckinHandler extends CheckinHandler implements DumbAware {
+    final @NotNull CheckinProjectPanel panel;
+
+    private TaskCheckinHandler(@NotNull CheckinProjectPanel panel) {
+      this.panel = panel;
+    }
+
+    @Override
+    public void checkinSuccessful() {
+      final String message = panel.getCommitMessage();
+      final Project project = panel.getProject();
+      final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
+      if (manager.getState().saveContextOnCommit) {
+        Task task = findTaskInRepositories(message, manager);
+        if (task == null) {
+          task = manager.createLocalTask(message);
+          ((LocalTaskImpl)task).setClosed(true);
         }
+        LocalTask localTask = manager.addTask(task);
+        localTask.setUpdated(new Date());
+
+        ApplicationManager.getApplication().invokeLater(() -> WorkingContextManager.getInstance(project).saveContext(localTask), project.getDisposed());
       }
-    };
+    }
   }
 
   private static @Nullable Task findTaskInRepositories(String message, TaskManager manager) {

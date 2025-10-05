@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.diff
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
+import com.intellij.collaboration.ui.codereview.diff.viewer.EditorModelFactory
 import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
@@ -21,27 +22,28 @@ import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRInlayUtils
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
+import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
+import org.jetbrains.plugins.github.pullrequest.ui.diff.util.LineRangeUtil
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewEditorGutterControlsState
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.createRenderer
 import org.jetbrains.plugins.github.util.GithubSettings
-import kotlin.math.max
-import kotlin.math.min
 
 internal class GHPRReviewDiffExtension : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
@@ -64,32 +66,54 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
       cs.launchNow {
         withContext(Dispatchers.Main) {
           reviewVm.getViewModelFor(change).collectScoped { changeVm ->
+            viewer.context.putUserData(GHPRDiffReviewViewModel.KEY, changeVm)
             if (changeVm == null) return@collectScoped
 
             val userIcon = reviewVm.iconProvider.getIcon(reviewVm.currentUser.url, 16)
 
             if (settings.isAutomaticallyMarkAsViewed) {
-              changeVm.markViewed()
+              changeVm.setViewedState(isViewed = true)
             }
-
-            viewer.showCodeReview({ locationToLine, lineToLocation, lineToUnified ->
-                                    DiffEditorModel(this, reviewVm, changeVm, locationToLine, lineToLocation) {
-                                      val (leftLine, rightLine) = lineToUnified(it)
-                                      GHPRReviewUnifiedPosition(change, leftLine, rightLine)
-                                    }
-                                  },
+            val modelFactory = createEditorModelFactory(reviewVm, changeVm, change)
+            viewer.showCodeReview(modelFactory,
                                   GHPRReviewDiffEditorModel.KEY,
                                   { createRenderer(it, userIcon) })
           }
         }
       }.cancelOnDispose(viewer)
     }
+
+    private fun createEditorModelFactory(
+      reviewVm: GHPRDiffViewModel,
+      changeVm: GHPRDiffReviewViewModel,
+      change: RefComparisonChange,
+    ): EditorModelFactory<GHPRReviewDiffEditorModel> =
+      {
+        editor: Editor,
+        side: Side?,
+        locationToLine: (DiffLineLocation) -> Int?,
+        lineToLocation: (Int) -> DiffLineLocation?,
+        lineToUnified: (Int) -> Pair<Int, Int>,
+        ->
+        val cs = this
+        DiffEditorModel(this, reviewVm, changeVm, locationToLine, lineToLocation) {
+          val (leftLine, rightLine) = lineToUnified(it)
+          GHPRReviewUnifiedPosition(change, leftLine, rightLine)
+        }.apply {
+          cs.launchNow {
+            inlays
+              .mapStatefulToStateful { inlayModel -> GHPRInlayUtils.installInlayHoverOutline(this, editor, side, locationToLine, inlayModel) }
+              .collect()
+          }
+        }
+      }
   }
 }
 
 internal interface GHPRReviewDiffEditorModel : CodeReviewEditorModel<GHPREditorMappedComponentModel>,
                                                CodeReviewCommentableEditorModel.WithMultilineComments,
-                                               CodeReviewNavigableEditorViewModel {
+                                               CodeReviewNavigableEditorViewModel,
+                                               CodeReviewEditorGutterControlsModel.WithMultilineComments {
   companion object {
     val KEY: Key<GHPRReviewDiffEditorModel> = Key.create("GitHub.PullRequest.Diff.Editor.Model")
   }
@@ -104,30 +128,51 @@ private class DiffEditorModel(
   @RequiresEdt private val lineToUnified: (Int) -> GHPRReviewUnifiedPosition,
 ) : GHPRReviewDiffEditorModel {
 
-  private val threads = diffVm.threads.mapModelsToViewModels { MappedThread(cs, it) }.stateInNow(cs, emptyList())
-  private val newComments = diffVm.newComments.mapModelsToViewModels { MappedNewComment(it) }.stateInNow(cs, emptyList())
-  private val aiComments = diffVm.aiComments.mapModelsToViewModels { MappedAIComment(it) }.stateInNow(cs, emptyList())
+  private val threads = diffVm.threads.mapStatefulToStateful { MappedThread(cs, it) }.stateInNow(cs, emptyList())
+  private val newComments = diffVm.newComments.mapStatefulToStateful { MappedNewComment(it) }.stateInNow(cs, emptyList())
+  private val aiComments = diffVm.aiComments.mapStatefulToStateful { MappedAIComment(it) }.stateInNow(cs, emptyList())
 
   override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> =
     combineStateIn(cs, threads, newComments, aiComments) { threads, new, ai -> threads + new + ai }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val linesWithNewCommentsFlow: StateFlow<Set<Int>> =
+    diffVm.newComments.flatMapLatest { vms ->
+      if (vms.isEmpty()) flowOf(emptySet())
+      else combine(vms.map { it.location.map { loc -> locationToLine(loc.lineLocation) } }) { lines ->
+        lines.filterNotNull().toSet()
+      }
+    }.stateInNow(cs, emptySet())
+
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
-    combine(diffVm.locationsWithDiscussions, diffVm.newComments) { locationsWithDiscussions, newComments ->
+    combine(diffVm.locationsWithDiscussions, linesWithNewCommentsFlow) { locationsWithDiscussions, linesWithNewComments ->
       val linesWithComments = locationsWithDiscussions.mapNotNullTo(mutableSetOf(), locationToLine)
-      val linesWithNewComments = newComments.mapNotNullTo(mutableSetOf()) { locationToLine(it.location) }
       GHPRReviewEditorGutterControlsState(
         linesWithComments, linesWithNewComments,
-        if (diffVm.canComment) transferRanges(diffVm.commentableRanges) else emptyList()
+        if (diffVm.canComment) transferRanges(diffVm.commentableRanges, diffVm.changedRanges) else emptyList()
       )
     }.stateInNow(cs, null)
 
-  private fun transferRanges(ranges: List<Range>): List<LineRange> = ranges.mapNotNull {
-    val leftRange = getSideRange(it, Side.LEFT)
-    val rightRange = getSideRange(it, Side.RIGHT)
-    if (leftRange != null && rightRange != null) {
-      LineRange(min(leftRange.start, rightRange.start), max(leftRange.end, rightRange.end))
+  private fun transferRanges(ranges: List<Range>, changedRanges: List<Range>): List<LineRange> {
+    val leftRange = ranges.mapNotNull {
+      getSideRange(it, Side.LEFT)
     }
-    else leftRange ?: rightRange
+    val rightRange = ranges.mapNotNull {
+      getSideRange(it, Side.RIGHT)
+    }
+
+    if (leftRange.isEmpty() || rightRange.isEmpty()) {
+      return leftRange.takeIf { it.isNotEmpty() } ?: rightRange
+    }
+
+    val leftChangedRanges: List<LineRange> = changedRanges.mapNotNull {
+      getSideRange(it, Side.LEFT)
+    }
+    val rightChangedRanges: List<LineRange> = changedRanges.mapNotNull {
+      getSideRange(it, Side.RIGHT)
+    }
+
+    return LineRangeUtil.extract(leftRange, rightRange, leftChangedRanges, rightChangedRanges)
   }
 
   private fun getSideRange(range: Range, side: Side): LineRange? {
@@ -161,6 +206,10 @@ private class DiffEditorModel(
     diffVm.requestNewComment(loc, true)
   }
 
+  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) {
+    diffVm.updateCommentLines(LineRange(oldLineRange.start, oldLineRange.end), LineRange(newLineRange.start, newLineRange.end))
+  }
+
   override fun requestNewComment(lineIdx: Int) {
     val loc = lineToLocation(lineIdx) ?: return
     diffVm.requestNewComment(GHPRReviewCommentLocation.SingleLine(loc.first, loc.second), true)
@@ -168,7 +217,7 @@ private class DiffEditorModel(
 
   override fun cancelNewComment(lineIdx: Int) {
     val loc = lineToLocation(lineIdx) ?: return
-    diffVm.cancelNewComment(GHPRReviewCommentLocation.SingleLine(loc.first, loc.second))
+    diffVm.cancelNewComment(loc.first, loc.second)
   }
 
   override fun toggleComments(lineIdx: Int) {
@@ -176,18 +225,20 @@ private class DiffEditorModel(
   }
 
   @RequiresEdt
-  override fun canGotoNextComment(focusedThreadId: String): Boolean = reviewVm.nextComment(focusedThreadId) != null
+  override fun canGotoNextComment(threadId: String): Boolean = reviewVm.nextComment(threadId) != null
+
   @RequiresEdt
   override fun canGotoNextComment(line: Int): Boolean = reviewVm.nextComment(lineToUnified(line)) != null
 
   @RequiresEdt
-  override fun canGotoPreviousComment(focusedThreadId: String): Boolean = reviewVm.previousComment(focusedThreadId) != null
+  override fun canGotoPreviousComment(threadId: String): Boolean = reviewVm.previousComment(threadId) != null
+
   @RequiresEdt
   override fun canGotoPreviousComment(line: Int): Boolean = reviewVm.previousComment(lineToUnified(line)) != null
 
   @RequiresEdt
-  override fun gotoNextComment(focusedThreadId: String) {
-    val commentId = reviewVm.nextComment(focusedThreadId) ?: return
+  override fun gotoNextComment(threadId: String) {
+    val commentId = reviewVm.nextComment(threadId) ?: return
     reviewVm.showDiffAtComment(commentId)
   }
 
@@ -198,8 +249,8 @@ private class DiffEditorModel(
   }
 
   @RequiresEdt
-  override fun gotoPreviousComment(focusedThreadId: String) {
-    val commentId = reviewVm.previousComment(focusedThreadId) ?: return
+  override fun gotoPreviousComment(threadId: String) {
+    val commentId = reviewVm.previousComment(threadId) ?: return
     reviewVm.showDiffAtComment(commentId)
   }
 
@@ -213,20 +264,34 @@ private class DiffEditorModel(
     : GHPREditorMappedComponentModel.Thread<GHPRCompactReviewThreadViewModel>(vm) {
     private val cs = parentCs.childScope(javaClass.name)
     override val isVisible: StateFlow<Boolean> = combineStateIn(cs, vm.mapping, hiddenState) { mapping, hidden -> mapping.isVisible && !hidden }
+    override val range: StateFlow<Pair<Side, IntRange>?> = vm.mapping.mapState { mapping -> mapping.commentRange }
     override val line: StateFlow<Int?> = vm.mapping.mapState { mapping -> mapping.location?.let { locationToLine(it) } }
   }
 
   private inner class MappedNewComment(vm: GHPRNewCommentDiffViewModel)
     : GHPREditorMappedComponentModel.NewComment<GHPRReviewNewCommentEditorViewModel>(vm) {
-    private val location = vm.position.location.let { it.side to it.lineIdx }
-    override val key: Any = "NEW_${vm.position.location}"
+    private val location: StateFlow<GHPRReviewCommentLocation> = vm.position.mapState { it.location }
+    override val key: Any = "NEW_${vm.position.value.location}"
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
-    override val line: StateFlow<Int?> = MutableStateFlow(locationToLine(location))
+    override val line: StateFlow<Int?> = location.mapState { locationToLine(it.lineLocation) }
+    private val _range = MutableStateFlow<Pair<Side, IntRange>?>(when (val loc = location.value) {
+                                                                   is GHPRReviewCommentLocation.SingleLine -> {
+                                                                     loc.side to loc.lineIdx..loc.lineIdx
+                                                                   }
+                                                                   is GHPRReviewCommentLocation.MultiLine -> {
+                                                                     loc.side to loc.startLineIdx..loc.lineIdx
+                                                                   }
+                                                                 })
+    override val range: StateFlow<Pair<Side, IntRange>?> = _range.asStateFlow()
+    override fun setRange(range: Pair<Side, IntRange>?) {
+      _range.value = range
+    }
   }
 
   private inner class MappedAIComment(vm: GHPRAICommentViewModel)
     : GHPREditorMappedComponentModel.AIComment(vm) {
     override val isVisible: StateFlow<Boolean> = vm.isVisible
     override val line: StateFlow<Int?> = MutableStateFlow(vm.location?.let(locationToLine))
+    override val range: StateFlow<Pair<Side, IntRange>?> = stateFlowOf(null)
   }
 }

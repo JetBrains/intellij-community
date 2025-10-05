@@ -2,10 +2,10 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -43,7 +43,7 @@ public final class PluginBuildUtil {
 
   public static void getDependencies(Module module, final Set<? super Module> modules) {
     productionRuntimeDependencies(module).forEachModule(dep -> {
-      if (ModuleType.get(dep) == StdModuleTypes.JAVA && !modules.contains(dep)) {
+      if (ModuleType.get(dep) == JavaModuleType.getModuleType() && !modules.contains(dep)) {
         modules.add(dep);
         getDependencies(dep, modules);
       }

@@ -17,12 +17,15 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An interface that can be implemented by the ProgressIndicator to be called from CheckCanceledHook interface. 
  */
-public interface PingProgress {
+public interface PingProgress extends CoreProgressManager.CheckCanceledHook {
   void interact();
 
   /**
@@ -36,4 +39,10 @@ public interface PingProgress {
     }
   }
 
+  @ApiStatus.Internal
+  @Override
+  default boolean runHook(@Nullable ProgressIndicator indicator) {
+    interact();
+    return false;
+  }
 }

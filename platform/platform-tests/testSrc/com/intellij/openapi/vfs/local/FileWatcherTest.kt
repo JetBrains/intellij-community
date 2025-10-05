@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -33,6 +33,7 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.io.copyRecursively
 import com.intellij.util.io.delete
+import com.intellij.util.system.OS
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Assert.*
@@ -563,7 +564,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testLineBreaksInName() {
-    assumeTrue("Expected Unix but got: " + SystemInfo.getOsNameAndVersion(), SystemInfo.isUnix)
+    assumeTrue("Unix-only", OS.isGenericUnix())
 
     val root = tempDir.newDirectoryPath("root")
     val file = tempDir.newFile("root/weird\ndir\nname/weird\nfile\nname").toPath()
@@ -597,10 +598,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   // the following tests verify the same scenarios with an active file watcher (prevents explicit marking of refreshed paths)
-  @Test fun testPartialRefresh(): Unit = LocalFileSystemTest.doTestPartialRefresh(tempDir.newDirectory("top"))
-  @Test fun testInterruptedRefresh(): Unit = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newDirectory("top"))
-  @Test fun testRefreshAndFindFile(): Unit = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newDirectory("top"))
-  @Test fun testRefreshEquality(): Unit = LocalFileSystemTest.doTestRefreshEquality(tempDir.newDirectory("top"))
+  @Test fun testPartialRefresh(): Unit = LocalFileSystemTest.doTestPartialRefresh(tempDir.newDirectoryPath("top"))
+  @Test fun testInterruptedRefresh(): Unit = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newDirectoryPath("top"))
+  @Test fun testRefreshAndFindFile(): Unit = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newDirectoryPath("top"))
+  @Test fun testRefreshEquality(): Unit = LocalFileSystemTest.doTestRefreshEquality(tempDir.newDirectoryPath("top"))
 
   @Test fun testUnicodePaths() {
     val name = getUnicodeName()
@@ -615,7 +616,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testDisplacementByIsomorphicTree() {
-    assumeTrue("Expected not Mac but got: " + SystemInfo.getOsNameAndVersion(), !SystemInfo.isMac)
+    assumeFalse("macOS-incompatible", OS.CURRENT == OS.macOS)
 
     val top = tempDir.newDirectoryPath("top")
     val root = tempDir.newDirectoryPath("top/root")

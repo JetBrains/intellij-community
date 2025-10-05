@@ -1153,7 +1153,7 @@ public abstract class PropertyTable extends JBTable {
 
   public static void updateRenderer(JComponent component, boolean selected) {
     if (selected) {
-      component.setForeground(UIUtil.getTableSelectionForeground());
+      component.setForeground(UIUtil.getTableSelectionForeground(true));
       component.setBackground(UIUtil.getTableSelectionBackground(true));
     }
     else {

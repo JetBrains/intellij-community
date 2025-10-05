@@ -13,24 +13,25 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.nio.file.spi.FileTypeDetector;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
  * A file system that can delegate specific paths to other file systems.
  *
- * @see #setBackendProvider(MultiRoutingFileSystem.BackendProvider)
- * @see #invokeBackendProvider(String)
+ * @see MultiRoutingFileSystem#setBackendProvider
+ * @see #getTheOnlyFileSystem
  * @see RoutingAwareFileSystemProvider
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class MultiRoutingFileSystemProvider
-  extends DelegatingFileSystemProvider<MultiRoutingFileSystemProvider, MultiRoutingFileSystem> {
+  extends TracingFileSystemProvider<MultiRoutingFileSystemProvider, MultiRoutingFileSystem> {
 
   /**
    * A production IDE has two VM options file: the bundled one and the user-defined one.
@@ -52,89 +53,8 @@ public final class MultiRoutingFileSystemProvider
 
   private final MultiRoutingFileSystem myFileSystem;
 
-  /**
-   * Sets the function that intercepts all path object creations and can return a non-default filesystem to it.
-   */
-  public static void setBackendProvider(
-    @Nullable BiFunction<@NotNull FileSystem, @NotNull String, @NotNull FileSystem> computeFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull Path>> getCustomRootsFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull FileStore>> getCustomFileStoresFn
-  ) {
-    setBackendProvider(FileSystems.getDefault().provider(), computeFn, getCustomRootsFn, getCustomFileStoresFn);
-  }
-
-  /**
-   * A workaround for IJPL-158098.
-   *
-   * @see #setBackendProvider(MultiRoutingFileSystem.BackendProvider)
-   */
-  public static void setBackendProvider(
-    @NotNull FileSystemProvider provider,
-    @Nullable BiFunction<@NotNull FileSystem, @NotNull String, @NotNull FileSystem> computeFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull Path>> getCustomRootsFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull FileStore>> getCustomFileStoresFn
-  ) {
-    if (provider.getClass().getName().equals(MultiRoutingFileSystemProvider.class.getName())) {
-      try {
-        provider.getClass()
-          .getMethod("setBackendProvider0", BiFunction.class, Function.class, Function.class)
-          .invoke(provider, computeFn, getCustomRootsFn, getCustomFileStoresFn);
-      }
-      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    else {
-      throw new IllegalArgumentException(String.format("%s is not an instance of %s", provider, MultiRoutingFileSystemProvider.class));
-    }
-  }
-
-  /**
-   * A workaround for IJPL-158098.
-   */
-  @SuppressWarnings("unused")
-  public void setBackendProvider0(
-    @Nullable BiFunction<@NotNull FileSystem, @NotNull String, @NotNull FileSystem> computeFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull Path>> getCustomRootsFn,
-    @Nullable Function<@NotNull FileSystem, @NotNull Collection<@NotNull FileStore>> getCustomFileStoresFn
-  ) {
-    myFileSystem.setBackendProvider(computeFn, getCustomRootsFn, getCustomFileStoresFn);
-  }
-
-  /**
-   * Invokes {@link MultiRoutingFileSystem.BackendProvider#compute} for the given path.
-   */
-  public static void invokeBackendProvider(@NotNull String path) {
-    invokeBackendProvider(FileSystems.getDefault().provider(), path);
-  }
-
-  /**
-   * A workaround for IJPL-158098.
-   *
-   * @see #invokeBackendProvider(String)
-   */
-  public static void invokeBackendProvider(@NotNull FileSystemProvider provider, @NotNull String path) {
-    if (provider.getClass().getName().equals(MultiRoutingFileSystemProvider.class.getName())) {
-      try {
-        provider.getClass()
-          .getMethod("invokeBackendProvider0", String.class)
-          .invoke(provider, path);
-      }
-      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    else {
-      throw new IllegalArgumentException(String.format("%s is not an instance of %s", provider, MultiRoutingFileSystemProvider.class));
-    }
-  }
-
-  /**
-   * A workaround for IJPL-158098.
-   */
-  @SuppressWarnings("unused")
-  public void invokeBackendProvider0(@NotNull String path) {
-    myFileSystem.getBackend(path);
+  public @NotNull MultiRoutingFileSystem getTheOnlyFileSystem() {
+    return myFileSystem;
   }
 
   public MultiRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
@@ -143,7 +63,7 @@ public final class MultiRoutingFileSystemProvider
   }
 
   @Override
-  protected @NotNull MultiRoutingFileSystem wrapDelegateFileSystem(@NotNull FileSystem delegateFs) {
+  public @NotNull MultiRoutingFileSystem wrapDelegateFileSystem(@NotNull FileSystem delegateFs) {
     return new MultiRoutingFileSystem(this, delegateFs);
   }
 
@@ -241,58 +161,13 @@ public final class MultiRoutingFileSystemProvider
     throw new IllegalArgumentException(String.format("Provider mismatch: %s != %s", provider1, provider2));
   }
 
-  /**
-   * `intellij.platform.util` is not available in the boot classpath.
-   * Hence, concurrent weak maps from the platform can't be used here.
-   */
-  private static final Map<FileSystemProvider, Optional<Method>> ourCanHandleRoutingCache = Collections.synchronizedMap(new WeakHashMap<>());
-
   private static boolean canHandleRouting(FileSystemProvider provider, @NotNull Path path) {
-    if (provider instanceof RoutingAwareFileSystemProvider) {
+    if (provider instanceof RoutingAwareFileSystemProvider rafsp) {
       // `instanceof` is still faster than a successful cache hit.
       // Even if `instanceof` misses, its negative impact is negligible. See a benchmark in the commit message.
-      return ((RoutingAwareFileSystemProvider)provider).canHandleRouting(path);
+      return rafsp.canHandleRouting(path);
     }
-    Method method = ourCanHandleRoutingCache
-      .computeIfAbsent(provider, MultiRoutingFileSystemProvider::canHandleRoutingImpl)
-      .orElse(null);
-    if (method == null) {
-      return false;
-    }
-    try {
-      return (boolean)method.invoke(provider, path);
-    }
-    catch (IllegalAccessException | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * It often happens with such low-level things like this one that some class/interface gets loaded by two different classloaders:
-   * <ul>
-   *   <li>These particular classes are injected into the boot classpath.</li>
-   *   <li>The classes are loaded by {#link com.intellij.util.lang.PathClassLoader} again.</li>
-   * </ul>
-   * Therefore, the usual expression {@code a instanceof B} doesn't work when {@code a} is an instance of {@code B} loaded by
-   * a different classloader.
-   */
-  private static Optional<Method> canHandleRoutingImpl(FileSystemProvider provider) {
-    Class<?> providerClass = provider.getClass();
-    do {
-      for (Class<?> iface : providerClass.getInterfaces()) {
-        if (iface.getName().equals(RoutingAwareFileSystemProvider.class.getName())) {
-          try {
-            return Optional.of(iface.getMethod("canHandleRouting"));
-          }
-          catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }
-      providerClass = providerClass.getSuperclass();
-    }
-    while (providerClass != null);
-    return Optional.empty();
+    return false;
   }
 
   @Contract("null -> null; !null -> !null")
@@ -335,17 +210,6 @@ public final class MultiRoutingFileSystemProvider
     if (multiRoutingFileSystemProvider instanceof MultiRoutingFileSystemProvider provider) {
       try {
         fileTypeDetector = provider.getFileTypeDetectorInternal();
-      }
-      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-        e.printStackTrace(System.err);
-        fileTypeDetector = getDefaultFileTypeDetector();
-      }
-    }
-    else if (multiRoutingFileSystemProvider.getClass().getName().equals(MultiRoutingFileSystemProvider.class.getName())) {
-      try {
-        Method method = multiRoutingFileSystemProvider.getClass().getDeclaredMethod("getFileTypeDetectorInternal");
-        method.setAccessible(true);
-        fileTypeDetector = (FileTypeDetector)method.invoke(multiRoutingFileSystemProvider);
       }
       catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
         e.printStackTrace(System.err);

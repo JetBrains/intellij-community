@@ -1,12 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.serviceView
 
-import com.intellij.frontend.FrontendApplicationInfo
-import com.intellij.frontend.FrontendType
-import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.PlatformUtils
+import com.intellij.platform.ide.productMode.IdeProductMode
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -14,33 +11,48 @@ import org.jetbrains.annotations.ApiStatus
 //        and the corresponding classes must be moved to frontend modules of their plugins
 fun shouldEnableServicesViewInCurrentEnvironment(): Boolean {
   val isServicesEnabled = when {
-    isFrontend() && isNewFrontendServiceViewEnabled() -> true
-    isBackend() && isOldMonolithServiceViewEnabled() -> true
-    isMonolith() -> true
+    isFrontendAndSplitRegistryEnabled() -> true
+    isBackendAndMonolithRegistryEnabled() -> true
+    IdeProductMode.isMonolith -> true
     else -> false
   }
   fileLogger().debug("Services implementation is ${if (isServicesEnabled) "enabled" else "disabled"} in current environment. " +
-                     "Is frontend: ${isFrontend()}, is monolith: ${isMonolith()}, is backend: ${isBackend()}.")
+                     "Is frontend: ${IdeProductMode.isFrontend}, is monolith: ${IdeProductMode.isMonolith}, is backend: ${IdeProductMode.isBackend}.")
   return isServicesEnabled
 }
 
-private fun isFrontend(): Boolean {
-  return PlatformUtils.isJetBrainsClient()
+private fun isBackendAndMonolithRegistryEnabled(): Boolean {
+  return IdeProductMode.isBackend && isOldMonolithServiceViewEnabled()
 }
 
-private fun isMonolith(): Boolean {
-  // returns true in split mode backend 0_o
-  return FrontendApplicationInfo.getFrontendType() is FrontendType.Monolith && !isBackend() && !isFrontend()
+private fun isFrontendAndSplitRegistryEnabled(): Boolean {
+  return IdeProductMode.isFrontend && isNewFrontendServiceViewEnabled()
 }
 
-private fun isBackend(): Boolean {
-  return AppMode.isRemoteDevHost()
-}
+@ApiStatus.Internal
+fun isNewFrontendServiceViewEnabled(): Boolean {
+  // Split debugger's frontend works with a frontend run dashboard entities, same for backend. So registry flags must be in sync
+  // when it comes to testing either the debugger or service view.
+  // Otherwise we have to maintain even more registry flag combinations compatible which does not make sense
+  if (isSplitDebuggerEnabledInTestsCopyPaste()) return true
 
-private fun isNewFrontendServiceViewEnabled(): Boolean {
   return Registry.`is`("services.view.split.enabled")
 }
 
-private fun isOldMonolithServiceViewEnabled(): Boolean {
+@ApiStatus.Internal
+fun isOldMonolithServiceViewEnabled(): Boolean {
+  if (isSplitDebuggerEnabledInTestsCopyPaste()) return false
+
   return Registry.`is`("services.view.monolith.enabled")
+}
+
+private fun isSplitDebuggerEnabledInTestsCopyPaste(): Boolean {
+  val testProperty = System.getProperty("xdebugger.toolwindow.split.for.tests")
+  return testProperty?.toBoolean() ?: false
+}
+
+// dedicated key for the RUN toolwindow since it is not properly split
+@ApiStatus.Internal
+fun isShowLuxedRunToolwindowInServicesView(): Boolean {
+  return Registry.`is`("services.view.split.run.luxing.enabled", true)
 }

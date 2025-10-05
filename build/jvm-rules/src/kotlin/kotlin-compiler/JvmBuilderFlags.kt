@@ -11,14 +11,14 @@ import java.util.regex.Pattern
 
 private val FLAG_FILE_RE: Regex = Pattern.compile("""^--flagfile=((.*)-(\d+).params)$""").toRegex()
 
-fun parseArgs(args: Array<String>): ArgMap<JvmBuilderFlags> {
+fun parseArgs(args: Array<String>, baseDir: Path): ArgMap<JvmBuilderFlags> {
   check(args.isNotEmpty()) {
     "expected at least a single arg got: ${args.joinToString(" ")}"
   }
 
   return createArgMap(
     args = FLAG_FILE_RE.matchEntire(args[0])?.groups?.get(1)?.let {
-      Files.readAllLines(Path.of(it.value))
+      Files.readAllLines(baseDir.resolve(it.value))
     } ?: args.asList(),
     enumClass = JvmBuilderFlags::class.java,
   )
@@ -33,6 +33,7 @@ enum class JvmBuilderFlags {
 
   PLUGIN_ID,
   PLUGIN_CLASSPATH,
+  PLUGIN_OPTIONS,
 
   OUT,
   ABI_OUT,
@@ -42,15 +43,28 @@ enum class JvmBuilderFlags {
   API_VERSION,
   LANGUAGE_VERSION,
   JVM_TARGET,
+  JVM_DEFAULT,
 
   OPT_IN,
-  ALLOW_KOTLIN_PACKAGE,
-  WHEN_GUARDS,
-  LAMBDAS,
-  JVM_DEFAULT,
-  INLINE_CLASSES,
-  CONTEXT_RECEIVERS,
-  CONTEXT_PARAMETERS,
+  X_ALLOW_KOTLIN_PACKAGE,
+  X_ALLOW_RESULT_RETURN_TYPE,
+  X_WHEN_GUARDS,
+  X_LAMBDAS,
+  X_JVM_DEFAULT,
+  X_INLINE_CLASSES,
+  X_CONTEXT_RECEIVERS,
+  X_CONTEXT_PARAMETERS,
+  X_CONSISTENT_DATA_CLASS_COPY_VISIBILITY,
+  X_ALLOW_UNSTABLE_DEPENDENCIES,
+  SKIP_METADATA_VERSION_CHECK,
+  X_SKIP_PRERELEASE_CHECK,
+  X_EXPLICIT_API_MODE,
+  X_NO_CALL_ASSERTIONS,
+  X_NO_PARAM_ASSERTIONS,
+  X_SAM_CONVERSIONS,
+  X_STRICT_JAVA_NULLABILITY_ASSERTIONS,
+  X_WASM_ATTACH_JS_EXCEPTION,
+  X_X_LANGUAGE,
 
   WARN,
 
@@ -106,35 +120,35 @@ fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap
   }
   configHash.putStringListOrNull(kotlinArgs.optIn)
 
-  if (args.boolFlag(JvmBuilderFlags.ALLOW_KOTLIN_PACKAGE)) {
+  if (args.boolFlag(JvmBuilderFlags.X_ALLOW_KOTLIN_PACKAGE)) {
     kotlinArgs.allowKotlinPackage = true
   }
   configHash.putBoolean(kotlinArgs.allowKotlinPackage)
 
-  if (args.boolFlag(JvmBuilderFlags.WHEN_GUARDS)) {
+  if (args.boolFlag(JvmBuilderFlags.X_WHEN_GUARDS)) {
     kotlinArgs.whenGuards = true
   }
   configHash.putBoolean(kotlinArgs.whenGuards)
 
-  args.optionalSingle(JvmBuilderFlags.LAMBDAS)?.let {
+  args.optionalSingle(JvmBuilderFlags.X_LAMBDAS)?.let {
     kotlinArgs.lambdas = it
   }
   configHash.putStringOrNull(kotlinArgs.lambdas)
 
-  args.optionalSingle(JvmBuilderFlags.JVM_DEFAULT)?.let {
+  args.optionalSingle(JvmBuilderFlags.X_JVM_DEFAULT)?.let {
     kotlinArgs.jvmDefault = it
   }
   configHash.putString(kotlinArgs.jvmDefault ?: "")
 
-  if (args.boolFlag(JvmBuilderFlags.INLINE_CLASSES)) {
+  if (args.boolFlag(JvmBuilderFlags.X_INLINE_CLASSES)) {
     kotlinArgs.inlineClasses = true
   }
   configHash.putBoolean(kotlinArgs.inlineClasses)
 
-  if (args.boolFlag(JvmBuilderFlags.CONTEXT_RECEIVERS)) {
+  if (args.boolFlag(JvmBuilderFlags.X_CONTEXT_RECEIVERS)) {
     kotlinArgs.contextReceivers = true
   }
-  if (args.boolFlag(JvmBuilderFlags.CONTEXT_PARAMETERS)) {
+  if (args.boolFlag(JvmBuilderFlags.X_CONTEXT_PARAMETERS)) {
     kotlinArgs.contextParameters = true
   }
   configHash.putBoolean(kotlinArgs.contextReceivers)

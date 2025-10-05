@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import java.nio.file.Path
 
-class JdkWarmupConfigurator : WarmupConfigurator {
+public class JdkWarmupConfigurator : WarmupConfigurator {
 
   override val configuratorPresentableName: String = "warmupJdkConfigurator"
 

@@ -9,8 +9,10 @@ import java.awt.geom.RoundRectangle2D
 import java.util.*
 import javax.swing.SizeRequirements
 import javax.swing.text.*
+import javax.swing.text.View.X_AXIS
 import javax.swing.text.html.*
 import javax.swing.text.html.StyleSheet.BoxPainter
+import kotlin.math.max
 
 internal val HTML_Tag_SUMMARY: HTML.Tag get() = SUMMARY_TAG
 internal val HTML_Tag_DETAILS: HTML.Tag get() = DETAILS_TAG
@@ -179,6 +181,66 @@ private fun createNewHtmlBlockTag(name: String): HTML.Tag {
   CUSTOM_BLOCK_TAGS_SET.add(newTag)
   return newTag
 }
+
+internal fun Element.getIntAttr(attribute: HTML.Attribute, defaultValue: Int): Int {
+  val attr = attributes
+  if (!attr.isDefined(attribute)) return defaultValue
+
+  val value = attr.getAttribute(attribute) as? String ?: return defaultValue
+  return try {
+    max(0, value.toInt())
+  }
+  catch (_: NumberFormatException) {
+    defaultValue
+  }
+}
+
+internal class ImageViewPreferredSpan(
+  private val view: View,
+  private val getBaseSpan: (Int) -> Float,
+) {
+  private var myAvailableWidth = 0
+
+  fun get(axis: Int): Float {
+    val baseSpan = getBaseSpan(axis)
+    if (axis == X_AXIS) {
+      return baseSpan
+    }
+    else {
+      var availableWidth = view.availableWidth
+      if (availableWidth <= 0) return baseSpan
+      val baseXSpan = getBaseSpan(X_AXIS)
+      if (baseXSpan <= 0) return baseSpan
+      if (availableWidth > baseXSpan) {
+        availableWidth = baseXSpan.toInt()
+      }
+      if (myAvailableWidth > 0 && availableWidth != myAvailableWidth) {
+        view.preferenceChanged(null, false, true)
+      }
+      myAvailableWidth = availableWidth
+      return baseSpan * availableWidth / baseXSpan
+    }
+  }
+}
+
+
+private val View.availableWidth: Int
+  get() {
+    var v: View? = this
+    while (v != null) {
+      val parent = v.parent
+      if (parent is FlowView) {
+        val childCount = parent.viewCount
+        for (i in 0 until childCount) {
+          if (parent.getView(i) === v) {
+            return parent.getFlowSpan(i)
+          }
+        }
+      }
+      v = parent
+    }
+    return 0
+  }
 
 internal fun StyleSheet.patchAttributes(): StyleSheet {
   val css = styleSheetCssField.get(this) as CSS

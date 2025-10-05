@@ -215,6 +215,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testLinkInParamDescriptionMarkdown() { doTestAtCaret(); }
   public void testAllTags() { doTestAtCaret(); }
   public void testAllTagsMarkdown() { doTestAtCaret(); }
+  public void testFragmentReference()  { doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();
@@ -257,7 +258,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     PsiClass superClass = extendsList.getReferencedTypes()[0].resolve();
     String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(superClass, referenceElement);
     assertNotNull(docInfo);
-    assertFileTextEquals(UIUtil.getHtmlBody(docInfo));
+    assertFileTextEquals(UIUtil.getHtmlBodyWithoutPreWrapper(docInfo));
   }
 
   public void testInheritedParameter() {
@@ -323,7 +324,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
       doTestAtCaret();
     });
   }
-  
+
   public void testExternalTypeAnnotations() {
     PsiClass aClass = myJavaFacade.findClass("java.util.concurrent.CompletableFuture");
     assertNotNull(aClass);
@@ -368,7 +369,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(field, field);
     assertNotNull(docInfo);
     String htmlText = loadFile(new File(getTestDataPath() + TEST_DATA_FOLDER + getTestName(true) + "_quick.html"));
-    assertEquals(htmlText, replaceEnvironmentDependentContent(UIUtil.getHtmlBody(docInfo)));
+    assertEquals(htmlText, replaceEnvironmentDependentContent(UIUtil.getHtmlBodyWithoutPreWrapper(docInfo)));
   }
 
   private void doTestField() {

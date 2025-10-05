@@ -5,6 +5,7 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.bucketing.*;
@@ -136,22 +137,6 @@ public class TestCaseLoader {
     }
     return scheme;
   });
-
-  /**
-   * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).build();` instead
-   */
-  @Deprecated(forRemoval = true)
-  public TestCaseLoader(String classFilterName) {
-    this(classFilterName, false);
-  }
-
-  /**
-   * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).withForceLoadPerformanceTests(flag).build();` instead
-   */
-  @Deprecated(forRemoval = true)
-  public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
-    this(getFilter(getTestPatterns(), classFilterName, getTestGroups(), false), forceLoadPerformanceTests);
-  }
 
   private TestCaseLoader(TestClassesFilter filter, boolean forceLoadPerformanceTests) {
     myForceLoadPerformanceTests = forceLoadPerformanceTests;
@@ -618,7 +603,7 @@ public class TestCaseLoader {
     if (myGetClassesCalled) {
       throw new IllegalStateException("Cannot fill more classes after 'getClasses' was already called");
     }
-    final String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
+    String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
     boolean noRelevantJarsRoot = StringUtil.isEmptyOrSpaces(relevantJarsRoot);
     long t = System.nanoTime();
 

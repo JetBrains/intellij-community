@@ -1,0 +1,52 @@
+// FILE: first.before.kt
+// "Import operator 'MyIterator.next'" "true"
+// ERROR: None of the 'next()' functions is applicable for 'iterator()' of type 'MyIterator'
+// WITH_STDLIB
+// IGNORE_K1
+
+package bar
+
+import foo.MyClass
+import foo.iterator
+import foo.hasNext
+
+class UnrelatedIterator
+
+operator fun UnrelatedIterator.next(): String = "unrelated"
+
+fun foo(obj: MyClass) {
+    for (item in <caret>obj) {}
+}
+
+// FILE: second.kt
+package foo
+
+class MyClass
+
+operator fun MyClass.iterator(): MyIterator = MyIterator()
+
+class MyIterator
+
+operator fun MyIterator.hasNext(): Boolean = true
+operator fun MyIterator.next(): String = "item"
+
+// FILE: first.after.kt
+// "Import operator 'MyIterator.next'" "true"
+// ERROR: None of the 'next()' functions is applicable for 'iterator()' of type 'MyIterator'
+// WITH_STDLIB
+// IGNORE_K1
+
+package bar
+
+import foo.MyClass
+import foo.iterator
+import foo.hasNext
+import foo.next
+
+class UnrelatedIterator
+
+operator fun UnrelatedIterator.next(): String = "unrelated"
+
+fun foo(obj: MyClass) {
+    for (item in <caret>obj) {}
+}

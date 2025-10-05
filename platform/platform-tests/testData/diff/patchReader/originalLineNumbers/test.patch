@@ -1,0 +1,10 @@
+--- a/example.txt
++++ b/example.txt
+@@ -1,5 +1,6 @@
+ first line
+-second line
++second line modified
++new line added
+ third line
+ fourth line
+ fifth line

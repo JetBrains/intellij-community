@@ -26,3 +26,6 @@ val SeProviderId.isWildcard: Boolean
 @get:ApiStatus.Internal
 val SeProviderId.isText: Boolean
   get() = value == SeProviderIdUtils.TEXT_ID
+
+@ApiStatus.Internal
+fun String.toProviderId(): SeProviderId = SeProviderId(this)

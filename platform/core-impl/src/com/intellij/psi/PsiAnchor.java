@@ -3,7 +3,7 @@
 package com.intellij.psi;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
@@ -193,7 +193,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
                                @NotNull Identikit info,
                                @NotNull VirtualFile virtualFile) {
       myVirtualFile = virtualFile;
-      myContext = FileViewProviderUtil.getCodeInsightContext(file);
+      myContext = CodeInsightContextUtil.getCodeInsightContext(file);
       myProject = file.getProject();
       myStartOffset = startOffset;
       myEndOffset = endOffset;
@@ -307,7 +307,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
 
     private PsiFileReference(@NotNull VirtualFile file, @NotNull PsiFile psiFile) {
       myFile = file;
-      myContext = FileViewProviderUtil.getCodeInsightContext(psiFile);
+      myContext = CodeInsightContextUtil.getCodeInsightContext(psiFile);
       myProject = psiFile.getProject();
       myLanguage = findLanguage(psiFile);
     }
@@ -453,7 +453,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       myLanguage = language;
       myElementType = elementType;
       myVirtualFile = file.getVirtualFile();
-      myContext = FileViewProviderUtil.getCodeInsightContext(file);
+      myContext = CodeInsightContextUtil.getCodeInsightContext(file);
       if (file.getViewProvider() instanceof FreeThreadedFileViewProvider) {
         throw new IllegalArgumentException("Must not use StubIndexReference for injected file; take a closer look at HardReference instead");
       }

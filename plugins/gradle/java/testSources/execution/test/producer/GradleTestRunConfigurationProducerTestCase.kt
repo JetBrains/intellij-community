@@ -231,10 +231,10 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleRunConfigurati
       }
       withTask("testJar", "Jar") {
         code("dependsOn testClasses")
-        if (isGradleOlderThan("8.0")) {
-          assign("baseName", "test-${'$'}{project.archivesBaseName}")
-        } else {
-          assign("archiveBaseName", "test-${'$'}{project.archivesBaseName}")
+        when {
+          isGradleAtLeast("9.0") -> assign("archiveBaseName", "test-${'$'}{project.base.archivesName}")
+          isGradleAtLeast("8.0") -> assign("archiveBaseName", "test-${'$'}{project.archivesBaseName}")
+          else -> assign("baseName", "test-${'$'}{project.archivesBaseName}")
         }
         code("from sourceSets.test.output")
       }
@@ -246,7 +246,11 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleRunConfigurati
           code("tests testJar")
         }
         call("idea.module") {
-          code("testSourceDirs += file('automation')")
+          if (isGradleAtLeast("9.0")) {
+            code("testSources.from(files('automation'))")
+          } else {
+            code("testSourceDirs += file('automation')")
+          }
         }
       }
     }

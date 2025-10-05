@@ -1,19 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
-import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.mapModelsToViewModels
-import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -56,7 +51,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   private val discussion: GitLabMergeRequestDiscussion
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
   private val taskLauncher = SingleCoroutineLauncher(cs)
 
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
@@ -83,13 +78,13 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   override val replies: StateFlow<List<GitLabNoteViewModel>> = discussion.notes
     .map { it.drop(1) }
-    .mapModelsToViewModels { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser) }
+    .mapStatefulToStateful { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser) }
     .stateIn(cs, SharingStarted.Lazily, listOf())
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 
   override val isResolved: StateFlow<Boolean> = discussion.resolved
-  override val canChangeResolvedState: StateFlow<Boolean> = MutableStateFlow(discussion.canResolve)
+  override val canChangeResolvedState: StateFlow<Boolean> = discussion.resolvable.mapState { it && discussion.resolveAllowed }
 
   override val collapsible: Flow<Boolean> = isResolved
 

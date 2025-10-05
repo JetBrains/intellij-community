@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -26,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -66,8 +68,9 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
   private static final @NlsSafe String MAP_TYPE_TEXT = "Map";
   private static final @NlsSafe String[] MY_POSSIBLE_NAMES = new String[]{"attrs", "args", "params", "map"};
 
+  @VisibleForTesting
   @Override
-  protected void processIntention(final @NotNull PsiElement element, final @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  public void processIntention(final @NotNull PsiElement element, final @NotNull Project project, Editor editor) throws IncorrectOperationException {
     // Method or closure to be refactored
     final GrParameterListOwner owner = PsiTreeUtil.getParentOfType(element, GrParameterListOwner.class);
     final Collection<PsiElement> occurrences = new ArrayList<>();
@@ -162,6 +165,8 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
                                          final boolean createNewFirstParam,
                                          final @Nullable String mapParamName,
                                          final boolean specifyMapType) {
+    PsiFile file = element.getContainingFile();
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final GrParameter param = getAppropriateParameter(element);
     assert param != null;
     final String paramName = param.getName();
@@ -455,8 +460,9 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
     return result.get().booleanValue();
   }
 
+  @VisibleForTesting
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new MyPsiElementPredicate();
   }
 
@@ -476,6 +482,7 @@ public final class ConvertParameterToMapEntryIntention extends Intention {
       }
       if (parameter == null) return false;
       if (parameter.isOptional()) return false;
+      if (parameter.isUnnamed()) return false;
 
       GrParameterListOwner owner = PsiTreeUtil.getParentOfType(element, GrParameterListOwner.class);
       return owner != null && checkForMapParameters(owner);

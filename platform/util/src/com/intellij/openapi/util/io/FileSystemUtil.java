@@ -3,7 +3,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.system.OS;
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase;
@@ -33,10 +33,7 @@ public final class FileSystemUtil {
   /** Please use NIO API instead ({@link Files}, etc.) */
   @ApiStatus.Obsolete
   public static @Nullable FileAttributes getAttributes(@NotNull String path) {
-    if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
-      LOG.error("Incomplete Windows path: " + path);
-      path += '\\';
-    }
+    path = normalizePath(path);
     try {
       return getAttributes(Paths.get(path));
     }
@@ -44,6 +41,13 @@ public final class FileSystemUtil {
       LOG.debug(e);
       return null;
     }
+  }
+
+  private static String normalizePath(@NotNull String path) {
+    if (OS.CURRENT == OS.Windows && path.length() == 2 && path.charAt(1) == ':') {
+      path += '\\';
+    }
+    return path;
   }
 
   /** Please use NIO API instead ({@link Files}, etc.) */
@@ -92,8 +96,7 @@ public final class FileSystemUtil {
 
   private static @Nullable FileAttributes getAttributes(Path path) {
     try {
-      BasicFileAttributes attributes = NioFiles.readAttributes(path);
-      return attributes == NioFiles.BROKEN_SYMLINK ? com.intellij.openapi.util.io.FileAttributes.BROKEN_SYMLINK : com.intellij.openapi.util.io.FileAttributes.fromNio(path, attributes);
+      return getAttributesNotNull(path);
     }
     catch (NoSuchFileException e) {
       LOG.trace(e.getClass().getName() + ": " + path);
@@ -103,6 +106,13 @@ public final class FileSystemUtil {
       LOG.debug(path.toString(), e);
       return null;
     }
+  }
+
+  private static @NotNull FileAttributes getAttributesNotNull(Path path) throws IOException {
+    BasicFileAttributes attributes = NioFiles.readAttributes(path);
+    return attributes == NioFiles.BROKEN_SYMLINK
+           ? com.intellij.openapi.util.io.FileAttributes.BROKEN_SYMLINK
+           : com.intellij.openapi.util.io.FileAttributes.fromNio(path, attributes);
   }
 
   private static @Nullable String resolveSymLink(Path path) {
@@ -129,22 +139,15 @@ public final class FileSystemUtil {
   @ApiStatus.Internal
   public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull java.io.File anyChild) {
     FileAttributes.CaseSensitivity detected = readCaseSensitivityByNativeAPI(anyChild);
-    if (detected != com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN) return detected;
+    if (detected.isKnown()) return detected;
     // native queries failed, fallback to the Java I/O:
-    return readParentCaseSensitivityByJavaIO(anyChild);
+    return readCaseSensitivityByJavaIO(anyChild);
   }
 
   @VisibleForTesting
   @ApiStatus.Internal
-  public static @NotNull FileAttributes.CaseSensitivity readParentCaseSensitivityByJavaIO(@NotNull java.io.File anyChild) {
+  public static @NotNull FileAttributes.CaseSensitivity readCaseSensitivityByJavaIO(@NotNull java.io.File anyChild) {
     // try to query this path by different-case strings and deduce case sensitivity from the answers
-    if (!anyChild.exists()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): does not exist");
-      }
-      return FileAttributes.CaseSensitivity.UNKNOWN;
-    }
-
     java.io.File parent = anyChild.getParentFile();
     if (parent == null) {
       String probe = findCaseToggleableChild(anyChild);
@@ -184,10 +187,32 @@ public final class FileSystemUtil {
       altName = toggleCase(name);
     }
 
-    String altPath = parent.getPath() + '/' + altName;
-    FileAttributes newAttributes = getAttributes(altPath);
-
     try {
+      String altPath = normalizePath(parent.getPath() + '/' + altName);
+      FileAttributes newAttributes;
+
+      try {
+        newAttributes = getAttributesNotNull(Paths.get(altPath));
+      }
+      catch (NoSuchFileException e) {
+        if (!anyChild.exists()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("readParentCaseSensitivityByJavaIO(" + anyChild + "): does not exist");
+          }
+          return FileAttributes.CaseSensitivity.UNKNOWN;
+        }
+        LOG.trace(e.getClass().getName() + ": " + altPath);
+        newAttributes = null;
+      }
+      catch (IOException e) {
+        LOG.debug(altPath, e);
+        newAttributes = null;
+      }
+      catch (InvalidPathException e) {
+        LOG.debug(e);
+        newAttributes = null;
+      }
+
       if (newAttributes == null) {
         // couldn't find this file by other-cased name, so deduce FS is sensitive
         return FileAttributes.CaseSensitivity.SENSITIVE;
@@ -213,21 +238,20 @@ public final class FileSystemUtil {
   @VisibleForTesting
   @ApiStatus.Internal
   public static @NotNull FileAttributes.CaseSensitivity readCaseSensitivityByNativeAPI(@NotNull java.io.File anyChild) {
-    FileAttributes.CaseSensitivity detected = com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
     if (JnaLoader.isLoaded()) {
       java.io.File parent = anyChild.getParentFile();
       String path = (parent != null ? parent : anyChild).getAbsolutePath();
-      if (SystemInfo.isWin10OrNewer && WINDOWS_CS_API_AVAILABLE) {
-        detected = OSAgnosticPathUtil.isAbsoluteDosPath(path) ? getNtfsCaseSensitivity(path) : com.intellij.openapi.util.io.FileAttributes.CaseSensitivity.UNKNOWN;
+      if (OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(10, 0) && WINDOWS_CS_API_AVAILABLE && OSAgnosticPathUtil.isAbsoluteDosPath(path)) {
+        return getNtfsCaseSensitivity(path);
       }
-      else if (SystemInfo.isMac && MAC_CS_API_AVAILABLE) {
-        detected = getMacOsCaseSensitivity(path);
+      else if (OS.CURRENT == OS.macOS && MAC_CS_API_AVAILABLE) {
+        return getMacOsCaseSensitivity(path);
       }
-      else if (SystemInfo.isLinux && LINUX_CS_API_AVAILABLE) {
-        detected = getLinuxCaseSensitivity(path);
+      else if (OS.CURRENT == OS.Linux && LINUX_CS_API_AVAILABLE) {
+        return getLinuxCaseSensitivity(path);
       }
     }
-    return detected;
+    return FileAttributes.CaseSensitivity.UNKNOWN;
   }
 
   private static String toggleCase(String name) {

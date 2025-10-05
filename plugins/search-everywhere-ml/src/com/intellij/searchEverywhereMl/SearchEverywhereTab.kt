@@ -5,7 +5,6 @@ import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributo
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment.ExperimentType
 import com.intellij.util.PlatformUtils
@@ -27,6 +26,8 @@ sealed interface SearchEverywhereTab {
    * and define the mapping of experiment groups to the experiment that should be performed.
    */
   sealed interface TabWithExperiments : TabWithLogging {
+    val disableExperimentRegistryKey: String
+
     @get:VisibleForTesting
     val experiments: Map<Int, ExperimentType>
 
@@ -95,7 +96,6 @@ sealed interface SearchEverywhereTab {
      */
     val isMlRankingEnabled: Boolean
       get() {
-        val isMlRankingEnabledByDefault = AdvancedSettings.getDefaultBoolean(advancedSettingKey)
         val isMlRankingEnabled = AdvancedSettings.getBoolean(advancedSettingKey)
 
         val experiment = currentExperimentType
@@ -113,6 +113,13 @@ sealed interface SearchEverywhereTab {
 
         return experiment.shouldSortByMl
       }
+
+    /**
+     * Indicates whether Machine Learning (ML) ranking is enabled by default for this tab.
+     * It does NOT indicate if the ML ranking is currently enabled, for that, use [isMlRankingEnabled] instead.
+     */
+    val isMlRankingEnabledByDefault: Boolean
+      get() = AdvancedSettings.getDefaultBoolean(advancedSettingKey)
 
     /**
      * Indicates whether the experimental model is being used for the current tab.
@@ -138,17 +145,19 @@ sealed interface SearchEverywhereTab {
     override val tabId: String = ALL_CONTRIBUTORS_GROUP_ID
     override val advancedSettingKey: String = "searcheverywhere.ml.sort.all"
     override val localModelPathRegistryKey: String = "search.everywhere.ml.all.model.path"
+    override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.all.ml"
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.EssentialContributorPrediction,
-      2 to ExperimentType.ExperimentalModel,
+      2 to ExperimentType.CombinedExperiment,
     )
 
 
     override val currentExperimentType: ExperimentType
       get() {
         val experimentType = super.currentExperimentType
-        if (experimentType == ExperimentType.EssentialContributorPrediction) {
+        if (experimentType == ExperimentType.EssentialContributorPrediction ||
+            experimentType == ExperimentType.CombinedExperiment) {
           if (SearchEverywhereMlRegistry.disableEssentialContributorsExperiment) {
             return ExperimentType.NoExperiment
           }
@@ -162,38 +171,22 @@ sealed interface SearchEverywhereTab {
     override val tabId: String = ActionSearchEverywhereContributor::class.java.simpleName
     override val advancedSettingKey: String = "searcheverywhere.ml.sort.action"
     override val localModelPathRegistryKey: String = "search.everywhere.ml.action.model.path"
+    override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.action.ml"
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.ExactMatchManualFix,
       2 to ExperimentType.NoMl,
-      3 to ExperimentType.Typos,
     )
 
     override val useExperimentalModel: Boolean
       get() = super.useExperimentalModel || isSemanticSearchExperiment
-
-    override val currentExperimentType: ExperimentType
-      get() {
-        val experimentType = super.currentExperimentType
-        try {
-          if (experimentType == ExperimentType.Typos) {
-            val enabled = AdvancedSettings.getBoolean("searcheverywhere.ml.typos.enable")
-            if (!enabled) return ExperimentType.NoExperiment
-          }
-        } catch (ex: IllegalArgumentException) {
-          thisLogger().error("Exception thrown while getting typos advanced setting. " +
-                             "The typos submodule may be missing.", ex)
-          return ExperimentType.NoExperiment
-        }
-
-        return experimentType
-      }
   }
 
   object Classes : TabWithMlRanking {
     override val tabId: String = ClassSearchEverywhereContributor::class.java.simpleName
     override val advancedSettingKey: String = "searcheverywhere.ml.sort.classes"
     override val localModelPathRegistryKey: String = "search.everywhere.ml.classes.model.path"
+    override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.classes.ml"
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.SemanticSearch,
@@ -210,6 +203,7 @@ sealed interface SearchEverywhereTab {
     override val tabId: String = FileSearchEverywhereContributor::class.java.simpleName
     override val advancedSettingKey: String = "searcheverywhere.ml.sort.files"
     override val localModelPathRegistryKey: String = "search.everywhere.ml.files.model.path"
+    override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.files.ml"
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.SemanticSearch,
@@ -222,6 +216,7 @@ sealed interface SearchEverywhereTab {
 
   object Symbols : TabWithExperiments {
     override val tabId: String = SymbolSearchEverywhereContributor::class.java.simpleName
+    override val disableExperimentRegistryKey: String = "search.everywhere.force.disable.experiment.symbols.ml"
 
     override val experiments: Map<Int, ExperimentType> = mapOf(
       1 to ExperimentType.SemanticSearch
@@ -325,23 +320,13 @@ val SearchEverywhereTab.TabWithExperiments.isSemanticSearchExperiment: Boolean
  *
  * This property checks the current experimental type associated with the tab. If the experiment
  * type corresponds to [ExperimentType.EssentialContributorPrediction], it returns `true`.
+ * It also returns `true` for [ExperimentType.CombinedExperiment], which combines both
+ * EssentialContributorPrediction and ExperimentalModel functionality.
  * Otherwise, it returns `false`.
  *
  * The "Essential Contributor Prediction" experiment is designed to improve search result rankings
  * by prioritizing essential contributors during retrieval.
  */
 val SearchEverywhereTab.All.isEssentialContributorPredictionExperiment: Boolean
-  get() = this.currentExperimentType == ExperimentType.EssentialContributorPrediction
-
-/**
- * Indicates whether the current tab's active experiment is configured to handle typo-related scenarios.
- *
- * This property evaluates the `currentExperimentType` of the `Actions` tab and returns `true`
- * if the active experiment type corresponds to [ExperimentType.Typos], otherwise it returns `false`.
- *
- * Typo-related experiments aim to improve the behavior of the search functionality by accounting
- * for user typos and providing more accurate results in such scenarios. This enables testing
- * and evaluation of enhanced typo-tolerant features during experimental cycles.
- */
-val SearchEverywhereTab.Actions.isTypoExperiment: Boolean
-  get() = this.currentExperimentType == ExperimentType.Typos
+  get() = this.currentExperimentType == ExperimentType.EssentialContributorPrediction || 
+          this.currentExperimentType == ExperimentType.CombinedExperiment

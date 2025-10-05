@@ -195,16 +195,11 @@ public final class LambdaCanBeMethodReferenceInspection extends AbstractBaseJava
     final int calledParametersCount = psiMethod.getParameterList().getParametersCount();
     final PsiExpression[] expressions = argumentList.getExpressions();
 
-    final PsiExpression qualifier;
-    if (callExpression instanceof PsiMethodCallExpression) {
-      qualifier = ((PsiMethodCallExpression)callExpression).getMethodExpression().getQualifierExpression();
-    }
-    else if (callExpression instanceof PsiNewExpression) {
-      qualifier = ((PsiNewExpression)callExpression).getQualifier();
-    }
-    else {
-      qualifier = null;
-    }
+    final PsiExpression qualifier = switch (callExpression) {
+      case PsiMethodCallExpression expression -> expression.getMethodExpression().getQualifierExpression();
+      case PsiNewExpression expression -> expression.getQualifier();
+      default -> null;
+    };
 
     if (expressions.length == 0 && parameters.length == 0) {
       return !(callExpression instanceof PsiNewExpression && qualifier != null);
@@ -582,7 +577,7 @@ public final class LambdaCanBeMethodReferenceInspection extends AbstractBaseJava
    * @return true if given variable is annotated or its type is annotated
    */
   private static boolean hasAnnotation(PsiVariable p) {
-    if (p.getAnnotations().length > 0) return true;
+    if (p.hasAnnotations()) return true;
     PsiTypeElement typeElement = p.getTypeElement();
     return typeElement != null && !typeElement.isInferredType() && PsiTypesUtil.hasTypeAnnotation(typeElement.getType());
   }

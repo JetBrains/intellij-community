@@ -56,7 +56,7 @@ object ZipTestBenchmarkMPf {
 }
 
 private val largeModules = listOf("intellij.ruby", "intellij.python.helpers", "intellij.android.core", "intellij.platform.ide.impl",
-                                  "intellij.javascript.impl", "intellij.platform.lang.impl", "intellij.php.impl", "intellij.rider")
+                                  "intellij.javascript.backend", "intellij.platform.lang.impl", "intellij.php.impl", "intellij.rider")
 
 private suspend fun measure(useMapped: Boolean) {
   val tempDir = Files.createTempDirectory("zip-measure-")

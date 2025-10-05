@@ -11,7 +11,10 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.isCondaVirtualEnv
+import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.PythonSdkUtil.isRemote
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -121,8 +124,8 @@ fun groupModuleSdksByTypes(allSdks: List<Sdk>, module: Module?, invalid: (Sdk) -
     .filter { !it.isAssociatedWithAnotherModule(module) && !invalid(it) }
     .groupBy {
       when {
-        PythonSdkUtil.isVirtualEnv(it) || PythonSdkUtil.isCondaVirtualEnv(it) -> PyRenderedSdkType.VIRTUALENV
-        PythonSdkUtil.isRemote(it) -> PyRenderedSdkType.REMOTE
+        it.isVirtualEnv || it.isCondaVirtualEnv -> PyRenderedSdkType.VIRTUALENV
+        isRemote(it) -> PyRenderedSdkType.REMOTE
         else -> PyRenderedSdkType.SYSTEM
       }
     }
@@ -145,10 +148,12 @@ private fun wrapIconWithWarningDecorator(icon: Icon): LayeredIcon =
     setIcon(AllIcons.Actions.Cancel, 1)
   }
 
-internal fun SimpleColoredComponent.customizeWithSdkValue(value: Any?,
-                                                          nullSdkName: @Nls String,
-                                                          nullSdkValue: Sdk?,
-                                                          actualSdkName: String? = null) {
+internal fun SimpleColoredComponent.customizeWithSdkValue(
+  value: Any?,
+  nullSdkName: @Nls String,
+  nullSdkValue: Sdk?,
+  actualSdkName: String? = null,
+) {
   when (value) {
     is PySdkToInstall -> {
       value.renderInList(this)

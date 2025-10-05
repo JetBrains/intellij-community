@@ -9,7 +9,10 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -214,10 +217,8 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
       Value returnValue = methodValuePair.getSecond();
       // try to keep the value as early as possible
-      try {
-        evaluationContext.keep(returnValue);
-      }
-      catch (ObjectCollectedException ignored) {
+      if (returnValue instanceof ObjectReference returnValueObject) {
+        evaluationContext.getSuspendContext().keepAsync(returnValueObject);
       }
       ValueDescriptorImpl returnValueDescriptor =
         myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), returnValue);
@@ -275,7 +276,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       catch (EvaluateException e) {
         node.setErrorMessage(e.getMessage());
       }
-      DebuggerUtilsImpl.forEachSafe(ExtraDebugNodesProvider.getProviders(), p -> p.addExtraNodes(evaluationContext, children));
+      DebuggerUtils.forEachSafe(ExtraDebugNodesProvider.getProviders(), p -> p.addExtraNodes(evaluationContext, children));
     }
     catch (InvalidStackFrameException e) {
       LOG.info(e);
@@ -410,12 +411,12 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     Set<String> alreadyCollected = new HashSet<>(usedVars.first);
     usedVars.second.stream().map(TextWithImports::getText).forEach(alreadyCollected::add);
     Set<TextWithImports> extra = new HashSet<>();
-    DebuggerUtilsImpl.forEachSafe(FrameExtraVariablesProvider.EP_NAME,
-                                  provider -> {
-                                    if (provider.isAvailable(sourcePosition, evalContext)) {
-                                      extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
-                                    }
-                                  });
+    DebuggerUtils.forEachSafe(FrameExtraVariablesProvider.EP_NAME,
+                              provider -> {
+                                if (provider.isAvailable(sourcePosition, evalContext)) {
+                                  extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
+                                }
+                              });
     return extra;
   }
 

@@ -43,7 +43,7 @@ public final class MethodNameSameAsParentNameInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MethodNameSameAsParentClassNameVisitor();
   }
 

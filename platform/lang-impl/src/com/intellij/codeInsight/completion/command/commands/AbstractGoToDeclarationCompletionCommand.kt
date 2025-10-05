@@ -18,7 +18,7 @@ abstract class AbstractGoToDeclarationCompletionCommandProvider :
                         previewText = ActionsBundle.message("action.GotoDeclaration.description")) {
 
   final override fun supportsReadOnly(): Boolean = true
-
+  final override fun supportsInjected(): Boolean = true
   final override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     return super.isApplicable(offset, psiFile, editor) && hasToShow(offset, psiFile)
   }
@@ -37,6 +37,6 @@ abstract class AbstractGoToDeclarationCompletionCommandProvider :
   abstract fun canNavigateToDeclaration(context: PsiElement): Boolean
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
-    return createCommandWithNameIdentifier(context)
+    return createCommandWithNameIdentifierAndLastAdjusted(context)
   }
 }

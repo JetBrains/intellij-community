@@ -1,8 +1,9 @@
 ### auto-generated section `build intellij.platform.compose.compilerPlugin` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "compiler-plugin",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 ### auto-generated section `build intellij.platform.compose.compilerPlugin` end

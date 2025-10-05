@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 class MergeElseIfIntention : SelfTargetingIntention<KtIfExpression>(
   KtIfExpression::class.java,
-  KotlinBundle.lazyMessage("merge.else.if")
+  KotlinBundle.messagePointer("merge.else.if")
 ) {
     override fun isApplicableTo(element: KtIfExpression, caretOffset: Int): Boolean {
         val elseBody = element.`else` ?: return false

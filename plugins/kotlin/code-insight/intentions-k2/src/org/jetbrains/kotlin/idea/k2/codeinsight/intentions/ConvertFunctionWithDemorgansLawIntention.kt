@@ -81,7 +81,10 @@ internal sealed class ConvertFunctionWithDemorgansLawIntention(
 
         val callOrQualified = element.getQualifiedExpressionForSelectorOrThis()
         val skippedParenthesisUp = callOrQualified.parents.dropWhile { it is KtParenthesizedExpression }.firstOrNull()
-        val parentNotCall = (skippedParenthesisUp as? KtQualifiedExpression)?.callExpression?.isCalling(notSequence) == true
+        val parentNotCall =
+            (skippedParenthesisUp as? KtQualifiedExpression)
+                ?.callExpression
+                ?.isCallingAnyOf(StandardKotlinNames.Boolean.not) == true
 
         val operands = if (negatePredicate) {
             negate(functionPredicate)?.takeIf { it.isNotEmpty() } ?: return null
@@ -197,8 +200,6 @@ private val standardFunctions: Map<String, List<FqName>> = listOf(StandardKotlin
 }
 
 private val functions: Map<String, List<FqName>> = collectionFunctions + standardFunctions
-
-private val notSequence = listOf(StandardKotlinNames.Boolean.not)
 
 private data class Conversion(
     val fromFunctionName: String, val toFunctionName: String, val negateCall: Boolean, val negatePredicate: Boolean

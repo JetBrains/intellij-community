@@ -3,20 +3,24 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_kernel",
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
     "kotlin.concurrent.atomics.ExperimentalAtomicApi",
-  ]
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
 )
 
 jvm_library(
   name = "kernel",
   module_name = "fleet.kernel",
   visibility = ["//visibility:public"],
-  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
-  kotlinc_opts = ":custom",
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_kernel",
   deps = [
     "@lib//:kotlin-stdlib",
     "//fleet/rhizomedb",
@@ -29,6 +33,8 @@ jvm_library(
     "//fleet/reporting/shared",
     "//fleet/multiplatform.shims",
     "@lib//:fastutil-min",
+    "//fleet/bifurcan",
+    "//fleet/fastutil",
   ],
   exports = [
     "//fleet/rhizomedb",

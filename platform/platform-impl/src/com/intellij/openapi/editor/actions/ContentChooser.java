@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -136,22 +135,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-          int newSelectionIndex = -1;
-          for (Item o : myList.getSelectedValuesList()) {
-            int i = o.index;
-            removeContentAt(myAllContents.get(i));
-            if (newSelectionIndex < 0) {
-              newSelectionIndex = i;
-            }
-          }
-
-          rebuildListContent();
-          if (myAllContents.isEmpty()) {
-            close(CANCEL_EXIT_CODE);
-            return;
-          }
-          newSelectionIndex = Math.min(newSelectionIndex, myAllContents.size() - 1);
-          myList.setSelectedIndex(newSelectionIndex);
+          deleteSelectedItems();
         }
         else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
           doOKAction();
@@ -190,9 +174,16 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         }
       }
     });
-
-    mySplitter.setFirstComponent(ListWithFilter.wrap(
-      myList, ScrollPaneFactory.createScrollPane(myList), o -> o.getShortText(renderer.previewChars), true));
+    JComponent listWithToolbar = ToolbarDecorator.createDecorator(myList)
+      .disableUpDownActions()
+      .setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          deleteSelectedItems();
+        }
+      })
+      .createPanel();
+    mySplitter.setFirstComponent(listWithToolbar);
     mySplitter.setSecondComponent(new JPanel());
     mySplitter.getFirstComponent().addComponentListener(new ComponentAdapter() {
       @Override
@@ -223,6 +214,25 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     d.restoreSplitterProportions(mySplitter);
 
     return mySplitter;
+  }
+
+  private void deleteSelectedItems() {
+    int newSelectionIndex = -1;
+    for (Item o : myList.getSelectedValuesList()) {
+      int i = o.index;
+      removeContentAt(myAllContents.get(i));
+      if (newSelectionIndex < 0) {
+        newSelectionIndex = i;
+      }
+    }
+
+    rebuildListContent();
+    if (myAllContents.isEmpty()) {
+      close(CANCEL_EXIT_CODE);
+      return;
+    }
+    newSelectionIndex = Math.min(newSelectionIndex, myAllContents.size() - 1);
+    myList.setSelectedIndex(newSelectionIndex);
   }
 
   protected abstract void removeContentAt(final Data content);
@@ -301,9 +311,9 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       index++;
     }
     myAllContents = contents;
-    FilteringListModel<Item> listModel = (FilteringListModel<Item>)myList.getModel();
-    ((CollectionListModel<?>)listModel.getOriginalModel()).removeAll();
-    listModel.addAll(items);
+    CollectionListModel<Item> listModel = (CollectionListModel<Item>)myList.getModel();
+    listModel.removeAll();
+    listModel.addAll(0, items);
     ListWithFilter<?> listWithFilter = ComponentUtil.getParentOfType(ListWithFilter.class, myList);
     if (listWithFilter != null) {
       listWithFilter.getSpeedSearch().update();

@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ignore.cache.PatternCache;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntryDirectory;
@@ -47,7 +46,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -62,36 +63,42 @@ public final class IgnoreDirectoryMarkerProvider extends LineMarkerProviderDescr
     return null;
   }
 
+  private record IgnoreFileRecord(@NotNull IgnoreEntryFile entry, @NotNull Pattern pattern) {}
   @Override
   public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    if (elements.isEmpty()) return;
+    Collection<IgnoreFileRecord> ignoreEntryFiles = new HashSet<>(elements.size());
+    List<IgnoreEntryFile> ignoreEntryDirectories = new ArrayList<>(elements.size());
+    Project project = elements.get(0).getProject();
+    PatternCache patternCache = PatternCache.getInstance(project);
+    VirtualFile parent = elements.get(0).getContainingFile().getVirtualFile().getParent();
+    VirtualFile projectDir = project.getBaseDir();
+    boolean isRootFile = parent == null || projectDir == null;
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
-      if (!(element instanceof IgnoreEntryFile)) {
-        continue;
-      }
-
-      boolean isDirectory = element instanceof IgnoreEntryDirectory;
-
-      if (!isDirectory) {
-        IgnoreEntryFile entry = (IgnoreEntryFile)element;
-        VirtualFile parent = element.getContainingFile().getVirtualFile().getParent();
-        Project project = element.getProject();
-        VirtualFile projectDir = project.getBaseDir();
-        if (parent == null || projectDir == null) {
-          continue;
+      if (element instanceof IgnoreEntryFile entry) {
+        if (entry instanceof IgnoreEntryDirectory dir) {
+          ignoreEntryDirectories.add(dir);
         }
-
-        PatternCache patternCache = PatternCache.getInstance(element.getProject());
-        Pattern pattern = patternCache.createPattern(entry);
-        isDirectory = pattern != null && isDirectoryExist(parent, pattern);
-      }
-
-      if (isDirectory) {
-        final PsiElement leafElement = firstLeafOrNull(element);
-        if (leafElement != null) {
-          result.add(new LineMarkerInfo<>(leafElement, element.getTextRange(),
-                                          PlatformIcons.FOLDER_ICON, null, null, GutterIconRenderer.Alignment.CENTER));
+        else {
+          Pattern pattern = patternCache.createPattern(entry);
+          if (pattern != null && !isRootFile) {
+            ignoreEntryFiles.add(new IgnoreFileRecord(entry, pattern));
+          }
         }
+      }
+    }
+
+    if (!ignoreEntryFiles.isEmpty()) {
+      computerDirectoriesExist(parent, ignoreEntryFiles, ignoreEntryDirectories);
+    }
+
+    for (IgnoreEntryFile directory : ignoreEntryDirectories) {
+      ProgressManager.checkCanceled();
+      final PsiElement leafElement = firstLeafOrNull(directory);
+      if (leafElement != null) {
+        result.add(new LineMarkerInfo<>(leafElement, directory.getTextRange(),
+                                        PlatformIcons.FOLDER_ICON, null, null, GutterIconRenderer.Alignment.CENTER));
       }
     }
   }
@@ -111,17 +118,25 @@ public final class IgnoreDirectoryMarkerProvider extends LineMarkerProviderDescr
     return firstLeaf != null ? firstLeaf.getPsi() : null;
   }
 
-  private static boolean isDirectoryExist(@NotNull VirtualFile root, @NotNull Pattern pattern) {
-    Ref<Boolean> found = Ref.create(false);
-    VfsUtilCore.iterateChildrenRecursively(root, file -> file.isDirectory(), (dir) -> {
+  private static void computerDirectoriesExist(@NotNull VirtualFile root, @NotNull Collection<IgnoreFileRecord> fileRecords,
+                                               @NotNull List<? super IgnoreEntryFile> ignoreEntryDirectories) {
+    VfsUtilCore.iterateChildrenRecursively(root, file -> file.isDirectory(), dir -> {
       ProgressManager.checkCanceled();
       String path = VfsUtilCore.getRelativePath(dir, root);
-      if (path != null && RegexUtil.match(pattern, path)) {
-        found.set(true);
-        return false;
+      if (path != null) {
+        for (IgnoreFileRecord fileRecord : fileRecords) {
+          if (RegexUtil.match(fileRecord.pattern, path)) {
+            // directory matched, add it to the directory list
+            fileRecords.remove(fileRecord);
+            ignoreEntryDirectories.add(fileRecord.entry());
+            if (fileRecords.isEmpty()) {
+              return false;
+            }
+            break;
+          }
+        }
       }
       return true;
     });
-    return found.get();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
 import org.jetbrains.annotations.ApiStatus
@@ -23,23 +23,28 @@ class RollingFileHandler @JvmOverloads constructor(
   private var rotateFailed: Boolean = false
 
   private class MeteredOutputStream(private val delegate: OutputStream, @Volatile var written: Long) : OutputStream() {
+    @Throws(IOException::class)
     override fun write(b: Int) {
       delegate.write(b)
       written++
     }
 
+    @Throws(IOException::class)
     override fun write(b: ByteArray) {
       delegate.write(b)
       written += b.size
     }
 
+    @Throws(IOException::class)
     override fun write(b: ByteArray, off: Int, len: Int) {
       delegate.write(b, off, len)
       written += len
     }
 
+    @Throws(IOException::class)
     override fun close() = delegate.close()
 
+    @Throws(IOException::class)
     override fun flush() = delegate.flush()
   }
 
@@ -50,7 +55,7 @@ class RollingFileHandler @JvmOverloads constructor(
 
   private fun open(append: Boolean) {
     Files.createDirectories(logPath.parent)
-    val delegate = BufferedOutputStream(Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND))
+    val delegate = BufferedOutputStream(Files.newOutputStream(logPath, StandardOpenOption.CREATE, if (append) StandardOpenOption.APPEND else StandardOpenOption.TRUNCATE_EXISTING))
     meter = MeteredOutputStream(delegate, if (append) Files.size(logPath) else 0)
     setOutputStream(meter)
   }
@@ -95,7 +100,8 @@ class RollingFileHandler @JvmOverloads constructor(
       e
     }
 
-    open(false)
+    // Truncate log if we successfully created .1 file
+    open(e != null)
 
     if (e == null) {
       rotateFailed = false
@@ -116,6 +122,6 @@ class RollingFileHandler @JvmOverloads constructor(
   private fun logPathWithIndex(index: Int): Path {
     val pathString = logPath.toString()
     val extIndex = pathString.lastIndexOf('.')
-    return Paths.get(pathString.substring(0, extIndex) + ".$index" + pathString.substring(extIndex))
+    return Paths.get(pathString.take(extIndex) + '.' + index + pathString.substring(extIndex))
   }
 }

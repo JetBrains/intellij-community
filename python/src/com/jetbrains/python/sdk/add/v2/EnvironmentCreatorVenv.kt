@@ -74,7 +74,6 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
       versionComboBox = pythonInterpreterComboBox(
         title = message("sdk.create.custom.base.python"),
         selectedSdkProperty = model.state.baseInterpreter,
-        model = model,
         validationRequestor = validationRequestor,
         onPathSelected = model::addInterpreter,
       )

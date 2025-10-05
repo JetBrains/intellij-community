@@ -17,29 +17,35 @@ public class ElementSnapshotDeltaImpl<T extends ExternalizableGraphElement> impl
   private final ElementSnapshot<T> myBaseSnapshot;
   private final Iterable<T> myDeleted;
   private final Iterable<T> myModified;
+  private final Iterable<T> myChanged;
 
   public ElementSnapshotDeltaImpl(ElementSnapshot<T> base) {
     myBaseSnapshot = base;
     myDeleted = Set.of();
     myModified = Set.of();
+    myChanged = Set.of();
   }
 
   public ElementSnapshotDeltaImpl(ElementSnapshot<T> pastSnapshot, ElementSnapshot<T> presentSnapshot) {
     myBaseSnapshot = presentSnapshot;
     Iterable<T> modified;
+    Iterable<T> changed;
     Iterable<T> deleted;
     if (!isEmpty(pastSnapshot.getElements())) {
       Difference.Specifier<@NotNull T, Difference> diff = Difference.deepDiff(
         pastSnapshot.getElements(), presentSnapshot.getElements(), T::equals, T::hashCode, (pastElem, presentElem) -> () -> Objects.equals(pastSnapshot.getDigest(pastElem), presentSnapshot.getDigest(presentElem))
       );
       deleted = collect(diff.removed(), new HashSet<>());
-      modified = collect(flat(map(diff.changed(), Difference.Change::getPast), diff.added()), new HashSet<>());
+      changed = collect(map(diff.changed(), Difference.Change::getPast), new HashSet<>());
+      modified = collect(flat(changed, diff.added()), new HashSet<>());
     }
     else {
       deleted = Set.of();
+      changed = Set.of();
       modified = presentSnapshot.getElements();
     }
     myModified = modified;
+    myChanged = changed;
     myDeleted = deleted;
   }
 
@@ -56,5 +62,10 @@ public class ElementSnapshotDeltaImpl<T extends ExternalizableGraphElement> impl
   @Override
   public @NotNull Iterable<@NotNull T> getModified() {
     return myModified;
+  }
+
+  @Override
+  public @NotNull Iterable<@NotNull T> getChanged() {
+    return myChanged;
   }
 }

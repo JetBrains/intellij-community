@@ -62,7 +62,7 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  protected String suggestPrefix(@NotNull CompletionParameters parameters) {
+  protected @NotNull String suggestPrefix(@NotNull CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
     final int offset = parameters.getOffset();
     TextRange range = position.getTextRange();
@@ -82,8 +82,10 @@ public class BaseCompletionService extends CompletionService {
 
   @Override
   @ApiStatus.Internal
-  public CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<? super CompletionResult> consumer,
-                                                @NotNull CompletionContributor contributor, PrefixMatcher matcher) {
+  public @NotNull CompletionResultSet createResultSet(@NotNull CompletionParameters parameters,
+                                                      @NotNull Consumer<? super CompletionResult> consumer,
+                                                      @NotNull CompletionContributor contributor,
+                                                      @NotNull PrefixMatcher matcher) {
     return new BaseCompletionResultSet(consumer, matcher, contributor, parameters, null, null);
   }
 
@@ -98,9 +100,12 @@ public class BaseCompletionService extends CompletionService {
     protected final @Nullable BaseCompletionService.BaseCompletionResultSet myOriginal;
     private int itemCounter = 0;
 
-    protected BaseCompletionResultSet(java.util.function.Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
-                                      CompletionContributor contributor, CompletionParameters parameters,
-                                      @Nullable CompletionSorter sorter, @Nullable BaseCompletionService.BaseCompletionResultSet original) {
+    protected BaseCompletionResultSet(@NotNull java.util.function.Consumer<? super CompletionResult> consumer,
+                                      @NotNull PrefixMatcher prefixMatcher,
+                                      @Nullable CompletionContributor contributor,
+                                      @NotNull CompletionParameters parameters,
+                                      @Nullable CompletionSorter sorter,
+                                      @Nullable BaseCompletionService.BaseCompletionResultSet original) {
       super(prefixMatcher, consumer, contributor);
       this.parameters = parameters;
       this.sorter = sorter;
@@ -127,12 +132,10 @@ public class BaseCompletionService extends CompletionService {
     @Override
     public void passResult(@NotNull CompletionResult result) {
       LookupElement element = result.getLookupElement();
-      if (element != null) {
-        element.putUserDataIfAbsent(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
-        element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
-        element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, itemCounter);
-        itemCounter += 1;
-      }
+      element.putUserDataIfAbsent(LOOKUP_ELEMENT_CONTRIBUTOR, contributor);
+      element.putUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS, System.currentTimeMillis());
+      element.putUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER, itemCounter);
+      itemCounter += 1;
       super.passResult(result);
     }
 
@@ -178,7 +181,7 @@ public class BaseCompletionService extends CompletionService {
     }
 
     @Override
-    public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
+    public void restartCompletionOnPrefixChange(@NotNull ElementPattern<String> prefixCondition) {
     }
 
     @Override
@@ -197,7 +200,7 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  public CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher) {
+  public @NotNull CompletionSorter defaultSorter(@NotNull CompletionParameters parameters, @NotNull PrefixMatcher matcher) {
 
     CompletionLocation location = new CompletionLocation(parameters);
     CompletionSorterImpl sorter = emptySorter();
@@ -225,14 +228,14 @@ public class BaseCompletionService extends CompletionService {
     }
     return sorter.withClassifier("priority", true, new ClassifierFactory<>("liftShorter") {
       @Override
-      public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+      public @NotNull Classifier<LookupElement> createClassifier(@NotNull Classifier<LookupElement> next) {
         return new LiftShorterItemsClassifier("liftShorter", next, new LiftShorterItemsClassifier.LiftingCondition(), false);
       }
     });
   }
 
   @Override
-  public CompletionSorterImpl emptySorter() {
+  public @NotNull CompletionSorterImpl emptySorter() {
     return new CompletionSorterImpl(new ArrayList<>());
   }
 }

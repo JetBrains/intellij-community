@@ -119,7 +119,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
             val action = actionHint.findAndCheck(actions) { "Test file: ${projectPath.relativize(mainFilePath).pathString}" }
             if (action != null) {
                 codeInsightTestFixture.launchAction(action)
-                KotlinProjectConfigurationService.getInstance(project).awaitSyncFinished()
+                KotlinProjectConfigurationService.getInstance(myProject).awaitSyncFinished()
 
                 IndexingTestUtil.waitUntilIndexesAreReady(myProject)
 

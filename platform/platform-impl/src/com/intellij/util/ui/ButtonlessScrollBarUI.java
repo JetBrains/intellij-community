@@ -3,7 +3,8 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.UiDispatcherKind;
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -16,6 +17,7 @@ import com.intellij.util.MethodHandleUtil;
 import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -232,7 +234,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   public static boolean isMacOverlayScrollbarSupported() {
-    return SystemInfo.isMac && !Registry.is("ide.mac.disableMacScrollbars");
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    return (SystemInfo.isMac && !Registry.is("ide.mac.disableMacScrollbars")) || (customization != null && customization.isMacScrollBar());
   }
 
   private void updateMacScrollbarStyle() {
@@ -751,11 +754,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return value;
   }
 
+  @ApiStatus.Internal
   @Deprecated
   protected boolean isThumbTranslucent() {
     return scrollbar == null || !scrollbar.isOpaque();
   }
 
+  @ApiStatus.Internal
   @Deprecated
   protected int getThumbOffset(int value) {
     // com.intellij.ui.components.AbstractScrollBarUI.scale

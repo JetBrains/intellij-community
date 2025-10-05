@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.RIDER_MODULES_PREFIX
 import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.modulesWithAbstractTypes
 import com.intellij.idea.IJIgnore
@@ -9,7 +8,6 @@ import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -34,10 +32,8 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
-import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
@@ -49,13 +45,11 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENT
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import org.jetbrains.kotlin.idea.KotlinFileType
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
-import com.intellij.testFramework.workspaceModel.updateProjectModel
 
 abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private val LOG = logger<AbstractAllIntellijEntitiesGenerationTest>()
@@ -79,7 +73,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
   override val testDataDirectory: File
     get() = File(IdeaTestExecutionPolicy.getHomePathWithPolicy())
 
-  fun `test generation of all entities in intellij codebase`() {
+  open fun `test generation of all entities in intellij codebase`() {
     executeWorkspaceCodeGeneration(::compareIntellijWorkspaceCode)
   }
 
@@ -101,7 +95,8 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     val modulesToCheck = findModulesWhichRequireWorkspace(storage)
 
     var storageChanged = false
-    modulesToCheck.forEach { (moduleEntity, sourceRoot) ->
+    modulesToCheck.forEachIndexed { index, (moduleEntity, sourceRoot) ->
+      println("[${index + 1}/${modulesToCheck.size}] Generating workspace code for module ${moduleEntity.name}")
       val isTestModule = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
       val libraries = LibrariesRequiredForWorkspace.getRelatedLibraries(moduleEntity.name)
       val gen = generateWorkspaceCode(moduleEntity, sourceRoot, isTestModule, libraries)
@@ -124,9 +119,8 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     val path = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl)).invariantSeparatorsPathString
     LOG.info("Generating workspace code for module: ${moduleEntity.name}, path $path")
     myFixture.copyDirectoryToProject(path, path)
-    setupCustomIndent(moduleEntity)
 
-    if (moduleEntity.name == "intellij.javascript.impl") {
+    if (moduleEntity.name == "intellij.javascript.backend") {
       javascriptNodeModulesPackageExclusionFixForTests()
     }
 
@@ -164,7 +158,6 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
     generated: Pair<VirtualFile, VirtualFile>,
   ): Boolean {
     val (srcRoot, genRoot) = generated
-    val moduleEntity = sourceRoot.contentRoot.module
 
     val result = runWriteActionAndWait {
       var storageChanged = false
@@ -184,7 +177,6 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
       storageChanged
     }
 
-    resetCustomIndent(moduleEntity)
     (tempDirFixture as LightTempDirTestFixtureImpl).deleteAll()
     return result
   }
@@ -224,7 +216,6 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
       expectedGenDir.assertMatches(directoryContentOf(dir = actualGenPath), filePathFilter = { it.endsWith(".kt") })
     }
 
-    resetCustomIndent(moduleEntity)
     (tempDirFixture as LightTempDirTestFixtureImpl).deleteAll()
     return false
   }
@@ -255,26 +246,6 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
       context = context
     )
     return mutableEntityStorage to jpsProjectSerializer
-  }
-
-  private fun setupCustomIndent(moduleEntity: ModuleEntity) {
-    val indent = modulesWithCustomIndentSize[moduleEntity.name] ?: return
-    val settings = CodeStyle.getSettings(project)
-    val kotlinFileType: LanguageFileType? = KotlinFileType.INSTANCE
-    val indentOptions = settings.getIndentOptions(kotlinFileType)
-    indentOptions.INDENT_SIZE = indent
-    indentOptions.TAB_SIZE = indent
-    indentOptions.CONTINUATION_INDENT_SIZE = indent
-  }
-
-  private fun resetCustomIndent(moduleEntity: ModuleEntity) {
-    modulesWithCustomIndentSize[moduleEntity.name] ?: return
-    val settings = CodeStyle.getSettings(project)
-    val kotlinFileType: LanguageFileType? = KotlinFileType.INSTANCE
-    val indentOptions = settings.getIndentOptions(kotlinFileType)
-    indentOptions.INDENT_SIZE = INDENT_SIZE
-    indentOptions.TAB_SIZE = TAB_SIZE
-    indentOptions.CONTINUATION_INDENT_SIZE = CONTINUATION_INDENT_SIZE
   }
 
   private fun createProjectConfigLocation(): JpsProjectConfigLocation {
@@ -317,8 +288,6 @@ abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBas
 
     private val ModuleEntity.withAbstractTypes: Boolean
       get() = name in modulesWithAbstractTypes || name.startsWith(RIDER_MODULES_PREFIX)
-
-    private val modulesWithCustomIndentSize: Map<String, Int> = mapOf("kotlin.base.scripting" to 4)
 
     private val skippedModules: Set<String> = setOf(
       "intellij.platform.workspace.storage.tests",

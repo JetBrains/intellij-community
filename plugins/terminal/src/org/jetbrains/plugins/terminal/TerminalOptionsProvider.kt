@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.ide.util.RunOnceUtil
 import com.intellij.idea.AppMode
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
@@ -13,6 +14,8 @@ import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.block.ui.updateFrontendSettingsAndSync
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import java.util.concurrent.CopyOnWriteArrayList
@@ -49,7 +52,18 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
     @ApiStatus.Internal
     var terminalEngineInRemDev: TerminalEngine = TerminalEngine.REWORKED
 
-    var myTabName: @Nls String = TerminalBundle.message("local.terminal.default.name")
+    @ApiStatus.Internal
+    var showCompletionPopupAutomatically: Boolean = true
+    @ApiStatus.Internal
+    var commandCompletionShowingMode: TerminalCommandCompletionShowingMode = TerminalCommandCompletionShowingMode.ONLY_PARAMETERS
+
+    @ApiStatus.Internal
+    var enforceMinContrastRatio: Boolean = true
+
+    @ApiStatus.Internal
+    var minContrastRatio: Float = TerminalContrastRatio.DEFAULT_VALUE.value
+
+    var myTabName: @Nls String = defaultTabName()
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
@@ -99,6 +113,50 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
       if (state.terminalEngine != value || state.terminalEngineInRemDev != value) {
         state.terminalEngine = value
         state.terminalEngineInRemDev = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var showCompletionPopupAutomatically: Boolean
+    get() = state.showCompletionPopupAutomatically
+    set(value) {
+      if (state.showCompletionPopupAutomatically != value) {
+        state.showCompletionPopupAutomatically = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var commandCompletionShowingMode: TerminalCommandCompletionShowingMode
+    get() = state.commandCompletionShowingMode
+    set(value) {
+      if (state.commandCompletionShowingMode != value) {
+        state.commandCompletionShowingMode = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var enforceMinContrastRatio: Boolean
+    get() = state.enforceMinContrastRatio
+    set(value) {
+      if (state.enforceMinContrastRatio != value) {
+        state.enforceMinContrastRatio = value
+        fireSettingsChanged()
+      }
+    }
+
+  @get:ApiStatus.Experimental
+  @set:ApiStatus.Experimental
+  var minContrastRatio: TerminalContrastRatio
+    get() = TerminalContrastRatio.ofFloat(state.minContrastRatio)
+    set(value) {
+      if (TerminalContrastRatio.ofFloat(state.minContrastRatio) != value) {
+        state.minContrastRatio = value.value
         fireSettingsChanged()
       }
     }
@@ -285,6 +343,13 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
     private val LOG = logger<TerminalOptionsProvider>()
 
     internal const val COMPONENT_NAME: String = "TerminalOptionsProvider"
+
+    private fun defaultTabName(): @Nls String {
+      return if (AppModeAssertions.isMonolith()) {
+        TerminalBundle.message("local.terminal.default.name")
+      }
+      else TerminalBundle.message("remote.terminal.default.name")
+    }
   }
 
   class PresentableNameGetter: com.intellij.openapi.components.State.NameGetter() {

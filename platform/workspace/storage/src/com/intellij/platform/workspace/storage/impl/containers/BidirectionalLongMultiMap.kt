@@ -41,16 +41,30 @@ internal class BidirectionalLongMultiMap<V> {
   fun containsKey(key: Long): Boolean = keyToValues.containsKey(key)
   fun containsValue(value: V): Boolean = valueToKeys.containsKey(value)
 
+  /**
+   * Returns true if [value] was added to the map for the first time, otherwise returns false.
+   */
   fun put(key: Long, value: V): Boolean {
+    val addedFirstTime: Boolean
     when (val keys = valueToKeys.get(value)) {
       null -> {
+        addedFirstTime = true
         valueToKeys[value] = key
       }
       is Long -> {
-        val myKeys = if (keys != key) LongOpenHashSet.of(keys, key) else LongOpenHashSet.of(key)
+        addedFirstTime = false
+        val myKeys = if (keys != key) {
+          LongOpenHashSet.of(keys, key)
+        }
+        else {
+          LongOpenHashSet.of(key)
+        }
         valueToKeys[value] = myKeys
       }
-      is LongOpenHashSet -> keys.add(key)
+      is LongOpenHashSet -> {
+        addedFirstTime = false
+        keys.add(key)
+      }
       else -> error("Unexpected type of key $keys")
     }
     var values: MutableSet<V>? = keyToValues[key]
@@ -59,11 +73,13 @@ internal class BidirectionalLongMultiMap<V> {
       values = ObjectOpenHashSet()
       keyToValues.put(key, values)
     }
-    return values.add(value)
+    values.add(value)
+    return addedFirstTime
   }
 
-  fun removeKey(key: Long): Boolean {
-    val values = keyToValues[key] ?: return false
+  fun removeKey(key: Long) {
+    val values = keyToValues[key] ?: return
+
     for (v in values) {
       when (val keys = valueToKeys.get(v)!!) {
         is LongOpenHashSet -> {
@@ -79,59 +95,42 @@ internal class BidirectionalLongMultiMap<V> {
       }
     }
     keyToValues.remove(key)
-    return true
   }
 
-  fun remove(key: Long, value: V) {
-    val values = keyToValues[key]
-    val keys: Any? = valueToKeys[value]
-    if (keys != null && values != null) {
-      when (keys) {
-        is LongOpenHashSet -> {
-          keys.remove(key)
-          if (keys.isEmpty()) {
-            valueToKeys.remove(value)
-          }
-        }
-        is Long -> {
+  /**
+   * Returns true if the [value] was removed from the map, false otherwise
+   * That is, only this [key] had this value, and when [key] is deleted, no key has this value anymore.
+   */
+  fun remove(key: Long, value: V): Boolean {
+    val values = keyToValues[key] ?: return false
+    val keys: Any = valueToKeys[value] ?: return false
+    val lastRemoved: Boolean
+    when (keys) {
+      is LongOpenHashSet -> {
+        keys.remove(key)
+        if (keys.isEmpty()) {
+          lastRemoved = true
           valueToKeys.remove(value)
         }
-        else -> error("Unexpected type of key $keys")
+        else {
+          lastRemoved = false
+        }
       }
-      values.remove(value)
-      if (values.isEmpty()) {
-        keyToValues.remove(key)
+      is Long -> {
+        valueToKeys.remove(value)
+        lastRemoved = true
       }
+      else -> error("Unexpected type of key $keys")
     }
+    values.remove(value)
+    if (values.isEmpty()) {
+      keyToValues.remove(key)
+    }
+    return lastRemoved
   }
 
   fun isEmpty(): Boolean {
     return keyToValues.isEmpty() && valueToKeys.isEmpty()
-  }
-
-  fun removeValue(value: V): Boolean {
-    val keys = valueToKeys[value] ?: return false
-    when (keys) {
-      is LongOpenHashSet -> {
-        keys.iterator().forEach { k ->
-          val values = keyToValues[k]
-          values.remove(value)
-          if (values.isEmpty()) {
-            keyToValues.remove(k)
-          }
-        }
-      }
-      is Long -> {
-        val values = keyToValues[keys]
-        values.remove(value)
-        if (values.isEmpty()) {
-          keyToValues.remove(keys)
-        }
-      }
-      else -> error("Unexpected type of key $keys")
-    }
-    valueToKeys.remove(value)
-    return true
   }
 
   fun clear() {

@@ -378,7 +378,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     var t = new RuntimeException();
     class ThrowingIndicator extends EmptyProgressIndicator implements BlockingProgressIndicator {
       @Override
-      public void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition) {
+      public void startBlocking(@NotNull Runnable init, boolean isSynchronousHeadlessExecution, @NotNull CompletableFuture<?> stopCondition) {
         // "enter" modality
         init.run();
         // wait for task future to complete

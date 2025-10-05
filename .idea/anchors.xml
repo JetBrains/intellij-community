@@ -39,7 +39,6 @@
         <entry key="kotlinc.kotlin-script-runtime" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-jps-plugin-classpath" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-jps-plugin-tests" value="kotlin.util.compiler-classpath" />
-        <entry key="kotlinc.kotlin-ide-dist" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-dist" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-jps-plugin-classpath-bootstrap-for-tests" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api-platform-interface" value="kotlin.util.compiler-classpath" />

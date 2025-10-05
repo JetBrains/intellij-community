@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_java//java:defs.bzl", "java_test")
 
 PKGS = [
     "java.base/java.io",
@@ -12,6 +12,7 @@ PKGS = [
     "java.base/java.util",
     "java.base/java.util.concurrent",
     "java.base/java.util.concurrent.atomic",
+    "java.base/jdk.internal.ref",
     "java.base/jdk.internal.vm",
     "java.base/sun.nio.ch",
     "java.base/sun.nio.fs",
@@ -23,15 +24,16 @@ PKGS = [
     "java.desktop/java.awt",
     "java.desktop/java.awt.dnd.peer",
     "java.desktop/java.awt.event",
+    "java.desktop/java.awt.font",
     "java.desktop/java.awt.image",
     "java.desktop/java.awt.peer",
-    "java.desktop/java.awt.font",
     "java.desktop/javax.swing",
     "java.desktop/javax.swing.plaf.basic",
     "java.desktop/javax.swing.text.html",
+    "java.desktop/javax.swing.text.html.parser",
+    "java.desktop/sun.awt",
     "java.desktop/sun.awt.datatransfer",
     "java.desktop/sun.awt.image",
-    "java.desktop/sun.awt",
     "java.desktop/sun.font",
     "java.desktop/sun.java2d",
     "java.desktop/sun.lwawt",
@@ -45,21 +47,23 @@ PKGS = [
 
 ADD_OPENS_FLAGS = ["--add-opens=" + pkg + "=ALL-UNNAMED" for pkg in PKGS]
 
-JVM_FLAGS = [
+JAVA_TEST_FLAGS = [
     "-Didea.classpath.index.enabled=false",
     "-Djava.awt.headless=true",
     "-Djunit.jupiter.extensions.autodetection.enabled=true",
     "-Didea.force.use.core.classloader=true",
     "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+    "-Didea.reset.classpath.from.manifest=true",
     "-Dintellij.build.use.compiled.classes=false",
 ]
 
-JVM_TEST_ARGS = [
-    "--disable-banner",
-    "--fail-if-no-tests",
+JAVA_TEST_ARGS = [
 ]
 
 TEST_FRAMEWORK_DEPS = [
+  # TODO Review this list, most likely only tools-testsBootstrap is required
+  # junit stuff should be propagated via runtime deps of testsBootstrap
+
   "@community//platform/testFramework/bootstrap:tools-testsBootstrap",
   "@community//platform/util:util-tests_test_lib",
 
@@ -67,9 +71,6 @@ TEST_FRAMEWORK_DEPS = [
   "@lib//:junit5Vintage-provided",
   "@lib//:junit4",
   "@lib//:junit4-provided",
-  "@community//platform/main/intellij.platform.monolith.main:monolith-main",
-  "@community//plugins/IntelliLang/xml-support:xml-langInjection",
-  "@community//community-resources:customization",
 ]
 
 # needed to avoid runtime duplications in jps_test of community/platform/util/BUILD.bazel
@@ -83,21 +84,33 @@ def _normalize_runtime_dep(dep):
         return "@community//platform/util:util-tests_test_lib"
     return dep
 
-def jps_test(name, jvm_flags = [], runtime_deps = [], tags = [], args = [], **kwargs):
+def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags = [], **kwargs):
     # Merge user-provided args with our default ones
-    all_jvm_flags = JVM_FLAGS + ADD_OPENS_FLAGS + jvm_flags
-    all_args = JVM_TEST_ARGS + args
+    all_jvm_flags = JAVA_TEST_FLAGS + ADD_OPENS_FLAGS + jvm_flags
+    all_args = JAVA_TEST_ARGS + args
 
     normalized_runtime_deps = [_normalize_runtime_dep(d) for d in runtime_deps]
     all_runtime_deps = depset(TEST_FRAMEWORK_DEPS + normalized_runtime_deps).to_list()
 
-    jvm_test(
+    # https://bazel.build/reference/be/java#java_test
+    # https://bazel.build/reference/be/common-definitions#common-attributes-tests
+    java_test(
         name = name,
         main_class = "com.intellij.tests.JUnit5BazelRunner",
         jvm_flags = all_jvm_flags,
         args = all_args,
         runtime_deps = all_runtime_deps,
+        # maximum available test size, do not enforce more precise limits for now
+        # settings size also sets test timeout to 1 hours
+        # which is also a reasonable tests timeout for current state of things
+        size = "enormous",
         tags = tags,
-        data = ["@community//:intellij.idea.community.main.iml"],
+        data = [
+            # so com.intellij.tests.JUnit5BazelRunner.guessBazelWorkspaceDir will find a real workspace root
+            "@community//:intellij.idea.community.main.iml",
+            # required for com.intellij.openapi.projectRoots.impl.JavaSdkImpl.internalJdkAnnotationsPath
+            "@community//java:mockJDK",
+        ] + data,
+        use_testrunner = False,
         **kwargs
     )

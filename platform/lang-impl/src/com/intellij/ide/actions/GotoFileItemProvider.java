@@ -187,6 +187,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
     // Find all directories and files names similar to the last component in patternComponents
     List<MatchResult> matchingNames = new ArrayList<>();
+    final String fullPattern = String.join("", patternComponents);
+    final MinusculeMatcher fullMatcher = buildPatternMatcher(fullPattern, true);
     String lastPatternComponent = patternComponents.get(patternComponents.size() - 1);
     MinusculeMatcher matcher = buildPatternMatcher(lastPatternComponent, true);
     var nameMatchingCheck = new ProcessorWithThrottledCancellationCheck<>(
@@ -194,7 +196,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         indicator.checkCanceled();
         if (fileNameCharSeq != null) {
           String fileName = fileNameCharSeq.toString();
-          MatchResult result = matches(base, parameters.getCompletePattern(), matcher, fileName);
+          MatchResult result = matchesWithFullMatcherCheck(base, fullMatcher, parameters.getCompletePattern(), matcher, fileName);
           if (result != null) {
             matchingNames.add(result);
           }
@@ -560,6 +562,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   private final class SuffixMatches {
     final String patternSuffix;
+    final MinusculeMatcher fullMatcher;
     final MinusculeMatcher matcher;
     final List<MatchResult> matchingNames = new ArrayList<>();
     final ProgressIndicator indicator;
@@ -574,6 +577,12 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         builder.preferringStartMatches();
       }
 
+      final var fullBuilder = NameUtil.buildMatcher(patternSuffix).withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE);
+      if (preferStartMatches) {
+        builder.preferringStartMatches();
+      }
+
+      this.fullMatcher = fullBuilder.build();
       this.matcher = builder.build();
       this.indicator = indicator;
     }
@@ -587,7 +596,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     boolean matchName(@NotNull ChooseByNameViewModel base, String name) {
-      MatchResult result = matches(base, patternSuffix, matcher, name);
+      MatchResult result = matchesWithFullMatcherCheck(base, fullMatcher, patternSuffix, matcher, name);
       if (result != null) {
         matchingNames.add(result);
         return true;

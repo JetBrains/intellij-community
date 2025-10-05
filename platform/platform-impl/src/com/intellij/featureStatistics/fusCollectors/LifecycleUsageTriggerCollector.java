@@ -28,7 +28,7 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
 
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 74);
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 75);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -65,6 +65,9 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId FRAME_DEACTIVATED = LIFECYCLE.registerEvent("frame.deactivated");
 
   private static final EventId1<Long> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.DurationMs);
+
+  private static final EventId FREEZE_POPUP_SHOWN =
+    LIFECYCLE.registerEvent("freeze.popup.shown", "Happens when the IDE shows a popup that indicates UI freeze");
 
   private static final EventId3<PluginInfo, Long, Boolean> IDE_FREEZE_DETECTED_PLUGIN =
     LIFECYCLE.registerEvent("ide.freeze.detected.plugin", EventFields.PluginInfo, EventFields.DurationMs, EventFields.Boolean("reported_to_user"));
@@ -165,6 +168,10 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
 
   public static void onFreeze(long durationMs) {
     IDE_FREEZE.log(durationMs);
+  }
+
+  public static void onFreezePopupShown() {
+    FREEZE_POPUP_SHOWN.log(null);
   }
 
   public static void onError(

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.cache
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -17,6 +19,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
@@ -121,17 +124,21 @@ internal fun RecoveryAction.performUnderProgress(recoveryScope: RecoveryScope, f
     override fun run(indicator: ProgressIndicator) {
       CacheRecoveryUsageCollector.recordRecoveryPerformedEvent(recoveryAction, fromGuide, project)
       recoveryAction.perform(recoveryScope).handle { res, err ->
-        if (err != null) {
-          RecoveryWorker.LOG.error(err)
-          return@handle
-        }
+        // Remove the Job, because the Job may have already finished by the moment when .handle() is invoked.
+        // Make sure that this finished Job is not leaking to the handler. (the same problem as in AsyncPromise.thenAsync)
+        installThreadContext(currentThreadContext().minusKey(Job), replace = true) {
+          if (err != null) {
+            RecoveryWorker.LOG.error(err)
+            return@installThreadContext
+          }
 
-        if (res.problems.isNotEmpty()) {
-          RecoveryWorker.LOG.info("${recoveryAction.actionKey} found and fixed ${res.problems.size} problems, samples: " +
-                                   res.problems.take(10).joinToString(", ") { it.message })
-        }
+          if (res.problems.isNotEmpty()) {
+            RecoveryWorker.LOG.info("${recoveryAction.actionKey} found and fixed ${res.problems.size} problems, samples: " +
+                                    res.problems.take(10).joinToString(", ") { it.message })
+          }
 
-        onComplete(res.scope)
+          onComplete(res.scope)
+        }
       }
     }
   }.queue()

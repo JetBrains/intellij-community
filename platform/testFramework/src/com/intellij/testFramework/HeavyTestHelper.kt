@@ -32,6 +32,7 @@ object HeavyTestHelper {
       if (rootPath != null) {
         val vDir1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath.replace(File.separatorChar, '/'))
                     ?: throw Exception("$rootPath not found")
+        vDir1.refresh(false, true)
         VfsUtil.copyDirectory(null, vDir1, virtualDir, null)
       }
       if (addProjectRoots) {

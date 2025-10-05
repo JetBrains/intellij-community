@@ -1,5 +1,5 @@
 import sys
-from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON, IS_IRONPYTHON, ForkSafeLock
+from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON, IS_IRONPYTHON
 from _pydev_bundle import pydev_log
 # IFDEF CYTHON
 # pydev_log.debug("Using Cython speedups")
@@ -7,7 +7,7 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 56
+version = 58
 
 if not hasattr(sys, '_current_frames'):
 
@@ -104,11 +104,11 @@ class PyDBAdditionalThreadInfo(object):
         self.pydev_smart_step_context = PydevSmartStepContext()
 
     def get_topmost_frame(self, thread):
-        """
+        '''
         Gets the topmost frame for the given thread. Note that it may be None
         and callers should remove the reference to the frame as soon as possible
         to avoid disturbing user code.
-        """
+        '''
         # sys._current_frames(): dictionary with thread id -> topmost frame
         current_frames = _current_frames()
         return current_frames.get(thread.ident)
@@ -146,7 +146,9 @@ class PydevSmartStepContext:
     reset = __init__
 
 
-_set_additional_thread_info_lock = ForkSafeLock()
+from _pydev_imps._pydev_saved_modules import threading
+_set_additional_thread_info_lock = threading.Lock()
+
 
 def set_additional_thread_info(thread):
     try:

@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 
@@ -34,7 +34,7 @@ class SdkmanrcWatcherHeavyTests : ExternalJavaConfigurationTest() {
   }
 }
 
-class SdkmanrcWatcherLightTests : BasePlatformTestCase() {
+class SdkmanrcWatcherLightTests : UsefulTestCase() {
 
   fun `test candidates parsing`() {
     assertEquals(SdkmanReleaseData.parse("8"),

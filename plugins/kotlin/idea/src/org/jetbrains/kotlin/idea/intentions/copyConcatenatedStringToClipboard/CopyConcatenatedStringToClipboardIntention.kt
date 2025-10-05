@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import java.awt.datatransfer.StringSelection
 
-class CopyConcatenatedStringToClipboardIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
-    KtBinaryExpression::class.java, KotlinBundle.lazyMessage("copy.concatenation.text.to.clipboard")
+internal class CopyConcatenatedStringToClipboardIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
+    KtBinaryExpression::class.java, KotlinBundle.messagePointer("copy.concatenation.text.to.clipboard")
 ) {
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
         val text = ConcatenatedStringGenerator().create(element)

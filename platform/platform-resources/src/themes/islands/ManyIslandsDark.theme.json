@@ -1,9 +1,9 @@
 {
-  "name": "Many Islands Dark",
+  "name": "Islands Dark",
   "dark": true,
   "author": "JetBrains",
   "parentTheme": "ExperimentalDark",
-  "editorScheme": "Island Dark",
+  "editorScheme": "Islands Dark",
   "colors": {
     "Gray3": "#393B40",
     "Gray2.5": "#323438",
@@ -60,7 +60,13 @@
     "Islands": 1,
     "Island": {
       "arc": 20,
-      "border1.insets": "6,6,6,6"
+      "borderWidth": 4,
+      "inactiveAlpha": 0.44,
+      "inactiveAlphaInStatusBar": {
+        "os.mac": 0.2,
+        "os.windows": 0.2,
+        "os.linux": 0.15
+      }
     },
 
     "MainWindow.background": "BackgroundLight",
@@ -68,13 +74,21 @@
 
     "Borders.color": "BorderDark",
     "Borders.ContrastBorderColor": "BorderDark",
-    "MainWindow.Tab.background": "#131314",
     "MainWindow.FullScreeControl.Background": "#575A5C",
+
+    "MainWindow.Tab": {
+      "background": "#131314",
+      "selectedBackground": "ToolWindowBackground",
+      "hoverBackground": "#FFFFFF12",
+      "separatorColor": "#FFFFFF16",
+      "foreground": "#6F737A"
+    },
 
     "MainToolbar": {
       "background": "BackgroundLight",
       "borderColor": "BorderTransparent",
-      "Dropdown.transparentHoverBackground": "#FFFFFF12"
+      "Dropdown.transparentHoverBackground": "#FFFFFF12",
+      "Button.arc.compact": 8
     },
 
     "StatusBar": {
@@ -111,17 +125,20 @@
       "hoverBackground": "Gray2",
 
       "tabInsets": "-7,8,-7,8",
+      "tabInsets.compact": "-2,6,-2,4",
       "tabContentActionsRightInsets": "0,4,0,2"
     },
 
     "Editor": {
-      "SearchField.background": "BackgroundMid",
+      "SearchField.background": "BackgroundDark",
       "Toolbar.borderColor": "BorderDark",
       "ToolTip": {
         "background": "BackgroundLight",
         "border": "BorderLight"
       }
     },
+
+    "EditorPane.inactiveBackground": "BackgroundDark",
 
     "Code.Block": {
       "borderColor": "BorderLight",
@@ -140,7 +157,8 @@
       "Header.activeBackground": "PopupBackground",
       "Advertiser.background": "PopupBackgroundLight",
       "Advertiser.borderColor": "PopupBackgroundLight",
-      "borderColor": "PopupBorder"
+      "borderColor": "PopupBorder",
+      "Toolbar.background": "PopupBackground"
     },
     "ComplexPopup.Header.background": "PopupBackgroundLight",
     "CompletionPopup.Advertiser.background": "PopupBackgroundLight",
@@ -183,6 +201,8 @@
       "borderColor": "BorderLight"
     },
 
+    "SearchEverywhere.Header.insets": "2,4,0,9",
+
     "Button": {
       "startBackground": "PanelBackground",
       "endBackground": "PanelBackground"
@@ -208,7 +228,7 @@
     "TipOfTheDay.Image.borderColor": "Gray3",
 
     "OnePixelDivider.background": "BorderLight",
-    "Plugins.SectionHeader.background": "PanelBackground",
+    "Plugins.SectionHeader.background": "Gray1.5",
     "Debugger.EvaluateExpression.background": "Gray3",
     "NewUiOnboarding.Dialog.background": "PanelBackground",
     "WelcomeScreen.Details.background": "BackgroundDark",
@@ -244,12 +264,43 @@
     "RecentProject.MainToolbarGradient.width": 600,
     "RecentProject.MainToolbarGradient.height": 300,
 
+    "ProjectGradients": {
+      "Group1": {
+        "DiagonalGradient": {
+          "Color1": "#FF0000",
+          "Color2": "#4800FF",
+          "Color3": "#1FB6D4",
+          "Color4": "#FF0000",
+
+          "Fraction1": 0.0,
+          "Fraction2": 0.13,
+          "Fraction3": 0.3,
+          "Fraction4": 1.0
+        },
+        "RadialGradient": {
+          "Color1": "#E500FFFF",
+          "Color2": "#E500FF00"
+        },
+        "HorizontalGradient": {
+          "Color1": "#2B2D301A",
+          "Color2": "#2B2D3033"
+        },
+        "VerticalGradient": {
+          "Color1": "#2B2D301A",
+          "Color2": "#2B2D309A"
+        }
+      }
+    },
 
     "TrialWidget": {
       "Default.background": "#27282E",
       "Active.background": "#273828",
       "Alert.background": "#3D3223",
-      "Expiring.background": "#CC3645"
+      "Expiring.background": "#CC3645",
+      "Default.borderColor": "#B4B8BF",
+      "Active.borderColor": "#4E8052",
+      "Alert.borderColor": "#826A41",
+      "Expiring.borderColor": "#DB5C5C"
     },
 
     "Bookmark": {
@@ -318,6 +369,33 @@
       }
     },
 
-    "VersionControl.MarkerPopup.borderColor": "Gray4"
+    "ScrollBar": {
+      "hoverThumbBorderColor": "#2626268C",
+      "hoverThumbColor": "#8080808C",
+      "hoverTrackColor": "#80808000",
+      "thumbBorderColor": "#26262659",
+      "thumbColor": "#80808059",
+      "trackColor": "#80808000",
+      "Transparent": {
+        "hoverThumbBorderColor": "#2626268C",
+        "hoverThumbColor": "#8080808C",
+        "hoverTrackColor": "#8080801A",
+        "thumbBorderColor": "#26262600",
+        "thumbColor": "#80808059",
+        "trackColor": "#80808000"
+      }
+    },
+
+    "VersionControl.MarkerPopup.borderColor": "Gray4",
+
+    "NewClass": {
+      "Panel.background": "PopupBackground",
+      "SearchField.background": "PopupBackground"
+    },
+
+    "ProgressBar": {
+      "progressCounterBackground": "Blue5",
+      "progressCounterForeground": "#000000"
+    }
   }
 }

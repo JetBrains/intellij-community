@@ -6,39 +6,41 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.cancelOnDispose
+import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<OpenFileChooserService>()
 
 @ApiStatus.Internal
-@Service(Service.Level.APP)
-class OpenFileChooserService(val coroutineScope: CoroutineScope) {
+@Service(Service.Level.PROJECT)
+class OpenFileChooserService(private val project: Project, val coroutineScope: CoroutineScope) {
   private var chooseDirectoryJob: Job? = null
 
-  fun chooseDirectory(project: Project, initialDirectory: String, onResult: (@NlsSafe String?) -> Any?) {
+  fun chooseDirectory(initialDirectory: String, onResult: (@NlsSafe String?) -> Any?) {
     chooseDirectoryJob = coroutineScope.launch {
-      try {
-        val result = OpenFileChooserApi.getInstance().chooseDirectory(project.projectId(), initialDirectory)
-        onResult(result)
+      val deferred = try {
+         OpenFileChooserApi.getInstance().chooseDirectory(project.projectId(), initialDirectory)
       }
-      catch (e: CancellationException) {
-        onResult(null)
-        throw e  // Propagate cancellation
-      }
-      catch (e: Exception) {
+      catch (e: RpcTimeoutException) {
         LOG.warn("Directory selection failed", e)
-        chooseDirectoryJob?.cancel()
-        onResult(null)
+        null
       }
+      deferred?.cancelOnDispose(project)
+      deferred?.invokeOnCompletion { cause ->
+        if (cause != null) {
+          onResult(null)
+        }
+      }
+      onResult(deferred?.await())
     }
   }
 
   companion object {
     @JvmStatic
-    fun getInstance(): OpenFileChooserService = service()
+    fun getInstance(project: Project): OpenFileChooserService = project.service()
   }
 }

@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.PluginUtils.joinedPluginIds
 import com.intellij.ide.plugins.PluginUtils.parseAsPluginIdSet
 import com.intellij.ide.plugins.PluginUtils.toPluginIdSet
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.JetBrainsProtocolHandler
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -71,10 +72,13 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
           return emptySet()
         }
 
+        //remote dev host is supposed to be the paid feature, so when running the IDE as a remove dev backend we automatically enable the ultimate plugin if it was disabled
+        val requiredForCurrentMode = if (AppMode.isRemoteDevHost()) PluginManagerCore.ULTIMATE_PLUGIN_ID else null
+
         // ApplicationInfoImpl maybe loaded in another thread - get it after readPluginIdsFromFile
         val applicationInfo = ApplicationInfoImpl.getShadowInstance()
         for (id in pluginIdsFromFile) {
-          if (!requiredPlugins.contains(id) && !applicationInfo.isEssentialPlugin(id)) {
+          if (!requiredPlugins.contains(id) && !applicationInfo.isEssentialPlugin(id) && id != requiredForCurrentMode) {
             disabledPlugins.add(id)
           }
           else {
@@ -141,9 +145,10 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       if (changed) {
         disabledPlugins = Collections.unmodifiableSet(disabled)
       }
-      logger.info(pluginIds.joinedPluginIds(if (enabled) "enable" else "disable"))
-
-      return changed && saveDisabledPluginsAndInvalidate(disabled)
+      val actuallyChanged = changed && saveDisabledPluginsAndInvalidate(disabled)
+      val operation = if (enabled) "enable" else "disable"
+      logger.info("${pluginIds.joinedPluginIds(operation)}, ${if (actuallyChanged) "applied" else " was already ${operation}d, nothing changed"}")
+      return actuallyChanged
     }
 
     fun saveDisabledPluginsAndInvalidate(pluginIds: Set<PluginId>): Boolean {
@@ -192,6 +197,8 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
   override fun enable(descriptors: Collection<IdeaPluginDescriptor>): Boolean = setEnabledState(descriptors, enabled = true)
 
   override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean = setEnabledState(descriptors, enabled = false)
+
+  override fun enableById(pluginIds: Set<PluginId>): Boolean = setEnabledState(pluginIds, enabled = true)
 
   override fun disableById(pluginIds: Set<PluginId>): Boolean = setEnabledState(pluginIds, enabled = false)
 }

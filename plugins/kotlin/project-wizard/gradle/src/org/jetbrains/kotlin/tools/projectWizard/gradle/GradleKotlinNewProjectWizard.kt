@@ -205,10 +205,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         var selectedJdkJvmTarget: Int? = null
             private set
 
-        private fun resolveSelectedJvmTarget(): Int? {
+        private fun resolveSelectedJvmTarget(): Int? =
             // Ordinal here works correctly, starting at Java 1.0 (0)
-            return jdkIntent?.javaVersion?.feature
-        }
+            jdkIntent.javaVersion?.feature
 
         override fun resolveIsFoojayPluginSupported(): Boolean {
             if (!super.resolveIsFoojayPluginSupported()) {
@@ -292,7 +291,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 // Find the library entries from the libraries table in the TOML file
                 val libraryEntries = tomlTree.get("libraries") ?: return false
                 // Find the name of the library entry that contains the Kotlin Gradle Plugin
-                libraryEntries.fields().asSequence().firstOrNull { (_, node) ->
+                libraryEntries.properties().firstOrNull { (_, node) ->
                     node.get("module")?.asText()?.contains(KOTLIN_GRADLE_PLUGIN_ID) == true
                 }?.key
             }.getOrNull() ?: return false
@@ -310,6 +309,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
     private class AssetsStep(parent: Step) : GradleAssetsNewProjectWizardStep<Step>(parent) {
 
         override fun setupAssets(project: Project) {
+            setupCommonProjectAssets()
+
             if (parent.shouldGenerateMultipleModules) {
                 setupMultiModuleProjectAssets(project)
             } else {
@@ -317,11 +318,16 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
         }
 
-        private fun setupSingleModuleProjectAssets(project: Project) {
+        private fun setupCommonProjectAssets() {
             if (context.isCreatingNewProject) {
                 addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
-                addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
                 addGradleWrapperAsset(parent.gradleVersionToUse)
+            }
+        }
+
+        private fun setupSingleModuleProjectAssets(project: Project) {
+            if (context.isCreatingNewProject) {
+                addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
             }
 
             addEmptyDirectoryAsset(SRC_MAIN_KOTLIN_PATH)
@@ -377,8 +383,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 "KOTLINX_SERIALIZATION_JSON_VERSION" to serializationJsonVersion,
                 "KOTLINX_COROUTINES_VERSION" to coroutinesVersion,
             )
-
-            addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
 
             addTemplateAsset("gradle.properties", "KotlinSampleProperties", templateParameters)
             addTemplateAsset("gradle/libs.versions.toml", "KotlinSampleGradleToml", templateParameters)

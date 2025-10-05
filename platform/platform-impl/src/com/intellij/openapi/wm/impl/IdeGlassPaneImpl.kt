@@ -8,11 +8,13 @@ import com.intellij.ide.IdeTooltipManager
 import com.intellij.ide.dnd.DnDAware
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.MouseWheelEventInterceptor.Companion.MOUSE_WHEEL_EVENT_INTERCEPTORS
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.impl.ProjectLoadingCancelled
@@ -40,8 +42,9 @@ import java.awt.event.*
 import java.util.*
 import javax.swing.*
 import javax.swing.text.html.HTMLEditorKit
+import kotlin.coroutines.EmptyCoroutineContext
 
-class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
+class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEventDispatcher {
   private val mouseListeners = ArrayList<EventListener>()
 
   private val sortedMouseListeners = TreeSet<EventListener> { o1, o2 ->
@@ -63,6 +66,8 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
   internal var windowShadowPainter: AbstractPainter? = null
   private var paintersInstalled = false
   private var loadingIndicator: IdePaneLoadingLayer? = null
+
+  internal var colorfulToolbar: (() -> Boolean)? = null
 
   @JvmOverloads
   constructor(rootPane: JRootPane, installPainters: Boolean = false) {
@@ -159,6 +164,16 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
   override fun dispatch(e: AWTEvent): Boolean {
     if (e !is InputEvent) {
       return false
+    }
+
+    if (e is MouseWheelEvent) {
+      // Use extension point processors
+      MOUSE_WHEEL_EVENT_INTERCEPTORS.extensionList.forEach { processor ->
+        if (processor.process(e)) {
+          logger<IdeGlassPaneImpl>().debug("Mouse wheel event $e is processed by $processor. Propagation is stopped")
+          return true
+        }
+      }
     }
 
     loadingIndicator?.let {
@@ -503,6 +518,11 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     return components.any { it is TransparentLayeredPane }
   }
 
+  @ApiStatus.Internal
+  override fun isColorfulToolbar(): Boolean {
+    return colorfulToolbar?.invoke() == true
+  }
+
   override fun paintComponent(g: Graphics) {
     if (loadingIndicator == null) {
       painters.paint(g)
@@ -531,8 +551,9 @@ private class IdePaneLoadingLayer(pane: JComponent,
     icon.isOpaque = false
     pane.add(icon)
 
+    val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
     loadingState.done.invokeOnCompletion {
-      coroutineScope.launch(RawSwingDispatcher) {
+      coroutineScope.launch(RawSwingDispatcher + startUpContextElementToPass) {
         try {
           removeIcon(pane)
         }

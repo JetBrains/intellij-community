@@ -3,6 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.plugins.*
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -32,7 +33,7 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
-    assertThat(foo).hasDirectParentClassloaders(bar)
+    assertThat(foo).hasExactDirectParentClassloaders(bar)
   }
 
   @Test
@@ -50,7 +51,7 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
-    assertThat(foo).hasDirectParentClassloaders(bar)
+    assertThat(foo).hasExactDirectParentClassloaders(bar)
     assertNonOptionalDependenciesIds(pluginSet, "foo")
   }
 
@@ -73,7 +74,7 @@ internal class PluginDependenciesTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
     assertThat(foo)
-      .hasDirectParentClassloaders(bar)
+      .hasExactDirectParentClassloaders(bar)
       .doesNotHaveTransitiveParentClassloaders(pluginSet.getEnabledModule("bar.module"))
   }
 
@@ -91,7 +92,7 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
-    assertThat(foo).hasDirectParentClassloaders(bar, pluginSet.getEnabledModule("bar.module"))
+    assertThat(foo).hasExactDirectParentClassloaders(bar, pluginSet.getEnabledModule("bar.module"))
   }
 
   @Test
@@ -109,7 +110,7 @@ internal class PluginDependenciesTest {
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
     val (opt, req, _) = pluginSet.getEnabledModules("bar.optional", "bar.required", "bar.embedded")
     assertThat(foo)
-      .hasDirectParentClassloaders(bar)
+      .hasExactDirectParentClassloaders(bar)
       .doesNotHaveTransitiveParentClassloaders(opt, req)
   }
 
@@ -304,7 +305,7 @@ internal class PluginDependenciesTest {
     val result = buildPluginSet()
     assertThat(result).hasExactlyEnabledPlugins("sample.plugin", "dep")
     val (sample, dep) = result.getEnabledPlugins("sample.plugin", "dep")
-    assertThat(sample).hasDirectParentClassloaders(dep)
+    assertThat(sample).hasExactDirectParentClassloaders(dep)
   }
 
   @Test
@@ -331,8 +332,8 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("embedded.module", "required.module", "required2.module")
     val (req, req2, embed) = pluginSet.getEnabledModules("required.module", "required2.module", "embedded.module")
-    assertThat(req2).hasDirectParentClassloaders(req)
-    assertThat(req).hasDirectParentClassloaders(embed)
+    assertThat(req2).hasExactDirectParentClassloaders(req)
+    assertThat(req).hasExactDirectParentClassloaders(embed)
   }
 
   @Test
@@ -448,7 +449,7 @@ internal class PluginDependenciesTest {
     val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
     val bazModule = pluginSet.getEnabledModule("baz.module")
     assertThat(foo)
-      .hasDirectParentClassloaders(bazModule)
+      .hasExactDirectParentClassloaders(bazModule)
       .doesNotHaveDirectParentClassloaders(baz)
       .hasTransitiveParentClassloaders(baz) // only because the module is optional
   }
@@ -462,7 +463,7 @@ internal class PluginDependenciesTest {
     val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
     val bazModule = pluginSet.getEnabledModule("baz.module")
     assertThat(foo)
-      .hasDirectParentClassloaders(bazModule)
+      .hasExactDirectParentClassloaders(bazModule)
       .doesNotHaveDirectParentClassloaders(baz)
       .hasTransitiveParentClassloaders(baz) // only because the module is optional
   }
@@ -485,8 +486,28 @@ internal class PluginDependenciesTest {
     val bazModule = pluginSet.getEnabledModule("baz.module")
     assertThat(bazModule).doesNotHaveTransitiveParentClassloaders(baz)
     assertThat(foo)
-      .hasDirectParentClassloaders(bazModule)
+      .hasExactDirectParentClassloaders(bazModule)
       .doesNotHaveTransitiveParentClassloaders(baz)
+  }
+  
+  @Test
+  fun `plugin is loaded if it has a depends dependency on plugin alias that is placed in required v2 module and other modules affects sorting`() {
+    plugin("baz") {
+      content {
+        module("baz.module", ModuleLoadingRule.REQUIRED) {
+          packagePrefix = "baz.module"
+          pluginAlias("bar")
+        }
+      }
+      depends("additional")
+    }.buildDir(pluginDirPath.resolve("baz"))
+    `foo depends bar`()
+    /* an additional module is used to ensure that in the sorted modules list the main module of 'baz' plugin is moved to the end of the 
+       list if no explicit edge from 'foo' plugin to it is added */
+    plugin("additional") {}.buildDir(pluginDirPath.resolve("additional"))
+    
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz", "additional")
   }
 
   @Test
@@ -498,7 +519,7 @@ internal class PluginDependenciesTest {
     val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
     val bazModule = pluginSet.getEnabledModule("baz.module")
     assertThat(foo)
-      .hasDirectParentClassloaders(bazModule)
+      .hasExactDirectParentClassloaders(bazModule)
       .doesNotHaveTransitiveParentClassloaders(baz)
   }
 
@@ -508,14 +529,6 @@ internal class PluginDependenciesTest {
     `foo module-dependency bar`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
-  }
-
-  @Test
-  fun `plugin is loaded if it has a module dependency on a plugin with package prefix`() {
-    plugin("bar") { packagePrefix = "idk" }.buildDir(pluginDirPath.resolve("bar"))
-    `foo module-dependency bar`()
-    val pluginSet = buildPluginSet()
-    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
   }
 
   @Test
@@ -659,7 +672,7 @@ internal class PluginDependenciesTest {
     val (core, foo) = pluginSet.getEnabledPlugins(PluginManagerCore.CORE_PLUGIN_ID, "foo")
     val (opt, req, emb) = pluginSet.getEnabledModules("optional.module", "required.module", "embedded.module")
     assertThat(foo)
-      .hasDirectParentClassloaders(opt)
+      .hasExactDirectParentClassloaders(opt)
       .doesNotHaveDirectParentClassloaders(core, req, emb)
       .hasTransitiveParentClassloaders(core, emb)
       .doesNotHaveTransitiveParentClassloaders(req)
@@ -729,10 +742,10 @@ internal class PluginDependenciesTest {
     val (withDepends, withDependsOnLang, withDependencies, withDependsOnVcs) = 
       pluginSet.getEnabledPlugins("with-depends", "with-depends-on-lang", "with-dependencies", "with-depends-on-vcs")
     val tasks = pluginSet.getEnabledModule("intellij.platform.tasks.impl")
-    assertThat(withDepends).hasDirectParentClassloaders(tasks)
-    assertThat(withDependsOnLang).hasDirectParentClassloaders(tasks)
-    assertThat(withDependencies).hasDirectParentClassloaders()
-    assertThat(withDependsOnVcs).hasDirectParentClassloaders()
+    assertThat(withDepends).hasExactDirectParentClassloaders(tasks)
+    assertThat(withDependsOnLang).hasExactDirectParentClassloaders(tasks)
+    assertThat(withDependencies).hasExactDirectParentClassloaders()
+    assertThat(withDependsOnVcs).hasExactDirectParentClassloaders()
   } 
   
   @Test
@@ -754,10 +767,34 @@ internal class PluginDependenciesTest {
     val barSub = bar.dependencies[0].subDescriptor!!
     assertThat(barSub.pluginClassLoader).isEqualTo(bar.pluginClassLoader)
     assertThat(barSub)
-      .hasDirectParentClassloaders(foo)
+      .hasExactDirectParentClassloaders(foo)
       .doesNotHaveTransitiveParentClassloaders(baz, bazModule)
     assertThat(barSub.moduleDependencies.modules).hasSize(1)
     assertThat(err).hasMessageContainingAll("'depends' sub-descriptor", "bar", "<dependencies><module>")
+  }
+
+  @Test
+  fun `content module is not loaded if it depends on module from plugin which was not included in explicit loaded subset`() {
+    plugin("foo") {
+      content {
+        module("foo.embedded", ModuleLoadingRule.EMBEDDED) {}
+      }
+    }.buildDir(pluginDirPath.resolve("foo"))
+    plugin("bar") {
+      content {
+        module("bar.optional") {}
+        module("bar.foo.optional") {
+          dependencies {
+            module("foo.embedded")
+          }
+        }
+      }
+    }.buildDir(pluginDirPath.resolve("bar"))
+    val pluginSet = PluginSetTestBuilder.fromPath(pluginDirPath)
+      .withExplicitPluginSubsetToLoad(setOf(PluginId("bar")))
+      .build()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
+    assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("bar.optional")
   }
 
   @Test
@@ -779,7 +816,7 @@ internal class PluginDependenciesTest {
     assertThat(req)
       .doesNotHaveTransitiveParentClassloaders(foo, opt)
     assertThat(opt)
-      .hasDirectParentClassloaders(foo)
+      .hasExactDirectParentClassloaders(foo)
       .doesNotHaveTransitiveParentClassloaders(req)
   }
 

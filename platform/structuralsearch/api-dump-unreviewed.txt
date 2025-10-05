@@ -1055,6 +1055,7 @@ c:com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationP
 - getDocumentationElementForLookupItem(com.intellij.psi.PsiManager,java.lang.Object,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 c:com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplatesCompletionContributor
 - com.intellij.codeInsight.completion.CompletionContributor
+- com.intellij.openapi.project.DumbAware
 - <init>():V
 - fillCompletionVariants(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionResultSet):V
 c:com.intellij.structuralsearch.plugin.ui.StructuralSearchTypedHandler

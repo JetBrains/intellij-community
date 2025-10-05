@@ -3,10 +3,10 @@
 
 package com.intellij.ide.projectWizard.generators
 
+import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.icon
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shortcut
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shouldRenderOnboardingTips
-import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.javaData
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -25,16 +25,16 @@ private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "Sa
 private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "SampleCodeWithRenderedOnboardingTipsInstanceMain.java"
 
 object AssetsJava {
-
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("The onboarding tips generated unconditionally")
   fun getJavaSampleTemplateName(generateOnboardingTips: Boolean): String =
     getJavaSampleTemplateName()
 
   @ApiStatus.Internal
-  fun getJavaSampleTemplateName(projectWizardStep: AssetsNewProjectWizardStep?): String {
-    val intent = projectWizardStep?.javaData?.jdkIntent
+  fun getJavaSampleTemplateName(intent: ProjectWizardJdkIntent?): String {
     val minimumLevel = JavaFeature.JAVA_LANG_IO.minimumLevel
-    if (intent != null && intent.isAtLeast(minimumLevel.feature())) {
+    if (intent != null && intent.isAtLeast(minimumLevel.feature(), true)) {
       //use compact source file
       return when (shouldRenderOnboardingTips()) {
         true -> DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN
@@ -72,6 +72,8 @@ object AssetsJava {
   }
 }
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The onboarding tips generated unconditionally")
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, packageName: String?, generateOnboardingTips: Boolean) {
   val templateName = AssetsJava.getJavaSampleTemplateName()
@@ -79,6 +81,8 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, p
   withJavaSampleCodeAsset(sourcePath, packageName, templateName)
 }
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The onboarding tips generated unconditionally")
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourcePath: String, templateName: String, packageName: String?, generateOnboardingTips: Boolean): Unit =
   withJavaSampleCodeAsset(sourcePath, packageName, templateName)
@@ -88,11 +92,13 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   sourceRootPath: String,
   packageName: String? = null,
   fileName: String = DEFAULT_FILE_NAME,
-  templateName: String = AssetsJava.getJavaSampleTemplateName(this),
+  templateName: String? = null,
+  jdkIntent: ProjectWizardJdkIntent? = null,
 ) {
+  val currentTemplate = templateName ?: AssetsJava.getJavaSampleTemplateName(jdkIntent)
   val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, packageName, fileName)
   AssetsJava.prepareJavaSampleOnboardingTips(project, fileName)
-  withJavaSampleCodeAsset(sourcePath, packageName, templateName)
+  withJavaSampleCodeAsset(sourcePath, packageName, currentTemplate)
 }
 
 private fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
@@ -137,6 +143,8 @@ private fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   addFilesToOpen(sourcePath)
 }
 
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("The onboarding tips are prepared in the withJavaSampleCodeAsset function")
 fun AssetsNewProjectWizardStep.prepareJavaSampleOnboardingTips(project: Project): Unit =
   AssetsJava.prepareJavaSampleOnboardingTips(project, DEFAULT_FILE_NAME)

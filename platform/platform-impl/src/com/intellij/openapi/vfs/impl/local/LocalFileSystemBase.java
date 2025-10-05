@@ -9,14 +9,19 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
@@ -54,12 +59,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @Nullable VirtualFile findFileByPath(@NotNull String path) {
-    return VfsImplUtil.findFileByPath(this, path);
+    return findFileByPath(this, path);
   }
 
   @Override
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return VfsImplUtil.findFileByPathIfCached(this, path);
+    return findFileByPathIfCached(this, path);
   }
 
   @Override
@@ -303,13 +308,16 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       NioFiles.createIfNotExists(nioFile);
       if (existing != null) {
         // Wow, I/O created the file successfully even though it already existed in VFS. Maybe we got dir case sensitivity wrong?
-        var knownCS = parent.isCaseSensitive();
-        var actualCS = FileSystemUtil.readParentCaseSensitivity(new File(existing.getPath()));
-        if ((actualCS == FileAttributes.CaseSensitivity.SENSITIVE) != knownCS) {
+        boolean knownCS = parent.isCaseSensitive();
+        CaseSensitivity actualCS = fetchCaseSensitivity(parent, name);
+        if (actualCS.isKnown() && actualCS.isSensitive() != knownCS) {
           // we need to update case sensitivity
-          var event = ((PersistentFSImpl)PersistentFS.getInstance()).generateCaseSensitivityChangedEvent(parent, actualCS);
+          var event = ((PersistentFSImpl)PersistentFS.getInstance()).prepareCaseSensitivityUpdateIfNeeded(
+            (VirtualDirectoryImpl)parent,
+            actualCS.toBooleanOrFail()
+          );
           if (event != null) {
-            RefreshQueue.getInstance().processEvents(false, List.of(event));
+            RefreshQueue.getInstance().processEvents(/* async: */ false, List.of(event));
           }
         }
       }
@@ -318,6 +326,25 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     auxNotifyCompleted(handler -> handler.createFile(parent, name));
 
     return new FakeVirtualFile(parent, name);
+  }
+
+  //TODO RC: this method is better to be in LocalFileSystemImpl -- but it is _used_ from this class, createChildFile() method
+  //         I'm not really sure it _should_ be used where, because I'm not sure LocalFileSystemBase subclasses other than
+  //         LocalFileSystemImpl are really could/should deal with per-directory case-sensitivity though...
+  @ApiStatus.Internal
+  public @NotNull CaseSensitivity fetchCaseSensitivity(@NotNull VirtualFile parent, @NotNull String childName) {
+    if (Registry.is("vfs.fetch.case.sensitivity.using.eel")) {
+      EelPath eelPath = LocalFileSystemEelUtil.toEelPath(parent, childName);
+      if (
+        eelPath != null && (
+          !(eelPath.getDescriptor() instanceof LocalEelDescriptor)
+          || Registry.is("vfs.fetch.case.sensitivity.using.eel.local")  // TODO IJPL-204344
+        )
+      ) {
+        return LocalFileSystemEelUtil.fetchCaseSensitivityUsingEel(eelPath);
+      }
+    }
+    return FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
   }
 
   @Override
@@ -616,6 +643,5 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @TestOnly
   public void cleanupForNextTest() {
     FileDocumentManager.getInstance().saveAllDocuments();
-    PersistentFS.getInstance().clearIdCache();
   }
 }

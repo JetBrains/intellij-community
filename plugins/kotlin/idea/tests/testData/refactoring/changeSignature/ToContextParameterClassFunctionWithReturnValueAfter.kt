@@ -3,7 +3,8 @@
 class MyClass {
     val value: Int = 42
 
-    context(param: String) fun getLength(): Int = param.length
+    context(param: String)
+    fun getLength(): Int = param.length
 
     fun inside(param: Int = with("abc") {
         getLength()
@@ -40,6 +41,4 @@ fun MyClass.foo() = with("param1") {
     getLength()
 }
 
-fun String.bar(m: MyClass) = with(this) {
-    m.getLength()
-}
+fun String.bar(m: MyClass) = m.getLength()

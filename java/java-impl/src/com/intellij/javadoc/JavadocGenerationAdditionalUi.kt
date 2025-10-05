@@ -13,32 +13,32 @@ import javax.swing.JCheckBox
 import javax.swing.JPanel
 import javax.swing.JTextField
 
-class JavadocGenerationAdditionalUi {
-  lateinit var myIncludeLibraryCb: JCheckBox
-  lateinit var myLinkToJdkDocs: JCheckBox
+public class JavadocGenerationAdditionalUi {
+  public lateinit var myIncludeLibraryCb: JCheckBox
+  public lateinit var myLinkToJdkDocs: JCheckBox
 
-  lateinit var myTfOutputDir: TextFieldWithBrowseButton
+  public lateinit var myTfOutputDir: TextFieldWithBrowseButton
 
-  lateinit var myScopeCombo: ComboBox<@NlsSafe String>
+  public lateinit var myScopeCombo: ComboBox<@NlsSafe String>
 
-  lateinit var myHierarchy: JCheckBox
-  lateinit var myNavigator: JCheckBox
-  lateinit var myIndex: JCheckBox
-  lateinit var mySeparateIndex: JCheckBox
+  public lateinit var myHierarchy: JCheckBox
+  public lateinit var myNavigator: JCheckBox
+  public lateinit var myIndex: JCheckBox
+  public lateinit var mySeparateIndex: JCheckBox
 
-  lateinit var myTagUse: JCheckBox
-  lateinit var myTagAuthor: JCheckBox
-  lateinit var myTagVersion: JCheckBox
-  lateinit var myTagDeprecated: JCheckBox
-  lateinit var myDeprecatedList: JCheckBox
+  public lateinit var myTagUse: JCheckBox
+  public lateinit var myTagAuthor: JCheckBox
+  public lateinit var myTagVersion: JCheckBox
+  public lateinit var myTagDeprecated: JCheckBox
+  public lateinit var myDeprecatedList: JCheckBox
 
-  lateinit var myLocaleTextField: JTextField
-  lateinit var myOtherOptionsField: JTextField
-  lateinit var myHeapSizeField: JTextField
+  public lateinit var myLocaleTextField: JTextField
+  public lateinit var myOtherOptionsField: JTextField
+  public lateinit var myHeapSizeField: JTextField
 
-  lateinit var myOpenInBrowserCheckBox: JCheckBox
+  public lateinit var myOpenInBrowserCheckBox: JCheckBox
 
-  val panel: JPanel = panel {
+  public val panel: JPanel = panel {
     group(JavaBundle.message("javadoc.generate.options.separator")) {
       row {
         myIncludeLibraryCb = checkBox(JavaBundle.message("javadoc.generate.include.jdk.library.sources.in.sourcepath.option")).component

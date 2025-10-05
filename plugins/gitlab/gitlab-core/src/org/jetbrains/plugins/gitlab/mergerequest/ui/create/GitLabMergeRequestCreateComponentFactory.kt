@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.create
 
-import com.intellij.collaboration.async.extensionListFlow
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
@@ -9,13 +8,11 @@ import com.intellij.collaboration.ui.bindValueIn
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewLayoutBuilder
 import com.intellij.collaboration.ui.codereview.create.CodeReviewCreateReviewUIUtil
-import com.intellij.collaboration.ui.util.bindContentIn
-import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.codereview.create.CodeReviewTitleDescriptionComponentFactory
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.ui.branch.MergeDirectionComponentFactory
 import git4idea.ui.branch.MergeDirectionModel
@@ -23,13 +20,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.BranchState
+import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequestCreateDirectionModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequestCreateTitleGenerationViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.create.model.GitLabMergeRequestCreateViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.JComponent
-import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 
 internal object GitLabMergeRequestCreateComponentFactory {
   fun create(project: Project, cs: CoroutineScope, createVm: GitLabMergeRequestCreateViewModel): JComponent {
@@ -51,7 +49,7 @@ internal object GitLabMergeRequestCreateComponentFactory {
 
     val directionSelector = createDirectionSelector(directionModel)
     val commitsLoadingPanel = createCommitsPanel(project, cs, createVm)
-    val titlePanel = cs.createTitleEditorPanel(createVm)
+    val textPanel = cs.createTextPanel(project, createVm)
     val reviewersPanel = GitLabMergeRequestCreateReviewersComponentFactory.create(cs, createVm)
     val statusPanel = GitLabMergeRequestCreateStatusComponentFactory.create(cs, createVm)
     val actionsPanel = GitLabMergeRequestCreateActionsComponentFactory.create(project, cs, createVm)
@@ -60,7 +58,7 @@ internal object GitLabMergeRequestCreateComponentFactory {
       .addComponent(directionSelector, zeroMinWidth = true)
       .addComponent(commitsLoadingPanel, stretchYWithWeight = 0.5f, withoutBorder = true)
       .addSeparator()
-      .addComponent(titlePanel, stretchYWithWeight = 0.3f, zeroMinWidth = true)
+      .addComponent(textPanel, stretchYWithWeight = 0.3f, zeroMinWidth = true)
       .addSeparator()
       .addComponent(reviewersPanel, zeroMinWidth = true, stretchYWithWeight = 0.2f)
       .addSeparator()
@@ -69,28 +67,12 @@ internal object GitLabMergeRequestCreateComponentFactory {
       .build()
   }
 
-  private fun CoroutineScope.createTitleEditorPanel(createVm: GitLabMergeRequestCreateViewModel): JComponent {
+  private fun CoroutineScope.createTextPanel(project: Project, createVm: GitLabMergeRequestCreateViewModel): JComponent {
     val cs = this
-    val editor = CodeReviewCreateReviewUIUtil.createTitleEditor(GitLabBundle.message("merge.request.create.title.placeholder")).apply {
-      document.addDocumentListener(object : DocumentListener {
-        fun updateText() = createVm.updateTitle(text)
-        override fun insertUpdate(e: DocumentEvent?) = updateText()
-        override fun removeUpdate(e: DocumentEvent?) = updateText()
-        override fun changedUpdate(e: DocumentEvent?) = updateText()
-      })
-      bindTextIn(cs, createVm.title)
-    }
-
-    return Wrapper().apply {
-      bindContentIn(cs, GitLabTitleGeneratorExtension.EP_NAME.extensionListFlow()) { extensions ->
-        if (extensions.isEmpty()) {
-          editor
-        }
-        else {
-          wrapTitleEditorWithGenerateActions(createVm, editor)
-        }
-      }
-    }
+    val titleEditor = CodeReviewTitleDescriptionComponentFactory.createTitleEditorIn(project, cs, createVm, GitLabBundle.message("merge.request.create.title.placeholder"))
+    val descriptionEditor = CodeReviewTitleDescriptionComponentFactory.createDescriptionEditorIn(project, cs, createVm, GitLabBundle.message("merge.request.create.description.placeholder"))
+    val textPanel = CodeReviewTitleDescriptionComponentFactory.createIn(cs, createVm, titleEditor, descriptionEditor)
+    return wrapTitleEditorWithGenerateActions(createVm, textPanel)
   }
 
   private fun CoroutineScope.wrapTitleEditorWithGenerateActions(

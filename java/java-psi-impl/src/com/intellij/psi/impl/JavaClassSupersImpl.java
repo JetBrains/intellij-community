@@ -112,7 +112,7 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
         PsiType targetType;
         if (paramCandidate instanceof PsiTypeParameter && paramCandidate != parameter) {
           targetType = outer.substituteWithBoundsPromotion((PsiTypeParameter)paramCandidate);
-          if (targetType != null && innerType.getAnnotations().length > 0) {
+          if (targetType != null && innerType.hasAnnotations()) {
             PsiAnnotation[] typeAnnotations = targetType.getAnnotations();
             targetType = targetType.annotate(() -> ArrayUtil.mergeArrays(innerType.getAnnotations(), typeAnnotations));
           }

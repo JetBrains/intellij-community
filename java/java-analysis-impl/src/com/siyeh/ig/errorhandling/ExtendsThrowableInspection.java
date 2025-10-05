@@ -26,7 +26,7 @@ public final class ExtendsThrowableInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ExtendsThrowableVisitor();
   }
 

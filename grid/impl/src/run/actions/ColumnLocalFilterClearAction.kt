@@ -4,9 +4,10 @@ import com.intellij.database.DatabaseDataKeys
 import com.intellij.database.run.ui.table.TableResultView
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 
-class ColumnLocalFilterClearAllAction : DumbAwareAction(), GridAction {
+class ColumnLocalFilterClearAllAction : DumbAwareAction(), GridAction, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }

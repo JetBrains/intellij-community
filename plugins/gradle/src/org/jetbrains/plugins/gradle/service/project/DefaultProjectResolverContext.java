@@ -40,6 +40,8 @@ import java.util.function.Supplier;
 @ApiStatus.Internal
 public class DefaultProjectResolverContext extends GradleExecutionContextImpl implements ProjectResolverContext {
 
+  private final @NotNull String myExternalProjectPath;
+
   private final @NotNull GradleProjectResolverIndicator myProjectResolverIndicator;
   private @Nullable GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
@@ -55,6 +57,7 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
   private static final Logger LOG = Logger.getInstance(DefaultProjectResolverContext.class);
 
   public DefaultProjectResolverContext(
+    @NotNull String externalProjectPath,
     @NotNull ExternalSystemTaskId externalSystemTaskId,
     @NotNull String projectPath,
     @NotNull GradleExecutionSettings settings,
@@ -64,6 +67,7 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
     boolean isBuildSrcProject
   ) {
     super(projectPath, externalSystemTaskId, settings, listener, projectResolverIndicator.token());
+    myExternalProjectPath = externalProjectPath;
     myPolicy = resolverPolicy;
     myProjectResolverIndicator = projectResolverIndicator;
     myBuildSrcProject = isBuildSrcProject;
@@ -75,11 +79,17 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
     @NotNull GradleExecutionSettings settings,
     boolean isBuildSrcProject
   ) {
-    super(projectPath, settings, resolverContext);
+    super(resolverContext, projectPath, settings);
+    myExternalProjectPath = resolverContext.myExternalProjectPath;
     myPolicy = resolverContext.myPolicy;
     myProjectResolverIndicator = resolverContext.myProjectResolverIndicator;
     myBuildSrcProject = isBuildSrcProject;
     resolverContext.copyUserDataTo(this);
+  }
+
+  @Override
+  public @NotNull String getExternalProjectPath() {
+    return myExternalProjectPath;
   }
 
   @Override
@@ -134,7 +144,7 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
     return myPhasedSyncEnabled;
   }
 
-  private static boolean isPhasedSyncEnabledImpl(@NotNull ProjectResolverContext context) {
+  private static boolean isPhasedSyncEnabledImpl(@NotNull DefaultProjectResolverContext context) {
     if (!Registry.is("gradle.phased.sync.enabled")) {
       LOG.debug("The phased Gradle sync isn't applicable: disabled by registry");
       return false;
@@ -145,6 +155,14 @@ public class DefaultProjectResolverContext extends GradleExecutionContextImpl im
     }
     if (!context.isUseQualifiedModuleNames()) {
       LOG.debug("The phased Gradle sync isn't applicable: unsupported sync mode with isUseQualifiedModuleNames = false");
+      return false;
+    }
+    if (context.isBuildSrcProject() && Registry.is("gradle.phased.sync.bridge.disabled")) {
+      // With older Gradle versions, buildSrc has its own separate resolve (as opposed to being a composite build) and this causes issues.
+      // As of now, it's simpler to just skip the sync contributors in these cases.
+      LOG.debug("The phased Gradle sync isn't applicable:" +
+                " unsupported sync mode with isBuildSrcProject = true" +
+                " and disabled phased sync bridges");
       return false;
     }
     return true;

@@ -11,12 +11,11 @@ import java.util.function.Supplier;
  * some external plugins. It isn't supposed to be used by plugins directly.
  */
 @ApiStatus.Internal
-public class IdeDeprecatedMessagesBundle extends DynamicBundle {
+public final class IdeDeprecatedMessagesBundle {
   private static final @NonNls String BUNDLE = "messages.IdeDeprecatedMessagesBundle";
-  private static final IdeDeprecatedMessagesBundle INSTANCE = new IdeDeprecatedMessagesBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(IdeDeprecatedMessagesBundle.class, BUNDLE);
 
   private IdeDeprecatedMessagesBundle() {
-    super(BUNDLE);
   }
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

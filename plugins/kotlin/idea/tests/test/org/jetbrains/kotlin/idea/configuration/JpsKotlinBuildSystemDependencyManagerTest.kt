@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.modifyModules
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.DependencyScope
@@ -59,7 +59,7 @@ class JpsKotlinBuildSystemDependencyManagerTest : HeavyPlatformTestCase() {
     fun testReusingExistingDependency() = runBlocking {
         addAndTestDependency(module, DependencyScope.COMPILE)
         val module = project.modifyModules {
-            newModule("submodule", StdModuleTypes.JAVA.id)
+            newModule("submodule", JavaModuleType.getModuleType().id)
         }
         addAndTestDependency(module, DependencyScope.COMPILE)
 
@@ -85,7 +85,7 @@ class JpsKotlinBuildSystemDependencyManagerTest : HeavyPlatformTestCase() {
 
     fun testAddDependencySubmodule() = runBlocking {
         val module = project.modifyModules {
-            newModule("submodule", StdModuleTypes.JAVA.id)
+            newModule("submodule", JavaModuleType.getModuleType().id)
         }
         addAndTestDependency(module, DependencyScope.COMPILE)
     }

@@ -75,6 +75,8 @@ public abstract class ActionPlaces {
 
   public static final String STATUS_BAR_PLACE = "StatusBarPlace";
 
+  public static final String FIND_IN_FILES_POPUP = "FindInFilesPopup";
+
   public static final String SCOPE_VIEW_POPUP = "ScopeViewPopup";
   public static final String ACTION_SEARCH = "GoToAction";
 
@@ -93,6 +95,7 @@ public abstract class ActionPlaces {
   public static final String RUNNER_TOOLBAR = "RunnerToolbar";
   public static final String RUNNER_LAYOUT_BUTTON_TOOLBAR = "RunnerLayoutButtonToolbar";
   public static final String DEBUGGER_TOOLBAR = "DebuggerToolbar";
+  public static final String XDEBUGGER_TREE_POPUP = "XDebuggerTreePopup";
   public static final String ATTACH_DIALOG_TOOLBAR = "AttachDialogToolbar";
   public static final String USAGE_VIEW_POPUP = "UsageViewPopup";
   public static final String USAGE_VIEW_TOOLBAR = "UsageViewToolbar";
@@ -140,8 +143,6 @@ public abstract class ActionPlaces {
 
   public static final String WELCOME_SCREEN = "WelcomeScreen";
   public static final String WELCOME_SCREEN_QUICK_PANEL = "WelcomeScreen.QuickPanel";
-  @ApiStatus.Internal
-  public static final String WELCOME_SCREEN_NON_MODAL = "WelcomeScreen.NonModal";
 
   public static final String CHANGES_VIEW_TOOLBAR = "ChangesViewToolbar";
   public static final String CHANGES_VIEW_POPUP = "ChangesViewPopup";
@@ -273,7 +274,7 @@ public abstract class ActionPlaces {
     VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_LOG_BRANCHES_PLACE, VCS_TOOLBAR_WIDGET,
     PROJECT_WIDGET_POPUP,
     JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP,
-    REVEAL_IN_POPUP
+    REVEAL_IN_POPUP, FIND_IN_FILES_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";

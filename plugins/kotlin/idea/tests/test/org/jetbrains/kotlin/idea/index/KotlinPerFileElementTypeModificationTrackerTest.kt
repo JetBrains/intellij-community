@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.psi.stubs.elements.KtFileElementType
 
 class KotlinPerFileElementTypeModificationTrackerTest : KotlinLightCodeInsightFixtureTestCase() {
     companion object {
-        val KOTLIN = KtFileElementType.INSTANCE
+        val KOTLIN get() = KtFileElementType
     }
 
     private val helper = StubIndexPerFileElementTypeModificationTrackerTestHelper()

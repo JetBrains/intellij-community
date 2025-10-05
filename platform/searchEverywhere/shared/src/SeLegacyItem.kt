@@ -7,5 +7,4 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface SeLegacyItem : SeItem {
   val contributor: SearchEverywhereContributor<*>
-  val rawObject: Any
 }

@@ -30,20 +30,20 @@ public class XmlBuilderTest extends LightJavaCodeInsightTestCase {
     private final StringBuilder builder = new StringBuilder();
     private final StringBuilder currentPhysicalText = new StringBuilder();
     private final StringBuilder currentDisplayText = new StringBuilder();
-    private final ProcessingOrder myTagProcessingOrder;
+    private final @NotNull ProcessingOrder myTagProcessingOrder;
 
-    TestXmlBuilder(final ProcessingOrder tagsAndAttributes) {
+    TestXmlBuilder(@NotNull ProcessingOrder tagsAndAttributes) {
       myTagProcessingOrder = tagsAndAttributes;
     }
 
     @Override
-    public void attribute(final CharSequence name, final CharSequence value, final int startoffset, final int endoffset) {
+    public void attribute(final @NotNull CharSequence name, final @NotNull CharSequence value, final int startoffset, final int endoffset) {
       flushText();
       builder.append("ATT: name='").append(name).append("' value='").append(value).append("'\n");
     }
 
     @Override
-    public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
+    public void endTag(final @NotNull CharSequence localName, final @NotNull String namespace, final int startoffset, final int endoffset) {
       flushText();
       builder.append("ENDTAG: name='").append(localName).append("' namespace='").append(namespace).append("'\n");
     }
@@ -53,21 +53,21 @@ public class XmlBuilderTest extends LightJavaCodeInsightTestCase {
         }
 
     @Override
-    public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,
-                                    final int headerEndOffset) {
+    public @NotNull ProcessingOrder startTag(final @NotNull CharSequence localName, final @NotNull String namespace, final int startoffset, final int endoffset,
+                                             final int headerEndOffset) {
       flushText();
       builder.append("TAG: name='").append(localName).append("' namespace='").append(namespace).append("'\n");
       return myTagProcessingOrder;
     }
 
     @Override
-    public void textElement(final CharSequence display, final CharSequence physical, final int startoffset, final int endoffset) {
+    public void textElement(final @NotNull CharSequence display, final @NotNull CharSequence physical, final int startoffset, final int endoffset) {
       currentPhysicalText.append(physical);
       currentDisplayText.append(display);
     }
 
     @Override
-    public void entityRef(final CharSequence ref, final int startOffset, final int endOffset) {
+    public void entityRef(final @NotNull CharSequence ref, final int startOffset, final int endOffset) {
       flushText();
       builder.append("REF: '").append(ref).append("'\n");
     }
@@ -286,7 +286,7 @@ public class XmlBuilderTest extends LightJavaCodeInsightTestCase {
     );
   }
 
-  private static void doTest(String xml, String expectedEventSequence, final XmlBuilder.ProcessingOrder tagsAndAttributes) {
+  private static void doTest(String xml, String expectedEventSequence, @NotNull XmlBuilder.ProcessingOrder tagsAndAttributes) {
     final TestXmlBuilder builder = new TestXmlBuilder(tagsAndAttributes);
     new XmlBuilderDriver(xml).build(builder);
     assertEquals(expectedEventSequence, builder.getResult());

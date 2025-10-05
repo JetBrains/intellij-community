@@ -51,6 +51,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getDownloadPageUrl()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public final @Nullable String getDownloadUrl() {
@@ -58,35 +59,70 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
     return productUrl != null ? productUrl + "download/" : null;
   }
 
-  public abstract @Nullable UpdateUrls getUpdateUrls();
+  /**
+   * @deprecated use properties from {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls} instead
+   */
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  public @Nullable String getProductUrl() {
+    return null;
+  }
+
+  /**
+   * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getYouTubeChannelUrl()} instead
+   */
+  @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
+  public @Nullable String getJetBrainsTvUrl() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable UpdateUrls getUpdateUrls() {
+    return null;
+  }
 
   /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getGettingStartedPageUrl()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract String getDocumentationUrl();
+  public @Nullable String getDocumentationUrl() {
+    return null;
+  }
 
   /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getTechnicalSupportUrl()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract String getSupportUrl();
+  public @Nullable String getSupportUrl() {
+    return null;
+  }
 
   /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getBugReportUrl()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract String getYoutrackUrl();
+  public @Nullable String getYoutrackUrl() {
+    return null;
+  }
 
   /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getFeedbackReporter()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract String getFeedbackUrl();
+  public @Nullable String getFeedbackUrl() {
+    return null;
+  }
 
   /**
    * Returns URL to plugins repository without a trailing slash.
@@ -104,45 +140,64 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * URL of the built-in custom plugin repository instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract String getBuiltinPluginsUrl();
+  public @Nullable String getBuiltinPluginsUrl() {
+    return null;
+  }
 
   /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getHelpPageUrl()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract String getWebHelpUrl();
+  public @Nullable String getWebHelpUrl() {
+    return null;
+  }
 
   /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getWhatIsNewPageUrl()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract String getWhatsNewUrl();
+  public @Nullable String getWhatsNewUrl() {
+    return null;
+  }
 
   /**
    * @deprecated use {@link com.intellij.ide.actions.WhatsNewUtil#isWhatsNewAvailable()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract boolean isShowWhatsNewOnUpdate();
+  public boolean isShowWhatsNewOnUpdate() {
+    return false;
+  }
 
   /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getKeyboardShortcutsPdfUrl()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract @Nullable String getWinKeymapUrl();
+  public @Nullable String getWinKeymapUrl() {
+    return null;
+  }
 
   /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getKeyboardShortcutsPdfUrl()} instead
    */
+  @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract @Nullable String getMacKeymapUrl();
+  public @Nullable String getMacKeymapUrl() {
+    return null;
+  }
 
+  @ApiStatus.Internal
   public interface UpdateUrls {
     /**
      * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getUpdateMetadataUrl()} instead

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -292,7 +293,7 @@ public final class GroovyDslFileIndex {
     for (Class<?> aClass : classes) {
       File jarPath = new File(PathUtil.getJarPathForClass(aClass));
       if (jarPath.isFile()) {
-        String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+        String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
         if (relevantJarsRoot != null && jarPath.toPath().startsWith(relevantJarsRoot)) {
           // compilation output jar
           jarPath = switch (jarPath.getParentFile().getName()) {

@@ -15,8 +15,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.completion.KeywordLookupObject
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -96,6 +98,7 @@ fun Document.isTextAt(offset: Int, text: String) =
     offset + text.length <= textLength && getText(TextRange(offset, offset + text.length)) == text
 
 @ApiStatus.Internal
+@Serializable
 data class KeywordConstructLookupObject(
     val keyword: String,
     val constructToInsert: String
@@ -103,11 +106,20 @@ data class KeywordConstructLookupObject(
 
 fun LookupElement.withLineIndentAdjuster(): LookupElement = LookupElementDecorator.withDelegateInsertHandler(
     this,
-    InsertHandler { context, item ->
+    LineAdjusterInsertionHandler,
+)
+
+@ApiStatus.Internal
+@Serializable
+object LineAdjusterInsertionHandler : SerializableInsertHandler {
+    override fun handleInsert(
+        context: InsertionContext,
+        item: LookupElement
+    ) {
         item.handleInsert(context)
         context.document.adjustLineIndent(context.project, context.startOffset)
-    },
-)
+    }
+}
 
 fun createKeywordConstructLookupElement(
     project: Project,
@@ -150,42 +162,56 @@ fun createKeywordConstructLookupElement(
     return LookupElementBuilder.create(lookupElement, keyword)
         .bold()
         .withTailText(tailText)
-        .withInsertHandler { insertionContext, _ ->
-            if (insertionContext.completionChar == Lookup.NORMAL_SELECT_CHAR ||
-                insertionContext.completionChar == Lookup.REPLACE_SELECT_CHAR ||
-                insertionContext.completionChar == Lookup.AUTO_INSERT_SELECT_CHAR
+        .withInsertHandler(KeywordConstructorInsertionHandler(keyword, adjustLineIndent, tailBeforeCaret, tailAfterCaret))
+}
+
+@ApiStatus.Internal
+@Serializable
+data class KeywordConstructorInsertionHandler(
+    val keyword: String,
+    val adjustLineIndent: Boolean,
+    val tailBeforeCaret: String,
+    val tailAfterCaret: String,
+) : SerializableInsertHandler {
+    override fun handleInsert(
+        insertionContext: InsertionContext,
+        item: LookupElement
+    ) {
+        if (insertionContext.completionChar == Lookup.NORMAL_SELECT_CHAR ||
+            insertionContext.completionChar == Lookup.REPLACE_SELECT_CHAR ||
+            insertionContext.completionChar == Lookup.AUTO_INSERT_SELECT_CHAR
+        ) {
+            val keywordStartOffset = if (!adjustLineIndent) {
+                insertionContext.tailOffset - keyword.length
+            } else {
+                val offset = insertionContext.tailOffset - keyword.length
+                insertionContext.document.adjustLineIndent(insertionContext.project, offset)
+                insertionContext.tailOffset - keyword.length
+            }
+
+            val offset = keywordStartOffset + keyword.length
+            val newIndent = detectIndent(insertionContext.document.charsSequence, keywordStartOffset)
+            val beforeCaret = tailBeforeCaret.indentLinesAfterFirst(newIndent)
+            val afterCaret = tailAfterCaret.indentLinesAfterFirst(newIndent)
+
+            val element = insertionContext.file.findElementAt(offset)
+
+            val sibling = when {
+                element !is PsiWhiteSpace -> element
+                element.textContains('\n') -> null
+                else -> element.getNextSiblingIgnoringWhitespace(true)
+            }
+
+            if (sibling != null &&
+                beforeCaret.trimStart().startsWith(insertionContext.document.getText(TextRange.from(sibling.startOffset, 1)))
             ) {
-                val keywordStartOffset = if (!adjustLineIndent) {
-                    insertionContext.tailOffset - keyword.length
-                } else {
-                    val offset = insertionContext.tailOffset - keyword.length
-                    insertionContext.document.adjustLineIndent(insertionContext.project, offset)
-                    insertionContext.tailOffset - keyword.length
-                }
-
-                val offset = keywordStartOffset + keyword.length
-                val newIndent = detectIndent(insertionContext.document.charsSequence, keywordStartOffset)
-                val beforeCaret = tailBeforeCaret.indentLinesAfterFirst(newIndent)
-                val afterCaret = tailAfterCaret.indentLinesAfterFirst(newIndent)
-
-                val element = insertionContext.file.findElementAt(offset)
-
-                val sibling = when {
-                    element !is PsiWhiteSpace -> element
-                    element.textContains('\n') -> null
-                    else -> element.getNextSiblingIgnoringWhitespace(true)
-                }
-
-                if (sibling != null &&
-                    beforeCaret.trimStart().startsWith(insertionContext.document.getText(TextRange.from(sibling.startOffset, 1)))
-                ) {
-                    insertionContext.editor.moveCaret(sibling.startOffset + 1)
-                } else {
-                    insertionContext.document.insertString(offset, beforeCaret + afterCaret)
-                    insertionContext.editor.moveCaret(offset + beforeCaret.length)
-                }
+                insertionContext.editor.moveCaret(sibling.startOffset + 1)
+            } else {
+                insertionContext.document.insertString(offset, beforeCaret + afterCaret)
+                insertionContext.editor.moveCaret(offset + beforeCaret.length)
             }
         }
+    }
 }
 
 private fun detectIndent(text: CharSequence, offset: Int): String {

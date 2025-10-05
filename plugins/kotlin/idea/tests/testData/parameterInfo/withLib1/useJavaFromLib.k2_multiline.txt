@@ -1,0 +1,2 @@
+Text: (<highlight>myParamName1: Int</highlight>,
+myParamName2: String!), Disabled: false, Strikeout: false, Green: true

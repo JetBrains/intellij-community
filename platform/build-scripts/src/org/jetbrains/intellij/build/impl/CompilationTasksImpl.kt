@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -34,22 +33,7 @@ internal class CompilationTasksImpl(private val context: CompilationContext) : C
     resolveProjectDependencies(context)
   }
 
-  override suspend fun generateRuntimeModuleRepository() {
-    generateRuntimeModuleRepository(context)
-  }
-
   override suspend fun compileAllModulesAndTests() {
     context.compileModules(moduleNames = null, includingTestsInModules = null)
-  }
-}
-
-internal suspend fun generateRuntimeModuleRepository(context: CompilationContext) {
-  if (context.compilationData.runtimeModuleRepositoryGenerated) {
-    Span.current().addEvent("runtime module repository is already generated")
-  }
-  else {
-    spanBuilder("generate runtime module repository").use {
-      JpsCompilationRunner(context).generateRuntimeModuleRepository()
-    }
   }
 }

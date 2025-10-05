@@ -86,7 +86,7 @@ private fun checkKeyCapabilities(capabilities: String): Boolean {
 fun isGpgSignEnabledCached(repository: GitRepository): Boolean {
   return GitConfigUtil
     .getBooleanValue(GitProjectConfigurationCache.getInstance(repository.project)
-                       .readRepositoryConfig(repository, GitConfigUtil.GPG_COMMIT_SIGN)) == true
+                       .readRepositoryConfig(repository.root, GitConfigUtil.GPG_COMMIT_SIGN)) == true
 }
 
 fun isGpgSignEnabled(project: Project, root: VirtualFile): Boolean {
@@ -101,7 +101,7 @@ fun isGpgSignEnabled(project: Project, root: VirtualFile): Boolean {
 
 @RequiresBackgroundThread
 fun getGpgSignKeyCached(repository: GitRepository): String? {
-  return GitProjectConfigurationCache.getInstance(repository.project).readRepositoryConfig(repository, GitConfigUtil.GPG_COMMIT_SIGN_KEY)
+  return GitProjectConfigurationCache.getInstance(repository.project).readRepositoryConfig(repository.root, GitConfigUtil.GPG_COMMIT_SIGN_KEY)
 }
 
 fun getGpgSignKey(project: Project, root: VirtualFile): String? {

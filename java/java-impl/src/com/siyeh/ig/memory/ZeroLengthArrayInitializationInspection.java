@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.psi.PsiArrayInitializerExpression;
-import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiNewExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -43,12 +42,11 @@ public final class ZeroLengthArrayInitializationInspection extends BaseInspectio
 
   @Override
   public @NotNull String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "array.allocation.zero.length.problem.descriptor");
+    return InspectionGadgetsBundle.message("array.allocation.zero.length.problem.descriptor");
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ZeroLengthArrayInitializationVisitor();
   }
 
@@ -57,12 +55,10 @@ public final class ZeroLengthArrayInitializationInspection extends BaseInspectio
     return true;
   }
 
-  private static class ZeroLengthArrayInitializationVisitor
-    extends BaseInspectionVisitor {
+  private static class ZeroLengthArrayInitializationVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(
-      @NotNull PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (!ConstructionUtils.isEmptyArrayInitializer(expression)) {
         return;
@@ -74,11 +70,9 @@ public final class ZeroLengthArrayInitializationInspection extends BaseInspectio
     }
 
     @Override
-    public void visitArrayInitializerExpression(
-      @NotNull PsiArrayInitializerExpression expression) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
       super.visitArrayInitializerExpression(expression);
-      final PsiExpression[] initializers = expression.getInitializers();
-      if (initializers.length > 0) {
+      if (!expression.isEmpty()) {
         return;
       }
       if (expression.getParent() instanceof PsiNewExpression) {

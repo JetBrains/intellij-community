@@ -1,20 +1,22 @@
 ### auto-generated section `build kotlin.code-insight.impl-base` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
+  name = "custom_impl-base",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-  ]
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "impl-base_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,8 +24,9 @@ jvm_library(
   name = "impl-base",
   module_name = "kotlin.code-insight.impl-base",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl-base_resources"],
+  kotlinc_opts = ":custom_impl-base",
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -72,8 +75,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/plugin",
     "@lib//:fastutil-min",
-    "//plugins/kotlin/base/scripting",
-  ],
-  runtime_deps = [":impl-base_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.code-insight.impl-base` end

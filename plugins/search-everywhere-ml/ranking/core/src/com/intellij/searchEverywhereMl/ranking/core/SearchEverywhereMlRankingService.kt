@@ -1,17 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core
 
-import com.intellij.ide.actions.searcheverywhere.SEListSelectionTracker
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorWrapper
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.ide.actions.searcheverywhere.SearchListModel
-import com.intellij.ide.actions.searcheverywhere.SearchListener
-import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
-import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
@@ -63,18 +53,29 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     val foundElementInfoWithoutMl = SearchEverywhereFoundElementInfoWithMl.withoutMl(element, priority, contributor, correction)
 
     if (!isEnabled()) return foundElementInfoWithoutMl
-
     val session = getCurrentSession() ?: return foundElementInfoWithoutMl
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
 
     val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
     val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.cachedContextInfo, correction)
 
-    val effectiveContributor = if (contributor is SearchEverywhereContributorWrapper) contributor.getEffectiveContributor() else contributor
-    val mlWeight = if (shouldCalculateMlWeight(effectiveContributor, state, element)) state.getMLWeight(session.cachedContextInfo, mlElementInfo) else null
+    val effectiveContributor = if (contributor is SearchEverywhereContributorWrapper) {
+      contributor.getEffectiveContributor()
+    } else {
+      contributor
+    }
+    val mlWeight = if (shouldCalculateMlWeight(effectiveContributor, state, element)) {
+      state.getMLWeight(session.cachedContextInfo, mlElementInfo)
+    } else {
+      null
+    }
 
-    return if (isShowDiff()) SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
-    else SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
+    return if (isShowDiff()) {
+      SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
+    }
+    else {
+      SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
+    }
   }
 
   private fun shouldCalculateMlWeight(contributor: SearchEverywhereContributor<*>,

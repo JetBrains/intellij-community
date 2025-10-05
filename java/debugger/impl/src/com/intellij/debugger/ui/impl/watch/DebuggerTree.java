@@ -325,7 +325,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements UiDataProvide
     }
 
     protected void updateUI(final boolean scrollToVisible) {
-      DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+      DebuggerInvocationUtil.invokeLaterAnyModality(getProject(), () -> {
         myNode.removeAllChildren();
         for (DebuggerTreeNodeImpl debuggerTreeNode : myChildren) {
           myNode.add(debuggerTreeNode);
@@ -433,7 +433,7 @@ public abstract class DebuggerTree extends DnDAwareTree implements UiDataProvide
     }
 
     protected void updateUI(final boolean scrollToVisible) {
-      DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+      DebuggerInvocationUtil.invokeLaterAnyModality(getProject(), () -> {
         myNode.removeAllChildren();
         for (DebuggerTreeNodeImpl debuggerTreeNode : myChildren) {
           myNode.add(debuggerTreeNode);

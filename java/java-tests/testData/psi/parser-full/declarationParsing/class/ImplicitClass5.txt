@@ -1,5 +1,7 @@
 PsiJavaFile:ImplicitClass5.java
   PsiErrorElement:'class' or 'interface' expected
+    PsiModifierList:
+      <empty list>
     PsiKeyword:package('package')
   PsiWhiteSpace(' ')
   PsiImportList

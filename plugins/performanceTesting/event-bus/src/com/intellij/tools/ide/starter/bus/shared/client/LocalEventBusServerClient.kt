@@ -39,6 +39,7 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
     return try {
       connection.requestMethod = method
       connection.connectTimeout = 1000 // 1 seconds
+      connection.readTimeout = 5000
       requestBody?.also { body ->
         connection.doOutput = true
         connection.setRequestProperty("Content-Type", "application/json")

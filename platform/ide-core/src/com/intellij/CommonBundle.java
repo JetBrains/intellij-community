@@ -68,6 +68,7 @@ public final class CommonBundle {
   /**
    * @deprecated Use more informative title instead
    */
+  @ApiStatus.Internal
   @Deprecated(forRemoval = true)
   public static @DialogTitle String getWarningTitle() {
     return message("title.warning");

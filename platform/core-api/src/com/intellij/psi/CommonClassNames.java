@@ -112,6 +112,8 @@ public interface CommonClassNames {
 
   String JAVA_LANG_NULL_POINTER_EXCEPTION = "java.lang.NullPointerException";
 
+  String JAVA_LANG_IO = "java.lang.IO";
+
   String JAVA_NIO_CHARSET_CHARSET = "java.nio.charset.Charset";
 
   String JAVA_NET_URI = "java.net.URI";

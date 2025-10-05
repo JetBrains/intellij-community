@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.pycharm.community.ide.implTraining">
+<idea-plugin>
   <dependencies>
     <plugin id="training"/>
     <module name="intellij.python.featuresTrainer"/>

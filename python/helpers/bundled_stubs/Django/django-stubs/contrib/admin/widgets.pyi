@@ -133,6 +133,8 @@ class AdminUUIDInputWidget(forms.TextInput):
 
 SELECT2_TRANSLATIONS: dict[str, str]
 
+def get_select2_language() -> str | None: ...
+
 class AutocompleteMixin:
     url_name: str
     field: Any

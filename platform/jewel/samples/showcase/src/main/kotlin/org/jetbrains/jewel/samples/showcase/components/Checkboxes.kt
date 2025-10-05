@@ -8,14 +8,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.TriStateCheckboxRow
 
 @Composable
-public fun Checkboxes() {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+public fun Checkboxes(modifier: Modifier = Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         var checked by remember { mutableStateOf(ToggleableState.Off) }
         var checked2 by remember { mutableStateOf(ToggleableState.Off) }
         var checked3 by remember { mutableStateOf(ToggleableState.Off) }

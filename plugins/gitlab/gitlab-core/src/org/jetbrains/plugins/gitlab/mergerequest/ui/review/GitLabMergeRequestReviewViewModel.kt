@@ -31,10 +31,11 @@ interface GitLabMergeRequestReviewViewModel : CodeReviewDiscussionsViewModel {
 open class GitLabMergeRequestReviewViewModelBase(
   protected val cs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
-  private val mergeRequest: GitLabMergeRequest
+  private val mergeRequest: GitLabMergeRequest,
+  initialViewOption: DiscussionsViewOption,
 ) : GitLabMergeRequestReviewViewModel {
 
-  private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
+  private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(initialViewOption)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
 
   override val submittableReview: StateFlow<GitLabMergeRequestSubmitReviewViewModel.SubmittableReview?> =

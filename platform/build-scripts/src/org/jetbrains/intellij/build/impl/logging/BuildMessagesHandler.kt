@@ -27,10 +27,10 @@ internal class BuildMessagesHandler(private val messages: BuildMessagesImpl) : H
     if (level.intValue() >= Level.SEVERE.intValue()) {
       val throwable = record.thrown
       if (throwable == null) {
-        messages.error(message)
+        messages.logErrorAndThrow(message)
       }
       else {
-        messages.error(message, throwable)
+        messages.logErrorAndThrow(message, throwable)
       }
       return
     }

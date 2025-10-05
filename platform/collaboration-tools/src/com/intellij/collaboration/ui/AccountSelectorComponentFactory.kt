@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui
 
 import com.intellij.collaboration.auth.Account
+import com.intellij.collaboration.auth.DefaultAccountHolder
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindIn
@@ -27,20 +28,27 @@ import javax.swing.event.ListDataListener
 
 class AccountSelectorComponentFactory<A : Account>(
   private val accountsState: StateFlow<Collection<A>>,
-  private val selectionState: MutableStateFlow<A?>
+  private val selectionState: MutableStateFlow<A?>,
 ) {
 
-  fun create(scope: CoroutineScope,
-             avatarIconsProvider: IconsProvider<A>,
-             avatarSize: Int,
-             popupAvatarSize: Int,
-             emptyStateTooltip: @Nls String,
-             actions: StateFlow<List<Action>> = MutableStateFlow(emptyList())): JComponent {
-
+  fun create(
+    scope: CoroutineScope,
+    defaultAccountHolder: DefaultAccountHolder<A>?,
+    avatarIconsProvider: IconsProvider<A>,
+    avatarSize: Int,
+    popupAvatarSize: Int,
+    emptyStateTooltip: @Nls String,
+    actions: StateFlow<List<Action>> = MutableStateFlow(emptyList()),
+  ): JComponent {
     val comboModel = ComboBoxWithActionsModel<A>().apply {
       bindIn(scope, accountsState, selectionState, actions, Comparator.comparing { it.name })
 
-      if (size > 0) {
+      val defaultAccount = defaultAccountHolder?.account
+      if (selectedItem == null && defaultAccount != null) {
+        selectedItem = ComboBoxWithActionsModel.Item.Wrapper(defaultAccount)
+      }
+
+      if (size > 0 && selectedItem == null) {
         for (i in 0 until size) {
           val item = getElementAt(i)
           if (item is ComboBoxWithActionsModel.Item.Wrapper) {
@@ -61,12 +69,14 @@ class AccountSelectorComponentFactory<A : Account>(
     return label
   }
 
-  private class Controller<A : Account>(private val accountsModel: ComboBoxWithActionsModel<A>,
-                                        private val label: JLabel,
-                                        private val avatarIconsProvider: IconsProvider<A>,
-                                        private val avatarSize: Int,
-                                        private val popupAvatarSize: Int,
-                                        private val emptyStateTooltip: @Nls String)
+  private class Controller<A : Account>(
+    private val accountsModel: ComboBoxWithActionsModel<A>,
+    private val label: JLabel,
+    private val avatarIconsProvider: IconsProvider<A>,
+    private val avatarSize: Int,
+    private val popupAvatarSize: Int,
+    private val emptyStateTooltip: @Nls String,
+  )
     : ComboBoxPopup.Context<ComboBoxWithActionsModel.Item<A>> {
 
     private var popup: ComboBoxPopup<*>? = null
@@ -125,11 +135,13 @@ class AccountSelectorComponentFactory<A : Account>(
 
       private val delegateRenderer = AccountMenuItemRenderer()
 
-      override fun getListCellRendererComponent(list: JList<out ComboBoxWithActionsModel.Item<A>>?,
-                                                value: ComboBoxWithActionsModel.Item<A>,
-                                                index: Int,
-                                                selected: Boolean,
-                                                focused: Boolean): Component {
+      override fun getListCellRendererComponent(
+        list: JList<out ComboBoxWithActionsModel.Item<A>>?,
+        value: ComboBoxWithActionsModel.Item<A>,
+        index: Int,
+        selected: Boolean,
+        focused: Boolean,
+      ): Component {
         val item = when (value) {
           is ComboBoxWithActionsModel.Item.Wrapper<A> ->
             value.wrappee.let { account ->

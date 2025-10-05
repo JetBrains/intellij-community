@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.computeIfAbsent
+import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.get
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.extension.*
@@ -25,10 +27,9 @@ internal class TestDisposableExtension
   }
 
   override fun afterEach(context: ExtensionContext) {
-    context.testDisposableIfRequested()?.let { disposable ->
-      Assertions.assertFalse(disposable.isDisposed)
-      Disposer.dispose(disposable)
-    }
+    val disposable = context[testDisposableKey] ?: return
+    Assertions.assertFalse(disposable.isDisposed)
+    Disposer.dispose(disposable)
   }
 
   override fun supportsParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Boolean {
@@ -40,16 +41,10 @@ internal class TestDisposableExtension
   }
 }
 
-private const val testDisposableKey = "test disposable"
+private val testDisposableKey = TypedStoreKey.createKey<CheckedDisposable>()
 
 private fun ExtensionContext.testDisposable(): CheckedDisposable {
-  return getStore(ExtensionContext.Namespace.GLOBAL)
-    .computeIfAbsent(testDisposableKey) {
+  return computeIfAbsent(testDisposableKey) {
       Disposer.newCheckedDisposable(uniqueId)
     }
-}
-
-private fun ExtensionContext.testDisposableIfRequested(): CheckedDisposable? {
-  return getStore(ExtensionContext.Namespace.GLOBAL)
-    .typedGet(testDisposableKey)
 }

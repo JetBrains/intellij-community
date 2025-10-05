@@ -18,7 +18,8 @@ internal abstract class GitCommitEditingOperation(protected val repository: GitR
   protected fun rebase(
     commits: List<VcsCommitMetadata>,
     rebaseEditor: GitRebaseEditorHandler,
-    preserveMerges: Boolean = false
+    preserveMerges: Boolean = false,
+    initialHead: String? = null
   ): GitCommitEditingOperationResult {
     val lastCommit = commits.last()
     val base = getRebaseUpstreamFor(lastCommit)
@@ -31,7 +32,7 @@ internal abstract class GitCommitEditingOperation(protected val repository: GitR
     )
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)
-    val process = GitMultipleCommitEditingProcess(repository, params, spec)
+    val process = GitMultipleCommitEditingProcess(repository, params, spec, initialHead)
     process.rebase()
     return process.result
   }
@@ -39,13 +40,14 @@ internal abstract class GitCommitEditingOperation(protected val repository: GitR
   private class GitMultipleCommitEditingProcess(
     private val repository: GitRepository,
     private val params: GitRebaseParams,
-    spec: GitRebaseSpec
+    spec: GitRebaseSpec,
+    initialHead: String?,
   ) : GitRebaseProcess(repository.project, spec, null) {
     init {
       repository.update()
     }
 
-    private val initialHead = repository.currentRevision!!
+    private val initialHead = initialHead ?: repository.currentRevision!!
     var result: GitCommitEditingOperationResult = GitCommitEditingOperationResult.Incomplete
 
     @RequiresBackgroundThread

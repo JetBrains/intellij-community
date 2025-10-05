@@ -19,15 +19,13 @@ public class JavaFileSerializer implements ObjectStubSerializer<PsiJavaFileStub,
     dataStream.writeBoolean(stub.isCompiled());
     LanguageLevel level = stub.getLanguageLevel();
     dataStream.writeByte(level != null ? level.ordinal() : -1);
-    dataStream.writeName(stub.getPackageName());
   }
 
   @Override
   public @NotNull PsiJavaFileStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     boolean compiled = dataStream.readBoolean();
     int level = dataStream.readByte();
-    String packageName = dataStream.readNameString();
-    return new PsiJavaFileStubImpl(null, packageName, level >= 0 ? LanguageLevel.getEntries().get(level) : null, compiled);
+    return new PsiJavaFileStubImpl(null, level >= 0 ? LanguageLevel.getEntries().get(level) : null, compiled);
   }
 
   @Override

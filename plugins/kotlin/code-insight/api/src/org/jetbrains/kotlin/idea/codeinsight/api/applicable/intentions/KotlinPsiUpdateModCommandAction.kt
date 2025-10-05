@@ -8,6 +8,8 @@ import com.intellij.modcommand.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ContextProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
@@ -33,7 +35,8 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
         context: ActionContext,
         element: E,
     ): ModCommand = try {
-        ModCommand.psiUpdate(element) { e, updater ->
+        ModCommand.psiUpdate(context) { updater ->
+            val e = updater.getWritable(element)
             val elementContext = getElementContext(context, e)
                                  ?: throw NoContextException()
             invoke(context, e, elementContext, updater)
@@ -89,9 +92,18 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
     ) : KotlinPsiUpdateModCommandAction<E, C>(null, elementClass),
         ContextProvider<E, C> {
 
+        @OptIn(KaAllowAnalysisOnEdt::class)
         final override fun getElementContext(
             actionContext: ActionContext,
             element: E,
-        ): C? = getElementContext(element)
+        ): C? = allowAnalysisOnEdt { // TODO: remove this workaround when IJPL-193738 is fixed.
+            getElementContext(element)
+        }
+    }
+
+    abstract class Contextless<E : KtElement>(
+        elementClass: KClass<E>,
+    ) : KotlinPsiUpdateModCommandAction<E, Unit>(null, elementClass) {
+        final override fun getElementContext(actionContext: ActionContext, element: E) {}
     }
 }

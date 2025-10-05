@@ -49,7 +49,10 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myFile = psiFile;
     myEditor = editor;
     myRestrictRange = restrictRange;
-    if (psiFile != null) {
+    if (psiFile == null) {
+      myHighlightingSession = null;
+    }
+    else {
       if (psiFile.getProject() != project) {
         throw new IllegalArgumentException("File '" + psiFile +"' ("+psiFile.getClass()+") is from an alien project (" + psiFile.getProject()+") but expected: "+project);
       }
@@ -57,9 +60,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
         throw new IllegalArgumentException("File '" + psiFile +"' ("+psiFile.getClass()+") is an injected fragment but expected top-level");
       }
       myHighlightingSession = HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
-    }
-    else {
-      myHighlightingSession = null;
     }
     if (document instanceof DocumentWindow) {
       throw new IllegalArgumentException("Document '" + document +" is an injected fragment but expected top-level");
@@ -79,6 +79,11 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   private void sessionFinished() {
     advanceProgress(Math.max(1, myProgressLimit - myProgressCount.get()));
+  }
+
+  @Override
+  public String toString() {
+    return super.toString() + (myRestrictRange.equals(new TextRange(0, myDocument.getTextLength())) ? "" : "; restrictRange="+myRestrictRange);
   }
 
   @Override

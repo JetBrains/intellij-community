@@ -30,7 +30,6 @@
     </group>
 
     <group id="ImagesCommanderActions2">
-      <reference ref="Images.ShowThumbnails"/>
       <add-to-group anchor="last" group-id="CommanderPopupMenu"/>
     </group>
   </actions>

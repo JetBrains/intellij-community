@@ -232,4 +232,15 @@ abstract class RedundantLocalInFor {
   }
 
   protected abstract RedundantLocalInFor getParent();
+
+  void incompleteLambda() {
+    <error descr="Cannot infer type: lambda expression requires an explicit target type">var</error> z = s -> {
+      final Object s1  = s;
+      return x(s1) ;
+    };
+  }
+
+  boolean x(Object o) {
+    return false;
+  }
 }

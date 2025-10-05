@@ -31,13 +31,16 @@ sealed class ProjectWizardJdkIntent {
 
   data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String, val isSymlink: Boolean) : ProjectWizardJdkIntent()
 
-  fun isAtLeast(version: Int): Boolean = when (this) {
-    is DownloadJdk -> JavaVersion.tryParse(task.plannedVersion)?.isAtLeast(version)
-    is ExistingJdk -> if (jdk.versionString == null) true
-                      else JavaVersion.tryParse(jdk.versionString)?.isAtLeast(version)
-    is DetectedJdk -> JavaVersion.tryParse(this.version)?.isAtLeast(version)
-    else -> false
-  } ?: true
+  fun isAtLeast(version: Int, strict: Boolean = false): Boolean {
+    val defaultValue = !strict
+    return when (this) {
+             is DownloadJdk -> JavaVersion.tryParse(task.plannedVersion)?.isAtLeast(version)
+             is ExistingJdk -> if (jdk.versionString == null) defaultValue
+                               else JavaVersion.tryParse(jdk.versionString)?.isAtLeast(version)
+             is DetectedJdk -> JavaVersion.tryParse(this.version)?.isAtLeast(version)
+             else -> false
+           } ?: defaultValue
+  }
 
   val versionString: String?
     get() = when (this) {

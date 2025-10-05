@@ -4,19 +4,21 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.impl.RW;
+import org.jetbrains.intellij.build.io.*;
 
-import java.io.*;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.ref.SoftReference;
-import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.*;
 import java.util.*;
-import java.util.zip.Deflater;
+import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -25,12 +27,26 @@ import static com.intellij.tools.build.bazel.jvmIncBuilder.ZipOutputBuilder.*;
 import static org.jetbrains.jps.util.Iterators.*;
 
 public class ZipOutputBuilderImpl implements ZipOutputBuilder {
+  
+  // ZipEntry internally stores time adjusted to the system default timezone.
+  // Setting entry modification time in 'milliseconds since epoch' will always result in conversion of the specified milliseconds value into the local time.
+  // This means that entries created in different timezones will have different local time values and will be considered 'different' by this data.
+  // Using the 'LocalDateTime' data structure with the fixed date-time when setting the time to a zip entry guarantees that the actual time
+  // will be stored exactly as specified and not converted to a local time using system default timezone.
+  // Using '01-January-1980 00:00:01' fixed date time ensures that only 'xdostime' field will be populated leaving extra field data empty.
+  private static final LocalDateTime ZERO_TIME = LocalDateTime.of(
+    LocalDate.of(1980 /* year */, 1 /* month */, 1 /* day */),
+    LocalTime.of(0 /* hour */, 0 /* minute */, 1 /* second */, 0 /* nanosecond */)
+  );
+
   private final Map<String, EntryData> myEntries = new TreeMap<>();
   private final Map<String, ZipEntry> myExistingDirectories = new HashMap<>();
+  private final CRC32 myCrc = new CRC32();
 
   private final @NotNull Path myWriteZipPath;
   private final @NotNull Path myReadZipPath;
   private final @Nullable ZipFile myReadZipFile;
+  private final boolean myCreateIndex;
 
   private final Map<String, byte[]> mySwap;
   private final Map<String, Set<String>> myDirIndex = new HashMap<>();
@@ -41,14 +57,15 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
   }
   
   public ZipOutputBuilderImpl(@NotNull Path readZipPath, @NotNull Path writeZipPath) throws IOException {
-    this(new HashMap<>(), readZipPath, writeZipPath);
+    this(new HashMap<>(), readZipPath, writeZipPath, false);
   }
   
-  public ZipOutputBuilderImpl(Map<String, byte[]> dataSwap, @NotNull Path readZipPath, @NotNull Path writeZipPath) throws IOException {
+  public ZipOutputBuilderImpl(Map<String, byte[]> dataSwap, @NotNull Path readZipPath, @NotNull Path writeZipPath, boolean createIndex) throws IOException {
     myReadZipPath = readZipPath;
     myWriteZipPath = writeZipPath;
     mySwap = dataSwap;
     myReadZipFile = openZipFile(readZipPath);
+    myCreateIndex = createIndex;
     if (myReadZipFile != null) {
       // load existing entries
       Enumeration<? extends ZipEntry> entries = myReadZipFile.entries();
@@ -59,7 +76,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
           myExistingDirectories.put(entry.getName(), entry);
         }
         else {
-          myEntries.put(entry.getName(), EntryData.create(myReadZipFile, entry));
+          myEntries.put(entry.getName(), createEntryData(myReadZipFile, entry));
         }
       }
     }
@@ -110,7 +127,7 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       throw new RuntimeException("Unexpected name with trailing slash for ZIP entry with content: \"" + entryName + "\"");
     }
     if (content != null) {
-      myEntries.put(entryName, EntryData.create(mySwap, entryName, content));
+      myEntries.put(entryName, createEntryData(mySwap, entryName, content));
       addToPackageIndex(entryName);
       myHasChanges = true;
     }
@@ -156,38 +173,35 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
           if (saveChanges && !Files.exists(myWriteZipPath)) {
             // ensure an empty output file exists, even if there are no changes (bazel requirement)
             try (var zos = new ZipOutputStream(openOutputStream(myWriteZipPath))) {
-              zos.setLevel(Deflater.BEST_SPEED);
+              zos.setMethod(ZipOutputStream.STORED);
             }
           }
         }
       }
       else {
-        // augment entry map with all currently present directory entries
-        for (String dirName : myDirIndex.keySet()) {
-          ZipEntry existingEntry = myExistingDirectories.get(dirName);
-          if (existingEntry == null && "/".equals(dirName)) {
-            continue; // keep root '/' entry if it were present in the original zip
-          }
-          if (existingEntry != null) {
-            myEntries.put(dirName, EntryData.create(myReadZipFile, existingEntry));
-          }
-          else {
-            myEntries.put(dirName, EntryData.create(dirName, EntryData.NO_DATA_BYTES));
-          }
-        }
         boolean useTempOutput = myReadZipFile != null /*srcZip exists*/ && Files.exists(myWriteZipPath) && Files.isSameFile(myReadZipPath, myWriteZipPath);
         Path outputPath = useTempOutput? getTempOutputPath() : myWriteZipPath;
-        try (var zos = new ZipOutputStream(openOutputStream(outputPath))) {
-          zos.setLevel(Deflater.BEST_SPEED);
-          for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
-            EntryData data = it.next().getValue();
-            ZipEntry zipEntry = data.getZipEntry();
-            zos.putNextEntry(zipEntry);
-            if (!zipEntry.isDirectory()) {
-              // either new content or the one loaded from the previous file
-              data.transferTo(zos);
+        try {
+
+          // augment entry map with all currently present directory entries
+          for (String dirName : myDirIndex.keySet()) {
+            ZipEntry existingEntry = myExistingDirectories.get(dirName);
+            if (existingEntry == null && "/".equals(dirName)) {
+              continue; // keep root '/' entry if it were present in the original zip
             }
-            it.remove();
+            if (existingEntry != null) {
+              myEntries.put(dirName, createEntryData(myReadZipFile, existingEntry));
+            }
+            else {
+              myEntries.put(dirName, createEntryData(dirName, EntryData.NO_DATA_BYTES));
+            }
+          }
+
+          if (myCreateIndex) {
+            saveToIndexedArchive(outputPath);
+          }
+          else {
+            saveToArchive(outputPath);
           }
         }
         finally {
@@ -201,17 +215,54 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
       }
     }
     finally {
+      myExistingDirectories.clear();
+      myDirIndex.clear();
+      myEntries.clear();
       mySwap.clear();
+    }
+  }
+
+  private void saveToArchive(Path outputPath) throws IOException {
+    try (var zos = new ZipOutputStream(openOutputStream(outputPath))) {
+      zos.setMethod(ZipOutputStream.STORED);
+
+      for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
+        EntryData data = it.next().getValue();
+        ZipEntry zipEntry = data.getZipEntry();
+        zos.putNextEntry(zipEntry);
+        if (!zipEntry.isDirectory()) {
+          // either new content or the one loaded from the previous file
+          data.transferTo(zos);
+        }
+        it.remove();
+      }
+    }
+  }
+
+  private void saveToIndexedArchive(Path outputPath) throws IOException {
+    PackageIndexBuilder indexBuilder = new PackageIndexBuilder(AddDirEntriesMode.ALL, true);
+    try (ZipArchiveOutputStream zos = ZipArchiveOutputStreamKt.zipWriter(outputPath, indexBuilder, true)) {
+      myEntries.remove(IkvIndexBuilderKt.INDEX_FILENAME); // remove old index
+
+      for (Iterator<Map.Entry<String, EntryData>> it = myEntries.entrySet().iterator(); it.hasNext(); ) {
+        EntryData data = it.next().getValue();
+        ZipEntry zipEntry = data.getZipEntry();
+        indexBuilder.addFile(zipEntry.getName());
+        if (!zipEntry.isDirectory()) {
+          zos.uncompressedData(zipEntry.getName().getBytes(StandardCharsets.UTF_8), data.getContent(), myCrc);
+        }
+        it.remove();
+      }
     }
   }
 
   private static OutputStream openOutputStream(Path outputPath) throws IOException {
     try {
-      return Files.newOutputStream(outputPath);
+      return new BufferedOutputStream(Files.newOutputStream(outputPath));
     }
     catch (NoSuchFileException e) {
       Files.createDirectories(outputPath.getParent());
-      return Files.newOutputStream(outputPath);
+      return new BufferedOutputStream(Files.newOutputStream(outputPath));
     }
   }
 
@@ -236,85 +287,6 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
 
     default void cleanup() {
     }
-    
-    static EntryData create(String entryName, byte[] content) {
-      return new EntryData() {
-        private ZipEntry entry;
-        @Override
-        public byte[] getContent() {
-          return content;
-        }
-
-        @Override
-        public ZipEntry getZipEntry() {
-          return entry != null? entry : (entry = new ZipEntry(entryName));
-        }
-      };
-    }
-
-    static EntryData create(Map<String, byte[]> swap, String entryName, byte[] content) {
-      swap.put(entryName, content);
-      return new CachingDataEntry(content) {
-        private ZipEntry entry;
-        @Override
-        protected byte[] loadData() {
-          return swap.get(entryName);
-        }
-
-        @Override
-        public ZipEntry getZipEntry() {
-          return entry != null? entry : (entry = new ZipEntry(entryName));
-        }
-
-        @Override
-        public void cleanup() {
-          super.cleanup();
-          entry = null;
-          swap.remove(entryName);
-        }
-      };
-    }
-
-    static EntryData create(ZipFile zip, ZipEntry entry) {
-      if (entry.isDirectory()) {
-        return new EntryData() {
-          @Override
-          public byte[] getContent() {
-            return NO_DATA_BYTES;
-          }
-
-          @Override
-          public ZipEntry getZipEntry() {
-            return entry;
-          }
-        };
-      }
-      return new CachingDataEntry(null) {
-        @Override
-        protected byte[] loadData() throws IOException {
-          try (InputStream is = zip.getInputStream(entry)) {
-            return RW.readAllBytes(is);
-          }
-        }
-
-        @Override
-        public void transferTo(OutputStream os) throws IOException {
-          byte[] data = getCached();
-          if (data != null) {
-            os.write(data);
-          }
-          else {
-            RW.transferTo(StreamAccessor.unwrapInputStream(zip.getInputStream(entry)), StreamAccessor.unwrapOutputStream(os));
-          }
-        }
-
-        @Override
-        public ZipEntry getZipEntry() {
-          return entry;
-        }
-      };
-    }
-
   }
 
   private static abstract class CachingDataEntry implements EntryData {
@@ -348,66 +320,102 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
     }
   }
 
-  private static final class StreamAccessor {
-    private static final MethodHandle outFieldAccessor;
-    private static final MethodHandle inFieldAccessor;
-
-    static {
-      outFieldAccessor = getMethodHandle(FilterOutputStream.class, "out");
-      inFieldAccessor = getMethodHandle(FilterInputStream.class, "in");
-    }
-
-    private static MethodHandle getMethodHandle(Class<?> aClass, String fieldName) {
-      try {
-        Field outField = aClass.getDeclaredField(fieldName);
-        outField.setAccessible(true);
-        return MethodHandles.lookup().unreflectGetter(outField);
+  private EntryData createEntryData(String entryName, byte[] content) {
+    return new EntryData() {
+      private ZipEntry entry;
+      @Override
+      public byte[] getContent() {
+        return content;
       }
-      catch (Throwable e) {
-        return null;
+
+      @Override
+      public ZipEntry getZipEntry() {
+        return entry != null? entry : (entry = createZipEntry(entryName, content));
       }
-    }
-
-    static InputStream unwrapInputStream(InputStream is) {
-      //if (inFieldAccessor != null && is instanceof FilterInputStream) {
-      //  try {
-      //    return (InputStream) inFieldAccessor.invoke(is);
-      //  }
-      //  catch (Throwable ignored) {
-      //  }
-      //}
-      return is;
-    }
-
-    static OutputStream unwrapOutputStream(OutputStream os) {
-      //if (outFieldAccessor != null && os instanceof ZipOutputStream) {
-      //  try {
-      //    return (OutputStream) outFieldAccessor.invoke(os);
-      //  }
-      //  catch (Throwable ignored) {
-      //  }
-      //}
-      return os;
-    }
+    };
   }
 
-  private Iterable<String> allParentNames(String entryName) {
-    String parent = getParentEntryName(entryName);
-    return parent == null? List.of() : () -> new Iterator<>() {
-      private String next = parent;
+  private EntryData createEntryData(Map<String, byte[]> swap, String entryName, byte[] content) {
+    swap.put(entryName, content);
+    return new CachingDataEntry(content) {
+      private ZipEntry entry;
       @Override
-      public boolean hasNext() {
-        return next != null;
+      protected byte[] loadData() {
+        return swap.get(entryName);
       }
 
       @Override
-      public String next() {
-        if (next == null) {
-          throw new NoSuchElementException();
+      public ZipEntry getZipEntry() {
+        try {
+          return entry != null? entry : (entry = createZipEntry(entryName, getContent()));
         }
-        String result = next;
-        next = getParentEntryName(next);
-        return result;
+        catch (IOException e) {
+          // should not happen, since loadData() in this implementation won't throw anything
+          throw new RuntimeException();
+        }
+      }
+
+      @Override
+      public void cleanup() {
+        super.cleanup();
+        entry = null;
+        swap.remove(entryName);
+      }
+    };
+  }
+
+  private @NotNull ZipEntry createZipEntry(String entryName, byte[] content) {
+    ZipEntry entry = new ZipEntry(entryName);
+    entry.setMethod(ZipEntry.STORED);
+    entry.setSize(content.length);
+    myCrc.reset();
+    myCrc.update(content);
+    entry.setCrc(myCrc.getValue());
+    
+    // ensure zip content is not considered 'changed' because of changed timestamps
+    // calling 'setTimeLocal()' ensures the passed value will be stored as-is and will not be further converted  
+    entry.setTimeLocal(ZERO_TIME);
+    return entry;
+  }
+
+  private static EntryData createEntryData(ZipFile zip, ZipEntry entry) {
+    if (entry.isDirectory()) {
+      return new EntryData() {
+        @Override
+        public byte[] getContent() {
+          return NO_DATA_BYTES;
+        }
+
+        @Override
+        public ZipEntry getZipEntry() {
+          return entry;
+        }
+      };
+    }
+    return new CachingDataEntry(null) {
+      @Override
+      protected byte[] loadData() throws IOException {
+        try (InputStream is = zip.getInputStream(entry)) {
+          return is.readAllBytes();
+        }
+      }
+
+      @Override
+      public void transferTo(OutputStream os) throws IOException {
+        byte[] data = getCached();
+        if (data != null) {
+          os.write(data);
+        }
+        else {
+          try (InputStream in = zip.getInputStream(entry)) {
+            in.transferTo(os);
+          }
+        }
+      }
+
+      @Override
+      public ZipEntry getZipEntry() {
+        return entry;
       }
     };
   }

@@ -2,8 +2,8 @@
 package com.intellij.openapi.actionSystem.remoting
 
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
-import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -23,7 +23,10 @@ enum class ActionRemoteBehavior {
   /**
    * The action updates on both backend and frontend,
    * if a frontend action is available, its presentation will be taken, and the action will be performed on the frontend.
-   * Otherwise, backend's presentation will be used, and the action will be performed on the backend
+   * Otherwise, backend's presentation will be used, and the action will be performed on the backend.
+   *
+   * It's possible to disable the action update on the backend side by setting [SKIP_FALLBACK_UPDATE] to `true`
+   * in the presentation during the frontend's update.
    */
   FrontendOtherwiseBackend,
 
@@ -46,7 +49,16 @@ enum class ActionRemoteBehavior {
   /**
    * Action should be disabled in remote dev mode on both sides
    */
-  Disabled
+  Disabled;
+
+  companion object {
+    /**
+     * If set as a presentation property by an action with [FrontendOtherwiseBackend] behaviour during frontend update,
+     * disables the subsequent backend update, even if the frontend update reports the action as disabled.
+     */
+    @JvmField
+    val SKIP_FALLBACK_UPDATE: Key<Boolean> = Key.create("SKIP_FALLBACK_UPDATE")
+  }
 }
 
 /**
@@ -85,18 +97,12 @@ interface ActionRemoteBehaviorSpecification {
 
 
   companion object {
-    val REMOTE_UPDATE_KEY = Key.create<Boolean>("REMOTE_UPDATE_KEY")
+    fun AnAction.getActionDeclaredBehavior(): ActionRemoteBehavior? {
+      return (this as? ActionRemoteBehaviorSpecification)?.getBehavior()
+    }
 
-    fun AnAction.getActionBehavior(useDeclaredBehaviour: Boolean = false): ActionRemoteBehavior? {
-      val behavior = (this as? ActionRemoteBehaviorSpecification)?.getBehavior()
-      val isRiderOrCLion = PlatformUtils.isRider() || PlatformUtils.isCLion()
-      return when {
-        useDeclaredBehaviour || !isRiderOrCLion -> behavior
-        templatePresentation.getClientProperty(REMOTE_UPDATE_KEY) == true -> ActionRemoteBehavior.FrontendThenBackend
-        behavior == ActionRemoteBehavior.BackendOnly -> ActionRemoteBehavior.FrontendOnly
-        behavior == ActionRemoteBehavior.Disabled -> ActionRemoteBehavior.FrontendOnly
-        else -> behavior
-      }
+    fun AnAction.getActionBehavior(): ActionRemoteBehavior? {
+      return service<ActionRemoteBehaviorCustomizer>().customizeActionUpdateBehavior(this, getActionDeclaredBehavior())
     }
   }
 }

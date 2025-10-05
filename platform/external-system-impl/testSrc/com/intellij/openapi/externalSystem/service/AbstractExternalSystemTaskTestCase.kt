@@ -52,8 +52,8 @@ abstract class AbstractExternalSystemTaskTestCase : ExternalSystemTestCase() {
   ): AbstractExternalSystemTask {
     val systemId = ProjectSystemId.IDE
     val taskType = ExternalSystemTaskType.EXECUTE_TASK
-    val projectPath = project.basePath!!
-    return object : AbstractExternalSystemTask(systemId, taskType, project, projectPath) {
+    val projectPath = myProject.basePath!!
+    return object : AbstractExternalSystemTask(systemId, taskType, myProject, projectPath) {
       override fun doExecute() = doExecute(this)
       override fun doCancel(): Boolean = doCancel(this)
     }

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.ide.concurrency` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "concurrency_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +11,8 @@ jvm_library(
   name = "concurrency",
   module_name = "intellij.platform.ide.concurrency",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":concurrency_resources"],
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
@@ -23,8 +24,41 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/util/coroutines",
     "//platform/indexing-api:indexing",
-    "@lib//:guava",
-  ],
-  runtime_deps = [":concurrency_resources"]
+    "//libraries/guava",
+    "//libraries/caffeine",
+  ]
+)
+
+jvm_library(
+  name = "concurrency_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":concurrency"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/util/coroutines",
+    "//platform/indexing-api:indexing",
+    "//libraries/guava",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+    "//libraries/caffeine",
+  ]
 )
 ### auto-generated section `build intellij.platform.ide.concurrency` end
+
+### auto-generated section `test intellij.platform.ide.concurrency` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "concurrency_test",
+  runtime_deps = [":concurrency_test_lib"]
+)
+### auto-generated section `test intellij.platform.ide.concurrency` end

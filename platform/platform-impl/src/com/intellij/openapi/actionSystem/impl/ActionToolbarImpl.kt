@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -296,8 +295,8 @@ open class ActionToolbarImpl @JvmOverloads constructor(
         return
       }
 
-      launchOnceOnShow("ActionToolbarImpl.updateActionsOnAdd") {
-        withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      initOnShow("ActionToolbarImpl.updateActionsOnAdd") {
+        withContext(Dispatchers.UiWithModelAccess) {
           // a first update really
           if (myForcedUpdateRequested && myLastUpdate == null) {
             @Suppress("DEPRECATION")
@@ -518,6 +517,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     return createToolbarButton(action, look, place, presentation, Supplier { minimumSize })
   }
 
+  /**
+   * Override together with [canReuseActionButton]
+   */
   protected open fun createToolbarButton(
     action: AnAction,
     look: ActionButtonLook?,
@@ -534,6 +536,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     return actionButton
   }
 
+  /**
+   * Override together with [canReuseActionButton]
+   */
   protected open fun createIconButton(
     action: AnAction,
     place: String,
@@ -543,6 +548,9 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     return ActionButton(action, presentation, place, minimumSize)
   }
 
+  /**
+   * Override together with [canReuseActionButton]
+   */
   protected open fun createTextButton(
     action: AnAction,
     place: String,
@@ -558,6 +566,22 @@ open class ActionToolbarImpl @JvmOverloads constructor(
         KeyStroke.getKeyStroke(mnemonic, InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW)
     }
     return buttonWithText
+  }
+
+  /**
+   * Return `true` if the [oldActionButton] instance can be reused
+   * Return `false` if the difference with new [newPresentation] from the prior one requres re-creation of the ActionButton
+   *
+   * If `true`, the [createToolbarButton] will be called to re-build the action UI.
+   */
+  protected open fun canReuseActionButton(oldActionButton: ActionButton, newPresentation: Presentation): Boolean {
+    val shouldHaveText = newPresentation.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true
+    if (shouldHaveText) {
+      return oldActionButton.javaClass == ActionButtonWithText::class.java
+    }
+    else {
+      return oldActionButton.javaClass == ActionButton::class.java
+    }
   }
 
   protected fun applyToolbarLook(look: ActionButtonLook?, presentation: Presentation, component: JComponent) {
@@ -924,7 +948,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   @RequiresEdt
   protected fun updateActionsWithoutLoadingIcon(includeInvisible: Boolean) {
     // null when called through updateUI from a superclass constructor
-    myUpdater.updateActions(true, false, includeInvisible)
+    myUpdater.updateActions(now = true, forced = false, includeInvisible = includeInvisible)
   }
 
   @OptIn(InternalCoroutinesApi::class)
@@ -941,7 +965,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
     val cs = service<CoreUiCoroutineScopeHolder>().coroutineScope
     val job = cs.launch(
-      Dispatchers.EDT + ModalityState.any().asContextElement() +
+      Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement() +
       ClientId.coroutineContext(), CoroutineStart.UNDISPATCHED) {
       try {
         val actions = Utils.expandActionGroupSuspend(
@@ -961,7 +985,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       }
     }
     myLastUpdate = job
-    job.invokeOnCompletion(onCancelling = true, invokeImmediately = true) { ex ->
+    job.invokeOnCompletion(onCancelling = true, invokeImmediately = true) {
       if (myLastUpdate === job) {
         myLastUpdate = null
       }
@@ -1004,7 +1028,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       else {
         val icon = AnimatedIcon.Default.INSTANCE
         label.setIcon(EmptyIcon.create(icon.iconWidth, icon.iconHeight))
-        EdtScheduler.getInstance().schedule(Registry.intValue("actionSystem.toolbar.progress.icon.delay", 500), UiDispatcherKind.STRICT) {
+        EdtScheduler.getInstance().schedule(Registry.intValue("actionSystem.toolbar.progress.icon.delay", 500), CoroutineSupport.UiDispatcherKind.RELAX) {
           label.setIcon(icon)
         }
       }
@@ -1017,7 +1041,6 @@ open class ActionToolbarImpl @JvmOverloads constructor(
   protected open fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
     myListeners.getMulticaster().actionsUpdated()
     if (!forced && !presentationFactory.isNeedRebuild) {
-      if (newVisibleActions == myVisibleActions) return
       if (replaceButtonsForNewActionInstances(newVisibleActions)) return
     }
     myForcedUpdateRequested = false
@@ -1045,47 +1068,74 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     compForSize.repaint()
   }
 
+  /**
+   * Try to update toolbar without calling [JComponent.remove] on all old components.
+   *
+   * We assume that Toolbar might have non-action [JComponent.getComponents],
+   * so we need to find the old action component to replace it.
+   *
+   * For non-trivial cases, fallback to the full rebuild.
+   */
   private fun replaceButtonsForNewActionInstances(newVisibleActions: List<AnAction>): Boolean {
+    data class Replacement(val buttonIndex: Int, val nextAction: AnAction)
+
     if (newVisibleActions.size != myVisibleActions.size) return false
     val components = getComponents()
-    val pairs = ArrayList<Pair<Int, AnAction>>()
-    var count = 0
-    val size = myVisibleActions.size
-    var buttonIndex = 0
-    while (count < size) {
-      val prev: AnAction = myVisibleActions[count]
-      val next: AnAction = newVisibleActions[count]
-      if (next === prev) {
-        count++
+    val pairs = ArrayList<Replacement>()
+
+    var buttonIndex = 0 // avoid N^2 button search
+    for (index in myVisibleActions.indices) {
+      val prev: AnAction = myVisibleActions[index]
+      val next: AnAction = newVisibleActions[index]
+      if (next.javaClass != prev.javaClass) return false // in theory, that should be OK, but better to be safe
+
+      val isSecondaryAction = isSecondaryAction(next, index)
+      if (isSecondaryAction) continue
+
+      if (prev is Separator) {
+        if (next !is Separator) return false
+        if (myShowSeparatorTitles && prev.text != next.text) return false
         continue
       }
-      if (next.javaClass != prev.javaClass) return false
-      if (next is CustomComponentAction) return false
-      // replace only regular action buttons without text (same size 16x16)
+
       val nextP = presentationFactory.getPresentation(next)
-      if (nextP.getClientProperty(ActionUtil.COMPONENT_PROVIDER) != null ||
-          nextP.getClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR) == true) {
-        return false
+
+      val nextIsCustom = next is CustomComponentAction ||
+                         nextP.getClientProperty(ActionUtil.COMPONENT_PROVIDER) != null
+      val prevIsCustom = nextP.getClientProperty(CustomComponentAction.COMPONENT_KEY) != null
+      if (nextIsCustom != prevIsCustom) return false // ActionUtil.COMPONENT_PROVIDER can change dynamically
+      if (nextIsCustom) {
+        if (next === prev) continue // keep old custom component untouched
+        return false // can't find what component to replace
       }
-      var pair: Pair<Int, AnAction>? = null
-      while (buttonIndex < components.size && pair == null) {
+
+      var actionButton: ActionButton? = null
+      while (buttonIndex < components.size) {
         val component = components[buttonIndex]
-        val action = if (component is ActionButton) component.action else null
-        if (action === prev && component.javaClass == ActionButton::class.java) {
-          pair = Pair.create(buttonIndex, next)
-        }
         buttonIndex++
+
+        if (component is ActionButton && component.action === prev) {
+          actionButton = component
+          break
+        }
       }
-      if (pair == null) return false
-      pairs.add(pair)
-      count++
+      if (actionButton == null) return false
+
+      if (next === prev && canReuseActionButton(actionButton, nextP)) {
+        continue // keep old component untouched
+      }
+
+      // create a new button and replace it in-place
+      pairs.add(Replacement(buttonIndex - 1, next))
     }
-    if (pairs.size == newVisibleActions.size) return false
+
+    if (pairs.size == newVisibleActions.size) return false // no gain from in-place updates
+
     myVisibleActions = newVisibleActions
     for (pair in pairs) {
-      val index: Int = pair.first
+      val index: Int = pair.buttonIndex
       remove(index)
-      addActionButtonImpl(pair.second, index)
+      addActionButtonImpl(pair.nextAction, index)
       val button = getComponent(index)
       button.bounds = components[index].bounds
       button.validate()
@@ -1590,6 +1640,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     myNeedCheckHoverOnLayout = needCheckHoverOnLayout
   }
 
+  @Suppress("RedundantInnerClassModifier")
   private inner class AccessibleActionToolbar : AccessibleJPanel() {
     override fun getAccessibleRole() = AccessibilityUtils.GROUPED_ELEMENTS
   }

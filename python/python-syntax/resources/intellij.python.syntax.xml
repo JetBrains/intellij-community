@@ -6,6 +6,8 @@
     <editor.backspaceModeOverride language="Python" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
+    <enterBetweenBracesDelegate language="Python"
+                                implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <langCodeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyLanguageCodeStyleSettingsProvider"/>
     <lang.braceMatcher language="Python" implementationClass="com.jetbrains.python.PyBraceMatcher"/>
@@ -19,7 +21,6 @@
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyKeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
     <backspaceHandlerDelegate implementation="com.jetbrains.python.codeInsight.editorActions.PyTripleQuoteBackspaceDelegate"/>
-    <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyCompositeAnnotator"/>
     <colorSettingsPage implementation="com.jetbrains.python.highlighting.PythonColorsPage"/>
     <statementUpDownMover implementation="com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover" id="pyStatementMover"
                           order="before line"/>
@@ -27,10 +28,4 @@
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
     <applicationService serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
   </extensions>
-  <extensions defaultExtensionNs="Pythonid">
-    <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
-  </extensions>
-  <extensionPoints>
-    <extensionPoint qualifiedName="Pythonid.pyAnnotator" interface="com.jetbrains.python.validation.PyAnnotatorBase" dynamic="true"/>
-  </extensionPoints>
 </idea-plugin>

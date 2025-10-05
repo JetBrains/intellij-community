@@ -52,23 +52,6 @@ interface LayoutBuilderImpl {
   @Deprecated("Use Kotlin UI DSL Version 2")
   val componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
 
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
-  @get:ApiStatus.ScheduledForRemoval
-  @get:ApiStatus.Internal
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  val applyCallbacks: Map<JComponent?, List<() -> Unit>>
-
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
-  @get:ApiStatus.ScheduledForRemoval
-  @get:ApiStatus.Internal
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  val resetCallbacks: Map<JComponent?, List<() -> Unit>>
-
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
-  @get:ApiStatus.ScheduledForRemoval
-  @get:ApiStatus.Internal
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  val isModifiedCallbacks: Map<JComponent?, List<() -> Boolean>>
 }
 
 // https://jetbrains.github.io/ui/controls/input_field/#spacing
@@ -79,7 +62,6 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val horizontalGap = JBUI.scale(6)
     override val componentVerticalGap = JBUI.scale(6)
     override val labelColumnHorizontalGap = JBUI.scale(6)
-    override val largeHorizontalGap = JBUI.scale(16)
     override val largeVerticalGap = JBUI.scale(20)
 
     override val shortTextWidth = JBUI.scale(250)

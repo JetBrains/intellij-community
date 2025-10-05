@@ -21,12 +21,12 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyUnusedImportsInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +79,7 @@ public final class PyImportOptimizer implements ImportOptimizer {
 
     PyUnusedImportsInspection inspection = new PyUnusedImportsInspection();
     PyUnusedImportsInspection.Visitor visitor = new PyUnusedImportsInspection.Visitor(
-      null, inspection, context, PythonLanguageLevelPusher.getLanguageLevelForFile(file)
+      null, inspection, context, PyLanguageFacadeKt.getEffectiveLanguageLevel(file)
     );
     file.accept(new PyRecursiveElementVisitor() {
       @Override

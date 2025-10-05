@@ -8,6 +8,7 @@ import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilitySupportUpdater
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.junit.jupiter.api.Assertions
 
 abstract class GradleJvmSupportMatricesTestCase : LightIdeaTestCase() {
   override fun setUp() {
@@ -38,4 +39,16 @@ abstract class GradleJvmSupportMatricesTestCase : LightIdeaTestCase() {
 
   fun suggestOldestSupportedJavaVersion(gradleVersion: String): Int? =
     GradleJvmSupportMatrix.suggestOldestSupportedJavaVersion(GradleVersion.version(gradleVersion))?.feature
+
+  fun assertSupportedGradleVersion(gradleVersion: String, chooseGradleVersion: List<GradleVersion>.() -> GradleVersion?) {
+    val expectedGradleVersion = GradleVersion.version(gradleVersion)
+    val allSupportedGradleVersions = GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea()
+    val actualGradleVersions = allSupportedGradleVersions
+      .filter { it.majorVersion == expectedGradleVersion.majorVersion }
+    Assertions.assertEquals(expectedGradleVersion, actualGradleVersions.chooseGradleVersion()) {
+      "Incorrect Gradle version format\n" +
+      "All supported versions = $allSupportedGradleVersions\n" +
+      "Chosen versions = $actualGradleVersions\n"
+    }
+  }
 }

@@ -7,6 +7,18 @@ from antlr4.RuleContext import RuleContext as RuleContext
 from antlr4.Token import Token as Token
 
 class ATN:
+    __slots__ = (
+        "grammarType",
+        "maxTokenType",
+        "states",
+        "decisionToState",
+        "ruleToStartState",
+        "ruleToStopState",
+        "modeNameToStartState",
+        "ruleToTokenType",
+        "lexerActions",
+        "modeToStartState",
+    )
     INVALID_ALT_NUMBER: int
     grammarType: Incomplete
     maxTokenType: Incomplete

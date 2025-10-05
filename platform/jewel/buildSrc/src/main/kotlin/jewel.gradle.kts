@@ -13,12 +13,10 @@ val gitHubRef: String? = System.getenv("GITHUB_REF")
 version =
     when {
         properties.containsKey("versionOverride") -> {
-            val rawVersion = (properties["versionOverride"] as String).trim()
-            if (!rawVersion.matches("^\\d\\.\\d{2,}\\.\\d+$".toRegex())) {
-                throw GradleException("Invalid versionOverride: $rawVersion")
-            }
-            logger.warn("Using version override: $rawVersion")
-            rawVersion
+            val jewelVersion = getJewelVersion()
+            validateJewelVersion(jewelVersion)
+            logger.warn("Using version override: $jewelVersion")
+            jewelVersion
         }
         gitHubRef?.startsWith("refs/tags/") == true -> {
             gitHubRef.substringAfter("refs/tags/").removePrefix("v")
@@ -57,42 +55,24 @@ kotlin {
     }
 }
 
-detekt {
-    config.from(files(rootProject.file("detekt.yml")))
-    buildUponDefaultConfig = true
-}
-
-val sarifReport: Provider<RegularFile> = layout.buildDirectory.file("reports/ktlint-${project.name}.sarif")
-
 tasks {
-    detektMain {
-        val sarifOutputFile = layout.buildDirectory.file("reports/detekt-${project.name}.sarif")
-        exclude { it.file.absolutePath.startsWith(layout.buildDirectory.asFile.get().absolutePath) }
-        reports {
-            sarif.required = true
-            sarif.outputLocation = sarifOutputFile
-        }
-    }
+    // We need to use relative paths for patterns.
+    // Exclude does not work; this is how the Kotlinter plugin docs recommend doing it, and it works...
+    val buildDir = layout.buildDirectory.asFile.get().relativeTo(project.projectDir).path
+    detektMain { source = (source - fileTree(buildDir)).asFileTree }
 
-    formatKotlinMain { exclude { it.file.absolutePath.replace('\\', '/').contains("build/generated") } }
-    withType<KtfmtBaseTask> { exclude { it.file.absolutePath.contains("build/generated") } }
+    formatKotlinMain { source = (source - fileTree(buildDir)).asFileTree }
+
+    withType<KtfmtBaseTask> { source = (source - fileTree(buildDir)).asFileTree }
 
     lintKotlinMain {
-        exclude { it.file.absolutePath.replace('\\', '/').contains("build/generated") }
+        source = (source - fileTree(buildDir)).asFileTree
 
         reports = provider {
             mapOf(
                 "plain" to layout.buildDirectory.file("reports/ktlint-${project.name}.txt").get().asFile,
                 "html" to layout.buildDirectory.file("reports/ktlint-${project.name}.html").get().asFile,
-                "sarif" to sarifReport.get().asFile,
             )
         }
-    }
-}
-
-configurations.named("sarif") {
-    outgoing {
-        artifact(tasks.detektMain.flatMap { it.sarifReportFile }) { builtBy(tasks.detektMain) }
-        artifact(sarifReport) { builtBy(tasks.lintKotlinMain) }
     }
 }

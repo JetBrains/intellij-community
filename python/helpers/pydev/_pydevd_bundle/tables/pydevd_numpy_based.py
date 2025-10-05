@@ -287,6 +287,8 @@ def __create_table(command, start_index=None, end_index=None, format=None):
     try:
         import torch
         if isinstance(np_array, torch.Tensor):
+            if np_array.requires_grad:
+                np_array = np_array.detach()
             np_array = np_array.to_dense()
     except Exception:
         pass

@@ -139,12 +139,11 @@ public class TracRepository extends BaseRepositoryImpl {
       @Override
       public @NotNull TaskType getType() {
         String type = map.get("type");
-        if (type == null) return TaskType.OTHER;
         return switch (type) {
           case "Feature", "enhancement" -> TaskType.FEATURE;
           case "Bug", "defect", "error" -> TaskType.BUG;
           case "Exception" -> TaskType.EXCEPTION;
-          default -> TaskType.OTHER;
+          case null, default -> TaskType.OTHER;
         };
       }
 

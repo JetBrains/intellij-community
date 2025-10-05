@@ -144,7 +144,7 @@ public class PyStatementPartsTest extends LightMarkedTestCase {
 
   public void testTry() {
     Map<String, PsiElement> marks = loadTest();
-    Assert.assertEquals(6, marks.size());
+    Assert.assertEquals(9, marks.size());
 
     PsiElement elt = marks.get("<stmt>").getParent().getParent(); // keyword -> part -> stmt
     Assert.assertTrue(elt instanceof PyTryExceptStatement);
@@ -155,13 +155,33 @@ public class PyStatementPartsTest extends LightMarkedTestCase {
     Assert.assertNotNull(stmt_list);
     Assert.assertEquals(marks.get("<body>").getParent().getParent(), stmt_list); // keyword -> stmt -> stmt_list
 
-    PyExceptPart exc_part = stmt.getExceptParts()[0];
-    Assert.assertEquals("ArithmeticError", exc_part.getExceptClass().getText());
-    Assert.assertEquals(marks.get("<ex1>").getParent(), exc_part);
+    PyExceptPart exc_part0 = stmt.getExceptParts()[0];
+    Assert.assertEquals("ArithmeticError", exc_part0.getExceptClass().getText());
+    Assert.assertNull(exc_part0.getTarget());
+    Assert.assertEquals(marks.get("<ex0>").getParent(), exc_part0);
 
-    exc_part = (PyExceptPart)marks.get("<ex2>").getParent(); // keyword -> part
-    Assert.assertEquals(stmt.getExceptParts()[1], exc_part);
-    Assert.assertNull(exc_part.getExceptClass());
+    PyExceptPart exc_part1 = stmt.getExceptParts()[1];
+    Assert.assertEquals("ArithmeticError, ImportError", exc_part1.getExceptClass().getText());
+    Assert.assertNull(exc_part1.getTarget());
+    Assert.assertEquals(marks.get("<ex1>").getParent(), exc_part1);
+
+    PyExceptPart exc_part2 = stmt.getExceptParts()[2];
+    Assert.assertEquals("ArithmeticError", exc_part2.getExceptClass().getText());
+    Assert.assertNotNull(exc_part2.getTarget());
+    Assert.assertEquals("e2", exc_part2.getTarget().getText());
+    Assert.assertEquals(marks.get("<ex2>").getParent(), exc_part2);
+
+    PyExceptPart exc_part3 = stmt.getExceptParts()[3];
+    Assert.assertEquals("(ArithmeticError, ImportError)", exc_part3.getExceptClass().getText());
+    Assert.assertNotNull(exc_part3.getTarget());
+    Assert.assertEquals("e3", exc_part3.getTarget().getText());
+    Assert.assertEquals(marks.get("<ex3>").getParent(), exc_part3);
+
+    PyExceptPart exc_part4 = stmt.getExceptParts()[4];
+    Assert.assertNull(exc_part4.getExceptClass());
+    Assert.assertNull(exc_part4.getTarget());
+    Assert.assertEquals(marks.get("<ex4>").getParent(), exc_part4);
+    Assert.assertNull(exc_part4.getExceptClass());
 
     elt = marks.get("<else>").getParent(); // keyword -> part
     Assert.assertTrue(elt instanceof PyElsePart);

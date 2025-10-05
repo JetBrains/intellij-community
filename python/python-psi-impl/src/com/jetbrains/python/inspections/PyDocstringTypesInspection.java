@@ -100,9 +100,9 @@ public final class PyDocstringTypesInspection extends PyInspection {
     }
 
     private static @Nullable String getPrintableName(@Nullable PyType type) {
-      if (type instanceof PyUnionType) {
+      if (type instanceof PyUnionType unionType) {
         return StreamEx
-          .of(((PyUnionType)type).getMembers())
+          .of(unionType.getMembers())
           .map(Visitor::getPrintableName)
           .joining(" or ");
       }

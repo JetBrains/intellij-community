@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.icons.AllIcons
@@ -806,7 +806,7 @@ private fun filterIcon(g: Graphics2D?, source: Icon, filter: ColorFilter): Icon 
   }
   return object : ImageIcon(image) {
     override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-      drawImage(g = g, image = image, x = x, y = y, observer = imageObserver ?: c)
+      StartupUiUtil.drawImage(g, image, x, y, imageObserver ?: c)
     }
 
     override fun getIconWidth(): Int = ImageUtil.getUserWidth(image)

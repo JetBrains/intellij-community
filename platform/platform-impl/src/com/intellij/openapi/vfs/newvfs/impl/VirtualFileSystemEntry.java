@@ -8,21 +8,21 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.serviceContainer.AlreadyDisposedException;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,27 +35,46 @@ import java.util.List;
 import static com.intellij.openapi.vfs.InvalidVirtualFileAccessException.getInvalidationReason;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
+@ApiStatus.Internal
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
-  public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
+  public static final VirtualFileSystemEntry[] EMPTY_ARRAY = {};
+
+  /**
+   * true: use new (recursive) implementation of {@link #computePath(String, String)},
+   * false: use legacy (iterative) implementation
+   */
+  private static final boolean USE_RECURSIVE_PATH_COMPUTE = getBooleanProperty("VirtualFileSystemEntry.USE_RECURSIVE_PATH_COMPUTE", true);
 
   /**
    * If true -- {@link #isValid()} return false for 'alien' vfiles (vfiles created in previous VFS session).
    * If false -- {@link #isValid()} throw AssertionError for 'alien' files (as all other method do)
+   *
    * @see #isValid() comments for details
    */
   private static final boolean TREAT_ALIEN_FILES_AS_INVALID_INSTEAD_OF_CODE_BUG = getBooleanProperty(
     "VirtualFileSystemEntry.TREAT_ALIEN_FILES_AS_INVALID_INSTEAD_OF_CODE_BUG", true
   );
 
+  /**
+   * Max file-tree depth to switch from recursive to iterative path computation -- to avoid potential StackOverflowException.
+   * Specific value is severely on a safe side, but intentionally so, since the path computation could be invoked with stack
+   * already deep enough -- and we have very deep stacktraces in our code
+   */
+  private static final int MAX_DEPTH_FOR_RECURSIVE_PATH_COMPUTATION = 64;
+
   @ApiStatus.Internal
   static final class VfsDataFlags {
+    //Flags are contained in the highest byte, because lowest 3 bytes are for (content)ModCount,
+    // see VfsData.Segment.intFieldsArray for details
+
     static final int IS_WRITABLE_FLAG = 0x0100_0000;
     static final int IS_HIDDEN_FLAG = 0x0200_0000;
     static final int IS_OFFLINE = 0x0400_0000;
-    /** {@code true} if the line separator for this file was detected to be equal to {@link com.intellij.util.LineSeparator#getSystemLineSeparator()}. */
+    /** {@code true} if the line separator for this file was detected to be equal to {@link LineSeparator#getSystemLineSeparator()}. */
     static final int SYSTEM_LINE_SEPARATOR_DETECTED = 0x0800_0000; // applicable only to non-directory files
     /** The case-sensitivity of the directory children is known, so the value of {@link #CHILDREN_CASE_SENSITIVE} is actual. */
     static final int CHILDREN_CASE_SENSITIVITY_CACHED = SYSTEM_LINE_SEPARATOR_DETECTED; // applicable only to directories
+    /** Used to mark directories that need refresh */
     private static final int DIRTY_FLAG = 0x1000_0000;
     /** This file is a symlink. */
     static final int IS_SYMLINK_FLAG = 0x2000_0000;
@@ -64,9 +83,39 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     /** This directory contains case-sensitive files. I.e. files "readme.txt" and "README.TXT" it can contain would be treated as different. */
     static final int CHILDREN_CASE_SENSITIVE = 0x8000_0000;     // applicable only to directories
     static final int IS_SPECIAL_FLAG = CHILDREN_CASE_SENSITIVE; // applicable only to non-directory files
+
+    static @Flags int toFlags(@PersistentFS.Attributes int attributes,
+                              boolean isDirectory) {
+      FileAttributes.CaseSensitivity sensitivity = isDirectory ?
+                                                   PersistentFS.areChildrenCaseSensitive(attributes) :
+                                                   FileAttributes.CaseSensitivity.UNKNOWN;
+      return (PersistentFS.isWritable(attributes) ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
+             (PersistentFS.isHidden(attributes) ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
+             (PersistentFS.isOfflineByDefault(attributes) ? VfsDataFlags.IS_OFFLINE : 0) |
+
+             (sensitivity.isKnown() ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
+
+             (PersistentFS.isSymLink(attributes) ? VfsDataFlags.IS_SYMLINK_FLAG : 0) |
+             (sensitivity.isSensitive() ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
+             (PersistentFS.isSpecialFile(attributes) ? VfsDataFlags.IS_SPECIAL_FLAG : 0);
+    }
+
+    static @Flags int toFlags(@NotNull FileAttributes attributes,
+                              boolean isOfflineByDefault) {
+      FileAttributes.CaseSensitivity sensitivity = attributes.areChildrenCaseSensitive();
+      return (attributes.isWritable() ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
+             (attributes.isHidden() ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
+             (isOfflineByDefault ? VfsDataFlags.IS_OFFLINE : 0) |
+
+             (sensitivity.isKnown() ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
+
+             (attributes.isSymLink() ? VfsDataFlags.IS_SYMLINK_FLAG : 0) |
+             (sensitivity.isSensitive() ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0) |
+             (attributes.isSpecial() ? VfsDataFlags.IS_SPECIAL_FLAG : 0);
+    }
   }
 
-  static final int ALL_FLAGS_MASK =
+  static final @Flags int ALL_FLAGS_MASK =
     VfsDataFlags.IS_WRITABLE_FLAG |
     VfsDataFlags.IS_HIDDEN_FLAG |
     VfsDataFlags.IS_OFFLINE |
@@ -80,52 +129,65 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @interface Flags {
   }
 
-  private volatile @NotNull("except `NULL_VIRTUAL_FILE`") VfsData.Segment mySegment;
-  private volatile VirtualDirectoryImpl myParent;
-  final int myId;
-  private volatile CachedFileType myFileType;
+
+  private final int id;
+  private volatile VirtualDirectoryImpl parent;
+  /** Actual file data is stored here, see {@link VfsData} doc for details */
+  private volatile @NotNull("except `NULL_VIRTUAL_FILE`") VfsData.Segment segment;
+
+  private volatile CachedFileType cachedFileType;
 
   static {
+    //noinspection ConstantValue
     assert ~ALL_FLAGS_MASK == LocalTimeCounter.TIME_MASK : "ALL_FLAGS_MASK and MOD_COUNTER_MASK must combined into full int32";
   }
 
   VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
-    mySegment = segment;
-    myId = id;
-    myParent = parent;
     if (id <= 0) {
-      throw new IllegalArgumentException("id must be positive but got: " + id);
+      throw new IllegalArgumentException("file id(=" + id + ") must be positive");
     }
+    this.id = id;
+    this.segment = segment;
+    this.parent = parent;
   }
 
   private VirtualFileSystemEntry() {
     // an exception to instantiate the special singleton `NULL_VIRTUAL_FILE`
     //noinspection ConstantConditions
-    mySegment = null;
-    myParent = null;
-    myId = -42;
+    segment = null;
+    parent = null;
+    id = -42;
   }
 
-  @NotNull
-  VfsData getVfsData() {
-    VfsData data = mySegment.owningVfsData;
-    PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
-    if (!owningPersistentFS.isOwnData(data)) {
-      //PersistentFSImpl re-creates VfsData on (re-)connect
-      throw new AssertionError("'Alien' file object: was created before PersistentFS (re-)connected " +
-                               "(id=" + myId + ", parent=" + myParent + "), " +
-                               "owningData: " + data + ", pFS: " + owningPersistentFS);
+  Throwable owningDiscrepancyError(@NotNull VfsData owningVfsData) {
+    PersistentFSImpl owningPersistentFS = owningVfsData.owningPersistentFS();
+    if (!owningPersistentFS.isOwnData(owningVfsData)) {
+      if (!owningPersistentFS.isConnected()) {
+        return new AlreadyDisposedException("VFS is disconnected, all it's files are invalid now");
+      }
+      else {
+        //PersistentFSImpl re-creates VfsData on (re-)connect
+        return new AssertionError("'Alien' file object: was created before PersistentFS (re-)connected " +
+               "(id=" + id + ", parent=" + parent + ")");
+      }
     }
-    return data;
+    return null;
+  }
+  VfsData getVfsData() {
+    VfsData owningVfsData = segment.owningVfsData();
+    Throwable error = owningDiscrepancyError(owningVfsData);
+    if (error != null) {
+      ExceptionUtil.rethrowUnchecked(error);
+    }
+    return owningVfsData;
   }
 
   PersistentFSImpl owningPersistentFS() {
     return getVfsData().owningPersistentFS();
   }
 
-  @NotNull
-  VfsData.Segment getSegment() {
-    VfsData.Segment segment = mySegment;
+  @NotNull VfsData.Segment getSegment() {
+    VfsData.Segment segment = this.segment;
     if (segment.replacement != null) {
       segment = updateSegmentAndParent(segment);
     }
@@ -136,17 +198,17 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     while (segment.replacement != null) {
       segment = segment.replacement;
     }
-    VirtualDirectoryImpl changedParent = segment.owningVfsData.getChangedParent(myId);
+    VirtualDirectoryImpl changedParent = segment.owningVfsData().getChangedParent(id);
     if (changedParent != null) {
-      myParent = changedParent;
+      parent = changedParent;
     }
-    mySegment = segment;
+    this.segment = segment;
     return segment;
   }
 
   void registerLink(@NotNull VirtualFileSystem fs) {
     if (fs instanceof LocalFileSystemImpl && isSymlink() && isValid()) {
-      ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getNameSequence(), getPath(), getCanonicalPath());
+      ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, getNameSequence(), getPath(), getCanonicalPath());
     }
   }
 
@@ -157,29 +219,29 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NotNull String getName() {
-    return getNameSequence().toString();
+    PersistentFSImpl pfs = owningPersistentFS();
+    if (pfs == null) {
+      return "<FS-is-disposed>";//shutdown-safe
+    }
+    return pfs.getName(id);
   }
 
   @Override
   public @NotNull CharSequence getNameSequence() {
-    PersistentFSImpl pfs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
-    if (pfs == null) {
-      return "<FS-is-disposed>";//shutdown-safe
-    }
-    return pfs.getName(myId);
+    return getName();
   }
 
   public final int getNameId() {
-    return owningPersistentFS().peer().getNameIdByFileId(myId);
+    return owningPersistentFS().peer().getNameIdByFileId(id);
   }
 
   @Override
   public VirtualDirectoryImpl getParent() {
-    VfsData.Segment segment = mySegment;
+    VfsData.Segment segment = this.segment;
     if (segment.replacement != null) {
       updateSegmentAndParent(segment);
     }
-    return myParent;
+    return parent;
   }
 
   @Override
@@ -208,19 +270,19 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public long getModificationStamp() {
-    return isValid() ? getSegment().getModificationStamp(myId) : -1;
+    return isValid() ? getSegment().getModificationStamp(id) : -1;
   }
 
   public void setModificationStamp(long modificationStamp) {
-    getSegment().setModificationStamp(myId, modificationStamp);
+    getSegment().setModificationStamp(id, modificationStamp);
   }
 
   boolean getFlagInt(@Flags int mask) {
-    return getSegment().getFlag(myId, mask);
+    return getSegment().getFlag(id, mask);
   }
 
   void setFlagInt(@Flags int mask, boolean value) {
-    getSegment().setFlag(myId, mask, value);
+    getSegment().setFlag(id, mask, value);
   }
 
   @Override
@@ -249,41 +311,157 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  private @NotNull String computePath(@NotNull String protocol, @NotNull String protoSeparator) {
+  //TODO RC: the whole 'String getPath()'/'String getUrl()' methods causes a lot of performance issues because:
+  //         1. They look like a simple getters, and clients (even inside JB) use them assuming they are cheap, while
+  //            they are not.
+  //         2. String representation of Path/Url is ineffective in may ways -- e.g. it involves a lot of memory allocating,
+  //            memcopy-ing, and memcmp-ing. E.g. splitting path into segments, finding is one path is an ancestor of
+  //            another one, changing path from platform-specific to platform-agnostic -- all that requires a lot of
+  //            memory-allocation, scanning, and copying while working with String paths/urls.
+  //         3. String representation of Path/Url is ineffective and error-prone while working with case-INsensitive
+  //            file systems -- one must always remember that path/url _may_ be case-insensitive (and even some _part_
+  //            of path could be case-sensitive, while other part is case-insensitive).
+  //         Better approach would be to have a lightweight analog of Path:
+  //         - PathSegment(name, caseSensitive)
+  //         - InternalPath(PathSegment[])
+  //         - InternalUrl(protocol, PathSegment[])
+  //         And use this abstraction internally everywhere instead of 'String path'. E.g. VirtualFile should have
+  //         .getInternalPath()->InternalPath and .getInternalUrl()->InternalUrl methods.
+  //         This approach has many upsides:
+  //         - No need to convert between platform-dependent/-independent forms -- same InternalPath instance could be
+  //           _formatted_ in both ways, if needed, but InternalPath itself is platform-agnostic.
+  //         - PathSegments could be cached/interned/reused -> reduce allocation pressure
+  //         - Case-(in)sensitivity is embedded into PathSegment, hence can't be forgot/missed/omitted
+  //         - Since case-sensitivity is embedded into PathSegment, PathSegment could cache case-insensitive hashCode
+  //           thus greatly reducing cost of evaluating StringUtilRt.stringHashCodeInsensitive() every time, and also
+  //           speeds up case-insensitive equals (by piggibacking on hashCode comparison first)
+  //         - isAncestor(path1, path2) could be calculated faster
+  //         Actually, we already have a (limited) implementation of InternalPath: com.intellij.compiler.server.InternedPath
+  //         It could be taken as a starting point.
+  //         ...Why not using java.nio.Path: because it is (way) more expensive -- it takes more memory, involves IO,
+  //         and generally linked to the specific FileSystem -- while InternalPath should be very lightweight and
+  //         completely uncoupled from any specific FS
+
+  private @NotNull String computePath(@NotNull String protocol,
+                                      @NotNull String protoSeparator) {
+    if (USE_RECURSIVE_PATH_COMPUTE) {
+      return computePathRecursively(this, protocol, protoSeparator).toString();
+    }
+    else {
+      return computePathIteratively(this, protocol, protoSeparator);
+    }
+  }
+
+  /**
+   * Recursive implementation of {@link #computePathIteratively(VirtualFileSystemEntry, String, String)}: avoids allocating ArrayList,
+   * and uses StringBuilder instead of plain char[] -- StringBuilder uses byte[] inside, which may be faster than explicit char[]
+   */
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull StringBuilder computePathRecursively(@NotNull VirtualFile file,
+                                                              @NotNull String protocol,
+                                                              @NotNull String protoSeparator) {
+    return computePathRecursively(
+      (VirtualFileSystemEntry)file, protocol, protoSeparator,
+      /*requiredBufferSize: */ 0, /*depth: */ 0
+    );
+  }
+
+  private static @NotNull StringBuilder computePathRecursively(@NotNull VirtualFileSystemEntry file,
+                                                               @NotNull String protocol,
+                                                               @NotNull String protoSeparator,
+                                                               int requiredBufferSize,
+                                                               int depth) {
+    if (depth > MAX_DEPTH_FOR_RECURSIVE_PATH_COMPUTATION) {
+      //For very deep file-trees StackOverflow might happen (EA-823363), so if depth is large enough
+      //  it's better to switch to non-recursive method:
+      String pathPrefix = computePathIteratively(file, protocol, protoSeparator);
+      StringBuilder pathBuilder = new StringBuilder(pathPrefix.length() + 1 + requiredBufferSize)
+        .append(pathPrefix);
+      if (!pathPrefix.endsWith("/")) {
+        pathBuilder.append('/');//must end with '/'
+      }
+      return pathBuilder;
+    }
+
+    VirtualFileSystemEntry parent = file.getParent();
+    if (parent == null) {// <=> (file instanceof FsRoot)
+      String rootPath = file.getPath();
+      return new StringBuilder(
+        protocol.length() + protoSeparator.length() + rootPath.length() + requiredBufferSize
+      )
+        .append(protocol)
+        .append(protoSeparator)
+        .append(rootPath);//FsRoot.getPath() intentionally ends with '/'
+    }
+
+    String fileName = file.getName();
+
+    StringBuilder pathBuilder = computePathRecursively(
+      parent,
+      protocol, protoSeparator,
+      requiredBufferSize + fileName.length() + 1,
+      depth + 1
+    );
+
+    pathBuilder.append(fileName);
+    if (requiredBufferSize > 0) { // requiredBufferSize=0 is the top calling frame, don't need trailing '/'
+      pathBuilder.append('/');
+    }
+    return pathBuilder;
+  }
+
+  private static final ThreadLocal<ArrayList<String>> parentsNames = ThreadLocal.withInitial(ArrayList::new);
+
+  /**
+   * Iterative implementation of {@link #computePath(String, String)}: builds the path into a char[], allocates
+   * temporary ArrayList as stack.
+   * Currently used as a fallback for very long paths there recursive method may exceed the stack
+   */
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull String computePathIteratively(@NotNull VirtualFileSystemEntry file,
+                                                       @NotNull String protocol,
+                                                       @NotNull String protoSeparator) {
+    VirtualFileSystemEntry v = file;
     int length = 0;
-    List<CharSequence> names = new ArrayList<>();
-    VirtualFileSystemEntry v = this;
+    //TODO RC: maybe just cache the list in a thread-local, and go with iterative method?
+    List<String> names = parentsNames.get();//new ArrayList<>();
     for (; ; ) {
-      VirtualDirectoryImpl parent = v.getParent();
-      if (parent == null) {
+      VirtualFileSystemEntry parent = v.getParent();
+      if (parent == null) { //<=> (v instanceof FsRoot)
         break;
       }
-      CharSequence name = v.getNameSequence();
-      if (length != 0) length++;
-      length += name.length();
+
+      String name = v.getName();
       names.add(name);
+
+      if (length != 0) {
+        length += name.length() + 1; //add '/'
+      }
+      else {
+        length += name.length();
+      }
+
       v = parent;
     }
-    int protocolLength = protocol.length();
-    String rootPath = v.getPath();
-    int rootPathLength = rootPath.length();
-    length += protocolLength + protoSeparator.length() + rootPathLength;
-    char[] path = new char[length];
-    CharArrayUtil.getChars(protocol, path, 0);
-    CharArrayUtil.getChars(protoSeparator, path, protocolLength);
-    int o = protocolLength + protoSeparator.length();
-    CharArrayUtil.getChars(rootPath, path, o, rootPathLength);
-    o += rootPathLength;
+
+    String rootPath = v.getPath();//root==FsRoot, its' getPath() contains trailing '/'
+
+    StringBuilder pathBuilder = new StringBuilder(
+      protocol.length() + protoSeparator.length() + rootPath.length() + length
+    )
+      .append(protocol).append(protoSeparator).append(rootPath);
     for (int i = names.size() - 1; i >= 1; i--) {
-      CharSequence name = names.get(i);
-      int nameLength = name.length();
-      CharArrayUtil.getChars(name, path, o, nameLength);
-      o += nameLength;
-      path[o++] = '/';
+      String name = names.get(i);
+      pathBuilder.append(name).append('/');
     }
-    CharSequence name = names.get(0);
-    CharArrayUtil.getChars(name, path, o);
-    return new String(path);
+    if (!names.isEmpty()) {
+      String name = names.get(0);
+      pathBuilder.append(name);
+    }
+    names.clear();
+    return pathBuilder.toString();
   }
 
   @Override
@@ -370,17 +548,26 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public int getId() {
-    return myId;
+    return id;
   }
 
   @Override
-  public boolean equals(Object o) {
-    return this == o || o instanceof VirtualFileSystemEntry && myId == ((VirtualFileSystemEntry)o).myId;
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+
+    if (!(o instanceof VirtualFileWithId)) {
+      return false;
+    }
+
+    //untrivial equals implementation: all VirtualFileWithId implementations are considered comparable -- even if they
+    // are completely different implementation classes
+
+    return ((VirtualFileWithId)o).getId() == id;
   }
 
   @Override
-  public int hashCode() {
-    return myId;
+  public final int hashCode() {
+    return id;
   }
 
   @Override
@@ -397,7 +584,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public final boolean exists() {
-    return getVfsData().isFileValid(myId);
+    return getVfsData().isFileValid(id);
   }
 
   @Override
@@ -418,29 +605,23 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       //    flaky 'Alien file object' assertions failing the tests. So we're forced to compromise our integrity: isValid()
       //    is the only method that _doesn't_ throw the AssertionError for alien files, but returns false instead.
       //    In other words: we now consider an 'alien' file as 'invalid' file, instead of a primordial sin.
-
-      VfsData data = mySegment.owningVfsData;
-      PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
-      if (!owningPersistentFS.isOwnData(data)) {
-        Logger.getInstance(VirtualFileSystemEntry.class).warn(
-          "'Alien' file object: was created before PersistentFS (re-)connected (id=" + myId + ", parent=" + myParent + ")"
-        );
-        return false;
+      VfsData owningVfsData = getVfsData();
+      Throwable error = owningDiscrepancyError(owningVfsData);
+      if (error != null) {
+        Logger.getInstance(VirtualFileSystemEntry.class).warn(error);
       }
-      return data.isFileValid(myId);
+      return error == null && owningVfsData.isFileValid(id);
     }
   }
 
   @Override
   public @NonNls String toString() {
-    VfsData owningVfsData = getSegment().owningVfsData;
+    VfsData owningVfsData = segment.owningVfsData();
     //don't use .owningPersistentFS() since it throws assertion if pFS not own current segment anymore,
     // but here we want to return some string always:
-    PersistentFSImpl persistentFs = owningVfsData.owningPersistentFS();
-    if (!persistentFs.isOwnData(owningVfsData)) {
-      //PersistentFSImpl re-creates VfsData on (re-)connect
-      return "'Alien' file object: was created before PersistentFS (re-)connected " +
-             "(id=" + myId + ", parent=" + myParent + ")";
+    Throwable error = owningDiscrepancyError(owningVfsData);
+    if (error != null) {
+      return error.getMessage();
     }
 
     if (exists()) {
@@ -461,7 +642,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl parent = getParent();
     //children are sorted by name: child position must change after its name has changed
     parent.removeChild(this);
-    pfs.peer().setName(myId, newName);
+    pfs.peer().setName(id, newName);
     parent.addChild(this);
 
     pfs.incStructuralModificationCount();
@@ -480,7 +661,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       () -> {
         oldParent.removeChild(this);
 
-        getSegment().changeParent(myId, newParent);
+        getSegment().changeParent(id, newParent);
         newParent.addChild(this);
         return (Void)null;
       },
@@ -503,7 +684,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @ApiStatus.Internal
   public void invalidate(@NotNull Object source, @NotNull Object reason) {
-    getVfsData().invalidateFile(myId);
+    getVfsData().invalidateFile(id);
     appendInvalidationReason(source, reason);
   }
 
@@ -579,7 +760,16 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   /**
-   * @return true, if this file is a symlink or there is a symlink parent
+   * BEWARE: This holds only while inside the same file-system, but breaks on file-system borders.
+   * I.e. lets' take a [jar:///local/path/file.jar!/path/inside/My.class] file: if [/local/path] is a
+   * symlink, then
+   * VirtualFile[file:///local/path/file.jar].thisOrParentHaveSymlink() == true
+   * but
+   * VirtualFile[ jar:///local/path/file.jar!/path/inside/My.class].thisOrParentHaveSymlink() == false
+   * because for VFS VirtualFile[jar:///local/path/file.jar!/path/inside/My.class] belongs to
+   * [jar:///local/path/file.jar!/] root, and up to this root there are no symlinks.
+   * I don't know is it 'intended' behavior, or just an omission though
+   * @return true, if this file is a symlink or there is a symlink parent, up to VFS root (not file-system root!)
    */
   @ApiStatus.Internal
   public boolean thisOrParentHaveSymlink() {
@@ -647,70 +837,69 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public final @NotNull FileType getFileType() {
-    CachedFileType cache = myFileType;
+    CachedFileType cache = cachedFileType;
     FileType type = cache == null ? null : cache.getUpToDateOrNull();
     if (type == null) {
       type = super.getFileType();
-      myFileType = CachedFileType.forType(type);
+      cachedFileType = CachedFileType.forType(type);
     }
     return type;
   }
 
-  static final VirtualFileSystemEntry NULL_VIRTUAL_FILE =
-    new VirtualFileSystemEntry() {
-      @Override
-      public String toString() {
-        return "NULL";
-      }
+  static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileSystemEntry() {
+    @Override
+    public String toString() {
+      return "NULL";
+    }
 
-      @Override
-      public @NotNull NewVirtualFileSystem getFileSystem() {
-        throw new UnsupportedOperationException();
-      }
+    @Override
+    public @NotNull NewVirtualFileSystem getFileSystem() {
+      throw new UnsupportedOperationException();
+    }
 
-      @Override
-      public @Nullable NewVirtualFile findChild(@NotNull String name) {
-        throw new UnsupportedOperationException();
-      }
+    @Override
+    public @Nullable NewVirtualFile findChild(@NotNull String name) {
+      throw new UnsupportedOperationException();
+    }
 
-      @Override
-      public @Nullable NewVirtualFile refreshAndFindChild(@NotNull String name) {
-        throw new UnsupportedOperationException();
-      }
+    @Override
+    public @Nullable NewVirtualFile refreshAndFindChild(@NotNull String name) {
+      throw new UnsupportedOperationException();
+    }
 
-      @Override
-      public @Nullable NewVirtualFile findChildIfCached(@NotNull String name) {
-        throw new UnsupportedOperationException();
-      }
+    @Override
+    public @Nullable NewVirtualFile findChildIfCached(@NotNull String name) {
+      throw new UnsupportedOperationException();
+    }
 
-      @Override
-      public @NotNull Collection<VirtualFile> getCachedChildren() {
-        throw new UnsupportedOperationException();
-      }
+    @Override
+    public @NotNull Collection<VirtualFile> getCachedChildren() {
+      throw new UnsupportedOperationException();
+    }
 
-      @Override
-      public @NotNull Iterable<VirtualFile> iterInDbChildren() {
-        throw new UnsupportedOperationException();
-      }
+    @Override
+    public @NotNull Iterable<VirtualFile> iterInDbChildren() {
+      throw new UnsupportedOperationException();
+    }
 
-      @Override
-      public boolean isDirectory() {
-        throw new UnsupportedOperationException();
-      }
+    @Override
+    public boolean isDirectory() {
+      throw new UnsupportedOperationException();
+    }
 
-      @Override
-      public VirtualFile[] getChildren() {
-        throw new UnsupportedOperationException();
-      }
+    @Override
+    public VirtualFile[] getChildren() {
+      throw new UnsupportedOperationException();
+    }
 
-      @Override
-      public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
-        throw new UnsupportedOperationException();
-      }
+    @Override
+    public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
+      throw new UnsupportedOperationException();
+    }
 
-      @Override
-      public @NotNull InputStream getInputStream() {
-        throw new UnsupportedOperationException();
-      }
-    };
+    @Override
+    public @NotNull InputStream getInputStream() {
+      throw new UnsupportedOperationException();
+    }
+  };
 }

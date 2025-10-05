@@ -12,6 +12,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
+import com.intellij.util.PsiIconUtil.getIconFromProviders
 import com.intellij.util.QueryExecutor
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -27,7 +28,6 @@ import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toPsiParameters
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.KotlinIconProvider.Companion.getBaseIcon
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.search.PsiBasedClassResolver
 import org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex
@@ -126,7 +126,7 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                     val declaration = elt.getStrictParentOfType<KtDeclaration>() ?: return true
 
                     val psiBasedResolveResult = elt.calleeExpression?.constructorReferenceExpression?.let { ref ->
-                        elt.getBaseIcon()
+                        getIconFromProviders(elt, 0)
                         psiBasedClassResolver.canBeTargetReference(ref)
                     }
 

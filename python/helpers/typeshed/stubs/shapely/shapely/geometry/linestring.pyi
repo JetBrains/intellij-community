@@ -15,6 +15,7 @@ __all__ = ["LineString"]
 _ConvertibleToLineString: TypeAlias = LineString | ArrayLikeSeq[float] | Iterable[Point | Iterable[SupportsFloat]]
 
 class LineString(BaseGeometry):
+    __slots__: list[str] = []
     def __new__(self, coordinates: _ConvertibleToLineString | None = None) -> Self: ...
     def svg(self, scale_factor: float = 1.0, stroke_color: str | None = None, opacity: float | None = None) -> str: ...  # type: ignore[override]
     def offset_curve(

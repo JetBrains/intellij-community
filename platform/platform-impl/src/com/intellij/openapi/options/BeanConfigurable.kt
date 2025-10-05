@@ -121,7 +121,11 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
       return myAccessor.getBeanValue(settingsInstance)
     }
 
-    val component: JCheckBox by lazy { JCheckBox(title) }
+    val component: JCheckBox by lazy {
+      JCheckBox(title).apply {
+        isOpaque = false
+      }
+    }
 
     fun isModified(instance: Any): Boolean {
       val beanValue = myAccessor.getBeanValue(instance)

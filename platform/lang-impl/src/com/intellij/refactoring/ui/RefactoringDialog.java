@@ -55,7 +55,7 @@ public abstract class RefactoringDialog extends DialogWrapper implements Possibl
    * Must be called before {@link #init()}.
    */
   protected void addOpenInEditorCheckbox() {
-    setDoNotAskOption(new DoNotAskOption.Adapter() {
+    setDoNotAskOption(new com.intellij.openapi.ui.DoNotAskOption.Adapter() {
       @Override
       public void rememberChoice(boolean selected, int exitCode) {
         PropertiesComponent.getInstance().setValue(getRefactoringId() + ".OpenInEditor", selected, isOpenInEditorEnabledByDefault());

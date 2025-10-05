@@ -1,14 +1,16 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.GrazieCheckers
 import com.intellij.openapi.components.service
-import org.junit.Test
+import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
+import com.intellij.spellchecker.dictionary.Dictionary
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
 
 object GrazieSpellchecker {
-  fun isCorrect(word: String): Boolean? {
-    return service<GrazieCheckers>().isCorrect(word)
-  }
+  fun lookup(word: String): Dictionary.LookupStatus = service<GrazieCheckers>().lookup(word)
 
   /**
    * Checks text for spelling mistakes.
@@ -19,49 +21,67 @@ object GrazieSpellchecker {
 }
 
 class SpellCheckerTest : GrazieTestBase() {
-  @Test
+
+  private fun doSuggestionTest(word: String, expected: String) {
+    assertTrue(getInstance(project).hasProblem(word))
+    val suggestions = getInstance(project).getSuggestions(word)
+    assertTrue(suggestions.isNotEmpty())
+    assertEquals(expected, suggestions.first())
+  }
+
   fun `test empty word`() {
-    assertTrue(GrazieSpellchecker.isCorrect("") ?: false)
+    assertFalse(getInstance(project).hasProblem(""))
   }
 
-  @Test
   fun `test emoji`() {
-    assertTrue(GrazieSpellchecker.isCorrect("\uD83D\uDE4B\uD83C\uDFFF") ?: false)
+    assertFalse(getInstance(project).hasProblem("\uD83D\uDE4B\uD83C\uDFFF"))
   }
 
-  @Test
   fun `test alien word`() {
-    assertNull(GrazieSpellchecker.isCorrect("例子"))
+    assertEquals(Alien, GrazieSpellchecker.lookup("例子"))
   }
 
-  @Test
   fun `test unknown word`() {
     val word = "dasfhaljkwehfjhadfdsafdsv"
-    assertFalse(GrazieSpellchecker.isCorrect(word) ?: true)
+    assertTrue(GrazieSpellchecker.lookup(word).isNotPresent)
     assertTrue(GrazieSpellchecker.getSuggestions(word).isEmpty())
   }
 
-  @Test
   fun `test correct word`() {
-    assertTrue(GrazieSpellchecker.isCorrect("banana") ?: false)
+    assertFalse(getInstance(project).hasProblem("banana"))
   }
 
-  @Test
   fun `test incorrect word`() {
     val word = "bannana"
-    assertFalse(GrazieSpellchecker.isCorrect(word) ?: true)
-    assertTrue(GrazieSpellchecker.getSuggestions(word).contains("banana"))
+    assertTrue(getInstance(project).hasProblem(word))
+    assertTrue(getInstance(project).getSuggestions(word).contains("banana"))
   }
 
-  @Test
   fun `test correct word with apostrophe`() {
-    assertTrue(GrazieSpellchecker.isCorrect("un'espressione") ?: false)
+    enableProofreadingFor(setOf(Lang.ITALIAN))
+    assertEquals(Present, GrazieSpellchecker.lookup("un'espressione"))
   }
 
-  @Test
   fun `test incorrect word with apostrophe`() {
+    enableProofreadingFor(setOf(Lang.ITALIAN))
     val word = "un'espresssione"
-    assertFalse(GrazieSpellchecker.isCorrect(word) ?: true)
+    assertTrue(GrazieSpellchecker.lookup(word).isNotPresent)
     assertTrue(GrazieSpellchecker.getSuggestions(word).contains("un'espressione"))
+  }
+
+  fun `test speller rules are disabled when hunspell is enabled`() {
+    enableProofreadingFor(setOf(Lang.RUSSIAN, Lang.UKRAINIAN, Lang.GERMANY_GERMAN))
+    // Even though words shouldn't be treated as alien because corresponding languages have been enabled,
+    // `lookup` will return `Alien` anyway.
+    // It happens because LT Spelling Tools are disabled if Hunspell dictionary is enabled
+    assertEquals(Alien, GrazieSpellchecker.lookup("привет"))
+    assertEquals(Alien, GrazieSpellchecker.lookup("entschuldigung"))
+    assertEquals(Alien, GrazieSpellchecker.lookup("кiт"))
+  }
+
+  fun `test advanced dat suggestions`() {
+    enableProofreadingFor(setOf(Lang.RUSSIAN))
+    doSuggestionTest("Врядтли", "Вряд ли")
+    doSuggestionTest("Грейзи", "Грацие")
   }
 }

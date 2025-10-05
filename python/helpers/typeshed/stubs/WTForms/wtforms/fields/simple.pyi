@@ -6,6 +6,22 @@ from wtforms.fields.core import Field, _Filter, _FormT, _Validator, _Widget
 from wtforms.form import BaseForm
 from wtforms.meta import DefaultMeta, _SupportsGettextAndNgettext
 
+__all__ = (
+    "BooleanField",
+    "TextAreaField",
+    "PasswordField",
+    "FileField",
+    "MultipleFileField",
+    "HiddenField",
+    "SearchField",
+    "SubmitField",
+    "StringField",
+    "TelField",
+    "URLField",
+    "EmailField",
+    "ColorField",
+)
+
 class BooleanField(Field):
     data: bool
     default: bool | Callable[[], bool] | None

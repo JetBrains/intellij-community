@@ -7,12 +7,11 @@ import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.ModuleBasedBuildTargetType;
 import org.jetbrains.jps.incremental.ResourcesTarget;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTarget> {
   public static final ResourcesTargetType PRODUCTION = new ResourcesTargetType("resources-production", false);
@@ -50,18 +49,15 @@ public final class ResourcesTargetType extends ModuleBasedBuildTargetType<Resour
   }
 
   private final class Loader extends BuildTargetLoader<ResourcesTarget> {
-    private final Map<String, JpsModule> myModules;
+    private final @NotNull JpsProject myProject;
 
     Loader(JpsModel model) {
-      myModules = new HashMap<>();
-      for (JpsModule module : model.getProject().getModules()) {
-        myModules.put(module.getName(), module);
-      }
+      myProject = model.getProject();
     }
 
     @Override
     public @Nullable ResourcesTarget createTarget(@NotNull String targetId) {
-      JpsModule module = myModules.get(targetId);
+      JpsModule module = myProject.findModuleByName(targetId);
       return module != null ? new ResourcesTarget(module, ResourcesTargetType.this) : null;
     }
   }

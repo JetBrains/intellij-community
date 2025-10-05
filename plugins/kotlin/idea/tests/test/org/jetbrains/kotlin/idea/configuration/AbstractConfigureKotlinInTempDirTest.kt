@@ -9,7 +9,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import com.intellij.util.io.createParentDirectories
+import org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
@@ -17,6 +18,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
+import kotlin.io.path.copyTo
 
 abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTest() {
     companion object {
@@ -55,8 +57,8 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
             val stdlibPath = "lib/kotlin-stdlib.jar"
             val originalPath = originalDir.resolve(stdlibPath)
             if (Files.exists(originalPath.toPath())) error(originalPath)
-            val kotlinStdlib = projectRoot.resolve(stdlibPath)
-            originalStdlibFile.copyTo(kotlinStdlib.toFile(), overwrite = true)
+            val kotlinStdlib = projectRoot.resolve(stdlibPath).createParentDirectories()
+            originalStdlibFile.copyTo(kotlinStdlib, overwrite = true)
         }
         // Needed, so the index knows that there are Kotlin files in the project
         VfsUtil.markDirtyAndRefresh(false, true, true, this.projectRoot.toPath().refreshAndFindVirtualDirectory())

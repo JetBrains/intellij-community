@@ -5,7 +5,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
-import com.jetbrains.python.validation.DocStringAnnotator;
+import com.jetbrains.python.validation.PyDocStringHighlightingAnnotator;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +28,7 @@ public final class ConsoleVisitorFilter implements PythonVisitorFilter {
       }
 
       //annotators
-      if (visitorClass == DocStringAnnotator.class) {
+      if (visitorClass == PyDocStringHighlightingAnnotator.class) {
         return false;
       }
     }

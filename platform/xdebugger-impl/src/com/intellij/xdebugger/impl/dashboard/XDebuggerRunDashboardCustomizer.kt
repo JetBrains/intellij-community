@@ -3,12 +3,11 @@ package com.intellij.xdebugger.impl.dashboard
 
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.dashboard.RunDashboardCustomizationBuilder
 import com.intellij.execution.dashboard.RunDashboardCustomizer
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
-import com.intellij.ide.projectView.PresentationData
 import com.intellij.xdebugger.XDebuggerManager
 
 internal class XDebuggerRunDashboardCustomizer : RunDashboardCustomizer() {
@@ -18,12 +17,14 @@ internal class XDebuggerRunDashboardCustomizer : RunDashboardCustomizer() {
     return executors.any { it.id == DefaultDebugExecutor.EXECUTOR_ID }
   }
 
-  override fun updatePresentation(presentation: PresentationData, node: RunDashboardRunConfigurationNode): Boolean {
-    val processHandler = node.descriptor?.processHandler ?: return false
-    val session = XDebuggerManager.getInstance(node.project).debugSessions.find { it.debugProcess.processHandler === processHandler }
+  override fun updatePresentation(customizationBuilder: RunDashboardCustomizationBuilder, configurationSettings: RunnerAndConfigurationSettings, descriptor: RunContentDescriptor?): Boolean {
+    val processHandler = descriptor?.processHandler ?: return false
+    val session = XDebuggerManager.getInstance(configurationSettings.configuration.project).debugSessions.find { it.debugProcess.processHandler === processHandler }
                   ?: return false
     if (session.isPaused) {
-      presentation.setIcon(AllIcons.Actions.Pause)
+      customizationBuilder.setIcon(AllIcons.Actions.Pause)
+    } else if (!session.isStopped) {
+      customizationBuilder.setIcon(AllIcons.Actions.StartDebugger)
     }
     return false
   }

@@ -5,7 +5,7 @@ import com.intellij.codeInspection.ex.InspectionElementsMergerBase
 import com.intellij.openapi.util.JDOMExternalizerUtil
 import org.jdom.Element
 
-class JavadocDeclarationMerger: InspectionElementsMergerBase() {
+public class JavadocDeclarationMerger: InspectionElementsMergerBase() {
   override fun getMergedToolName(): String = "JavadocDeclaration"
 
   override fun getSourceToolNames(): Array<String> = arrayOf("JavaDoc")

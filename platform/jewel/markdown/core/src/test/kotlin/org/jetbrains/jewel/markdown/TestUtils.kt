@@ -192,7 +192,7 @@ public fun orderedList(
     delimiter: String = ".",
 ): OrderedList = OrderedList(items.toList(), isTight, startFrom, delimiter)
 
-public fun listItem(vararg items: MarkdownBlock): ListItem = ListItem(*items)
+public fun listItem(vararg items: MarkdownBlock, level: Int = 0): ListItem = ListItem(children = items, level)
 
 public fun htmlBlock(content: String): HtmlBlock = HtmlBlock(content)
 

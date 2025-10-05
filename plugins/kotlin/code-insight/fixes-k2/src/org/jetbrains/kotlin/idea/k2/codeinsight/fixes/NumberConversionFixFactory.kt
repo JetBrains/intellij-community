@@ -3,6 +3,15 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isByteType
+import org.jetbrains.kotlin.analysis.api.components.isCharType
+import org.jetbrains.kotlin.analysis.api.components.isDoubleType
+import org.jetbrains.kotlin.analysis.api.components.isFloatType
+import org.jetbrains.kotlin.analysis.api.components.isIntType
+import org.jetbrains.kotlin.analysis.api.components.isShortType
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -39,14 +48,14 @@ internal object NumberConversionFixFactory {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun prepareNumberConversionElementContext(
     fromType: KaType,
     toType: KaType,
 ): NumberConversionFix.ElementContext {
     return NumberConversionFix.ElementContext(
-        typePresentation = toType.withNullability(KaTypeNullability.NON_NULLABLE).render(
+        typePresentation = toType.withNullability(false).render(
             renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
             position = Variance.INVARIANT,
         ),
@@ -60,15 +69,15 @@ internal fun prepareNumberConversionElementContext(
     )
 }
 
-context(KaSession)
+context(_: KaSession)
 internal fun isNumberConversionAvailable(
     fromType: KaType,
     toType: KaType,
 ): Boolean = !fromType.semanticallyEquals(toType) && fromType.isNumberOrCharType() && toType.isNumberOrCharType()
 
-context(KaSession)
+context(session: KaSession)
 internal fun KaType.isNumberOrCharType(): Boolean {
-    return with(withNullability(KaTypeNullability.NON_NULLABLE)) {
-        isNumberOrUNumberType(this) || isCharType
+    return with(withNullability(false)) {
+        with(session) { isNumberOrUNumberType(this@isNumberOrCharType) } || isCharType
     }
 }

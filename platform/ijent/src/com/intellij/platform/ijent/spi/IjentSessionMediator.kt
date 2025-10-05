@@ -4,17 +4,19 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.Cancellation.ensureActive
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.coroutineNameAppended
-import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.*
+import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.CHECK_CODE
+import com.intellij.platform.ijent.spi.IjentSessionMediator.ProcessExitPolicy.NORMAL
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -51,19 +53,13 @@ abstract class IjentSessionMediator private constructor(
    * Used to determine whether a process termination should be treated as an error.
    */
   enum class ProcessExitPolicy {
-    /** 
-     * Treat any exit as an error.
-     * Used during initialization when process must stay alive.
-     */
-    ERROR,
-
-    /** 
+    /**
      * Check exit code to determine if it's an error.
      * Normal termination with expected exit codes is allowed.
      */
     CHECK_CODE,
 
-    /** 
+    /**
      * Normal shutdown, never treat as error.
      * Used during intentional process termination.
      */
@@ -73,7 +69,7 @@ abstract class IjentSessionMediator private constructor(
   internal abstract suspend fun isExpectedProcessExit(exitCode: Int): Boolean
 
   @Volatile
-  internal var myExitPolicy: ProcessExitPolicy = ERROR
+  internal var myExitPolicy: ProcessExitPolicy = CHECK_CODE
 
   companion object {
     /**
@@ -142,7 +138,7 @@ abstract class IjentSessionMediator private constructor(
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
-      GlobalScope.launch(blockingDispatcher + ijentProcessScope.coroutineNameAppended("stderr logger")) {
+      GlobalScope.launch(IjentThreadPool.asCoroutineDispatcher() + ijentProcessScope.coroutineNameAppended("stderr logger")) {
         ijentProcessStderrLogger(process, ijentLabel, lastStderrMessages)
       }
 
@@ -201,6 +197,7 @@ private fun logIjentError(ijentLabel: String, exception: Throwable) {
 private suspend fun ijentProcessStderrLogger(process: Process, ijentLabel: String, lastStderrMessages: MutableSharedFlow<String?>) {
   try {
     process.errorStream.reader().useLines { lines ->
+      val logIjentStderr = LogIjentStderr()
       for (line in lines) {
         yield()
         if (line.isNotEmpty()) {
@@ -220,6 +217,7 @@ private suspend fun ijentProcessStderrLogger(process: Process, ijentLabel: Strin
 
 private val ijentLogMessageRegex = Regex(
   """
+^
 (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+\S*)
 \s+
 (\w+)
@@ -229,52 +227,78 @@ private val ijentLogMessageRegex = Regex(
   RegexOption.COMMENTS,
 )
 
-private fun logIjentStderr(ijentLabel: String, line: String) {
-  val hostDateTime = ZonedDateTime.now()
+private val logTargets: Map<String, Logger> by lazy {
+  IjentLogger.ALL_LOGGERS.mapKeys { (loggerName, _) ->
+    loggerName.removePrefix("#com.intellij.platform.ijent.")
+  }
+}
 
-  val (rawRemoteDateTime, level, message) =
-    ijentLogMessageRegex.matchEntire(line)?.destructured
-    ?: run {
-      val message = "$ijentLabel log: $line"
-      // It's important to always log such messages,
-      // but if logs are supposed to be written to a separate file in debug level,
-      // they're logged in debug level.
-      if (LOG.isDebugEnabled) {
-        LOG.debug(message)
+private class LogIjentStderr {
+  private var lastLoggingHandler: ((String) -> Unit)? = null
+
+  operator fun invoke(ijentLabel: String, line: String) {
+    val hostDateTime = ZonedDateTime.now()
+
+    val (rawRemoteDateTime, level, message) =
+      ijentLogMessageRegex.matchEntire(line)?.destructured
+      ?: run {
+        val message = "$ijentLabel log: $line"
+        // It's important to always log such messages,
+        // but if logs are supposed to be written to a separate file in debug level,
+        // they're logged in debug level.
+        val logger = lastLoggingHandler ?: LOG::info
+        logger(message)
+        return
       }
-      else {
-        LOG.info(message)
-      }
+
+    val dateTimeDiff = try {
+      java.time.Duration.between(ZonedDateTime.parse(rawRemoteDateTime), hostDateTime).toKotlinDuration()
+    }
+    catch (_: DateTimeParseException) {
+      val logger = lastLoggingHandler ?: LOG::info
+      logger(message)
       return
     }
 
-  val dateTimeDiff = try {
-    java.time.Duration.between(ZonedDateTime.parse(rawRemoteDateTime), hostDateTime).toKotlinDuration()
-  }
-  catch (_: DateTimeParseException) {
-    LOG.debug { "$ijentLabel log: $line" }
-    return
-  }
+    val logger: ((String) -> Unit)? = run {
+      val logTargetPrefix = message
+        .take(256)  // I hope that there will never be a span/target name longer than 256 characters.
+        .split("ijent::-", limit = 2)
+        .getOrNull(1)
+        ?.substringBefore("::")
+        ?.takeWhile { it.isLetter() || it == '_' }
 
-  val logger: (String) -> Unit = when (level) {
-    "TRACE" -> if (LOG.isTraceEnabled) LOG::trace else return
-    "INFO" -> LOG::info
-    "WARN" -> LOG::warn
-    "ERROR" -> LOG::error
-    else -> if (LOG.isDebugEnabled) LOG::debug else return
-  }
+      val logger = logTargets[logTargetPrefix] ?: IjentLogger.OTHER_LOG
 
-  logger(buildString {
-    append(ijentLabel)
-    append(" log: ")
-    if (dateTimeDiff.absoluteValue > 50.milliseconds) {  // The timeout is taken at random.
-      append(rawRemoteDateTime)
-      append(" (time diff ")
-      append(dateTimeDiff)
-      append(") ")
+      when (level) {
+        "TRACE" -> if (logger.isTraceEnabled) logger::trace else null
+        "INFO" -> logger::info
+        "WARN" -> logger::warn
+        "ERROR" -> logger::error
+        "DEBUG" -> if (logger.isDebugEnabled) logger::debug else null
+        else -> lastLoggingHandler
+      }
     }
-    append(message)
-  })
+
+    lastLoggingHandler = logger
+
+    if (logger == null) {
+      return
+    }
+
+
+    logger(buildString {
+      append(ijentLabel)
+      append(" log: ")
+      if (dateTimeDiff.absoluteValue > 50.milliseconds) {  // The timeout is taken at random.
+        append(rawRemoteDateTime)
+        append(" (time diff ")
+        append(dateTimeDiff)
+        append(") ")
+      }
+      append(message)
+    })
+  }
 }
 
 private suspend fun ijentProcessExitAwaiter(
@@ -289,12 +313,11 @@ private suspend fun ijentProcessExitAwaiter(
   LOG.debug { "IJent process $ijentLabel exited with code $exitCode" }
 
   val isExitExpected = when (mediator.myExitPolicy) {
-    ERROR -> false
     CHECK_CODE -> mediator.isExpectedProcessExit(exitCode)
     NORMAL -> true
   }
 
-  throw if (isExitExpected) {
+  val error = if (isExitExpected) {
     IjentUnavailableException.CommunicationFailure("IJent process exited successfully").apply { exitedExpectedly = true }
   }
   else {
@@ -313,6 +336,15 @@ private suspend fun ijentProcessExitAwaiter(
       Attachment("stderr", stderr.toString()),
     )
   }
+
+  // TODO IJPL-198706 When IJent unexpectedly terminates, users should be asked for further actions.
+  if (isExitExpected) {
+    LOG.info(error)
+  }
+  else {
+    LOG.warn(error)
+  }
+  throw error
 }
 
 private suspend fun collectLines(lastStderrMessages: SharedFlow<String?>, stderr: StringBuilder) {

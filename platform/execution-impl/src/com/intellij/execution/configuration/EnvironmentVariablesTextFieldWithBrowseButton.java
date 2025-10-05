@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.util.EnvVariables;
 import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
@@ -15,6 +16,8 @@ import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -49,9 +52,9 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         if (!StringUtil.equals(getEnvText(), getText())) {
-          Map<String, String> textEnvs = EnvVariablesTable.parseEnvsFromText(getText());
-          myData = myData.with(textEnvs);
-          updateEnvFilesFromText();
+          var parsedEnvsAndFiles = EnvVariables.parseFromText(getText());
+          myData = myData.with(parsedEnvsAndFiles.getEnvs());
+          updateEnvFiles(parsedEnvsAndFiles.getEnvFiles());
           fireStateChanged();
         }
       }
@@ -62,7 +65,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   private void addEnvFilesExtension() {
     if (myEnvFilesExtension != null) return;
     myEnvFilesExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
-                                             ExecutionBundle.message("tooltip.browse.for.environment.files"), () -> browseForEnvFile());
+                                             ExecutionBundle.message("tooltip.browse.for.environment.files"), true, () -> browseForEnvFile());
     getTextField().addExtension(myEnvFilesExtension);
     getTextField().getEmptyText().setText(ExecutionBundle.message("status.text.environment.variables.or.env.files"));
   }
@@ -73,7 +76,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
         myEnvFilePaths.add(s);
         updateText();
         fireEnvFilePathsChanged();
-        return null;
+        return Unit.INSTANCE;
       });
     }
     else {
@@ -152,16 +155,28 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   }
 
   protected @NotNull String stringifyEnvs(@NotNull EnvironmentVariablesData evd) {
+    return stringifyEnvironment(evd);
+  }
+
+  @ApiStatus.Internal
+  public static String stringifyEnvironment(@NotNull EnvironmentVariablesData evd) {
     StringBuilder buf = new StringBuilder();
     for (Map.Entry<String, String> entry : evd.getEnvs().entrySet()) {
       if (!buf.isEmpty()) {
         buf.append(";");
       }
-      buf.append(StringUtil.escapeChar(entry.getKey(), ';'))
+      buf.append(tryEscapeKeyOrValue(entry.getKey()))
         .append("=")
-        .append(StringUtil.escapeChar(entry.getValue(), ';'));
+        .append(tryEscapeKeyOrValue(entry.getValue()));
     }
     return buf.toString();
+  }
+
+  private static @NotNull String tryEscapeKeyOrValue(@NotNull String keyOrValue) {
+    if(keyOrValue.contains(";") || keyOrValue.contains("=") || keyOrValue.contains("\"")) {
+      return StringUtil.wrapWithDoubleQuote(StringUtil.escapeChars(keyOrValue,  '\\', '"'));
+    }
+    else return keyOrValue;
   }
 
   public boolean isPassParentEnvs() {
@@ -213,12 +228,10 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     return myEnvFilePaths;
   }
 
-  private void updateEnvFilesFromText() {
-    String text = StringUtil.trimStart(getText(), stringifyEnvs(myData));
-    if (myEnvFilePaths.isEmpty() || text.isEmpty()) return;
-    List<String> paths = ContainerUtil.filter(ContainerUtil.map(text.split(";"), s -> s.trim()), s -> !s.isEmpty());
-    for (int i = 0; i < Math.min(myEnvFilePaths.size(), paths.size()); i++) {
-      myEnvFilePaths.set(i, paths.get(i));
+  private void updateEnvFiles(List<String> files) {
+    if (myEnvFilePaths.isEmpty() || files.isEmpty()) return;
+    for (int i = 0; i < Math.min(myEnvFilePaths.size(), files.size()); i++) {
+      myEnvFilePaths.set(i, files.get(i));
     }
     fireEnvFilePathsChanged();
   }

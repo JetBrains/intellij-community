@@ -14,8 +14,8 @@ import java.awt.event.ActionListener;
 
 public class NullableNotNullDialog extends DialogWrapper {
   private final Project myProject;
-  private final AnnotationsPanel myNullablePanel;
-  private final AnnotationsPanel myNotNullPanel;
+  private final NullableAnnotationsPanel myNullablePanel;
+  private final NullableAnnotationsPanel myNotNullPanel;
   private final boolean myShowInstrumentationOptions;
   public static final @NlsSafe String NULLABLE = "Nullable";
   public static final @NlsSafe String NOT_NULL = "NotNull";
@@ -30,12 +30,12 @@ public class NullableNotNullDialog extends DialogWrapper {
     myShowInstrumentationOptions = showInstrumentationOptions;
 
     NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    myNullablePanel = new AnnotationsPanel(project,
+    myNullablePanel = new NullableAnnotationsPanel(project,
                                            new NullabilityAnnotationPanelModel.NullableModel(manager),
-                                           false, true);
-    myNotNullPanel = new AnnotationsPanel(project,
+                                           false);
+    myNotNullPanel = new NullableAnnotationsPanel(project,
                                           new NullabilityAnnotationPanelModel.NotNullModel(manager),
-                                          showInstrumentationOptions, true);
+                                          showInstrumentationOptions);
 
     init();
     setTitle(JavaBundle.message("nullable.notnull.configuration.dialog.title"));

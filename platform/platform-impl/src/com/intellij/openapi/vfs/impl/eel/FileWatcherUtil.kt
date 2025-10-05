@@ -6,6 +6,7 @@ import com.intellij.platform.eel.fs.UnwatchOptionsBuilder
 import com.intellij.platform.eel.path.EelPath
 
 internal object FileWatcherUtil {
+  @Throws(UnsupportedOperationException::class)
   internal suspend fun reset(eel: EelApi) {
     eel.fs.unwatch(UnwatchOptionsBuilder(EelPath.parse("/", eel.descriptor)).build())
   }

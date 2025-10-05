@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -33,6 +34,9 @@ import java.util.concurrent.atomic.AtomicInteger
 @InternalIgnoreDependencyViolation
 private class KotlinConfigurationCheckerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
+        // do not show the `Configure Kotlin Language Settings` progress bar too early, await initial scanning and indexing
+        project.waitForSmartMode()
+
         KotlinConfigurationCheckerService.getInstance(project).performProjectPostOpenActions()
     }
 }
@@ -56,7 +60,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
     }
 
     fun performProjectPostOpenActionsInEdt() {
-        runWithModalProgressBlocking(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings")) {
+        runWithModalProgressBlocking(project, KotlinProjectConfigurationBundle.message("configure.kotlin.language.settings.title")) {
             doPerformProjectPostOpenActions()
         }
     }
@@ -68,16 +72,16 @@ class KotlinConfigurationCheckerService(private val project: Project) {
         val kotlinLanguageVersionConfigured = readAction { isKotlinLanguageVersionConfigured(project) }
 
         val ktModules = if (kotlinLanguageVersionConfigured) {
-            // we already have `.idea/kotlinc` so it's ok to add the jps version there
+            // we already have `.idea/kotlinc `, so it's ok to add the jps version there
             KotlinJpsPluginSettings.validateSettings(project)
 
-            // pick up modules with kotlin faces those use custom (non project) settings
+            // pick up modules with kotlin faces those use custom (non-project) settings
             val modulesWithKotlinFacets = readAction {
                 ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
             }
                 .filter {
                     val facetSettings = KotlinFacet.get(it)?.configuration?.settings ?: return@filter false
-                    // module uses custom (not a project-wide) kotlin facet settings and LV or ApiVersion is missed
+                    // module uses custom (not a project-wide) kotlin facet settings, and LV or ApiVersion is missed
                     !facetSettings.useProjectSettings && (facetSettings.languageLevel == null || facetSettings.apiLevel == null)
                 }
 
@@ -128,7 +132,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
         val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(module) ?: return
         val newLanguageLevel = getLibraryLanguageLevel(module, null, facetSettings.targetPlatform?.idePlatformKind)
 
-        // Preserve inferred version in facet/project settings
+        // Preserve the inferred version in facet/project settings
         if (facetSettings.useProjectSettings) {
             KotlinCommonCompilerArgumentsHolder.getInstance(project).takeUnless { isKotlinLanguageVersionConfigured(it) }
                 ?.let { compilerArgumentsHolder ->

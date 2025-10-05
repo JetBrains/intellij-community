@@ -22,26 +22,43 @@ import org.jetbrains.kotlin.renderer.render
 @ApiStatus.Internal
 object TailTextProvider {
 
-    context(KaSession)
+    context(_: KaSession)
     fun getTailText(
         signature: KaCallableSignature<*>,
+        useFqName: Boolean = false,
     ): String  {
         // use unsubstituted type when rendering receiver type of extension
         val symbol = signature.symbol
-        return getTailText(symbol)
+        return getTailText(symbol, useFqName = useFqName)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun getTailText(
         symbol: KaCallableSymbol,
+        useFqName: Boolean = false,
     ): String = buildString {
         symbol.receiverType?.let { renderReceiverType(it) }
 
-        symbol.getContainerPresentation(isFunctionalVariableCall = false)?.let { append(it) }
+        symbol.getContainerOrAliasPresentation(useFqName = useFqName)?.let { append(it) }
     }
 
-    context(KaSession)
-    fun getTailTextForVariableCall(functionalType: KaFunctionType, signature: KaVariableSignature<*>): String = buildString {
+    context(_: KaSession)
+    private fun KaCallableSymbol.getContainerOrAliasPresentation(isFunctionalVariableCall: Boolean = false, useFqName: Boolean = false): String? {
+        return if (useFqName) {
+            val callableId = callableId ?: return null
+            val renderedAliasName = callableId.asSingleFqName().asStringForTailText()
+            " ($renderedAliasName)"
+        } else {
+            getContainerPresentation(isFunctionalVariableCall = isFunctionalVariableCall)
+        }
+    }
+
+    context(_: KaSession)
+    fun getTailTextForVariableCall(
+        functionalType: KaFunctionType,
+        signature: KaVariableSignature<*>,
+        useFqName: Boolean = false,
+    ): String = buildString {
         if (insertLambdaBraces(functionalType)) {
             append(" {...} ")
         }
@@ -50,15 +67,16 @@ object TailTextProvider {
         // use unsubstituted type when rendering receiver type of extension
         functionalType.receiverType?.let { renderReceiverType(it) }
 
-        signature.symbol.getContainerPresentation(isFunctionalVariableCall = true)?.let { append(it) }
+        signature.symbol.getContainerOrAliasPresentation(useFqName = useFqName, isFunctionalVariableCall = true)?.let { append(it) }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getTailText(
         symbol: KaClassLikeSymbol,
         usePackageFqName: Boolean = false,
-        addTypeParameters: Boolean = true
+        addTypeParameters: Boolean = true,
+        useFqnAsTailText: Boolean = false,
     ): String = buildString {
         symbol.classId?.let { classId ->
             if (addTypeParameters && symbol.typeParameters.isNotEmpty()) {
@@ -66,7 +84,13 @@ object TailTextProvider {
                 append(symbol.typeParameters.joinToString(", ", "<", ">") { it.name.render() })
             }
 
-            val fqName = if (usePackageFqName) classId.packageFqName else classId.asSingleFqName().parent()
+            val fqName = if (useFqnAsTailText) {
+                classId.asSingleFqName()
+            } else if (usePackageFqName) {
+                classId.packageFqName
+            } else {
+                classId.asSingleFqName().parent()
+            }
 
             append(" (")
             append(fqName.asStringForTailText())
@@ -74,14 +98,14 @@ object TailTextProvider {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun StringBuilder.renderReceiverType(receiverType: KaType) {
         val renderedType = receiverType.renderVerbose()
         append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaCallableSymbol.getContainerPresentation(isFunctionalVariableCall: Boolean): String? {
         val callableId = callableId ?: return null
         val className = callableId.className
@@ -102,7 +126,7 @@ object TailTextProvider {
     private fun FqName.asStringForTailText(): String =
         if (isRoot) "<root>" else render()
 
-    context(KaSession)
+    context(_: KaSession)
     fun insertLambdaBraces(symbol: KaFunctionType): Boolean {
         val singleParam = symbol.parameterTypes.singleOrNull()
         return singleParam != null && singleParam is KaFunctionType

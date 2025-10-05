@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.EditorTextField
@@ -27,7 +26,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalCommandExecutor
-import org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletion
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.block.history.CommandSearchPresenter
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController.PromptStateListener
@@ -37,7 +35,6 @@ import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorUtil
 import org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileType
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
-import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.getCharSize
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import java.awt.*
@@ -186,7 +183,6 @@ class TerminalPromptView(
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     editor.setVerticalScrollbarVisible(true)
     editor.gutterComponentEx.isPaintBackground = false
-    editor.useTerminalDefaultBackground(this)
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
       editorFontSize = settings.terminalFont.size
@@ -200,9 +196,6 @@ class TerminalPromptView(
     FileDocumentManager.getInstance().getFile(editor.document)?.let {
       editor.setFile(it)
       it.putUserData(NavBarModelExtension.IGNORE_IN_NAVBAR, true)
-    }
-    if (Registry.`is`("terminal.new.ui.inline.completion")) {
-      TerminalInlineCompletion.getInstance(project).install(editor)
     }
 
     editor.contextMenuGroupId = "Terminal.PromptContextMenu"

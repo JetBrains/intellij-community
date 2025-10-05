@@ -21,7 +21,6 @@
 
   <content>
     <module name="intellij.vcs.git/localHistory"/>
-    <module name="intellij.vcs.git/newUiOnboarding"/>
     <module name="intellij.vcs.git/terminal"/>
     <module name="intellij.vcs.git.coverage"/>
     <!--It makes sense to reconsider this dependency in the future

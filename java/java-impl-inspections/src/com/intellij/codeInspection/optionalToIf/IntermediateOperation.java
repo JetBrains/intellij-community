@@ -166,7 +166,7 @@ abstract class IntermediateOperation implements Operation {
                                      @NotNull ChainVariable outVar,
                                      @NotNull String code,
                                      @NotNull OptionalToIfContext context) {
-      String orResult = myRecords.get(myRecords.size() - 1).myOutVar.getName();
+      String orResult = myRecords.getLast().myOutVar.getName();
       String orCode = OptionalToIfInspection.wrapCode(context, myRecords, outVar.getName() + "=" + orResult + ";");
       if (orCode == null) return null;
       return "if(" + outVar.getName() + "==null){\n" +
@@ -196,7 +196,7 @@ abstract class IntermediateOperation implements Operation {
 
     @Override
     public @NotNull ChainVariable getOutVar(@NotNull ChainVariable inVar) {
-      ChainVariable outVar = myRecords.get(myRecords.size() - 1).myOutVar;
+      ChainVariable outVar = myRecords.getLast().myOutVar;
       return myVarName.equals(outVar.getName()) ? inVar : outVar;
     }
 

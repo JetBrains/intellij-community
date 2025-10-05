@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static com.intellij.reference.SoftReference.dereference;
 
+/** @see jdk.internal.jrtfs.JrtFileSystemProvider */
 @SuppressWarnings("SynchronizeOnThis")
 public class JrtHandler extends ArchiveHandler {
   private static final URI ROOT_URI = URI.create("jrt:/");

@@ -236,7 +236,7 @@ open class TrafficLightRenderer private constructor(
         s.append("; reasonWhyDisabled=").append(reasonWhyDisabled)
       }
       if (reasonWhySuspended != null) {
-        s.append("; reasonWhySuspended").append(reasonWhySuspended)
+        s.append("; reasonWhySuspended=").append(reasonWhySuspended)
       }
       return s.toString()
     }

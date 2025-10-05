@@ -1,23 +1,23 @@
 ### auto-generated section `build intellij.devkit.kotlin.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-tests_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
-java_library(
+jvm_library(
   name = "kotlin-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "kotlin-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":kotlin-tests_test_resources"],
   associates = ["//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit"],
   deps = [
     "//plugins/devkit/devkit-tests:testFramework",
@@ -48,19 +48,21 @@ jvm_library(
     "@lib//:kotlin-test",
     "//plugins/devkit/devkit-core:core",
     "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
   ],
-  runtime_deps = [
-    ":kotlin-tests_test_resources",
-    "//plugins/devkit",
-  ]
+  runtime_deps = ["//plugins/devkit"]
 )
+### auto-generated section `build intellij.devkit.kotlin.tests` end
+
+### auto-generated section `test intellij.devkit.kotlin.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "kotlin-tests_test",
   runtime_deps = [":kotlin-tests_test_lib"]
 )
-### auto-generated section `build intellij.devkit.kotlin.tests` end
+### auto-generated section `test intellij.devkit.kotlin.tests` end

@@ -21,7 +21,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyCallableParameter;
@@ -206,8 +205,8 @@ public final class PyOverrideImplementUtil {
     }
     PyAnnotation anno = baseFunction.getAnnotation();
     boolean copyAnnotations = PyPsiRefactoringUtil.shouldCopyAnnotations(baseFunction, pyClass.getContainingFile());
-    if (anno != null && copyAnnotations) {
-      pyFunctionBuilder.annotation(anno.getText());
+    if (anno != null && copyAnnotations && anno.getValue() != null) {
+      pyFunctionBuilder.returnType(anno.getValue().getText());
     }
     if (baseFunction.isAsync()) {
       pyFunctionBuilder.makeAsync();

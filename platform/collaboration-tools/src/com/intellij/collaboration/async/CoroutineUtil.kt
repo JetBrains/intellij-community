@@ -4,15 +4,14 @@
 package com.intellij.collaboration.async
 
 import com.intellij.collaboration.util.ComputedResult
-import com.intellij.collaboration.util.HashingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
-import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.toArray
 import com.intellij.util.diff.Diff
 import kotlinx.coroutines.*
@@ -22,6 +21,19 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.reflect.KClass
+
+/**
+ * @see com.intellij.platform.util.coroutines.childScope(kotlinx.coroutines.CoroutineScope, java.lang.String, kotlin.coroutines.CoroutineContext, boolean)
+ */
+@ApiStatus.Internal
+fun CoroutineScope.childScope(
+  owner: KClass<*>,
+  context: CoroutineContext = EmptyCoroutineContext,
+  supervisor: Boolean = true,
+): CoroutineScope {
+  return childScope(owner.qualifiedName ?: owner.toString(), context, supervisor)
+}
 
 /**
  * Prefer creating a service to supply a parent scope
@@ -42,6 +54,7 @@ fun Disposable.disposingMainScope(): CoroutineScope = DisposingMainScope(this)
 /**
  * Prefer creating a service to supply a parent scope
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Prefer creating a service to supply a parent scope")
 fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope = CoroutineScope(context).also {
   Disposer.register(this) {
@@ -130,7 +143,7 @@ suspend fun <T1, T2, T3> combineAndCollect(
   }
 }
 
-fun Flow<Boolean>.inverted() = map { !it }
+fun Flow<Boolean>.inverted(): Flow<Boolean> = map { !it }
 
 @ApiStatus.Experimental
 fun <T, M> StateFlow<T>.mapState(
@@ -256,7 +269,7 @@ private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): 
 fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?> = mapScoped2 { if (it == null) null else mapper(it) }
 
 @ApiStatus.Experimental
-suspend fun <T> Flow<T>.collectScoped(block: suspend CoroutineScope.(T) -> Unit) = mapScoped2(block).collect()
+suspend fun <T> Flow<T>.collectScoped(block: suspend CoroutineScope.(T) -> Unit): Unit = mapScoped2(block).collect()
 
 @ApiStatus.Experimental
 suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev: T, current: T) -> Unit) {
@@ -292,79 +305,21 @@ fun <T> Flow<T>.modelFlow(cs: CoroutineScope, log: Logger): SharedFlow<T> =
   catch { log.error(it) }.shareIn(cs, SharingStarted.Lazily, 1)
 
 /**
- * The destructor is never necessary because cleanup can be performed on scope cancellation
- * @see associateCachingBy
+ * Maps each item in the collection from the source flow to a flow and emits the array of the latest values of each mapped flow.
+ * Each new emission of the source flow triggers re-subscription to the mapped flows.
  */
-@ApiStatus.Obsolete
-fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(
-  keyExtractor: (T) -> K,
-  hashingStrategy: HashingStrategy<K>,
-  valueExtractor: CoroutineScope.(T) -> V,
-  destroy: suspend V.() -> Unit,
-  update: (suspend V.(T) -> Unit)? = null,
-)
-  : Flow<Map<K, V>> = flow {
-  coroutineScope {
-    val container = MappingScopedItemsContainer(this, keyExtractor, hashingStrategy, valueExtractor, destroy, update)
-    collect {
-      container.update(it)
-      emit(container.mappingState.value)
-    }
-    awaitCancellation()
+inline fun <T, reified R> Flow<Iterable<T>>.flatMapLatestEach(crossinline transform: (T) -> Flow<R>): Flow<Array<R>> =
+  flatMapLatest {
+    it.mapEach(transform)
   }
+
+/**
+ * Maps each item in the collection to a flow and emits the array of the values from each mapped flow.
+ */
+inline fun <T, reified R> Iterable<T>.mapEach(crossinline transform: (T) -> Flow<R>): Flow<Array<R>> {
+  val nestedFlows = map(transform)
+  return combine(nestedFlows) { it }
 }
-
-/**
- * Associate each *item* [T] *key* [K] in the iterable from the receiver flow (source list) with a *value* [V]
- *
- * Keys are distinguished by a [hashingStrategy]
- *
- * When a new iterable is received:
- * * a new [CoroutineScope] and a new value is created via [valueExtractor] for new items
- * * existing values are updated via [update] if it was supplied
- * * values for missing items are removed and their scope is cancelled
- *
- * Order of the values in the resulting map is the same as in the source iterable
- * All [CoroutineScope]'s of values are only active while the resulting flow is being collected
- *
- * **Returned flow never completes**
- */
-fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(
-  keyExtractor: (T) -> K,
-  hashingStrategy: HashingStrategy<K>,
-  valueExtractor: CoroutineScope.(T) -> V,
-  update: (suspend V.(T) -> Unit)? = null,
-)
-  : Flow<Map<K, V>> = associateCachingBy(keyExtractor, hashingStrategy, valueExtractor, { }, update)
-
-/**
- * @see associateCachingBy
- *
- * Shorthand for cases where key is the same as item destructor simply cancels the value scope
- */
-private fun <T, R> Flow<Iterable<T>>.associateCaching(
-  hashingStrategy: HashingStrategy<T>,
-  mapper: CoroutineScope.(T) -> R,
-  update: (suspend R.(T) -> Unit)? = null,
-): Flow<Map<T, R>> {
-  return associateCachingBy({ it }, hashingStrategy, { mapper(it) }, { }, update)
-}
-
-/**
- * Creates a list of model objects from DTOs
- */
-fun <T, R> Flow<Iterable<T>>.mapDataToModel(
-  sourceIdentifier: (T) -> Any,
-  mapper: CoroutineScope.(T) -> R,
-  update: (suspend R.(T) -> Unit),
-): Flow<List<R>> =
-  associateCaching(HashingUtil.mappingStrategy(sourceIdentifier), mapper, update).map { it.values.toList() }
-
-/**
- * Create a list of view models from models
- */
-fun <T, R> Flow<Iterable<T>>.mapModelsToViewModels(mapper: CoroutineScope.(T) -> R): Flow<List<R>> =
-  associateCaching(HashingStrategy.identity(), mapper).map { it.values.toList() }
 
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
 
@@ -467,29 +422,6 @@ fun <T, R> Flow<ComputedResult<T>>.transformConsecutiveSuccesses(
       )
     }
   }
-
-/**
- * Transforms the flow of some computation requests to a flow of computation states of this request
- * Will not emit "loading" state if the computation was completed before handling its state
- */
-@OptIn(ExperimentalCoroutinesApi::class)
-@ApiStatus.Internal
-fun <T> Flow<Deferred<T>>.computationState(): Flow<ComputedResult<T>> =
-  transformLatest { request ->
-    if (!request.isCompleted) {
-      emit(ComputedResult.loading())
-    }
-    try {
-      val value = request.await()
-      emit(ComputedResult.success(value))
-    }
-    catch (e: Exception) {
-      if (e !is CancellationException) {
-        emit(ComputedResult.failure(e))
-      }
-    }
-  }
-
 
 @OptIn(ExperimentalCoroutinesApi::class)
 inline fun <A, T> computationStateFlow(arguments: Flow<A>, crossinline computer: suspend (A) -> T): Flow<ComputedResult<T>> =

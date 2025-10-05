@@ -2,12 +2,12 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.ide.ui.IdeUiService;
-import com.jetbrains.fus.reporting.model.http.StatsProxyInfo;
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings;
+import com.intellij.internal.statistic.eventLog.connection.metadata.StatsProxyInfo;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

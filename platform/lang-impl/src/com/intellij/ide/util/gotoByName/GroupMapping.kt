@@ -24,7 +24,7 @@ class GroupMapping @JvmOverloads constructor(private val myShowNonPopupGroups: B
   }
 
   override fun compareTo(o: GroupMapping?): Int {
-    return Comparing.compare<String?>(this.firstGroupName, o?.firstGroupName)
+    return Comparing.compare(this.firstGroupName, o?.firstGroupName)
   }
 
   val bestGroupName: @ActionText String?

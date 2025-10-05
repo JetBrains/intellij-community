@@ -8,7 +8,7 @@ import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.EditorBundle
@@ -314,6 +314,6 @@ internal class HTMLFileEditorResourceHandler(val handler: HTMLEditorProvider.Res
   }
 }
 
-private fun String.toURIOrNull() = runCatching { URI(this) }.getOrLogException { logger.trace(it) }
+private fun String.toURIOrNull() = runCatching { URI(this) }.getOrHandleException { logger.trace(it) }
 
 private val logger = logger<HTMLFileEditor>()

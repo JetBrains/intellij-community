@@ -14,7 +14,6 @@ import com.intellij.util.ui.JBUI
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.border.EmptyBorder
 
 internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, shortcutSupplier: Function<in String, String?>,
                                  toolbar: JComponent) {
@@ -43,11 +42,8 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
       }
     }
 
-    val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
-    @Suppress("UseDPIAwareBorders")
-    panel.border = JBUI.Borders.compound(
-      JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
-      EmptyBorder(0, headerInsets.left, 0, headerInsets.right))
+    panel.border = JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
+                                         JBUI.CurrentTheme.BigPopup.headerBorder())
 
     for (tab in tabs) {
       @NlsSafe val shortcut = shortcutSupplier.apply(tab.id)

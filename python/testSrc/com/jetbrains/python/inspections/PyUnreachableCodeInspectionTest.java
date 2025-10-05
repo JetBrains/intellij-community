@@ -24,6 +24,140 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   public void testUnreachable() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
+  
+  // PY-83237
+  public void testIrrefutablePatternWithGuardCondition() {
+    doTestByText("""
+def foo(x):
+    match x:
+        case _ if x.isdigit():
+            print(2)
+        case _:
+            print("reachable")
+    print("reachable")
+                   """);
+  }
+
+  // PY-81676
+  public void testUnreachableBranchesAreStillConnected() {
+    // This test ensures that the unreachable branch still
+    // has some edges to and from the main CFG, which allows us
+    // to make an exception for assert_never or assert False
+    doTestByText("""
+from typing import assert_never
+
+if False:
+    <warning descr="This code is unreachable">print("actually unreachable")
+    print("actually unreachable")</warning>
+
+if False:
+    assert False
+    <warning descr="This code is unreachable">print("actually unreachable")</warning>
+    <warning descr="This code is unreachable">print("actually unreachable")</warning>
+
+def f(obj: int) -> None:
+    match scalar:
+        case <error descr="Pattern makes remaining case clauses unreachable">x</error>:
+            print("everything")
+        case <error descr="Pattern makes remaining case clauses unreachable">_</error>:
+            <warning descr="This code is unreachable">print("actually unreachable")
+            print("actually unreachable")</warning>
+        case _ as unreachable:
+            assert_never(unreachable)
+            <warning descr="This code is unreachable">print("actually unreachable")</warning>
+            <warning descr="This code is unreachable">print("actually unreachable")</warning>
+                   """);
+  }
+
+  // PY-82712
+  public void testIfInsideTryExcept() {
+    doTestByText("""
+try:
+    if a==1:
+        print(0)
+    else:
+        print(1)
+finally:
+    print(2)
+print("Reachable")
+                   """);
+  }
+
+  // PY-81608
+  public void testWhileInsideTryExcept() {
+    doTestByText("""
+try:
+    x = True
+    while x and not condition():
+        print('a')
+        x = False
+finally:
+    print('b')
+print('Reachable')
+                   """);
+  }
+
+  // PY-81482
+  public void testTryAssertFinally() {
+    doTestByText("""
+try:
+    assert True
+finally:
+    pass
+print('Reachable')
+                   """);
+  }
+
+  // PY-81936
+  public void testUnreachableWithLangLevel() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> doTestByText("""
+import sys
+
+if sys.version_info < (2, 7):
+    <warning descr="This code is unreachable">print("Unreachable")</warning>
+
+if sys.version_info > (3, 11):
+    <warning descr="This code is unreachable">print("Unreachable")</warning>
+                   """));
+  }
+  
+  // PY-81947
+  public void testAnyOrNoneAfterIsNotNoneCast(){
+    doTestByText("""
+def func(x: Any | None = None):
+    if x is not None:
+        print("foo")
+                   """);
+  }
+  
+  // PY-82707
+  public void testClassInheritingFromAny() {
+    doTestByText("""
+from typing import Any
+
+class A(Any): ...
+
+a = A()
+if a is not None:
+    print("hi")  # reachable
+
+match a:
+    case int():
+        print()
+    case str():
+        print()  # reachable
+                   """);
+  }
+
+  // PY-81729
+  public void testTypeVarOrNoneAfterIsNotNoneCast(){
+    doTestByText("""
+def func[T](x: T | None = None) -> T | None:
+    if x is not None:
+        print("foo")
+    return x
+                   """);
+  }
 
   // PY-81674
   public void testFinallyEarlyExit() {
@@ -36,6 +170,37 @@ def f():
         <warning descr="This code is unreachable">print("Goodbye, world!")</warning>
         
     <warning descr="This code is unreachable">print("This is unreachable")</warning>
+                   """);
+  }
+  
+  // PY-81676
+  public void testTerminatingInBranch() {
+    doTestByText("""
+from enum import Enum
+from typing import assert_never
+
+class Foo(Enum):
+    A = 0
+    B = 1
+
+def f1(foo: Foo) -> None:
+    if foo is Foo.A:
+        ...
+    elif foo is Foo.B:
+        ...
+    else:
+        assert_never(foo)
+        <warning descr="This code is unreachable">print("unreachable");</warning>
+
+def f2(foo: Foo) -> None:
+    match foo:
+        case Foo.A:
+            ...
+        case Foo.B:
+            ...
+        case _:
+            assert_never(foo)
+            <warning descr="This code is unreachable">print("unreachable");</warning>
                    """);
   }
   
@@ -71,7 +236,7 @@ class Foo(Enum):
     A = 0
     B = 1
 
-<warning descr="This code is unreachable">print(exit())</warning>
+print(exit())
 
 <warning descr="This code is unreachable">def unreachable(foo: Foo) -> None:
     if foo is Foo.A:

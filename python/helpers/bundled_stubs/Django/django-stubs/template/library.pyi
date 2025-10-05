@@ -5,7 +5,7 @@ from django.template.base import FilterExpression, Origin, Parser, Token
 from django.template.context import Context
 from django.utils.safestring import SafeString
 
-from .base import Node, Template
+from .base import Node, NodeList, Template
 
 class InvalidTemplateLibrary(Exception): ...
 
@@ -28,16 +28,35 @@ class Library:
     def filter(self, name: str | None, filter_func: _C, **flags: Any) -> _C: ...
     @overload
     def filter(self, name: str | None = None, filter_func: None = None, **flags: Any) -> Callable[[_C], _C]: ...
+    def filter_function(self, func: _C, **flags: Any) -> _C: ...
     @overload
     def simple_tag(self, func: _C, takes_context: bool | None = None, name: str | None = None) -> _C: ...
     @overload
-    def simple_tag(self, takes_context: bool | None = None, name: str | None = None) -> Callable[[_C], _C]: ...
+    def simple_tag(
+        self, func: None = None, takes_context: bool | None = None, name: str | None = None
+    ) -> Callable[[_C], _C]: ...
     def inclusion_tag(
         self,
         filename: Template | str,
         func: Callable | None = None,
         takes_context: bool | None = None,
         name: str | None = None,
+    ) -> Callable[[_C], _C]: ...
+    @overload
+    def simple_block_tag(
+        self,
+        func: _C,
+        takes_context: bool | None = None,
+        name: str | None = None,
+        end_name: str | None = None,
+    ) -> _C: ...
+    @overload
+    def simple_block_tag(
+        self,
+        func: None = None,
+        takes_context: bool | None = None,
+        name: str | None = None,
+        end_name: str | None = None,
     ) -> Callable[[_C], _C]: ...
 
 class TagHelperNode(Node):
@@ -64,6 +83,19 @@ class SimpleNode(TagHelperNode):
     target_var: str | None
     def __init__(
         self,
+        func: Callable,
+        takes_context: bool | None,
+        args: list[FilterExpression],
+        kwargs: dict[str, FilterExpression],
+        target_var: str | None,
+    ) -> None: ...
+
+class SimpleBlockNode(SimpleNode):
+    nodelist: NodeList
+
+    def __init__(
+        self,
+        nodelist: NodeList,
         func: Callable,
         takes_context: bool | None,
         args: list[FilterExpression],

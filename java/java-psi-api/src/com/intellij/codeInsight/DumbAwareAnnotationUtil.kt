@@ -5,10 +5,12 @@ import com.intellij.codeInsight.DumbAwareAnnotationUtil.KNOWN_ANNOTATIONS
 import com.intellij.codeInsight.DumbAwareAnnotationUtil.hasAnnotation
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.PsiUtil
 
 /**
  * Utility which helps to detect annotation in `Dumb mode`.
@@ -16,10 +18,24 @@ import com.intellij.psi.util.PsiModificationTracker
 object DumbAwareAnnotationUtil {
   private const val JAVA_LANG_PACKAGE = "java.lang"
 
+  /**
+   * Represents a list of fully qualified names for annotations that are treated as a type annotations.
+   */
   private val KNOWN_ANNOTATIONS = setOf(
     AnnotationUtil.NOT_NULL,
     AnnotationUtil.NULLABLE,
-    AnnotationUtil.NON_NLS
+    AnnotationUtil.NON_NLS,
+    AnnotationUtil.J_SPECIFY_NON_NULL,
+    AnnotationUtil.J_SPECIFY_NULLABLE
+  )
+
+  /**
+   * Represents a mapping from a fully qualified name of a module to a set of fully qualified names of annotations
+   * that are treated as type annotations and located in this module
+   */
+  private val KNOWN_MODULE_TO_ANNOTATIONS_MAP = mapOf(
+    "org.jetbrains.annotations" to setOf(AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE, AnnotationUtil.NON_NLS),
+    "org.jspecify" to setOf(AnnotationUtil.J_SPECIFY_NON_NULL, AnnotationUtil.J_SPECIFY_NULLABLE)
   )
 
   /**
@@ -57,12 +73,12 @@ object DumbAwareAnnotationUtil {
    * Formats the given fully qualified name (FQN) by trimming whitespace around each segment.
    */
   @JvmStatic
-  fun getFormattedReferenceFqn(referenceText: @NlsSafe String) = referenceText.split(".").joinToString(separator = ".") { pathPart -> pathPart.trim() }
+  fun getFormattedReferenceFqn(referenceText: @NlsSafe String): String = referenceText.split(".").joinToString(separator = ".") { pathPart -> pathPart.trim() }
 
   private fun getImportedKnownAnnotations(file: PsiJavaFile): Set<String> = CachedValuesManager.getCachedValue(file) {
     val importList = file.importList
                      ?: return@getCachedValue CachedValueProvider.Result(emptySet(), PsiModificationTracker.MODIFICATION_COUNT)
-    val filteredAnnotations = KNOWN_ANNOTATIONS.filter { isAnnotationInImportList(it, importList) }
+    val filteredAnnotations = KNOWN_ANNOTATIONS.filter { isAnnotationInImportList(it, importList) || isAnnotationInModuleImportList(it, importList) }
       .mapNotNull { fqn -> fqn.split(".").lastOrNull() }
       .toSet()
     CachedValueProvider.Result.create(filteredAnnotations, PsiModificationTracker.MODIFICATION_COUNT)
@@ -74,6 +90,16 @@ object DumbAwareAnnotationUtil {
       val referenceElement = statement.importReference ?: return@any false
       val referenceElementText = getCanonicalTextOfTheReference(referenceElement)
       referenceElementText == annotationFqn || statement.isOnDemand && referenceElementText.startsWith(packageName)
+    }
+  }
+
+  private fun isAnnotationInModuleImportList(annotationFqn: String, moduleList: PsiImportList): Boolean {
+    if (!PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, moduleList)) return false
+    return moduleList.importModuleStatements.any { statement: PsiImportModuleStatement ->
+      val referenceName = statement.referenceName ?: return@any false
+      val formattedReferenceName = getFormattedReferenceFqn(referenceName)
+      if (formattedReferenceName !in KNOWN_MODULE_TO_ANNOTATIONS_MAP) return@any false
+      annotationFqn in KNOWN_MODULE_TO_ANNOTATIONS_MAP.getValue(formattedReferenceName)
     }
   }
 

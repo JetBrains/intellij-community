@@ -4,6 +4,7 @@ package com.intellij.platform.searchEverywhere.equalityProviders
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.util.withSafeCatch
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -28,7 +29,12 @@ class SeEqualityChecker {
     return readAction {
       lock.withLock {
         val newItemInfo = SearchEverywhereFoundElementInfo(newItemData.uuid, itemObject, newItemData.weight, item.contributor)
-        val action = equalityProvider.compareItemsCollection(newItemInfo, alreadyFoundItems.values)
+        val action = {
+          equalityProvider.compareItemsCollection(newItemInfo, alreadyFoundItems.values)
+        }.withSafeCatch {
+          SeLog.error(it)
+          SEResultsEqualityProvider.SEEqualElementsActionType.DoNothing
+        }
 
         when (action) {
           is SEResultsEqualityProvider.SEEqualElementsActionType.Replace -> {

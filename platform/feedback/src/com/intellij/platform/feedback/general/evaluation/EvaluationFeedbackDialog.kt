@@ -4,9 +4,7 @@ package com.intellij.platform.feedback.general.evaluation
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
-import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.dialog.CommonBlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackDialogCanceled
 import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackDialogShown
@@ -17,7 +15,7 @@ import javax.swing.Action
 
 internal class EvaluationFeedbackDialog(
   project: Project?, forTest: Boolean
-) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
+) : CommonBlockBasedFeedbackDialogWithEmail(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 3
@@ -49,13 +47,6 @@ internal class EvaluationFeedbackDialog(
     add(RatingGroupBlock(EvaluationFeedbackBundle.message("evaluation.dialog.rating.block.top.label"), ratingItems)
           .setHint(EvaluationFeedbackBundle.message("evaluation.dialog.rating.block.hint")).setRandomOrder(true))
     add(TextAreaBlock(EvaluationFeedbackBundle.message("evaluation.dialog.text.area.details"), tellUsMoreJsonElementName))
-  }
-
-  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
-    CommonFeedbackSystemData.getCurrentData()
-  }
-  override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
   }
 
   init {

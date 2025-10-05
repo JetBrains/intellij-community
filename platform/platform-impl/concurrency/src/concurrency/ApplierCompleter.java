@@ -177,8 +177,11 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     }
   }
   private void helpAll() {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-      helpOthers();
+    try {
+      ThreadContext.resetThreadContext(() -> {
+        helpOthers();
+        return null;
+      });
     }
     catch (IndexNotReadyException ignore) {
     }
@@ -256,7 +259,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     final boolean[] result = {true};
     // these tasks could not be executed in the other thread; do them here
     boolean inReadAction = ApplicationManager.getApplication().isReadAccessAllowed(); // we are going to reset the thread context here, so the information about locks will be lost
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+    ThreadContext.resetThreadContext(() -> {
       for (ApplierCompleter<?> task : array) {
         ProgressManager.checkCanceled();
         Runnable r = () -> {
@@ -276,7 +279,8 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
           ApplicationManager.getApplication().runReadAction(r);
         }
       }
-    }
+      return null;
+    });
     return result[0];
   }
 

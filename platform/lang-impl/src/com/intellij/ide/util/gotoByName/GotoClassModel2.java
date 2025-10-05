@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class GotoClassModel2 extends FilteringGotoByModel<LanguageRef> {
+public class GotoClassModel2 extends DisposableGotoModelWithPersistentFilter<LanguageRef> {
   private String[] mySeparators;
 
   public GotoClassModel2(@NotNull Project project) {

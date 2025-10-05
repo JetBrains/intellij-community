@@ -26,6 +26,10 @@ internal fun getOrLoadDetails(project: Project, data: VcsLogData, selection: Vcs
   return loadDetails(project, data, selection)
 }
 
+internal fun getOrLoadSingleCommitDetails(project: Project, data: VcsLogData, selection: VcsLogCommitSelection): VcsCommitMetadata {
+  return getOrLoadDetails(project, data, selection).single()
+}
+
 private fun loadDetails(project: Project, data: VcsLogData, selection: VcsLogCommitSelection): List<VcsCommitMetadata> {
   try {
     val loadedDetails = ProgressManager.getInstance().runProcessWithProgressSynchronously(

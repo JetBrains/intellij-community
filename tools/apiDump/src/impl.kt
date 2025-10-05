@@ -10,9 +10,6 @@ import kotlinx.validation.api.*
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
-import java.net.URI
-import java.nio.file.FileSystemAlreadyExistsException
-import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.metadata.jvm.JvmFieldSignature
@@ -119,6 +116,7 @@ fun api(index: ApiIndex, root: Path): API {
   val signatures: List<ClassBinarySignature> = classFilePaths
     .map { it.inputStream() }
     .loadApiFromJvmClasses()
+    .filter { !it.isComposableSingleton() }
     .map { it.removeSyntheticBridges() }
     .map { it.removeToString() }
     .map { signature ->
@@ -310,22 +308,11 @@ private fun stableAndExperimentalApi(classSignatures: List<ApiClass>): Pair<List
 
 @OptIn(ExperimentalPathApi::class)
 private fun classFilePaths(classRoot: Path): Sequence<Path> {
-  var root = classRoot
-  if (root.isRegularFile() && root.extension == "jar") {
-    val uri = URI("jar:${classRoot.toUri()}!/")
-    val fs = try {
-      FileSystems.newFileSystem(uri, emptyMap<String, Any>())
-    }
-    catch (ignored: FileSystemAlreadyExistsException) {
-      FileSystems.getFileSystem(uri)
-    }
-    root = fs.rootDirectories.single()
-  }
-  return root
+  return classRoot
     .walk()
     .filter { path ->
       path.extension == "class" &&
-      !root.relativize(path).startsWith("META-INF/")
+      !classRoot.relativize(path).startsWith("META-INF/")
     }
 }
 
@@ -402,6 +389,19 @@ private fun List<AnnotationNode>?.isNonExtendable(): Boolean {
 }
 
 private typealias ClassResolver = (String) -> ClassBinarySignature?
+
+/**
+ * Due to the issues in Kotlin's BCV and the Compose compiler plugin, the generated classes by Compose leak to API dumps
+ * Such classes are not really a part of the API, so we filter them here.
+ * This should be removed once CMP-7715 is fixed
+ */
+private fun ClassBinarySignature.isComposableSingleton(): Boolean {
+  return access.isFinal &&
+         // see `androidx.compose.compiler.plugins.kotlin.lower.ComposerLambdaMemoization#getOrCreateComposableSingletonsClass`
+         name.contains("ComposableSingletons$") &&
+         // check if it is really a kotlin object singleton
+         memberSignatures.any { it.name == "INSTANCE" && it.access.isFinal && it.access.isStatic }
+}
 
 private fun ClassBinarySignature.removeSyntheticBridges(): ClassBinarySignature {
   val withoutBridges = memberSignatures.filterNot {

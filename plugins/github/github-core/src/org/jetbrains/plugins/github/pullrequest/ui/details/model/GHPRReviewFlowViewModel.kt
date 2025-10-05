@@ -10,7 +10,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import javax.swing.JComponent
 
-internal interface GHPRReviewFlowViewModel : CodeReviewFlowViewModel<GHPullRequestRequestedReviewer>, GHPRReviewViewModel {
+interface GHPRReviewFlowViewModel : CodeReviewFlowViewModel<GHPullRequestRequestedReviewer>, GHPRReviewViewModel {
   val isBusy: Flow<Boolean>
   val requestedReviewers: Flow<List<GHPullRequestRequestedReviewer>>
   val reviewState: Flow<ReviewState>

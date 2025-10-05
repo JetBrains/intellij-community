@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.xml" exported="" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
@@ -26,9 +25,9 @@
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
-    <orderEntry type="module" module-name="intellij.xml.frontback.impl" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.xml.ui.common" exported="" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" exported="" />
     <orderEntry type="module" module-name="intellij.xml.structureView.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
@@ -45,10 +44,11 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="library" name="aalto-xml" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.aalto.xml" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.polySymbols.backend" />
     <orderEntry type="module" module-name="intellij.libraries.xerces" />
+    <orderEntry type="module" module-name="intellij.xml.syntax" />
   </component>
   <component name="copyright">
     <Base>

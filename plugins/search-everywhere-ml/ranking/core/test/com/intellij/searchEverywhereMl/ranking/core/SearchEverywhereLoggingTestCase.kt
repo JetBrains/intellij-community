@@ -68,7 +68,7 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
   }
 }
 
-interface MockSearchEverywhereProvider {
+fun interface MockSearchEverywhereProvider {
   fun provide(project: Project): SearchEverywhereUI
 
   object SingleActionSearchEverywhere : MockSearchEverywhereProvider {

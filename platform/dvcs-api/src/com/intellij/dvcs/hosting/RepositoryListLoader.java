@@ -30,14 +30,8 @@ public interface RepositoryListLoader {
    * Prompt user for additional configuration (e.g. provide credentials)
    */
   default boolean enable(@Nullable Component parentComponent) {
-    return enable();
+    return false;
   }
-
-  /**
-   * @deprecated parent component is required for dialogs to not fall through on welcome screen
-   */
-  @Deprecated(forRemoval = true)
-  default boolean enable() { return false; }
 
   /**
    * Load repository urls in a single requests

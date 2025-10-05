@@ -6,6 +6,8 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -23,7 +25,7 @@ object CallParameterInfoProvider {
      * If error types should be ignored when checking for type mismatches, please specify [KaSubtypingErrorTypePolicy.LENIENT] as the
      * [subtypingErrorTypePolicy].
      */
-    context(KaSession)
+    context(_: KaSession)
     fun hasTypeMismatchBeforeCurrent(
         sourceElement: KtElement,
         argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
@@ -44,7 +46,7 @@ object CallParameterInfoProvider {
     /**
      * Returns argument expressions mapped to parameter indices. In case of array set call the value to set is ignored.
      */
-    context(KaSession)
+    context(_: KaSession)
     fun mapArgumentsToParameterIndices(
         sourceElement: KtElement,
         signature: KaFunctionSignature<*>,
@@ -67,7 +69,7 @@ object CallParameterInfoProvider {
      * a[""] = 1 // array set call
      * ```
      */
-    context(KaSession)
+    context(_: KaSession)
     fun isArraySetCall(sourceElement: KtElement, signature: KaFunctionSignature<*>): Boolean {
         val callableId = signature.symbol.callableId ?: return false
         val isSet = callableId.callableName == OperatorNameConventions.SET
@@ -87,7 +89,7 @@ object CallParameterInfoProvider {
      * 3. Mixed named arguments in their own positions are not supported.
      * 4. An argument is after non-named vararg.
      */
-    context(KaSession)
+    context(_: KaSession)
     fun firstArgumentInNamedMode(
         sourceCallElement: KtCallElement,
         signature: KaFunctionSignature<*>,
@@ -118,7 +120,7 @@ object CallParameterInfoProvider {
     /**
      * Returns parameters mapped to their indices. In case of array set call last parameter is ignored.
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun mapParametersToIndices(
         signature: KaFunctionSignature<*>,
         isArraySetCall: Boolean
@@ -131,7 +133,7 @@ object CallParameterInfoProvider {
      * Returns true for an argument in Java annotation entry if the argument is not mapped to default ("value") method of annotation.
      * For passing such arguments named argument syntax needs to be used.
      */
-    context(KaSession)
+    context(_: KaSession)
     fun isJavaArgumentWithNonDefaultName(
         signature: KaFunctionSignature<*>,
         argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,

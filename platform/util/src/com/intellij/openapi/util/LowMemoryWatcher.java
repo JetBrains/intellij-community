@@ -17,6 +17,7 @@ public final class LowMemoryWatcher {
 
   public enum LowMemoryWatcherType {
     ALWAYS,
+    /** The current meaning is 'GC/memory subsystem is overloaded'; the name is a historical artifact */
     ONLY_AFTER_GC
   }
 
@@ -25,7 +26,7 @@ public final class LowMemoryWatcher {
   private final LowMemoryWatcherType myType;
   private static final AtomicBoolean ourNotificationsSuppressed = new AtomicBoolean();
 
-  public static <T> T runWithNotificationsSuppressed(Computable<T> runnable) {
+  public static <T> T runWithNotificationsSuppressed(@NotNull Computable<T> runnable) {
     if (ourNotificationsSuppressed.getAndSet(true)) {
       throw new IllegalStateException("runWithNotificationsSuppressed does not support reentrancy");
     }
@@ -37,12 +38,17 @@ public final class LowMemoryWatcher {
     }
   }
 
-  public static void onLowMemorySignalReceived(boolean afterGc) {
-    LOG.info("Low memory signal received: afterGc=" + afterGc);
+  public static void onLowMemorySignalReceived(boolean memorySubsystemOverloaded) {
+    if (notificationsSuppressed()) {
+      LOG.info("Low memory signal received (gc overloaded: " + memorySubsystemOverloaded + ") but suppressed");
+      return;
+    }
+
+    LOG.info("Low memory signal received (gc overloaded: " + memorySubsystemOverloaded + ")");
     for (LowMemoryWatcher watcher : ourListeners.toStrongList()) {
       try {
         if (watcher.myType == LowMemoryWatcherType.ALWAYS
-            || watcher.myType == LowMemoryWatcherType.ONLY_AFTER_GC && afterGc) {
+            || watcher.myType == LowMemoryWatcherType.ONLY_AFTER_GC && memorySubsystemOverloaded) {
           watcher.myRunnable.run();
         }
       }

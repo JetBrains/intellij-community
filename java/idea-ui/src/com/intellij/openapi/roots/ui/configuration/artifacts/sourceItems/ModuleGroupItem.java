@@ -22,7 +22,7 @@ public class ModuleGroupItem extends PackagingSourceItem {
 
   public ModuleGroupItem(@NotNull List<@NlsSafe String> path) {
     super(false);
-    myGroupName = path.get(path.size() - 1);
+    myGroupName = path.getLast();
     myPath = path;
   }
 

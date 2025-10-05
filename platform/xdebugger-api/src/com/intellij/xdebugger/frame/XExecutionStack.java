@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Represents a stack of executions frames usually corresponding to a thread. It is shown in 'Frames' panel of
@@ -82,6 +83,14 @@ public abstract class XExecutionStack {
    * @param container callback
    */
   public abstract void computeStackFrames(int firstFrameIndex, XStackFrameContainer container);
+
+  /**
+   * Provides additional information about XExecutionStack, which frontend may use.
+   */
+  @ApiStatus.Internal
+  public @Nullable CompletableFuture<XDescriptor> getXExecutionStackDescriptorAsync() {
+    return null;
+  }
 
   public interface XStackFrameContainer extends Obsolescent, XValueCallback {
     /**

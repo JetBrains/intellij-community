@@ -10,9 +10,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.messages.Topic
-import com.intellij.vcs.git.shared.GitDisplayName
-import com.intellij.vcs.git.shared.branch.calcTooltip
-import com.intellij.vcs.git.shared.ui.GitBranchPresentation
+import com.intellij.vcs.git.GitDisplayName
+import com.intellij.vcs.git.branch.calcTooltip
+import com.intellij.vcs.git.ui.GitBranchPresentation
 import git4idea.GitTag
 import git4idea.GitUtil
 import git4idea.branch.GitBranchIncomingOutgoingManager
@@ -29,7 +29,7 @@ import javax.swing.Icon
 
 /**
  * Supplies a branch presentation to the git toolbar widget through via
- * [com.intellij.vcs.git.shared.rpc.GitWidgetApi.getWidgetState]
+ * [com.intellij.vcs.git.rpc.GitWidgetApi.getWidgetState]
  */
 interface GitCurrentBranchPresenter {
   companion object {

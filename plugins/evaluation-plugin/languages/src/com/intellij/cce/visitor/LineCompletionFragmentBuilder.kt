@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 
 class LineCompletionFragmentBuilder(
   project: Project,
-  language: Language,
+  language: Language?,
   private val featureName: String,
   private val completionGolfMode: CompletionGolfMode,
   private val fallbackToDefaultIfNotFound: Boolean = true,
@@ -17,7 +17,7 @@ class LineCompletionFragmentBuilder(
       .filter { it.language == language }.takeIf { it.isNotEmpty() }
       ?.map { it.createVisitor(featureName, completionGolfMode) }
     if (knownVisitors != null) return knownVisitors
-    if (fallbackToDefaultIfNotFound) return listOf(LineCompletionAllEvaluationVisitor.Default(featureName, language))
+    if (fallbackToDefaultIfNotFound) return listOf(LineCompletionAllEvaluationVisitor.Default(featureName, language ?: Language.ANOTHER))
 
     val registeredLanguages = LineCompletionVisitorFactory.EP_NAME.extensionList.map { it.language.displayName }
     throw IllegalStateException("No known visitors found for $language and $featureName. Registered languages: $registeredLanguages")

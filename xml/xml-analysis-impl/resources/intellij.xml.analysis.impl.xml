@@ -21,6 +21,8 @@
                     dynamic="true"/>
 
     <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler" dynamic="true"/>
+
+    <extensionPoint name="xml.implicitIdRefProvider" interface="com.intellij.psi.impl.source.resolve.reference.impl.providers.ImplicitIdRefProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <highlightingPassFactory order="last" implementation="com.intellij.xml.XmlCustomTagHighlightingPassFactory" />
@@ -160,5 +162,45 @@
 
     <languageStubDefinition language="HTML" implementationClass="com.intellij.xml.HtmlLanguageStubDefinition"/>
     <stubElementRegistryExtension implementation="com.intellij.xml.HtmlStubRegistryExtension"/>
+
+    <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.XmlResolveReferenceSupport" serviceImplementation="com.intellij.psi.impl.source.resolve.XmlResolveReferenceSupportImpl"/>
+
+    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
+                                      hostLanguage="HtmlCompatible"
+                                      implementationClass="com.intellij.polySymbols.html.elements.HtmlElementSymbolReferenceProvider"/>
+    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
+                                      hostLanguage="HtmlCompatible"
+                                      implementationClass="com.intellij.polySymbols.html.attributes.HtmlAttributeSymbolReferenceProvider"/>
+    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
+                                      hostLanguage="HtmlCompatible"
+                                      implementationClass="com.intellij.polySymbols.html.attributeValues.HtmlAttributeValueSymbolReferenceProvider"/>
+
+    <psi.symbolReferenceProvider hostLanguage="XML"
+                                 hostElementClass="com.intellij.psi.xml.XmlNamedReferenceHost"
+                                 anyReferenceClass="true"
+                                 targetClass="com.intellij.model.Symbol"
+                                 implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
+
+    <polySymbols.highlightingCustomizer id="html" implementation="com.intellij.polySymbols.html.HtmlSymbolHighlightingCustomizer"/>
+    <polySymbols.codeCompletionItemCustomizer id="html" implementation="com.intellij.polySymbols.html.HtmlCodeCompletionItemCustomizer"/>
+
+    <lang.findUsagesProvider language="DTD" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+    <lang.findUsagesProvider language="XML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+    <lang.findUsagesProvider language="HTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+    <lang.findUsagesProvider language="XHTML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
+
+    <lang.foldingBuilder language="DTD" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+    <lang.foldingBuilder language="XML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+    <lang.foldingBuilder language="HTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+    <lang.foldingBuilder language="XHTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
+
+    <!--temporarily moved from intellij.xml.psi.impl-->
+    <multiHostInjector implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.XsdRegExpInjector"/>
+    <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
+    <multiHostInjector implementation="com.intellij.polySymbols.html.HtmlSymbolsTextInjector"
+                       order="before JSConfigurationInjector, after TemporaryPlacesInjector"
+                       id="PolySymbolsHtmlText"/>
+
+    <applicationService serviceInterface="com.intellij.xml.util.InclusionProvider" serviceImplementation="com.intellij.xml.util.InclusionProviderImpl"/>
   </extensions>
 </idea-plugin>

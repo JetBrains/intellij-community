@@ -46,5 +46,10 @@ class GroovyVersionAnnotator : Annotator {
     } else {
       element.accept(GroovyAnnotator40(holder))
     }
+    if (compareSdkVersions(version, GROOVY5_0) < 0) {
+      element.accept(GroovyAnnotatorPre50(holder))
+    } else {
+      element.accept(GroovyAnnotator50(holder))
+    }
   }
 }

@@ -633,7 +633,7 @@ public final class JavaPsiModuleUtil {
     public boolean isAccessible(@NotNull PsiJavaModule targetModule, @NotNull PsiElement place) {
       PsiFile useFile = place.getContainingFile() != null ? place.getContainingFile().getOriginalFile() : null;
       if (useFile == null) return true;
-      return new JpmsModuleInfo.TargetModuleInfo(targetModule, "").accessAt(useFile).checkModuleAccess(place) == null;
+      return new JpmsModuleInfo.TargetModuleInfoByJavaModule(targetModule, "").accessAt(useFile).checkModuleAccess(place) == null;
     }
   }
 }

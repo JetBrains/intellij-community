@@ -36,7 +36,7 @@ fun Document.bindToBackend(
     val builder = BackendDocumentBindBuilder().apply(builder)
     val backendDocumentIdProvider = builder.backendDocumentIdProvider
     if (backendDocumentIdProvider != null) {
-      bindToBackend(backendDocumentIdProvider)
+      bindToBackend(backendDocumentIdProvider, builder.onBindingDispose)
     }
 
     if (builder.bindEditors) {
@@ -84,11 +84,14 @@ private fun Document.bindCurrentEditors() {
  *   3. [bindToFrontend] starts RD synchronization through [BackendDocumentHost].
  *   4. Frontend handles this synchronization and substitute stored [Document] there through [FrontendDocumentHost].
  */
-private suspend fun Document.bindToBackend(backendDocumentIdProvider: suspend (FrontendDocumentId) -> BackendDocumentId?) {
+private suspend fun Document.bindToBackend(
+  backendDocumentIdProvider: suspend (FrontendDocumentId) -> BackendDocumentId?,
+  onBindingDispose: (() -> Unit)?,
+) {
   val frontendDocument = this
   val frontendDocumentId = FrontendDocumentId(UID.random())
   val registry = FrontendDocumentIdRegistry.EP_NAME.extensionList.firstOrNull()
-  registry?.registerFrontendDocumentId(frontendDocumentId, frontendDocument)
+  registry?.registerFrontendDocumentId(frontendDocumentId, frontendDocument, onBindingDispose)
   var backendDocumentId: BackendDocumentId? = null
   try {
     backendDocumentId = backendDocumentIdProvider(frontendDocumentId)
@@ -120,6 +123,11 @@ class BackendDocumentBindBuilder {
    * which is created by the platform using given [Document] (e.g. [EditorTextField]).
    */
   var bindEditors: Boolean = false
+
+  /**
+   * This callback will be called when the binding is disposed.
+   */
+  var onBindingDispose: (() -> Unit)? = null
 }
 
 @ApiStatus.Internal
@@ -152,7 +160,7 @@ interface FrontendDocumentIdRegistry {
 
   // TODO: should we deal with session here,
   //  so that it will be registered for session not not app level?
-  fun registerFrontendDocumentId(frontendDocumentId: FrontendDocumentId, frontendDocument: Document)
+  fun registerFrontendDocumentId(frontendDocumentId: FrontendDocumentId, frontendDocument: Document, onBindingDispose: (() -> Unit)?)
 
   fun unregisterFrontendDocumentId(frontendDocumentId: FrontendDocumentId)
 }

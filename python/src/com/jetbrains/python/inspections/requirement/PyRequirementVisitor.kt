@@ -56,16 +56,25 @@ class PyRequirementVisitor(
     val sdk = module.pythonSdk ?: return
     val manager = PythonPackageManager.forSdk(module.project, sdk)
     val requirementsManager = manager.getDependencyManager() ?: return
+    if (requirementsManager.getDependenciesFile() == null)
+      return
     val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, manager)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return
+
+
+    val fixes = if (requirementsManager.isAddDependencyPossible()) {
+      arrayOf(PyAddToDeclaredPackagesQuickFix(requirementsManager, packageName),
+              IgnoreRequirementFix(setOf(packageName)))
+    }
+    else
+      arrayOf()
 
     registerProblem(
       packageReferenceExpression,
       PyPsiBundle.message(PACKAGE_NOT_LISTED, importedPyModule),
       ProblemHighlightType.WEAK_WARNING,
       null,
-      PyAddToDeclaredPackagesQuickFix(requirementsManager, packageName),
-      IgnoreRequirementFix(setOf(packageName))
+      *fixes
     )
   }
 

@@ -1,6 +1,7 @@
 # This is <GRAMMAR_ERROR descr="EN_A_VS_AN">a</GRAMMAR_ERROR> error
 # (in a multiline comment
 #  with  parentheses)
+# Я - Пришелец!
 
 def foo():
     """

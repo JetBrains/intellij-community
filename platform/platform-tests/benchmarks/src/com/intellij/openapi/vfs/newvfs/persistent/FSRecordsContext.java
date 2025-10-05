@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.ShutDownTracker;
@@ -22,10 +22,11 @@ public class FSRecordsContext {
   @Setup
   public void setup() throws Exception {
     vfsFolder = FileUtil.createTempDirectory("FastVFSAttributeAccessBenchmark", "tst", /*deleteOnExit: */ true);
-    vfs = FSRecordsImpl.connect(vfsFolder.toPath(),
-                                (records, error) -> {
-                                  throw new RuntimeException(error);
-                                }
+    vfs = FSRecordsImpl.connect(
+      vfsFolder.toPath(),
+      (records, error) -> {
+        throw new RuntimeException(error);
+      }
     );
   }
 

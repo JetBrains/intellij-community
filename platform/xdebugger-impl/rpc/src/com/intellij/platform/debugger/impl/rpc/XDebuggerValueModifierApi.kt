@@ -3,12 +3,10 @@ package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.xdebugger.impl.rpc.XExpressionDto
 import com.intellij.xdebugger.impl.rpc.XValueId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
-import kotlinx.coroutines.Deferred
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 

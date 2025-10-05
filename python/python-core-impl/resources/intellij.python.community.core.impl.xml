@@ -2,5 +2,6 @@
   <dependencies>
     <module name="intellij.python.psi.impl"/>
     <module name="intellij.python.sdk"/>
+    <module name="intellij.regexp"/>
   </dependencies>
 </idea-plugin>

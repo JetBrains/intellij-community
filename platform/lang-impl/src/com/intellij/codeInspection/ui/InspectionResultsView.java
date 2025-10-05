@@ -13,7 +13,6 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -68,8 +67,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
@@ -545,15 +544,16 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
       }
       else {
         myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, getProject(), file.getVirtualFile(), false, EditorKind.PREVIEW);
-        DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
         settings.setFoldingOutlineShown(true);
+        settings.setAutoCodeFoldingEnabled(false);
         settings.setLineMarkerAreaShown(true);
         settings.setGutterIconsShown(false);
         settings.setAdditionalColumnsCount(0);
         settings.setAdditionalLinesCount(0);
         settings.setLeadingWhitespaceShown(true);
         myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
+        myPreviewEditor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
         myPreviewEditor.getScrollPane().setBorder(JBUI.Borders.empty());
       }
       if (problemCount == 0) {

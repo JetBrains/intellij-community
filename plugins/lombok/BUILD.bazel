@@ -1,22 +1,21 @@
 ### auto-generated section `build intellij.lombok` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "lombok_resources",
-  files = glob(["src/main/resources/**/*"]),
+  srcs = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "lombok_test_resources",
-  files = glob(["src/test/resources/**/*"]),
+  srcs = glob(["src/test/resources/**/*"]),
   strip_prefix = "src/test/resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "lombok_test_resources_1",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -25,6 +24,7 @@ jvm_library(
   module_name = "intellij.lombok",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "lang/src/**/*.kt", "lang/src/**/*.java"], allow_empty = True),
+  resources = [":lombok_resources"],
   deps = [
     "//plugins/lombok/generated",
     "//platform/analysis-api:analysis",
@@ -42,21 +42,25 @@ jvm_library(
     "//platform/core-ui",
     "//java/compiler/openapi:java-compiler",
     "//java/compiler/impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
     "//java/java-impl-inspections:impl-inspections",
     "//java/java-impl-refactorings:impl-refactorings",
     "//java/codeserver/highlighting",
-  ],
-  runtime_deps = [":lombok_resources"]
+    "//platform/ide-core-impl",
+  ]
 )
 
 jvm_library(
   name = "lombok_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java", "src/test/java/**/*.form"], allow_empty = True),
+  resources = [
+    ":lombok_test_resources",
+    ":lombok_test_resources_1",
+  ],
   associates = [":lombok"],
   deps = [
     "//plugins/lombok/generated",
@@ -76,7 +80,7 @@ jvm_library(
     "//platform/core-ui",
     "//java/compiler/openapi:java-compiler",
     "//java/compiler/impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
@@ -84,23 +88,23 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
     "@lib//:junit4",
-    "@lib//:mockito",
+    "//libraries/mockito",
     "//java/java-impl-inspections:impl-inspections",
     "//java/java-impl-refactorings:impl-refactorings",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//java/java-tests:tests_test_lib",
     "//java/codeserver/highlighting",
-  ],
-  runtime_deps = [
-    ":lombok_resources",
-    ":lombok_test_resources",
-    ":lombok_test_resources_1",
+    "//platform/ide-core-impl",
   ]
 )
+### auto-generated section `build intellij.lombok` end
+
+### auto-generated section `test intellij.lombok` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "lombok_test",
   runtime_deps = [":lombok_test_lib"]
 )
-### auto-generated section `build intellij.lombok` end
+### auto-generated section `test intellij.lombok` end

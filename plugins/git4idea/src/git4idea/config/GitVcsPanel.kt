@@ -41,7 +41,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.vcs.git.shared.GitDisplayName
+import com.intellij.vcs.git.GitDisplayName
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory

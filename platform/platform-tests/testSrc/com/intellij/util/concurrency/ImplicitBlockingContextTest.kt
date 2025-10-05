@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
 import com.intellij.concurrency.*
@@ -6,9 +6,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.IntelliJCoroutinesFacade
 import io.kotest.mpp.atomics.AtomicReference
 import kotlinx.coroutines.*
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.coroutines.*
@@ -20,7 +20,7 @@ class ImplicitBlockingContextTest {
   @Test
   fun noThreadContextByDefault() {
     assertNull(currentThreadContextOrNull())
-    assertNull(IntellijCoroutines.currentThreadCoroutineContext())
+    assertNull(IntelliJCoroutinesFacade.currentThreadCoroutineContext())
     assertEquals(EmptyCoroutineContext, currentThreadContext())
   }
 
@@ -91,8 +91,8 @@ class ImplicitBlockingContextTest {
     withContext(E()) {
       val context = coroutineContext
       val newContext = currentThreadContext() + F()
-      installThreadContext(newContext).use {
-        assertEquals(IntellijCoroutines.currentThreadCoroutineContext(), context)
+      installThreadContext(newContext) {
+        assertEquals(IntelliJCoroutinesFacade.currentThreadCoroutineContext(), context)
         assertNotEquals(context, currentThreadContext())
         assertEquals(newContext, currentThreadContext())
       }
@@ -103,8 +103,8 @@ class ImplicitBlockingContextTest {
   fun resetThreadContextTakesPriority(): Unit = runBlockingWithCatchingExceptions {
     withContext(E()) {
       val context = coroutineContext
-      resetThreadContext().use {
-        assertEquals(IntellijCoroutines.currentThreadCoroutineContext(), context)
+      resetThreadContext {
+        assertEquals(IntelliJCoroutinesFacade.currentThreadCoroutineContext(), context)
         assertNull(currentThreadContextOrNull())
         assertEquals(EmptyCoroutineContext, currentThreadContext())
       }
@@ -142,12 +142,12 @@ class ImplicitBlockingContextTest {
       assertEquals(e, currentThreadContext()[E])
     }
 
-    installThreadContext(currentThreadContext() + e).use {
+    installThreadContext(currentThreadContext() + e) {
       `has e, not f`()
       @Suppress("SSBasedInspection")
       CoroutineScope(f + handler).launch(start = CoroutineStart.UNDISPATCHED) {
         `has f, not e`()
-        installThreadContext(e + handler).use {
+        installThreadContext(e + handler) {
           `has e, not f`()
         }
         `has f, not e`()
@@ -164,7 +164,7 @@ class ImplicitBlockingContextTest {
   }
 
   private fun assertContextRemainsOnFreeThread() {
-    assertNull(IntellijCoroutines.currentThreadCoroutineContext())
+    assertNull(IntelliJCoroutinesFacade.currentThreadCoroutineContext())
     val set = currentThreadContext().fold(HashSet<CoroutineContext.Key<*>>(), { list, elem -> list.apply { add(elem.key) } })
     assertTrue(set.contains(E))
   }

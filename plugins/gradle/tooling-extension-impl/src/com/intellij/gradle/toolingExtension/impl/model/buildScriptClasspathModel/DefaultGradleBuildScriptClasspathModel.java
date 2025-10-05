@@ -23,9 +23,11 @@ public class DefaultGradleBuildScriptClasspathModel implements GradleBuildScript
   private final List<ClasspathEntryModel> myClasspathEntries;
   private @Nullable File gradleHomeDir;
   private String myGradleVersion;
+  private int myClasspathEntriesHashCode;
 
   public DefaultGradleBuildScriptClasspathModel() {
     myClasspathEntries = new ArrayList<>(0);
+    myClasspathEntriesHashCode = 0;
   }
 
   @Override
@@ -44,6 +46,7 @@ public class DefaultGradleBuildScriptClasspathModel implements GradleBuildScript
 
   public void add(@NotNull ClasspathEntryModel classpathEntryModel) {
     myClasspathEntries.add(classpathEntryModel);
+    myClasspathEntriesHashCode = 31 * myClasspathEntriesHashCode + classpathEntryModel.hashCode();
   }
 
   public void setGradleVersion(@NotNull String gradleVersion) {
@@ -62,7 +65,7 @@ public class DefaultGradleBuildScriptClasspathModel implements GradleBuildScript
 
     DefaultGradleBuildScriptClasspathModel other = (DefaultGradleBuildScriptClasspathModel)o;
 
-    if (!myClasspathEntries.equals(other.myClasspathEntries)) return false;
+    if (myClasspathEntriesHashCode != other.myClasspathEntriesHashCode) return false;
     if (gradleHomeDir == null && other.gradleHomeDir != null ||
         gradleHomeDir != null && (other.gradleHomeDir == null || !gradleHomeDir.getPath().equals(other.gradleHomeDir.getPath()))) {
       return false;
@@ -74,7 +77,7 @@ public class DefaultGradleBuildScriptClasspathModel implements GradleBuildScript
 
   @Override
   public int hashCode() {
-    int result = myClasspathEntries.hashCode();
+    int result = myClasspathEntriesHashCode;
     result = 31 * result + (gradleHomeDir != null ? gradleHomeDir.hashCode() : 0);
     result = 31 * result + (myGradleVersion != null ? myGradleVersion.hashCode() : 0);
     return result;

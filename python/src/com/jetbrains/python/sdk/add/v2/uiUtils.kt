@@ -38,7 +38,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
+import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_NEW
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
@@ -59,7 +59,6 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.plaf.basic.BasicComboBoxEditor
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -159,8 +158,8 @@ internal fun SimpleColoredComponent.customizeForPythonInterpreter(isLoading: Boo
 
   when (interpreter) {
     is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> {
-      icon = IconLoader.getTransparentIcon(interpreter.ui?.icon ?: PythonPsiApiIcons.Python)
-      val title = interpreter.ui?.title ?: message("sdk.rendering.detected.grey.text")
+      icon = IconLoader.getTransparentIcon(interpreter.ui?.icon ?: PythonParserIcons.PythonFile)
+      val title = interpreter.ui?.toolName ?: message("sdk.rendering.detected.grey.text")
       append(String.format("Python %-4s", interpreter.languageLevel))
       append(" (" + replaceHomePathToTilde(interpreter.homePath) + ") $title", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
@@ -170,7 +169,7 @@ internal fun SimpleColoredComponent.customizeForPythonInterpreter(isLoading: Boo
       append(" " + message("sdk.rendering.installable.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
     is ExistingSelectableInterpreter -> {
-      icon = PythonPsiApiIcons.Python
+      icon = PythonParserIcons.PythonFile
       // This is a dirty hack, but version string might be null for invalid pythons
       // We must fix it after PythonInterpreterService will make sdk needless
       append(interpreter.sdk.versionString ?: "broken interpreter")
@@ -208,14 +207,14 @@ fun replaceHomePathToTilde(sdkHomePath: @NonNls String): @NlsSafe String {
 }
 
 
-class PythonSdkComboBoxListCellRenderer(val loadingFlow: StateFlow<Boolean>) : ColoredListCellRenderer<PythonSelectableInterpreter?>() {
+class PythonSdkComboBoxListCellRenderer(val isLoading: () -> Boolean) : ColoredListCellRenderer<PythonSelectableInterpreter?>() {
 
   override fun getListCellRendererComponent(list: JList<out PythonSelectableInterpreter?>?, value: PythonSelectableInterpreter?, index: Int, selected: Boolean, hasFocus: Boolean): Component {
     return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
   }
 
   override fun customizeCellRenderer(list: JList<out PythonSelectableInterpreter?>, value: PythonSelectableInterpreter?, index: Int, selected: Boolean, hasFocus: Boolean) {
-    customizeForPythonInterpreter(loadingFlow.value, value)
+    customizeForPythonInterpreter(isLoading.invoke(), value)
   }
 }
 
@@ -250,12 +249,11 @@ class PythonEnvironmentComboBoxRenderer : ColoredListCellRenderer<Any>() {
 internal fun Panel.pythonInterpreterComboBox(
   title: @Nls String,
   selectedSdkProperty: ObservableMutableProperty<PythonSelectableInterpreter?>, // todo not sdk
-  model: PythonAddInterpreterModel,
   validationRequestor: DialogValidationRequestor,
-  onPathSelected: (VanillaPythonWithLanguageLevel) -> Unit,
+  onPathSelected: (VanillaPythonWithLanguageLevel) -> PythonSelectableInterpreter,
   customizer: RowsRange.() -> Unit = {},
 ): PythonInterpreterComboBox {
-  val comboBox = PythonInterpreterComboBox(model, onPathSelected, ShowingMessageErrorSync)
+  val comboBox = PythonInterpreterComboBox(onPathSelected, ShowingMessageErrorSync)
     .apply {
       setBusy(true)
     }
@@ -291,32 +289,40 @@ internal fun Panel.pythonInterpreterComboBox(
 }
 
 internal class PythonInterpreterComboBox(
-  val controller: PythonAddInterpreterModel,
-  val onPathSelected: (VanillaPythonWithLanguageLevel) -> Unit,
+  val onPathSelected: (VanillaPythonWithLanguageLevel) -> PythonSelectableInterpreter,
   private val errorSink: ErrorSink,
 ) : ComboBox<PythonSelectableInterpreter?>() {
 
   init {
-    renderer = PythonSdkComboBoxListCellRenderer(controller.interpreterLoading)
+    renderer = PythonSdkComboBoxListCellRenderer { isBusy }
     val newOnPathSelected: (String) -> Unit = {
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
-        controller.getSystemPythonFromSelection(it, errorSink)?.let { python ->
-          onPathSelected(python)
+        getSystemPythonFromSelection(it, errorSink)?.let { python ->
+          onPathSelected(python).also { interpreter ->
+            require(isEditable) {
+              "works only with editable combobox because it doesn't reject non-listed items (the list will be updated later via coroutine)"
+            }
+            selectedItem = interpreter
+          }
         }
       }
     }
-    editor = PythonSdkComboBoxWithBrowseButtonEditor(this, controller, newOnPathSelected)
+    editor = PythonSdkComboBoxWithBrowseButtonEditor(this, newOnPathSelected)
   }
 
-  fun initialize(scope: CoroutineScope, flow: Flow<List<PythonSelectableInterpreter>>) {
-    controller.interpreterLoading.onEach {
-      setBusy(it)
-    }.launchIn(scope + Dispatchers.EDT)
-
-
+  fun initialize(scope: CoroutineScope, flow: Flow<List<PythonSelectableInterpreter>?>) {
     flow.onEach { interpreters ->
+      if (interpreters == null) {
+        setBusy(true)
+        return@onEach
+      }
+
+      val selectedItemReminder = selectedItem
       removeAllItems()
       interpreters.forEach(this::addItem)
+      selectedItemReminder?.let { selectedItem = it }
+
+      setBusy(false)
     }.launchIn(scope + Dispatchers.EDT)
   }
 
@@ -352,13 +358,6 @@ internal fun ComboBox<*>.displayLoaderWhen(
     }
   }
 }
-
-internal fun <T : TextFieldWithBrowseButton> Cell<T>.displayLoaderWhen(
-  loading: StateFlow<Boolean>,
-  scope: CoroutineScope,
-  uiContext: CoroutineContext,
-): Cell<T> =
-  applyToComponent { displayLoaderWhen(loading, scope, uiContext) }
 
 internal fun <T, C : ComboBox<T>> Cell<C>.withExtendableTextFieldEditor(): Cell<C> =
   applyToComponent {

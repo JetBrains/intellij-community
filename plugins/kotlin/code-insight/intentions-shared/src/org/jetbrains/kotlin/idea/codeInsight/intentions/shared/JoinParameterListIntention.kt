@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
@@ -16,11 +17,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import java.util.function.Supplier
 
 internal abstract class AbstractJoinListIntention<TList : KtElement, TElement : KtElement>(
     listClass: Class<TList>,
     elementClass: Class<TElement>,
-    textGetter: () -> String
+    textGetter: Supplier<@IntentionName String>
 ) : AbstractChopListIntention<TList, TElement>(listClass, elementClass, textGetter) {
     override fun isApplicableTo(element: TList, caretOffset: Int): Boolean {
         val elements = element.elements()
@@ -61,7 +63,7 @@ internal abstract class AbstractJoinListIntention<TList : KtElement, TElement : 
 internal class JoinParameterListIntention : AbstractJoinListIntention<KtParameterList, KtParameter>(
     KtParameterList::class.java,
     KtParameter::class.java,
-    KotlinBundle.lazyMessage("put.parameters.on.one.line")
+    KotlinBundle.messagePointer("put.parameters.on.one.line")
 ) {
     override fun isApplicableTo(element: KtParameterList, caretOffset: Int): Boolean {
         if (element.parent is KtFunctionLiteral) return false
@@ -72,5 +74,5 @@ internal class JoinParameterListIntention : AbstractJoinListIntention<KtParamete
 internal class JoinArgumentListIntention : AbstractJoinListIntention<KtValueArgumentList, KtValueArgument>(
     KtValueArgumentList::class.java,
     KtValueArgument::class.java,
-    KotlinBundle.lazyMessage("put.arguments.on.one.line")
+    KotlinBundle.messagePointer("put.arguments.on.one.line")
 )

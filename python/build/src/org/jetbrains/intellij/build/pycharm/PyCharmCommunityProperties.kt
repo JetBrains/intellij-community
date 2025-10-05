@@ -33,8 +33,8 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
         "intellij.python.community.plugin", // Python language
         "intellij.pycharm.community.customization", // Convert Intellij to PyCharm
         "intellij.pycharm.community.customization.shared",
-        "intellij.vcs.github.community",
-        "intellij.vcs.gitlab.community") +
+        "intellij.vcs.github",
+        "intellij.vcs.gitlab") +
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
 
     productLayout.skipUnresolvedContentModules = true

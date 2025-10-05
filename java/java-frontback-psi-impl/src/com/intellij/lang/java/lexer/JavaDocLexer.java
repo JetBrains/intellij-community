@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -13,8 +14,11 @@ import java.io.IOException;
 /**
  * @deprecated Use the new Java syntax library instead.
  *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ *             This class is planned to be removed.
+ *             Use {@link com.intellij.java.syntax.lexer.JavaDocLexer}.
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
 public class JavaDocLexer extends MergingLexerAdapter {
   public JavaDocLexer(@NotNull LanguageLevel level) {
     this(JavaDocTokenTypes.INSTANCE, level.isAtLeast(LanguageLevel.JDK_1_5));

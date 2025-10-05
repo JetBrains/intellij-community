@@ -16,6 +16,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
+import com.intellij.platform.vcs.impl.shared.ui.RepositoryColors;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
 import com.intellij.vcs.log.ui.render.RootCell;
@@ -25,12 +26,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
@@ -127,7 +127,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
       }
       else {
         myColor = myColorManager.getPathColor(paths.get(0), isNarrow
-                                                            ? VcsLogColorManager.DEFAULT_COLOR_MODE
+                                                            ? RepositoryColors.DEFAULT_COLOR_SPACE
                                                             : VcsLogColorManagerFactory.ROOT_OPENED_STATE);
       }
     }

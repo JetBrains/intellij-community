@@ -181,14 +181,14 @@ private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult
   val processedLoaders = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
   for (module in PluginManagerCore.getPluginSet().getEnabledModules()) {
     val loader = module.classLoader
+    if (module is ContentModuleDescriptor && module.jarFiles.isNullOrEmpty()) {
+      // not isolated module - skip, as resource will be loaded from plugin classpath
+      continue
+    }
     if ((loader is PluginAwareClassLoader && loader.files.isEmpty()) || !processedLoaders.add(loader)) {
       // test or development mode, when IDEA_CORE's loader contains all the classpath
       continue
     } else if (loader is PluginAwareClassLoader && LocalizationUtil.isLocalizationPluginDescriptor(loader.pluginDescriptor) && !LocalizationUtil.isCurrentLocalizationPluginDescriptor(loader.pluginDescriptor)) {
-      continue
-    }
-    if (module is ContentModuleDescriptor && module.jarFiles.isNullOrEmpty()) {
-      // not isolated module - skip, as resource will be loaded from plugin classpath
       continue
     }
 

@@ -3,6 +3,9 @@ package com.intellij.python.junit5Tests.unit.showCase
 import com.intellij.python.junit5Tests.framework.winLockedFile.FileLockedException
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.python.junit5Tests.framework.winLockedFile.getProcessLockedPath
+import com.intellij.util.io.awaitExit
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
@@ -16,7 +19,9 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.writeText
+import kotlin.time.Duration.Companion.seconds
 
 class WinLockedFilesTest {
 
@@ -59,5 +64,25 @@ class WinLockedFilesTest {
     process.destroy()
     process.waitFor()
     deleteCheckLocking(path)
+  }
+
+  @OptIn(ExperimentalPathApi::class)
+  @EnabledOnOs(value = [OS.WINDOWS])
+  @Test
+  fun testDirectoryLockedUnlock(@TempDir path: Path): Unit = runBlocking {
+    val systemRoot = System.getenv("SystemRoot") ?: "c:\\windows"
+    val process = ProcessBuilder("$systemRoot/system32/cmd.exe")
+      .directory(path.toFile())
+      .start()
+    try {
+      deleteCheckLocking(path, Regex("cmd\\.exe"))
+      withTimeoutOrNull(10.seconds) {
+        process.awaitExit()
+      }
+      path.deleteIfExists()
+    }
+    finally {
+      process.destroyForcibly()
+    }
   }
 }

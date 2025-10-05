@@ -91,6 +91,18 @@ object EventFields {
                                                                             @NonNls description: String? = null): StringEventField =
     StringValidatedByCustomRule(name, T::class.java, description)
 
+  @JvmStatic
+  @JvmOverloads
+  fun StringValidatedByDictionary(name: String,
+                                  dictionary: String,
+                                  description: String? = null): StringEventField =
+    StringEventField.ValidatedByDictionary(name, dictionary, description)
+
+  @JvmStatic
+  @JvmOverloads
+  fun StringListValidatedByDictionary(name: String, dictionary: String, description: String? = null): StringListEventField =
+    StringListEventField.ValidatedByDictionary(name, dictionary, description)
+
   /**
    * Creates a field that allows only a specific list of values
    * @param name  name of the field
@@ -351,6 +363,20 @@ object EventFields {
   @JvmStatic
   @JvmOverloads
   fun IntList(@NonNls @EventFieldName name: String, @NonNls description: String? = null): IntListEventField = IntListEventField(name, description)
+
+  @JvmStatic
+  @JvmOverloads
+  fun LanguagesList(@NonNls @EventFieldName name: String, @NonNls description: String? = null): PrimitiveEventField<Collection<Language>> =
+    object : PrimitiveEventField<Collection<Language>>() {
+    override val name = name
+    override val description = description
+    override val validationRule: List<String>
+      get() = listOf("{util#lang}")
+
+    override fun addData(fuData: FeatureUsageData, value: Collection<Language>) {
+      fuData.addData(this.name, value.map { it.id })
+    }
+  }
 
   @JvmStatic
   @JvmOverloads

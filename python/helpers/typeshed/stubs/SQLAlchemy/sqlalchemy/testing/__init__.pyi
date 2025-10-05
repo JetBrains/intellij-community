@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from . import config as config, mock as mock
 from .assertions import (
     AssertsCompiledSQL as AssertsCompiledSQL,

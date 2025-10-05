@@ -1,17 +1,38 @@
-### auto-generated section `build kotlin.jvm-debugger.test.k2` start
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 
-java_library(
+jps_test(
+  name = "k2_test",
+  runtime_deps = [
+    ":k2_test_lib",
+    "//:main_test_lib",
+  ],
+  data = [
+    "@debugger_test_deps_debugger_agent//file:debugger-agent.jar",
+    "@community//plugins/kotlin/jvm-debugger/test:testData",
+    "@community//plugins/kotlin/idea/tests:testData",
+  ] + all_test_dep_targets,
+  tags = [
+    "block-network",
+  ],
+)
+
+### skip generation section `test kotlin.jvm-debugger.test.k2`
+
+### auto-generated section `build kotlin.jvm-debugger.test.k2` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
   name = "k2",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "k2_test_lib",
+  module_name = "kotlin.jvm-debugger.test.k2",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-ui",
     "//plugins/kotlin/plugin/k2",
@@ -21,7 +42,7 @@ jvm_library(
     "@lib//:asm",
     "//platform/core-api:core",
     "//platform/lang-core",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:jb-jdi",
@@ -56,6 +77,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//platform/xdebugger-testFramework:debugger-testFramework",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//plugins/stream-debugger:java-debugger-streams",
     "//plugins/stream-debugger:java-debugger-streams_test_lib",
     "//aether-dependency-resolver",
@@ -66,20 +88,14 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/test:test_test_lib",
     "//platform/service-container",
     "//platform/service-container:service-container_test_lib",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   runtime_deps = [
     "//platform/core-api:core",
     "//plugins/kotlin/uast/uast-kotlin",
     "//plugins/kotlin/gradle/gradle",
   ]
-)
-
-jps_test(
-  name = "k2_test",
-  runtime_deps = [":k2_test_lib"]
 )
 ### auto-generated section `build kotlin.jvm-debugger.test.k2` end

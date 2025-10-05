@@ -18,15 +18,12 @@ import com.intellij.openapi.roots.ui.configuration.*
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.EdtRule
-import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.RunsInEdt
-import com.intellij.testFramework.SystemPropertyRule
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.WaitFor
-import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import java.util.*
@@ -34,6 +31,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.test.assertTrue
 
 @RunsInEdt
 class SdkLookupTest : BareTestFixtureTestCase() {
@@ -43,6 +41,19 @@ class SdkLookupTest : BareTestFixtureTestCase() {
 
   val log: MutableList<String> = Collections.synchronizedList(mutableListOf<String>())
   val sdkType get() = SimpleJavaSdkType.getInstance()!!
+
+  @After
+  fun tearDown() {
+    val registeredJdks = ProjectJdkTable.getInstance().allJdks
+    assertTrue(
+      registeredJdks.isEmpty(),
+      """
+        The test should explicitly remove all expected registered JDKs from the table after execution to prevent JDK leak.
+        Leaked JDKs:
+          - ${registeredJdks.joinToString { "'${it.name}': ${it.homePath}\n" }}
+      """.trimIndent()
+    )
+  }
 
   interface SdkLookupBuilderEx : SdkLookupBuilder {
     fun onDownloadingSdkDetectedEx(d: SdkLookupDownloadDecision): SdkLookupBuilderEx
@@ -87,11 +98,8 @@ class SdkLookupTest : BareTestFixtureTestCase() {
 
   fun SdkLookupBuilder.lookupBlocking(): Unit = service<SdkLookup>().lookupBlocking(this as SdkLookupParameters)
 
-  private fun assertLog(vararg messages: String) {
-    assertThat(log).containsExactly(*messages)
-  }
-
-  @Test fun `test no sdk found`() {
+  @Test
+  fun `test no sdk found`() {
     runInThreadAndPumpMessages {
       lookup.lookupBlocking()
     }
@@ -101,7 +109,8 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     )
   }
 
-  @Test fun `test find existing by name`() {
+  @Test
+  fun `test find existing by name`() {
     val sdk = newSdk("temp-1")
     runInThreadAndPumpMessages {
       lookup.withSdkName(sdk.name).lookupBlocking()
@@ -110,9 +119,11 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       "sdk-name: temp-1",
       "sdk: temp-1",
     )
+    removeSdks("temp-1")
   }
 
-  @Test fun `test find sdk from alternatives`() {
+  @Test
+  fun `test find sdk from alternatives`() {
     val sdk1 = newUnregisteredSdk("temp-3")
     val sdk2 = newUnregisteredSdk("temp-2")
     runInThreadAndPumpMessages {
@@ -126,7 +137,8 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     )
   }
 
-  @Test fun `test find sdk from alternatives and filter`() {
+  @Test
+  fun `test find sdk from alternatives and filter`() {
     val sdk1 = newUnregisteredSdk("temp-3", "1.2.3")
     val sdk2 = newUnregisteredSdk("temp-2", "2.3.4")
 
@@ -142,7 +154,8 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     )
   }
 
-  @Test fun `test find downloading sdk`() {
+  @Test
+  fun `test find downloading sdk`() {
     val taskLatch = CountDownLatch(1)
     val downloadStarted = CountDownLatch(1)
     Disposer.register(testRootDisposable, Disposable { taskLatch.countDown() })
@@ -197,9 +210,11 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       "download-completed",
       "sdk: temp-5",
     )
+    removeSdks("temp-5")
   }
 
-  @Test fun `test find downloading sdk stop`() {
+  @Test
+  fun `test find downloading sdk stop`() {
     val taskLatch = CountDownLatch(1)
     val downloadStarted = CountDownLatch(1)
     Disposer.register(testRootDisposable, Disposable { taskLatch.countDown() })
@@ -258,9 +273,11 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       "download-completed",
       "sdk: null",
       )
+    removeSdks("temp-5")
   }
 
-  @Test fun `test find downloading sdk async`() {
+  @Test
+  fun `test find downloading sdk async`() {
     val taskLatch = CountDownLatch(1)
     val downloadStarted = CountDownLatch(1)
     Disposer.register(testRootDisposable, Disposable { taskLatch.countDown() })
@@ -314,9 +331,11 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       "download-completed",
       "sdk: temp-5",
     )
+    removeSdks("temp-5")
   }
 
-  @Test fun `test local fix`() {
+  @Test
+  fun `test local fix`() {
     val auto = object: UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
       override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
@@ -347,15 +366,11 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       "sdk-name: xqwr",
       "sdk: xqwr",
     )
-    removeSdk("xqwr")
+    removeSdks("xqwr")
   }
 
-  private fun removeSdk(name: String) {
-    val sdk = ProjectJdkTable.getInstance().findJdk(name) ?: error("SDK '$name' doesn't exist")
-    SdkTestCase.removeSdk(sdk)
-  }
-
-  @Test fun `test local fix with SDK prototype`() {
+  @Test
+  fun `test local fix with SDK prototype`() {
     val prototypeSdk = newSdk("prototype")
     val auto = object : UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
@@ -382,9 +397,11 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       "sdk-name: prototype",
       "sdk: prototype",
     )
+    removeSdks("prototype")
   }
 
-  @Test fun `test local fix with unregistered SDK prototype`() {
+  @Test
+  fun `test local fix with unregistered SDK prototype`() {
     val prototypeSdk = newUnregisteredSdk("prototype")
     val auto = object : UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
@@ -413,11 +430,11 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       "sdk-name: suggested-name",
       "sdk: suggested-name",
     )
-    removeSdk("suggested-name")
+    removeSdks("suggested-name")
   }
 
-
-  @Test fun `test local fix with stop`() {
+  @Test
+  fun `test local fix with stop`() {
     val prototypeSdk = newUnregisteredSdk("prototype")
     val auto = object : UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
@@ -448,7 +465,8 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     )
   }
 
-  @Test fun `test local fix should not clash with SDK name`() {
+  @Test
+  fun `test local fix should not clash with SDK name`() {
     val prototypeSdk = newSdk("prototype")
     val auto = object : UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
@@ -476,9 +494,11 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       "sdk-name: prototype (2)",
       "sdk: prototype (2)",
     )
+    removeSdks("prototype", "prototype (2)")
   }
 
-  @Test fun `test download fix`() {
+  @Test
+  fun `test download fix`() {
     val auto = object: UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
       override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
@@ -515,10 +535,11 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       "configure: xqwr",
       "sdk: xqwr",
     )
-    removeSdk("xqwr")
+    removeSdks("xqwr")
   }
 
-  @Test fun `test download fix stop`() {
+  @Test
+  fun `test download fix stop`() {
     val auto = object: UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
       override fun createResolver(project: Project?, indicator: ProgressIndicator) = object : UnknownSdkResolver.UnknownSdkLookup {
@@ -556,7 +577,8 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     )
   }
 
-  @Test fun `test download fix should not clash SDK name`() {
+  @Test
+  fun `test download fix should not clash SDK name`() {
     val prototypeSdk = newSdk("prototype")
     val auto = object: UnknownSdkResolver {
       override fun supportsResolution(sdkTypeId: SdkTypeId) = sdkTypeId == sdkType
@@ -590,7 +612,7 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       "configure: prototype (2)",
       "sdk: prototype (2)",
     )
-    removeSdk("prototype (2)")
+    removeSdks("prototype", "prototype (2)")
   }
 
   private fun newSdk(sdkName: String, version: String = "1.2.3"): Sdk {
@@ -598,6 +620,14 @@ class SdkLookupTest : BareTestFixtureTestCase() {
       val sdk = newUnregisteredSdk(sdkName, version)
       ProjectJdkTable.getInstance().addJdk(sdk, testRootDisposable)
       sdk
+    }
+  }
+
+  private fun removeSdks(vararg names: String) {
+    val jdkTable = ProjectJdkTable.getInstance()
+    names.forEach { name ->
+      val sdk = jdkTable.findJdk(name) ?: error("SDK '$name' doesn't exist")
+      SdkTestCase.removeSdk(sdk)
     }
   }
 
@@ -618,7 +648,7 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     val th = threadEx { result.set(runCatching { action() }) }
     while (th.isAlive) {
       ProgressManager.checkCanceled()
-      UIUtil.dispatchAllInvocationEvents()
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
       th.join(100)
     }
     return result.get()?.getOrThrow() ?: error("No result was set")
@@ -628,5 +658,9 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     val thread = thread(block = task)
     Disposer.register(testRootDisposable, Disposable { thread.interrupt(); thread.join(500) })
     return thread
+  }
+
+  private fun assertLog(vararg messages: String) {
+    assertThat(log).containsExactly(*messages)
   }
 }

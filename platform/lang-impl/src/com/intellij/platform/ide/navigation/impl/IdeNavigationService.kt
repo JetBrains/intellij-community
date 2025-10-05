@@ -268,6 +268,7 @@ private suspend fun openFile(
       reuseOpen = true,
       requestFocus = options.requestFocus,
       openMode = if (options.openInRightSplit) FileEditorManagerImpl.OpenMode.RIGHT_SPLIT else FileEditorManagerImpl.OpenMode.DEFAULT,
+      forceFocus = options.forceFocus,
     ),
   )
 

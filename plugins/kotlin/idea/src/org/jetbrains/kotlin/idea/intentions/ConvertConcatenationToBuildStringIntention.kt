@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
-    KotlinBundle.lazyMessage("convert.concatenation.to.build.string")
+    KotlinBundle.messagePointer("convert.concatenation.to.build.string")
 ) {
 
     override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean {

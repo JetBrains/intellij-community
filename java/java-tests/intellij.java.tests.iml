@@ -68,7 +68,7 @@
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" />
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
@@ -83,9 +83,9 @@
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.coverage" exported="" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jackson" level="project" />
-    <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
-    <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="TEST" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
@@ -127,5 +127,8 @@
     <orderEntry type="module" module-name="intellij.java.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.scripts" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="byte-buddy" level="project" />
+    <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
   </component>
 </module>

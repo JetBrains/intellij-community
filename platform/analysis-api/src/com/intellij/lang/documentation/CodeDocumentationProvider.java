@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.documentation;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,4 +53,16 @@ public interface CodeDocumentationProvider extends DocumentationProvider {
    */
   @Nullable
   String generateDocumentationContentStub(PsiComment contextComment);
+
+  /**
+   * Works like {@link #generateDocumentationContentStub(PsiComment)}, but inserts generated content into the document.
+   * @param contextComment context psi comment
+   * @param document document to insert generated content into
+   * @param offset offset in the document to insert generated content at
+   * @return true if documentation content was generated and inserted into the document, false otherwise
+   */
+  @ApiStatus.Internal
+  default boolean insertDocumentationContentStub(@NotNull PsiComment contextComment, @NotNull Document document, int offset) {
+    return false;
+  }
 }

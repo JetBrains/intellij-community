@@ -1,17 +1,11 @@
 ### auto-generated section `build intellij.idea.community.build.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
-java_library(
-  name = "tests",
-  visibility = ["//visibility:public"]
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.idea.community.build.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//build",
     "//platform/build-scripts/testFramework",
@@ -23,9 +17,13 @@ jvm_library(
     "//platform/build-scripts/downloader",
   ]
 )
+### auto-generated section `build intellij.idea.community.build.tests` end
+
+### auto-generated section `test intellij.idea.community.build.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.idea.community.build.tests` end
+### auto-generated section `test intellij.idea.community.build.tests` end

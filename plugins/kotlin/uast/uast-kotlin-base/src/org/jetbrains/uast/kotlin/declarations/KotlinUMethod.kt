@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isGetter
 import org.jetbrains.kotlin.asJava.elements.isSetter
+import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_STATIC_FQ_NAME
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.uast.*
@@ -140,11 +140,10 @@ open class KotlinUMethod(
             buildTrampolineForJvmOverload()?.let { return it }
 
             val bodyExpression = when (sourcePsi) {
-                is KtFunction -> sourcePsi.bodyExpression
-                is KtPropertyAccessor -> sourcePsi.bodyExpression
-                is KtProperty -> when {
-                    psiRef is KtLightMethod && psiRef.isGetter -> sourcePsi.getter?.bodyExpression
-                    psiRef is KtLightMethod && psiRef.isSetter -> sourcePsi.setter?.bodyExpression
+                is KtFunction, is KtPropertyAccessor -> sourcePsi.bodyExpressionIfNotCompiled
+                is KtProperty -> when (psiRef) {
+                    is KtLightMethod if psiRef.isGetter -> sourcePsi.getter?.bodyExpressionIfNotCompiled
+                    is KtLightMethod if psiRef.isSetter -> sourcePsi.setter?.bodyExpressionIfNotCompiled
                     else -> null
                 }
 
@@ -179,6 +178,6 @@ open class KotlinUMethod(
             }
         }
 
-        private fun isJvmStatic(it: PsiAnnotation): Boolean = it.hasQualifiedName(JVM_STATIC_ANNOTATION_FQ_NAME.asString())
+        private fun isJvmStatic(it: PsiAnnotation): Boolean = it.hasQualifiedName(JVM_STATIC_FQ_NAME.asString())
     }
 }

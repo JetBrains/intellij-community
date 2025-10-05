@@ -12,9 +12,9 @@ import com.intellij.psi.util.PsiUtil
 import com.siyeh.ig.psiutils.MethodUtils
 import com.siyeh.ig.psiutils.SideEffectChecker
 
-interface PreContract {
-  fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract>
-  fun negate(): PreContract? = NegatingContract(
+public interface PreContract {
+  public fun toContracts(method: PsiMethod, body: () -> PsiCodeBlock): List<StandardMethodContract>
+  public fun negate(): PreContract? = NegatingContract(
     this)
 }
 

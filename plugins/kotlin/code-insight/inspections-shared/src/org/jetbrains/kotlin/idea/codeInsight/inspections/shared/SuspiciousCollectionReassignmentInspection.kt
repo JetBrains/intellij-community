@@ -97,16 +97,14 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val property = left.mainReference?.resolve() as? KtProperty ?: return
 
             val psiFactory = KtPsiFactory(project)
-            MutableCollectionsConversionUtils.convertPropertyTypeToMutable(property, immutableCollectionClassId, psiFactory)
+            MutableCollectionsConversionUtils.convertDeclarationTypeToMutable(property, immutableCollectionClassId, psiFactory)
             property.valOrVarKeyword.replace(psiFactory.createValKeyword())
             updater.moveCaretTo(property.endOffset)
         }
     }
 
     private class ReplaceWithFilterFix : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
-        override fun getName() = KotlinBundle.message("replace.with.filter.fix.text")
-
-        override fun getFamilyName() = name
+        override fun getFamilyName(): String = KotlinBundle.message("replace.with.filter.fix.text")
 
         override fun applyFix(project: Project, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
             val operationReference = element
@@ -132,9 +130,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
     }
 
     private class ReplaceWithAssignmentFix : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
-        override fun getName() = KotlinBundle.message("replace.with.assignment.fix.text")
-
-        override fun getFamilyName() = name
+        override fun getFamilyName() = KotlinBundle.message("replace.with.assignment.fix.text")
 
         override fun applyFix(project: Project, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
             val operationReference = element

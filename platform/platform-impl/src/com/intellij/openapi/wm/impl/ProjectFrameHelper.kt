@@ -16,7 +16,10 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.service
@@ -134,6 +137,8 @@ abstract class ProjectFrameHelper internal constructor(
     )
     frameHeaderHelper = coroutineScope.createFrameHeaderHelper(frame, frameDecorator, rootPane)
     installLinuxResizeHandler(coroutineScope, frame, glassPane)
+
+    glassPane.colorfulToolbar = { frameHeaderHelper.isColorfulToolbar() }
 
     frame.setFrameHelper(object : FrameHelper {
       override fun uiDataSnapshot(sink: DataSink) {
@@ -277,6 +282,9 @@ abstract class ProjectFrameHelper internal constructor(
       // or on Windows (for products that don't use a native launcher, e.g., MPS)
       updateAppWindowIcon(frame)
     }
+
+    InternalUICustomization.getInstance()?.configureMainFrame(frame)
+
     return frame
   }
 
@@ -338,7 +346,7 @@ abstract class ProjectFrameHelper internal constructor(
 
   suspend fun updateTitle(title: String, project: Project) {
     val titleInfoProviders = getTitleInfoProviders()
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       this@ProjectFrameHelper.title = title
       updateTitle(project = project, titleInfoProviders = titleInfoProviders)
     }
@@ -424,7 +432,7 @@ abstract class ProjectFrameHelper internal constructor(
 
     this.project = project
 
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       applyInitBounds()
 
       if (statusBar == null) {
@@ -631,7 +639,7 @@ private object WindowCloseListener : WindowAdapter() {
     if (app != null && !app.isDisposed) {
       // The project closing process is also subject to cancellation checks.
       // Here we run the closing process in the scope of the application, so that the user gets the chance to abort a project closing process.
-      installThreadContext(service<CoreUiCoroutineScopeHolder>().coroutineScope.coroutineContext).use {
+      installThreadContext(service<CoreUiCoroutineScopeHolder>().coroutineScope.coroutineContext) {
         frameHelper.windowClosing(project)
       }
     }

@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong
  * so they should not call [IncrementalUpdateFlowProducer.handleUpdate]
  * to avoid deadlocks.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface MutableStateWithIncrementalUpdates<U : Any> {
   /**
    * Applies the given update to the state.
@@ -27,8 +27,19 @@ interface MutableStateWithIncrementalUpdates<U : Any> {
    * Should not emit any recursive updates to avoid deadlocks.
    * In other words, calling [IncrementalUpdateFlowProducer.handleUpdate] from this function,
    * directly or indirectly, is forbidden.
+   *
+   * If the update is applied, normally this function should return the update unchanged.
+   *
+   * If the update is a no-op for some reason (e.g., the event is outdated),
+   * the implementation may choose to return `null` to indicate that the event should not be forwarded
+   * to the output flow to save on traffic.
+   *
+   * In exotic cases, the implementation may decide to modify the update somehow and return the modified copy.
+   * Then the modified copy will be forwarded.
+   *
+   * In the case when this function threw an exception, the update will be forwarded to the output flow as-is.
    */
-  suspend fun applyUpdate(update: U)
+  suspend fun applyUpdate(update: U): U?
 
   /**
    * Takes a snapshot of the current state.
@@ -61,7 +72,7 @@ interface MutableStateWithIncrementalUpdates<U : Any> {
  * and the frontend can connect at any moment and needs to receive the full state first
  * and then incremental updates to that state.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 class IncrementalUpdateFlowProducer<U : Any>(private val state: MutableStateWithIncrementalUpdates<U>) {
   private val updateVersion = AtomicLong()
   private val lock = Mutex()
@@ -74,7 +85,7 @@ class IncrementalUpdateFlowProducer<U : Any>(private val state: MutableStateWith
    * 
    * This function calls [MutableStateWithIncrementalUpdates.applyUpdate] under a mutex
    * to update the state.
-   * Then the update is forwarded to the output flows, if any.
+   * Then the update is forwarded to the output flows, if any, unless `applyUpdate` returned `null`.
    * 
    * **Exception handling**
    * 
@@ -98,16 +109,24 @@ class IncrementalUpdateFlowProducer<U : Any>(private val state: MutableStateWith
    */
   suspend fun handleUpdate(update: U) {
     val versionedUpdate = VersionedUpdate(update, updateVersion.incrementAndGet())
+    var updateToForward: VersionedUpdate<U>? = versionedUpdate
     try {
       lock.withLock {
-        state.applyUpdate(update)
+        val modifiedUpdate = state.applyUpdate(update)
+        updateToForward = when {
+          modifiedUpdate === update -> versionedUpdate // nothing changed, avoid unneeded copying
+          modifiedUpdate != null -> versionedUpdate.copy(update = modifiedUpdate)
+          else -> null // the update is a no-op, don't forward
+        }
         appliedVersion = versionedUpdate.version
       }
     }
     finally {
-      outputFlow.emit(versionedUpdate)
-      // Clear the reference to the update from the replay buffer now, to avoid leaks.
-      outputFlow.emit(fakeUpdate())
+      if (updateToForward != null) {
+        outputFlow.emit(updateToForward)
+        // Clear the reference to the update from the replay buffer now, to avoid leaks.
+        outputFlow.emit(fakeUpdate())
+      }
     }
   }
 

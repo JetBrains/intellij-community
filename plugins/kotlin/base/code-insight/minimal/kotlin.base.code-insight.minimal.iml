@@ -20,5 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="kotlin.formatter.minimal" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
   </component>
 </module>

@@ -7,8 +7,6 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum;
-import com.intellij.ide.plugins.newui.PluginUiModel;
-import com.intellij.ide.plugins.newui.UiPluginManager;
 import com.intellij.idea.AppMode;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -27,7 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -75,7 +73,8 @@ public final class PluginManagerMain {
                                                   @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
                                                   @NotNull ModalityState modalityState,
                                                   @Nullable Runnable cleanup) throws IOException {
-    return downloadPlugins(plugins, customPlugins, false, onSuccess, pluginEnabler, modalityState, cleanup != null ? __ -> cleanup.run() : null);
+    return downloadPlugins(plugins, customPlugins, false, onSuccess, pluginEnabler, modalityState,
+                           cleanup != null ? __ -> cleanup.run() : null);
   }
 
   public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
@@ -95,7 +94,8 @@ public final class PluginManagerMain {
                                              @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
                                              @NotNull ModalityState modalityState,
                                              @Nullable Consumer<Boolean> function) throws IOException {
-    return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState, false);
+    return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState,
+                               false);
   }
 
   private static boolean downloadPluginsImpl(List<PluginNode> plugins,
@@ -161,7 +161,8 @@ public final class PluginManagerMain {
           f.accept(indicator);
         }
       };
-    } else {
+    }
+    else {
       return new Task.Modal(null, IdeBundle.message("progress.download.plugins"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -173,13 +174,38 @@ public final class PluginManagerMain {
 
   public static boolean suggestToEnableInstalledDependantPlugins(@NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
                                                                  @NotNull List<? extends IdeaPluginDescriptor> list) {
+    return suggestToEnableInstalledDependantPlugins(pluginEnabler, list, null);
+  }
+
+  public static boolean suggestToEnableInstalledDependantPlugins(@NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                                                 @NotNull List<? extends IdeaPluginDescriptor> list,
+                                                                 @Nullable Boolean isUpdate) {
+    Set<IdeaPluginDescriptor> disabled = getDisabledPlugins(pluginEnabler, list, isUpdate);
+    Set<IdeaPluginDescriptor> disabledDependants = getDisabledDependants(pluginEnabler, list);
+    boolean result = askToEnableDependencies(list.size(),
+                                             ContainerUtil.map(disabled, it -> it.getName()),
+                                             ContainerUtil.map(disabledDependants, it -> it.getName()));
+    enablePlugins(result, disabled, disabledDependants, pluginEnabler);
+    return result;
+  }
+
+  public static Set<IdeaPluginDescriptor> getDisabledPlugins(com.intellij.ide.plugins.@NotNull PluginEnabler pluginEnabler,
+                                                             @NotNull List<? extends IdeaPluginDescriptor> list,
+                                                             @Nullable Boolean isUpdate) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
-    Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (IdeaPluginDescriptor node : list) {
       PluginId pluginId = node.getPluginId();
-      if (pluginEnabler.isDisabled(pluginId)) {
+      if (pluginEnabler.isDisabled(pluginId) && (isUpdate == null || isUpdate)) {
         disabled.add(node);
       }
+    }
+    return disabled;
+  }
+
+  public static Set<IdeaPluginDescriptor> getDisabledDependants(com.intellij.ide.plugins.@NotNull PluginEnabler pluginEnabler,
+                                                                @NotNull List<? extends IdeaPluginDescriptor> list) {
+    Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
+    for (IdeaPluginDescriptor node : list) {
       for (IdeaPluginDependency dependency : node.getDependencies()) {
         if (dependency.isOptional()) {
           continue;
@@ -188,48 +214,58 @@ public final class PluginManagerMain {
         PluginId dependantId = dependency.getPluginId();
         // If there is no installed plugin implementing the module, then it can only be a platform module that cannot be disabled
         if (PluginManagerCore.looksLikePlatformPluginAlias(dependantId) &&
-            PluginManagerCore.findPluginByPlatformAlias(dependantId) == null) { //TODO Denis Zaichenko move to backend
+            PluginManagerCore.findPluginByPlatformAlias(dependantId) == null) {
           continue;
         }
 
-        PluginUiModel pluginUiModel = UiPluginManager.getInstance().getPlugin(dependantId);
-        if (pluginUiModel != null && pluginEnabler.isDisabled(dependantId)) {
-          disabledDependants.add(pluginUiModel.getDescriptor());
+        IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(dependantId);
+        if (descriptor != null && pluginEnabler.isDisabled(dependantId)) {
+          disabledDependants.add(descriptor);
         }
       }
     }
+    return disabledDependants;
+  }
 
+  public static boolean askToEnableDependencies(int pluginsToInstallCount,
+                                                List<String> disabled,
+                                                List<String> disabledDependants) {
     if (!disabled.isEmpty() || !disabledDependants.isEmpty()) {
       String message = "";
       if (disabled.size() == 1) {
-        message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part1", disabled.iterator().next().getName());
+        message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part1", disabled.iterator().next());
       }
       else if (!disabled.isEmpty()) {
-        message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part2", StringUtil.join(disabled, pluginDescriptor -> pluginDescriptor.getName(), ", "));
+        message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part2",
+                                     StringUtil.join(disabled, name -> name, ", "));
       }
 
       if (!disabledDependants.isEmpty()) {
         message += "<br>";
-        message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part3", list.size());
+        message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part3", pluginsToInstallCount);
         message += " ";
         if (disabledDependants.size() == 1) {
-          message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part4", disabledDependants.iterator().next().getName());
+          message +=
+            IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part4", disabledDependants.iterator().next());
         }
         else {
-          message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part5", StringUtil.join(disabledDependants, pluginDescriptor -> pluginDescriptor.getName(), ", "));
+          message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part5",
+                                       StringUtil.join(disabledDependants, name -> name, ", "));
         }
       }
       message += " ";
-      message += IdeBundle.message(disabled.isEmpty() ? "plugin.manager.main.suggest.to.enable.message.part6" : "plugin.manager.main.suggest.to.enable.message.part7");
+      message += IdeBundle.message(
+        disabled.isEmpty() ? "plugin.manager.main.suggest.to.enable.message.part6" : "plugin.manager.main.suggest.to.enable.message.part7");
 
       boolean result;
       if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
         Integer codeHeadless = PluginUtilsKt.getEnableDisabledPluginsDependentConfirmationData();
         int code = codeHeadless != null ? codeHeadless :
-          MessageDialogBuilder.yesNoCancel(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message))
-            .yesText(IdeBundle.message("button.enable.all"))
-            .noText(IdeBundle.message("button.enable.updated.plugins", disabled.size()))
-            .guessWindowAndAsk();
+                   MessageDialogBuilder.yesNoCancel(IdeBundle.message("dialog.title.dependent.plugins.found"),
+                                                    XmlStringUtil.wrapInHtml(message))
+                     .yesText(IdeBundle.message("button.enable.all"))
+                     .noText(IdeBundle.message("button.enable.updated.plugins", disabled.size()))
+                     .guessWindowAndAsk();
         if (code == Messages.CANCEL) {
           return false;
         }
@@ -247,23 +283,30 @@ public final class PluginManagerMain {
         Integer codeHeadless = PluginUtilsKt.getEnableDisabledPluginsDependentConfirmationData();
         result = codeHeadless != null
                  ? codeHeadless.equals(Messages.YES)
-                 : MessageDialogBuilder.yesNo(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message)).guessWindowAndAsk();
+                 : MessageDialogBuilder.yesNo(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message))
+                   .guessWindowAndAsk();
         if (!result) {
           return false;
         }
       }
 
-      if (result) {
-        disabled.addAll(disabledDependants);
-        pluginEnabler.enable(disabled);
-      }
-      else if (!disabled.isEmpty()) {
-        pluginEnabler.enable(disabled);
-      }
-      return true;
+      return result;
     }
 
     return false;
+  }
+
+  public static void enablePlugins(boolean dialogResult,
+                                   Set<IdeaPluginDescriptor> disabled,
+                                   Set<IdeaPluginDescriptor> disabledDependants,
+                                   com.intellij.ide.plugins.PluginEnabler pluginEnabler) {
+    if (dialogResult) {
+      disabled.addAll(disabledDependants);
+      pluginEnabler.enable(disabled);
+    }
+    else if (!disabled.isEmpty()) {
+      pluginEnabler.enable(disabled);
+    }
   }
 
   /** @deprecated Please use {@link com.intellij.ide.plugins.PluginEnabler} directly. */
@@ -294,7 +337,8 @@ public final class PluginManagerMain {
       return HEADLESS.disable(descriptors);
     }
 
-    final class HEADLESS implements PluginEnabler { }
+    final class HEADLESS implements PluginEnabler {
+    }
   }
 
   @ApiStatus.Internal
@@ -317,7 +361,7 @@ public final class PluginManagerMain {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String action = IdeBundle.message("ide.restart.required.notification", app.isRestartCapable() ? 1 : 0);
-    UpdateChecker.getNotificationGroupForPluginUpdateResults()
+    ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForPluginUpdateResults()
       .createNotification(title, NotificationType.INFORMATION)
       .setDisplayId("plugins.updated.suggest.restart")
       .addAction(new NotificationAction(action) {
@@ -333,7 +377,8 @@ public final class PluginManagerMain {
   }
 
   public static boolean checkThirdPartyPluginsAllowed(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    var aliens = ContainerUtil.filter(descriptors, descriptor -> !(descriptor.isBundled() || PluginManagerCore.isVendorTrusted(descriptor)));
+    var aliens =
+      ContainerUtil.filter(descriptors, descriptor -> !(descriptor.isBundled() || PluginManagerCore.isVendorTrusted(descriptor)));
     if (aliens.isEmpty()) return true;
 
     var updateSettings = UpdateSettings.getInstance();
@@ -352,7 +397,8 @@ public final class PluginManagerMain {
     var pluginList = aliens.stream()
       .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + PluginManagerCore.getPluginNameAndVendor(descriptor))
       .collect(Collectors.joining("<br>"));
-    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList, ApplicationInfoImpl.getShadowInstance().getShortCompanyName());
+    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList,
+                                     ApplicationInfoImpl.getShadowInstance().getShortCompanyName());
     var yesText = CoreBundle.message("third.party.plugins.privacy.note.accept");
     var noText = CommonBundle.getCancelButtonText();
     if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {

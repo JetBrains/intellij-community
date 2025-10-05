@@ -37,10 +37,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -674,6 +671,12 @@ public abstract class TodoTreeBuilder implements Disposable {
     return myFileTree.isDirectoryEmpty(psiDirectory.getVirtualFile());
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<?> rebuildCacheTestAccessor() {
+    return rebuildCache();
+  }
+  
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
 
     @Override
@@ -684,7 +687,7 @@ public abstract class TodoTreeBuilder implements Disposable {
         scheduleMarkFileAsDirtyAndUpdateTree(file);
         return;
       }
-      // If added element if PsiFile and it doesn't contains TODOs, then do nothing
+      // If an added element is PsiFile, and it doesn't contain TODOs, then do nothing
       PsiElement child = e.getChild();
       if (child instanceof PsiFile psiFile) {
         scheduleMarkFileAsDirtyAndUpdateTree(psiFile);

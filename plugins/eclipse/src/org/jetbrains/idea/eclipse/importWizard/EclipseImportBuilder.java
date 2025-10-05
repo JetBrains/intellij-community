@@ -11,10 +11,10 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -276,7 +276,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
           modulesDirectory = path;
         }
         final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerEx.IML_EXTENSION,
-                                                    StdModuleTypes.JAVA.getId());
+                                                    JavaModuleType.getModuleType().getId());
         result.add(module);
         final Set<String> natures = collectNatures(path);
 

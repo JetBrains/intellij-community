@@ -8,11 +8,11 @@ import com.intellij.openapi.components.*
 @Service(Service.Level.PROJECT)
 @State(name = "JvmLoggingSettingsStorage",
        storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class JvmLoggingSettingsStorage : SimplePersistentStateComponent<JvmLoggingSettingsStorage.State>(State()) {
-  class State : BaseState() {
-    var loggerId: String? by string(UnspecifiedLogger.UNSPECIFIED_LOGGER_ID)
+public class JvmLoggingSettingsStorage : SimplePersistentStateComponent<JvmLoggingSettingsStorage.State>(State()) {
+  public class State : BaseState() {
+    public var loggerId: String? by string(UnspecifiedLogger.UNSPECIFIED_LOGGER_ID)
 
-    var loggerName: String? by string(JvmLoggerFieldDelegate.LOGGER_IDENTIFIER)
+    public var loggerName: String? by string(JvmLoggerFieldDelegate.LOGGER_IDENTIFIER)
   }
 }
 

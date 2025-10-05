@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -204,7 +205,10 @@ public final class PsiImplUtil {
     if (fromBody) {
       final PsiParameter[] parameters = element.getParameterList().getParameters();
       for (PsiParameter parameter : parameters) {
-        if (parameter.isUnnamed()) continue;
+        if (parameter.isUnnamed() &&
+            !Boolean.TRUE.equals(processor.getHint(ElementClassHint.PROCESS_UNNAMED_VARIABLES))) {
+          continue;
+        }
         if (!processor.execute(parameter, state)) return false;
       }
     }
@@ -222,7 +226,8 @@ public final class PsiImplUtil {
     for (PsiResourceListElement resource : resourceList) {
       if (resource == lastParent) break;
       if (resource instanceof PsiResourceVariable &&
-          !((PsiResourceVariable)resource).isUnnamed() &&
+          !(((PsiResourceVariable)resource).isUnnamed() &&
+            !Boolean.TRUE.equals(processor.getHint(ElementClassHint.PROCESS_UNNAMED_VARIABLES))) &&
           !processor.execute(resource, state)) return false;
     }
 
@@ -279,7 +284,7 @@ public final class PsiImplUtil {
       substitutor = substitutor.put(typeParameters[0], operandType instanceof PsiClassType ? ((PsiClassType)operandType).rawType() : operandType);
     }
 
-    return new PsiImmediateClassType(classClass, substitutor);
+    return new PsiImmediateClassType(classClass, substitutor).withNullability(TypeNullability.NOT_NULL_MANDATED);
   }
 
   public static @Nullable PsiAnnotation findAnnotation(@Nullable PsiAnnotationOwner annotationOwner, @NotNull String qualifiedName) {

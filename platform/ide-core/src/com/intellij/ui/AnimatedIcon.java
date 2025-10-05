@@ -2,7 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.UiDispatcherKind;
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.icons.IconUtilKt;

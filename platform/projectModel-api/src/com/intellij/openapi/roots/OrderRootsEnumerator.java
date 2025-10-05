@@ -19,15 +19,15 @@ import java.util.Collection;
 @ApiStatus.NonExtendable
 public interface OrderRootsEnumerator {
   /**
+   * todo IJPL-339 mark deprecated
    * @return all roots processed by this enumerator
    */
   VirtualFile @NotNull [] getRoots();
 
   /**
-   * todo IJPL-339 mark experimental
    * @return all roots processed by this enumerator
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @NotNull @Unmodifiable
   Collection<RootEntry> getRootEntries();
 

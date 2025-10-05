@@ -26,8 +26,15 @@ class JupyterLineBreakpoint(LineBreakpoint):
 
 def add_line_breakpoint(plugin, pydb, type, file, line, condition, expression, func_name, hit_condition=None, is_logpoint=False):
     if type == 'jupyter-line':
-        breakpoint = JupyterLineBreakpoint(file, line, condition, func_name, expression, hit_condition=hit_condition,
-                                           is_logpoint=is_logpoint)
+        breakpoint = JupyterLineBreakpoint(
+            file,
+            line,
+            condition,
+            func_name,
+            expression,
+            hit_condition=hit_condition,
+            is_logpoint=is_logpoint
+        )
         if not hasattr(pydb, 'jupyter_breakpoints'):
             _init_plugin_breaks(pydb)
         return breakpoint, pydb.jupyter_breakpoints
@@ -61,7 +68,8 @@ def remove_exception_breakpoint(plugin, pydb, type, exception):
 
 def get_breakpoints(plugin, pydb, type):
     if type == 'jupyter-line':
-        return pydb.jupyter_breakpoints
+        if hasattr(pydb, 'jupyter_breakpoints'):
+            return pydb.jupyter_breakpoints
     return None
 
 
@@ -70,8 +78,9 @@ def change_variable(plugin, frame, attr, expression):
 
 
 def has_exception_breaks(plugin):
-    if len(plugin.main_debugger.jupyter_exception_break) > 0:
-        return True
+    if hasattr(plugin.main_debugger, 'jupyter_exception_break'):
+        if len(plugin.main_debugger.jupyter_exception_break) > 0:
+            return True
     return False
 
 
@@ -81,9 +90,10 @@ def has_exception_breaks(plugin):
 
 
 def has_line_breaks(plugin):
-    for file, breakpoints in dict_iter_items(plugin.main_debugger.jupyter_breakpoints):
-        if len(breakpoints) > 0:
-            return True
+    if hasattr(plugin.main_debugger, 'jupyter_breakpoints'):
+        for file, breakpoints in dict_iter_items(plugin.main_debugger.jupyter_breakpoints):
+            if len(breakpoints) > 0:
+                return True
     return False
 
 
@@ -91,6 +101,8 @@ def can_not_skip(plugin, pydb, frame, info):
     step_cmd = info.pydev_step_cmd
     if step_cmd == 108 and _is_equals(frame, _get_stop_frame(info)):
         return True
+    if not hasattr(pydb, 'cell_info') or not hasattr(pydb, 'jupyter_breakpoints'):
+        return False
     if pydb.jupyter_breakpoints:
         filename = frame.f_code.co_filename
         cell_info = pydb.cell_info
@@ -125,6 +137,8 @@ def _is_equals(frame, other_frame):
     # We can't compare frames directly, because Jupyter compiles ast nodes
     # in cell separately. At the same time, the frame filename is unique and stays
     # the same within a cell.
+    if frame is None or other_frame is None:
+        return False
     return frame.f_code.co_filename == other_frame.f_code.co_filename \
            and ((frame.f_code.co_name.startswith('<cell line:')
                  and other_frame.f_code.co_name.startswith('<cell line:'))
@@ -177,17 +191,18 @@ def get_breakpoint(plugin, pydb, frame, event, args):
     filename = frame.f_code.co_filename
     frame_line = frame.f_lineno
     if event == "line":
-        cell_info = pydb.cell_info
-        if is_cell_filename(filename):
-            if filename not in cell_info.cell_filename_to_cell_id_map:
-                cell_info.cache_cell_mapping(filename)
+        if hasattr(pydb, 'cell_info'):
+            cell_info = pydb.cell_info
+            if is_cell_filename(filename):
+                if filename not in cell_info.cell_filename_to_cell_id_map:
+                    cell_info.cache_cell_mapping(filename)
 
-            cell_id = cell_info.cell_filename_to_cell_id_map[filename]
-            if cell_id in pydb.jupyter_breakpoints:
-                line_to_bp = pydb.jupyter_breakpoints[cell_id]
-                if frame_line in line_to_bp:
-                    bp = line_to_bp[frame_line]
-                    return True, bp, frame, "jupyter-line"
+                cell_id = cell_info.cell_filename_to_cell_id_map[filename]
+                if cell_id in pydb.jupyter_breakpoints:
+                    line_to_bp = pydb.jupyter_breakpoints[cell_id]
+                    if frame_line in line_to_bp:
+                        bp = line_to_bp[frame_line]
+                        return True, bp, frame, "jupyter-line"
     return False
 
 
@@ -215,13 +230,14 @@ def _is_inside_jupyter_cell(frame, pydb):
     while frame is not None:
         filename = frame.f_code.co_filename
         file_basename = os.path.basename(filename)
-        if is_cell_filename(filename):
-            if filename not in pydb.cell_info.cell_filename_to_cell_id_map:
-                send_cell_modified_warning_once(pydb, file_basename)
-                # IDE side doesn't know about the cell, so we should ignore it
-                return False
-            return True
-        frame = frame.f_back
+        if hasattr(pydb, 'cell_info'):
+            if is_cell_filename(filename):
+                if filename not in pydb.cell_info.cell_filename_to_cell_id_map:
+                    send_cell_modified_warning_once(pydb, file_basename)
+                    # IDE side doesn't know about the cell, so we should ignore it
+                    return False
+                return True
+            frame = frame.f_back
     return False
 
 
@@ -255,7 +271,7 @@ def exception_break(plugin, pydb, frame, args, arg):
 
 def _convert_filename(frame, pydb):
     filename = frame.f_code.co_filename
-    if is_cell_filename(filename):
+    if hasattr(pydb, 'cell_info') and is_cell_filename(filename):
         return pydb.cell_info.cell_filename_to_cell_id_map[filename]
     else:
         return filename

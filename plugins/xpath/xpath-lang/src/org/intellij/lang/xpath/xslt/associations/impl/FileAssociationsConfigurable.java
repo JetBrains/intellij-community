@@ -70,7 +70,7 @@ public final class FileAssociationsConfigurable implements SearchableConfigurabl
   @Override
   public void apply() {
     myEditor.apply();
-    DaemonCodeAnalyzer.getInstance(myProject).restart();
+    DaemonCodeAnalyzer.getInstance(myProject).restart(this);
   }
 
   @Override

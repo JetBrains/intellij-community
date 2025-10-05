@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.outputs.action
 
+import com.intellij.notebooks.jupyter.core.jupyter.CellType
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.NotebookCellLines
 import com.intellij.notebooks.visualization.cellSelectionModel
@@ -126,7 +127,7 @@ private fun getCollapsingComponents(editor: Editor, interval: NotebookCellLines.
 
 private fun getCollapsingComponents(editor: Editor, intervals: Iterable<NotebookCellLines.Interval>): Sequence<EditorCellOutput> =
   intervals.asSequence()
-    .filter { it.type == NotebookCellLines.CellType.CODE }
+    .filter { it.type == CellType.CODE }
     .flatMap { getCollapsingComponents(editor, it) }
 
 private val AnActionEvent.notebookCellInlayManager: NotebookCellInlayManager?

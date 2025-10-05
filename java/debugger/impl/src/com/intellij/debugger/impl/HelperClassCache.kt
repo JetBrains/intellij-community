@@ -124,7 +124,7 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
       val type = tryToDefineInClassLoader(evaluationContext, companionClassLoader, companionClassLoader,
                                           className, *additionalClassesToLoad) ?: return null
       if (currentInfo == null) {
-        DebuggerUtilsImpl.disableCollection(companionClassLoader)
+        DebuggerUtilsAsync.disableCollection(companionClassLoader)
         evaluationClassLoaderMapping[evaluationContext.classLoader] = DefinedInCompanionClassLoader(companionClassLoader)
       }
       return type

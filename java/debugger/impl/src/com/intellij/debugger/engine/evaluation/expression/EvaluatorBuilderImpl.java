@@ -1318,8 +1318,17 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         mustBeVararg = psiMethod.isVarArgs();
       }
 
+      boolean lastArgumentIsNotArray = false;
+      if (mustBeVararg) {
+        PsiExpression element = ArrayUtil.getLastElement(argExpressions);
+        if (element != null) {
+          PsiType type = element.getType();
+          lastArgumentIsNotArray = !(type instanceof PsiArrayType || PsiTypes.nullType().equals(type));
+        }
+      }
+
       myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(), signature,
-                                     argumentEvaluators, mustBeVararg);
+                                     argumentEvaluators, mustBeVararg, lastArgumentIsNotArray);
     }
 
     @Override

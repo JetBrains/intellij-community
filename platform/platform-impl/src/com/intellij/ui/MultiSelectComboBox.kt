@@ -137,6 +137,7 @@ class MultiSelectComboBox<T>(
   override fun setEnabled(enabled: Boolean) {
     super.setEnabled(enabled)
     myComboBox.isEnabled = enabled
+    updateSelectedDisplay()
   }
 
   fun addActionListener(listener: ActionListener) {
@@ -206,15 +207,20 @@ class MultiSelectComboBox<T>(
       val itemPanel = JPanel(FlowLayout(FlowLayout.LEFT, 2, 0)).apply {
         isOpaque = true
         border = JBUI.Borders.emptyTop(2)
-
+        isEnabled = myComboBox.isEnabled
         @Suppress("HardCodedStringLiteral")
-        val textLabel = JLabel(getItemText(item))
+        val textLabel = JLabel(getItemText(item)).apply {
+          isEnabled = myComboBox.isEnabled
+        }
         add(textLabel)
 
         val closeLabel = JLabel().apply {
           icon = AllIcons.Actions.Close
           addMouseListener(object : MouseAdapter() {
-            override fun mouseClicked(e: MouseEvent?) = deselectItem(item)
+            override fun mouseClicked(e: MouseEvent?) {
+              if(!myComboBox.isEnabled) return
+              deselectItem(item)
+            }
           })
         }
         add(closeLabel)

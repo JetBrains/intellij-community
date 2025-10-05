@@ -337,13 +337,13 @@ public class ReformatCodeAction extends AnAction implements DumbAware, LightEdit
       }
       if (!(element instanceof PsiDirectory)) {
         PsiFile file = element.getContainingFile();
-        if (file != null && canFormat(file)) {
-          return true;
+        if (file == null || !canFormat(file)) {
+          return false;
         }
       }
     }
 
-    return false;
+    return true;
   }
 
   private static boolean canFormat(PsiFile psiFile) {

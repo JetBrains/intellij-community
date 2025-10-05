@@ -8,7 +8,6 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.addPostCommitAction
 import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.commitByBuilder
 import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.postCommitByBuilder
-import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -32,37 +31,6 @@ import javax.swing.JLabel
 
 @get:ApiStatus.Internal
 val WizardContext.projectOrDefault: Project get() = project ?: ProjectManager.getInstance().defaultProject
-
-@ApiStatus.Internal
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Use NewProjectWizardChainStep.nextStep instead",
-  replaceWith = ReplaceWith(
-    "nextStep(f1).nextStep(f2)",
-    "com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep"
-  )
-)
-fun <T1, T2, T3> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3): NewProjectWizardStep
-  where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep, T3 : NewProjectWizardStep {
-  return nextStep(f1)
-    .nextStep(f2)
-}
-
-@ApiStatus.Internal
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-  message = "Use NewProjectWizardChainStep.nextStep instead",
-  replaceWith = ReplaceWith(
-    "nextStep(f1).nextStep(f2).nextStep(f3)",
-    "com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep"
-  )
-)
-fun <T1, T2, T3, T4> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4): NewProjectWizardStep
-  where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep, T3 : NewProjectWizardStep, T4 : NewProjectWizardStep {
-  return nextStep(f1)
-    .nextStep(f2)
-    .nextStep(f3)
-}
 
 /**
  * A little bit hacky solution, looking forward to a better idea

@@ -36,7 +36,6 @@ final class EditConfigurationAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    // fixme raspil dialog - ask Lera?
     Project project = e.getProject();
     RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
     if (node == null) return;

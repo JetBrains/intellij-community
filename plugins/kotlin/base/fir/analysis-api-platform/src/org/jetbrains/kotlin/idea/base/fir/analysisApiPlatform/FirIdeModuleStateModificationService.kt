@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -12,8 +12,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.*
-import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -21,6 +23,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
 import com.intellij.platform.workspace.storage.EntityChange
@@ -29,7 +34,6 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.io.URLUtil
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
@@ -76,6 +80,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             // it's required to clear caches manually,
             // otherwise opening file which referred the old builtins would let to PIEAE exceptions
             val jarPath = URLUtil.splitJarUrl(file.path)?.first
+            //MAYBE RC: try (file.fileSystem as ArchiveFileSystem).getLocalByEntry(file) instead of expensive
+            //          file.path building and splitting
             if (jarPath != null && jarPath in builtinsFiles) {
                 runWriteAction {
                     PsiManager.getInstance(project).dropPsiCaches()
@@ -121,16 +127,24 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 return
             }
 
-            events.mapNotNull { event ->
+            val workspaceModel = project.workspaceModel
+
+            val affectedLibraries = events.flatMapTo(mutableSetOf()) { event ->
                 val file = when (event) {
                     //for all other events workspace model should do the job
                     is VFileContentChangeEvent -> event.file
-                    else -> return@mapNotNull null
+                    else -> return@flatMapTo emptyList()
                 }
-                if (!file.extension.equals("jar", ignoreCase = true)) return@mapNotNull null  //react only on jars
-                val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@mapNotNull null
-                (fileIndex.getOrderEntriesForFile(jarRoot).firstOrNull { it is LibraryOrderEntry } as? LibraryOrderEntry)?.library
-            }.distinct().forEach { it.publishModuleStateModificationEvent(project) }
+
+                if (!file.extension.equals("jar", ignoreCase = true)) return@flatMapTo emptyList()  //react only on jars
+                val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@flatMapTo emptyList()
+                val url = jarRoot.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
+                workspaceModel.currentSnapshot.getVirtualFileUrlIndex().findEntitiesByUrl(url).filterIsInstance<LibraryEntity>().toList()
+            }
+
+            for (library in affectedLibraries) {
+                library.publishModuleStateModificationEvent(project)
+            }
         }
 
         private fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean {
@@ -192,6 +206,12 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             runWriteAction {
                 project.publishGlobalModuleStateModificationEvent()
             }
+        }
+    }
+
+    internal class GeneralWorkspaceModelChangeListener(private val project: Project) : WorkspaceModelChangeListener {
+        override fun beforeChanged(event: VersionedStorageChange) {
+            getInstance(project).beforeWorkspaceModelChanged(event)
         }
     }
 
@@ -293,14 +313,12 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 is EntityChange.Removed -> {
                     change.oldEntity
                         .takeIf { it.tableId !is GlobalLibraryTableId }
-                        ?.findLibraryBridge(event.storageBefore)
                         ?.publishModuleStateModificationEvent(project, KotlinModuleStateModificationKind.REMOVAL)
                 }
 
                 is EntityChange.Replaced -> {
                     change.newEntity()
                         ?.takeIf { it.tableId !is GlobalLibraryTableId }
-                        ?.findLibraryBridge(event.storageAfter)
                         ?.publishModuleStateModificationEvent(project)
                 }
             }
@@ -357,7 +375,7 @@ private fun Module.publishModuleStateModificationEvent(
     }
 }
 
-private fun Library.publishModuleStateModificationEvent(
+private fun LibraryEntity.publishModuleStateModificationEvent(
     project: Project,
     modificationKind: KotlinModuleStateModificationKind = KotlinModuleStateModificationKind.UPDATE,
 ) {

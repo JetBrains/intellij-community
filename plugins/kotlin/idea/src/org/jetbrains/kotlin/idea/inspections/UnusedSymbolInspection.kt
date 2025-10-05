@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
+import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.options.JavaInspectionButtons
 import com.intellij.codeInsight.options.JavaInspectionControls
 import com.intellij.codeInspection.*
@@ -113,6 +114,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             if (declaration.isMainFunction()) return true
 
             val lightElement: PsiElement = when (declaration) {
+                is KtEnumEntry -> LightClassUtil.getLightClassBackingField(declaration)
                 is KtClassOrObject -> declaration.toLightClass()
                 is KtNamedFunction, is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
                 is KtProperty, is KtParameter -> {
@@ -124,6 +126,12 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                             if (javaInspection.isEntryPoint(javaParameterPsi)) {
                                 return true
                             }
+                        }
+                    }
+                    if (declaration is KtProperty) {
+                        val javaFieldPsi = LightClassUtil.getLightClassBackingField(declaration)
+                        if (javaFieldPsi != null && javaInspection.isEntryPoint(javaFieldPsi)) {
+                            return true
                         }
                     }
                     // can't rely on light element, check annotation ourselves
@@ -692,14 +700,14 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             val fqName = resolvedName.fqName?.asString() ?: continue
 
             // checks taken from com.intellij.codeInspection.util.SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes
-            if (fqName.startsWith("kotlin.")
-                || fqName.startsWith("java.")
-                || fqName.startsWith("javax.")
-                || fqName.startsWith("org.jetbrains.annotations.")
-            )
-                continue
+            if (
+                fqName.startsWith("kotlin.") || 
+                fqName.startsWith("java.") || 
+                fqName.startsWith("javax.") || 
+                fqName.startsWith("org.jetbrains.annotations.")
+            ) continue
 
-            val intentionAction = createAddToDependencyInjectionAnnotationsFix(declaration.project, fqName)
+            val intentionAction = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(declaration.project, fqName)
 
             list.add(IntentionWrapper(intentionAction))
         }

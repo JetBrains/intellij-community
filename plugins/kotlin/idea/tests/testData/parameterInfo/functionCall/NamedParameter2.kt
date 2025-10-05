@@ -6,7 +6,3 @@ open class A(x: Int) {
         m(<caret>y = false, x = 1)
     }
 }
-/*
-Text: (<highlight>[y: Boolean]</highlight>, [x: Int]), Disabled: false, Strikeout: false, Green: true
-Text: ([x: Int]), Disabled: true, Strikeout: false, Green: false
-*/

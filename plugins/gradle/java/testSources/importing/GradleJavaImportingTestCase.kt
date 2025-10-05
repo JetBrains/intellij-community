@@ -88,11 +88,11 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
     }
   }
 
-  fun assertProjectLanguageLevel(languageLevel: LanguageLevel) {
+  fun assertProjectLanguageLevel(languageLevel: LanguageLevel?) {
     assertEquals(languageLevel, getLanguageLevelForProject(myProject))
   }
 
-  fun assertModuleLanguageLevel(moduleName: String, languageLevel: LanguageLevel) {
+  fun assertModuleLanguageLevel(moduleName: String, languageLevel: LanguageLevel?) {
     assertEquals(languageLevel, getLanguageLevelForModule(moduleName))
   }
 

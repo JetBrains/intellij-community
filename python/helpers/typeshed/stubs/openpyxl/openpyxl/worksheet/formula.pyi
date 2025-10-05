@@ -20,8 +20,8 @@ class DataTableFormula:
         ca: bool = False,
         dt2D: bool = False,
         dtr: bool = False,
-        r1: Incomplete | None = None,
-        r2: Incomplete | None = None,
+        r1=None,
+        r2=None,
         del1: bool = False,
         del2: bool = False,
         **kw,
@@ -33,5 +33,5 @@ class ArrayFormula:
     ref: Incomplete
     text: Incomplete | None
 
-    def __init__(self, ref, text: Incomplete | None = None) -> None: ...
+    def __init__(self, ref, text=None) -> None: ...
     def __iter__(self) -> Iterator[tuple[str, str]]: ...

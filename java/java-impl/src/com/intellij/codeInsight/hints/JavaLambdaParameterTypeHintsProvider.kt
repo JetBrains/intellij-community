@@ -7,9 +7,9 @@ import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.*
 
-class JavaLambdaParameterTypeHintsProvider : InlayHintsProvider  {
-  companion object {
-    const val PROVIDER_ID : String = "java.implicit.types.lambda"
+public class JavaLambdaParameterTypeHintsProvider : InlayHintsProvider  {
+  public companion object {
+    public const val PROVIDER_ID : String = "java.implicit.types.lambda"
   }
 
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {

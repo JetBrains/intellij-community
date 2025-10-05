@@ -9,6 +9,8 @@
 
     <projectService serviceInterface="com.intellij.terminal.backend.TerminalPortForwardingManager"
                     serviceImplementation="com.intellij.terminal.backend.TerminalNoPortForwardingManager"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.terminal.hyperlinks.BackendHyperlinkInfoService"
+      serviceImplementation="com.intellij.terminal.backend.hyperlinks.BackendHyperlinkInfoServiceImpl" />
     <applicationService serviceImplementation="com.intellij.terminal.backend.rpc.TerminalInputChannelsManager"
                         client="remote"/>
     <applicationService serviceInterface="com.intellij.terminal.backend.TerminalActivityTracker"

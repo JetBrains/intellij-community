@@ -1,23 +1,26 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore;
 
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateSplitterEx;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
-@ApiStatus.Internal
+@Internal
 public class FileStorageAnnotation implements Storage {
   protected final String path;
 
   private final boolean deprecated;
   private final Class<? extends StateSplitterEx> mySplitterClass;
+
+  public static final FileStorageAnnotation PROJECT_FILE_STORAGE_ANNOTATION =
+    new FileStorageAnnotation(StoragePathMacros.PROJECT_FILE, false);
+
+  public static final FileStorageAnnotation MODULE_FILE_STORAGE_ANNOTATION =
+    new FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false);
 
   public FileStorageAnnotation(@NotNull String path, boolean deprecated) {
     this(path, deprecated, StateSplitterEx.class);

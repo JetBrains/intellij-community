@@ -1374,7 +1374,23 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   }
 
   // PY-28228
-  public void testReturnAnnotationForwardReference() {
+  public void testMethodReturnAnnotationForwardReferenceBefore314() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> assertUnresolved()
+    );
+  }
+
+  // PY-28228
+  public void testFunctionReturnAnnotationForwardReferenceBefore314() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> assertUnresolved()
+    );
+  }
+
+  // PY-28228
+  public void testMethodReturnAnnotationForwardReferenceBefore314WithFromFutureImportAnnotations() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> assertResolvesTo(PyClass.class, "A")
@@ -1382,11 +1398,43 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   }
 
   // PY-28228
-  public void testParameterAnnotationForwardReference() {
+  public void testFunctionReturnAnnotationForwardReferenceBefore314WithFromFutureImportAnnotations() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON37,
       () -> assertResolvesTo(PyClass.class, "A")
     );
+  }
+
+  // PY-28228
+  public void testMethodParameterAnnotationForwardReferenceBefore314WithFromFutureImportAnnotations() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> assertResolvesTo(PyClass.class, "A")
+    );
+  }
+
+  // PY-80002
+  public void testMethodReturnAnnotationForwardReference() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> assertResolvesTo(PyClass.class, "A")
+    );
+  }
+
+  // PY-80002
+  public void testFunctionReturnAnnotationForwardReference() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> assertResolvesTo(PyClass.class, "A")
+    );
+  }
+
+  public void testTopLevelNewStyleTypeAliasForwardReference() {
+    assertResolvesTo(PyClass.class, "MyClass");
+  }
+
+  public void testClassLevelNewStyleTypeAliasForwardReference() {
+    assertResolvesTo(PyClass.class, "MyClass");
   }
 
   // PY-19890

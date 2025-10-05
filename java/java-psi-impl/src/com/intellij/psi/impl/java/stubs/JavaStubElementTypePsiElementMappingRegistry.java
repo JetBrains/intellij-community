@@ -55,6 +55,7 @@ public final class JavaStubElementTypePsiElementMappingRegistry {
     registerFactory(JavaStubElementTypes.OPENS_STATEMENT, node -> new PsiPackageAccessibilityStatementImpl(node));
     registerFactory(JavaStubElementTypes.USES_STATEMENT, node -> new PsiUsesStatementImpl(node));
     registerFactory(JavaStubElementTypes.PROVIDES_STATEMENT, node -> new PsiProvidesStatementImpl(node));
+    registerFactory(JavaStubElementTypes.PACKAGE_STATEMENT, node -> new PsiPackageStatementImpl(node));
     registerFactory(JavaStubElementTypes.RECORD_COMPONENT, node -> new PsiRecordComponentImpl(node));
     registerFactory(JavaStubElementTypes.RECORD_HEADER, node -> new PsiRecordHeaderImpl(node));
     registerFactory(JavaStubElementTypes.NAME_VALUE_PAIR, node -> new PsiNameValuePairImpl(node));

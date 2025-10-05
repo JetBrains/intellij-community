@@ -2,21 +2,20 @@
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult.HighlightingType
 import com.intellij.codeInsight.intention.impl.preview.LookupPreviewHandler
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo.Html
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupEvent
-import com.intellij.codeInsight.lookup.LookupListener
+import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.idea.AppMode
 import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Pointer
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -44,6 +43,7 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.createSmartPointer
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.LayeredIcon
@@ -58,8 +58,6 @@ import java.util.function.Function
 class CommandCompletionDocumentationProvider : LookupElementDocumentationTargetProvider {
   override fun documentationTarget(psiFile: PsiFile, element: LookupElement, offset: Int): DocumentationTarget? {
     val completionLookupElement = element.`as`(CommandCompletionLookupElement::class.java) ?: return null
-    val command: CompletionCommand = completionLookupElement.command
-    if (command !is CompletionCommandWithPreview) return null
     val anchorElement = if (offset - 1 >= 0) psiFile.findElementAt(offset - 1) else psiFile.findElementAt(offset)
     if (anchorElement == null) return null
     return CommandCompletionDocumentationTarget(anchorElement, completionLookupElement)
@@ -89,11 +87,10 @@ private class CommandCompletionDocumentationTarget(
                                       ?: completionLookupElement.command.presentableName).icon(presentation.icon).containerText(presentation.tailText).presentation()
   }
 
-  override fun computeDocumentation(): DocumentationResult? {
-    if (!completionLookupElement.hasPreview) return null
+  override fun computeDocumentation(): DocumentationResult {
     return DocumentationResult.asyncDocumentation {
       readAction {
-        val previewResult = completionLookupElement.preview ?: return@readAction null
+        val previewResult = completionLookupElement.preview
         render(postprocess(previewResult))
       }
     }
@@ -167,18 +164,14 @@ private class CommandCompletionDocumentationTarget(
   @NlsSafe
   private fun renderHtml(diffs: List<IntentionPreviewDiffResult.DiffInfo>): String {
     val builder = StringBuilder()
-    val maxLine = (diffs.maxOfOrNull { it.startLine + it.length } ?: 1000).toString().length
+    val maxLine = (diffs.maxOfOrNull { it.startLine + it.length + 1 } ?: 1000).toString().length
     for (i in 0..diffs.size - 1) {
       ProgressManager.checkCanceled()
-      var codeSnippet = diffs[i].fileText
-      val length = codeSnippet.split("\n").lastOrNull()?.length ?: -1
-      if (length > 0 && length < 35) {
-        codeSnippet += " ".repeat(35 - length)
-      }
+      val codeSnippet = diffs[i].fileText
       val lineNumberIndexes = codeSnippet.indexesOf("\n").map { it + 1 }.toMutableList()
       lineNumberIndexes.add(0, 0)
       val additionalHighlighting = additionalHighlighting(diffs[i].fragments, lineNumberIndexes)
-      val textHandler = if (diffs[i].startLine != -1) createLineNumberTextHandler(lineNumberIndexes, diffs[i].startLine, maxLine) else null
+      val textHandler = if (diffs[i].startLine != -1) createLineNumberTextHandler(lineNumberIndexes, diffs[i].startLine + 1, maxLine) else null
       var properties = HtmlSyntaxInfoUtil.HtmlGeneratorProperties.createDefault()
         .generateWrappedTags()
         .generateBackground()
@@ -200,10 +193,10 @@ private class CommandCompletionDocumentationTarget(
     val defaultBackground = scheme.defaultBackground
     val lineSpacing = scheme.lineSpacing
     val backgroundColor = ColorUtil.toHtmlColor(defaultBackground)
-    return """
-      <div style="min-width: 150px; max-width: 250px; padding: 0; margin: 0;"> 
-      <div style="width: 95%; background-color:$backgroundColor; line-height: ${lineSpacing * 1.1}">$builder<br/>
-      </div></div>""".trimIndent()
+    val editorFontSize = scheme.editorFontSize
+    return """<${DocumentationHtmlUtil.codePreviewFloatingKey} background-color="$backgroundColor" font-size="$editorFontSize">""" + """
+      <div style="$backgroundColor; line-height:${lineSpacing * 1.1};">$builder
+      </div>""" + "</${DocumentationHtmlUtil.codePreviewFloatingKey}>".trimIndent()
   }
 
   private fun createLineNumberTextHandler(
@@ -284,6 +277,7 @@ private class CommandCompletionDocumentationTarget(
   private fun postprocess(info: IntentionPreviewInfo) = when (info) {
     is IntentionPreviewInfo.CustomDiff -> IntentionPreviewDiffResult.fromCustomDiff(info)
     is IntentionPreviewInfo.MultiFileDiff -> IntentionPreviewDiffResult.fromMultiDiff(info)
+    is IntentionPreviewInfo.Snippet -> IntentionPreviewDiffResult.fromSnippet(info)
     else -> info
   }
 }
@@ -341,6 +335,36 @@ fun combineFragments(
   return combinedFragments
 }
 
+internal class CommandCompletionLookupMayHaveCustomPreviewProvider : LookupMayHaveCustomPreviewProvider {
+  override fun mayHaveCustomPreview(lookup: Lookup): Boolean {
+    if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return false
+    val editor = lookup.editor
+    val psiFile = lookup.psiFile ?: return false
+    val project = lookup.project
+    val topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile)
+    if (topLevelFile?.virtualFile == null || topLevelFile.virtualFile is LightVirtualFile) {
+      return false
+    }
+    if (lookup !is LookupImpl) return false
+    val completionService = editor.project?.getService(CommandCompletionService::class.java)
+    completionService?.getFactory(psiFile.language) ?: return false
+    return true
+  }
+}
+
+
+internal class CustomLookupIntentionPreviewListener : LookupManagerListener {
+  override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
+    if (newLookup !is LookupImpl) return
+    newLookup.addLookupListener(object : LookupListener {
+      override fun lookupShown(event: LookupEvent) {
+        if (LookupMayHaveCustomPreviewProvider.EP_NAME.extensionList.none { it.mayHaveCustomPreview(newLookup) }) return
+        installLookupIntentionPreviewListener(newLookup)
+      }
+    })
+  }
+}
+
 /**
  * Installs a listener on the provided lookup that enables preview functionality for intentions
  * if certain user settings allow it. The preview displays additional context or suggestions
@@ -350,8 +374,6 @@ fun combineFragments(
  */
 internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
   if (!EditorSettingsExternalizable.getInstance().isShowIntentionPreview) return
-  if (ApplicationManager.getApplication().isHeadlessEnvironment ||
-      AppMode.isRemoteDevHost()) return
   val project = lookup.project
   if (showJavaDocPreview(project)) return
   val previewHandler =
@@ -361,22 +383,19 @@ internal fun installLookupIntentionPreviewListener(lookup: LookupImpl) {
         return@Function element as? LookupElement
       },
       Function { element ->
-        val commandElement = element.`as`(CommandCompletionLookupElement::class.java)
-        if (commandElement != null && commandElement.hasPreview) {
-          commandElement.preview
-        }
-        else {
-          IntentionPreviewInfo.EMPTY
-        }
+        val commandElement = element.`as`(LookupElementCustomPreviewHolder::class.java)
+        commandElement?.preview ?: IntentionPreviewInfo.EMPTY
       }
     )
 
   val listener = object : LookupListener {
+    private var shown: Boolean = false
     override fun currentItemChanged(event: LookupEvent) {
       val currentItem = event.lookup.currentItem
       val element = currentItem
-        ?.`as`(CommandCompletionLookupElement::class.java)
-      if (element != null) {
+        ?.`as`(LookupElementCustomPreviewHolder::class.java)
+      if (!shown && element != null) {
+        shown = true
         previewHandler.showInitially()
       }
     }

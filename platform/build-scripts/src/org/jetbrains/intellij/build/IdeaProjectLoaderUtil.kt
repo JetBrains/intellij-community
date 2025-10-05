@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.application.PathManager
@@ -50,6 +50,10 @@ internal object IdeaProjectLoaderUtil {
     HomeSource(
       moniker = "current directory",
       path = System.getProperty("user.dir"),
+    ),
+    HomeSource(
+      moniker = "ultimate home directory",
+      path = PathManager.getHomePathFor(javaClass),
     ),
   )
 

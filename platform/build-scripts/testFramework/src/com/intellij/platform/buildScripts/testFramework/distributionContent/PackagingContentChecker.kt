@@ -112,7 +112,7 @@ private suspend fun SequenceScope<DynamicTest>.checkPlugins(
   suggestedReviewer: String? = null,
 ) {
   for (item in fileEntries) {
-    val module = project.modules.find { it.name == item.mainModule } ?: continue
+    val module = project.findModuleByName(item.mainModule) ?: continue
     val contentRoot = Path.of(JpsPathUtil.urlToPath(module.contentRootsList.urls.first()))
     val expectedFile = contentRoot.resolve("plugin-content.yaml")
 

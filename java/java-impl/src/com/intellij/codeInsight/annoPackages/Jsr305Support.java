@@ -28,7 +28,11 @@ public final class Jsr305Support implements AnnotationPackageSupport {
     PsiModifierList modList = declaration == null ? null : declaration.getModifierList();
     if (modList == null) return ContextNullabilityInfo.EMPTY;
 
-    PsiAnnotation tqDefault = AnnotationUtil.findAnnotation(declaration, true, "javax.annotation.meta.TypeQualifierDefault");
+    PsiAnnotation tqDefault = null;
+    final PsiModifierList list = declaration.getModifierList();
+    if (list != null) {
+      tqDefault = list.findAnnotation("javax.annotation.meta.TypeQualifierDefault");
+    }
     if (tqDefault == null) return ContextNullabilityInfo.EMPTY;
 
     Set<PsiAnnotation.TargetType> required = AnnotationTargetUtil.extractRequiredAnnotationTargets(tqDefault.findAttributeValue(null));

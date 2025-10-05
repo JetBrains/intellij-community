@@ -223,11 +223,20 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (PyTypeChecker.hasGenerics(type, context)) {
       final var substitutions = PyTypeChecker.unifyGenericCall(receiver, parameters, context);
       if (substitutions != null) {
-        PyClass containingClass = getContainingClass();
-        if (containingClass != null && type instanceof PySelfType) {
-          PyType genericType = PyTypeChecker.findGenericDefinitionType(containingClass, context);
-          if (genericType != null) {
-            type = genericType;
+        // Special handling for __new__ constructor and factory methods of generic classes returning Self:
+        //
+        // class C[T]:
+        //     def __new__(cls, x: T) -> Self:
+        //         ...
+        //
+        // C(42)  # expected C[int], not just C
+        if (getModifier() == CLASSMETHOD || PyUtil.isNewMethod(this)) {
+          PyClass containingClass = getContainingClass();
+          if (containingClass != null && type instanceof PySelfType) {
+            PyType genericType = PyTypeChecker.findGenericDefinitionType(containingClass, context);
+            if (genericType != null) {
+              type = genericType;
+            }
           }
         }
         final var substitutionsWithUnresolvedReturnGenerics =
@@ -331,6 +340,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     public void visitPyLambdaExpression(@NotNull PyLambdaExpression node) {
       // Ignore nested lambdas
     }
+
+    @Override
+    public void visitPyClass(@NotNull PyClass node) {
+      // Ignore nested classes
+    }
   }
 
   /**
@@ -363,7 +377,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         hasReturn = true;
         final PyExpression expr = returnStatement.getExpression();
         types.add(expr != null ? context.getType(expr) : PyBuiltinCache.getInstance(this).getNoneType());
-      } 
+      }
       else {
         types.add(PyBuiltinCache.getInstance(this).getNoneType());
       }
@@ -380,8 +394,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @NotNull List<PyStatement> getReturnPoints(@NotNull TypeEvalContext context) {
-    final Instruction[] flow = ControlFlowCache.getControlFlow(this).getInstructions();
-    final PyDataFlow dataFlow = ControlFlowCache.getDataFlow(this, context);
+    final PyDataFlow dataFlow = ControlFlowCache.getDataFlow(this, new FlowContext(context, false));
+    final Instruction[] flow = dataFlow.getInstructions();
 
     class ReturnPointCollector {
       final List<PyStatement> returnPoints = new ArrayList<>();
@@ -635,6 +649,16 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         @Override
         public void visitPyFunction(@NotNull PyFunction node) {
           // Ignore nested functions
+        }
+
+        @Override
+        public void visitPyLambdaExpression(@NotNull PyLambdaExpression node) {
+          // Ignore lambdas
+        }
+
+        @Override
+        public void visitPyClass(@NotNull PyClass node) {
+          // Ignore nested classes
         }
 
         @Override

@@ -270,7 +270,8 @@ class BlockTerminalView(
       promptView.let { it.terminalWidth to it.charSize }
     }
     return if (width > 0 && component.height > 0) {
-      TerminalUiUtils.calculateTerminalSize(Dimension(width, component.height), charSize)
+      val gridSize = TerminalUiUtils.calculateTerminalSize(Dimension(width, component.height), charSize)
+      TermSize(gridSize.columns, gridSize.rows)
     }
     else null
   }
@@ -302,13 +303,17 @@ class BlockTerminalView(
     return "$outputText\n$promptText"
   }
 
+  override fun getCurrentDirectory(): String? {
+    return promptView.controller.model.promptState?.currentDirectory
+  }
+
   override fun dispose() {}
 
   private fun getDisposed(): () -> Boolean = outputView.controller.outputModel.editor.getDisposed()
 
   private inner class BlockTerminalPanel : JPanel(), UiDataProvider, TerminalPanelMarker {
     init {
-      background = TerminalUi.defaultBackground(outputView.controller.outputModel.editor)
+      background = TerminalUi.defaultBackgroundLazy()
     }
 
     override fun uiDataSnapshot(sink: DataSink) {

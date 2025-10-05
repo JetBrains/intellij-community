@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider.Fields.FILE_GROUP
 import com.intellij.util.asSafely
 
-internal class SearchEverywhereFileGroupFeatureProvider : SearchEverywhereElementFeaturesProvider(
+class SearchEverywhereFileGroupFeatureProvider : SearchEverywhereElementFeaturesProvider(
   FileSearchEverywhereContributor::class.java,
   RecentFilesSEContributor::class.java) {
 
@@ -26,7 +26,7 @@ internal class SearchEverywhereFileGroupFeatureProvider : SearchEverywhereElemen
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    return SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
+    return SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element)
       .asSafely<PsiFileSystemItem>()
       ?.name
       ?.let { FileGroup.findGroup(it) }

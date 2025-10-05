@@ -14,7 +14,7 @@
     </context>
   </template>
   <template name="itar" value="for(int $INDEX$ = 0; $INDEX$ &lt; $ARRAY$.length; $INDEX$++) {&#10;  $ELEMENT_TYPE$ $VAR$ = $ARRAY$[$INDEX$];&#10;  $END$&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.itar" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.itar" toReformat="true" toShortenFQNames="true">
     <variable name="INDEX" expression="suggestIndexName()" defaultValue="" alwaysStopAt="true" />
     <variable name="ARRAY" expression="arrayVariable()" defaultValue="&quot;array&quot;" alwaysStopAt="true" />
     <variable name="ELEMENT_TYPE" expression="componentTypeOf(ARRAY)" defaultValue="" alwaysStopAt="false" />
@@ -25,7 +25,7 @@
     </context>
   </template>
   <template name="itco" value="for($ITER_TYPE$ $ITER$ = $COLLECTION$.iterator(); $ITER$.hasNext(); ) {&#10;  $ELEMENT_TYPE$ $VAR$ =$CAST$ $ITER$.next();&#10;  $END$&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.itco" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.itco" toReformat="true" toShortenFQNames="true">
     <variable name="ITER" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true" />
     <variable name="COLLECTION" expression="variableOfType(&quot;java.util.Collection&quot;)" defaultValue="&quot;collection&quot;" alwaysStopAt="true" />
     <variable name="ELEMENT_TYPE" expression="guessElementType(COLLECTION)" defaultValue="&quot;Object&quot;" alwaysStopAt="true" />
@@ -38,7 +38,7 @@
     </context>
   </template>
   <template name="iten" value="while($ENUM$.hasMoreElements()){&#10;  $TYPE$ $VAR$ = $CAST$ $ENUM$.nextElement();&#10;  $END$&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.iten" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.iten" toReformat="true" toShortenFQNames="true">
     <variable name="ENUM" expression="variableOfType(&quot;java.util.Enumeration&quot;)" defaultValue="&quot;enumeration&quot;" alwaysStopAt="true" />
     <variable name="TYPE" expression="rightSideType()" defaultValue="&quot;Object&quot;" alwaysStopAt="true" />
     <variable name="VAR" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true" />
@@ -49,7 +49,7 @@
     </context>
   </template>
   <template name="itit" value="while($ITER$.hasNext()){&#10;  $TYPE$ $VAR$ = $CAST$ $ITER$.next();&#10;  $END$&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.itit" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.itit" toReformat="true" toShortenFQNames="true">
     <variable name="ITER" expression="variableOfType(&quot;java.util.Iterator&quot;)" defaultValue="&quot;iterator&quot;" alwaysStopAt="true"/>
     <variable name="TYPE" expression="rightSideType()" defaultValue="&quot;Object&quot;" alwaysStopAt="true"/>
     <variable name="VAR" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true"/>
@@ -60,7 +60,7 @@
     </context>
   </template>
   <template name="itli" value="for (int $INDEX$ = 0; $INDEX$ &lt; $LIST$.size(); $INDEX$++) {&#10;  $ELEMENT_TYPE$ $VAR$ = $CAST$ $LIST$.get($INDEX$);&#10;  $END$&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.itli" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.itli" toReformat="true" toShortenFQNames="true">
     <variable name="INDEX" expression="suggestIndexName()" defaultValue="" alwaysStopAt="true" />
     <variable name="LIST" expression="variableOfType(&quot;java.util.List&quot;)" defaultValue="&quot;list&quot;" alwaysStopAt="true" />
     <variable name="ELEMENT_TYPE" expression="guessElementType(LIST)" defaultValue="&quot;Object&quot;" alwaysStopAt="true" />
@@ -72,7 +72,7 @@
     </context>
   </template>
   <template name="itm" value="for (java.util.Map.Entry&lt;$KEY_TYPE$, $VALUE_TYPE$&gt; $ENTRY$: $MAP$.entrySet()) {&#10;  $KEY_TYPE$ $KEY$ = $ENTRY$.getKey();&#10;  $VALUE_TYPE$ $VALUE$ = $ENTRY$.getValue();&#10;  $END$&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.itm" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.itm" toReformat="true" toShortenFQNames="true">
     <variable name="MAP" expression="variableOfType(&quot;java.util.Map&quot;)" defaultValue="&quot;map&quot;" alwaysStopAt="true" />
     <variable name="KEY_TYPE" expression="typeParameterOf(MAP,&quot;0&quot;)" defaultValue="" alwaysStopAt="false" />
     <variable name="VALUE_TYPE" expression="typeParameterOf(MAP,&quot;1&quot;)" defaultValue="" alwaysStopAt="false" />
@@ -84,7 +84,7 @@
     </context>
   </template>
   <template name="ittok" value="for (java.util.StringTokenizer $TOKENIZER$ = new java.util.StringTokenizer($STRING$); $TOKENIZER$.hasMoreTokens(); ) {&#10;    String $VAR$ = $TOKENIZER_COPY$.nextToken();&#10;    $END$&#10;}&#10;"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.ittok" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.ittok" toReformat="true" toShortenFQNames="true">
     <variable name="TOKENIZER" expression="suggestVariableName()" defaultValue="&quot;tokenizer&quot;" alwaysStopAt="true" />
     <variable name="STRING" expression="variableOfType(&quot;java.lang.String&quot;)" defaultValue="" alwaysStopAt="true" />
     <variable name="VAR" expression="suggestVariableName()" defaultValue="&quot;token&quot;" alwaysStopAt="true" />
@@ -95,7 +95,7 @@
     </context>
   </template>
   <template name="ritar" value="for(int $INDEX$ = $ARRAY$.length - 1; $INDEX$ &gt;= 0; $INDEX$--) {&#10;  $ELEMENT_TYPE$ $VAR$ = $ARRAY$[$INDEX$];&#10;  $END$&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.ritar"  toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.ritar"  toReformat="true" toShortenFQNames="true">
     <variable name="INDEX" expression="suggestIndexName()" defaultValue="" alwaysStopAt="true" />
     <variable name="ARRAY" expression="arrayVariable()" defaultValue="&quot;array&quot;" alwaysStopAt="true" />
     <variable name="ELEMENT_TYPE" expression="componentTypeOf(ARRAY)" defaultValue="" alwaysStopAt="false" />
@@ -106,7 +106,7 @@
     </context>
   </template>
   <template name="iter" value="for ($ELEMENT_TYPE$ $VAR$ : $ITERABLE_TYPE$) {&#10;  $END$&#10;}"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.iter" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.iter" toReformat="true" toShortenFQNames="true">
     <variable name="ITERABLE_TYPE" expression="iterableVariable()" defaultValue="" alwaysStopAt="true" />
     <variable name="ELEMENT_TYPE" expression="iterableComponentType(ITERABLE_TYPE)" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="false" />
     <variable name="VAR" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true" />
@@ -115,7 +115,7 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.inst"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.inst"
             name="inst" toReformat="true" toShortenFQNames="true" value="if ($EXPR$ instanceof $TYPE$) {&#13;&#10;  $TYPE$ $VAR$ = ($TYPE$)$EXPR$;&#13;&#10;  $END$&#13;&#10;}">
     <variable alwaysStopAt="true" defaultValue="expr" expression="variableOfType(&quot;Object&quot;)" name="EXPR" />
     <variable alwaysStopAt="true" defaultValue="" expression="subtypes(typeOfVariable(EXPR))" name="TYPE" />
@@ -125,7 +125,7 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.lst"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.lst"
             name="lst" toReformat="true" toShortenFQNames="true" value="$ARRAY$[$ARRAY$.length - 1]">
     <variable alwaysStopAt="true" defaultValue="array" expression="arrayVariable()" name="ARRAY" />
     <context>
@@ -133,7 +133,7 @@
       <option name="JAVA_EXPRESSION" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.mn"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.mn"
             name="mn" toReformat="true" toShortenFQNames="true" value="$VAR$ = Math.min($VAR$, $END$);">
     <variable alwaysStopAt="true" defaultValue="" expression="variableOfType(&quot;double&quot;)" name="VAR" />
     <context>
@@ -141,7 +141,7 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.mx"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.mx"
             name="mx" toReformat="true" toShortenFQNames="true" value="$VAR$ = Math.max($VAR$, $END$);">
     <variable alwaysStopAt="true" defaultValue="" expression="variableOfType(&quot;double&quot;)" name="VAR" />
     <context>
@@ -149,19 +149,19 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psvm"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.psvm"
             name="psvm" toReformat="true" toShortenFQNames="true" value="public static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
     <context>
       <option name="JAVA_NORMAL_CLASS_DECLARATION_WITHOUT_INSTANCE_MAIN" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psvm"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.psvm"
             name="main" toReformat="true" toShortenFQNames="true" value="public static void main(String[] args){&#13;&#10;  $END$&#13;&#10;}">
     <context>
       <option name="JAVA_NORMAL_CLASS_DECLARATION_WITHOUT_INSTANCE_MAIN" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.toar"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.toar"
             name="toar" toReformat="true" toShortenFQNames="true" value="$COLLECTION$.toArray(new $COMPONENT_TYPE$[0])$END$">
     <variable alwaysStopAt="true" defaultValue="&quot;Object&quot;" expression="componentTypeOf(expectedType())" name="COMPONENT_TYPE" />
     <variable alwaysStopAt="true" defaultValue="collection" expression="variableOfType(&quot;java.util.Collection&quot;)" name="COLLECTION" />
@@ -170,7 +170,7 @@
       <option name="JAVA_EXPRESSION" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.lazy"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.lazy"
             name="lazy" value="if ($VAR$ == null) {&#10;  $VAR$ = new $TYPE$($END$);&#10;}" toReformat="true" toShortenFQNames="true">
     <variable name="VAR" expression="variableOfType(&quot;java.lang.Object&quot;)" defaultValue="" alwaysStopAt="true" />
     <variable name="TYPE" expression="subtypes(typeOfVariable(VAR))" defaultValue="" alwaysStopAt="true" />
@@ -179,7 +179,7 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.if.not.null"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.if.not.null"
             name="inn" value="if ($VAR$ != null) {&#10;$END$&#10;}" toReformat="true" toShortenFQNames="true">
     <variable name="VAR" expression="suggestFirstVariableName(&quot;Object&quot;)" defaultValue="var" alwaysStopAt="true" />
     <context>
@@ -187,7 +187,7 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.if.null"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.if.null"
             name="ifn" value="if ($VAR$ == null) {&#10;$END$&#10;}" toReformat="true" toShortenFQNames="true">
     <variable name="VAR" expression="suggestFirstVariableName(&quot;Object&quot;)" defaultValue="var" alwaysStopAt="true" />
     <context>
@@ -195,7 +195,7 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.geti"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.geti"
             name="geti" toReformat="true" toShortenFQNames="true" value="public static $CLASS_NAME$ getInstance() {&#13;&#10;  return $VALUE$;&#13;&#10;}">
     <variable name="CLASS_NAME" expression="className" defaultValue="" alwaysStopAt="false"/>
     <variable name="VALUE" expression="variableOfType(CLASS_NAME)" defaultValue="null" alwaysStopAt="true"/>
@@ -204,7 +204,7 @@
       <option name="JAVA_DECLARATION" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.st"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.st"
             name="St" toReformat="false" toShortenFQNames="false" value="String ">
     <context>
       <option name="JAVA_CODE" value="false" />
@@ -213,42 +213,42 @@
       <option name="JAVA_EXPRESSION" value="false" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psf"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.psf"
             name="psf" toReformat="false" toShortenFQNames="false" value="public static final ">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_DECLARATION" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.prsf"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.prsf"
             name="prsf" toReformat="false" toShortenFQNames="false" value="private static final ">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_DECLARATION" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psfi"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.psfi"
             name="psfi" toReformat="false" toShortenFQNames="false" value="public static final int ">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_DECLARATION" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psfs"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.psfs"
             name="psfs" toReformat="false" toShortenFQNames="false" value="public static final String ">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_DECLARATION" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.thr"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.thr"
             name="thr" toReformat="false" toShortenFQNames="false" value="throw new ">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.serr"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.serr"
             name="serr" toReformat="true" toShortenFQNames="true" value="System.err.println($END$);">
     <context>
       <option name="JAVA_CODE" value="false" />
@@ -261,20 +261,20 @@
       <option name="JAVA_CONSUMER" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.sout"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.sout"
             name="sout" toReformat="true" toShortenFQNames="true" value="System.out.println($END$);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.iop"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.iop"
             name="iop" toReformat="true" toShortenFQNames="true" value="IO.println($END$);">
     <context>
       <option name="JAVA_LANG_IO_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.ior"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.ior"
             name="ior" toReformat="true" toShortenFQNames="true" value="IO.readln($END$);">
     <context>
       <option name="JAVA_LANG_IO_STATEMENT" value="true" />
@@ -286,14 +286,14 @@
       <option name="JAVA_CONSUMER" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.souf"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.souf"
             name="souf" toReformat="true" toShortenFQNames="true" value="System.out.printf(&quot;$END$&quot;);">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutm"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.soutm"
             name="soutm" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$CLASS_NAME$.$METHOD_NAME$&quot;);">
     <variable alwaysStopAt="false" defaultValue="" expression="className()" name="CLASS_NAME" />
     <variable alwaysStopAt="false" defaultValue="" expression="methodName()" name="METHOD_NAME" />
@@ -302,7 +302,7 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutp"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.soutp"
             name="soutp" toReformat="true" toShortenFQNames="true" value="System.out.println($FORMAT$);">
     <variable alwaysStopAt="false" defaultValue="" expression="groovyScript(&quot;_1.isEmpty() ? '' : '\&quot;' + _1.withIndex().collect { el, index -> el + ' = \&quot; + ' + (_2[index].indexOf('[') > 0 ? (_2[index].lastIndexOf('[') != _2[index].indexOf('[') ? 'java.util.Arrays.deepToString(' : 'java.util.Arrays.toString(') + el + ')' : el) }.join(' + \&quot;, ')&quot;, methodParameters(), methodParameterTypes())" name="FORMAT" />
     <context>
@@ -310,7 +310,7 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.soutv"
+  <template resource-bundle="messages.JavaBundle" key="livetemplate.description.soutv"
             name="soutv" toReformat="true" toShortenFQNames="true" value="System.out.println(&quot;$EXPR_COPY$ = &quot; + $EXPR$);">
     <variable alwaysStopAt="true" defaultValue="&quot;expr&quot;" expression="variableOfType(&quot;&quot;)" name="EXPR" />
     <variable alwaysStopAt="false" defaultValue="" expression="escapeString(EXPR)" name="EXPR_COPY" />
@@ -319,7 +319,7 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template name="C" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.callable"
+  <template name="C" resource-bundle="messages.JavaBundle" key="livetemplate.description.surround.with.callable"
             value="java.util.concurrent.Callable&lt;$RET$&gt; callable = new java.util.concurrent.Callable&lt;$RET$&gt;() {&#10;  public $RET$ call() throws Exception {&#10;    $SELECTION$&#10;    $END$ &#10;  }&#10;};"
             toReformat="true" toShortenFQNames="true">
     <variable name="RET" expression="" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="true" />
@@ -329,7 +329,7 @@
     </context>
   </template>
 
-  <template name="RL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.read.lock"
+  <template name="RL" resource-bundle="messages.JavaBundle" key="livetemplate.description.surround.with.read.lock"
             value="$LOCK$.readLock().lock();&#10;try { &#10;  $SELECTION$&#10;} finally {&#10;  $LOCK$.readLock().unlock();&#10;}&#10;"
             toReformat="true" toShortenFQNames="true">
     <variable name="LOCK" expression="variableOfType(&quot;java.util.concurrent.locks.ReadWriteLock&quot;)" defaultValue="" alwaysStopAt="true" />
@@ -339,7 +339,7 @@
     </context>
   </template>
 
-  <template name="WL" resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.write.lock"
+  <template name="WL" resource-bundle="messages.JavaBundle" key="livetemplate.description.surround.with.write.lock"
             value="$LOCK$.writeLock().lock();&#10;try { &#10;  $SELECTION$&#10;} finally {&#10;  $LOCK$.writeLock().unlock();&#10;}&#10;"
             toReformat="true" toShortenFQNames="true">
     <variable name="LOCK" expression="variableOfType(&quot;java.util.concurrent.locks.ReadWriteLock&quot;)" defaultValue="" alwaysStopAt="true" />
@@ -350,7 +350,7 @@
   </template>
 
   <template name="I" value="for ($ELEMENT_TYPE$ $VAR$ : $SELECTION$) {&#10;  $END$&#10;}&#10;"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.iter" toReformat="true" toShortenFQNames="true">
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.iter" toReformat="true" toShortenFQNames="true">
     <variable name="ELEMENT_TYPE" expression="iterableComponentType(SELECTION)" defaultValue="&quot;java.lang.Object&quot;" alwaysStopAt="false" />
     <variable name="VAR" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true" />
     <context>
@@ -359,11 +359,27 @@
     </context>
   </template>
 
-  <template name="sts" value="try (var scope = java.util.concurrent.StructuredTaskScope.open()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}&#10;"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.stss" toReformat="true" toShortenFQNames="true">
+  <template name="stss" value="try (var scope = new java.util.concurrent.StructuredTaskScope.ShutdownOnSuccess()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}"
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.stss" toReformat="true" toShortenFQNames="true">
     <context>
       <option name="JAVA_CODE" value="false" />
-      <option name="JAVA_STATEMENT" value="true" />
+      <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_CONSTRUCTORS" value="true" />
+    </context>
+  </template>
+
+  <template name="stsf" value="try (var scope = new java.util.concurrent.StructuredTaskScope.ShutdownOnFailure()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}"
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.stsf" toReformat="true" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_CONSTRUCTORS" value="true" />
+    </context>
+  </template>
+
+  <template name="sts" value="try (var scope = java.util.concurrent.StructuredTaskScope.open()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}"
+            resource-bundle="messages.JavaBundle" key="livetemplate.description.sts" toReformat="true" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT_WITH_STRUCTURED_CONCURRENCY_STATIC_FACTORY_METHODS" value="true" />
     </context>
   </template>
 </templateSet>

@@ -54,7 +54,7 @@ private fun verifyJsonBySchema(jsonData: String, jsonSchemaFile: Path, messages:
   val schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7).getSchema(Files.readString(jsonSchemaFile))
   val errors = schema.validate(ObjectMapper().readTree(jsonData))
   if (!errors.isEmpty()) {
-    messages.error("Unable to validate JSON against ${jsonSchemaFile}:\n${errors.joinToString("\n")}\nfile content:\n${jsonData}")
+    messages.logErrorAndThrow("Unable to validate JSON against ${jsonSchemaFile}:\n${errors.joinToString("\n")}\nfile content:\n${jsonData}")
   }
 }
 
@@ -63,10 +63,9 @@ private fun checkFileExists(path: String?, description: String, installationDire
     return
   }
 
-  val pathFromProductJson = path
   if (
-    installationDirectories.none { Files.exists(it.resolve(pathFromProductJson)) } &&
-    installationArchives.none { archiveContainsEntry(it.first, joinPaths(it.second, pathFromProductJson)) }
+    installationDirectories.none { Files.exists(it.resolve(path)) } &&
+    installationArchives.none { archiveContainsEntry(it.first, joinPaths(it.second, path)) }
   ) {
     throw RuntimeException(
       "Incorrect path to ${description} '${path}' in product-info.json:" +

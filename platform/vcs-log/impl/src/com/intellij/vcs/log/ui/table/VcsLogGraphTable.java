@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -28,6 +27,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LoadingDecoratorLayeredPane;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -42,7 +42,6 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.highlighters.VcsLogCommitsHighlighter;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.*;
@@ -586,7 +585,9 @@ public class VcsLogGraphTable extends TableWithProgress
     sink.set(VcsLogInternalDataKeys.VCS_LOG_GRAPH_TABLE, this);
 
     if (roots.size() == 1) {
-      sink.set(VcsDataKeys.VCS, myLogData.getLogProvider(Objects.requireNonNull(getFirstItem(roots))).getSupportedVcs());
+      VirtualFile root = Objects.requireNonNull(getFirstItem(roots));
+      VcsLogProvider provider = Objects.requireNonNull(myLogData.getLogProviders().get(root));
+      sink.set(VcsDataKeys.VCS, provider.getSupportedVcs());
     }
     if (selectedRows.length == 1) {
       List<VcsRef> refsAtRow = getModel().getRefsAtRow(selectedRows[0]);
@@ -677,8 +678,9 @@ public class VcsLogGraphTable extends TableWithProgress
     return myBaseStyleProvider.getBaseStyle(row, column, hasFocus, selected);
   }
 
+  @ApiStatus.Internal
   @NotNull
-  VcsCommitStyle getStyle(int row, int column, boolean hasFocus, boolean selected, boolean hovered) {
+  public VcsCommitStyle getStyle(int row, int column, boolean hasFocus, boolean selected, boolean hovered) {
     VcsCommitStyle baseStyle = getBaseStyle(row, column, hasFocus, selected);
 
     GraphTableModel model = getModel();
@@ -763,7 +765,7 @@ public class VcsLogGraphTable extends TableWithProgress
   @Override
   public void setCursor(Cursor cursor) {
     super.setCursor(cursor);
-    Component layeredPane = ComponentUtil.findParentByCondition(this, component -> component instanceof LoadingDecorator.CursorAware);
+    Component layeredPane = ComponentUtil.findParentByCondition(this, component -> component instanceof LoadingDecoratorLayeredPane);
     if (layeredPane != null) {
       layeredPane.setCursor(cursor);
     }
@@ -1041,11 +1043,6 @@ public class VcsLogGraphTable extends TableWithProgress
 
   private class MyProgressListener implements VcsLogProgress.ProgressListener {
     @Override
-    public void progressStarted(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
-      progressChanged(keys);
-    }
-
-    @Override
     public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
       if (VcsLogUiUtil.isProgressVisible(keys, getId())) {
         getEmptyText().setText(VcsLogBundle.message("vcs.log.loading.status"));
@@ -1053,11 +1050,6 @@ public class VcsLogGraphTable extends TableWithProgress
       else {
         updateEmptyText();
       }
-    }
-
-    @Override
-    public void progressStopped() {
-      updateEmptyText();
     }
   }
 

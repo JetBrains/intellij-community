@@ -90,14 +90,21 @@ internal class StickyLinesPanel(
     repaint()
   }
 
-  override fun paintComponent(g: Graphics?) {
+  override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
+
     val panelHeight = panelH
     val panelWidth = stickyLinesPanelWidth() // panelW can be outdated here
     val lineHeight = editor.lineHeight
-    if (g is Graphics2D && panelHeight > 0 && panelWidth > 0 && lineHeight > 0) {
-      val borderHeight = (border as LineBorder).thickness
-      shadowPainter.paintShadow(g, panelHeight + borderHeight, panelWidth, lineHeight)
+    if (panelHeight > 0 && panelWidth > 0 && lineHeight > 0) {
+      val g2d = g.create() as Graphics2D
+      try {
+        val borderHeight = (border as LineBorder).thickness
+        shadowPainter.paintShadow(g2d, panelHeight + borderHeight, panelWidth, lineHeight)
+      }
+      finally {
+        g2d.dispose()
+      }
     }
   }
 

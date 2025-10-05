@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -227,10 +227,16 @@ public final class FixDocCommentAction extends EditorAction {
       return;
     }
 
-    String stub = documentationProvider.generateDocumentationContentStub(pair.second);
-    if (stub != null) {
-      int insertionOffset = commentStartOffset + commentBodyRelativeOffset;
-      document.insertString(insertionOffset, stub);
+    int insertionOffset = commentStartOffset + commentBodyRelativeOffset;
+    boolean inserted = documentationProvider.insertDocumentationContentStub(pair.second, document, insertionOffset);
+    if (!inserted) {
+      String stub = documentationProvider.generateDocumentationContentStub(pair.second);
+      if (stub != null) {
+        document.insertString(insertionOffset, stub);
+        inserted = true;
+      }
+    }
+    if (inserted) {
       docManager.commitDocument(document);
       pair = documentationProvider.parseContext(anchor);
     }

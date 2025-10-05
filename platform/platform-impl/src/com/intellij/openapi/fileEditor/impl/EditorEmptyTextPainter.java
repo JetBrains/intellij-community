@@ -7,7 +7,6 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -22,26 +21,25 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class EditorEmptyTextPainter {
   public void paintEmptyText(@NotNull JComponent splitters, @NotNull Graphics g) {
+    if (JBUI.getInt("Islands", 0) != 1) {
+      doPaintEmptyText(splitters, g);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void doPaintEmptyText(@NotNull JComponent splitters, @NotNull Graphics g) {
     if (!isEnabled()) {
       return;
     }
 
     UISettings.setupAntialiasing(g);
-
-    InternalUICustomization customization = InternalUICustomization.getInstance();
-    if (customization != null) {
-      customization.paintBeforeEditorEmptyText(splitters, g);
-    }
 
     UIUtil.TextPainter painter = createTextPainter();
     advertiseActions(splitters, painter);

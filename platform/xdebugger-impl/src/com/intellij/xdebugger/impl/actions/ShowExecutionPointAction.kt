@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -25,7 +24,7 @@ class ShowExecutionPointAction : XDebuggerActionBase(), ActionRemoteBehaviorSpec
 private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
     performDebuggerActionAsync(session.project, dataContext) {
-      XDebugSessionApi.getInstance().switchToTopFrame(session.id)
+      session.switchToTopFrame()
     }
   }
 }

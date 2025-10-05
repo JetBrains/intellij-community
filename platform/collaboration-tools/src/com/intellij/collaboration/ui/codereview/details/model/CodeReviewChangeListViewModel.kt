@@ -1,14 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details.model
 
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel.SelectionRequest
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.*
@@ -63,13 +64,19 @@ interface CodeReviewChangeListViewModel {
     fun setGrouping(grouping: Collection<String>)
   }
 
+  @ApiStatus.Experimental
+  interface WithViewedState : WithDetails {
+    @RequiresEdt
+    fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean)
+  }
+
   sealed interface SelectionRequest {
     data object All : SelectionRequest
     data class OneChange(val change: RefComparisonChange) : SelectionRequest
   }
 
   companion object {
-    val DATA_KEY = DataKey.create<CodeReviewChangeListViewModel>("Code.Review.Changes.List.ViewModel")
+    val DATA_KEY: DataKey<CodeReviewChangeListViewModel> = DataKey.create("Code.Review.Changes.List.ViewModel")
   }
 }
 
@@ -81,7 +88,7 @@ abstract class CodeReviewChangeListViewModelBase(
   parentCs: CoroutineScope,
   protected val changeList: CodeReviewChangeList
 ) : CodeReviewChangeListViewModel {
-  protected val cs = parentCs.childScope()
+  protected val cs: CoroutineScope = parentCs.childScope(this::class)
 
   private val _selectionRequests = MutableSharedFlow<SelectionRequest>(replay = 1)
   override val selectionRequests: SharedFlow<SelectionRequest> = _selectionRequests.asSharedFlow()

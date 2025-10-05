@@ -1,9 +1,15 @@
 ### auto-generated section `build intellij.compose.ide.plugin.shared` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+create_kotlinc_options(
+  name = "custom_ide-plugin-shared",
+  x_context_parameters = True
+)
+
+resourcegroup(
   name = "ide-plugin-shared_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +17,9 @@ jvm_library(
   name = "ide-plugin-shared",
   module_name = "intellij.compose.ide.plugin.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":ide-plugin-shared_resources"],
+  kotlinc_opts = ":custom_ide-plugin-shared",
   deps = [
     "//plugins/compose:compose-ide-plugin",
     "//platform/analysis-api:analysis",
@@ -28,30 +36,27 @@ jvm_library(
     "//uast/uast-common:uast",
     "//platform/util",
     "//plugins/kotlin/base/indices",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/code-insight/api",
     "//platform/lang-impl",
-  ],
-  runtime_deps = [":ide-plugin-shared_resources"]
+  ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.shared` end
 
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
-java_library(
+jvm_library(
   name = "ide-plugin-shared-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "ide-plugin-shared-tests_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   associates = ["//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared"],
   deps = [
     "//platform/analysis-api:analysis",
@@ -84,9 +89,13 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
   ]
 )
+### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end
+
+### auto-generated section `test intellij.compose.ide.plugin.shared.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "ide-plugin-shared-tests_test",
   runtime_deps = [":ide-plugin-shared-tests_test_lib"]
 )
-### auto-generated section `build intellij.compose.ide.plugin.shared.tests` end
+### auto-generated section `test intellij.compose.ide.plugin.shared.tests` end

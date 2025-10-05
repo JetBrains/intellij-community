@@ -118,7 +118,7 @@ public class BaseDataTypeConversion implements DataTypeConversion {
         return v.length;
       }
       if (myObject instanceof LobInfo<?> v) {
-        return (int)Math.min(v.getLoadedDataLength(), Integer.MAX_VALUE);
+        return Math.clamp(v.getLoadedDataLength(), 0, Integer.MAX_VALUE);
       }
       return 1000; // 1000 is default size from CopyPasteManagerWithHistory.getSize
     }

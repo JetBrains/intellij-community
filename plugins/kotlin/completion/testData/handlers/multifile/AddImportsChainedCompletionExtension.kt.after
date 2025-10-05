@@ -1,0 +1,11 @@
+// IGNORE_K1
+package app
+
+import app.modifier.MyModifier
+import app.modifier.fooBarExtension
+
+fun myView(modifier: MyModifier) { }
+
+fun main() {
+    myView(modifier = MyModifier.fooBarExtension())
+}

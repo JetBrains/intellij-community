@@ -137,6 +137,8 @@ public class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
 
   public void testAlignFields2BlankLines() throws Throwable { doTest(); }
 
+  public void testBooleanOperators() throws Throwable { doTest(); }
+
   private void doTest() throws Throwable {
     doTest(getTestName(true) + ".test");
   }

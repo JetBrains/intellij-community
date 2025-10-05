@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.util.containers.CollectionFactory;
@@ -30,7 +30,7 @@ final class FileLoadingTracker {
       ourLeafNameIds = new IntOpenHashSet(ourPaths.size());
       FSRecordsImpl fsRecords = FSRecords.getInstance();
       for (String path : ourPaths) {
-        ourLeafNameIds.add(fsRecords.getNameId(StringUtilRt.getShortName(path, '/')));
+        ourLeafNameIds.add(fsRecords.getNameId(StringUtil.getShortName(path, '/')));
       }
     }
   }

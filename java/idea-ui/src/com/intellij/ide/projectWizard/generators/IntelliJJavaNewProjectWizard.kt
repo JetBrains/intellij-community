@@ -55,7 +55,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
       }
       if (parent.addSampleCode) {
-        withJavaSampleCodeAsset(project, "src")
+        withJavaSampleCodeAsset(project, "src", jdkIntent = parent.jdkIntent)
       }
     }
   }

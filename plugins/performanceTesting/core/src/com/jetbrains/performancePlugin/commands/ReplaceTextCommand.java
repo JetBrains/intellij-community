@@ -8,8 +8,14 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.jetbrains.performancePlugin.PerformanceTestSpan;
+import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener;
+import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerResult;
 import com.sampullara.cli.Args;
 import com.sampullara.cli.Argument;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -27,6 +33,7 @@ import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.
  */
 public class ReplaceTextCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "replaceText";
+  public static final String CODE_ANALYSIS_SPAN_NAME = "replaceTextCodeAnalysis";
 
   public ReplaceTextCommand(@NotNull String command, int line) {
     super(command, line);
@@ -39,6 +46,15 @@ public class ReplaceTextCommand extends AbstractCommand {
     Args.parse(options, extractCommandArgument(PREFIX).split(" "), false);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
+
+      SimpleMessageBusConnection projectConnection = context.getProject().getMessageBus().simpleConnect();
+      Ref<DaemonCodeAnalyzerResult> codeAnalysisJob = new Ref<>();
+
+      if (options.calculateAnalysisTime) {
+        Ref<Span> spanRef = new Ref<>(PerformanceTestSpan.TRACER.spanBuilder(CODE_ANALYSIS_SPAN_NAME).startSpan());
+        codeAnalysisJob.set(DaemonCodeAnalyzerListener.INSTANCE.listen(projectConnection, spanRef, 0, null));
+      }
+
       try {
         Waiter.checkCondition(() -> findTarget(context) != null).await(10, TimeUnit.MINUTES);
       }
@@ -54,12 +70,24 @@ public class ReplaceTextCommand extends AbstractCommand {
           int endOffset = options.endOffset == null ? document.getTextLength() : options.endOffset;
           WriteCommandAction.runWriteCommandAction(context.getProject(),
                                                    () -> document.replaceString(startOffset, endOffset, options.newText));
-          result.setResult(null);
         }
         else {
           result.setError("Cannot replace text on non-Editor component");
         }
       });
+
+      if (options.calculateAnalysisTime) {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            codeAnalysisJob.get().blockingWaitForComplete();
+          } finally {
+            projectConnection.disconnect();
+            result.setResult(null);
+          }
+        });
+      }
+
+      if (!options.calculateAnalysisTime) result.setResult(null);
     });
 
     return result;
@@ -74,5 +102,8 @@ public class ReplaceTextCommand extends AbstractCommand {
 
     @Argument
     public String newText = "";
+
+    @Argument
+    public Boolean calculateAnalysisTime = false;
   }
 }

@@ -592,18 +592,16 @@ public final class PassExecutorService implements Disposable {
     ContainerUtil.quickSort(result, Comparator.comparingInt(TextEditorHighlightingPass::getId));
   }
 
-  static void log(ProgressIndicator progressIndicator, HighlightingPass pass, @NonNls Object @NotNull ... info) {
+  static void log(@Nullable ProgressIndicator progressIndicator, @Nullable HighlightingPass pass, @NonNls Object @NotNull ... info) {
     if (LOG.isDebugEnabled()) {
       Document document = pass instanceof TextEditorHighlightingPass text ? text.getDocument() : null;
       CharSequence docText = document == null ? "" : ": '" + StringUtil.first(document.getCharsSequence(), 10, true)+ "'";
-      synchronized (PassExecutorService.class) {
-        String message = StringUtil.repeatSymbol(' ', IdeaForkJoinWorkerThreadFactory.getThreadNum() * 4)
-                         + " " + (pass == null ? "" : pass + " ")
-                         + StringUtil.join(info, Functions.TO_STRING(), " ")
-                         + "; progress=" + progressIndicator
-                         + (docText.isEmpty() ? "" : " " + docText);
-        LOG.debug(message);
-      }
+      String message = StringUtil.repeatSymbol(' ', IdeaForkJoinWorkerThreadFactory.getThreadNum() * 4)
+                       + " " + (pass == null ? "" : pass + " ")
+                       + StringUtil.join(info, Functions.TO_STRING(), " ")
+                       + "; progress=" + progressIndicator
+                       + (docText.isEmpty() ? "" : " " + docText);
+      LOG.debug(message);
     }
   }
 

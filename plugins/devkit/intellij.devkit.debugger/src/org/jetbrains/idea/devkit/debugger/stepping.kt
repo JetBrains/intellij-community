@@ -142,8 +142,7 @@ private class SessionThreadsData() {
  */
 private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectReference? {
   if (!suspendContext.debugProcess.isEvaluationPossible(suspendContext)) return null
-  val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
-  val cancellationClass = findClassOrNull(evaluationContext, CANCELLATION_FQN) as? ClassType ?: return null
+  val cancellationClass = findClassOrNull(suspendContext, CANCELLATION_FQN) as? ClassType ?: return null
   val method = DebuggerUtilsImpl.findMethod(cancellationClass,
                                             "initThreadNonCancellableState",
                                             "()Lcom/intellij/openapi/progress/Cancellation\$DebugNonCancellableState;")
@@ -151,6 +150,7 @@ private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectRef
                  logger<ResumeListener>().debug("Init method not found. Unsupported IJ platform version?")
                  return null
                }
+  val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
   try {
     return evaluationContext.debugProcess.invokeMethod(evaluationContext, cancellationClass, method, emptyList()) as? ObjectReference
   }

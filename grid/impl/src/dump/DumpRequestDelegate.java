@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -113,7 +114,8 @@ public class DumpRequestDelegate implements DataConsumer {
   private @NotNull DataExtractor.Extraction startExtraction() {
     int[] selectedColumns = mySelectedColumns != null ? mySelectedColumns.asArray() : ArrayUtilRt.EMPTY_INT_ARRAY;
 
-    return myExtractor.startExtraction(myOut, Arrays.asList(myColumns), myQuery, myConfig, selectedColumns);
+    List<GridColumn> columns = myColumns != null ? Arrays.asList(myColumns) : Collections.emptyList();
+    return myExtractor.startExtraction(myOut, columns, myQuery, myConfig, selectedColumns);
   }
 
   public GridColumn[] getColumns() {

@@ -195,3 +195,35 @@ class InitializeField {
     super();
   }
 }
+class Person {
+
+  Person(Other other) {
+  }
+
+  Person() {
+    Other o = new Other(<error descr="Cannot call 'Object.hashCode()' before superclass constructor is called">hashCode</error>()) {};
+    this(o);
+  }
+
+  Person(int i) {
+    this(new Other(<error descr="Cannot call 'Object.hashCode()' before superclass constructor is called">hashCode</error>()));
+  }
+}
+class Other {
+  Other(int x) {}
+}
+class Machine {
+  private final boolean big;
+  Machine(boolean big) {
+    this.big = big;
+  }
+
+  Machine() {
+    <error descr="Cannot assign final field 'big' before chained constructor call">big</error> = false;
+    this(false);
+  }
+
+  Machine(int size) {
+    this(<error descr="Cannot assign final field 'big' before chained constructor call">big</error> = size > 10);
+  }
+}

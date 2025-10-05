@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ThreeState
-import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
-import com.intellij.vcs.git.shared.ui.getText
+import com.intellij.vcs.git.branch.GitInOutCountersInProject
+import com.intellij.vcs.git.ui.getText
 import git4idea.*
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitRefType
@@ -77,7 +77,7 @@ sealed class BranchNodeDescriptor {
     override fun toString() = "ROOT"
   }
 
-  internal object Head : BranchNodeDescriptor(), LogNavigatable {
+  internal object Head : BranchNodeDescriptor() {
     override val displayName: @Nls String = message("group.Git.HEAD.Branch.Filter.title")
     override val children: List<BranchNodeDescriptor>
       get() = emptyList()
@@ -100,7 +100,7 @@ sealed class BranchNodeDescriptor {
     override fun toString(): String = "REMOTE:$displayName"
   }
 
-  internal sealed class Ref(val refInfo: RefInfo) : BranchNodeDescriptor(), LogNavigatable {
+  internal sealed class Ref(val refInfo: RefInfo) : BranchNodeDescriptor() {
     override val children: List<BranchNodeDescriptor>
       get() = emptyList()
   }
@@ -132,8 +132,6 @@ sealed class BranchNodeDescriptor {
   ) : BranchNodeDescriptor() {
     override fun toString(): String = "GROUP:$displayName"
   }
-
-  sealed interface LogNavigatable
 }
 
 internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMutableTreeNode(nodeDescriptor) {

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.util.Locale
 
 @VisibleForTesting
-class JavaElementFeaturesProvider : ElementFeatureProvider {
+public class JavaElementFeaturesProvider : ElementFeatureProvider {
 
   private inline val POPULAR_MODIFIERS: List<JvmModifier>
     get() =

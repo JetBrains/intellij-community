@@ -14,7 +14,10 @@ class AdjustFontSizeAction : AnAction(CodeInsightBundle.message("javadoc.adjust.
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = documentationBrowser(e.dataContext) != null
+    val documentationBrowser = documentationBrowser(e.dataContext)
+    val ui = documentationBrowser?.ui
+    e.presentation.isEnabledAndVisible = documentationBrowser != null &&
+                                         ui?.editorPane?.isCustomSettingsEnabled == false
   }
 
   override fun actionPerformed(e: AnActionEvent) {

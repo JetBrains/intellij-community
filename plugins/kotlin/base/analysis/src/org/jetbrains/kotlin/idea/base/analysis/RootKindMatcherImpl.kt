@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_AND_RESOURCES_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
-import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
+import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTENSION

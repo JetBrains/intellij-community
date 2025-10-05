@@ -10,15 +10,13 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.changes.committed.LabeledComboBoxAction
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
-import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinWorksheet
 import javax.swing.JComponent
 
-class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
+class ModulesComboBoxAction(private val scratchFile: ScratchFile, val moduleSelectedListener: (Module) -> Unit) :
   LabeledComboBoxAction(KotlinJvmBundle.message("scratch.module.combobox")) {
     override fun createPopupActionGroup(button: JComponent, context: DataContext): DefaultActionGroup {
         val actionGroup = DefaultActionGroup()
@@ -45,22 +43,17 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
 
     override fun update(e: AnActionEvent) {
         super.update(e)
-        val selectedModule = scratchFile.module?.takeIf { !it.isDisposed }
+        val selectedModule = scratchFile.currentModule?.takeIf { !it.isDisposed }
 
         e.presentation.apply {
             icon = selectedModule?.let { ModuleType.get(it).icon }
             text = selectedModule?.name ?: KotlinJvmBundle.message("list.item.no.module")
         }
 
-        e.presentation.isVisible = isModuleSelectorVisible()
+        e.presentation.isVisible = true
     }
 
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-    @TestOnly
-    fun isModuleSelectorVisible(): Boolean {
-        return !scratchFile.file.isKotlinWorksheet
-    }
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     private inner class ModuleIsNotSelectedAction(@NlsActions.ActionText placeholder: String) : DumbAwareAction(placeholder) {
         override fun actionPerformed(e: AnActionEvent) {
@@ -72,6 +65,7 @@ class ModulesComboBoxAction(private val scratchFile: ScratchFile) :
       DumbAwareAction(module.name, null, ModuleType.get(module).icon) {
         override fun actionPerformed(e: AnActionEvent) {
             scratchFile.setModule(module)
+            moduleSelectedListener(module)
         }
     }
 }

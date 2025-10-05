@@ -159,16 +159,10 @@ final class ClassChecker {
     PsiElement parent = aClass.getParent();
     boolean checkSiblings;
     if (parent instanceof PsiClass psiClass && !PsiUtil.isLocalOrAnonymousClass(psiClass) && !PsiUtil.isLocalOrAnonymousClass(aClass)) {
-      // optimization: instead of iterating PsiClass children manually, we can get them all from caches
-      PsiClass innerClass = psiClass.findInnerClassByName(name, false);
-      if (innerClass != null && innerClass != aClass) {
-        if (innerClass.getTextOffset() > aClass.getTextOffset()) {
-          // report duplicate lower in text
-          PsiClass c = innerClass;
-          innerClass = aClass;
-          aClass = c;
-        }
-        myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, innerClass));
+      var duplicates = ContainerUtil.filter(psiClass.getInnerClasses(), c -> Objects.equals(c.getName(), name));
+      var duplicatesWithoutMe = ContainerUtil.filter(duplicates, c -> c != aClass);
+      if (!duplicatesWithoutMe.isEmpty()) {
+        myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, duplicatesWithoutMe.get(0)));
         return;
       }
       checkSiblings = false; // there still might be duplicates in parents
@@ -204,6 +198,7 @@ final class ClassChecker {
 
       if (element instanceof PsiClass psiClass && name.equals(psiClass.getName())) {
         myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, psiClass));
+        return;
       }
     }
   }
@@ -404,8 +399,8 @@ final class ClassChecker {
       myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_INVALID_FILE_NAME.create(file, implicitClass));
       return;
     }
-    PsiMethod[] methods = implicitClass.getMethods();
-    boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method));
+    PsiMethod[] methods = implicitClass.findMethodsByName("main", false);
+    boolean hasMainMethod = ContainerUtil.exists(methods, method -> PsiMethodUtil.isMainMethod(method));
     if (!hasMainMethod) {
       //don't show errors if there is a package, this package will be highlighted
       if (file.getPackageStatement() != null) return;
@@ -644,12 +639,8 @@ final class ClassChecker {
     myVisitor.report(error.create(ref, aClass));
   }
 
-  void checkValueClassExtends(@NotNull PsiClass superClass,
-                              @NotNull PsiClass psiClass,
-                              @NotNull PsiJavaCodeReferenceElement ref) {
-    if (!(!psiClass.isValueClass() ||
-          superClass.isValueClass() ||
-          CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()))) {
+  void checkValueClassExtends(@NotNull PsiClass superClass, @NotNull PsiClass psiClass, @NotNull PsiJavaCodeReferenceElement ref) {
+    if (psiClass.isValueClass() && !superClass.isValueClass() && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
       myVisitor.report(JavaErrorKinds.VALUE_CLASS_EXTENDS_NON_ABSTRACT.create(ref));
     }
   }

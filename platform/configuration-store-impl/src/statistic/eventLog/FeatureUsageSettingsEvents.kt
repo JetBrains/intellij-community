@@ -70,7 +70,8 @@ internal class FeatureUsageSettingsEvents private constructor(private val projec
         }
       }
 
-      (project ?: ApplicationManager.getApplication()).messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      val messageBus = project?.messageBus ?: ApplicationManager.getApplication().messageBus
+      messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
         override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
           if (!FeatureUsageLogger.getInstance().isEnabled()) return
           // process all pending requests

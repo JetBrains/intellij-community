@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 

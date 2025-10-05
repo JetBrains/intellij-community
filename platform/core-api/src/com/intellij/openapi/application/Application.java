@@ -10,6 +10,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
+import com.intellij.util.messages.MessageBus;
 import kotlin.Pair;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -103,9 +104,9 @@ public interface Application extends ComponentManager {
   }
 
   /**
-   * Runs the specified computation in a read action. Can be called from any thread.
-   * The action is executed immediately if no write action is currently running or the write action
-   * is running on the current thread.
+   * Runs the specified computation in a blocking read action (as opposed to {@link com.intellij.openapi.application.NonBlockingReadAction}).
+   * Can be called from any thread.
+   * The action is executed immediately if no write action is currently running or the write action is running on the current thread.
    * Otherwise, the action is blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#run} for a more lambda-friendly version.
@@ -118,9 +119,9 @@ public interface Application extends ComponentManager {
   void runReadAction(@NotNull Runnable action);
 
   /**
-   * Runs the specified computation in a read action. Can be called from any thread.
-   * The computation is executed immediately if no write action is currently running or the write action
-   * is running on the current thread.
+   * Runs the specified computation in a blocking read action (as opposed to {@link com.intellij.openapi.application.NonBlockingReadAction}).
+   * Can be called from any thread.
+   * The computation is executed immediately if no write action is currently running or the write action is running on the current thread.
    * Otherwise, the action is blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#compute} for a more lambda-friendly version.
@@ -135,9 +136,9 @@ public interface Application extends ComponentManager {
   <T> T runReadAction(@NotNull Computable<T> computation);
 
   /**
-   * Runs the specified computation in a read action. Can be called from any thread.
-   * The computation is executed immediately if no write action is currently running or the write action
-   * is running on the current thread.
+   * Runs the specified computation in a blocking read action (as opposed to {@link com.intellij.openapi.application.NonBlockingReadAction}).
+   * Can be called from any thread.
+   * The computation is executed immediately if no write action is currently running or the write action is running on the current thread.
    * Otherwise, the action is blocked until the currently running write action completes.
    * <p>
    * See also {@link ReadAction#compute} for a more lambda-friendly version.
@@ -639,6 +640,12 @@ public interface Application extends ComponentManager {
 
   boolean isEAP();
 
+  /**
+   * Provides access to the application-level {@link MessageBus} instance to send or receive events.
+   */
+  @Override
+  @NotNull MessageBus getMessageBus();
+
   @ApiStatus.Internal
   default boolean isExitInProgress() {
     return false;
@@ -682,7 +689,7 @@ public interface Application extends ComponentManager {
   /** @deprecated bad name, use {@link #assertWriteIntentLockAcquired()} instead */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   default void assertIsWriteThread() {
     assertWriteIntentLockAcquired();
   }
@@ -711,6 +718,11 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Internal
   default @NonNls @Nullable String isLockingProhibited() {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  default @Nullable ThreadingSupport getThreadingSupport() {
     return null;
   }
 }

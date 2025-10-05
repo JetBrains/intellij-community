@@ -7,6 +7,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.plugins.PluginFeatureService;
+import com.intellij.ide.plugins.UltimateDependencyChecker;
 import com.intellij.ide.plugins.PluginManagerConfigurableService;
 import com.intellij.ide.plugins.advertiser.FeaturePluginData;
 import com.intellij.openapi.options.SettingsEditor;
@@ -109,7 +110,8 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
       return;
     }
     FeaturePluginData plugin = PluginFeatureService.Companion.__getPluginForFeature(RunManager.CONFIGURATION_TYPE_FEATURE_ID, typeId);
-    if (plugin != null) {
+    if (plugin != null &&
+        UltimateDependencyChecker.getInstance().canBeEnabled(plugin.pluginData.getPluginId())) {
       RuntimeConfigurationError err = new RuntimeConfigurationError(
         ExecutionBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.displayName));
       err.setQuickFix(() -> {

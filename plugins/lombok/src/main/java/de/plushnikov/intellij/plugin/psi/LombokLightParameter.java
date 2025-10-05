@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightParameter;
@@ -93,7 +94,16 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
       return false;
     }
 
-    return getType().equals(that.getType());
+    DumbService dumbService = DumbService.getInstance(getProject());
+    if (dumbService.isDumb() && !dumbService.isAlternativeResolveEnabled()) {
+      //it is necessary to resolve for weak references for inner caches
+      return dumbService.computeWithAlternativeResolveEnabled(() -> {
+        return getType().equals(that.getType());
+      });
+    }
+    else {
+      return getType().equals(that.getType());
+    }
   }
 
   @Override

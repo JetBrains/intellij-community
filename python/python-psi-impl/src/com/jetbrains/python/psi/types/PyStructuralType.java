@@ -27,17 +27,14 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PyStructuralType implements PyType {
   private final @NotNull Set<String> myAttributes;
   private final boolean myInferredFromUsages;
 
   public PyStructuralType(@NotNull Set<String> attributes, boolean inferredFromUsages) {
-    myAttributes = attributes;
+    myAttributes = new LinkedHashSet<>(attributes);
     myInferredFromUsages = inferredFromUsages;
   }
 
@@ -84,7 +81,19 @@ public class PyStructuralType implements PyType {
     return myInferredFromUsages;
   }
 
-  public Set<String> getAttributeNames() {
-    return myAttributes;
+  public @NotNull Set<String> getAttributeNames() {
+    return Collections.unmodifiableSet(myAttributes);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    PyStructuralType type = (PyStructuralType)o;
+    return myInferredFromUsages == type.myInferredFromUsages && Objects.equals(myAttributes, type.myAttributes);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myAttributes, myInferredFromUsages);
   }
 }

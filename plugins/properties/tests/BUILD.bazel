@@ -1,17 +1,17 @@
 ### auto-generated section `build intellij.properties.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "intellij.properties.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -34,6 +34,7 @@ jvm_library(
     "//platform/util/diff",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
+    "//plugins/grazie/src:core",
     "//java/openapi:java",
     "//xml/impl",
     "//plugins/properties:properties-backend",
@@ -49,11 +50,16 @@ jvm_library(
     "//platform/diff-impl",
     "//xml/xml-psi-api:psi",
     "@lib//:fastutil-min",
-  ]
+  ],
+  exports = ["//plugins/properties:properties-backend"]
 )
+### auto-generated section `build intellij.properties.tests` end
+
+### auto-generated section `test intellij.properties.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build intellij.properties.tests` end
+### auto-generated section `test intellij.properties.tests` end

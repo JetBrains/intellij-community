@@ -351,9 +351,10 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   private inner class MyUndoDocumentListener : DocumentListener {
     override fun beforeDocumentChange(event: DocumentEvent) {
+      if (project.isDisposed) return
       if (hasUndoInCommand) return
       if (undoManager.isUndoOrRedoInProgress) return
-      if (CommandProcessor.getInstance().currentCommand == null) return
+      if (!CommandProcessor.getInstance().isCommandInProgress) return
       hasUndoInCommand = true
 
       registerUndoAction(true)
@@ -374,13 +375,13 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
 
     override fun undoTransparentActionStarted() {
-      if (CommandProcessor.getInstance().currentCommand == null) {
+      if (!CommandProcessor.getInstance().isCommandInProgress) {
         hasUndoInCommand = false
       }
     }
 
     override fun undoTransparentActionFinished() {
-      if (CommandProcessor.getInstance().currentCommand == null) {
+      if (!CommandProcessor.getInstance().isCommandInProgress) {
         hasUndoInCommand = false
       }
     }
@@ -757,6 +758,25 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
   @RequiresEdt
   override fun moveToChangelist(lines: BitSet, changelist: LocalChangeList) {
     moveToChangelist({ it.isSelectedByLine(lines) }, changelist)
+  }
+
+  @RequiresEdt
+  @ApiStatus.Internal
+  fun recreateBlocks(map: Map<Range, LocalChangeList>) {
+    changeListManager.executeUnderDataLock {
+      val rangesToBlockData = map.entries.associate { (range, changelist) ->
+        if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderDataLock
+        val newMarker = ChangeListMarker(changelist)
+        com.intellij.diff.util.Range(range.vcsLine1, range.vcsLine2, range.line1, range.line2) to ChangeListBlockData(marker = newMarker) as DocumentTracker.BlockData
+      }
+
+      documentTracker.writeLock {
+        documentTracker.recreateBlocks(rangesToBlockData)
+        dropExistingUndoActions()
+        updateHighlighters()
+        updateAffectedChangeLists()
+      }
+    }
   }
 
   @RequiresEdt

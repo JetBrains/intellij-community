@@ -1,20 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService
 
-import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.python.community.execService.impl.ProcessSemiInteractiveHandlerImpl
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
-import java.nio.file.Path
 
 
 // This is an advanced API, consider using basic api.kt
+
 
 /**
  * Service is a thin wrapper over [com.intellij.platform.eel.EelApi] to execute python tools on local or remote Eel.
@@ -33,17 +33,27 @@ interface ExecService {
    * You must listen for process stdout/stderr e.t.c.
    * Use it if you need to get some info from a process before it ends or to interact (i.e. write into stdin).
    * See [ProcessInteractiveHandler] and [processSemiInteractiveHandler].
-   * [argsBuilder] is a lambda to build args, see [ArgsBuilder]
    */
   @CheckReturnValue
   suspend fun <T> executeAdvanced(
-    binary: Path,
-    argsBuilder: suspend ArgsBuilder.() -> Unit = {},
+    binary: BinaryToExec,
+    args: Args,
     options: ExecOptions = ExecOptions(),
     processInteractiveHandler: ProcessInteractiveHandler<T>,
   ): PyResult<T>
-}
 
+  /**
+   * Execute process from [binary] with [args]. It is up to you to manage its lifecycle.
+   * When bound to [scopeToBind] process will be destroyed once [scopeToBind] gets cancelled.
+   */
+  @CheckReturnValue
+  suspend fun executeGetProcess(
+    binary: BinaryToExec,
+    args: Args = Args(),
+    scopeToBind: CoroutineScope? = null,
+    options: ExecGetProcessOptions = ExecGetProcessOptions(),
+  ): Result<Process, ExecuteGetProcessError<*>>
+}
 
 /**
  * Message to be displayed to a user in case of process failure.
@@ -60,7 +70,7 @@ fun interface ProcessInteractiveHandler<T> {
    * In latter case returns [EelProcessExecutionResult] (created out of collected output) and optional error message.
    * If no message returned -- the default one is used.
    */
-  suspend fun getResultFromProcess(binary: Path, args: List<String>, process: EelProcess): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>>
+  suspend fun getResultFromProcess(binary: BinaryToExec, args: List<String>, process: Process): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>>
 }
 
 
@@ -76,17 +86,16 @@ typealias ProcessSemiInteractiveFun<T> = suspend (EelSendChannel, Deferred<EelPr
  */
 fun <T> processSemiInteractiveHandler(pyProcessListener: PyProcessListener? = null, code: ProcessSemiInteractiveFun<T>): ProcessInteractiveHandler<T> = ProcessSemiInteractiveHandlerImpl(pyProcessListener, code)
 
-/**
- * ```kotlin
- *   addLocalFile(helper)
- *   addTextArgs("-v")
- * ```
- */
-interface ArgsBuilder {
-  fun addArgs(vararg args: String)
+
+sealed class ExecuteGetProcessError<T : PyError>(val pyError: T) {
+  /**
+   * Failed to create environment for process (i.e. failed to start docker)
+   */
+  class EnvironmentError internal constructor(pyError: MessageError) : ExecuteGetProcessError<MessageError>(pyError)
 
   /**
-   * This file will be copied to eel and its remote name will be added to the list of arguments
+   * Process couldn't be started
    */
-  suspend fun addLocalFile(localFile: Path)
+  class CanStart internal constructor(pyError: ExecErrorImpl<ExecErrorReason.CantStart>) : ExecuteGetProcessError<ExecErrorImpl<ExecErrorReason.CantStart>>(pyError)
 }
+

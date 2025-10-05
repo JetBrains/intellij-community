@@ -241,7 +241,7 @@ public class XmlBuilderDriver {
     );
   }
 
-  private @NonNls String getNamespace(@NotNull CharSequence tagName) {
+  private @NonNls @NotNull String getNamespace(@NotNull CharSequence tagName) {
     final String namespacePrefix;
     int pos = StringUtil.indexOf(tagName, ':');
     if (pos == -1) {

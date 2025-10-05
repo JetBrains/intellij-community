@@ -27,7 +27,6 @@ import com.intellij.util.messages.Topic.AppLevel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
 
 @Service(Level.APP)
@@ -35,12 +34,17 @@ class CloneableProjectsService {
   private val cloneableProjects = ContainerUtil.createLockFreeCopyOnWriteList<CloneableProject>()
 
   @CalledInAny
-  fun runCloneTask(projectPath: @SystemIndependent String, cloneTask: CloneTask) {
+  fun runCloneTask(projectPath: String, cloneTask: CloneTask) {
+    runCloneTask(Path.of(projectPath), cloneTask)
+  }
+
+  @CalledInAny
+  fun runCloneTask(projectPath: Path, cloneTask: CloneTask) {
     val taskInfo = cloneTask.taskInfo()
     val progressIndicator = CloneableProjectProgressIndicator(taskInfo)
     val cloneableProject = CloneableProject(projectPath, taskInfo, progressIndicator, CloneStatus.PROGRESS)
     addCloneableProject(cloneableProject)
-    WslUsagesCollector.beforeProjectCreated(Path.of(projectPath), cloneTask)
+    WslUsagesCollector.beforeProjectCreated(projectPath, cloneTask)
 
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().runProcess(Runnable {
@@ -197,7 +201,7 @@ class CloneableProjectsService {
   }
 
   data class CloneableProject(
-    val projectPath: @SystemIndependent String,
+    val projectPath: Path,
     val cloneTaskInfo: CloneTaskInfo,
     val progressIndicator: ProgressIndicatorEx,
     var cloneStatus: CloneStatus,

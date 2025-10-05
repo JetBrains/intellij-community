@@ -13,11 +13,12 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.launchOnceOnShow
+import com.intellij.util.ui.initOnShow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.RecordUniqueValidator
@@ -59,7 +60,7 @@ class GithubShareDialog(
     title = message("share.on.github")
     setOKButtonText(message("share.button"))
     init()
-    window.launchOnceOnShow("${javaClass.name}#init") {
+    window.initOnShow("${javaClass.name}#init") {
       switchAccount(accountsModel.selected)
     }
   }
@@ -120,7 +121,7 @@ class GithubShareDialog(
           .validationOnApply { if (accountsModel.selected == null) error(message("dialog.message.account.cannot.be.empty")) else null }
           .applyToComponent {
             addActionListener {
-              window.launchOnceOnShow("${javaClass.name}#switchAccount") {
+              window.initOnShow("${javaClass.name}#switchAccount") {
                 switchAccount(accountsModel.selected)
               }
             }
@@ -128,7 +129,7 @@ class GithubShareDialog(
           .resizableColumn()
 
         if (accountsModel.size == 0) {
-          cell(GHAccountsUtil.createAddAccountLink(project, accountsModel))
+          cell(GHAccountsUtil.createAddAccountLink(project, accountsModel, GHLoginSource.SHARE))
         }
       }
     }

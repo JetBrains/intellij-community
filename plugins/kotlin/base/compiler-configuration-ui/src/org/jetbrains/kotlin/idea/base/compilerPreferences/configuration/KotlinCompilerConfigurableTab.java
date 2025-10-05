@@ -363,9 +363,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         }
 
         apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
-        if (isJpsCompilerVisible()) {
-            languageVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
-        }
+        languageVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
 
         VersionView selectedItem =
                 VersionComparatorUtil.compare(selectedAPIVersion.getVersionString(), upperBound.getVersionString()) <= 0
@@ -636,7 +634,14 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         JpsVersionItem selectedItem = (JpsVersionItem) kotlinJpsPluginVersionComboBox.getSelectedItem();
         IdeKotlinVersion version = selectedItem != null ? selectedItem.getVersion() : null;
         LanguageVersion languageVersion = version != null ? LanguageVersion.fromFullVersionString(version.toString()) : null;
-        return languageVersion != null ? new VersionView.Specific(languageVersion) : getLatestStableVersion();
+        VersionView versionView;
+        if (languageVersion != null) {
+            versionView = new VersionView.Specific(languageVersion);
+        } else {
+            String compilerVersionFromSettings = KotlinJpsPluginSettings.getInstance(project).getSettings().getVersion();
+            versionView = VersionView.Companion.deserialize(compilerVersionFromSettings, /*isAutoAdvance =*/ false);
+        }
+        return versionView;
     }
 
     private @NotNull String getSelectedKotlinJpsPluginVersion() {

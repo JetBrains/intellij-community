@@ -34,7 +34,9 @@ class GraphDef(google.protobuf.message.Message):
     compatible, this field is entirely ignored.
     """
     @property
-    def node(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.core.framework.node_def_pb2.NodeDef]: ...
+    def node(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.core.framework.node_def_pb2.NodeDef]: ...
     @property
     def versions(self) -> tensorflow.core.framework.versions_pb2.VersionDef:
         """Compatibility versions of the graph.  See core/public/version.h for version
@@ -44,7 +46,7 @@ class GraphDef(google.protobuf.message.Message):
 
     @property
     def library(self) -> tensorflow.core.framework.function_pb2.FunctionDefLibrary:
-        """"library" provides user-defined functions.
+        """ "library" provides user-defined functions.
 
         Naming:
           * library.function.name are in a flat namespace.
@@ -85,7 +87,14 @@ class GraphDef(google.protobuf.message.Message):
         library: tensorflow.core.framework.function_pb2.FunctionDefLibrary | None = ...,
         debug_info: tensorflow.core.framework.graph_debug_info_pb2.GraphDebugInfo | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["debug_info", b"debug_info", "library", b"library", "versions", b"versions"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["debug_info", b"debug_info", "library", b"library", "node", b"node", "version", b"version", "versions", b"versions"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["debug_info", b"debug_info", "library", b"library", "versions", b"versions"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "debug_info", b"debug_info", "library", b"library", "node", b"node", "version", b"version", "versions", b"versions"
+        ],
+    ) -> None: ...
 
 global___GraphDef = GraphDef

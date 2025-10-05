@@ -10,7 +10,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.BridgeInitializer
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.*
@@ -40,7 +40,7 @@ private class GlobalSdkBridgeInitializer : BridgeInitializer {
   }
 }
 
-private class GlobalSdkBridgesLoader(private val descriptor: EelDescriptor) : GlobalSdkTableBridge {
+private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : GlobalSdkTableBridge {
   override fun initializeBridgesAfterLoading(mutableStorage: MutableEntityStorage,
                                              initialEntityStorage: VersionedEntityStorage): () -> Unit {
     val sdks = mutableStorage
@@ -132,18 +132,18 @@ private class GlobalSdkBridgesLoader(private val descriptor: EelDescriptor) : Gl
     if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
       return false
     }
-    return entity.homePath?.toPath()?.getEelDescriptor() != descriptor
+    return entity.homePath?.toPath()?.getEelDescriptor()?.machine != eelMachine
   }
 }
 
 private val LOG = logger<GlobalSdkBridgesLoader>()
 
 private class GlobalSdkTableBridgeRegistryImpl : GlobalSdkTableBridgeRegistry {
-  private val registry = ConcurrentHashMap<EelDescriptor, GlobalSdkTableBridge>()
+  private val registry = ConcurrentHashMap<EelMachine, GlobalSdkTableBridge>()
 
-  override fun getTableBridge(eelDescriptor: EelDescriptor): GlobalSdkTableBridge {
-    return registry.computeIfAbsent(eelDescriptor) {
-      GlobalSdkBridgesLoader(eelDescriptor)
+  override fun getTableBridge(eelMachine: EelMachine): GlobalSdkTableBridge {
+    return registry.computeIfAbsent(eelMachine) {
+      GlobalSdkBridgesLoader(eelMachine)
     }
   }
 }

@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.idea.TestFor;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCase {
@@ -15,6 +17,11 @@ public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCa
     return new LocalInspectionTool[]{
       new RedundantCastInspection()
     };
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk11();
   }
 
   private void doTest() {
@@ -47,4 +54,7 @@ public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCa
 
   @TestFor(issues = "IDEA-361212")
   public void testNestedCallRawInheritance() {doTest();}
+
+  @TestFor(issues = {"IDEA-375458", "IDEA-377186"})
+  public void testExplicitNullabilityAnnotation() { doTest(); }
 }

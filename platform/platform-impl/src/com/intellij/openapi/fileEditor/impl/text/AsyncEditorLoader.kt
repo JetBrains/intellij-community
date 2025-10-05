@@ -62,6 +62,7 @@ class  AsyncEditorLoader internal constructor(
      * Invoke callback when the editor is successfully loaded. The callback will not be called if the loading was canceled.
      */
     @RequiresEdt
+    @JvmStatic
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
       val asyncLoader = editor.getUserData(ASYNC_LOADER)
       performWhenLoaded(asyncLoader, runnable)
@@ -81,7 +82,7 @@ class  AsyncEditorLoader internal constructor(
     @Suppress("UsagesOfObsoleteApi")
     internal suspend fun waitForCompleted(editor: Editor) {
       val asyncLoader = editor.getUserData(ASYNC_LOADER)?.takeIf { !it.isLoaded() } ?: return
-      withContext(Dispatchers.ui(UiDispatcherKind.LEGACY) + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.LEGACY) + ModalityState.any().asContextElement()) {
         suspendCancellableCoroutine { continuation ->
           // resume on editor close
           val handle = asyncLoader.coroutineScope.coroutineContext.job.invokeOnCompletion {
@@ -171,7 +172,7 @@ class  AsyncEditorLoader internal constructor(
   }
 
   private fun executeDelayedActions(delayedActions: Array<Runnable>) {
-    resetThreadContext().use {
+    resetThreadContext {
       for (action in delayedActions) {
         action.run()
       }
@@ -240,7 +241,7 @@ private fun CoroutineScope.showLoadingIndicator(
     val processIconRef = AtomicReference<AnimatedIcon>()
 
     awaitCancellationAndInvoke {
-      withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+      withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
         val processIcon = processIconRef.getAndSet(null)
         if (processIcon != null) {
           processIcon.suspend()
@@ -250,7 +251,7 @@ private fun CoroutineScope.showLoadingIndicator(
       }
     }
 
-    withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+    withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
       val processIcon = AsyncProcessIcon.createBig(/* coroutineScope = */ this@launch)
       processIconRef.set(processIcon)
       addUi(processIcon)

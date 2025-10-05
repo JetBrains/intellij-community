@@ -35,7 +35,7 @@ internal fun getLoggerFactoryWasmJs(): KLoggerFactory {
 }
 
 private enum class BrowserConsoleLogLevel {
-  ERROR, WARN, INFO, DEBUG, TRACE
+  ERROR, WARN, INFO, DEBUG
 }
 
 private fun getLogger(name: String): KLogger {
@@ -47,11 +47,11 @@ private fun getLogger(name: String): KLogger {
     override val isErrorEnabled: Boolean = true
 
     override fun trace(message: Any?) {
-      log(BrowserConsoleLogLevel.TRACE, message)
+      log(BrowserConsoleLogLevel.DEBUG, message)
     }
 
     override fun trace(t: Throwable?, message: Any?) {
-      log(BrowserConsoleLogLevel.TRACE, message, t)
+      log(BrowserConsoleLogLevel.DEBUG, message, t)
     }
 
     override fun debug(message: Any?) {
@@ -120,16 +120,9 @@ private fun getLogger(name: String): KLogger {
         BrowserConsoleLogLevel.DEBUG -> {
           consoleDebug(message)
         }
-        BrowserConsoleLogLevel.TRACE -> {
-          consoleTrace(message)
-        }
       }
     }
   })
-}
-
-internal fun consoleTrace(message: String) {
-  js("console.trace(message)")
 }
 
 internal fun consoleDebug(message: String) {

@@ -26,7 +26,9 @@ class Score(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ScoreTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Score._ScoreType.ValueType], builtins.type):
+    class _ScoreTypeEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[Score._ScoreType.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Curriculum: Score._ScoreType.ValueType  # 1
         """map generated score (from curriculum maps with special scoring)"""
@@ -54,8 +56,12 @@ class Score(google.protobuf.message.Message):
         score: builtins.int | None = ...,
         score_details: global___ScoreDetails | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["score", b"score", "score_details", b"score_details", "score_type", b"score_type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["score", b"score", "score_details", b"score_details", "score_type", b"score_type"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["score", b"score", "score_details", b"score_details", "score_type", b"score_type"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["score", b"score", "score_details", b"score_details", "score_type", b"score_type"]
+    ) -> None: ...
 
 global___Score = Score
 
@@ -83,8 +89,18 @@ class CategoryScoreDetails(google.protobuf.message.Message):
         technology: builtins.float | None = ...,
         upgrade: builtins.float | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["army", b"army", "economy", b"economy", "none", b"none", "technology", b"technology", "upgrade", b"upgrade"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["army", b"army", "economy", b"economy", "none", b"none", "technology", b"technology", "upgrade", b"upgrade"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "army", b"army", "economy", b"economy", "none", b"none", "technology", b"technology", "upgrade", b"upgrade"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "army", b"army", "economy", b"economy", "none", b"none", "technology", b"technology", "upgrade", b"upgrade"
+        ],
+    ) -> None: ...
 
 global___CategoryScoreDetails = CategoryScoreDetails
 
@@ -99,13 +115,11 @@ class VitalScoreDetails(google.protobuf.message.Message):
     shields: builtins.float
     energy: builtins.float
     def __init__(
-        self,
-        *,
-        life: builtins.float | None = ...,
-        shields: builtins.float | None = ...,
-        energy: builtins.float | None = ...,
+        self, *, life: builtins.float | None = ..., shields: builtins.float | None = ..., energy: builtins.float | None = ...
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["energy", b"energy", "life", b"life", "shields", b"shields"]) -> builtins.bool: ...
+    def HasField(
+        self, field_name: typing.Literal["energy", b"energy", "life", b"life", "shields", b"shields"]
+    ) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["energy", b"energy", "life", b"life", "shields", b"shields"]) -> None: ...
 
 global___VitalScoreDetails = VitalScoreDetails
@@ -192,7 +206,7 @@ class ScoreDetails(google.protobuf.message.Message):
 
     @property
     def lost_minerals(self) -> global___CategoryScoreDetails:
-        """ Sum of lost minerals for the player in each category."""
+        """Sum of lost minerals for the player in each category."""
 
     @property
     def lost_vespene(self) -> global___CategoryScoreDetails:
@@ -266,7 +280,127 @@ class ScoreDetails(google.protobuf.message.Message):
         current_apm: builtins.float | None = ...,
         current_effective_apm: builtins.float | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["collected_minerals", b"collected_minerals", "collected_vespene", b"collected_vespene", "collection_rate_minerals", b"collection_rate_minerals", "collection_rate_vespene", b"collection_rate_vespene", "current_apm", b"current_apm", "current_effective_apm", b"current_effective_apm", "food_used", b"food_used", "friendly_fire_minerals", b"friendly_fire_minerals", "friendly_fire_vespene", b"friendly_fire_vespene", "idle_production_time", b"idle_production_time", "idle_worker_time", b"idle_worker_time", "killed_minerals", b"killed_minerals", "killed_value_structures", b"killed_value_structures", "killed_value_units", b"killed_value_units", "killed_vespene", b"killed_vespene", "lost_minerals", b"lost_minerals", "lost_vespene", b"lost_vespene", "spent_minerals", b"spent_minerals", "spent_vespene", b"spent_vespene", "total_damage_dealt", b"total_damage_dealt", "total_damage_taken", b"total_damage_taken", "total_healed", b"total_healed", "total_used_minerals", b"total_used_minerals", "total_used_vespene", b"total_used_vespene", "total_value_structures", b"total_value_structures", "total_value_units", b"total_value_units", "used_minerals", b"used_minerals", "used_vespene", b"used_vespene"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["collected_minerals", b"collected_minerals", "collected_vespene", b"collected_vespene", "collection_rate_minerals", b"collection_rate_minerals", "collection_rate_vespene", b"collection_rate_vespene", "current_apm", b"current_apm", "current_effective_apm", b"current_effective_apm", "food_used", b"food_used", "friendly_fire_minerals", b"friendly_fire_minerals", "friendly_fire_vespene", b"friendly_fire_vespene", "idle_production_time", b"idle_production_time", "idle_worker_time", b"idle_worker_time", "killed_minerals", b"killed_minerals", "killed_value_structures", b"killed_value_structures", "killed_value_units", b"killed_value_units", "killed_vespene", b"killed_vespene", "lost_minerals", b"lost_minerals", "lost_vespene", b"lost_vespene", "spent_minerals", b"spent_minerals", "spent_vespene", b"spent_vespene", "total_damage_dealt", b"total_damage_dealt", "total_damage_taken", b"total_damage_taken", "total_healed", b"total_healed", "total_used_minerals", b"total_used_minerals", "total_used_vespene", b"total_used_vespene", "total_value_structures", b"total_value_structures", "total_value_units", b"total_value_units", "used_minerals", b"used_minerals", "used_vespene", b"used_vespene"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "collected_minerals",
+            b"collected_minerals",
+            "collected_vespene",
+            b"collected_vespene",
+            "collection_rate_minerals",
+            b"collection_rate_minerals",
+            "collection_rate_vespene",
+            b"collection_rate_vespene",
+            "current_apm",
+            b"current_apm",
+            "current_effective_apm",
+            b"current_effective_apm",
+            "food_used",
+            b"food_used",
+            "friendly_fire_minerals",
+            b"friendly_fire_minerals",
+            "friendly_fire_vespene",
+            b"friendly_fire_vespene",
+            "idle_production_time",
+            b"idle_production_time",
+            "idle_worker_time",
+            b"idle_worker_time",
+            "killed_minerals",
+            b"killed_minerals",
+            "killed_value_structures",
+            b"killed_value_structures",
+            "killed_value_units",
+            b"killed_value_units",
+            "killed_vespene",
+            b"killed_vespene",
+            "lost_minerals",
+            b"lost_minerals",
+            "lost_vespene",
+            b"lost_vespene",
+            "spent_minerals",
+            b"spent_minerals",
+            "spent_vespene",
+            b"spent_vespene",
+            "total_damage_dealt",
+            b"total_damage_dealt",
+            "total_damage_taken",
+            b"total_damage_taken",
+            "total_healed",
+            b"total_healed",
+            "total_used_minerals",
+            b"total_used_minerals",
+            "total_used_vespene",
+            b"total_used_vespene",
+            "total_value_structures",
+            b"total_value_structures",
+            "total_value_units",
+            b"total_value_units",
+            "used_minerals",
+            b"used_minerals",
+            "used_vespene",
+            b"used_vespene",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "collected_minerals",
+            b"collected_minerals",
+            "collected_vespene",
+            b"collected_vespene",
+            "collection_rate_minerals",
+            b"collection_rate_minerals",
+            "collection_rate_vespene",
+            b"collection_rate_vespene",
+            "current_apm",
+            b"current_apm",
+            "current_effective_apm",
+            b"current_effective_apm",
+            "food_used",
+            b"food_used",
+            "friendly_fire_minerals",
+            b"friendly_fire_minerals",
+            "friendly_fire_vespene",
+            b"friendly_fire_vespene",
+            "idle_production_time",
+            b"idle_production_time",
+            "idle_worker_time",
+            b"idle_worker_time",
+            "killed_minerals",
+            b"killed_minerals",
+            "killed_value_structures",
+            b"killed_value_structures",
+            "killed_value_units",
+            b"killed_value_units",
+            "killed_vespene",
+            b"killed_vespene",
+            "lost_minerals",
+            b"lost_minerals",
+            "lost_vespene",
+            b"lost_vespene",
+            "spent_minerals",
+            b"spent_minerals",
+            "spent_vespene",
+            b"spent_vespene",
+            "total_damage_dealt",
+            b"total_damage_dealt",
+            "total_damage_taken",
+            b"total_damage_taken",
+            "total_healed",
+            b"total_healed",
+            "total_used_minerals",
+            b"total_used_minerals",
+            "total_used_vespene",
+            b"total_used_vespene",
+            "total_value_structures",
+            b"total_value_structures",
+            "total_value_units",
+            b"total_value_units",
+            "used_minerals",
+            b"used_minerals",
+            "used_vespene",
+            b"used_vespene",
+        ],
+    ) -> None: ...
 
 global___ScoreDetails = ScoreDetails

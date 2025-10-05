@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -46,6 +46,9 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   public @Nullable VirtualFile findFileByNioFile(@NotNull Path file) {
+    //TODO RC: we convert Path to String, but down the stack we convert String to Path again -- and such conversion
+    //         could be costly (e.g. on Windows). It may worth to think about how to pass the Path down the stack,
+    //         to avoid this double-conversion
     return findFileByPath(file.toAbsolutePath().toString());
   }
 

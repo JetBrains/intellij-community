@@ -73,6 +73,7 @@ public interface JavaElementType {
   IElementType RECORD_COMPONENT = JavaStubElementTypes.RECORD_COMPONENT;
   IElementType RECORD_HEADER = JavaStubElementTypes.RECORD_HEADER;
   IElementType PERMITS_LIST = JavaStubElementTypes.PERMITS_LIST;
+  IElementType PACKAGE_STATEMENT = JavaStubElementTypes.PACKAGE_STATEMENT;
 
   IElementType IMPORT_STATIC_REFERENCE =
     new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", () -> new PsiImportStaticReferenceElementImpl(),
@@ -85,8 +86,6 @@ public interface JavaElementType {
                                  BASIC_REFERENCE_PARAMETER_LIST);
   IElementType JAVA_CODE_REFERENCE = new JavaCompositeElementType("JAVA_CODE_REFERENCE", () -> new PsiJavaCodeReferenceElementImpl(),
                                                                   BASIC_JAVA_CODE_REFERENCE);
-  IElementType PACKAGE_STATEMENT = new JavaCompositeElementType("PACKAGE_STATEMENT", () -> new PsiPackageStatementImpl(),
-                                                                BASIC_PACKAGE_STATEMENT);
   IElementType LOCAL_VARIABLE = new JavaCompositeElementType("LOCAL_VARIABLE", () -> new PsiLocalVariableImpl(),
                                                              BASIC_LOCAL_VARIABLE);
   IElementType REFERENCE_EXPRESSION = new JavaCompositeElementType("REFERENCE_EXPRESSION", () -> new PsiReferenceExpressionImpl(),

@@ -11,4 +11,6 @@ class PromoStep(val generator: PromoProjectGenerator) : ProjectSettingsStepBase<
     myCreateButton.isEnabled = false
     return generator.createPromoPanel()
   }
+
+  override fun createAdvancedSettings(): JPanel? = null
 }

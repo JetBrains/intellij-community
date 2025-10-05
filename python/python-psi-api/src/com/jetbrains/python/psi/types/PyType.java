@@ -5,9 +5,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.ApiStatus;
@@ -36,22 +39,53 @@ public interface PyType {
   /**
    * Resolves an attribute of type.
    *
-   * @param name      attribute name
-   * @param location  the expression of type qualifierType on which the member is being resolved (optional)
+   * @param name     attribute name
+   * @param location the expression of type qualifierType on which the member is being resolved (optional)
    * @return null if name definitely cannot be found (e.g. in a qualified reference),
-   *         or an empty list if name is not found but other contexts are worth looking at,
-   *         or a list of elements that define the name, a la multiResolve().
+   * or an empty list if name is not found but other contexts are worth looking at,
+   * or a list of elements that define the name, a la multiResolve().
    */
   @Nullable
-  List<? extends RatedResolveResult> resolveMember(@NotNull String name, final @Nullable PyExpression location,
-                                                   final @NotNull AccessDirection direction, final @NotNull PyResolveContext resolveContext);
+  List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                   final @Nullable PyExpression location,
+                                                   final @NotNull AccessDirection direction,
+                                                   final @NotNull PyResolveContext resolveContext);
+
+  @ApiStatus.Experimental
+  @Nullable
+  default List<@NotNull PyTypedResolveResult> getMemberTypes(@NotNull String name,
+                                                             final @Nullable PyExpression location,
+                                                             final @NotNull AccessDirection direction,
+                                                             final @NotNull PyResolveContext context) {
+    for (PyTypeProvider typeProvider : PyTypeProvider.EP_NAME.getExtensionList()) {
+      List<PyTypedResolveResult> types = typeProvider.getMemberTypes(this, name, location, direction, context);
+      if (types != null) {
+        return types;
+      }
+    }
+
+    List<? extends RatedResolveResult> results = resolveMember(name, location, direction, context);
+    if (results == null) {
+      return null;
+    }
+
+    return ContainerUtil.map(results, result -> {
+      PsiElement element = result.getElement();
+      if (element instanceof PyTypedElement typedElement) {
+        return new PyTypedResolveResult(typedElement,
+                                        context.getTypeEvalContext().getType(typedElement));
+      }
+      else {
+        return new PyTypedResolveResult(element, null);
+      }
+    });
+  }
 
   /**
    * Proposes completion variants from type's attributes.
    *
-   *
-   * @param location   the reference on which the completion was invoked
-   * @param context    to share state between nested invocations
+   * @param location the reference on which the completion was invoked
+   * @param context  to share state between nested invocations
    * @return completion variants good for {@link com.intellij.psi.PsiReference#getVariants} return value.
    */
   Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context);
@@ -63,9 +97,12 @@ public interface PyType {
 
   /**
    * TODO rename it to something like getPresentableName(), because it's not clear that these names are actually visible to end-user
+   *
    * @return name of the type
    */
-  @Nullable @NlsSafe String getName();
+  @Nullable
+  @NlsSafe
+  String getName();
 
   /**
    * @return true if the type is a known built-in type.

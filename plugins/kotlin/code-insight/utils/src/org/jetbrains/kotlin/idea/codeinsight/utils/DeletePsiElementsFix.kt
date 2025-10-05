@@ -15,9 +15,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 class DeletePsiElementsFix(
     @SafeFieldForPreview private val elementsToBeDeleted: List<SmartPsiElementPointer<PsiElement>>,
 ) : LocalQuickFix {
-    override fun getName() = KotlinBundle.message("delete.equals.and.hash.code.fix.text")
-
-    override fun getFamilyName() = name
+    override fun getFamilyName(): String = KotlinBundle.message("delete.equals.and.hash.code.fix.text")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         for (element in elementsToBeDeleted) {

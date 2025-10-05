@@ -18,7 +18,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Test
 
@@ -68,13 +67,13 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        class Shared {}  /*<# [3 usages] #>*/
+        class Shared {}/*<# [3 usages] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
       package com.company;
-      class Shared {} /*<# [2 usages] #>*/
+      class Shared {}/*<# [2 usages] #>*/
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
   }
@@ -109,16 +108,16 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
       package com.company;
-      class Shared { /*<# [3 usages] #>*/
-        void doShared() {} /*<# [1 usage] #>*/
-      }  
+      class Shared {/*<# [3 usages] #>*/
+        void doShared() {}/*<# [1 usage] #>*/
+      }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        class Shared {  /*<# [2 usages] #>*/
-          void doShared() {} /*<# [no usages] #>*/
+        class Shared {/*<# [2 usages] #>*/
+          void doShared() {}/*<# [no usages] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
   }
@@ -142,13 +141,13 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        class Shared{} /*<# [3 usages   2 inheritors] #>*/
+        class Shared{}/*<# [3 usages   2 inheritors] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        class Shared{} /*<# [2 usages   1 inheritor] #>*/
+        class Shared{}/*<# [2 usages   1 inheritor] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
   }
 
@@ -171,7 +170,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        interface Shared{} /*<# [2 usages   1 implementation] #>*/
+        interface Shared{}/*<# [2 usages   1 implementation] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
                              JavaInheritorsCodeVisionProvider().groupId
     )
@@ -179,7 +178,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        interface Shared{} /*<# [3 usages   2 implementations] #>*/
+        interface Shared{}/*<# [3 usages   2 implementations] #>*/
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
                              JavaInheritorsCodeVisionProvider().groupId
     )
@@ -210,8 +209,8 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        class Shared{ /*<# [2 usages   1 inheritor] #>*/
-          public void foo(){} /*<# [no usages   1 override] #>*/
+        class Shared{/*<# [2 usages   1 inheritor] #>*/
+          public void foo(){}/*<# [no usages   1 override] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
                              JavaInheritorsCodeVisionProvider().groupId
@@ -220,8 +219,8 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        class Shared{ /*<# [3 usages   2 inheritors] #>*/
-          public void foo(){} /*<# [no usages   2 overrides] #>*/
+        class Shared{/*<# [3 usages   2 inheritors] #>*/
+          public void foo(){}/*<# [no usages   2 overrides] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
                              JavaInheritorsCodeVisionProvider().groupId
@@ -299,7 +298,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleAContext = setContext(editor, moduleAFixture.get())
     codeVision.testProviders(moduleAContext, """
         package com.company;
-        enum E { /*<# [7 usages] #>*/
+        enum E {/*<# [7 usages] #>*/
           E1, E2, E3, E4/*<# [1 usage] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,
@@ -309,7 +308,7 @@ internal class JavaMultiverseCodeVisionProviderTest {
     val moduleBContext = setContext(editor, moduleBFixture.get())
     codeVision.testProviders(moduleBContext, """
         package com.company;
-        enum E { /*<# [5 usages] #>*/
+        enum E {/*<# [5 usages] #>*/
           E1, E2, E3, E4/*<# [1 usage] #>*/
         }
       """.trimIndent(), JavaReferencesCodeVisionProvider().groupId,

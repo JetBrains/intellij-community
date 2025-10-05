@@ -26,6 +26,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.*;
 
@@ -103,7 +104,7 @@ public final class JavaErrorKinds {
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_IN_PERMIT_LIST = error("annotation.not.allowed.in.permit.list");
   public static final Simple<PsiPackageStatement> ANNOTATION_NOT_ALLOWED_ON_PACKAGE =
     error(PsiPackageStatement.class, "annotation.not.allowed.on.package")
-      .withAnchor(statement -> requireNonNull(statement.getAnnotationList()));
+      .withAnchor(PsiPackageStatement::getAnnotationList);
   public static final Simple<PsiReferenceList> ANNOTATION_MEMBER_THROWS_NOT_ALLOWED =
     error(PsiReferenceList.class, "annotation.member.may.not.have.throws.list").withAnchor(list -> requireNonNull(list.getFirstChild()));
   public static final Simple<PsiParameterList> ANNOTATION_MEMBER_MAY_NOT_HAVE_PARAMETERS =
@@ -438,9 +439,6 @@ public final class JavaErrorKinds {
     error(PsiClass.class, "class.sealed.permits.on.non.sealed")
       .withAnchor(cls -> requireNonNull(cls.getPermitsList()).getFirstChild())
       .withDescription(cls -> message("class.sealed.permits.on.non.sealed", cls.getName()));
-  public static final Parameterized<PsiElement, LocalClassInstantiationErrorContext> LOCAL_CLASS_INSTANTIATED_FROM_DIFFERENT_STATIC_CONTEXT =
-    parameterized(PsiElement.class, LocalClassInstantiationErrorContext.class, "local.class.cannot.be.instantiated.from.different.static.context")
-      .withDescription((psi, ctx) -> message("local.class.cannot.be.instantiated.from.different.static.context", ctx.localClass().getName()));
   public static final Parameterized<PsiElement, ClassStaticReferenceErrorContext> CLASS_NOT_ENCLOSING =
     parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "class.not.enclosing")
       .withDescription((psi, ctx) -> message("class.not.enclosing", formatClass(ctx.outerClass())));
@@ -496,6 +494,9 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiExpression, PsiClass> INSTANTIATION_ABSTRACT = 
     parameterized(PsiExpression.class, PsiClass.class, "instantiation.abstract")
       .withDescription((expr, aClass) -> message("instantiation.abstract", aClass.getName()));
+  public static final Parameterized<PsiElement, PsiClass> INSTANTIATION_LOCAL_CLASS_WRONG_STATIC_CONTEXT =
+    parameterized(PsiElement.class, PsiClass.class, "instantiation.local.class.wrong.static.context")
+      .withDescription((psi, ctx) -> message("instantiation.local.class.wrong.static.context", ctx.getName()));
   
   public static final Simple<PsiClass> RECORD_NO_HEADER = error(PsiClass.class, "record.no.header")
     .withAnchor(PsiClass::getNameIdentifier);
@@ -639,11 +640,11 @@ public final class JavaErrorKinds {
                                                 owner.getTypeParameters().length));
   public static final Simple<PsiTypeElement> TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH = error("type.parameter.actual.inferred.mismatch");
 
-  public static final Simple<PsiMethod> METHOD_DUPLICATE =
-    error(PsiMethod.class, "method.duplicate")
-      .withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange)
+  public static final Parameterized<PsiMethod, DuplicateMethodsContext> METHOD_DUPLICATE =
+    parameterized(PsiMethod.class, DuplicateMethodsContext.class, "method.duplicate")
+      .withRange((method, duplicates) -> getMethodDeclarationTextRange(method))
       .withDescription(
-        method -> message("method.duplicate", formatMethod(method), formatClass(requireNonNull(method.getContainingClass()))));
+        (method, duplicates) -> message("method.duplicate", formatMethod(method), formatClass(requireNonNull(method.getContainingClass()))));
   public static final Simple<PsiMethod> METHOD_NO_PARAMETER_LIST =
     error(PsiMethod.class, "method.no.parameter.list").withAnchor(PsiMethod::getNameIdentifier);
   public static final Simple<PsiJavaCodeReferenceElement> METHOD_THROWS_CLASS_NAME_EXPECTED =
@@ -1492,7 +1493,14 @@ public final class JavaErrorKinds {
       .withDescription((ref, var) -> message("variable.already.assigned", var.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED_CONSTRUCTOR =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned.constructor")
-      .withDescription((ref, var) -> message("variable.already.assigned.constructor", var.getName()));
+      .withDescription((ref, var) -> {
+        PsiMethod constructor = PsiTreeUtil.getParentOfType(ref, PsiMethod.class);
+        assert constructor != null;
+        PsiMethodCallExpression thisCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+        assert thisCall != null;
+        return message("variable.already.assigned.constructor", var.getName(),
+                       thisCall.getTextOffset() + thisCall.getTextLength() > ref.getTextOffset() ? 1 : 2);
+      });
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED_FIELD =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned.field")
       .withDescription((ref, var) -> message("variable.already.assigned.field", var.getName()));
@@ -1698,8 +1706,6 @@ public final class JavaErrorKinds {
     }
   }
 
-  public record LocalClassInstantiationErrorContext(@NotNull PsiClass localClass, @NotNull PsiModifierListOwner enclosingStaticElement) {}
-
   /**
    * A context for {@link #CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL} error kind
    * @param psiClass a class where an ambiguous call is performed
@@ -1769,4 +1775,6 @@ public final class JavaErrorKinds {
   public record DeconstructionCountMismatchContext(@NotNull PsiPattern @NotNull [] patternComponents,
                                                    @NotNull PsiRecordComponent @NotNull [] recordComponents,
                                                    boolean hasMismatch) {}
+
+  public record DuplicateMethodsContext(@NotNull List<@NotNull PsiMethod> methods) {}
 }

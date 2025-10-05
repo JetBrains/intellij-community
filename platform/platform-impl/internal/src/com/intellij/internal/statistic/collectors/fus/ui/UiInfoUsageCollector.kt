@@ -18,8 +18,8 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.jbr.JdkEx
@@ -158,7 +158,7 @@ private suspend fun addScreenScale(set: MutableSet<MetricEvent>) {
   val userScale = roundScaleValue(JBUIScale.scale(1.0f))
   var isScaleMode: Boolean? = null
   if (!GraphicsEnvironment.isHeadless()) {
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       val dm = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode
       isScaleMode = dm != null && !JdkEx.getDisplayModeEx().isDefault(dm)
     }
@@ -167,7 +167,7 @@ private suspend fun addScreenScale(set: MutableSet<MetricEvent>) {
   data.add(SCALE_FIELD.with(scale))
   data.add(USER_SCALE_FIELD.with(userScale))
   if (isScaleMode != null) {
-    data.add(SCALE_MODE_FIELD.with(isScaleMode == true))
+    data.add(SCALE_MODE_FIELD.with(isScaleMode))
   }
   set.add(SCREEN_SCALE.metric(data))
 }

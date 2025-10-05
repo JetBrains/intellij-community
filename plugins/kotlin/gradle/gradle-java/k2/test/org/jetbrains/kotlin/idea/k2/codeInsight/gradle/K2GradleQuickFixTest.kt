@@ -46,7 +46,7 @@ class K2GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
             ignoreChangesInBuildScriptFiles = false,
             additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" },
             afterDirectorySanitizer = { _, text ->
-                val nativeMain = ModuleManager.getInstance(project).findModuleByName("project.nativeMain")
+                val nativeMain = ModuleManager.getInstance(myProject).findModuleByName("project.nativeMain")
                     ?: error("Missing 'nativeMain' module")
 
                 val version = KotlinLibraryVersionProvider.EP_NAME.extensionList

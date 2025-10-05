@@ -4,14 +4,16 @@ package org.jetbrains.plugins.terminal.block.completion.spec.specs.make
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.completion.spec.*
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCompletionSuggestion
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
 
-internal object ShellMakeCommandSpec {
+@ApiStatus.Internal
+object ShellMakeCommandSpec {
 
-  fun create() = ShellCommandSpec("make") {
+  fun create(): ShellCommandSpec = ShellCommandSpec("make") {
     description(TerminalBundle.messagePointer("make.command.description"))
     argument {
       isVariadic = true

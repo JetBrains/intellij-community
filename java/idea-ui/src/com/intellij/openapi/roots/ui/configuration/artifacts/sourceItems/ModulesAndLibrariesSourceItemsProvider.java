@@ -26,16 +26,12 @@ public final class ModulesAndLibrariesSourceItemsProvider extends PackagingSourc
   @Override
   public @NotNull Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
                                                                            PackagingSourceItem parent) {
-    if (parent == null) {
-      return createModuleItems(editorContext, Collections.emptyList());
-    }
-    else if (parent instanceof ModuleGroupItem) {
-      return createModuleItems(editorContext, ((ModuleGroupItem)parent).getPath());
-    }
-    else if (parent instanceof ModuleSourceItemGroup) {
-      return createAvailableItems(editorContext, artifact, ((ModuleSourceItemGroup)parent).getModule());
-    }
-    return Collections.emptyList();
+    return switch (parent) {
+      case null -> createModuleItems(editorContext, Collections.emptyList());
+      case ModuleGroupItem item -> createModuleItems(editorContext, item.getPath());
+      case ModuleSourceItemGroup group -> createAvailableItems(editorContext, artifact, group.getModule());
+      default -> Collections.emptyList();
+    };
   }
 
   private static @NotNull Collection<? extends PackagingSourceItem> createAvailableItems(@NotNull ArtifactEditorContext editorContext,

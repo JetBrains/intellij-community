@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.diagnostic.LoadingState
@@ -7,13 +7,12 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.util.system.OS
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -33,7 +32,7 @@ private val LOG: Logger
 private val isCustomDecorationActiveCache = AtomicReference<Boolean>()
 
 private val defaultCustomDecorationState: Boolean
-  get() = SystemInfoRt.isWindows && mergeMainMenuWithWindowTitleOverrideValue != false
+  get() = OS.CURRENT == OS.Windows && mergeMainMenuWithWindowTitleOverrideValue != false
 
 internal abstract class IdeFrameDecorator protected constructor(@JvmField protected val frame: IdeFrameImpl) {
   companion object {
@@ -42,8 +41,8 @@ internal abstract class IdeFrameDecorator protected constructor(@JvmField protec
     fun decorate(frame: IdeFrameImpl, glassPane: IdeGlassPane, coroutineScope: CoroutineScope): IdeFrameDecorator? {
       try {
         return when {
-          SystemInfoRt.isMac -> MacMainFrameDecorator(frame, glassPane, coroutineScope)
-          SystemInfoRt.isWindows -> WinMainFrameDecorator(frame)
+          OS.CURRENT == OS.Windows -> WinMainFrameDecorator(frame)
+          OS.CURRENT == OS.macOS -> MacMainFrameDecorator(frame, glassPane, coroutineScope)
           StartupUiUtil.isXToolkit() && X11UiUtil.isFullScreenSupported() -> EWMHFrameDecorator(frame)
           StartupUiUtil.isWaylandToolkit() && UIUtil.isFullScreenSupportedByDefaultGD() -> WLFrameDecorator(frame)
           else -> null
@@ -59,7 +58,7 @@ internal abstract class IdeFrameDecorator protected constructor(@JvmField protec
     }
 
     internal val isCustomDecorationAvailable: Boolean
-      get() = (SystemInfoRt.isMac || SystemInfo.isWin8OrNewer) && JBR.isWindowDecorationsSupported()
+      get() = (OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS) && JBR.isWindowDecorationsSupported()
 
     fun isCustomDecorationActive(): Boolean {
       if (!LoadingState.COMPONENTS_REGISTERED.isOccurred) {

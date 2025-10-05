@@ -299,7 +299,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       .map(TestIgnored.class::cast)
       .collect(Collectors.toList());
     assertSize(1, ignoredTests);
-    assertEquals("testDisabledMethod()", ignoredTests.get(0).getTestName());
+    assertEquals("testDisabledMethod()", ignoredTests.getFirst().getTestName());
   }
 
   public void testIgnoreDisabledTestMethod() throws Exception {
@@ -315,8 +315,8 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
       .map(TestIgnored.class::cast)
       .collect(Collectors.toList());
     assertSize(1, ignoredTests);
-    assertEquals("testDisabledMethod()", ignoredTests.get(0).getTestName());
-    assertEquals("Method disabled", ignoredTests.get(0).getIgnoreComment());
+    assertEquals("testDisabledMethod()", ignoredTests.getFirst().getTestName());
+    assertEquals("Method disabled", ignoredTests.getFirst().getIgnoreComment());
   }
 
   public void testRunSpecificDisabledMethod() throws Exception {

@@ -6,34 +6,24 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ArrayUtil;
-import org.apache.maven.model.Activation;
-import org.apache.maven.model.Profile;
-import org.apache.maven.model.building.DefaultModelBuilderFactory;
-import org.apache.maven.model.building.ModelBuilder;
-import org.apache.maven.model.building.ModelProblemCollector;
-import org.apache.maven.model.profile.ProfileActivationContext;
-import org.apache.maven.model.profile.activation.ProfileActivator;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
-import org.eclipse.aether.*;
+import org.eclipse.aether.DefaultRepositoryCache;
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.DefaultSessionData;
+import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.collection.CollectResult;
 import org.eclipse.aether.collection.DependencyCollectionException;
-import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
 import org.eclipse.aether.graph.*;
-import org.eclipse.aether.impl.DefaultServiceLocator;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.*;
-import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
-import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transfer.TransferCancelledException;
 import org.eclipse.aether.transfer.TransferEvent;
 import org.eclipse.aether.transfer.TransferListener;
-import org.eclipse.aether.transport.file.FileTransporterFactory;
-import org.eclipse.aether.transport.http.HttpTransporterFactory;
 import org.eclipse.aether.util.artifact.DelegatingArtifact;
 import org.eclipse.aether.util.artifact.JavaScopes;
 import org.eclipse.aether.util.filter.DependencyFilterUtils;
@@ -66,31 +56,6 @@ public final class ArtifactRepositoryManager {
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
   private final Retry myRetry;
   private final RepositorySystemSessionFactory mySessionFactory;
-
-  private static final RepositorySystem ourSystem;
-  static {
-    DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
-    locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
-    locator.addService(TransporterFactory.class, FileTransporterFactory.class);
-    locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
-    locator.setServices(ModelBuilder.class, new DefaultModelBuilderFactory() {
-      @Override
-      public ProfileActivator[] newProfileActivators() {
-        // allow pom profiles to make dependency resolution deterministic and predictable:
-        // consider all possible dependencies the artifact can potentially have.
-        return new ProfileActivator[] {new ProfileActivatorProxy(super.newProfileActivators())};
-      }
-    }.newInstance());
-    locator.setErrorHandler(new DefaultServiceLocator.ErrorHandler() {
-      @Override
-      public void serviceCreationFailed(Class<?> type, Class<?> impl, Throwable exception) {
-        if (exception != null) {
-          throw new RuntimeException(exception);
-        }
-      }
-    });
-    ourSystem = locator.getService(RepositorySystem.class);
-  }
 
   private final List<RemoteRepository> myRemoteRepositories = new ArrayList<>();
 
@@ -166,7 +131,7 @@ public final class ArtifactRepositoryManager {
         });
       }
       // setup session here
-      session.setLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
+      session.setLocalRepositoryManager(RepositorySystemHolder.getInstance().newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
       session.setProxySelector(ourProxySelector);
       session.setOffline(offline);
 
@@ -294,7 +259,10 @@ public final class ArtifactRepositoryManager {
     CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(ArtifactKind.ARTIFACT));
     ArtifactDependencyTreeBuilder builder = new ArtifactDependencyTreeBuilder();
 
-    DependencyNode root = runWithRetry(mySessionFactory.createVerboseSession(), s -> ourSystem.collectDependencies(s, collectRequest).getRoot());
+    DependencyNode root = runWithRetry(
+      mySessionFactory.createVerboseSession(),
+      s -> RepositorySystemHolder.getInstance().collectDependencies(s, collectRequest).getRoot()
+    );
 
     if (root.getArtifact() == null && root.getChildren().size() == 1) {
       root = root.getChildren().get(0);
@@ -331,7 +299,7 @@ public final class ArtifactRepositoryManager {
 
         if (!requests.isEmpty()) {
           try {
-            List<ArtifactResult> resultList = runWithRetry(session, s -> ourSystem.resolveArtifacts(s, requests));
+            List<ArtifactResult> resultList = runWithRetry(session, s -> RepositorySystemHolder.getInstance().resolveArtifacts(s, requests));
 
             for (ArtifactResult result : resultList) {
               artifacts.add(result.getArtifact());
@@ -345,7 +313,7 @@ public final class ArtifactRepositoryManager {
                   try {
                     // Don't retry on sources or javadocs resolution: used only in IDE, will only waste user's time if the artifact does not
                     // exist.
-                    ArtifactResult result = ourSystem.resolveArtifact(session, request);
+                    ArtifactResult result = RepositorySystemHolder.getInstance().resolveArtifact(session, request);
                     artifacts.add(result.getArtifact());
                   }
                   catch (ArtifactResolutionException ignored) {
@@ -380,7 +348,10 @@ public final class ArtifactRepositoryManager {
     RepositorySystemSession session;
     if (includeTransitiveDependencies) {
       CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind));
-      var resultAndSession = runWithRetry(mySessionFactory.createSession(excludedDependencies), s -> Pair.create(s, ourSystem.collectDependencies(s, collectRequest)));
+      var resultAndSession = runWithRetry(
+        mySessionFactory.createSession(excludedDependencies),
+        s -> Pair.create(s, RepositorySystemHolder.getInstance().collectDependencies(s, collectRequest))
+      );
       session = resultAndSession.getFirst();
       CollectResult collectResult = resultAndSession.getSecond();
 
@@ -397,7 +368,7 @@ public final class ArtifactRepositoryManager {
       for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, Collections.singleton(kind))) {
         if (ourVersioning.parseVersionConstraint(artifact.getVersion()).getRange() != null) {
           VersionRangeRequest versionRangeRequest = new VersionRangeRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null);
-          VersionRangeResult result = ourSystem.resolveVersionRange(session, versionRangeRequest);
+          VersionRangeResult result = RepositorySystemHolder.getInstance().resolveVersionRange(session, versionRangeRequest);
           if (!result.getVersions().isEmpty()) {
             Artifact newArtifact = artifact.setVersion(result.getHighestVersion().toString());
             requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
@@ -420,7 +391,10 @@ public final class ArtifactRepositoryManager {
     RepositorySystemSession session = prepareRequests(groupId, artifactId, constraints, kind, includeTransitiveDependencies, excludedDependencies, requests);
 
     if (!requests.isEmpty()) {
-      List<ArtifactResult> resultList = runWithRetry(session, s -> ourSystem.resolveArtifacts(s, requests));
+      List<ArtifactResult> resultList = runWithRetry(
+        session,
+        s -> RepositorySystemHolder.getInstance().resolveArtifacts(s, requests)
+      );
 
       for (ArtifactResult result : resultList) {
         artifacts.add(result.getArtifact());
@@ -496,8 +470,9 @@ public final class ArtifactRepositoryManager {
    * Gets the versions (in ascending order) that matched the requested range.
    */
   public @NotNull List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, ArtifactKind artifactKind) throws Exception {
-    VersionRangeResult result = ourSystem.resolveVersionRange(
-      mySessionFactory.createDefaultSession(), createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
+    VersionRangeResult result = RepositorySystemHolder.getInstance().resolveVersionRange(
+      mySessionFactory.createDefaultSession(),
+      createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
     );
     return result.getVersions();
   }
@@ -733,50 +708,6 @@ public final class ArtifactRepositoryManager {
     public ArtifactDependencyNode getRoot() {
       List<ArtifactDependencyNode> rootNodes = myCurrentChildren.get(0);
       return rootNodes.isEmpty() ? null : rootNodes.get(0);
-    }
-  }
-
-  // Force certain activation kinds to be always active in order to include such dependencies in dependency resolution process
-  // Currently JDK activations are always enabled for the purpose of transitive artifact discovery
-  private static class ProfileActivatorProxy implements ProfileActivator {
-
-    private final ProfileActivator[] myDelegates;
-
-    ProfileActivatorProxy(ProfileActivator[] delegates) {
-      myDelegates = delegates;
-    }
-
-    private static boolean isForceActivation(Profile profile) {
-      Activation activation = profile.getActivation();
-      return activation != null && activation.getJdk() != null;
-    }
-
-    @Override
-    public boolean isActive(Profile profile, ProfileActivationContext context, ModelProblemCollector problems) {
-      if (isForceActivation(profile)) {
-        return true;
-      }
-      Boolean active = null;
-      for (ProfileActivator delegate : myDelegates) {
-        if (delegate.presentInConfig(profile, context, problems)) {
-          boolean activeValue = delegate.isActive(profile, context, problems);
-          active = active == null? activeValue : active && activeValue;
-        }
-      }
-      return Boolean.TRUE.equals(active);
-    }
-
-    @Override
-    public boolean presentInConfig(Profile profile, ProfileActivationContext context, ModelProblemCollector problems) {
-      if (isForceActivation(profile)) {
-        return true;
-      }
-      for (ProfileActivator delegate : myDelegates) {
-        if (delegate.presentInConfig(profile, context, problems)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 }

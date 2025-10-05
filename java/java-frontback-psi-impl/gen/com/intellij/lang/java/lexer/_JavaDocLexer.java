@@ -9,7 +9,15 @@ package com.intellij.lang.java.lexer;
 import com.intellij.lexer.JavaDocCommentTokenTypes;
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}, {@link com.intellij.java.syntax.lexer._JavaDocLexer}
+ *             This class is planned to be removed.
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 @SuppressWarnings("ALL")
 
 class _JavaDocLexer implements FlexLexer {

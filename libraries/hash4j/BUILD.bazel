@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.hash4j` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "hash4j_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "hash4j",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":hash4j_resources"],
+  exports = ["@lib//:libraries-hash4j-hash4j"],
+  runtime_deps = ["@lib//:libraries-hash4j-hash4j"]
+)
+### auto-generated section `build intellij.libraries.hash4j` end

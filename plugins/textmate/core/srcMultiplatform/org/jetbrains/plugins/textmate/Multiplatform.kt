@@ -1,10 +1,12 @@
 package org.jetbrains.plugins.textmate
 
 import org.jetbrains.plugins.textmate.atomics.updateAndGet
+import org.jetbrains.plugins.textmate.concurrent.TextMateLock
+import org.jetbrains.plugins.textmate.concurrent.TextMateThreadLocal
+import org.jetbrains.plugins.textmate.concurrent.createTextMateLockJvm
+import org.jetbrains.plugins.textmate.concurrent.createTextMateThreadLocalJvm
 import org.jetbrains.plugins.textmate.logging.Slf4jTextMateLogger
 import org.jetbrains.plugins.textmate.logging.TextMateLogger
-import org.jetbrains.plugins.textmate.regex.TextMateThreadLocal
-import org.jetbrains.plugins.textmate.regex.createTextMateThreadLocalJvm
 import org.slf4j.LoggerFactory
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.reflect.KClass
@@ -19,7 +21,7 @@ import kotlin.reflect.KClass
  * and every target should provide its own implementation.
  */
 
-internal fun <T> AtomicReference<T>.update(f: (T) -> T) {
+fun <T> AtomicReference<T>.update(f: (T) -> T) {
   updateAndGet(f)
 }
 
@@ -29,4 +31,8 @@ internal fun getLogger(clazz: KClass<*>): TextMateLogger {
 
 internal fun <T> createTextMateThreadLocal(): TextMateThreadLocal<T> {
   return createTextMateThreadLocalJvm()
+}
+
+internal fun createTextMateLock(): TextMateLock {
+  return createTextMateLockJvm()
 }

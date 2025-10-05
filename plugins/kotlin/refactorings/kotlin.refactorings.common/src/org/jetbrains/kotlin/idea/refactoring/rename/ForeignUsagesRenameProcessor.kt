@@ -31,6 +31,9 @@ abstract class ForeignUsagesRenameProcessor {
         }
     }
 
+    /**
+     * @return `true` if processor handles the given usage and prevents default Kotlin behavior. Otherwise, `false`.
+     */
     abstract fun process(element: PsiElement, newName: String, language: Language, allUsages: Collection<UsageInfo>): Boolean
     abstract fun prepare(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope)
 }

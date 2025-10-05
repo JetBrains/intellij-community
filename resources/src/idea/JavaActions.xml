@@ -47,10 +47,6 @@
       <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
       <add-to-group group-id="SettingsEntryPointGroup" anchor="before" relative-to-action="ShowSettings"/>
     </action>
-    <action id="TemplateProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
-      <add-to-group group-id="FileSettingsGroup" anchor="last"/>
-      <override-text place="MainMenu"/>
-    </action>
     <action id="ShowSiblings" class="com.intellij.codeInsight.hint.actions.ShowSiblingsAction">
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickImplementations"/>
     </action>
@@ -66,10 +62,7 @@
     <action class="com.intellij.execution.testDiscovery.actions.FindUnusedTestDataAction" id="FindUsedTestData"
             internal="true"/>
 
-    <action id="JShell.Console"
-            class="com.intellij.execution.jshell.LaunchJShellConsoleAction">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
+
 
     <action id="JavaSoftExit" class="com.intellij.execution.impl.DefaultJavaProgramRunner$SoftExitAction">
       <add-to-group group-id="RunTab.TopToolbar" anchor="after" relative-to-action="Stop"/>
@@ -254,10 +247,6 @@
       <add-to-group group-id="WelcomeScreen.Documentation" anchor="last"/>
     </group>
 
-    <action id="WelcomeScreen.Configure.ProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
-      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="RunConfigurationTemplatesForNewProjects"/>
-    </action>
-
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="before" relative-to-action="LoadUnloadModules"/>
     </action>
@@ -311,6 +300,10 @@
       <action id="NewModuleInfo" class="com.intellij.ide.actions.CreateModuleInfoAction"/>
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </group>
+
+    <action id="CompactSourceFile" class="com.intellij.ide.actions.CreateCompactSourceFileAction">
+      <add-to-group group-id="NewGroup1" anchor="after" relative-to-action="NewClass"/>
+    </action>
 
     <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction">
       <add-to-group group-id="AnalyzeActions" anchor="after" relative-to-action="ViewOfflineInspection"/>

@@ -212,7 +212,7 @@ public enum LanguageLevel {
   }
 
   public static @NotNull LanguageLevel forElement(@NotNull PsiElement element) {
-    return PyLanguageFacade.Companion.getINSTANCE().forLanguage(element);
+    return PyLanguageFacade.getINSTANCE().getEffectiveLanguageLevel(element);
   }
 
   public static @NotNull LanguageLevel getLatest() {

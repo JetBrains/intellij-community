@@ -66,7 +66,8 @@ public abstract class ForkedByModuleSplitter {
     final ProcessBuilder builder = initProcessBuilder();
     builder.add(vmParameters);
 
-    //copy encoding from first VM, as encoding is added into command line explicitly and vm options do not contain it
+    // copy encoding from the first VM, as encoding is added into the command line explicitly 
+    // and vm options do not contain it
     String encoding = System.getProperty("file.encoding");
     if (encoding != null) {
       builder.add("-Dfile.encoding=" + encoding);
@@ -146,27 +147,24 @@ public abstract class ForkedByModuleSplitter {
   }
 
   private static Runnable createInputReader(final InputStream inputStream, final PrintStream outputStream) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        try {
-          try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            while (true) {
-              String line = inputReader.readLine();
-              if (line == null) break;
-              outputStream.println(line);
-            }
+    return () -> {
+      try {
+        try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+          while (true) {
+            String line = inputReader.readLine();
+            if (line == null) break;
+            outputStream.println(line);
           }
         }
-        catch (UnsupportedEncodingException ignored) { }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
+      }
+      catch (UnsupportedEncodingException ignored) { }
+      catch (IOException e) {
+        e.printStackTrace();
       }
     };
   }
 
-  //read file with classes grouped by module
+  //read a file with classes grouped by module
   protected int splitPerModule(String repeatCount) throws IOException {
     int result = 0;
     try (BufferedReader perDirReader = new BufferedReader(new FileReader(myWorkingDirsPath))) {
@@ -241,7 +239,7 @@ public abstract class ForkedByModuleSplitter {
         classpathForManifest.append(" ");
       }
       try {
-        classpathForManifest.append(new File(path).toURI().toURL().toString());
+        classpathForManifest.append(new File(path).toURI().toURL());
       }
       catch (NoSuchMethodError e) {
         classpathForManifest.append(new File(path).toURL().toString());

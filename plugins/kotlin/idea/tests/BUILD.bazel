@@ -1,27 +1,34 @@
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build kotlin.idea.tests` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_tests",
   opt_in = [
     "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "com.intellij.openapi.util.IntellijInternalApi",
   ]
 )
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "kotlin.idea.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_tests",
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-indexing-api:indexing",
@@ -45,8 +52,8 @@ jvm_library(
     "@lib//:kotlin-test",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView",
-    "@lib//:gson",
-    "@lib//:guava",
+    "//libraries/gson",
+    "//libraries/guava",
     "@lib//:fastutil-min",
     "//platform/usageView-impl",
     "//platform/vcs-api:vcs",
@@ -67,8 +74,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//plugins/kotlin/base/code-insight",
@@ -182,8 +187,10 @@ jvm_library(
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
     "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared_test_lib",
     "//plugins/kotlin/jvm/k1",
-    "//plugins/kotlin/base/scripting.k1",
-    "//plugins/kotlin/base/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
+    "//plugins/IntelliLang/backend",
+    "//plugins/kotlin/base/scripting/scripting.shared",
   ],
   runtime_deps = [
     "//plugins/kotlin/gradle/gradle",
@@ -206,9 +213,13 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/parcelize/gradle",
   ]
 )
+### auto-generated section `build kotlin.idea.tests` end
+
+### auto-generated section `test kotlin.idea.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build kotlin.idea.tests` end
+### auto-generated section `test kotlin.idea.tests` end

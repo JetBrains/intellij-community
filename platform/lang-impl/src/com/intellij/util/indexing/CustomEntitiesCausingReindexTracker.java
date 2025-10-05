@@ -68,10 +68,15 @@ final class CustomEntitiesCausingReindexTracker {
     List<? extends DependencyDescription<?>> dependencies = contributor.getDependenciesOnOtherEntities();
     Stream<Class<? extends WorkspaceEntity>> baseStream = Stream.of(contributor.getEntityClass());
     if (dependencies.isEmpty()) return baseStream;
-    Stream<? extends Class<? extends WorkspaceEntity>> dependenciesStream =
+    Stream<? extends Class<? extends WorkspaceEntity>> parentDependenciesStream =
       dependencies.stream().filter(description -> description instanceof DependencyDescription.OnParent)
         .map(description -> ((DependencyDescription.OnParent<?, ?>)description).getParentClass());
-    return Stream.concat(baseStream, dependenciesStream);
+    Stream<? extends  Class<? extends WorkspaceEntity>> onEntityDeps =
+      dependencies.stream().filter(description -> description instanceof DependencyDescription.OnArbitraryEntity)
+        .map(description -> ((DependencyDescription.OnArbitraryEntity<?, ?>)description).getEntityClass());
+
+    Stream<Class<? extends WorkspaceEntity>> baseAndParentsDependenciesStream = Stream.concat(baseStream, parentDependenciesStream);
+    return Stream.concat(baseAndParentsDependenciesStream, onEntityDeps);
   }
 
   private static boolean isEntityReindexingCustomised(Class<? extends WorkspaceEntity> entityClass) {
@@ -129,8 +134,11 @@ final class CustomEntitiesCausingReindexTracker {
         return isEntityToRescan(contentRoot);
       }
       return false;
-    } else if (Registry.is("ide.workspace.model.sdk.remove.custom.processing") && entity instanceof SdkEntity) {
+    } else if (entity instanceof SdkEntity) {
       return hasDependencyOn((SdkEntity) entity, project);
+    }
+    else if (entity instanceof ProjectSettingsEntity && Registry.is("project.root.manager.over.wsm", true)) {
+      return true; // don't care if there are references from modules or not: project sdk is always indexed
     }
     return isEntityToRescan(entity);
   }

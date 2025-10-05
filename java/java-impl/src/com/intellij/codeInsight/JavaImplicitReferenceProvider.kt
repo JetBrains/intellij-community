@@ -9,7 +9,7 @@ import com.intellij.psi.LambdaUtil.resolveFunctionalInterfaceClass
 import com.intellij.psi.util.PsiUtil.isJavaToken
 import com.intellij.psi.util.PsiUtil.resolveClassInType
 
-class JavaImplicitReferenceProvider : ImplicitReferenceProvider {
+public class JavaImplicitReferenceProvider : ImplicitReferenceProvider {
 
   override fun resolveAsReference(element: PsiElement): Collection<Symbol> {
     return listOfNotNull(

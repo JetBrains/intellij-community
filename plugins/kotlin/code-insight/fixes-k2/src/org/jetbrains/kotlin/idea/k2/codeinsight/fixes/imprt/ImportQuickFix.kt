@@ -121,7 +121,7 @@ class ImportQuickFix(
         }
     }
     
-    context(KaSession)
+    context(_: KaSession)
     private fun shouldBeImportedWithShortening(element: KtElement, importVariant: SymbolBasedAutoImportVariant): Boolean {
         if (element !is KtSimpleNameExpression) return false
 

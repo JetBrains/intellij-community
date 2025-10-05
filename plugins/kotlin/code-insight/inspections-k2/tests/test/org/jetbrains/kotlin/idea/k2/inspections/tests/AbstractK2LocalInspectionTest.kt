@@ -5,15 +5,16 @@ package org.jetbrains.kotlin.idea.k2.inspections.tests
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationWithSdk
-import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
@@ -73,10 +74,12 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
 
         val extraFileNames = findExtraFilesForTest(mainFile)
 
-        myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
+        myFixture.configureByFiles(*(arrayOf(mainFile.name) + extraFileNames))
 
-        val ktFile = myFixture.file as? KtFile
-        ktFile?.let { processKotlinScriptIfNeeded(ktFile) }
+        (myFixture.file as? KtFile)?.let {
+            val file = PsiUtilCore.getPsiFile(project, it.virtualFile)
+            processKotlinScriptIfNeeded(it)
+        }
 
         super.doTest(path)
     }
@@ -101,10 +104,13 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         DefaultScriptConfigurationHandler(testProject, CoroutineScope(EmptyCoroutineContext)) {
         override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {}
 
-        override fun isModuleExist(
+        override fun isScriptExist(
             project: Project,
             scriptFile: VirtualFile,
             definition: ScriptDefinition
-        ): Boolean = true
+        ): Boolean {
+            return true
+        }
+
     }
 }

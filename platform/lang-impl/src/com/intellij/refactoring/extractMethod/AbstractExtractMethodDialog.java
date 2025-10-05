@@ -11,9 +11,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
 import com.intellij.refactoring.ui.MethodSignatureComponent;
+import com.intellij.refactoring.util.AbstractParameterTablePanel;
+import com.intellij.refactoring.util.AbstractParameterTablePanel.NameColumnInfo;
+import com.intellij.refactoring.util.AbstractParameterTablePanel.PassParameterColumnInfo;
 import com.intellij.refactoring.util.AbstractVariableData;
-import com.intellij.refactoring.util.SimpleParameterTablePanel;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,17 +27,18 @@ import java.util.stream.Stream;
 
 public class AbstractExtractMethodDialog<T> extends DialogWrapper implements ExtractMethodSettings<T> {
   private JPanel myContentPane;
-  private SimpleParameterTablePanel myParametersPanel;
+  private AbstractParameterTablePanel<AbstractVariableData> myParametersPanel;
   private JTextField myMethodNameTextField;
-  private MethodSignatureComponent mySignaturePreviewTextArea;
+  protected MethodSignatureComponent mySignaturePreviewTextArea;
   private JTextArea myOutputVariablesTextArea;
   private final ComboBoxVisibilityPanel<T> myVisibilityComboBox;
-  private final Project myProject;
+  protected final Project myProject;
   private final String myDefaultName;
-  private final ExtractMethodValidator myValidator;
-  private final ExtractMethodDecorator<T> myDecorator;
+  protected final CodeFragment myFragment;
+  protected final ExtractMethodValidator myValidator;
+  protected final ExtractMethodDecorator<T> myDecorator;
 
-  private AbstractVariableData[] myVariableData;
+  protected AbstractVariableData[] myVariableData;
   private Map<String, AbstractVariableData> myVariablesMap;
 
   private final List<String> myArguments;
@@ -51,6 +55,7 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
     super(project, true);
     myProject = project;
     myDefaultName = defaultName;
+    myFragment = fragment;
     myValidator = validator;
     myDecorator = decorator;
     myFileType = type;
@@ -91,7 +96,7 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
     });
 
 
-    myVariableData = createVariableDataByNames(myArguments);
+    myVariableData = innerCreateVariableDataByNames(myArguments);
     myVariablesMap = createVariableMap(myVariableData);
     myParametersPanel.init(myVariableData);
 
@@ -103,6 +108,11 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myMethodNameTextField;
+  }
+
+  @NotNull
+  protected AbstractVariableData @NotNull [] innerCreateVariableDataByNames(final @NotNull List<String> args) {
+    return createVariableDataByNames(args);
   }
 
   public static AbstractVariableData[] createVariableDataByNames(final List<String> args) {
@@ -157,8 +167,10 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
   }
 
   private void createUIComponents() {
-    myParametersPanel = new SimpleParameterTablePanel(myValidator::isValidName) {
-      @Override
+    myParametersPanel =
+      new AbstractParameterTablePanel<>(getParameterColumns()) {
+
+        @Override
       protected void doCancelAction() {
         AbstractExtractMethodDialog.this.doCancelAction();
       }
@@ -175,6 +187,10 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
       }
     };
     mySignaturePreviewTextArea = new MethodSignatureComponent("", myProject, myFileType);
+  }
+
+  protected @NotNull ColumnInfo @NotNull [] getParameterColumns() {
+    return new ColumnInfo[]{new PassParameterColumnInfo(), new NameColumnInfo(myValidator::isValidName)};
   }
 
   private @NotNull String getPersistenceId() {
@@ -209,7 +225,7 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
       !builder.isEmpty() ? builder.toString() : RefactoringBundle.message("refactoring.extract.method.dialog.empty"));
   }
 
-  private void updateSignature() {
+  protected void updateSignature() {
     mySignaturePreviewTextArea.setSignature(myDecorator.createMethodSignature(this));
   }
 

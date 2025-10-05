@@ -58,6 +58,11 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
 
   override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
     super.visitVariableDeclaration(variableDeclaration)
+    checkTupleVariableIsNotAllowed(variableDeclaration,
+                                   holder,
+                                   message("tuple.declaration.should.end.with.def.modifier"),
+                                   setOf(KW_DEF))
+
     if (variableDeclaration.parent is GrTraditionalForClause) {
       if (variableDeclaration.isTuple) {
         holder.newAnnotation(HighlightSeverity.ERROR, message("unsupported.tuple.declaration.in.for")).create()

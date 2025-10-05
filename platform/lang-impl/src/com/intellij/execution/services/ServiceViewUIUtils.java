@@ -7,6 +7,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
@@ -24,10 +25,13 @@ import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 import java.util.function.Supplier;
 
 @Internal
 public final class ServiceViewUIUtils {
+  public static final DataKey<List<ServiceViewDescriptorId>> SERVICES_SELECTED_DESCRIPTOR_IDS = DataKey.create("services.selected.descriptor.ids");
+
   private ServiceViewUIUtils() {
   }
 

@@ -197,7 +197,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
   }
 }
 
-fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: RuntimeException): RuntimeException {
+public fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: RuntimeException): RuntimeException {
   if (e is ProcessCanceledException) return e
 
   val file = method.containingFile
@@ -225,7 +225,7 @@ fun handleInconsistency(method: PsiMethodImpl, cachedData: MethodData, e: Runtim
   return e
 }
 
-fun getIndexedData(method: PsiMethodImpl): MethodData? {
+public fun getIndexedData(method: PsiMethodImpl): MethodData? {
   val file = method.containingFile
   val map = CachedValuesManager.getCachedValue(file) {
     CachedValueProvider.Result.create(bindMethods(gist.getFileData(file), file), file)

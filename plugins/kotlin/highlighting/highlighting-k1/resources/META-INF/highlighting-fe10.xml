@@ -7,9 +7,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.base.highlighting.AbstractScriptHighlightHelper"
-                    serviceImplementation="org.jetbrains.kotlin.idea.highlighter.ScriptHighlightHelper"/>
-
     <applicationService
             serviceInterface="org.jetbrains.kotlin.references.fe10.base.KtFe10ReferenceResolutionHelper"
             serviceImplementation="org.jetbrains.kotlin.idea.references.KtFe10ReferenceResolutionHelperImpl"/>
@@ -33,7 +30,6 @@
                  defaultValue="false"/>
 
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.DebugInfoHighlightingPass$Registrar"/>
-    <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.ScriptExternalHighlightingPass$Registrar"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsPassFactory$Registrar"/>
 
     <daemon.changeLocalityDetector implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinChangeLocalityDetector"/>

@@ -2,9 +2,8 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
@@ -73,28 +72,11 @@ class ModuleDependencyIndexTest {
   }
 
   @Test
-  fun `test add two modules with same library`() = runBlocking {
-    projectModel.project.workspaceModel.update {
-      it addEntity LibraryEntity("HeyLib", LibraryTableId.ProjectLibraryTableId, emptyList(), MySource)
-    }
-
-    val events = withDependencyListener {
-      projectModel.project.workspaceModel.update {
-        val deps = listOf(LibraryDependency(LibraryId("HeyLib", LibraryTableId.ProjectLibraryTableId), false, DependencyScope.TEST))
-        it addEntity ModuleEntity("MyModule", deps, MySource)
-        it addEntity ModuleEntity("MyModule2", deps, MySource)
-      }
-    }
-
-    assertEquals("+HeyLib", events.single())
-  }
-
-  @Test
   fun `test dependency on global library`() = runBlocking {
     try {
       edtWriteAction {
-        GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test") {
-          val manager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
+        GlobalWorkspaceModel.getInstance(LocalEelMachine).updateModel("Test") {
+          val manager = GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
           val globalEntitySource = JpsGlobalFileEntitySource(manager.getOrCreateFromUrl("/url"))
           it addEntity LibraryEntity("GlobalLib", LibraryTableId.GlobalLibraryTableId("application"), emptyList(), globalEntitySource)
         }
@@ -156,8 +138,8 @@ class ModuleDependencyIndexTest {
   fun `test dependency on global library after rename`() = runBlocking {
     try {
       edtWriteAction {
-        GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test") {
-          val manager = GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
+        GlobalWorkspaceModel.getInstance(LocalEelMachine).updateModel("Test") {
+          val manager = GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
           val globalEntitySource = JpsGlobalFileEntitySource(manager.getOrCreateFromUrl("/url"))
           it addEntity LibraryEntity("GlobalLib", LibraryTableId.GlobalLibraryTableId("application"), emptyList(), globalEntitySource)
         }
@@ -168,7 +150,7 @@ class ModuleDependencyIndexTest {
       }
 
       edtWriteAction {
-        GlobalWorkspaceModel.getInstance(LocalEelDescriptor).updateModel("Test") {
+        GlobalWorkspaceModel.getInstance(LocalEelMachine).updateModel("Test") {
           val resolved = it.resolve(LibraryId("GlobalLib", LibraryTableId.GlobalLibraryTableId("application")))!!
           it.modifyLibraryEntity(resolved) {
             this.name = "NewGlobalName"
@@ -200,13 +182,6 @@ class ModuleDependencyIndexTest {
     projectModel.project.workspaceModel.update {
       it addEntity LibraryEntity("HeyLib", LibraryTableId.ProjectLibraryTableId, emptyList(), MySource)
     }
-    val events = withDependencyListener {
-      projectModel.project.workspaceModel.update {
-        val deps = listOf(LibraryDependency(LibraryId("HeyLib", LibraryTableId.ProjectLibraryTableId), false, DependencyScope.TEST))
-        it addEntity ModuleEntity("MyModule", deps, MySource)
-      }
-    }
-    assertEquals("+HeyLib", events.single())
 
     val events1 = withDependencyListener {
       projectModel.project.workspaceModel.update {
@@ -215,33 +190,12 @@ class ModuleDependencyIndexTest {
       }
     }
     assertTrue(events1.isEmpty())
-
-    val events2 = withDependencyListener {
-      projectModel.project.workspaceModel.update {
-        it.removeEntity(it.resolve(ModuleId("MyModule"))!!)
-      }
-    }
-    assertTrue(events2.isEmpty())
-
-    val events3 = withDependencyListener {
-      projectModel.project.workspaceModel.update {
-        it.removeEntity(it.resolve(ModuleId("MyModule2"))!!)
-      }
-    }
-    assertEquals("-HeyLib", events3.single())
   }
 
   private suspend fun withDependencyListener(action: suspend () -> Unit): List<String> {
     val events = mutableListOf<String>()
 
     val listener = object : ModuleDependencyListener {
-      override fun addedDependencyOn(library: Library) {
-        events.add("+${library.name}")
-      }
-
-      override fun removedDependencyOn(library: Library) {
-        events.add("-${library.name}")
-      }
     }
 
     try {

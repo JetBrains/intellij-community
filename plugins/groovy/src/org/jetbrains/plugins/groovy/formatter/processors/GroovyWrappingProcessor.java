@@ -79,7 +79,9 @@ public class GroovyWrappingProcessor {
     GroovyTokenTypes.mCOLON,
 
     GroovyTokenTypes.mGSTRING_CONTENT, GroovyTokenTypes.mGSTRING_END, GroovyElementTypes.GSTRING_INJECTION, GroovyTokenTypes.mREGEX_CONTENT,
-    GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END
+    GroovyTokenTypes.mREGEX_END, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_END,
+
+    GroovyTokenTypes.mIMPL
   );
 
   public Wrap getChildWrap(ASTNode childNode) {

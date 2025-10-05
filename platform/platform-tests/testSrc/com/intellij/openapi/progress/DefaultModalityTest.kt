@@ -65,7 +65,7 @@ class DefaultModalityTest : CancellationTest() {
     val outerModality = createFakeModality()
     val nestedModality = createFakeModality()
     val nestedModality2 = createFakeModality()
-    installThreadContext(outerModality.asContextElement()).use {
+    installThreadContext(outerModality.asContextElement()) {
       assertModality(outerModality)
       withIndicator(EmptyProgressIndicator(nestedModality)) {
         assertModality(nestedModality) // IJPL-155640

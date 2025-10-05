@@ -192,9 +192,9 @@ public interface PsiClass
   PsiMethod @NotNull [] getConstructors();
 
   /**
-   * Returns the array of inner classes for the class.
+   * Returns the array of (static and non-static) nested classes for the class.
    *
-   * @return the array of inner classes.
+   * @return the array of (static and non-static) nested classes.
    */
   @Override
   PsiClass @NotNull [] getInnerClasses();
@@ -221,9 +221,9 @@ public interface PsiClass
   PsiMethod @NotNull [] getAllMethods();
 
   /**
-   * Returns the array of inner classes for the class and all its superclasses.
+   * Returns the array of (static and non-static) nested classes for the class and all its superclasses.
    *
-   * @return the array of inner classes.
+   * @return the array of (static and non-static) nested classes.
    */
   PsiClass @NotNull [] getAllInnerClasses();
 
@@ -296,11 +296,11 @@ public interface PsiClass
   List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors();
 
   /**
-   * Searches the class (and optionally its superclasses) for the inner class with the specified name.
+   * Searches the class (and optionally its superclasses) for the (static or non-static) nested class with the specified name.
    *
-   * @param name       the name of the inner class to find.
-   * @param checkBases if true, the inner class is also searched in the base classes of the class.
-   * @return the inner class instance, or null if the inner class cannot be found.
+   * @param name       the name of the (static or non-static) nested class to find.
+   * @param checkBases if true, the nested class is also searched in the base classes of the class.
+   * @return the nested class instance, or null if the nested class cannot be found.
    */
   @Nullable
   PsiClass findInnerClassByName(@NonNls String name, boolean checkBases);
@@ -367,9 +367,9 @@ public interface PsiClass
   boolean isInheritorDeep(@NotNull PsiClass baseClass, @Nullable PsiClass classToByPass);
 
   /**
-   * For an inner class, returns its containing class.
+   * For a (static or non-static) nested class, returns its containing class.
    *
-   * @return the containing class, or null if the class is not an inner class.
+   * @return the containing class, or null if the class is not a (static or non-static) nested class.
    */
   @Override
   @Nullable

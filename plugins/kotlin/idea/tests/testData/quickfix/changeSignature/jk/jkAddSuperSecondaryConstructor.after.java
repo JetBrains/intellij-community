@@ -9,5 +9,3 @@ public class JavaInheritor extends KotlinBase {
         super(s, i<selection><caret></selection>);
     }
 }
-
-// IGNORE_K2

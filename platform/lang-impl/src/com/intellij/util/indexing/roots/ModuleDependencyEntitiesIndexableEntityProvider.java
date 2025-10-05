@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
@@ -52,14 +53,18 @@ public final class ModuleDependencyEntitiesIndexableEntityProvider implements In
 
   private static @NotNull Collection<? extends IndexableIteratorBuilder> createIteratorBuildersForDependency(@NotNull ModuleDependencyItem dependency) {
     if (dependency instanceof SdkDependency) {
+      if (Registry.is("use.workspace.file.index.for.partial.scanning")) return Collections.emptyList();
       return Collections.singletonList(IndexableIteratorBuilders.INSTANCE.forSdk(((SdkDependency)dependency).getSdk().getName(),
                                                                                  ((SdkDependency)dependency).getSdk().getType()));
     }
     else if (dependency instanceof LibraryDependency) {
+      if (Registry.is("use.workspace.file.index.for.partial.scanning")) return Collections.emptyList();
       LibraryId libraryId = ((LibraryDependency)dependency).getLibrary();
       return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(libraryId, true);
     }
     else if (dependency instanceof InheritedSdkDependency) {
+      if (Registry.is("use.workspace.file.index.for.partial.scanning") &&
+          Registry.is("project.root.manager.over.wsm")) return Collections.emptyList();
       return IndexableIteratorBuilders.INSTANCE.forInheritedSdk();
     }
     return Collections.emptyList();

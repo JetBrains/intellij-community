@@ -1,14 +1,14 @@
 from collections.abc import Awaitable, Callable, Iterator, Mapping, Sequence
 from logging import Logger
-from typing import IO, Any, TypeVar
+from typing import IO, Any, TypeAlias, TypeVar
 
+from django.core.files import uploadedfile
 from django.core.handlers import base
 from django.http.request import HttpRequest, _ImmutableQueryDict
 from django.http.response import HttpResponseBase
 from django.urls.resolvers import ResolverMatch, URLResolver
 from django.utils.datastructures import MultiValueDict
 from django.utils.functional import cached_property
-from typing_extensions import TypeAlias
 
 _ReceiveCallback: TypeAlias = Callable[[], Awaitable[Mapping[str, Any]]]
 
@@ -31,7 +31,8 @@ class ASGIRequest(HttpRequest):
     @cached_property
     def GET(self) -> _ImmutableQueryDict: ...  # type: ignore[override]
     POST: _ImmutableQueryDict
-    FILES: MultiValueDict
+    @property
+    def FILES(self) -> MultiValueDict[str, uploadedfile.UploadedFile]: ...  # type: ignore[override]
     @cached_property
     def COOKIES(self) -> dict[str, str]: ...  # type: ignore[override]
 

@@ -14,7 +14,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileEditorProvider id="csv-data-editor" implementation="com.intellij.database.editor.CsvTableFileEditorProvider" fileType="CSV/TSV" isDocumentRequired="true"/>
+    <fileEditorProvider id="csv-data-editor" implementation="com.intellij.database.editor.CsvTableFileEditorProvider" isDocumentRequired="true"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.database.actions.EscapeEditMaximizedHandler"/>
     <statusBarWidgetFactory id="GridAggregator" implementation="com.intellij.database.datagrid.AggregatorWidget$Factory" order="before Position"/>
     <statusBarWidgetFactory id="GridPosition" implementation="com.intellij.database.datagrid.GridPositionWidget$Factory" order="before Position"/>
@@ -165,10 +165,10 @@
       <reference ref="Console.TableResult.AddColumn"/>
       <reference ref="Console.TableResult.CloneColumn"/>
       <reference ref="Console.TableResult.DeleteColumns"/>
-      <separator text="ORDER BY"/>
+      <separator key="separator.order.by"/>
       <reference ref="Console.TableResult.ColumnSortAsc"/>
       <reference ref="Console.TableResult.ColumnSortDesc"/>
-      <separator text="Add to ORDER BY"/>
+      <separator key="separator.add.to.order.by"/>
       <reference ref="Console.TableResult.ColumnSortAddAsc"/>
       <reference ref="Console.TableResult.ColumnSortAddDesc"/>
       <separator/>
@@ -327,8 +327,13 @@
       <reference ref="Console.TableResult.Group.Common"/>
       <action id="Console.TableResult.FindInGrid" class="com.intellij.database.run.actions.FindInGridAction"
               icon="AllIcons.Actions.Find"  use-shortcut-of="Find"/>
-      <action id="Console.TableResult.ColumnLocalFilterToggle" class="com.intellij.database.run.actions.ColumnLocalFilterToggleAction"
-              icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.ColumnFilter" />
+      <group id="Console.TableResult.ColumnLocalFilterGroup" icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.ColumnFilter" popup="true">
+        <action id="Console.TableResult.ColumnLocalFilterToggle" class="com.intellij.database.run.actions.ColumnLocalFilterToggleAction"/>
+        <separator/>
+        <action id="Console.TableResult.ColumnLocalFilterClearAll"
+                class="com.intellij.database.run.actions.ColumnLocalFilterClearAllAction"
+                icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.ClearOutputs"/>
+      </group>
       <action id="Console.TableResult.ToggleRecordView" class="com.intellij.database.actions.ToggleEditMaximizedViewAction"
               icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.SingleRecordView"/>
       <group id="TableViewColoringGroup" icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.TableHeatmap" popup="true">
@@ -421,7 +426,5 @@
     <action id="Console.TableResult.ColumnLocalFilterWithCell"
             class="com.intellij.database.run.actions.ColumnLocalFilterWithCellAction"/>
     <group id="Console.TableResult.AggregatorViewGroup"/>
-    <action id="Console.TableResult.ColumnLocalFilterClearAll"
-            class="com.intellij.database.run.actions.ColumnLocalFilterClearAllAction"/>
   </actions>
 </idea-plugin>

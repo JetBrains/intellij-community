@@ -7,6 +7,7 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -19,10 +20,9 @@ import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.lang.UrlClassLoader
 import it.unimi.dsi.fastutil.Hash
 import org.gradle.internal.classpath.ClassPath
-import org.gradle.internal.impldep.com.google.common.cache.Cache
 import org.gradle.internal.service.CloseableServiceRegistry
-import org.gradle.internal.service.DefaultServiceRegistry
 import org.gradle.tooling.internal.consumer.ConnectorServices
+import org.gradle.tooling.internal.consumer.GradleConnectorFactory
 import org.gradle.tooling.internal.consumer.connection.AbstractConsumerConnection
 import org.gradle.tooling.internal.consumer.connection.ConsumerConnection
 import org.gradle.tooling.internal.consumer.connection.ParameterValidatingConsumerConnection
@@ -34,9 +34,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.*
 import java.lang.reflect.Method
 import java.nio.file.Path
-import java.util.*
 import java.util.function.BiConsumer
-
 
 private val LOG = Logger.getInstance("org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices")
 
@@ -175,10 +173,23 @@ private fun getObject(bytes: ByteArray?): Any? {
 }
 
 fun getConnections() : Map<ClassPath, ConsumerConnection> {
-  val registry: DefaultServiceRegistry =  getStaticFieldValue(ConnectorServices::class.java, CloseableServiceRegistry::class.java, "singletonRegistry") as DefaultServiceRegistry
-  if (registry.isClosed) {
-    return Collections.emptyMap()
+  val sharedConnectorFactory = getStaticFieldValue(
+    ConnectorServices::class.java,
+    GradleConnectorFactory::class.java,
+    "sharedConnectorFactory"
+  ) as GradleConnectorFactory
+  val defaultGradleConnectorFactoryClass = ConnectorServices::class.java.declaredClasses
+    .find { it.canonicalName == "org.gradle.tooling.internal.consumer.ConnectorServices.DefaultGradleConnectorFactory" }
+  if (defaultGradleConnectorFactoryClass == null) {
+    LOG.warn("Unable to find the DefaultGradleConnectorFactory class in the Tooling API")
+    return emptyMap()
   }
+  val registry: CloseableServiceRegistry = getField(
+    defaultGradleConnectorFactoryClass,
+    sharedConnectorFactory,
+    CloseableServiceRegistry::class.java,
+    "ownerRegistry"
+  )
   val loader = registry.get(ToolingImplementationLoader::class.java)
   val delegate = getField(SynchronizedToolingImplementationLoader::class.java,
                           loader,
@@ -186,17 +197,13 @@ fun getConnections() : Map<ClassPath, ConsumerConnection> {
                           "delegate")
 
   if (GradleVersionUtil.isCurrentGradleOlderThan("8.9")) {
-    return getField(CachingToolingImplementationLoader::class.java,
-                                   delegate,
-                                   Map::class.java,
-                                   "connections") as Map<ClassPath, ConsumerConnection>
+    return getField(CachingToolingImplementationLoader::class.java, delegate, Map::class.java, "connections")
+      as Map<ClassPath, ConsumerConnection>
   }
   else {
-    val connections = getField(CachingToolingImplementationLoader::class.java,
-                                              delegate,
-                                              Cache::class.java,
-                                              "connections") as Cache<ClassPath, ConsumerConnection>
-    return connections.asMap()
+    val cacheClass = Class.forName("org.gradle.internal.impldep.com.google.common.cache.Cache")
+    val connections = getField(CachingToolingImplementationLoader::class.java, delegate, cacheClass, "connections")
+    return GradleReflectionUtil.getPrivateValue(connections, "asMap", Map::class.java) as Map<ClassPath, ConsumerConnection>
   }
 }
 

@@ -83,6 +83,11 @@ public class PyUnusedImportTest extends PyTestCase {
     doTest();
   }
 
+  // PY-83075
+  public void testInjectedImportUsage() {
+    doTest("injectedImportUsage.py");
+  }
+
   // PY-22620
   public void testTupleTypeCommentsUseImportsFromTyping() {
     doTest();
@@ -101,7 +106,7 @@ public class PyUnusedImportTest extends PyTestCase {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureFromTempProjectFile(filename);
     myFixture.enableInspections(PyUnusedImportsInspection.class, PyUnresolvedReferencesInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+    myFixture.checkHighlighting(true, false, true);
   }
 
   @Override

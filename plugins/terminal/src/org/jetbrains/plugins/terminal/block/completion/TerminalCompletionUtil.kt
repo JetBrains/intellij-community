@@ -6,11 +6,13 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.terminal.completion.spec.*
 import com.intellij.terminal.completion.spec.ShellSuggestionType.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.util.ShellType
 import javax.swing.Icon
 
-internal object TerminalCompletionUtil {
+@ApiStatus.Internal
+object TerminalCompletionUtil {
   fun getNextSuggestionsString(suggestion: ShellCompletionSuggestion): String {
     var separator: String? = null
     val result = when (suggestion) {
@@ -52,14 +54,13 @@ internal object TerminalCompletionUtil {
     return if (isOptional) "[$name]" else "<$name>"
   }
 
-  fun findIconForSuggestion(name: String, type: ShellSuggestionType): Icon? {
+  fun findIconForSuggestion(name: String, type: ShellSuggestionType): Icon {
     return when (type) {
       COMMAND -> TerminalIcons.Command
       OPTION -> TerminalIcons.Option
       FOLDER -> AllIcons.Nodes.Folder
       FILE -> getFileIcon(name)
       ARGUMENT -> TerminalIcons.Other
-      else -> null
     }
   }
 

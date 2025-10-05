@@ -60,14 +60,12 @@ public final class ChainSearchTarget {
            this;
   }
 
-  public static @Nullable ChainSearchTarget create(PsiType type) {
-    if (type instanceof PsiArrayType) {
-      return create((PsiArrayType)type);
-    }
-    else if (type instanceof PsiClassType) {
-      return create((PsiClassType)type);
-    }
-    return null;
+  public static @Nullable ChainSearchTarget create(@Nullable PsiType type) {
+    return switch (type) {
+      case PsiArrayType arrayType -> create(arrayType);
+      case PsiClassType classType -> create(classType);
+      case null, default -> null;
+    };
   }
 
   private static @Nullable ChainSearchTarget create(PsiArrayType arrayType) {

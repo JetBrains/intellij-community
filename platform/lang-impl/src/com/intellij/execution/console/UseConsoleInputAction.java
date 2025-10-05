@@ -44,7 +44,7 @@ final class UseConsoleInputAction extends ToggleAction implements DumbAware {
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(consoleView.getProject());
     PsiFile file = consoleView.getFile();
     daemonCodeAnalyzer.setHighlightingEnabled(file, state);
-    daemonCodeAnalyzer.restart(file);
+    daemonCodeAnalyzer.restart(file, this);
     PropertiesComponent.getInstance().setValue(processInputStateKey, useProcessStdIn);
 
     List<AnAction> actions = ActionUtil.getActions(consoleView.getConsoleEditor().getComponent());

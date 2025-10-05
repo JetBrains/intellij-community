@@ -197,7 +197,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
           @Override
           public void contextAction(@NotNull SuspendContextImpl suspendContext) {
             context.initCaches();
-            DebuggerInvocationUtil.swingInvokeLater(getProject(), setStateRunnable);
+            DebuggerInvocationUtil.invokeLaterAnyModality(getProject(), setStateRunnable);
           }
         });
       }
@@ -455,7 +455,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     getProcess().dispose();
     clearSteppingThrough();
     myLastThread.set(null);
-    DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+    DebuggerInvocationUtil.invokeLaterAnyModality(getProject(), () -> {
       myContextManager.setState(SESSION_EMPTY_CONTEXT, State.DISPOSED, Event.DISPOSE, null);
       myContextManager.dispose();
     });
@@ -504,7 +504,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       String connectionName = DebuggerUtilsImpl.getConnectionDisplayName(remoteConnection);
       description.append("; ").append(JavaDebuggerBundle.message("status.waiting.attach.address", connectionName));
     }
-    DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+    DebuggerInvocationUtil.invokeLaterAnyModality(() -> {
       getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH, description.toString());
     });
   }

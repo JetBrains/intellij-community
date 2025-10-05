@@ -64,6 +64,11 @@ final class PyCustomMemberProviderImpl extends PyCustomMemberProvider {
     }
 
     @Override
+    public boolean isPhysical() {
+      return false; // otherwise, it's impossible to create a smart pointer because restoreElement fails
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;

@@ -95,6 +95,7 @@ public class StreamChainInliner implements CallInliner {
   private static final CallMatcher FLAT_MAP =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "flatMap", "flatMapToInt", "flatMapToLong", "flatMapToDouble").parameterCount(1);
   private static final CallMatcher PEEK = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "peek").parameterCount(1);
+  private static final CallMatcher TAKE_DROP_WHILE = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "takeWhile", "dropWhile").parameterCount(1);
 
   private static final CallMatcher STREAM_GENERATE = anyOf(
     staticCall(JAVA_UTIL_STREAM_STREAM, "generate").parameterCount(1),
@@ -127,7 +128,8 @@ public class StreamChainInliner implements CallInliner {
     .register(PEEK, (PsiMethodCallExpression call) -> (Step next) -> new PeekStep(call, next))
     .register(SORTED, (PsiMethodCallExpression call) -> (Step next) -> new SortedStep(call, next))
     .register(BOXED, (PsiMethodCallExpression call) -> (Step next) -> new BoxedStep(call, next))
-    .register(STATE_FILTER, (PsiMethodCallExpression call) -> (Step next) -> new StateFilterStep(call, next));
+    .register(STATE_FILTER, (PsiMethodCallExpression call) -> (Step next) -> new StateFilterStep(call, next))
+    .register(TAKE_DROP_WHILE, (PsiMethodCallExpression call) -> (Step next) -> new TakeWhileStep(call, next));
 
   private static final CallMapper<Step> TERMINAL_STEP_MAPPER = new CallMapper<Step>()
     .register(FOR_TERMINAL, call -> new LambdaTerminalStep(call))
@@ -477,6 +479,41 @@ public class StreamChainInliner implements CallInliner {
         .chain(myNext::iteration)
         .elseBranch()
         .pop()
+        .end();
+    }
+  }
+
+  static class TakeWhileStep extends Step {
+    private final boolean myIsTakeWhile;
+    private DfaVariableValue myState;
+
+    TakeWhileStep(@NotNull PsiMethodCallExpression call, Step next) {
+      super(call, next, call.getArgumentList().getExpressions()[0]);
+      myIsTakeWhile = "takeWhile".equals(call.getMethodExpression().getReferenceName());
+    }
+
+    @Override
+    void before(CFGBuilder builder) {
+      myState = builder.createTempVariable(PsiTypes.booleanType());
+      builder.assignAndPop(myState, DfTypes.booleanValue(true));
+      super.before(builder);
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      builder
+        .push(myState)
+        .ifConditionIs(true)
+          .dup()
+          .invokeFunction(1, myFunction)
+          .assignTo(myState)
+          .pop()
+        .end()
+        .push(myState)
+        .ifConditionIs(myIsTakeWhile)
+          .chain(myNext::iteration)
+        .elseBranch()
+          .pop()
         .end();
     }
   }

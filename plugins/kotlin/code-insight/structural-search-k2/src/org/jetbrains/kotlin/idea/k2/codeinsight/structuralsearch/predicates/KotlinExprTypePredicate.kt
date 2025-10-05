@@ -8,6 +8,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch.renderNames
@@ -51,7 +52,7 @@ internal class KotlinExprTypePredicate(
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     fun match(type: KaType): Boolean {
         val typesToTest = mutableListOf(type)
         if (withinHierarchy) typesToTest.addAll(type.allSupertypes)

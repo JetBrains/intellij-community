@@ -2,9 +2,26 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.openapi.components.service
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class JSONSupportTest : GrazieTestBase() {
+
+  override val enableGrazieChecker: Boolean = true
+
   fun `test grammar check in file`() {
+    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
     runHighlightTestForFile("ide/language/json/Example.json")
+  }
+
+  fun `test json typos spellcheck performance`() {
+    Benchmark.newBenchmark("Highlight typos in i18n.json file") {
+      runHighlightTestForFile("ide/language/json/i18n.json")
+    }.setup {
+      psiManager.dropPsiCaches()
+      GrazieSpellCheckerEngine.getInstance(project).dropSuggestionCache()
+    }.start()
   }
 }

@@ -36,7 +36,7 @@ public final class UnusedLabelInspection extends BaseInspection implements Clean
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnusedLabelVisitor();
   }
 

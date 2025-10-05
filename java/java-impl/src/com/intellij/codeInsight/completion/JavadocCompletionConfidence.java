@@ -31,6 +31,9 @@ public final class JavadocCompletionConfidence extends CompletionConfidence {
       if (contextElement.textMatches("#")) {
         return ThreeState.NO;
       }
+      if (contextElement.textMatches("##")) {
+        return ThreeState.NO;
+      }
       if (PsiDocToken.isDocToken(contextElement, JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME) ||
           contextElement instanceof PsiSnippetAttributeValue) {
         return ThreeState.NO;

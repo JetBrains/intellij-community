@@ -1,12 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.test;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.lang.ClassPath;
+import com.intellij.util.lang.ClasspathCache;
 import com.intellij.util.lang.PathClassLoader;
 import com.intellij.util.lang.UrlClassLoader;
 import org.junit.Rule;
@@ -225,6 +227,13 @@ public class UrlClassLoaderTest {
     File jar = createTestJar(tempDir.newFile("test.jar"), entryName, "-");
     UrlClassLoader cl = builder().files(List.of(uncRootPath.resolve(jar.getName()))).get();
     assertNotNull(cl.findResource(entryName));
+  }
+
+  @Test
+  public void multiRoutingFileSystemHash() {
+    String className = IjentBuildScriptsConstantsKt.IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS.replace('.', '/');
+    assertThat(ClasspathCache.getPackageNameHash(className, className.lastIndexOf('/')))
+      .isEqualTo(UrlClassLoader.MULTI_ROUTING_FILE_SYSTEM_PACKAGE_HASH);
   }
 
   private static UrlClassLoader.Builder builder() {

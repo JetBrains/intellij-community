@@ -4,6 +4,8 @@
     <module name="intellij.platform.execution.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.shared"/>
     <module name="intellij.platform.debugger.impl.rpc"/>
+    <module name="intellij.platform.rpc.topics.frontend"/>
+    <module name="intellij.platform.rpc.topics"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint name="xdebugger.customQuickEvaluateActionProvider"
@@ -19,9 +21,10 @@
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>
-    <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerEventsListener"/>
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
     <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.debugger.impl.frontend.ShowBreakpointsDialogRemoteTopicListener"/>
   </extensions>
 </idea-plugin>

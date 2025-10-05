@@ -1,9 +1,10 @@
 ### auto-generated section `build fleet.compiler.plugins` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "compiler-plugins",
   visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"]),
   runtime_deps = [
     "@lib//:expects-compiler-plugin",
     "@lib//:noria-compiler-plugin",

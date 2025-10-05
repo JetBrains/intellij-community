@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.TextMateString
 
-internal object SyntaxMatchUtils {
+object SyntaxMatchUtils {
 
   /**
    * Replaces parts like \1 or \20 in string parameter with group captures from matchData.
@@ -44,8 +44,8 @@ internal object SyntaxMatchUtils {
             digitIndex++
           }
           if (hasGroupIndex && matchData.count() > groupIndex) {
-            val range = matchData.byteOffset(groupIndex)
-            val replacement = matchingString.bytes.decodeToString(range.start, range.end)
+            val byteRange = matchData.byteRange(groupIndex)
+            val replacement = if (byteRange.isEmpty) "" else matchingString.subSequenceByByteRange(byteRange).toString()
             append(BACK_REFERENCE_REPLACEMENT_REGEX.replace(replacement, "\\\\$0"))
             charIndex = digitIndex
             continue
@@ -87,9 +87,9 @@ internal object SyntaxMatchUtils {
       while (matcher != null) {
         val groupIndex = (matcher.groups[1] ?: matcher.groups[2])?.value?.toIntOrNull() ?: -1
         if (groupIndex >= 0 && matchData.count() > groupIndex) {
-          append(string, lastPosition, matcher.range.start)
-          val range = matchData.byteOffset(groupIndex)
-          val capturedText = matchingString.bytes.decodeToString(range.start, range.end)
+          append(string, lastPosition, matcher.range.first)
+          val byteRange = matchData.byteRange(groupIndex)
+          val capturedText = if (byteRange.isEmpty) "" else matchingString.subSequenceByByteRange(byteRange).toString()
           val replacement = capturedText.trimStart('.')
           val command = matcher.groups[3]?.value
           when (command) {
@@ -103,7 +103,7 @@ internal object SyntaxMatchUtils {
               append(replacement)
             }
           }
-          lastPosition = matcher.range.endInclusive + 1
+          lastPosition = matcher.range.last + 1
         }
         matcher = matcher.next()
       }

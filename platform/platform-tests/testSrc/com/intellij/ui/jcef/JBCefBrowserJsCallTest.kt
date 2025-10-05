@@ -1,13 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
 import com.intellij.ui.scale.TestScaleHelper
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.Language
 import org.junit.*
 import org.junit.Assert.*
-import org.junit.rules.TestName
 import java.util.concurrent.CountDownLatch
 
 /**
@@ -22,7 +23,7 @@ abstract class JBCefBrowserJsCallTest {
 
   @Rule
   @JvmField
-  val name = TestName()
+  var myDisposableRule: DisposableRule = DisposableRule()
 
   @Before
   fun before() {
@@ -96,9 +97,11 @@ abstract class JBCefBrowserJsCallTest {
     doTest(js, "4")
   }
 
-  protected abstract fun doTest(@Language("JavaScript") javaScript: String,
-                                expectedResult: String? = null,
-                                isExpectedToSucceed: Boolean = expectedResult != null)
+  protected abstract fun doTest(
+    @Language("JavaScript") javaScript: String,
+    expectedResult: String? = null,
+    isExpectedToSucceed: Boolean = expectedResult != null,
+  )
 
   protected fun prepareBrowser(): JBCefBrowser {
     val browser = JBCefApp.getInstance().createClient().also {
@@ -110,7 +113,7 @@ abstract class JBCefBrowserJsCallTest {
         .build()
     }
 
-    JBCefTestHelper.showAndWaitForLoad(browser, "DISPATCH")
+    JBCefTestHelper.showAndWaitForLoad(browser, "DISPATCH",myDisposableRule.disposable)
 
     assertNotNull(browser.component)
     assertTrue(browser.isCefBrowserCreated)
@@ -141,6 +144,7 @@ class AsyncJBCefBrowserJsCallTest : JBCefBrowserJsCallTest() {
 
     assertEquals("4", r1)
     assertEquals("4", r2)
+    Disposer.dispose(browser)
   }
 
 

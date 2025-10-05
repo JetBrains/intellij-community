@@ -1,16 +1,15 @@
 ### auto-generated section `build intellij.filePrediction` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "filePrediction_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-jvm_resources(
+resourcegroup(
   name = "filePrediction_test_resources",
-  files = glob(["testData/**/*"]),
+  srcs = glob(["testData/**/*"]),
   strip_prefix = "testData"
 )
 
@@ -18,7 +17,8 @@ jvm_library(
   name = "filePrediction",
   module_name = "intellij.filePrediction",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":filePrediction_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -29,7 +29,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//platform/ide-core-impl",
-    "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl",
     "//plugins/git4idea:vcs-git",
     "//uast/uast-common:uast",
@@ -40,14 +39,14 @@ jvm_library(
     "//platform/ml-impl",
     "@lib//:ngram-slp",
     "//platform/lang-impl",
-  ],
-  runtime_deps = [":filePrediction_resources"]
+  ]
 )
 
 jvm_library(
   name = "filePrediction_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":filePrediction_test_resources"],
   associates = [":filePrediction"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -60,7 +59,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//platform/ide-core-impl",
-    "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl",
     "//platform/vcs-log/impl:impl_test_lib",
     "//plugins/git4idea:vcs-git",
@@ -80,15 +78,15 @@ jvm_library(
     "@lib//:ngram-slp",
     "//platform/lang-impl",
     "//platform/statistics/testFramework",
-  ],
-  runtime_deps = [
-    ":filePrediction_resources",
-    ":filePrediction_test_resources",
   ]
 )
+### auto-generated section `build intellij.filePrediction` end
+
+### auto-generated section `test intellij.filePrediction` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "filePrediction_test",
   runtime_deps = [":filePrediction_test_lib"]
 )
-### auto-generated section `build intellij.filePrediction` end
+### auto-generated section `test intellij.filePrediction` end

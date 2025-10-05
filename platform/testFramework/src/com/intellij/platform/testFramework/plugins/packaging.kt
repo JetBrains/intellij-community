@@ -2,15 +2,19 @@
 package com.intellij.platform.testFramework.plugins
 
 import com.intellij.ide.plugins.ModuleLoadingRule
+import com.intellij.ide.plugins.ModuleVisibility
 import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.jarFile
 import com.intellij.util.io.zipFile
+import java.nio.file.FileSystems
 import java.nio.file.Path
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 open class PluginPackagingConfig {
   open val ContentModuleSpec.descriptorFilename: String get() {
-    return "${moduleName.replace('/', '.')}.xml"
+    return "${moduleId.replace('/', '.')}.xml"
   }
 
   open val ContentModuleSpec.embedToPluginXml: Boolean get() {
@@ -18,7 +22,7 @@ open class PluginPackagingConfig {
   }
 
   open val ContentModuleSpec.jarFilename: String get() {
-    return "${moduleName.replace('/', '.')}.jar"
+    return "${moduleId.replace('/', '.')}.jar"
   }
 
   open val ContentModuleSpec.packageToMainJar: Boolean get() {
@@ -34,6 +38,7 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
     if (implementationDetail) append(""" implementation-detail="true"""")
     if (packagePrefix != null) append(""" package="$packagePrefix"""")
     if (isSeparateJar) append(""" separate-jar="true"""")
+    if (moduleVisibility != ModuleVisibility.PRIVATE) append(""" visibility="${moduleVisibility.name.lowercase()}"""")
     if (rootTagAttributes != null) append(" $rootTagAttributes")
     appendLine(">")
     if (id != null) appendLine("<id>$id</id>")
@@ -43,6 +48,7 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
       sinceBuild != null -> appendLine("""<idea-version since-build="${sinceBuild}"/>""")
       untilBuild != null -> appendLine("""<idea-version until-build="${untilBuild}"/>""")
     }
+    if (category != null) appendLine("<category>$category</category>")
     if (version != null) appendLine("<version>$version</version>")
     if (vendor != null) appendLine("<vendor>$vendor</vendor>")
     if (description != null) appendLine("<description>$description</description>")
@@ -71,7 +77,8 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
       appendLine("""<incompatible-with>${plugin}</incompatible-with>""")
     }
     if (content.isNotEmpty()) {
-      appendLine("<content>")
+      val attributes = if (namespace != null) """ namespace="$namespace"""" else ""
+      appendLine("<content$attributes>")
       for (module in content) {
         val loadingAttribute = when (module.loadingRule) {
           ModuleLoadingRule.OPTIONAL -> ""
@@ -79,7 +86,7 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
           ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
           ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
         }
-        val tag = """module name="${module.moduleName}" $loadingAttribute"""
+        val tag = """module name="${module.moduleId}" $loadingAttribute"""
         if (module.embedToPluginXml) {
           appendLine("<$tag><![CDATA[${module.spec.buildXml(config)}]]></module>")
         } else {
@@ -181,16 +188,23 @@ private fun ContentModuleSpec.buildContentDir(dir: DirectoryContentBuilder, conf
 }
 
 private fun PluginSpec.buildClasses(dir: DirectoryContentBuilder) {
-  for (classFqn in classFiles) {
-    val url = this::class.java.classLoader.getResource(classFqn.replace('.', '/') + ".class")
+  for ((classFqn, classLoader) in classFiles) {
+    val url = (classLoader ?: this::class.java.classLoader).getResource(classFqn.replace('.', '/') + ".class")
               ?: error("$classFqn not found")
     dir.dirsFile(classFqn.replace('.', '/') + ".class", url.readBytes())
   }
-  for (pkg in packageClassFiles) {
-    for (url in this::class.java.classLoader.getResources(pkg.replace('.', '/'))) {
+  for ((pkg, classLoader) in packageClassFiles) {
+    for (url in (classLoader ?: this::class.java.classLoader).getResources(pkg.replace('.', '/'))) {
       require(url.toString().endsWith('/')) { url }
-      val entries = url.readText().splitToSequence("\n").filter { !it.isBlank() }
-      for (entry in entries) {
+      val packageEntries: List<String> = if (url.protocol.contains("jar")) {
+        FileSystems.newFileSystem(url.toURI(), mutableMapOf<String, Any>()).use { jarFs ->
+          val pkgPath = jarFs.getPath(pkg.replace('.', '/'))
+          pkgPath.listDirectoryEntries().map { it.name }
+        }
+      } else {
+        url.readText().splitToSequence("\n").filter { !it.isBlank() }.toList()
+      }
+      for (entry in packageEntries) {
         if (entry.endsWith(".class")) {
           val bytes = this::class.java.classLoader.getResource("${pkg.replace('.', '/')}/$entry")!!.readBytes()
           dir.dirsFile(pkg.replace('.', '/') + "/$entry", bytes)

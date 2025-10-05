@@ -13,26 +13,26 @@ import com.intellij.platform.workspace.storage.annotations.Parent
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
-interface LibraryMavenCoordinateEntity : WorkspaceEntity {
+public interface LibraryMavenCoordinateEntity : WorkspaceEntity {
 
   @Parent
-  val library: LibraryEntity
+  public val library: LibraryEntity
 
-  val coordinates: MavenCoordinates
+  public val coordinates: MavenCoordinates
 
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<LibraryMavenCoordinateEntity> {
+  public interface Builder : WorkspaceEntity.Builder<LibraryMavenCoordinateEntity> {
     override var entitySource: EntitySource
-    var library: LibraryEntity.Builder
-    var coordinates: MavenCoordinates
+    public var library: LibraryEntity.Builder
+    public var coordinates: MavenCoordinates
   }
 
-  companion object : EntityType<LibraryMavenCoordinateEntity, Builder>() {
+  public companion object : EntityType<LibraryMavenCoordinateEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(
+    public operator fun invoke(
       coordinates: MavenCoordinates,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
@@ -48,16 +48,16 @@ interface LibraryMavenCoordinateEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyLibraryMavenCoordinateEntity(
+public fun MutableEntityStorage.modifyLibraryMavenCoordinateEntity(
   entity: LibraryMavenCoordinateEntity,
   modification: LibraryMavenCoordinateEntity.Builder.() -> Unit,
 ): LibraryMavenCoordinateEntity {
   return modifyEntity(LibraryMavenCoordinateEntity.Builder::class.java, entity, modification)
 }
 
-var LibraryEntity.Builder.mavenCoordinates: LibraryMavenCoordinateEntity.Builder?
+public var LibraryEntity.Builder.mavenCoordinates: LibraryMavenCoordinateEntity.Builder?
   by WorkspaceEntity.extensionBuilder(LibraryMavenCoordinateEntity::class.java)
 //endregion
 
-val LibraryEntity.mavenCoordinates: LibraryMavenCoordinateEntity?
+public val LibraryEntity.mavenCoordinates: LibraryMavenCoordinateEntity?
   by WorkspaceEntity.extension()

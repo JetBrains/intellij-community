@@ -102,7 +102,7 @@ public class JavaClassDef implements TypeConstraints.ClassDef {
 
   @Override
   public boolean isFinal() {
-    return myClass.hasModifierProperty(PsiModifier.FINAL);
+    return myClass instanceof PsiAnonymousClass || myClass.hasModifierProperty(PsiModifier.FINAL);
   }
 
   @Override
@@ -116,10 +116,10 @@ public class JavaClassDef implements TypeConstraints.ClassDef {
     if (name == null) {
       name = myClass.getName();
     }
-    if (name == null && myClass instanceof PsiAnonymousClass) {
-      PsiClass baseClass = ((PsiAnonymousClass)myClass).getBaseClassType().resolve();
+    if (name == null && myClass instanceof PsiAnonymousClass anonymousClass) {
+      PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
       name = "anonymous " +
-             (baseClass == null ? ((PsiAnonymousClass)myClass).getBaseClassReference().getReferenceName() : new JavaClassDef(baseClass));
+             (baseClass == null ? anonymousClass.getBaseClassReference().getReferenceName() : new JavaClassDef(baseClass));
     }
     return String.valueOf(name);
   }

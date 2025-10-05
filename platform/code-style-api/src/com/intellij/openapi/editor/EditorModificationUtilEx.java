@@ -161,9 +161,7 @@ public class EditorModificationUtilEx {
       }
     }
 
-    for (int i = 0; i < afterLineEnd; i++) {
-      buf.append(' ');
-    }
+    buf.repeat(' ', afterLineEnd);
 
     return buf.toString();
   }

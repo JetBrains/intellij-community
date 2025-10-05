@@ -11,7 +11,6 @@ interface GitLabMergeRequestNotePositionMapping {
   class Actual(val change: ChangesSelection.Precise) : GitLabMergeRequestNotePositionMapping
   class Outdated(val change: ChangesSelection.Precise) : GitLabMergeRequestNotePositionMapping
   object Obsolete : GitLabMergeRequestNotePositionMapping
-  class Error(val error: Throwable) : GitLabMergeRequestNotePositionMapping
 
   companion object {
     private val LOG = logger<GitLabMergeRequestNotePositionMapping>()

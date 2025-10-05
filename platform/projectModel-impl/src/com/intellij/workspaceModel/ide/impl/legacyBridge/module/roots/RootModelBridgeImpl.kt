@@ -3,11 +3,12 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.configurationStore.deserializeAndLoadState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.roots.ModuleExtension
-import com.intellij.openapi.roots.ModuleRootManagerEx
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.roots.impl.LegacyModuleExtensionRegistry
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.util.Comparing
@@ -104,8 +105,8 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
       val moduleEntity = module.findModuleEntity(storage.current)
       val rootManagerElement = moduleEntity?.customImlData?.rootManagerTagCustomData?.let { JDOMUtil.load(it) }
 
-      for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensionList(module)) {
-        val readOnlyExtension = loadExtension(extension, rootManagerElement)
+      service<LegacyModuleExtensionRegistry>().forEachExtension { extensionEp -> 
+        val readOnlyExtension = loadExtension(extensionEp.createInstance(module), rootManagerElement)
 
         if (writable) {
           val modifiableExtension = readOnlyExtension.getModifiableModel(true)

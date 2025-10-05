@@ -24,13 +24,14 @@ import org.jetbrains.jewel.foundation.DisabledAppearanceValues
  *   to be provided to a CompositionLocal like `LocalGrayFilterValues`.
  * @see DisabledAppearanceValues
  */
+@Suppress("UnstableApiUsage")
 public fun DisabledAppearanceValues.Companion.readFromLaF(): DisabledAppearanceValues {
     val grayFilter = UIUtil.getGrayFilter()
     val (brightness, contrast, alpha) =
         if (grayFilter is GrayFilter) {
-            arrayOf(grayFilter.brightness, grayFilter.contrast, grayFilter.alpha)
+            listOf(grayFilter.brightness, grayFilter.contrast, grayFilter.alpha)
         } else {
-            if (isDark) arrayOf(-70, -70, 100) else arrayOf(33, -35, 100)
+            if (isDark) listOf(-70, -70, 100) else listOf(33, -35, 100)
         }
 
     return DisabledAppearanceValues(brightness, contrast, alpha)

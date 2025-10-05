@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.ide.browsers.actions.WebPreviewFileType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -10,10 +9,8 @@ import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.JS_FUNCTION_NAME
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.jcef.JBCefApp
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
@@ -22,9 +19,6 @@ import java.net.URI
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
   @Suppress("CompanionObjectInExtension")
   companion object {
-    private val REQUEST_KEY: Key<Request> = Key.create("html.editor.request.key")
-    private val EDITOR_KEY: Key<FileEditor> = Key.create("html.editor.component.key")
-
     const val JS_FUNCTION_NAME: String = "jbCefQuery"
 
     @JvmStatic
@@ -40,8 +34,7 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     @JvmStatic
     fun openEditor(project: Project, @DialogTitle title: String, request: Request): FileEditor? {
       logger<HTMLEditorProvider>().info(if (request.url == null) "HTML (${request.html!!.length} chars)" else "URL=${request.url}")
-      val file = LightVirtualFile(title, WebPreviewFileType.INSTANCE, "")
-      REQUEST_KEY.set(file, request)
+      val file = HTMLVirtualFile.createFile(project, title, request)
       return FileEditorManager.getInstance(project)
         .openFile(file, true)
         .find { it is HTMLFileEditor }
@@ -50,24 +43,15 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
 
   @ApiStatus.Internal
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return file.getUserData(EDITOR_KEY)
-           ?: HTMLFileEditor(project, file as LightVirtualFile, REQUEST_KEY.get(file)!!).also { file.putUserData(EDITOR_KEY, it) }
+    require(file is HTMLVirtualFile) {
+      "cannot create html editor for non-html file, actual $file"
+    }
+    return file.createEditor(project)
   }
 
-  @ApiStatus.Internal
-  override fun disposeEditor(editor: FileEditor) {
-    try {
-      editor.file?.let { file ->
-        file.putUserData(EDITOR_KEY, null)
-        file.putUserData(REQUEST_KEY, null)
-      }
-    }
-    finally {
-      super.disposeEditor(editor)
-    }
+  override fun accept(project: Project, file: VirtualFile): Boolean {
+    return JBCefApp.isSupported() && file is HTMLVirtualFile && !file.isDisposed()
   }
-
-  override fun accept(project: Project, file: VirtualFile): Boolean = JBCefApp.isSupported() && file.getUserData(REQUEST_KEY) != null
 
   override fun acceptRequiresReadAction(): Boolean = false
 

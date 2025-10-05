@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
-import com.intellij.xdebugger.impl.rpc.XDebugSessionApi
 
 open class ForceStepOverAction : XDebuggerActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
@@ -23,7 +22,7 @@ open class ForceStepOverAction : XDebuggerActionBase(), ActionRemoteBehaviorSpec
 private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
     performDebuggerActionAsync(session.project, dataContext) {
-      XDebugSessionApi.getInstance().stepOver(session.id, ignoreBreakpoints = true)
+      session.stepOver(ignoreBreakpoints = true)
     }
   }
 }

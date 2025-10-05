@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -41,6 +42,10 @@ class SoftLinksTest {
     // Check
     assertTrue(NameId(newId) in builder)
     assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
+    // Check first added/last removed
+    assertTrue(NameId(id) in builder.changeLog.removedSymbolicIds())
+    assertTrue(NameId(newId) in builder.changeLog.addedSymbolicIds())
+    assertTrue(NameId(id) !in builder.changeLog.addedSymbolicIds())
   }
 
   @Test
@@ -68,6 +73,8 @@ class SoftLinksTest {
     // Check
     assertNotNull(NameId(newId) in builder)
     assertOneElement(builder.referrers(NameId(newId), WithSoftLinkEntity::class.java).toList())
+    assertTrue(NameId(id) in builder.changeLog.removedSymbolicIds())
+    assertTrue(NameId(newId) in builder.changeLog.addedSymbolicIds())
 
     // Change symbolic id to the initial value
     val anotherNewBuilder = createBuilderFrom(builder.toSnapshot())
@@ -82,6 +89,8 @@ class SoftLinksTest {
     // Check
     assertNotNull(NameId(id) in builder)
     assertOneElement(builder.referrers(NameId(id), WithSoftLinkEntity::class.java).toList())
+    assertTrue(NameId(id) in builder.changeLog.addedSymbolicIds())
+    assertTrue(NameId(newId) in builder.changeLog.removedSymbolicIds())
   }
 
   @Test
@@ -98,7 +107,8 @@ class SoftLinksTest {
     }
 
     builder.assertConsistency()
-
+    assertTrue(NameId("newName") in builder.changeLog.addedSymbolicIds())
+    assertTrue(NameId("Name") in builder.changeLog.removedSymbolicIds())
     assertEquals("newName", builder.entities(WithSoftLinkEntity::class.java).single().link.presentableName)
   }
 
@@ -200,5 +210,39 @@ class SoftLinksTest {
     assertEquals("AnotherData", (updatedEntity.listSealedContainer.single() as SealedContainer.SmallContainer).notId.name)
     assertEquals("AnotherData",
                  (updatedEntity.deepSealedClass as DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour).id.name)
+  }
+
+  @Test
+  fun `many entities one symbolic id`() {
+    val builder = createEmptyBuilder()
+    val entityWithSymbolicId = builder addEntity NamedEntity("Name", MySource)
+    val first = builder addEntity WithSoftLinkEntity(entityWithSymbolicId.symbolicId, MySource)
+    val second = builder addEntity WithSoftLinkEntity(entityWithSymbolicId.symbolicId, MySource)
+
+    assertEquals( 1, builder.changeLog.addedSymbolicIds().size)
+    assertTrue(NameId("Name") in builder.changeLog.addedSymbolicIds())
+
+    builder.removeEntity(first)
+    assertEquals( 0, builder.changeLog.removedSymbolicIds().size)
+    assertFalse(NameId("Name") in builder.changeLog.removedSymbolicIds())
+    builder.removeEntity(second)
+    assertEquals( 1, builder.changeLog.removedSymbolicIds().size)
+    assertTrue(NameId("Name") in builder.changeLog.removedSymbolicIds())
+  }
+
+  @Test
+  fun `many entity types one symbolic id`() {
+    val builder = createEmptyBuilder()
+    val entityWithSymbolicId = builder addEntity NamedEntity("Name", MySource)
+    val firstType = builder addEntity WithSoftLinkEntity(entityWithSymbolicId.symbolicId, MySource)
+    val secondType = builder addEntity ComposedIdSoftRefEntity("AnotherType", entityWithSymbolicId.symbolicId, MySource)
+    assertTrue(NameId("Name") in builder.changeLog.addedSymbolicIds())
+    assertTrue(NameId("Name") in builder.changeLog.addedSymbolicIds())
+    builder.removeEntity(firstType)
+    // we still have reference from NamedEntity
+    assertFalse(NameId("Name") in builder.changeLog.removedSymbolicIds())
+    builder.removeEntity(secondType)
+    assertTrue(NameId("Name") in builder.changeLog.removedSymbolicIds())
+    assertFalse(NameId("Name") in builder.changeLog.addedSymbolicIds())
   }
 }

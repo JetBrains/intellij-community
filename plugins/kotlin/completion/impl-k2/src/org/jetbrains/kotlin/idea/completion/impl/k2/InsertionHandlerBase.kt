@@ -6,13 +6,18 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
+import org.jetbrains.kotlin.idea.completion.api.serialization.SerializableInsertHandler
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.reflect.KClass
 
+@Polymorphic
+@Serializable
 internal abstract class InsertionHandlerBase<LO : KotlinLookupObject>(
     private val lookupObjectClass: KClass<LO>
-) : InsertHandler<LookupElement> {
+) : SerializableInsertHandler {
 
     final override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val ktFile = context.file as? KtFile ?: return

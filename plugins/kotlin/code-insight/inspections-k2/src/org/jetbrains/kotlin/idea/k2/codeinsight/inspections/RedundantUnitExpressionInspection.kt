@@ -27,9 +27,7 @@ class RedundantUnitExpressionInspection : AbstractKotlinInspection(), CleanupLoc
 
 
 private class RemoveRedundantUnitFix : LocalQuickFix {
-    override fun getName() = KotlinBundle.message("remove.redundant.unit.fix.text")
-
-    override fun getFamilyName() = name
+    override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.unit.fix.text")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         (descriptor.psiElement as? KtReferenceExpression)?.delete()

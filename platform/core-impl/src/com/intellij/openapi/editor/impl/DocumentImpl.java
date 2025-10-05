@@ -39,10 +39,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -72,6 +69,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private final List<EditReadOnlyListener> myReadOnlyListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<DocumentFullUpdateListener> fullUpdateListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private int myCheckGuardedBlocks;
   private boolean myGuardsSuppressed;
@@ -359,7 +357,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     boolean executeInBulk = finalTargetOffsetPos > STRIP_TRAILING_SPACES_BULK_MODE_LINES_LIMIT * 2;
     // Document must be unblocked by now. If not, some Save handler attempted to modify PSI
     // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
-    DocumentUtil.writeInRunUndoTransparentAction(() -> {
+    DocumentUtil.writeInRunUndoTransparentAction(() ->
       DocumentUtil.executeInBulk(this, executeInBulk, () -> {
         int pos = finalTargetOffsetPos;
         while (pos > 0) {
@@ -367,8 +365,8 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
           int startOffset = targetOffsets[--pos];
           deleteString(startOffset, endOffset);
         }
-      });
-    });
+      })
+    );
     return markAsNeedsStrippingLater;
   }
 
@@ -487,7 +485,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     return collectGuardedBlocks();
   }
 
-  private @NotNull List<RangeMarker> collectGuardedBlocks() {
+  private @NotNull @UnmodifiableView List<RangeMarker> collectGuardedBlocks() {
     List<RangeMarker> blocks = new ArrayList<>();
     myPersistentRangeMarkers.processAll(GuardedBlock.processor(block -> {
       blocks.add(block);
@@ -585,8 +583,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
     ImmutableCharSequence newText = myText.insert(offset, s);
     ImmutableCharSequence newString = newText.subtext(offset, offset + s.length());
-    updateText(newText, offset, "", newString, false, LocalTimeCounter.currentTime(),
-               offset, 0, offset);
+    updateText(newText, offset, "", newString, false, LocalTimeCounter.currentTime(), offset, 0, offset);
     trimToSize();
   }
 
@@ -860,7 +857,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       ImmutableCharSequence prevText = myText;
       myText = newText;
       // increment sequence before firing events, so that the modification sequence on commit will match this sequence now
-      sequence.incrementAndGet();
+      incrementModificationSequence();
       changedUpdate(event, newModificationStamp, prevText, exceptions);
     }
     finally {
@@ -900,6 +897,10 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   public int getModificationSequence() {
     return sequence.get();
   }
+  @ApiStatus.Internal
+  public void incrementModificationSequence() {
+    sequence.incrementAndGet();
+  }
 
   private void beforeChangedUpdate(DocumentEvent event, DelayedExceptions exceptions) {
     Application app = ApplicationManager.getApplication();
@@ -935,7 +936,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     if (!myAssertThreading) return;
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     if (!commandProcessor.isUndoTransparentActionInProgress() &&
-        commandProcessor.getCurrentCommand() == null) {
+        !commandProcessor.isCommandInProgress()) {
       throw new IncorrectOperationException("Must not change document outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
     }
   }
@@ -1128,8 +1129,25 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     else {
       CommandProcessor.getInstance().executeCommand(null, runnable, "", DocCommandGroupId.noneGroupId(this));
     }
+    fireDocumentFullUpdated();
 
     clearLineModificationFlags();
+  }
+
+  private void fireDocumentFullUpdated() {
+    fullUpdateListeners.forEach(listener -> listener.onFullUpdateDocument(this));
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void addFullUpdateListener(DocumentFullUpdateListener listener) {
+    fullUpdateListeners.add(listener);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void removeFullUpdateListener(DocumentFullUpdateListener listener) {
+    fullUpdateListeners.remove(listener);
   }
 
   @Override
@@ -1213,13 +1231,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @Override
   public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
     TextRange interval = new ProperTextRange(start, end);
-    MarkupIterator<RangeMarkerEx> iterator = IntervalTreeImpl
-      .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, RangeMarker.BY_START_OFFSET);
-    try {
+    try(MarkupIterator<RangeMarkerEx> iterator = IntervalTreeImpl
+          .mergingOverlappingIterator(myRangeMarkers, interval, myPersistentRangeMarkers, interval, (byte)0, RangeMarker.BY_START_OFFSET)) {
       return ContainerUtil.process(iterator, processor);
-    }
-    finally {
-      iterator.dispose();
     }
   }
 

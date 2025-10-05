@@ -177,49 +177,6 @@ public final class Standalone {
     runBuild(loader, dataStorageRoot.toPath(), Collections.emptyMap(), messageHandler, scopes, true, CanceledStatus.NULL);
   }
 
-  /**
-   * @deprecated Use {@link #runBuild(JpsModelLoader, Path, Map, MessageHandler, List, boolean, CanceledStatus)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void runBuild(@NotNull JpsModelLoader loader,
-                              @NotNull File dataStorageRoot,
-                              @NotNull MessageHandler messageHandler,
-                              @NotNull List<TargetTypeBuildScope> scopes,
-                              boolean includeDependenciesToScope) throws Exception {
-    runBuild(loader,
-             dataStorageRoot.toPath(),
-             Collections.emptyMap(),
-             messageHandler,
-             scopes,
-             includeDependenciesToScope,
-             CanceledStatus.NULL);
-  }
-
-  /**
-   * @deprecated Use {@link #runBuild(JpsModelLoader, Path, Map, MessageHandler, List, boolean, CanceledStatus)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot,
-                              @NotNull Map<String, String> buildParameters,
-                              @NotNull MessageHandler messageHandler, @NotNull List<TargetTypeBuildScope> scopes,
-                              boolean includeDependenciesToScope) throws Exception {
-    runBuild(loader, dataStorageRoot.toPath(), buildParameters, messageHandler, scopes, includeDependenciesToScope, CanceledStatus.NULL);
-  }
-
-  /**
-   * @deprecated Use {@link #runBuild(JpsModelLoader, Path, Map, MessageHandler, List, boolean, CanceledStatus)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void runBuild(@NotNull JpsModelLoader loader,
-                                @NotNull File dataStorageRoot,
-                                @NotNull Map<String, String> buildParameters,
-                                @NotNull MessageHandler messageHandler,
-                                @NotNull List<TargetTypeBuildScope> scopes,
-                                boolean includeDependenciesToScope,
-                                @NotNull CanceledStatus canceledStatus) throws Exception {
-    runBuild(loader, dataStorageRoot.toPath(), buildParameters, messageHandler, scopes, includeDependenciesToScope, canceledStatus);
-  }
-
   public static void runBuild(@NotNull JpsModelLoader loader,
                               @NotNull Path dataStorageRoot,
                               @NotNull Map<String, String> buildParameters,

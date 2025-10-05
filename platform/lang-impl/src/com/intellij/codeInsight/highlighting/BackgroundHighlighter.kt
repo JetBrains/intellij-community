@@ -4,6 +4,8 @@ package com.intellij.codeInsight.highlighting
 import com.intellij.application.options.editor.EditorOptionsListener
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.*
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
@@ -14,6 +16,8 @@ import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.find.FindResult
 import com.intellij.find.impl.livePreview.LivePreviewController
+import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
@@ -160,6 +164,12 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     connection.subscribe(EditorOptionsListener.OPTIONS_PANEL_TOPIC, EditorOptionsListener {
       clearAllIdentifierHighlighters()
     })
+    connection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      clearAllIdentifierHighlighters()
+    })
+    connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      clearAllIdentifierHighlighters()
+    })
     DocumentAfterCommitListener.listen(project, parentDisposable) { document ->
       editorFactory.editors(document, project).forEach {
         updateHighlighted(project, it, coroutineScope)
@@ -172,8 +182,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     for (project in ProjectManager.getInstance().openProjects) {
       for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
         if (fileEditor is TextEditor) {
-          val document = fileEditor.editor.document
-          IdentifierHighlighterUpdater.clearMyHighlights(document, project)
+          IdentifierHighlighterUpdater.clearMyHighlights(fileEditor.editor)
         }
       }
     }
@@ -199,7 +208,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
     val offsetBefore = hostEditor.caretModel.offset
     val visibleRange = hostEditor.calculateVisibleRange()
     val needMatching = BackgroundHighlightingUtil.needMatching(hostEditor, CodeInsightSettings.getInstance())
-    coroutineScope.launch {
+    coroutineScope.launch(context = CoroutineName("BackgroundHighlighter.updateHighlighted(${hostEditor.document})")) {
       val job:Job = coroutineContext.job
       val oldJob = (hostEditor as UserDataHolderEx).getAndUpdateUserData(BACKGROUND_TASK) {
         job
@@ -236,10 +245,16 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         createPass(newPsiFile, hostEditor, newEditor)
       }
       if (identPass != null) {
-        var result = EMPTY_RESULT
         var infos = listOf<HighlightInfo>()
+        var result = EMPTY_RESULT
         try {
-          result = identPass.doCollectInformation(newPsiFile.project, visibleRange)
+          result = identPass.doCollectInformation(project, visibleRange)
+          if (result == WRONG_DOCUMENT_VERSION) {
+            launch(Dispatchers.EDT + modalityState) {
+              updateHighlighted(project, hostEditor, coroutineScope)
+            }
+            return@launch
+          }
           infos = readAction {
             identPass.createHighlightInfos(result)
           }
@@ -248,7 +263,8 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         }
         launch(Dispatchers.EDT + modalityState) {
           if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
-            UpdateHighlightersUtil.setHighlightersToSingleEditor(project, hostEditor, 0, hostDocument.textLength, infos, hostEditor.colorsScheme, IdentifierHighlighterUpdater.id)
+            val group = (IdentifierHighlightingManager.getInstance(project) as IdentifierHighlightingManagerImpl).getPassId()
+            UpdateHighlightersUtil.setHighlightersToSingleEditor(project, hostEditor, 0, hostDocument.textLength, infos, hostEditor.colorsScheme, group)
             identPass.doAdditionalCodeBlockHighlighting(result)
           }
         }

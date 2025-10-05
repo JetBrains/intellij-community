@@ -21,9 +21,14 @@ import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind
+import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.ui
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
@@ -67,8 +72,12 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -279,6 +288,7 @@ object Switcher : BaseSwitcherAction(null) {
         pinned = recent,
       )
       resetListModelAndUpdateNames(filesModel, filesToShow)
+      val selectedItemFlow = MutableStateFlow<SwitcherListItem?>(null)
       val filesSelectionListener = object : ListSelectionListener {
         override fun valueChanged(e: ListSelectionEvent) {
           if (e.valueIsAdjusting) {
@@ -286,9 +296,26 @@ object Switcher : BaseSwitcherAction(null) {
           }
 
           updatePathLabel()
-          val hint = hint
-          val popupUpdater = if (hint == null || !hint.isVisible) null else hint.getUserData(PopupUpdateProcessorBase::class.java)
-          popupUpdater?.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this@SwitcherPanel)))
+          selectedItemFlow.value = selectedList?.selectedValue
+        }
+      }
+      launchOnShow("Switcher hint popup updates") {
+        selectedItemFlow.collectLatest { selectedValue ->
+          // launchOnShow uses UI, but it won't do here: updatePopup needs a WIRA.
+          // Still, we'd like to avoid locking until the updatePopup call.
+          // At the same time, we'd like to keep this whole thing in a single EDT event,
+          // otherwise there's a chance that the hint popup may be hidden in between.
+          // So we can't just switch to Dispatchers.EDT, as that will dispatch on a separate event.
+          // Therefore, we use RELAX and take the lock only when necessary.
+          withContext(Dispatchers.UiWithModelAccess) {
+            val hint = hint
+            val popupUpdater = if (hint == null || !hint.isVisible) null else hint.getUserData(PopupUpdateProcessorBase::class.java)
+            if (selectedValue != null && popupUpdater != null) {
+              writeIntentReadAction {
+                popupUpdater.updatePopup(CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this@SwitcherPanel)))
+              }
+            }
+          }
         }
       }
 
@@ -332,7 +359,7 @@ object Switcher : BaseSwitcherAction(null) {
         .setModalContext(false)
         .setFocusable(true)
         .setRequestFocus(true)
-        .setCancelOnWindowDeactivation(true)
+        .setCancelOnWindowDeactivation(!pinned || !StartupUiUtil.isWaylandToolkit())
         .setCancelOnOtherWindowOpen(true)
         .setMovable(pinned)
         .setDimensionServiceKey(if (pinned) project else null, if (pinned) "SwitcherDM" else null, false)

@@ -4,7 +4,7 @@
 // ACTION: Enable option 'Property types' for 'Types' inlay hints
 // ACTION: Move to constructor
 // ERROR: Cannot access 'bar': it is private in 'First'
-// K2_AFTER_ERROR: Cannot access 'fun bar(x: Int): Data': it is private in '/First'.
+// K2_AFTER_ERROR: Cannot access 'fun bar(x: Int): Data': it is private in 'First'.
 
 private data class Data(val x: Int)
 

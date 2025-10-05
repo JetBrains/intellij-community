@@ -40,3 +40,4 @@ class Derived: Base() {
 
 // EXPRESSION: derivedAsBase.privateFun()
 // RESULT: 2: I
+

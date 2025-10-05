@@ -30,7 +30,9 @@ import java.util.concurrent.atomic.AtomicInteger
 @CanChangeDocumentDuringHighlighting
 class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
   override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable?>) {
-    DaemonProgressIndicator.runInDebugMode<Exception> { -> super.runTestRunnable(testRunnable) }
+    DaemonProgressIndicator.runInDebugMode<Exception> {
+      super.runTestRunnable(testRunnable)
+    }
   }
 
   fun testLocalInspectionInDumbMode() {
@@ -158,7 +160,7 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     val javaRedundantSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(JavaLanguage.INSTANCE)
       .filterIsInstance<RedundantSuppressionDetector>()
       .firstOrNull()
-    assertNotNull(javaRedundantSuppressor)// Java Redundant Suppressor is expected to exist
+    assertNotNull(javaRedundantSuppressor) // Java Redundant Suppressor is expected to exist
 
     @Language("JAVA")
     val text = """

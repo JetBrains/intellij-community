@@ -114,6 +114,10 @@ public final class PyUnboundLocalVariableInspection extends PyInspection {
         }
         final PsiPolyVariantReference ref = node.getReference(getResolveContext());
         final PsiElement resolved = ref.resolve();
+        // type parameter list is not included in CFG
+        if (resolved instanceof PyTypeParameter) {
+          return;
+        }
         final boolean isBuiltin = PyBuiltinCache.getInstance(node).isBuiltin(resolved);
         if (owner instanceof PyClass) {
           if (isBuiltin || ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {

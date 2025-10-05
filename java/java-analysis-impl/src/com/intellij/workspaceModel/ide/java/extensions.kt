@@ -4,13 +4,13 @@ package com.intellij.workspaceModel.ide.java
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.pom.java.LanguageLevel
 
-var JavaModuleSettingsEntity.Builder.languageLevel: LanguageLevel?
+public var JavaModuleSettingsEntity.Builder.languageLevel: LanguageLevel?
   get() = idToLanguageLevel(languageLevelId)
   set(value) {
     languageLevelId = value?.name
   }
 
-val JavaModuleSettingsEntity.languageLevel: LanguageLevel?
+public val JavaModuleSettingsEntity.languageLevel: LanguageLevel?
   get() = idToLanguageLevel(languageLevelId)
 
 private fun idToLanguageLevel(id: String?): LanguageLevel? {

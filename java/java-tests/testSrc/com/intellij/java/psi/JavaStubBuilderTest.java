@@ -63,6 +63,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
            """
              PsiJavaFileStub [p]
+               PACKAGE_STATEMENT:PsiPackageStatementStub[p]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
                IMPORT_LIST:PsiImportListStub
                  IMPORT_STATEMENT:PsiImportStatementStub[a.b]
                  IMPORT_STATIC_STATEMENT:PsiImportStatementStub[static c.d.*]
@@ -80,6 +82,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
            """
              PsiJavaFileStub [p]
+               PACKAGE_STATEMENT:PsiPackageStatementStub[p]
+                 MODIFIER_LIST:PsiModifierListStub[mask=0]
                IMPORT_LIST:PsiImportListStub
                CLASS:PsiClassStub[name=A fqn=p.A]
                  MODIFIER_LIST:PsiModifierListStub[mask=0]

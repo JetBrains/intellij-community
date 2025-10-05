@@ -9,7 +9,6 @@ import traceback
 from os.path import splitext, basename
 
 from _pydev_bundle import pydev_log
-from _pydev_bundle.pydev_is_thread_alive import is_thread_alive
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_bytecode_utils import (
     find_last_call_name, find_last_func_call_order)
@@ -104,13 +103,23 @@ class ThreadInfo:
         self.thread_ident = thread_ident
         self.additional_info = additional_info
         self.trace = trace
-        self._use_is_stopped = hasattr(thread, '_is_stopped')
+
+        self._use_handle = hasattr(thread, "_handle")
+        self._use_started = hasattr(thread, "_started")
+        self._use_os_thread_handle = hasattr(thread, "_os_thread_handle")
 
     def is_thread_alive(self):
-        if self._use_is_stopped:
-            return not self.thread._is_stopped
-        else:
+        # Python >=3.14
+        if self._use_os_thread_handle and self._use_started:
+            return not self.thread._os_thread_handle.is_done()
+
+        # Python ==3.13
+        elif self._use_handle and self._use_started:
             return not self.thread._handle.is_done()
+
+        # Python ==3.12
+        else:
+            return not self.thread._is_stopped
 
 
 class _DeleteDummyThreadOnDel:
@@ -240,6 +249,9 @@ def _should_enable_line_events_for_code(frame, code, filename, info, will_be_sto
 
     plugin_manager = py_db.plugin
 
+    if info is None:
+        return False
+
     stop_frame = info.pydev_step_stop
     step_cmd = info.pydev_step_cmd
 
@@ -315,6 +327,9 @@ def _should_enable_line_events_for_code(frame, code, filename, info, will_be_sto
 
 
 def _clear_run_state(info):
+    if info is None:
+        return
+
     info.pydev_step_stop = None
     info.pydev_step_cmd = -1
     info.pydev_state = STATE_RUN
@@ -351,6 +366,9 @@ def _get_top_level_frame():
 
 def _stop_on_unhandled_exception(exc_info, py_db, thread):
     additional_info = _get_additional_info(thread)
+    if additional_info is None:
+        return
+
     if not additional_info.suspended_at_unhandled:
         additional_info.suspended_at_unhandled = True
         stop_on_unhandled_exception(py_db, thread, additional_info,
@@ -436,10 +454,7 @@ def call_callback(code, instruction_offset, callable, arg0):
             if thread_info is None:
                 return
 
-        thread = thread_info.thread
-
-
-        if not is_thread_alive(thread):
+        if not thread_info.is_thread_alive():
             return
 
         frame_cache_key = _make_frame_cache_key(code)
@@ -578,10 +593,10 @@ def py_start_callback(code, instruction_offset):
                     and frame is not info.pydev_step_stop):
                 if frame.f_back is info.pydev_step_stop:
                     _enable_return_tracing(code)
-            if (py_db.is_files_filter_enabled
+            if (py_db.is_filter_enabled
                     and py_db.is_ignored_by_filters(filename)):
                 return monitoring.DISABLE
-            if (py_db._is_libraries_filter_enabled
+            if (py_db.is_filter_libraries
                     and not py_db.in_project_scope(filename)):
                 return monitoring.DISABLE
             # We are stepping, and there is no reason to skip the frame
@@ -715,11 +730,11 @@ def py_line_callback(code, line_number):
                         return
             else:
                 if step_cmd != -1:
-                    if (py_db.is_files_filter_enabled
+                    if (py_db.is_filter_enabled
                             and py_db.is_ignored_by_filters(filename)):
                         # ignore files matching stepping filters
                         return monitoring.DISABLE
-                    if (py_db._is_libraries_filter_enabled
+                    if (py_db.is_filter_libraries
                             and not py_db.in_project_scope(filename)):
                         # ignore library files while stepping
                         return monitoring.DISABLE

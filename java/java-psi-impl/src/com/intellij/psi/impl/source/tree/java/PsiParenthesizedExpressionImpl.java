@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -84,10 +85,18 @@ public class PsiParenthesizedExpressionImpl extends ExpressionPsiElement impleme
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    if (lastParent != null) return true;
     ElementClassHint elementClassHint = processor.getHint(ElementClassHint.KEY);
     if (elementClassHint != null && !elementClassHint.shouldProcess(ElementClassHint.DeclarationKind.VARIABLE)) return true;
-    PsiExpression expression = getExpression();
+    return processDeclarations(processor, state, lastParent, place, this::getExpression);
+  }
+
+  public static boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                            @NotNull ResolveState state,
+                                            PsiElement lastParent,
+                                            @NotNull PsiElement place,
+                                            @NotNull Computable<? extends @Nullable PsiElement> expressionProducer) {
+    if (lastParent != null) return true;
+    PsiElement expression = expressionProducer.get();
     if (expression == null) return true;
     return expression.processDeclarations(processor, state, null, place);
   }

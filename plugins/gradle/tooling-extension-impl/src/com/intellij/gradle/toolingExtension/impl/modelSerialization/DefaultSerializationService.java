@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelSerialization;
 
-import org.gradle.internal.impldep.org.apache.commons.io.input.ClassLoaderObjectInputStream;
+import org.apache.commons.io.input.ClassLoaderObjectInputStream;
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService;
 
 import java.io.*;

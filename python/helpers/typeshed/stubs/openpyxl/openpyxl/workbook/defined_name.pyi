@@ -48,7 +48,7 @@ class DefinedName(Serialisable):
         shortcutKey: str | None = None,
         publishToServer: _ConvertibleToBool | None = None,
         workbookParameter: _ConvertibleToBool | None = None,
-        attr_text: Incomplete | None = None,
+        attr_text=None,
     ) -> None: ...
     @property
     def type(self) -> _TokenTypesNotOperand | _TokenOperandSubtypes: ...

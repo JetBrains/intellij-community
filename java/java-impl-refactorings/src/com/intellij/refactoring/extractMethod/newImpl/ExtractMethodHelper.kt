@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.IntroduceVariableUtil
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
@@ -55,8 +56,9 @@ object ExtractMethodHelper {
 
   fun isNullabilityAvailable(extractOptions: ExtractOptions): Boolean {
     val project = extractOptions.project
-    val scope = extractOptions.elements.first().resolveScope
-    val defaultNullable = NullableNotNullManager.getInstance(project).defaultNullable
+    val element = extractOptions.elements.first()
+    val scope = element.resolveScope
+    val defaultNullable = NullableNotNullManager.getInstance(project).getDefaultAnnotation(Nullability.NULLABLE, element)
     val annotationClass = JavaPsiFacade.getInstance(project).findClass(defaultNullable, scope)
     return annotationClass != null
   }
@@ -119,12 +121,9 @@ object ExtractMethodHelper {
 
   fun addNullabilityAnnotation(typeElement: PsiTypeElement?, nullability: Nullability) {
     if (typeElement == null) return
+    if (nullability == Nullability.UNKNOWN) return
     val nullabilityManager = NullableNotNullManager.getInstance(typeElement.project)
-    val annotation = when (nullability) {
-      Nullability.NOT_NULL -> nullabilityManager.defaultNotNull
-      Nullability.NULLABLE -> nullabilityManager.defaultNullable
-      else -> return
-    }
+    val annotation = nullabilityManager.getDefaultAnnotation(nullability, typeElement)
     val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, typeElement)
     if (annotationElement != null) {
       JavaCodeStyleManager.getInstance(typeElement.project).shortenClassReferences(annotationElement)
@@ -264,12 +263,19 @@ object ExtractMethodHelper {
     val targetAsExpression = target.singleOrNull() as? PsiExpression
     if (sourceAsExpression != null && targetAsExpression != null) {
       val replacedExpression = IntroduceVariableUtil.replace(sourceAsExpression, targetAsExpression, sourceAsExpression.project)
-      return listOf(replacedExpression)
+      return listOf(findSubExpression(sourceAsExpression, replacedExpression) ?: replacedExpression)
     }
     val psiRange = getPhysicalPsiRange(sourceAsExpression) ?: PsiRange(source.first().parent, source.first(), source.last())
     val replacedElements = target.reversed().map { statement -> psiRange.lastChild.addSiblingAfter(statement) }.reversed()
     psiRange.parent.deleteChildRange(psiRange.firstChild, psiRange.lastChild)
     return replacedElements
+  }
+
+  private fun findSubExpression(sourceAsExpression: PsiExpression, context: PsiElement): PsiExpression? {
+    val marker = sourceAsExpression.getUserData(ElementToWorkOn.TEXT_RANGE) ?: return null
+    val file = context.containingFile
+    return PsiTreeUtil.findCommonParent(file.findElementAt(marker.textRange.startOffset), file.findElementAt(marker.textRange.endOffset - 1))
+      ?.parentOfType<PsiExpression>(withSelf = true)
   }
 
   fun replaceWithMethod(targetClass: PsiClass, elements: List<PsiElement>, preparedElements: ExtractedElements): ExtractedElements {

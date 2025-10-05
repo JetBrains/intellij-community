@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -25,8 +26,8 @@ import java.util.concurrent.atomic.AtomicInteger
     - Data about opening plugin cards, installing/removing plugins and plugin state changes will be collected by
       both [PluginManagerMPCollector] and [PluginManagerFUSCollector] for backward compatibility.
  */
-
 @ApiStatus.Internal
+@IntellijInternalApi
 object PluginManagerUsageCollector {
   private val fusCollector = PluginManagerFUSCollector()
   private val mpCollector = PluginManagerMPCollector()

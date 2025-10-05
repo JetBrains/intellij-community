@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -50,15 +50,8 @@ public final class PlatformUtils {
   public static final String FLEET_PREFIX = "FleetBackend";
   public static final String RUSTROVER_PREFIX = "RustRover";
   public static final String WRITERSIDE_PREFIX = "Writerside";
-  public static final String GITCLIENT_PREFIX = "GitClient";
+  public static final String GIT_CLIENT_PREFIX = "GitClient";
   public static final String MPS_PREFIX = "MPS";
-
-  /**
-   * @deprecated Code With Me Guest is an old name for JetBrains Client
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final String CWM_GUEST_PREFIX = "CodeWithMeGuest";
   public static final String JETBRAINS_CLIENT_PREFIX = "JetBrainsClient";
   public static final String GATEWAY_PREFIX = "Gateway";
 
@@ -195,9 +188,15 @@ public final class PlatformUtils {
   }
 
   public static boolean isGitClient() {
-    return is(GITCLIENT_PREFIX);
+    return is(GIT_CLIENT_PREFIX);
   }
 
+  /**
+   * Returns {@code true} if the IDE is running in a frontend mode (JetBrains Client).
+   * This is an internal method supposed to be used only from code running during early startup phases.
+   * If the instance container is initialized (in particular, in any plugin code), its equivalent
+   * {@link com.intellij.platform.ide.productMode.IdeProductMode#isFrontend()} should be used instead.
+   */
   public static boolean isJetBrainsClient() { return is(JETBRAINS_CLIENT_PREFIX); }
 
   public static boolean isGateway() { return is(GATEWAY_PREFIX); }

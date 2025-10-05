@@ -5,10 +5,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
@@ -21,9 +19,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -34,50 +29,13 @@ import java.util.function.Function;
  * Thread-safe.
  */
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
-  private static volatile Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS;
-  private static volatile boolean READY;
-
   SpellCheckingEditorCustomization(boolean enabled) {
     super(enabled);
-  }
-
-  private static @NotNull Map<String, LocalInspectionToolWrapper> getSpellCheckTools() {
-    Map<String, LocalInspectionToolWrapper> tools = SPELL_CHECK_TOOLS;
-    if (tools == null) {
-      tools = new HashMap<>();
-      // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
-      // Please perform corresponding settings tuning if that assumption is broken in the future.
-      Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])new Class<?>[]{SpellCheckingInspection.class};
-      for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
-        try {
-          LocalInspectionTool tool = inspectionClass.newInstance();
-          tools.put(tool.getShortName(), new LocalInspectionToolWrapper(tool));
-        }
-        catch (Throwable e) {
-          READY = false;
-          return Map.of();
-        }
-      }
-      SPELL_CHECK_TOOLS = tools;
-      READY = true;
-    }
-    return tools;
-  }
-
-  private static boolean isReady() {
-    if (SPELL_CHECK_TOOLS == null) {
-      getSpellCheckTools();
-    }
-    return READY;
   }
 
   @Override
   public void customize(@NotNull EditorEx editor) {
     boolean apply = isEnabled();
-
-    if (!isReady()) {
-      return;
-    }
 
     Project project = editor.getProject();
     if (project == null) {
@@ -108,7 +66,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     // Update representation.
     DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(project);
     if (analyzer != null) {
-      analyzer.restart(file);
+      analyzer.restart(file, this);
     }
   }
 
@@ -119,7 +77,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   }
 
   static Set<String> getSpellCheckingToolNames() {
-    return Collections.unmodifiableSet(getSpellCheckTools().keySet());
+    return Set.of(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
   }
 
   private static class MyInspectionProfileStrategy implements Function<InspectionProfile, InspectionProfileWrapper> {
@@ -129,9 +87,6 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
 
     @Override
     public @NotNull InspectionProfileWrapper apply(@NotNull InspectionProfile profile) {
-      if (!isReady()) {
-        return new InspectionProfileWrapper((InspectionProfileImpl)profile);
-      }
       MyInspectionProfileWrapper wrapper = myWrappers.get(profile);
       return wrapper == null
              ? ConcurrencyUtil.cacheOrGet(myWrappers, profile, new MyInspectionProfileWrapper(profile, myUseSpellCheck))
@@ -153,7 +108,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
 
     @Override
     public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-      return (key != null && getSpellCheckTools().containsKey(key.getShortName()) ? myUseSpellCheck : super.isToolEnabled(key, element));
+      return (key != null && getSpellCheckingToolNames().contains(key.getShortName()) ? myUseSpellCheck : super.isToolEnabled(key, element));
     }
   }
 }

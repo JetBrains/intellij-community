@@ -1,8 +1,15 @@
 package org.jetbrains.jewel.ui.theme
 
+import androidx.compose.foundation.IndicationNodeFactory
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.node.DelegatableNode
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalColorPalette
 import org.jetbrains.jewel.foundation.theme.LocalIconData
@@ -47,23 +54,28 @@ import org.jetbrains.jewel.ui.component.styling.LocalOutlinedSplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalPopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.LocalRadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalScrollbarStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSimpleListItemStyleStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
+import org.jetbrains.jewel.ui.component.styling.LocalSpeedSearchStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTransparentIconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.component.styling.PopupContainerStyle
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
+import org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlStyle
 import org.jetbrains.jewel.ui.component.styling.SelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 import org.jetbrains.jewel.ui.component.styling.SliderStyle
+import org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle
 import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
@@ -170,8 +182,19 @@ public val JewelTheme.Companion.tooltipStyle: TooltipStyle
 public val JewelTheme.Companion.iconButtonStyle: IconButtonStyle
     @Composable @ReadOnlyComposable get() = LocalIconButtonStyle.current
 
+@get:ApiStatus.Experimental
+@ExperimentalJewelApi
+public val JewelTheme.Companion.transparentIconButtonStyle: IconButtonStyle
+    @Composable @ReadOnlyComposable get() = LocalTransparentIconButtonStyle.current
+
 public val JewelTheme.Companion.sliderStyle: SliderStyle
     @Composable @ReadOnlyComposable get() = LocalSliderStyle.current
+
+public val JewelTheme.Companion.speedSearchStyle: SpeedSearchStyle
+    @Composable @ReadOnlyComposable get() = LocalSpeedSearchStyle.current
+
+public val JewelTheme.Companion.searchMatchStyle: SearchMatchStyle
+    @Composable @ReadOnlyComposable get() = LocalSearchMatchStyle.current
 
 @Composable
 public fun BaseJewelTheme(theme: ThemeDefinition, styling: ComponentStyling, content: @Composable () -> Unit) {
@@ -186,8 +209,20 @@ public fun BaseJewelTheme(
     content: @Composable () -> Unit,
 ) {
     JewelTheme(theme, swingCompatMode) {
-        CompositionLocalProvider(LocalColorPalette provides theme.colorPalette, LocalIconData provides theme.iconData) {
+        CompositionLocalProvider(
+            LocalColorPalette provides theme.colorPalette,
+            LocalIconData provides theme.iconData,
+            LocalIndication provides NoIndication,
+        ) {
             CompositionLocalProvider(values = styling.styles(), content = content)
         }
     }
+}
+
+private object NoIndication : IndicationNodeFactory {
+    override fun create(interactionSource: InteractionSource): DelegatableNode = object : Modifier.Node() {}
+
+    override fun hashCode(): Int = System.identityHashCode(this)
+
+    override fun equals(other: Any?): Boolean = this === other
 }

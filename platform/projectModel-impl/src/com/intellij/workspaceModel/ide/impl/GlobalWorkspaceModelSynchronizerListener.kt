@@ -10,8 +10,8 @@ import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeIntern
 
 internal class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
-    val eelDescriptor = project.getEelDescriptor()
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(eelDescriptor)
+    val eelMachine = project.getEelDescriptor().machine
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(eelMachine)
     // Avoid handling events if change was made by global workspace model
     if (globalWorkspaceModel.isFromGlobalWorkspaceModel) return
 

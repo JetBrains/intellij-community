@@ -12,11 +12,12 @@ import org.jetbrains.idea.maven.server.security.MavenToken
 import java.io.File
 
 abstract class DummyEmbedder : MavenServerEmbedder {
-  override fun evaluateEffectivePom(file: File,
+  override fun evaluateEffectivePom(longRunningTaskInput: LongRunningTaskInput,
+                                    file: File,
                                     activeProfiles: ArrayList<String>,
                                     inactiveProfiles: ArrayList<String>,
-                                    token: MavenToken?): String? {
-    return null
+                                    token: MavenToken?): MavenServerResponse<String> {
+    return MavenServerResponse("", LongRunningTaskStatus.EMPTY)
   }
 
   override fun resolveArtifacts(longRunningTaskInput: LongRunningTaskInput,
@@ -25,10 +26,15 @@ abstract class DummyEmbedder : MavenServerEmbedder {
     return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
-  override fun resolveArtifactsTransitively(artifacts: ArrayList<MavenArtifactInfo>,
-                                            remoteRepositories: ArrayList<MavenRemoteRepository>,
-                                            token: MavenToken?): MavenArtifactResolveResult {
-    return MavenArtifactResolveResult(emptyList(), null)
+  override fun resolveProcessorPathEntries(
+    longRunningTaskInput: LongRunningTaskInput,
+    artifacts: ArrayList<MavenArtifactInfo>,
+    remoteRepositories: ArrayList<MavenRemoteRepository>,
+    managedDependencies: HashMap<String, MavenArtifactInfo>,
+    profiles: MavenExplicitProfiles,
+    token: MavenToken?
+  ): MavenServerResponse<MavenArtifactResolveResult> {
+    return MavenServerResponse(MavenArtifactResolveResult(emptyList(), null), LongRunningTaskStatus.EMPTY)
   }
 
   override fun resolvePlugins(longRunningTaskInput: LongRunningTaskInput,

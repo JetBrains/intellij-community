@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -19,8 +19,8 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
-internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val libraryTable: LibraryTable, val descriptor: EelDescriptor, private val entitySource: EntitySource) :
-  LegacyBridgeModifiableBase(MutableEntityStorage.from(GlobalWorkspaceModel.getInstance(descriptor).currentSnapshot), true),
+internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val libraryTable: LibraryTable, val machine: EelMachine, private val entitySource: EntitySource) :
+  LegacyBridgeModifiableBase(MutableEntityStorage.from(GlobalWorkspaceModel.getInstance(machine).currentSnapshot), true),
   LibraryTable.ModifiableModel {
 
   private val myAddedLibraries = mutableListOf<LibraryBridgeImpl>()
@@ -54,7 +54,7 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
 
     val library = LibraryBridgeImpl(
       libraryTable = libraryTable,
-      origin = LibraryOrigin.OfDescriptor(descriptor),
+      origin = LibraryOrigin.OfMachine(machine),
       initialId = LibraryId(name, libraryTableId),
       initialEntityStorage = entityStorageOnDiff,
       targetBuilder = this.diff
@@ -78,7 +78,7 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
   }
 
   override fun commit() {
-    GlobalWorkspaceModel.getInstance(descriptor).updateModel("${libraryTableId.level} library table commit") {
+    GlobalWorkspaceModel.getInstance(machine).updateModel("${libraryTableId.level} library table commit") {
       it.applyChangesFrom(diff)
     }
     libraries.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }

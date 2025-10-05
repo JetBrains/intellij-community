@@ -76,7 +76,7 @@ class TotalAnnotator(LegendColEndCallout):
         fillColor=...,
         strokeWidth: float = 0.5,
         strokeColor=...,
-        strokeDashArray: Incomplete | None = None,
+        strokeDashArray=None,
         dx: int = 0,
         dy: int = 0,
         dly: int = 0,

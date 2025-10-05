@@ -7,10 +7,10 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.project.isDirectoryBased
-import com.intellij.project.stateStore
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * Returns `null` for the default project
@@ -23,18 +23,20 @@ fun getJpsProjectConfigLocation(project: Project): JpsProjectConfigLocation? {
 
 @ApiStatus.Internal
 fun getJpsProjectConfigLocation(project: Project, virtualFileUrlManager: VirtualFileUrlManager): JpsProjectConfigLocation? {
-  if (project.isDirectoryBased) {
-    return project.basePath?.let {
-      val ideaFolder = project.stateStore.directoryStorePath!!.toVirtualFileUrl(virtualFileUrlManager)
-      val baseUrl = VfsUtilCore.pathToUrl(it)
-      JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.getOrCreateFromUrl(baseUrl), ideaFolder)
-    }
+  if (project !is ProjectStoreOwner) {
+    return null
+  }
+
+  val storeDescriptor = project.componentStore.storeDescriptor
+  val dotIdea = storeDescriptor.dotIdea
+  if (dotIdea == null) {
+    val projectFileUrl = VfsUtilCore.pathToUrl(storeDescriptor.presentableUrl.invariantSeparatorsPathString)
+    val iprFile = virtualFileUrlManager.getOrCreateFromUrl(projectFileUrl)
+    return JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
   }
   else {
-    return project.projectFilePath?.let {
-      val projectFileUrl = VfsUtilCore.pathToUrl(it)
-      val iprFile = virtualFileUrlManager.getOrCreateFromUrl(projectFileUrl)
-      JpsProjectConfigLocation.FileBased(iprFile, iprFile.parent!!)
-    }
+    val ideaFolder = dotIdea.toVirtualFileUrl(virtualFileUrlManager)
+    val baseUrl = VfsUtilCore.pathToUrl(storeDescriptor.historicalProjectBasePath.invariantSeparatorsPathString)
+    return JpsProjectConfigLocation.DirectoryBased(virtualFileUrlManager.getOrCreateFromUrl(baseUrl), ideaFolder)
   }
 }

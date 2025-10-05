@@ -219,7 +219,23 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   public void testnew$arrayInitializerTrailingComma() { doTest(); }
 
+  public void testnew$nlInsideArrayDeclaration() { doTest(); }
+
+  public void testnew$nlBeforeArrayDeclaration() { doTest(); }
+
+  public void testnew$nlInsideArrayDeclarationWithExpression() { doTest(); }
+
   public void testnew$nestedArrayInitializer() { doTest(); }
+
+  public void testnew$emptyNestedArrayInitializer() { doTest(); }
+
+  public void testnew$nestedArrayInitializerWithClosure() { doTest(); }
+
+  public void testnew$nestedArrayInitializerWithLambda() { doTest(); }
+
+  public void testnew$nestedArrayInitializerCommaAfterLastElement() { doTest(); }
+
+  public void testnew$nestedArrayInitializerNewLinesInside() { doTest(); }
 
   public void testnew$noInitializer() { doTest(); }
 
@@ -272,6 +288,10 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testnew$newLine21() { doTest(); }
 
   public void testnew$newLine22() { doTest(); }
+
+  public void testnew$newLine23() { doTest(); }
+
+  public void testnew$newLine24() { doTest(); }
 
   public void testanonymous$anonymous() { doTest(); }
 
@@ -684,6 +704,16 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testthis$this() { doTest(); }
 
   public void testsuper$super() { doTest(); }
+
+  public void testbinary$implicationSimple() { doTest(); }
+
+  public void testbinary$implicationWithNewLineAfter() { doTest(); }
+
+  public void testbinary$implicationWithNewLineBefore() { doTest(); }
+
+  public void testbinary$implicationRightAssociativity() { doTest(); }
+
+  public void testbinary$implicationLowPriority() { doTest(); }
 
   public void testbinary$identity() { doTest(); }
 

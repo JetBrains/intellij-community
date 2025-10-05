@@ -2,8 +2,8 @@
 package com.intellij.java.psi.search;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
@@ -139,8 +139,8 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addFileToProject("mod1/B.java", "class B extends A {}");
     myFixture.addFileToProject("mod2/C.java", "class C extends B {}");
 
-    Module mod1 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
-    Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+    Module mod1 = PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod1", myFixture.getTempDirFixture().findOrCreateDir("mod1"));
+    Module mod2 = PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
 
     ModuleRootModificationUtil.addDependency(mod1, getModule(), DependencyScope.COMPILE, true);
     ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, false);
@@ -153,7 +153,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addFileToProject("mod2/C.java", "class C extends B {}");
 
     PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().findOrCreateDir("tests"), true);
-    Module mod2 = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
+    Module mod2 = PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "mod2", myFixture.getTempDirFixture().findOrCreateDir("mod2"));
 
     ModuleRootModificationUtil.updateModel(mod2, model ->
       model.addModuleOrderEntry(getModule()).setProductionOnTestDependency(true));

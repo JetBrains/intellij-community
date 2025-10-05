@@ -8,9 +8,28 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
 /**
  * A semaphore implementation throwing {@link ProcessCanceledException} instead of {@link InterruptedException}
- * Use {@link Semaphore#down} to remove a permit from the semaphore
- * Use {@link Semaphore#up} to return a permit to the semaphore
- * Use {@link Semaphore#waitFor} to request for a vacant permit. If there is no vacant permit, waitFor will be blocked until there is one.
+ *
+ * This implementation is suitable when you need wait for one or several events to occur.
+ * Note that {@link #waitFor} does not acquire permit.<p>
+ * The typical usage is:
+ * <pre>
+ * {@code
+ *   Semaphore semaphore = new Semaphore();
+ *   semaphore.down();
+ *
+ *   new Thread(() -> {
+ *     doTheJob();        // the job is done here
+ *     semaphore.up();
+ *   }).start();
+ *
+ *   semaphore.waitFor(); // wait for the job to finish
+ * }
+ * </pre>
+ *
+ * Use {@link Semaphore#down} to remove a permit from the semaphore <p>
+ * Use {@link Semaphore#up} to return a permit to the semaphore <p>
+ * Use {@link Semaphore#waitFor} to wait until the semaphore gets at least one permit. waitFor blocks until there is one.
+ * Note that it does not perform a ` down ` operation.
  */
 public final class Semaphore {
   /**

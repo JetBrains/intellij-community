@@ -12,11 +12,10 @@ import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.RootProvider.RootSetChangedListener
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
@@ -28,7 +27,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
-import com.intellij.workspaceModel.core.fileIndex.impl.LibrariesAndSdkContributors
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetImpl
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import org.jdom.Element
@@ -203,14 +201,9 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
 
     /** @return a [Sdk] which contains [set] or null otherwise */
     fun ImmutableEntityStorage.findSdk(set: WorkspaceFileSet): Sdk? {
-      if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
-        val setImpl = set as? WorkspaceFileSetImpl ?: return null
-        val sdkEntity = setImpl.entityPointer.resolve(this) as? SdkEntity ?: return null
-        return findSdk(sdkEntity)
-      }
-      else {
-        return LibrariesAndSdkContributors.getSdk(set)
-      }
+      val setImpl = set as? WorkspaceFileSetImpl ?: return null
+      val sdkEntity = setImpl.entityPointer.resolve(this) as? SdkEntity ?: return null
+      return findSdk(sdkEntity)
     }
 
     fun createEmptySdkEntity(name: String, type: String, homePath: String = "", version: String? = null): SdkEntity.Builder {
@@ -225,9 +218,8 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
 
     fun createEntitySourceForSdk(): EntitySource {
       val virtualFileUrlManager = getVirtualFileUrlManager()
-      val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUrl(
-        PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.SDK_FILE_NAME).absolutePath)
-      return JpsGlobalFileEntitySource(globalLibrariesFile)
+      val sdkFile = PathManager.getOptionsDir().resolve(JpsGlobalEntitiesSerializers.SDK_FILE_NAME + PathManager.DEFAULT_EXT)
+      return JpsGlobalFileEntitySource(virtualFileUrlManager.getOrCreateFromUrl(sdkFile.toAbsolutePath().toString()))
     }
   }
 }
@@ -276,6 +268,6 @@ fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity) {
 }
 
 private fun getVirtualFileUrlManager(): VirtualFileUrlManager {
-  // here we can use LocalEelDescriptor, as we simply need to get the virtual file url manager
-  return GlobalWorkspaceModel.getInstance(LocalEelDescriptor).getVirtualFileUrlManager()
+  // here we can use LocalEelMachine, as we simply need to get the virtual file url manager
+  return GlobalWorkspaceModel.getInstance(LocalEelMachine).getVirtualFileUrlManager()
 }

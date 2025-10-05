@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification.Frontend;
 
 import static com.intellij.database.datagrid.GridUtil.hidePageActions;
 
@@ -73,7 +74,7 @@ public abstract class PageAction extends DumbAwareAction implements GridAction {
     }
   }
   
-  public static abstract class NavigationAction extends PageAction {
+  public static abstract class NavigationAction extends PageAction implements Frontend {
     
     @Override
     public void update(@NotNull AnActionEvent e) {

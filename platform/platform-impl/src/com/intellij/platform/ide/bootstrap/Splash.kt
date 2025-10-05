@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.Gray
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.drawImage
 import java.awt.*
 import java.awt.image.BufferedImage
 
@@ -43,6 +42,6 @@ internal class Splash(private val image: BufferedImage, isAlwaysOnTop: Boolean) 
   }
 
   override fun paint(g: Graphics) {
-    drawImage(g = g, image = image, x = 0, y = 0)
+    StartupUiUtil.drawImage(g, image, x = 0, y = 0)
   }
 }

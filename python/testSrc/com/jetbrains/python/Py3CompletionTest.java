@@ -441,7 +441,7 @@ public class Py3CompletionTest extends PyTestCase {
                                                       c1 = Cat1("name", 5)
                                                       c1.<caret>""");
         assertNotNull(suggested);
-        assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
+        assertContainsElements(suggested, PyNamedTupleType.getSpecialAttributes(LanguageLevel.PYTHON37));
       }
     );
   }

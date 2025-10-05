@@ -16,13 +16,14 @@ import org.jetbrains.jps.dependency.impl.PathSource;
 import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder;
 import org.jetbrains.jps.util.Pair;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
 public final class LibraryGraphLoader {
-  private static final int CACHE_SIZE = 512; // todo: make configurable
+  private static final int CACHE_SIZE = 1024; // todo: make configurable
 
   private static final LoadingCache<LibDescriptor, Pair<NodeSourceSnapshot, Graph>> ourCache = Caffeine
     .newBuilder()
@@ -39,7 +40,7 @@ public final class LibraryGraphLoader {
   }
 
   private static Pair<NodeSourceSnapshot, Graph> loadReadonlyLibraryGraph(Path jarPath) throws IOException {
-    try (var is = Files.newInputStream(jarPath)) {
+    try (var is = new BufferedInputStream(Files.newInputStream(jarPath))) {
       return loadReadonlyLibraryGraph(new DeltaImpl(Set.of(), Set.of()) /*depGraph.createDelta(Set.of(), Set.of(), false)*/, ClassDataZipEntry.fromSteam(is));
     }
   }

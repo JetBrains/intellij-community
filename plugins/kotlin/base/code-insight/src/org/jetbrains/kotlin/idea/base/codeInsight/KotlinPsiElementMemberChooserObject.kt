@@ -13,6 +13,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -77,7 +78,7 @@ class KotlinPsiElementMemberChooserObject(
             }
         }
 
-        context(KaSession)
+        context(_: KaSession)
         @OptIn(KaExperimentalApi::class)
         private fun getChooserText(symbol: KaSymbol): @NlsSafe String {
             if (symbol is KaClassSymbol) {
@@ -94,7 +95,7 @@ class KotlinPsiElementMemberChooserObject(
             return ""
         }
 
-        context(KaSession)
+        context(_: KaSession)
         private fun getChooserIcon(element: PsiElement, symbol: KaSymbol): Icon? {
             val isClass = element is KtClass || element is PsiClass
             val flags = if (isClass) 0 else Iconable.ICON_FLAG_VISIBILITY

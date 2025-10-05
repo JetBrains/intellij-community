@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
@@ -10,7 +10,6 @@ import com.intellij.openapi.components.service
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.ui.logging.JvmLoggingSettingsStorage
-import junit.framework.TestCase
 
 private const val SMART_MODE_REASON_MESSAGE = "Logger completion is not supported in the dumb mode"
 
@@ -207,18 +206,47 @@ class LoggerCompletionTest : LightFixtureCompletionTestCase() {
     doAntiTest("logMethod", "anotherLogMethod", "clone")
   }
 
+  @NeedsIndex.SmartMode(reason = SMART_MODE_REASON_MESSAGE)
+  fun testNoAutoCompletionAfterErrorElementWithDot() {
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+    doAntiTest()
+  }
+
+  @NeedsIndex.SmartMode(reason = SMART_MODE_REASON_MESSAGE)
+  fun testNoAutoCompletionAfterExpressionWithDot() {
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+    doAntiTest("equals",
+                 "hashCode",
+                 "toString",
+                 "getClass",
+                 "notify",
+                 "notifyAll",
+                 "wait",
+                 "wait",
+                 "wait")
+  }
+
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/logger"
 
+
+  override fun doAntiTest() {
+    doAntiTest(*emptyArray<String>())
+  }
 
   private fun doAntiTest(vararg names: String) {
     val name = getTestName(true)
     configureByFile("$name.java")
     assertStringItems(*names)
-    TestCase.assertFalse(
-      lookup.items.any {
-        it is JvmLoggerLookupElement
-      }
-    )
+    if (names.isEmpty()) {
+      assertNull(lookup)
+    }
+    else {
+      assertFalse(
+        lookup.items.any {
+          it is JvmLoggerLookupElement
+        }
+      )
+    }
   }
 
   private fun doTest(position: Int, vararg names: String) {

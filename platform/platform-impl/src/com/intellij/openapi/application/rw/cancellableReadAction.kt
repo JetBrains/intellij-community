@@ -21,7 +21,7 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
   // A child Job is started to be externally cancellable by a write action without cancelling the current Job.
   val readJob = Job(parent = ctx[Job])
   return try {
-    installThreadContext(ctx.prepareForInstallation() + readJob).use {
+    installThreadContext(ctx.prepareForInstallation() + readJob) {
       var resultRef: Value<X>? = null
       val application = ApplicationManagerEx.getApplicationEx()
       val cancellation = CannotReadException.jobCancellation(readJob)

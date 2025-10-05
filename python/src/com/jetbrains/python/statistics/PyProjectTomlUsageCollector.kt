@@ -14,8 +14,8 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PY_PROJECT_TOML_BUILD_SYSTEM
 import com.intellij.python.pyproject.PY_PROJECT_TOML_TOOL_PREFIX
+import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirementParser
-import com.jetbrains.python.packaging.normalizePackageName
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.toml.lang.psi.*
@@ -127,7 +127,7 @@ class PyProjectTomlUsageCollector : ProjectUsagesCollector() {
           key.substringAfter(PY_PROJECT_TOML_TOOL_PREFIX, "").substringBefore(".")
         else ""
 
-        normalizePackageName(name)
+        PyPackageName.normalizePackageName(name)
       }.filter {
         it.isNotEmpty()
       }
@@ -151,7 +151,7 @@ class PyProjectTomlUsageCollector : ProjectUsagesCollector() {
             }
           }
         }.mapNotNull {
-          val requirement = PyRequirementParser.fromLine(normalizePackageName(it))
+          val requirement = PyRequirementParser.fromLine(PyPackageName.normalizePackageName(it))
           requirement?.name
         }
 

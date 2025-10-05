@@ -1,29 +1,35 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.client
 
+import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
 import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.RemoteKind
 import fleet.rpc.client.proxy.*
 import fleet.rpc.core.*
 import fleet.rpc.serializer
 import fleet.util.UID
-import fleet.util.async.resource
-import fleet.util.async.use
-import fleet.util.async.withSupervisor
+import fleet.util.async.*
 import fleet.util.causeOfType
 import fleet.util.channels.consumeAll
 import fleet.util.channels.isFull
 import fleet.util.logging.KLoggers
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.channels.ClosedSendChannelException
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.selects.whileSelect
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import fleet.multiplatform.shims.ConcurrentHashMap
-import fleet.multiplatform.shims.newSingleThreadCoroutineDispatcher
-import kotlin.coroutines.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.startCoroutine
+
+internal const val RPC_TIMEOUT = 60_000L
 
 private data class OutgoingRequest(
   val route: UID,
@@ -37,30 +43,32 @@ private data class OutgoingRequest(
 
 private data class OngoingRequest(val request: OutgoingRequest)
 
-@OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
-suspend fun <T> rpcClient(
-  transport: Transport<TransportMessage>,
+fun rpcClient(
+  transport: Transport,
   origin: UID,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
   abortOnError: Boolean,
-  body: suspend CoroutineScope.(RpcClient) -> T,
-): T =
-  newSingleThreadCoroutineDispatcher("rpc-client-$origin").use { dispatcher ->
-    withSupervisor { supervisor ->
-      val client = RpcClient(coroutineScope = supervisor + CoroutineName("RpcScope"),
-                             transport = transport,
-                             origin = origin,
-                             requestInterceptor = requestInterceptor)
-      launch(start = CoroutineStart.ATOMIC, context = dispatcher + CoroutineName("RpcClient")) { client.work(abortOnError) }
-        .use {
-          body(client)
-        }
+): Resource<IRpcClient> =
+  resource { cc ->
+    newSingleThreadCoroutineDispatcher("rpc-client-$origin").use { dispatcher ->
+      withSupervisor { supervisor ->
+        val client = RpcClient(
+          coroutineScope = supervisor + CoroutineName("RpcScope"),
+          transport = transport,
+          origin = origin,
+          requestInterceptor = requestInterceptor,
+        )
+        launch(start = CoroutineStart.ATOMIC, context = dispatcher) { client.work(abortOnError) }
+          .use {
+            cc(client)
+          }
+      }
     }
-  }
+  }.onContext(CoroutineName("rpcClient"))
 
-class RpcClient internal constructor(
+private class RpcClient(
   private val coroutineScope: CoroutineScope,
-  private val transport: Transport<TransportMessage>,
+  private val transport: Transport,
   private val origin: UID,
   private val requestInterceptor: RpcInterceptor,
 ) : IRpcClient {
@@ -112,7 +120,6 @@ class RpcClient internal constructor(
 
   companion object {
     internal val logger = KLoggers.logger(RpcClient::class)
-    internal const val RPC_TIMEOUT = 60_000L
   }
 
   private sealed class Event {
@@ -152,12 +159,6 @@ class RpcClient internal constructor(
             }
           }
           mergedIncomingAndTransport.collect { event ->
-            // TODO do I need to modify telemetryContext here?
-            //message.otelData()?.let { telemetryData ->
-            //  OpenTelemetry.getGlobalPropagators().textMapPropagator.extract(Context.current(), telemetryData, TelemetryData.otelGetter).makeCurrent().use {
-            //  }
-            //}
-
             try {
               when (event) {
                 is Event.Message -> {
@@ -411,7 +412,8 @@ class RpcClient internal constructor(
   private fun resumeAllOngoingCallsWithThrowable(throwable: Throwable) {
     logger.debug(throwable) { "resumeAllOngoingCallsWithThrowable" }
 
-    for (key in outgoingRpc.keys) {
+    val outgoingKeys = outgoingRpc.keys.toList()
+    for (key in outgoingKeys) {
       outgoingRpc.remove(key)?.let {
         logger.trace { "resumeAllOngoingCallsWithThrowable: resume request $key" }
         it.request.continuation.resumeWithException(throwable)
@@ -426,11 +428,10 @@ class RpcClient internal constructor(
 
   private fun resumeWithRouteClosed(route: UID) {
     val message = "Route $route closed"
-    for ((key, value) in outgoingRpc) {
-      if (value.request.route == route) {
-        outgoingRpc.remove(key)?.let {
-          it.request.continuation.resumeWithException(RouteClosedException(route, rpcCallFailureMessage(it.request.call, message)))
-        }
+    val outgoingKeys = outgoingRpc.filterValues { it.request.route == route }.keys
+    for (key in outgoingKeys) {
+      outgoingRpc.remove(key)?.let {
+        it.request.continuation.resumeWithException(RouteClosedException(route, rpcCallFailureMessage(it.request.call, message)))
       }
     }
     streams.values.removeAll {

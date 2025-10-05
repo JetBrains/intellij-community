@@ -1,0 +1,47 @@
+<idea-plugin allow-bundled-update="true">
+
+  <!-- Warn: remember to sync the following {name, id, vendor, category, description} tags
+             with plugin.xml in intellij.vcs.gitlab.ultimate module-->
+  <name>GitLab</name>
+  <id>org.jetbrains.plugins.gitlab</id>
+  <vendor>JetBrains</vendor>
+  <category>Version Controls</category>
+  <description>
+    <![CDATA[
+      <p>Provides integration with GitLab.</p>
+
+      <p><b>Access your GitLab projects without leaving the IDE</b><br>
+      Log in to your GitLab account to access all your projects from the IDE.<br>
+      Switch between multiple GitLab accounts to do your main job and contribute to your private projects.</p>
+
+      <p><b>Clone projects</b><br>
+      Clone a project that you want to contribute to directly from the IDE and create a new project based on it.</p>
+
+      <p><b>Work with merge requests</b><br>
+      Manage incoming merge requests:
+      <li>Filter requests by state, author, assignee, reviewer, and label.
+      <li>Keep up with the changes by checking the timeline.
+      <li>Jump to a merge request on GitLab if necessary.<br><br>
+
+      Review merge requests:
+      <li>View the diff between the suggested changes and the base revision.
+      <li>Leave your comments and suggestions.
+      <li>Merge or close merge requests.<br><br>
+
+      View and apply suggested changes:
+      <li>Answer the comments to your merge request.
+      <li>Close or save your merge request as a draft.</p>
+
+      <p>To configure, open <b>Settings / Preferences</b> and go to Version Control | GitLab.</p>
+      <p>Requires the Git plugin.</p>
+      ]]>
+  </description>
+
+  <content>
+    <module name="intellij.vcs.gitlab" loading="embedded"/>
+    <module name="intellij.vcs.gitlab.git"/>
+    <module name="intellij.vcs.gitlab.yaml"/>
+    <module name="intellij.vcs.gitlab.ultimate.features"/>
+    <module name="intellij.vcs.gitlab.ultimate.ci.sh"/>
+  </content>
+</idea-plugin>

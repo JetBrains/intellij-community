@@ -25,10 +25,7 @@
     <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmWasiLibraryType"/>
 
     <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
-    <configurationType implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationType"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
-    <runConfigurationProducer
-            implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFileAutoRunner"
                     serviceImplementation="org.jetbrains.kotlin.idea.jvm.k1.scratch.ScratchFileAutoRunnerK1"/>
@@ -52,7 +49,7 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <quickFixContributor implementation="org.jetbrains.kotlin.idea.jvm.k1.quickfix.JvmQuickFixRegistrar"/>
     <scratchFileLanguageProvider language="kotlin"
-                                 implementationClass="org.jetbrains.kotlin.idea.jvm.k1.scratch.KtScratchFileLanguageProvider"/>
+                                 implementationClass="org.jetbrains.kotlin.idea.jvm.k1.scratch.K1ScratchFileLanguageProvider"/>
 
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JvmIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JsIdePlatformKindTooling"/>
@@ -65,12 +62,18 @@
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 
   <actions>
-    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction">
+    <!-- Kotlin Console REPL-->
+    <action id="KotlinConsoleREPL" class="org.jetbrains.kotlin.console.actions.RunKotlinConsoleAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.LAUNCH">
+      <add-to-group group-id="KotlinToolsGroup" anchor="last"/>
+    </action>
+
+    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction" icon="AllIcons.Actions.Execute">
       <keyboard-shortcut first-keystroke="control alt W" keymap="$default"/>
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </action>
-    <action id="Kotlin.ClearScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ClearScratchAction"/>
-    <action id="Kotlin.StopScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.StopScratchAction"/>
+    <action id="Kotlin.ClearScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ClearScratchAction" icon="AllIcons.Actions.GC"/>
+    <action id="Kotlin.StopScratch" class="org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.StopScratchAction" icon="AllIcons.Actions.Suspend"/>
   </actions>
 
 </idea-plugin>

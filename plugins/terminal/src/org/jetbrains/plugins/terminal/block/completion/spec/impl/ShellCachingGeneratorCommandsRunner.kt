@@ -6,18 +6,20 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Scheduler
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellCommandResult
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
-internal class ShellCachingGeneratorCommandsRunner(private val delegate: ShellCommandExecutor) : ShellCommandExecutor {
+@ApiStatus.Internal
+class ShellCachingGeneratorCommandsRunner(private val delegate: ShellCommandExecutor) : ShellCommandExecutor {
   val cache: Cache<String, ShellCommandResult> = Caffeine.newBuilder()
     .maximumSize(5)
     .expireAfterAccess(Duration.ofMinutes(5))
     .scheduler(Scheduler.systemScheduler())
     .build()
 
-  override suspend fun runShellCommand(command: String): ShellCommandResult {
+  override suspend fun runShellCommand(directory: String, command: String): ShellCommandResult {
     cache.getIfPresent(command)?.let { return it }
-    val result = delegate.runShellCommand(command)
+    val result = delegate.runShellCommand(directory, command)
     if (result.exitCode == 0) {
       cache.put(command, result)
     }

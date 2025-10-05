@@ -204,6 +204,11 @@ public class Py3HighlightingTest extends PyTestCase {
     doTest(false, false, ".ipynb");
   }
 
+  // PY-83160
+  public void testStarInTypeAnnotationString() {
+    doTest(true, false);
+  }
+
   private void doTestWithLanguageLevel(LanguageLevel languageLevel, boolean checkWarnings, boolean checkInfos) {
     runWithLanguageLevel(languageLevel, () -> doTest(checkWarnings, checkInfos));
   }

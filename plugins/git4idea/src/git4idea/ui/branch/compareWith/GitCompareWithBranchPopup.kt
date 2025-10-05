@@ -10,14 +10,14 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupActions
-import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupBase
-import com.intellij.vcs.git.shared.branch.popup.GitBranchesPopupStepBase
-import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeModel
-import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeRenderer
-import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeSingleRepoModel
-import com.intellij.vcs.git.shared.branch.tree.createTreePathFor
-import com.intellij.vcs.git.shared.repo.GitRepositoryModel
+import com.intellij.vcs.git.branch.popup.GitBranchesPopupActions
+import com.intellij.vcs.git.branch.popup.GitBranchesPopupBase
+import com.intellij.vcs.git.branch.popup.GitBranchesPopupStepBase
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeModel
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeRenderer
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeSingleRepoModel
+import com.intellij.vcs.git.branch.tree.createTreePathFor
+import com.intellij.vcs.git.repo.GitRepositoryModel
 import git4idea.GitReference
 import git4idea.GitStandardLocalBranch
 import git4idea.config.GitVcsSettings
@@ -65,8 +65,10 @@ private class GitCompareWithBranchesTreeModel(project: Project, repository: GitR
   override fun getLocalBranches(): Collection<GitStandardLocalBranch> = repository.state.localBranches.skipCurrentBranch()
   override fun getRecentBranches(): Collection<GitStandardLocalBranch> = super.getRecentBranches().skipCurrentBranch()
 
-  private fun Collection<GitStandardLocalBranch>.skipCurrentBranch(): Collection<GitStandardLocalBranch> =
-    filter { repository.state.currentRef?.matches(it) == false }
+  private fun Collection<GitStandardLocalBranch>.skipCurrentBranch(): Collection<GitStandardLocalBranch> {
+    val currentBranch = repository.state.currentBranch ?: return this
+    return filter { it != currentBranch }
+  }
 
   override fun getPreferredSelection(): TreePath? {
     return getPreferredBranch()?.let { createTreePathFor(this, it) }

@@ -5,30 +5,29 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.DeltaView;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.LibraryGraphLoader;
-import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
-import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
-import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumenterClassWriter;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.BytecodeInstrumenter;
 import com.intellij.tools.build.bazel.jvmIncBuilder.runner.CompilerRunner;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputFile;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.util.Pair;
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.jetbrains.jps.util.SystemInfo;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.jetbrains.jps.util.Iterators.*;
 
 /** @noinspection SSBasedInspection*/
 public class BazelIncBuilder {
+  private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncBuilder");
   // recompile all, if more than X percent of files has been changed; for incremental tests, set equal to 100
   private static final int RECOMPILE_CHANGED_RATIO_PERCENT = 85;
 
@@ -38,6 +37,7 @@ public class BazelIncBuilder {
 
     DiagnosticSink diagnostic = context;
     NodeSourceSnapshotDelta srcSnapshotDelta = null;
+    ResourcesSnapshotDelta resourcesDelta = null;
     Iterable<NodeSource> modifiedLibraries = List.of();
     Iterable<NodeSource> deletedLibraries = List.of();
 
@@ -46,17 +46,22 @@ public class BazelIncBuilder {
       try {
         GraphUpdater graphUpdater = new GraphUpdater(context.getTargetName());
 
+        LOG.info(() -> "Building " + context.getTargetName() + " (rebuild requested: " + context.isRebuild() + ")");
+
         if (context.isRebuild() || !storageManager.getOutputBuilder().isInputZipExist()) {
-          // either rebuild is explicitly requested, or there is no previous data, need to compile whole target
+          // either rebuild is explicitly requested, or there is no previous data, need to compile the whole target
           srcSnapshotDelta = new SnapshotDeltaImpl(context.getSources());
           srcSnapshotDelta.markRecompileAll(); // force rebuild
         }
         else {
           ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getBinaryDependencies());
+          ConfigurationState presentState = new ConfigurationState(context.getPathMapper(), context.getSources(), context.getResources(), context.getBinaryDependencies(), context.getFlags());
 
-          srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), context.getSources());
-          if (shouldRecompileAll(srcSnapshotDelta) || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
+          srcSnapshotDelta = new SnapshotDeltaImpl(pastState.getSources(), presentState.getSources());
+
+          if (shouldRecompileAll(srcSnapshotDelta) || pastState.getFlagsDigest() != presentState.getFlagsDigest() || pastState.getClasspathStructureDigest() != presentState.getClasspathStructureDigest()) {
+            int changedPercent = srcSnapshotDelta.getChangedPercent();
+            LOG.info(() -> "Marking whole target for recompilation [" + context.getTargetName() + "]. Changed sources: " + changedPercent + "% (threshold " + RECOMPILE_CHANGED_RATIO_PERCENT + "%) ");
             srcSnapshotDelta.markRecompileAll();
           }
           else {
@@ -89,6 +94,7 @@ public class BazelIncBuilder {
                   }
                 }
                 catch (Exception e) { // problems loading library graphs
+                  LOG.log(Level.WARNING, "Problems loading library graphs, recompiling whole target " + context.getTargetName(), e);
                   srcSnapshotDelta.markRecompileAll();
                   context.report(Message.create(null, Message.Kind.WARNING, e));
                   break;
@@ -96,6 +102,16 @@ public class BazelIncBuilder {
               }
 
               if (!changedLibNodeSources.isEmpty() || !deletedLibNodeSources.isEmpty()) {
+
+                // Add to 'pastLibGraphs' all previously available graph parts, even if they are not changed. Reason: need full nodes info for graph node traversals
+                for (NodeSource lib : libsSnapshotDelta.getBaseSnapshot().getElements()) {
+                  if (!contains(libsSnapshotDelta.getModified(), lib)) {
+                    pastLibGraphs.add(
+                      LibraryGraphLoader.getLibraryGraph(lib, presentState.getLibraries().getDigest(lib), context.getPathMapper().toPath(lib)).second
+                    );
+                  }
+                }
+
                 try {
                   Delta libDelta = new DeltaView(changedLibNodeSources, deletedLibNodeSources, CompositeGraph.create(presentLibGraphs));
                   srcSnapshotDelta = graphUpdater.updateBeforeCompilation(storageManager.getGraph(), srcSnapshotDelta, libDelta, pastLibGraphs);
@@ -104,6 +120,7 @@ public class BazelIncBuilder {
                   }
                 }
                 catch (IOException e) {
+                  LOG.log(Level.WARNING, "Problems loading dependency graph, recompiling whole target " + context.getTargetName(), e);
                   srcSnapshotDelta.markRecompileAll();
                   context.report(Message.create(null, Message.Kind.WARNING, e));
                 }
@@ -112,8 +129,11 @@ public class BazelIncBuilder {
 
             // for all modified forms ensure sources bound to forms are marked for recompilation
             if (!srcSnapshotDelta.isRecompileAll()) {
-              for (NodeSource source : FormsCompiler.findBoundSources(storageManager, filter(srcSnapshotDelta.getModified(), FormBinding::isForm))) {
-                srcSnapshotDelta.markRecompile(source);
+              Iterator<@NotNull NodeSource> modifiedForms = filter(srcSnapshotDelta.getModified(), FormBinding::isForm).iterator();
+              if (modifiedForms.hasNext()) {
+                for (NodeSource source : FormsCompiler.findBoundSources(storageManager, collect(modifiedForms, new ArrayList<>()))) {
+                  srcSnapshotDelta.markRecompile(source);
+                }
               }
             }
 
@@ -127,11 +147,13 @@ public class BazelIncBuilder {
               }
             }
           }
+
+          if (!srcSnapshotDelta.isRecompileAll()) {
+            resourcesDelta = new ResourcesSnapshotDelta(pastState.getResources(), presentState.getResources());
+          }
         }
 
         List<CompilerRunner> roundCompilers = collect(map(RunnerRegistry.getRoundCompilers(), f -> f.create(context, storageManager)), new ArrayList<>());
-        List<BytecodeInstrumenter> instrumenters = collect(map(RunnerRegistry.getInstrumenters(), f -> f.create(context, storageManager)), new ArrayList<>());
-
         boolean isInitialRound = true;
 
         do { // build rounds loop
@@ -151,6 +173,21 @@ public class BazelIncBuilder {
           OutputSinkImpl outSink = new OutputSinkImpl(storageManager);
 
           if (isInitialRound) {
+
+            // processing resources
+            ZipOutputBuilder out = storageManager.getOutputBuilder();
+            if (resourcesDelta == null || srcSnapshotDelta.isRecompileAll()) {
+              // copy everything
+              for (ResourceGroup group : context.getResources()) {
+                copyResources(group, context.getPathMapper(), out);
+              }
+            }
+            else {
+              // only copy modified and remove deleted
+              deleteResources(resourcesDelta.getPastResources(), flat(resourcesDelta.getDeleted(), resourcesDelta.getChanged()), out);
+              copyResources(resourcesDelta.getPresentResources(), resourcesDelta.getModified(), context.getPathMapper(), out);
+            }
+
             // processing deleted sources makes sense on inintial round only
             if (!srcSnapshotDelta.isRecompileAll() && !isEmpty(srcSnapshotDelta.getDeleted())) {
               // clean outputs that correspond to deleted sources, no matter of source type
@@ -160,15 +197,21 @@ public class BazelIncBuilder {
               logDeletedPaths(context, cleaned);
             }
           }
+          else {
+            if (srcSnapshotDelta.isRecompileAll()) {
+              // After several rounds, the IC logic can decide to recompile everything
+              ZipOutputBuilder out = storageManager.getOutputBuilder();
+              for (ResourceGroup group : context.getResources()) {
+                copyResources(group, context.getPathMapper(), out);
+              }
+            }
+          }
 
           for (CompilerRunner runner : roundCompilers) {
 
             Iterable<NodeSource> toCompile = collect(filter(srcSnapshotDelta.getModified(), runner::canCompile), new ArrayList<>());
-            if (isEmpty(toCompile)) {
-              continue;
-            }
 
-            if (!srcSnapshotDelta.isRecompileAll()) {
+            if (!srcSnapshotDelta.isRecompileAll() && !isEmpty(toCompile)) {
               // delete outputs corresponding to recompiled sources before running the compiler
               ZipOutputBuilder outBuilder = storageManager.getCompositeOutputBuilder();
               Collection<String> cleaned = deleteCompilerOutputs(
@@ -193,10 +236,6 @@ public class BazelIncBuilder {
             if (diagnostic.hasErrors()) {
               break;
             }
-          }
-
-          if (!diagnostic.hasErrors()) {
-            runInstrumenters(outSink, storageManager, instrumenters, diagnostic);
           }
 
           NodeSourceSnapshotDelta nextSnapshotDelta = graphUpdater.updateAfterCompilation(
@@ -232,6 +271,7 @@ public class BazelIncBuilder {
       }
       catch (Throwable e) {
         // catch and report all errors before the storage manager is closed
+        LOG.log(Level.SEVERE, "Unexpected error compiling " + context.getTargetName(), e);
         diagnostic.report(Message.create(null, e));
         return ExitCode.ERROR;
       }
@@ -245,58 +285,107 @@ public class BazelIncBuilder {
       return ExitCode.OK;
     }
     finally {
-      saveBuildState(context, srcSnapshotDelta, modifiedLibraries, deletedLibraries);
+      NodeSourceSnapshot sourcesState = srcSnapshotDelta != null? srcSnapshotDelta.asSnapshot() : null;
+      saveBuildState(
+        context, sourcesState, context.getResources(), modifiedLibraries, deletedLibraries
+      );
     }
   }
 
-  private static void runInstrumenters(OutputSinkImpl outSink, StorageManager storageManager, List<BytecodeInstrumenter> instrumenters, DiagnosticSink diagnostic) throws IOException {
-    for (OutputOrigin.Kind originKind : OutputOrigin.Kind.values()) {
-      for (String generatedFile : outSink.getGeneratedOutputPaths(originKind, OutputFile.Kind.bytecode)) {
-        boolean changes = false;
-        byte[] content = null;
-        ClassReader reader = null;
-        for (BytecodeInstrumenter instrumenter : filter(instrumenters, inst -> inst.getSupportedOrigins().contains(originKind))) {
-          if (content == null) {
-            content = outSink.getFileContent(generatedFile);
-          }
-          try {
-            if (reader == null) {
-              reader = new FailSafeClassReader(content);
-            }
-            InstrumentationClassFinder classFinder = storageManager.getInstrumentationClassFinder();
-            int version = InstrumenterClassWriter.getClassFileVersion(reader);
-            ClassWriter writer = new InstrumenterClassWriter(reader, InstrumenterClassWriter.getAsmClassWriterFlags(version), classFinder);
-            final byte[] instrumented = instrumenter.instrument(generatedFile, reader, writer, classFinder);
-            if (instrumented != null) {
-              changes = true;
-              content = instrumented;
-              classFinder.cleanCachedData(reader.getClassName());
-              reader = null;
-            }
-          }
-          catch (Exception e) {
-            diagnostic.report(Message.create(instrumenter, Message.Kind.ERROR, e.getMessage(), generatedFile));
-            break;
-          }
-        }
-        if (changes && !diagnostic.hasErrors()) {
-          storageManager.getOutputBuilder().putEntry(generatedFile, content);
+  private static void deleteResources(Iterable<ResourceGroup> resGroups, Iterable<NodeSource> resources, ZipOutputBuilder out) {
+    if (count(resGroups) == 1) {
+      // optimization
+      ResourceGroup resourceGroup = resGroups.iterator().next();
+      for (NodeSource res : resources) {
+        deleteResource(resourceGroup, res, out);
+      }
+    }
+    else {
+      for (NodeSource res : resources) {
+        for (ResourceGroup resourceGroup : filter(resGroups, gr -> contains(gr.getElements(), res))) {
+          deleteResource(resourceGroup, res, out);
         }
       }
     }
   }
 
-  public void saveBuildState(
-    BuildContext context, NodeSourceSnapshotDelta srcSnapshotDelta, Iterable<NodeSource> modifiedLibraries, Iterable<NodeSource> deletedLibraries
-  ) {
+  private static void deleteResource(ResourceGroup resourceGroup, NodeSource res, ZipOutputBuilder out) {
+    String destPath = getResourceDestinationPath(resourceGroup, res);
+    if (destPath != null) {
+      out.deleteEntry(destPath);
+    }
+  }
 
-    if (srcSnapshotDelta != null) {
-      if (context.hasErrors()) {
-        ConfigurationState pastState = ConfigurationState.loadSavedState(context);
-        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), pastState.getLibraries()).save(context);
+  private static void copyResources(Iterable<ResourceGroup> resGroups, Iterable<NodeSource> resources, NodeSourcePathMapper pathMapper, ZipOutputBuilder out) throws IOException {
+    if (count(resGroups) == 1) {
+      // optimization
+      ResourceGroup resourceGroup = resGroups.iterator().next();
+      for (NodeSource res : resources) {
+        copyResource(resourceGroup, res, pathMapper, out);
+      }
+    }
+    else {
+      for (NodeSource res : resources) {
+        for (ResourceGroup resourceGroup : filter(resGroups, gr -> contains(gr.getElements(), res))) {
+          copyResource(resourceGroup, res, pathMapper, out);
+        }
+      }
+    }
+  }
+
+  private static void copyResources(ResourceGroup resourceGroup, NodeSourcePathMapper pathMapper, ZipOutputBuilder out) throws IOException {
+    for (NodeSource res : resourceGroup.getElements()) {
+      copyResource(resourceGroup, res, pathMapper, out);
+    }
+  }
+
+  private static void copyResource(ResourceGroup resourceGroup, NodeSource res, NodeSourcePathMapper pathMapper, ZipOutputBuilder out) throws IOException {
+    String destPath = getResourceDestinationPath(resourceGroup, res);
+    if (destPath != null) {
+      Path from = pathMapper.toPath(res);
+      try (InputStream in = Files.newInputStream(from)) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        in.transferTo(bytes);
+        out.putEntry(destPath, bytes.toByteArray());
+      }
+    }
+  }
+
+  private static @Nullable String getResourceDestinationPath(ResourceGroup group, NodeSource source) {
+    String destPath = source.toString();
+
+    String stripPrefix = group.getStripPrefix();
+    if (!stripPrefix.isEmpty()) {
+      if (destPath.length() > stripPrefix.length() && destPath.regionMatches(!SystemInfo.isFileSystemCaseSensitive, 0, stripPrefix, 0, stripPrefix.length()) && destPath.charAt(stripPrefix.length()) == '/' ) {
+        destPath = destPath.substring(stripPrefix.length() + 1);
       }
       else {
-        new ConfigurationState(context.getPathMapper(), srcSnapshotDelta.asSnapshot(), context.getBinaryDependencies()).save(context);
+        return null; // todo: emit error
+      }
+    }
+
+    String addPrefix = group.getAddPrefix();
+    if (!addPrefix.isEmpty()) {
+      destPath = addPrefix + "/" + destPath;
+    }
+
+    return destPath;
+  }
+
+
+  public void saveBuildState(
+    BuildContext context,
+    NodeSourceSnapshot sourcesState, Iterable<ResourceGroup> resourcesState,
+    Iterable<NodeSource> modifiedLibraries, Iterable<NodeSource> deletedLibraries
+  ) {
+
+    if (sourcesState != null) {
+      if (context.hasErrors()) {
+        ConfigurationState pastState = ConfigurationState.loadSavedState(context);
+        new ConfigurationState(context.getPathMapper(), sourcesState, resourcesState, pastState.getLibraries(), context.getFlags()).save(context);
+      }
+      else {
+        new ConfigurationState(context.getPathMapper(), sourcesState, resourcesState, context.getBinaryDependencies(), context.getFlags()).save(context);
       }
     }
 
@@ -323,6 +412,7 @@ public class BazelIncBuilder {
         StorageManager.backupDependencies(context, deletedPaths, presentPaths);
       }
       catch (Throwable e) {
+        LOG.log(Level.SEVERE, "Error saving build state " + context.getTargetName(), e);
         context.report(Message.create(null, e));
       }
     }
@@ -356,7 +446,7 @@ public class BazelIncBuilder {
   private static Delta createGraphDelta(DependencyGraph depGraph, NodeSourceSnapshotDelta snapshotDelta, OutputSinkImpl outSink) {
     Delta delta = depGraph.createDelta(snapshotDelta.getModified(), snapshotDelta.getDeleted(), false);
     for (var pair : outSink.getNodes()) {
-      delta.associate(pair.node, pair.sources);
+      delta.associate(pair.node(), pair.sources());
     }
     return delta;
   }

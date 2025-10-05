@@ -24,4 +24,8 @@ class KotlinClassToJavaClassInstruction(
         }
         return factory.unknown
     }
+
+    override fun toString(): String {
+        return "KT_CLASS_TO_JAVA_CLASS $targetClassType"
+    }
 }

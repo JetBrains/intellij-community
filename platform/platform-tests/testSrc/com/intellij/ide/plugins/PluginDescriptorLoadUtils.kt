@@ -6,26 +6,12 @@ import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.consume
-import com.intellij.platform.plugins.parser.impl.elements.OS
-import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import java.nio.file.Path
 
 
-fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
+fun readDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input: ByteArray, id: PluginId? = null): IdeaPluginDescriptorImpl {
   val loadingContext = PluginDescriptorLoadingContext()
-  val initContext = PluginInitializationContext.buildForTest(
-    essentialPlugins = emptySet(),
-    disabledPlugins = emptySet(),
-    expiredPlugins = emptySet(),
-    brokenPluginVersions = emptyMap(),
-    getProductBuildNumber = { PluginManagerCore.buildNumber },
-    requirePlatformAliasDependencyForLegacyPlugins = false,
-    checkEssentialPlugins = false,
-    explicitPluginSubsetToLoad = null,
-    disablePluginLoadingCompletely = false,
-    currentProductModeId = ProductMode.MONOLITH.id,
-  )
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
   val dataLoader = object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
@@ -34,8 +20,6 @@ fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input:
   val rawBuilder = PluginDescriptorFromXmlStreamConsumer(object : PluginDescriptorReaderContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
-    override val elementOsFilter: (OS) -> Boolean
-      get() = { it.convert().isSuitableForOs() }
   }, pathResolver.toXIncludeLoader(dataLoader)).let {
     it.consume(input, path.toString())
     it.getBuilder()
@@ -54,15 +38,14 @@ fun readAndInitDescriptorFromBytesForTest(path: Path, isBundled: Boolean, input:
     pluginDir = path,
     pool = ZipFilePoolImpl(),
   )
-  return result.apply { initialize(context = initContext) }
+  return result
 }
 
-fun readAndInitDescriptorFromBytesForTest(
+fun readDescriptorFromBytesForTest(
   path: Path,
   isBundled: Boolean,
   data: ByteArray,
   loadingContext: PluginDescriptorLoadingContext,
-  initContext: PluginInitializationContext,
   pathResolver: PathResolver,
   dataLoader: DataLoader,
 ): PluginMainDescriptor {
@@ -80,5 +63,5 @@ fun readAndInitDescriptorFromBytesForTest(
     pluginDir = path,
     pool = ZipFilePoolImpl()
   )
-  return result.apply { initialize(context = initContext) }
+  return result
 }

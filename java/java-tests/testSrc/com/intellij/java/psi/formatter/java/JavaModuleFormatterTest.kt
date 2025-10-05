@@ -34,4 +34,34 @@ class JavaModuleFormatterTest : AbstractJavaFormatterTest() {
     doTextTest("@Deprecated\nmodule m { }", "@Deprecated\nmodule m {\n}")
     doTextTest("@Deprecated(forRemoval = true)  module m { }", "@Deprecated(forRemoval = true)\nmodule m {\n}")
   }
+
+  fun testComposedModulesNamesAreCollapsed() {
+    doTextTest("""
+      module m   .  b   .
+         c { exports a  .  b to m1  .
+            m2 ,m2  .  m3, m3
+              .  m4; }
+    """.trimIndent(),
+               """
+                 module m.b.
+                         c {
+                     exports a.b to m1.
+                             m2, m2.m3, m3
+                             .m4;
+                 }
+               """.trimIndent())
+  }
+
+  fun testComposedImportModuleNamesAreCollapsed() {
+    doTextTest("""
+      import module m   .  b . c
+      import module m2 . b  .
+                   c
+    """.trimIndent(),
+               """
+      import module m.b.c
+      import module m2.b.
+              c
+    """.trimIndent()   )
+  }
 }

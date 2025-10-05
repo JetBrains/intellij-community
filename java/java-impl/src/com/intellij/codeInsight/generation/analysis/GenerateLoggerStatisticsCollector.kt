@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
-object GenerateLoggerStatisticsCollector : CounterUsagesCollector() {
+public object GenerateLoggerStatisticsCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("jvm.logger.generation", 2)
 
   private const val ACTION_STARTED = "action_started"
@@ -20,11 +20,11 @@ object GenerateLoggerStatisticsCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  fun logActionInvoked(project: Project) {
+  public fun logActionInvoked(project: Project) {
     ACTION_INVOKED.log(project, ACTION_STATUS.with(ACTION_STARTED))
   }
 
-  fun logActionCompleted(project: Project) {
+  public fun logActionCompleted(project: Project) {
     ACTION_INVOKED.log(project, ACTION_STATUS.with(ACTION_FINISHED))
   }
 }

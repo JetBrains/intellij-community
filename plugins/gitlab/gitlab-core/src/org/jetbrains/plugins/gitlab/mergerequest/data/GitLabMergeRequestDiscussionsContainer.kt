@@ -5,10 +5,12 @@ import com.intellij.collaboration.api.data.GraphQLRequestPagination
 import com.intellij.collaboration.async.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
@@ -21,9 +23,6 @@ import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 interface GitLabMergeRequestDiscussionsContainer {
-  val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>>
-  val draftNotesData: SharedFlow<Result<List<GitLabMergeRequestDraftNoteRestDTO>>>
-
   val discussions: Flow<Result<Collection<GitLabMergeRequestDiscussion>>>
   val systemNotes: Flow<Result<Collection<GitLabNote>>>
   val draftNotes: Flow<Result<Collection<GitLabMergeRequestDraftNote>>>
@@ -55,7 +54,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   private val mr: GitLabMergeRequest,
 ) : GitLabMergeRequestDiscussionsContainer {
 
-  private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class, Dispatchers.Default)
 
   override val canAddNotes: Boolean = mr.details.value.userPermissions.createNote
   override val canAddDraftNotes: Boolean =
@@ -84,7 +83,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       api.graphQL.loadMergeRequestDiscussions(glProject, mr.iid, GraphQLRequestPagination(cursor))
     }
 
-  override val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>> =
+  private val nonEmptyDiscussionsData: SharedFlow<Result<List<GitLabDiscussionDTO>>> =
     discussionsDataHolder.resultOrErrorFlow
       .mapCatching { discussions -> discussions.filter { it.notes.isNotEmpty() } }
       .modelFlow(cs, LOG)
@@ -142,7 +141,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       }
     }
 
-  override val draftNotesData =
+  private val draftNotesData =
     (draftNotesDataHolder?.resultOrErrorFlow ?: flowOf(Result.success(emptyList())))
       .mapCatching { draftNotes ->
         if (draftNotes.isEmpty()) return@mapCatching emptyList()

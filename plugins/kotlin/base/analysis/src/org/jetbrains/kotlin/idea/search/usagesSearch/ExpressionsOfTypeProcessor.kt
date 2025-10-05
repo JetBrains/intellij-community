@@ -329,7 +329,7 @@ class ExpressionsOfTypeProcessor(
         val declarationName = runReadAction { psiMember.name } ?: return
         if (declarationName.isEmpty()) return
 
-        class ProcessStaticCallableUsagesTask : Task {
+        data class ProcessStaticCallableUsagesTask(val psiMember: PsiMember, val scope: SearchScope) : Task {
             override fun perform() {
                 // This class will look through the whole hierarchy anyway, so shouldn't be a big overhead here
                 val inheritanceClasses = ClassInheritorsSearch.search(
@@ -384,7 +384,7 @@ class ExpressionsOfTypeProcessor(
             }
         }
 
-        addTask(ProcessStaticCallableUsagesTask())
+        addTask(ProcessStaticCallableUsagesTask(psiMember, scope))
     }
 
     private fun addCallableDeclarationToProcess(declaration: PsiElement, scope: SearchScope, processor: ReferenceProcessor) {
@@ -395,7 +395,7 @@ class ExpressionsOfTypeProcessor(
             return
         }
 
-        class ProcessCallableUsagesTask : Task {
+        data class ProcessCallableUsagesTask(val declaration: PsiElement, val scope: SearchScope) : Task {
             override fun perform() {
                 if (scope is LocalSearchScope) {
                     testLog { runReadAction { "Searched imported static member $declaration in ${scope.scope.toList()}" } }
@@ -415,7 +415,7 @@ class ExpressionsOfTypeProcessor(
                 }
             }
         }
-        addTask(ProcessCallableUsagesTask())
+        addTask(ProcessCallableUsagesTask(declaration, scope))
     }
 
     private fun addPsiMemberTask(member: PsiMember) {

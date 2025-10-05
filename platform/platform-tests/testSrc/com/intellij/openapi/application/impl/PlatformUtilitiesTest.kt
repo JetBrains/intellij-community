@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -8,29 +11,47 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
+import com.intellij.util.cancelOnDispose
+import com.intellij.util.ref.DebugReflectionUtil
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.JComponent
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class PlatformUtilitiesTest {
 
   @Test
   fun `relaxing preventive actions leads to absence of lock`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    withContext(Dispatchers.ui(kind = UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       assertThat(application.isWriteIntentLockAcquired).isFalse
       getGlobalThreadingSupport().runPreventiveWriteIntentReadAction {
         assertThat(application.isWriteIntentLockAcquired).isTrue
@@ -119,8 +140,9 @@ class PlatformUtilitiesTest {
     val infiniteJob = Job(currentCoroutineContext().job)
     val jobWaiting = Job(currentCoroutineContext().job)
     val coroutine = launch(Dispatchers.EDT) {
-      getGlobalThreadingSupport().releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
         jobWaiting.complete()
+        assertThat(application.isWriteIntentLockAcquired).isFalse
         infiniteJob.asCompletableFuture().join()
       }
     }
@@ -204,7 +226,7 @@ class PlatformUtilitiesTest {
       backgroundWriteAction {
         bgWaStarted.complete()
         Thread.sleep(100) // give chance EDT to start waiting for a coroutine
-        (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+        InternalThreading.invokeAndWaitWithTransferredWriteAction {
           assertThat(EDT.isCurrentThreadEdt()).isTrue
           assertThat(application.isWriteAccessAllowed).isTrue
           assertThat(application.isReadAccessAllowed).isTrue
@@ -222,7 +244,7 @@ class PlatformUtilitiesTest {
   @Test
   fun `transferredWriteAction can run as invokeAndWait`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     backgroundWriteAction {
-      (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+      InternalThreading.invokeAndWaitWithTransferredWriteAction {
         assertThat(EDT.isCurrentThreadEdt()).isTrue
         assertThat(application.isWriteAccessAllowed).isTrue
         assertThat(application.isReadAccessAllowed).isTrue
@@ -236,16 +258,16 @@ class PlatformUtilitiesTest {
   @Test
   fun `transferredWriteAction is not available without write lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     assertThrows<AssertionError> {
-      (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+      InternalThreading.invokeAndWaitWithTransferredWriteAction {
         fail<Nothing>()
       }
     }
   }
 
   @Test
-  fun `transferredWriteAction is not available on EDT`(): Unit = timeoutRunBlocking(context = Dispatchers.ui(UiDispatcherKind.RELAX)) {
+  fun `transferredWriteAction is not available on EDT`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     assertThrows<AssertionError> {
-      (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+      InternalThreading.invokeAndWaitWithTransferredWriteAction {
         fail<Nothing>()
       }
     }
@@ -255,11 +277,31 @@ class PlatformUtilitiesTest {
   fun `transferredWriteAction rethrows exceptions`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     backgroundWriteAction {
       val exception = assertThrows<IllegalStateException> {
-        (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+        InternalThreading.invokeAndWaitWithTransferredWriteAction {
           throw IllegalStateException("custom message")
         }
       }
       assertThat(exception.message).isEqualTo("custom message")
+    }
+  }
+
+  class MyElement : AbstractCoroutineContextElement(MyElement) {
+    companion object Key : CoroutineContext.Key<MyElement>
+  }
+
+  @Test
+  fun `transferred write action captures thread context`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    backgroundWriteAction {
+      val element = MyElement()
+      installThreadContext(currentThreadContext() + element, true) {
+        val currentThread = Thread.currentThread()
+        InternalThreading.invokeAndWaitWithTransferredWriteAction {
+          val transferredThread = Thread.currentThread()
+          assertNotEquals(currentThread, transferredThread)
+          val innerElement = currentThreadContext()[MyElement]
+          assertEquals(element, innerElement)
+        }
+      }
     }
   }
 
@@ -304,11 +346,147 @@ class PlatformUtilitiesTest {
         })
       }
       catch (_: CustomException) {
-        delay(1000)
+        customExceptionWasRethrown.set(true)
+      }
+      try {
+        UIUtil.dispatchAllInvocationEvents()
+      }
+      catch (e: CustomException) {
         customExceptionWasRethrown.set(true)
       }
     }
     assertThat(customExceptionWasRethrown.get()).isTrue()
     assertThat(writeActionThrew.get()).isFalse()
   }
+
+  @Test
+  fun `parallelization of write-intent lock removes write-intent access`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val (lockContext, lockCleanup) = getGlobalThreadingSupport().getPermitAsContextElement(currentThreadContext(), true)
+    installThreadContext(lockContext).use {
+      try {
+        assertThat(application.isWriteIntentLockAcquired).isFalse
+      } finally {
+        lockCleanup()
+      }
+    }
+  }
+
+  @Test
+  fun `synchronous non-blocking read action does not cause thread starvation`(): Unit = timeoutRunBlocking {
+    val numberOfNonBlockingReadActions = Runtime.getRuntime().availableProcessors() * 2
+    val readActionCanFinish = Job(coroutineContext.job)
+    val readActionStarted = Job(coroutineContext.job)
+    launch(Dispatchers.Default) {
+      runReadAction {
+        readActionStarted.complete()
+        readActionCanFinish.asCompletableFuture().join()
+      }
+    }
+    launch(Dispatchers.Default) {
+      readActionStarted.join()
+      backgroundWriteAction {  }
+    }
+    readActionStarted.join()
+    delay(100) // let bg wa become pending
+    val counter = AtomicInteger(0)
+    coroutineScope {
+      repeat(numberOfNonBlockingReadActions) {
+        launch(Dispatchers.Default) {
+          ReadAction.nonBlocking(Callable {
+            counter.incrementAndGet()
+          }).executeSynchronously()
+        }
+      }
+      delay(100)
+      readActionCanFinish.complete()
+    }
+    assertThat(counter.get()).isEqualTo(numberOfNonBlockingReadActions)
+  }
+
+
+  fun <T> Deferred<T>.toPromise(): Promise<T> = AsyncPromise<T>().also { promise ->
+    invokeOnCompletion { throwable ->
+      if (throwable != null) {
+        promise.setError(throwable)
+      }
+      else {
+        @Suppress("OPT_IN_USAGE")
+        promise.setResult(getCompleted())
+      }
+    }
+  }
+
+  @Test
+  fun `async promise does not leak cancellation`(): Unit = timeoutRunBlocking {
+    coroutineScope {
+      async { 100 }
+        .toPromise()
+        .thenAsync {
+          // acceptable if there is no job
+          assertTrue { Cancellation.currentJob()?.isActive ?: true }
+          resolvedPromise(42)
+        }
+    }
+  }
+
+  @Test
+  fun `unconfined loop does not break modal dialogs`(): Unit = timeoutRunBlocking(timeout = 100.seconds, context = Dispatchers.EDT) {
+    withContext(Dispatchers.Unconfined) {
+      val dialog: DialogWrapper = object : DialogWrapper(null) {
+        override fun createCenterPanel(): JComponent? {
+          return null
+        }
+
+        // a slight hack: headless dialogs are disposed in their event loop
+        // so we execute a test in `dispose`
+        override fun dispose() {
+          launch(Dispatchers.EdtImmediate) { }.asCompletableFuture().join()
+        }
+      }
+      dialog.show()
+    }
+  }
+
+  @Test
+  fun `yieldToPendingWriteAction does not cause thread starvation`() : Unit = timeoutRunBlocking {
+    val job = Job(coroutineContext.job)
+    val edtCanFinish = Job(coroutineContext.job)
+    launch(Dispatchers.UiWithModelAccess) {
+      WriteIntentReadAction.run {
+        job.complete()
+        edtCanFinish.asCompletableFuture().join()
+      }
+    }
+    job.join()
+    launch(Dispatchers.Default) {
+      backgroundWriteAction {
+
+      }
+    }
+    delay(50)
+    repeat(Runtime.getRuntime().availableProcessors()) {
+      launch(Dispatchers.Default) {
+        ProgressIndicatorUtils.yieldToPendingWriteActions()
+      }
+    }
+    delay(50)
+    edtCanFinish.complete()
+  }
+
+  suspend fun `interesting caller`() {
+    val job = Job(currentCoroutineContext().job)
+    val disposable = Disposer.newDisposable()
+    job.cancelOnDispose(disposable)
+    val result = DebugReflectionUtil.walkObjects(5, mapOf(Disposer.getTree() to "Disposer root tree"), Disposable::class.java, { true }) { disposable, _ ->
+      !disposable.toString().contains("interesting caller")
+    }
+    Assertions.assertFalse(result)
+    Disposer.dispose(disposable)
+  }
+
+  @Test
+  fun `cancelOnDispose contains information about caller`() = timeoutRunBlocking {
+   `interesting caller`()
+  }
+
 }

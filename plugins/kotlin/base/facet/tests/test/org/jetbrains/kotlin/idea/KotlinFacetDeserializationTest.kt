@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
-import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
@@ -185,8 +185,8 @@ class KotlinFacetDeserializationTest {
                 }
                 val testCacheFilesDir = testDataRoot.resolve(testDataDirName).resolve("external").toFile()
                 if (testCacheFilesDir.exists()) {
-                    val cachePath = appSystemDir
-                        .resolve("projects")
+                    val cachePath = getSystemDir()
+                      .resolve("projects")
                         .resolve(getProjectCacheFileName(dir.toNioPath()))
                         .resolve("external_build_system")
                     FileUtil.copyDir(testCacheFilesDir, cachePath.toFile())

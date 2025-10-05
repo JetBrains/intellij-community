@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
@@ -15,9 +16,12 @@ public final class SourceTreeToPsiMap {
     return element == null ? null : element.getPsi();
   }
 
-  public static @NotNull <T extends PsiElement> T treeToPsiNotNull(@NotNull ASTNode element) {
-    PsiElement psi = element.getPsi();
-    assert psi != null : element;
+  public static @NotNull <T extends PsiElement> T treeToPsiNotNull(@NotNull ASTNode astNode) {
+    PsiElement psi = astNode.getPsi();
+    if (psi == null) {
+      Logger.getInstance(SourceTreeToPsiMap.class).error("PSI is null for AST " + astNode + " (" + astNode.getClass() + ")");
+    }
+    assert psi != null : astNode;
     //noinspection unchecked
     return (T)psi;
   }

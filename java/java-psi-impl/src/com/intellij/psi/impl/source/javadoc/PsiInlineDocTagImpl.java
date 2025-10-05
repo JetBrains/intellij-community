@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -21,9 +21,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlineDocTag, Constants {
-  private static final TokenSet TAG_VALUE_BIT_SET = TokenSet.create(DOC_TAG_VALUE_ELEMENT, DOC_METHOD_OR_FIELD_REF);
+  private static final TokenSet TAG_VALUE_BIT_SET = TokenSet.create(DOC_TAG_VALUE_ELEMENT, DOC_METHOD_OR_FIELD_REF, DOC_FRAGMENT_REF);
   static final TokenSet VALUE_BIT_SET = TokenSet.orSet(TAG_VALUE_BIT_SET, TokenSet.create(
-    JAVA_CODE_REFERENCE, DOC_TAG_VALUE_TOKEN, WHITE_SPACE, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER,
+    JAVA_CODE_REFERENCE, DOC_TAG_VALUE_TOKEN, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER,
     DOC_COMMENT_BAD_CHARACTER, DOC_SNIPPET_TAG_VALUE,
     DOC_SHARP, DOC_LBRACKET, DOC_RBRACKET, DOC_LPAREN, DOC_RPAREN, DOC_CODE_FENCE, DOC_INLINE_CODE_FENCE, DOC_MARKDOWN_CODE_BLOCK, DOC_COMMA));
 

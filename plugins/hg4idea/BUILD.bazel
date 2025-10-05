@@ -1,10 +1,9 @@
 ### auto-generated section `build intellij.vcs.hg` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "vcs-hg_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -13,6 +12,7 @@ jvm_library(
   module_name = "intellij.vcs.hg",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":vcs-hg_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -26,7 +26,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl",
@@ -38,8 +38,8 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
-  ],
-  runtime_deps = [":vcs-hg_resources"]
+    "//platform/vcs-impl/shared",
+  ]
 )
 
 jvm_library(
@@ -64,7 +64,7 @@ jvm_library(
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
     "//platform/vcs-log/api:vcs-log",
@@ -79,12 +79,16 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
-  ],
-  runtime_deps = [":vcs-hg_resources"]
+    "//platform/vcs-impl/shared",
+  ]
 )
+### auto-generated section `build intellij.vcs.hg` end
+
+### auto-generated section `test intellij.vcs.hg` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "vcs-hg_test",
   runtime_deps = [":vcs-hg_test_lib"]
 )
-### auto-generated section `build intellij.vcs.hg` end
+### auto-generated section `test intellij.vcs.hg` end

@@ -1,6 +1,8 @@
 package com.intellij.database.csv;
 
+import com.intellij.database.editor.CsvTableFileEditor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
@@ -14,6 +16,7 @@ import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
@@ -33,14 +36,11 @@ public final class CsvFormatResolver extends CsvFormatResolverCore {
   }
 
   public static @Nullable CsvFormat getFormatFromState(@NotNull Project project, @NotNull VirtualFile file) {
-    FileEditorProvider csvProvider = FileEditorProviderManager.getInstance().getProvider("csv-data-editor");
-    return csvProvider == null ? null : getFormatFromState(project, file, csvProvider);
-  }
-
-  public static @Nullable CsvFormat getFormatFromState(@NotNull Project project,
-                                                       @NotNull VirtualFile file,
-                                                       @NotNull FileEditorProvider provider) {
+    FileEditorProvider provider = FileEditorProviderManager.getInstance().getProvider("csv-data-editor");
+    if (provider == null) return null;
     if (project.isDisposed()) return null;
+    CsvTableFileEditor csvEditor = ContainerUtil.findInstance(FileEditorManager.getInstance(project).getAllEditors(file), CsvTableFileEditor.class);
+    if (csvEditor != null) return csvEditor.getFormat();
     EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(project);
     FileEditorState state = editorHistoryManager.getState(file, provider);
     return state != null ? readCsvFormat(state) : null;
@@ -74,17 +74,27 @@ public final class CsvFormatResolver extends CsvFormatResolverCore {
     }
   }
 
+  public static void saveCsvFormatAndUpdateEditor(@Nullable Project project, @NotNull CsvFormat format, @NotNull VirtualFile file) {
+    saveCsvFormat(format, file);
+    if (project != null) {
+      CsvTableFileEditor csvEditor = ContainerUtil.findInstance(FileEditorManager.getInstance(project).getEditors(file), CsvTableFileEditor.class);
+      if (csvEditor != null) {
+        csvEditor.setFormat(format);
+      }
+    }
+  }
+
   public static @Nullable CsvFormat readCsvFormat(@Nullable FileEditorState state) {
     State csvState = ObjectUtils.tryCast(state, State.class);
     return csvState != null ? csvState.format.immutable() : null;
   }
 
-  public static @Nullable CsvFormat getFormat(@NotNull Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
+  public static @Nullable CsvFormat getFormat(@Nullable Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
                                               @Nullable Supplier<List<CsvFormat>> existingFormatsSupplier) {
     return getFormat(project, file, tryDetectHeader, existingFormatsSupplier, FormatGetter.FILE, FormatGetter.STATE, FormatGetter.CONTENT);
   }
 
-  public static @Nullable CsvFormat getFormat(@NotNull Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
+  public static @Nullable CsvFormat getFormat(@Nullable Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
                                               @Nullable Supplier<List<CsvFormat>> existingFormatsSupplier,
                                               FormatGetter @NotNull ... getters) {
     for (FormatGetter getter : getters) {
@@ -114,15 +124,15 @@ public final class CsvFormatResolver extends CsvFormatResolverCore {
     STATE {
       @Nullable
       @Override
-      CsvFormat get(@NotNull Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
+      CsvFormat get(@Nullable Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
                     @Nullable Supplier<List<CsvFormat>> existingFormatsSupplier) {
-        return getFormatFromState(project, file);
+        return project == null ? null : getFormatFromState(project, file);
       }
     },
     FILE {
       @Nullable
       @Override
-      CsvFormat get(@NotNull Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
+      CsvFormat get(@Nullable Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
                     @Nullable Supplier<List<CsvFormat>> existingFormatsSupplier) {
         return getFormatFromFile(file);
       }
@@ -130,13 +140,13 @@ public final class CsvFormatResolver extends CsvFormatResolverCore {
     CONTENT {
       @Nullable
       @Override
-      CsvFormat get(@NotNull Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
+      CsvFormat get(@Nullable Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
                     @Nullable Supplier<List<CsvFormat>> existingFormatsSupplier) {
         return getMoreSuitableCsvFormat(file, tryDetectHeader, existingFormatsSupplier);
       }
     };
 
-    abstract @Nullable CsvFormat get(@NotNull Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
+    abstract @Nullable CsvFormat get(@Nullable Project project, @NotNull VirtualFile file, boolean tryDetectHeader,
                                      @Nullable Supplier<List<CsvFormat>> existingFormatsSupplier);
   }
 }

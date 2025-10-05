@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.FileRankerMlService
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.Usage
@@ -41,7 +42,7 @@ enum class TooManyUsagesUserAction {
 object UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("usage.view", 22)
+  val GROUP: EventLogGroup = EventLogGroup("usage.view", 23)
   val USAGE_VIEW: PrimitiveEventField<UsageView?> = object : PrimitiveEventField<UsageView?>() {
     override val name: String = "usage_view"
 
@@ -109,6 +110,9 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
   val TARGET_ELEMENT_DATA: ObjectEventField = ObjectEventField("target_element", REFERENCE_CLASS, EventFields.Language, IS_IN_TEST_SOURCES,
                                                                IS_IN_INJECTED_FILE)
 
+  private val FIND_USAGES_ML_SERVICE_ENABLED: BooleanEventField = EventFields.Boolean("find_usages_ml_service_enabled")
+  private val FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION: BooleanEventField = EventFields.Boolean("find_usages_ml_service_new_implementation")
+
   const val SCOPE_RULE_ID: String = "scopeRule"
 
   private val SYMBOL_CLASS = EventFields.Class("symbol")
@@ -119,7 +123,13 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
   private val IS_SIMILAR_USAGE = EventFields.Boolean("is_similar_usage")
   private val IS_SEARCH_CANCELLED = EventFields.Boolean("search_cancelled")
 
-  private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION, TARGET_ELEMENT_DATA, NUMBER_OF_TARGETS)
+  private val searchStarted = GROUP.registerVarargEvent("started",
+                                                        USAGE_VIEW,
+                                                        UI_LOCATION,
+                                                        TARGET_ELEMENT_DATA,
+                                                        NUMBER_OF_TARGETS,
+                                                        FIND_USAGES_ML_SERVICE_ENABLED,
+                                                        FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION)
 
   private val searchFinished = GROUP.registerVarargEvent("finished",
                                                          USAGE_VIEW,
@@ -176,6 +186,14 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
                        showUsagesHandlerEventData: MutableList<EventPair<*>>) {
     showUsagesHandlerEventData.add(USAGE_VIEW.with(usageView))
     showUsagesHandlerEventData.add(UI_LOCATION.with(source))
+
+    val mlService = FileRankerMlService.getInstance()
+    val isMlServiceEnabled: Boolean = mlService != null
+    val isMlServiceUsingNewImplementation: Boolean = (isMlServiceEnabled && !(mlService.shouldUseOldImplementation())) // true if enabled and not using old implementation
+
+    showUsagesHandlerEventData.add(FIND_USAGES_ML_SERVICE_ENABLED.with(isMlServiceEnabled))
+    showUsagesHandlerEventData.add(FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION.with(isMlServiceUsingNewImplementation))
+
     searchStarted.log(project, showUsagesHandlerEventData)
   }
 
@@ -187,8 +205,12 @@ object UsageViewStatisticsCollector : CounterUsagesCollector() {
                        numberOfTargets: Int) {
     val elementData = calculateElementData(target)
     if (elementData != null) {
+      val mlService = FileRankerMlService.getInstance()
+      val isMlServiceEnabled: Boolean = mlService != null
+      val isMlServiceUsingNewImplementation: Boolean = (isMlServiceEnabled && !(mlService.shouldUseOldImplementation())) // true if enabled and not using old implementation
+
       searchStarted.log(project, USAGE_VIEW.with(usageView), UI_LOCATION.with(source), TARGET_ELEMENT_DATA.with(elementData),
-                        NUMBER_OF_TARGETS.with(numberOfTargets))
+                        NUMBER_OF_TARGETS.with(numberOfTargets), FIND_USAGES_ML_SERVICE_ENABLED.with(isMlServiceEnabled), FIND_USAGES_ML_SERVICE_NEW_IMPLEMENTATION.with(isMlServiceUsingNewImplementation))
     }
   }
 

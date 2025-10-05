@@ -7,10 +7,13 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.allSupertypes
+import org.jetbrains.kotlin.analysis.api.components.createUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.Parameter
@@ -18,6 +21,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtTypeParameter
@@ -67,7 +71,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
     }
 
     override fun returnType(ktNamedDeclaration: KtNamedDeclaration): KaType =
-        analyze(data.commonParent) { ktNamedDeclaration.returnType }
+        analyze(data.commonParent) { (ktNamedDeclaration as KtDeclarationWithReturnType).returnType }
 
     @OptIn(KaExperimentalApi::class)
     override fun renderForMessage(ktNamedDeclaration: KtNamedDeclaration): String {
@@ -121,7 +125,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
  *
  * @return true if [typeToCheck] doesn't contain unresolved components in the scope of [scope] and is "denotable"
  */
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 fun isResolvableInScope(
     typeToCheck: KaType,
@@ -131,7 +135,7 @@ fun isResolvableInScope(
    return getUnResolvableInScope(typeToCheck, scope, typeParameters) == null
 }
 
-context(KaSession)
+context(_: KaSession)
 @OptIn(KaExperimentalApi::class)
 fun getUnResolvableInScope(
     typeToCheck: KaType,
@@ -200,7 +204,7 @@ fun getUnResolvableInScope(
 }
 
 
-context(KaSession)
+context(_: KaSession)
 fun approximateWithResolvableType(type: KaType?, scope: PsiElement): KaType? {
     if (type == null) return null
     if (!(type is KaClassType && type.symbol is KaAnonymousObjectSymbol)

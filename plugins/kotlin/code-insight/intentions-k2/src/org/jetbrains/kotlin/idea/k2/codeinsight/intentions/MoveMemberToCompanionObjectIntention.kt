@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class MoveMemberToCompanionObjectIntention : MoveMemberIntention(
-    textGetter = KotlinBundle.lazyMessage("move.to.companion.object")
+    textGetter = KotlinBundle.messagePointer("move.to.companion.object")
 ) {
     override fun applicabilityRange(element: KtNamedDeclaration): TextRange? {
         if (element !is KtNamedFunction && element !is KtProperty && element !is KtClassOrObject) return null

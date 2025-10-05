@@ -203,11 +203,11 @@ public class PyElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPyFunction(@NotNull PyFunction node) {
-    visitPyElement(node);
+    visitPyStatement(node);
   }
 
   public void visitPyClass(@NotNull PyClass node) {
-    visitPyElement(node);
+    visitPyStatement(node);
   }
 
   public void visitPyFile(@NotNull PyFile node) {
@@ -271,7 +271,7 @@ public class PyElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPyAssertStatement(@NotNull PyAssertStatement node) {
-    visitPyElement(node);
+    visitPyStatement(node);
   }
 
   public void visitPyPassStatement(@NotNull PyPassStatement node) {

@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.intentions
 
-import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.json.JsonBundle
 import com.intellij.json.JsonTestCase
 import com.intellij.psi.PsiFile
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
-import com.jetbrains.jsonSchema.impl.fixes.AddOptionalPropertiesIntention
 import org.intellij.lang.annotations.Language
 import org.junit.Assert
 
@@ -60,12 +59,13 @@ class AddOptionalPropertiesIntentionTest : JsonTestCase() {
     val json = myFixture.configureByText("test.json", before)
 
     ensureSchemaIsCached(json)
-    val intention = myFixture.getAvailableIntention(AddOptionalPropertiesIntention().text)!!
-    ShowIntentionActionsHandler.chooseActionAndInvoke(myFixture.file, myFixture.editor, intention, intention.text)
+    val intentionText =  JsonBundle.message("intention.add.not.required.properties.text")
+    val intention = myFixture.getAvailableIntention(intentionText)!!
 
-    ensureSchemaIsCached(json)
     val previewText = myFixture.getIntentionPreviewText(intention)
     Assert.assertEquals(after, previewText)
+
+    myFixture.checkPreviewAndLaunchAction(intention)
     myFixture.checkResult(after)
   }
 

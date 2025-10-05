@@ -8,11 +8,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.documentation.PyTypeRenderer.Feature;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -21,7 +23,8 @@ import java.util.List;
 public final class PythonExpressionTypeProvider extends ExpressionTypeProvider<PyExpression> {
   @Override
   public @NotNull String getInformationHint(@NotNull PyExpression element) {
-    return getFormattedTypeInContext(element, TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()));
+    TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
+    return PythonDocumentationProvider.getTypeName(context.getType(element), context);
   }
 
   @Override
@@ -45,14 +48,14 @@ public final class PythonExpressionTypeProvider extends ExpressionTypeProvider<P
 
   @Override
   public @NotNull @NlsSafe String getAdvancedInformationHint(@NotNull PyExpression element) {
+    @NotNull TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile());
+    @NotNull TypeEvalContext userInitiated = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
     return """
       TypeEvalContext.userInitiated: %s
       TypeEvalContext.codeAnalysis: %s
-      """.formatted(getFormattedTypeInContext(element, TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile())),
-                    getFormattedTypeInContext(element, TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile())));
-  }
-
-  private static @NotNull @NlsSafe String getFormattedTypeInContext(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    return PythonDocumentationProvider.getTypeName(context.getType(expression), context);
+      """.formatted(
+      PythonDocumentationProvider.getTypeName(userInitiated.getType(element), userInitiated, Feature.UNSAFE_UNION),
+      PythonDocumentationProvider.getTypeName(codeAnalysis.getType(element), codeAnalysis, Feature.UNSAFE_UNION)
+    );
   }
 }

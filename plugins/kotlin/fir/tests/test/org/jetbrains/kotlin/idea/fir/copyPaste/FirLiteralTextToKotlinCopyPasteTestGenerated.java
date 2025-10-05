@@ -230,6 +230,11 @@ public class FirLiteralTextToKotlinCopyPasteTestGenerated extends AbstractFirLit
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/StacktraceDoublePrefix.txt");
     }
 
+    @TestMetadata("StacktraceLineToSingleQuoted.txt")
+    public void testStacktraceLineToSingleQuoted() throws Exception {
+        runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/StacktraceLineToSingleQuoted.txt");
+    }
+
     @TestMetadata("StacktraceTriplePrefix.txt")
     public void testStacktraceTriplePrefix() throws Exception {
         runTest("../../idea/tests/testData/copyPaste/plainTextLiteral/StacktraceTriplePrefix.txt");

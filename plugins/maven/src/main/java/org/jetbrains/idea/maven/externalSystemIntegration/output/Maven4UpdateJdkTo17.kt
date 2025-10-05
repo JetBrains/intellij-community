@@ -10,6 +10,7 @@ import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.pom.Navigatable
+import org.jetbrains.idea.maven.buildtool.quickfix.ChooseAnotherJdkQuickFix
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import java.util.function.Consumer
@@ -48,9 +49,9 @@ private class WrongRunnerJdkVersion(val mvnMessage: @NlsSafe String, val runConf
 
   @Suppress("HardCodedStringLiteral")
   override val description: @BuildEventsNls.Description String
-    get() = mvnMessage + "\n<br/>" + RunnerBundle.message("maven.4.old.jdk.modify.config.quick.fix", OpenRunConfigurationQuickFix.ID)
+    get() = mvnMessage + "\n<br/>" + RunnerBundle.message("maven.4.old.jdk.modify.config.quick.fix", ChooseAnotherJdkQuickFix.ID, OpenRunConfigurationQuickFix.ID)
   override val quickFixes: List<BuildIssueQuickFix> = listOf(
-    OpenRunConfigurationQuickFix(runConfiguration)
+    ChooseAnotherJdkQuickFix()
   )
 
   override fun getNavigatable(project: Project): Navigatable? = null

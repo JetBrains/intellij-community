@@ -15,13 +15,13 @@ public class ASTWrapperPsiElement extends ASTDelegatePsiElement {
   }
 
   @Override
-  public PsiElement getParent() {
-    return SharedImplUtil.getParent(getNode());
+  public @NotNull ASTNode getNode() {
+    return myNode;
   }
 
   @Override
-  public @NotNull ASTNode getNode() {
-    return myNode;
+  public PsiElement getParent() {
+    return SharedImplUtil.getParent(getNode());
   }
 
   @Override

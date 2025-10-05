@@ -51,7 +51,7 @@ public abstract class GradleSettingsImportingTestCase extends GradleImportingTes
    */
   @SuppressWarnings("unused")
   protected void printProjectStructure() {
-    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    ModuleManager moduleManager = ModuleManager.getInstance(getMyProject());
     for (Module module : moduleManager.getModules()) {
       System.out.println(module);
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptIn
 
 class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspectionBase() {
 
-    context(KaSession)
+    context(_: KaSession)
     override fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean {
         return element.isOptInAllowed(annotationClassId.asSingleFqName(), element.languageVersionSettings, element.analyze())
     }

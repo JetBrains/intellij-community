@@ -7,54 +7,56 @@ import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun applyIslandsTheme(afterImportSettings: Boolean) {
   val application = ApplicationManager.getApplication()
-  if (Registry.`is`("llm.riderNext.enabled", false) || !application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
+  if (!application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost() || PlatformUtils.isDataSpell()) {
+    return
+  }
+  if (System.getProperty("platform.experiment.ab.manual.option", "") == "control.option") {
     return
   }
 
   val properties = PropertiesComponent.getInstance()
   if (afterImportSettings) {
-    if (properties.getValue("ide.islands.show.feedback") != "show.promo") {
+    if (properties.getValue("ide.islands.show.feedback2") != "show.promo") {
       return
     }
   }
-  else if (properties.getBoolean("ide.islands.ab", false)) {
+  else if (properties.getBoolean("ide.islands.ab2", false)) {
     return
   }
 
-  properties.setValue("ide.islands.ab", true)
+  // ignore users who were enabled in 25.2
+  if (properties.getValue("ide.islands.show.feedback") != null) {
+    return
+  }
 
-  val experiments = Experiments.getInstance()
-  if (experiments.isFeatureEnabled("ide.one.island.theme") || System.getProperty("ide.one.island.theme") != null) {
-    enableTheme(true)
-  }
-  else if (experiments.isFeatureEnabled("ide.many.islands.theme") || System.getProperty("ide.many.islands.theme") != null) {
-    enableTheme(false)
-  }
+  properties.setValue("ide.islands.ab2", true)
+
+  enableTheme()
 }
 
-private fun enableTheme(oneIsland: Boolean) {
+private fun enableTheme() {
   val lafManager = LafManager.getInstance()
-  val colorsManager = EditorColorsManager.getInstance()
-
-  val currentTheme = lafManager.currentUIThemeLookAndFeel?.id ?: return
-  val currentEditorTheme = colorsManager.globalScheme.displayName
-
   if (lafManager.autodetect) {
     return
   }
 
-  if ((currentTheme != "ExperimentalDark" && currentTheme != "ExperimentalLight" && currentTheme != "ExperimentalLightWithLightHeader") ||
-      (currentEditorTheme != "Light" && currentEditorTheme != "Dark" && currentEditorTheme != "Rider Light" && currentEditorTheme != "Rider Dark")) {
+  val currentTheme = lafManager.currentUIThemeLookAndFeel?.id ?: return
+  if (currentTheme != "ExperimentalDark" && currentTheme != "ExperimentalLight" && currentTheme != "ExperimentalLightWithLightHeader") {
+    return
+  }
+
+  val colorsManager = EditorColorsManager.getInstance()
+  val currentEditorTheme = colorsManager.globalScheme.displayName
+  if (currentEditorTheme != "Light" && currentEditorTheme != "Dark" && currentEditorTheme != "Rider Light" && currentEditorTheme != "Rider Dark") {
     return
   }
 
@@ -63,26 +65,20 @@ private fun enableTheme(oneIsland: Boolean) {
     return
   }
 
-  val uiThemeManager = UiThemeProviderListManager.getInstance()
   val isLight = JBColor.isBright()
 
-  val editorScheme: String
-  val newTheme = if (oneIsland) {
-    editorScheme = if (isLight) "Light" else "Island Dark"
-    uiThemeManager.findThemeById(if (isLight) "One Island Light" else "One Island Dark")
-  }
-  else {
-    editorScheme = if (isLight) "Light" else "Island Dark"
-    uiThemeManager.findThemeById(if (isLight) "Many Islands Light" else "Many Islands Dark")
-  }
+  val newTheme = UiThemeProviderListManager.getInstance().findThemeById(if (isLight) "Islands Light" else "Islands Dark") ?: return
 
-  if (newTheme == null) {
-    return
-  }
-
-  PropertiesComponent.getInstance().setValue("ide.islands.show.feedback", "show.promo")
+  PropertiesComponent.getInstance().setValue("ide.islands.show.feedback2", "show.promo")
 
   lafManager.setCurrentLookAndFeel(newTheme, true)
+
+  val editorScheme = if (PlatformUtils.isRider()) {
+    if (isLight) "Rider Light" else "Rider Dark"
+  }
+  else {
+    if (isLight) "Light" else "Islands Dark"
+  }
 
   newTheme.installEditorScheme(colorsManager.getScheme(editorScheme) ?: colorsManager.defaultScheme)
 

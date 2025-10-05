@@ -22,9 +22,9 @@
       "h": 8764333034314,
       "relativePath": "$BUILD_DIR$/production/intellij.cidr.externalSystem"
     },
-    "intellij.sh": {
+    "intellij.sh.plugin": {
       "h": 8764333034314,
-      "relativePath": "$BUILD_DIR$/production/intellij.sh"
+      "relativePath": "$BUILD_DIR$/production/intellij.sh.plugin"
     }
   }
 }

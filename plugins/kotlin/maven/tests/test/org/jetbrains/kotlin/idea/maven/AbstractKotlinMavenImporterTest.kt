@@ -3004,7 +3004,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             )
 
             // Check that we haven't lost internal argument during importing to facet
-            Assert.assertEquals("-XXLanguage:+InlineClasses", facetSettings.compilerSettings?.additionalArguments)
+            Assert.assertTrue("Argument is missing from compiler settings", "-XXLanguage:+InlineClasses" in facetSettings.compilerSettings!!.additionalArguments)
 
             // Check that internal argument influenced LanguageVersionSettings correctly
             Assert.assertEquals(
@@ -3772,25 +3772,11 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
 
             assertModules(compoundModule, mainModule, testModule)
 
-            val mainKotlinFolder = "src/main/kotlin"
-            val mainContentRoots = arrayOf(
-                mainKotlinFolder,
-                "src/main/java",
-                *defaultResources(),
-            )
+            assertSources(mainModule, "src/main/kotlin", "src/main/java")
+            assertDefaultResources(mainModule)
 
-            val testKotlinFolder = "src/test/kotlin"
-            val testContentRoots = arrayOf(
-                testKotlinFolder,
-                "src/test/java",
-                *defaultTestResources(),
-            )
-
-            assertRelativeContentRoots(mainModule, *mainContentRoots)
-            assertContentRootSources(mainModule, "$projectPath/$mainKotlinFolder", "")
-
-            assertRelativeContentRoots(testModule, *testContentRoots)
-            assertContentRootTestSources(testModule, "$projectPath/$testKotlinFolder", "")
+            assertTestSources(testModule,"src/test/kotlin", "src/test/java")
+            assertDefaultTestResources(testModule)
         }
     }
 

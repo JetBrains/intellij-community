@@ -2,6 +2,7 @@
 package com.intellij.cce.actions
 
 import com.google.gson.*
+import com.intellij.cce.core.DEFAULT_LOOKUP_ELEMENT_TYPE
 import com.intellij.cce.core.TokenProperties
 import java.lang.reflect.Type
 import java.util.*
@@ -95,8 +96,7 @@ data class Rollback internal constructor(override val sessionId: SessionId, val 
   override val type: Action.ActionType = Action.ActionType.ROLLBACK
 }
 
-data class TextRange(val start: Int, val end: Int)
-
+data class TextRange(val start: Int, val end: Int, val elementType: String = DEFAULT_LOOKUP_ELEMENT_TYPE)
 
 class ActionsBuilder {
   private val actions: MutableList<Action> = mutableListOf()

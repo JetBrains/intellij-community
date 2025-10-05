@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
@@ -10,7 +11,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import com.intellij.platform.eel.provider.LocalEelMachine;
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements Disposable {
+  private static final Logger LOG = Logger.getInstance(LibraryTablesRegistrarImpl.class);
   private final Map<String, LibraryTable> customLibraryTables = new ConcurrentHashMap<>();
   private volatile boolean extensionLoaded = false;
   private final Object extensionLoadingLock = new Object();
@@ -33,7 +35,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
   @Override
   public @NotNull LibraryTable getLibraryTable() {
     // todo: IJPL-175225 add possibility to select non-local global library tables
-    return GlobalLibraryTableBridge.Companion.getInstance(LocalEelDescriptor.INSTANCE);
+    return GlobalLibraryTableBridge.Companion.getInstance(LocalEelMachine.INSTANCE);
   }
 
   @Override
@@ -52,7 +54,11 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
 
   @Override
   public @Nullable LibraryTable getCustomLibraryTableByLevel(String level) {
-    return getCustomLibrariesMap().get(level);
+    LibraryTable table = getCustomLibrariesMap().get(level);
+    if (table == null) {
+      LOG.warn("Table not found: " + level);
+    }
+    return table;
   }
 
   private @NotNull Map<String, LibraryTable> getCustomLibrariesMap() {
@@ -67,6 +73,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
           public void extensionAdded(@NotNull CustomLibraryTableDescription extension, @NotNull PluginDescriptor pluginDescriptor) {
             LibraryTable table = new CustomLibraryTableImpl(extension.getTableLevel(), extension.getPresentation());
             customLibraryTables.put(extension.getTableLevel(), table);
+            LOG.info("Table added: " + extension.getTableLevel());
           }
 
           @Override
@@ -74,6 +81,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
             LibraryTable table = customLibraryTables.remove(extension.getTableLevel());
             if (table instanceof Disposable disposable) {
               Disposer.dispose(disposable);
+              LOG.info("Table removed: " + extension.getTableLevel());
             }
           }
         }, true, null);

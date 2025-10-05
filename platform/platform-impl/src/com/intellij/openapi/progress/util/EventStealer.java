@@ -4,6 +4,8 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ThreadingSupport;
+import com.intellij.openapi.application.impl.InternalThreading;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.SunToolkit;
@@ -23,26 +25,50 @@ import java.util.function.Consumer;
 public class EventStealer {
   private final LinkedBlockingQueue<InputEvent> myInputEvents = new LinkedBlockingQueue<>();
   private final LinkedBlockingQueue<InvocationEvent> myInvocationEvents = new LinkedBlockingQueue<>();
+  // The ping funcitonality is needed for cases when EDT simply waits for some process that might occasionally send events to EventStealer.
+  // The EDT needs to react to these events ASAP, but not too eagerly, as we'd like to avoid spinning on EDT
+  // So the EDT can simply block on the ping queue with the necessary timeout. It will be woken up as soon as any interesting event appears in the event queue.
+  private final LinkedBlockingQueue<Object> myPingQueue;
   private final @NotNull Consumer<? super InputEvent> myInputEventDispatcher;
 
-  @SuppressWarnings("ConstantValue")
+  private static final Object PING = new Object();
+  private static final Logger LOG = Logger.getInstance(EventStealer.class);
+
   EventStealer(@NotNull Disposable parent, @NotNull Consumer<? super InputEvent> inputConsumer) {
+    this(parent, false, inputConsumer);
+  }
+
+  EventStealer(@NotNull Disposable parent, boolean installPingingQueue, @NotNull Consumer<? super InputEvent> inputConsumer) {
     myInputEventDispatcher = inputConsumer;
     IdeEventQueue.getInstance().addPostEventListener(event -> {
-      if (event instanceof MouseEvent) {
-        myInputEvents.offer((InputEvent)event);
+      if (event instanceof MouseEvent me) {
+        myInputEvents.offer(me);
+        ping();
         return true;
       }
-      else if (event instanceof KeyEvent && event.getID() != KeyEvent.KEY_TYPED) {
-        myInputEvents.offer((InputEvent)event);
+      else if (event instanceof KeyEvent ke && event.getID() != KeyEvent.KEY_TYPED) {
+        myInputEvents.offer(ke);
+        ping();
         return true;
       }
-      if (event instanceof InvocationEvent && isUrgentInvocationEvent(event)) {
-        myInvocationEvents.offer((InvocationEvent)event);
+      if (event instanceof InvocationEvent ie && isUrgentInvocationEvent(event)) {
+        myInvocationEvents.offer(ie);
+        ping();
         return true;
       }
       return false;
     }, parent);
+    if (installPingingQueue) {
+      myPingQueue = new LinkedBlockingQueue<>(1);
+    } else {
+      myPingQueue = null;
+    }
+  }
+
+  private void ping() {
+    if (myPingQueue != null) {
+      myPingQueue.offer(PING);
+    }
   }
 
 
@@ -59,14 +85,15 @@ public class EventStealer {
         eventString.contains(",runnable=com.intellij.platform.ide.menu.MacNativeActionMenuKt$$Lambda")) {
       return false;
     }
-    return eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") || // [tav] todo: remove in 2022.2
+    return event instanceof InternalThreading.TransferredWriteActionEvent ||
+           eventString.contains(",runnable=sun.lwawt.macosx.LWCToolkit") ||// [tav] todo: remove in 2022.2
            eventString.contains(",runnable=" + ThreadingSupport.RunnableWithTransferredWriteAction.NAME) ||
            eventString.contains(",runnable=DispatchTerminationEvent") ||
            event.getClass().getName().equals("sun.awt.AWTThreading$TrackedInvocationEvent"); // see JBR-4208
   }
 
 
-  public List<InputEvent> drainUndispatchedInputEvents() {
+  List<InputEvent> drainUndispatchedInputEvents() {
     List<InputEvent> result = new ArrayList<>();
     myInputEvents.drainTo(result);
     return result;
@@ -89,7 +116,21 @@ public class EventStealer {
     }
   }
 
-  public void dispatchAllExistingEvents() {
+  @SuppressWarnings("SameParameterValue")
+  void waitForPing(int timeoutMs) {
+    if (myPingQueue == null) {
+      LOG.error("Ping queue must be installed");
+      return;
+    }
+    try {
+      myPingQueue.poll(timeoutMs, TimeUnit.MILLISECONDS);
+    }
+    catch (InterruptedException e) {
+      // simply resume
+    }
+  }
+
+  void dispatchAllExistingEvents() {
     while (true) {
       InvocationEvent event = myInvocationEvents.poll();
       if (event == null) return;

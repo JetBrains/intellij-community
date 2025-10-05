@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -246,7 +246,7 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
         for (each in SearchScopeProvider.EP_NAME.extensionList) {
           runCatching {
             result.addAll(each.getGeneralSearchScopes(project, adjustedContext))
-          }.getOrLogException {
+          }.getOrHandleException {
             LOG.error("Couldn't retrieve general scopes from $each", it)
           }
         }

@@ -1,10 +1,9 @@
 from collections.abc import Mapping, Sequence
-from typing import Any, Literal, Protocol, type_check_only
+from typing import Any, Literal, Protocol, TypeAlias, type_check_only
 
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.migrations.state import StateApps
 from django.utils.datastructures import _ListOrTuple
-from typing_extensions import TypeAlias
 
 from .base import Operation
 

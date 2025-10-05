@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.psi.*
 
 
-object JavaTypeHintsFactory {
+public object JavaTypeHintsFactory {
   private const val startFoldingFromLevel: Int = 2
 
   private const val CAPTURE_OF = "capture of "
@@ -15,7 +15,7 @@ object JavaTypeHintsFactory {
   private const val ANONYMOUS_MARK = "anonymous"
 
 
-  fun typeHint(type: PsiType, treeBuilder: PresentationTreeBuilder) {
+  public fun typeHint(type: PsiType, treeBuilder: PresentationTreeBuilder) {
     treeBuilder.typeHint(this.startFoldingFromLevel, type)
   }
 

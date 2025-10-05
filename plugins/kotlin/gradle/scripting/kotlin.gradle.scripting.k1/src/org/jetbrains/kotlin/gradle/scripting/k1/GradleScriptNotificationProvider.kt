@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocato
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.ScriptUnderRoot
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
-import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.hasUnknownScriptExt
+import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.v1.hasUnknownScriptExt
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File

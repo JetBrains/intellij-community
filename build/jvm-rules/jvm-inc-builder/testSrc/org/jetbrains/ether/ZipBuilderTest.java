@@ -59,6 +59,7 @@ public class ZipBuilderTest extends TestCase {
       for (String entry : allEntriesSorted) {
         builder.putEntry(entry, emptyContent);
       }
+      builder.close(true);
     }
     
     // reading
@@ -107,6 +108,7 @@ public class ZipBuilderTest extends TestCase {
       builder.putEntry("com/sys1/api/service5.class", emptyContent);
       builder.putEntry("com/sys0/description.txt", descriptionContent.getBytes(StandardCharsets.UTF_8));
       builder.putEntry("com/sys3/description.txt", emptyContent);
+      builder.close(true);
     }
 
     try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFile)) {

@@ -3,14 +3,19 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
+import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +55,14 @@ public abstract class PyLineMarkerNavigator<T extends PsiElement> implements Gut
     }
     else {
       PsiElementListNavigator.openTargets(e, methods, getTitle(elt), null, new DefaultPsiElementCellRenderer());
+      if (methods.length == 1) {
+        methods[0].navigate(true);
+      } else {
+        var project = elt.getProject();
+        JBPopup popup = new PsiTargetNavigator<>(methods).createPopup(project, getTitle(elt));
+        NavigationUtil.hidePopupIfDumbModeStarts(popup, project);
+        popup.show(new RelativePoint(e));
+      }
     }
   }
 

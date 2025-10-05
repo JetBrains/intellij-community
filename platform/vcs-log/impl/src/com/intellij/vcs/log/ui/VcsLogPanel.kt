@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.util.VcsLogUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
@@ -45,25 +46,36 @@ class VcsLogPanel(private val manager: VcsLogManager, override val vcsLogUi: Vcs
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
-    val hashes = vcsLogUi.getTable().selection.commits
     sink[VcsLogInternalDataKeys.LOG_MANAGER] = manager
-    sink[VcsLogDataKeys.VCS_LOG] = vcsLogUi.getVcsLog()
-    sink[VcsLogDataKeys.VCS_LOG_UI] = vcsLogUi
-    sink[VcsLogDataKeys.VCS_LOG_DATA_PROVIDER] = manager.dataManager
-    sink[VcsLogInternalDataKeys.LOG_DATA] = manager.dataManager
-    sink[VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION] = vcsLogUi.getTable().selection
-    if (hashes.isNotEmpty()) {
-      sink[VcsDataKeys.VCS_REVISION_NUMBER] = VcsLogUtil.convertToRevisionNumber(hashes.first().hash)
-    }
-    if (hashes.isNotEmpty() && hashes.size <= VcsLogUtil.MAX_SELECTED_COMMITS) {
-      sink[PlatformDataKeys.SELECTED_ITEMS] = hashes.toTypedArray()
-      sink[VcsDataKeys.VCS_REVISION_NUMBERS] = hashes
-        .map { VcsLogUtil.convertToRevisionNumber(it.hash) }
-        .toTypedArray<VcsRevisionNumber>()
-    }
-    val metadata = vcsLogUi.getTable().selection.cachedMetadata
-    if (metadata.isNotEmpty() && metadata.size <= VcsLogUtil.MAX_SELECTED_COMMITS) {
-      sink[VcsDataKeys.VCS_COMMIT_SUBJECTS] = metadata.map { it.getSubject() }.toTypedArray()
+    collectLogUiKeys(sink, vcsLogUi)
+  }
+
+  @ApiStatus.Internal
+  companion object {
+    fun collectLogUiKeys(
+      sink: DataSink,
+      vcsLogUi: VcsLogUiEx,
+    ) {
+      sink[VcsLogDataKeys.VCS_LOG_DATA_PROVIDER] = vcsLogUi.logData
+      sink[VcsLogInternalDataKeys.LOG_DATA] = vcsLogUi.logData
+      val selection = vcsLogUi.table.selection
+      val hashes = selection.commits
+      sink[VcsLogDataKeys.VCS_LOG] = vcsLogUi.vcsLog
+      sink[VcsLogDataKeys.VCS_LOG_UI] = vcsLogUi
+      sink[VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION] = selection
+      if (hashes.isNotEmpty()) {
+        sink[VcsDataKeys.VCS_REVISION_NUMBER] = VcsLogUtil.convertToRevisionNumber(hashes.first().hash)
+      }
+      if (hashes.isNotEmpty() && hashes.size <= VcsLogUtil.MAX_SELECTED_COMMITS) {
+        sink[PlatformDataKeys.SELECTED_ITEMS] = hashes.toTypedArray()
+        sink[VcsDataKeys.VCS_REVISION_NUMBERS] = hashes
+          .map { VcsLogUtil.convertToRevisionNumber(it.hash) }
+          .toTypedArray<VcsRevisionNumber>()
+      }
+      val metadata = selection.cachedMetadata
+      if (metadata.isNotEmpty() && metadata.size <= VcsLogUtil.MAX_SELECTED_COMMITS) {
+        sink[VcsDataKeys.VCS_COMMIT_SUBJECTS] = metadata.map { it.getSubject() }.toTypedArray()
+      }
     }
   }
 }

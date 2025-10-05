@@ -14,9 +14,11 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Create a subclass to briefly test a compatibility of some Run Target with Java run configurations.
@@ -193,11 +195,13 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
   }
 
   @Test
-  fun `test junit tests - run single test`() {
+  fun `test junit tests - run single test`() = timeoutRunBlocking(timeout = 1.minutes) {
     val alsoTestClass = getTestClass("AlsoTest")
 
-    val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_CLASS).also { conf ->
-      conf.persistentData.setMainClass(alsoTestClass)
+    val runConfiguration = readAction {
+      createJUnitConfiguration(JUnitConfiguration.TEST_CLASS).also { conf ->
+        conf.persistentData.setMainClass(alsoTestClass)
+      }
     }
 
     @Suppress("SpellCheckingInspection")
@@ -304,9 +308,11 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
   }
 
   @Test
-  fun `test junit tests - run test method`() {
-    val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_METHOD).also { conf ->
-      conf.persistentData.setTestMethod(PsiLocation.fromPsiElement(getTestClass("AlsoTest").findMethodsByName("testShouldFail", false)[0]))
+  fun `test junit tests - run test method`() = timeoutRunBlocking(timeout = 1.minutes) {
+    val runConfiguration = readAction {
+      createJUnitConfiguration(JUnitConfiguration.TEST_METHOD).also { conf ->
+        conf.persistentData.setTestMethod(PsiLocation.fromPsiElement(getTestClass("AlsoTest").findMethodsByName("testShouldFail", false)[0]))
+      }
     }
 
     @Suppress("SpellCheckingInspection")

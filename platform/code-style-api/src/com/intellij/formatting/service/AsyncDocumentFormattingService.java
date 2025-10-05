@@ -72,6 +72,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
         return;
       }
     }
+    prepareForFormatting(document, formattingContext);
     FormattingRequestImpl formattingRequest = new FormattingRequestImpl(formattingContext, document, formattingRanges,
                                                                          canChangeWhiteSpaceOnly, quickFormat);
     FormattingTask formattingTask = createFormattingTask(formattingRequest);
@@ -124,6 +125,12 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
    */
   protected abstract @NotNull String getNotificationGroupId();
 
+  /**
+   * @return A notification display ID to use when timeout error messages are shown to an end user.
+   */
+  protected @Nullable String getTimeoutNotificationDisplayId() {
+    return null;
+  }
 
   protected boolean needToUpdate() {
     return true;
@@ -133,6 +140,14 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
    * @return A name which can be used in UI, for example, in notification messages.
    */
   protected abstract @NotNull @NlsSafe String getName();
+
+  /**
+   * Hook called before creating a formatting request. Default implementation saves the document
+   * to ensure external formatters working with IO files see the latest content.
+   */
+  protected void prepareForFormatting(@NotNull Document document, @NotNull FormattingContext formattingContext) {
+    FileDocumentManager.getInstance().saveDocument(document);
+  }
 
   /**
    * @return A duration to wait for the service to respond (call either {@code onTextReady()} or {@code onError()}).
@@ -177,7 +192,6 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       myRanges = ranges;
       myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
       myQuickFormat = quickFormat;
-      FileDocumentManager.getInstance().saveDocument(myDocument);
       myInitialModificationStamp = document.getModificationStamp();
     }
 
@@ -270,8 +284,9 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
           }
           if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
             FormattingNotificationService.getInstance(myContext.getProject()).reportError(
-              getNotificationGroupId(), getName(),
-              CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())), getTimeoutActions(myContext));
+              getNotificationGroupId(), getTimeoutNotificationDisplayId(),
+              getName(), CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())),
+              getTimeoutActions(myContext));
           }
           else if (myResult != null) {
             if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
@@ -325,21 +340,35 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     @Override
-    public void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
-      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        myTaskSemaphore.release();
-        FormattingNotificationService.getInstance(myContext.getProject()).reportError(getNotificationGroupId(), title, message);
-      }
+    public void onError(@NotNull String title, @NotNull String message) {
+      onError(title, message, null);
     }
 
     @Override
     public void onError(@NotNull @NlsContexts.NotificationTitle String title,
                         @NotNull @NlsContexts.NotificationContent String message,
+                        @Nullable String displayId) {
+      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        myTaskSemaphore.release();
+        FormattingNotificationService.getInstance(myContext.getProject())
+          .reportError(getNotificationGroupId(), displayId, title, message);
+      }
+    }
+
+    @Override
+    public void onError(@NotNull String title, @NotNull String message, int offset) {
+      onError(title, message, null, offset);
+    }
+
+    @Override
+    public void onError(@NotNull @NlsContexts.NotificationTitle String title,
+                        @NotNull @NlsContexts.NotificationContent String message,
+                        @Nullable String displayId,
                         int offset) {
       if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
         myTaskSemaphore.release();
         FormattingNotificationService.getInstance(myContext.getProject())
-                                     .reportErrorAndNavigate(getNotificationGroupId(), title, message, myContext, offset);
+          .reportErrorAndNavigate(getNotificationGroupId(), displayId, title, message, myContext, offset);
       }
     }
   }

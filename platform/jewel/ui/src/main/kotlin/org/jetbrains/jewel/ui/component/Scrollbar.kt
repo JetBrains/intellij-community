@@ -55,6 +55,8 @@ import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -79,6 +81,17 @@ import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior.JumpToSpot
 import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior.NextPage
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 
+/**
+ * A vertical scrollbar that can be tied to a [ScrollableState].
+ *
+ * @param scrollState The [ScrollableState] to control
+ * @param modifier The modifier to apply to this layout node
+ * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise.
+ * @param enabled `true` to enable the scrollbar, `false` otherwise.
+ * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
+ * @param style The [ScrollbarStyle] to use for this scrollbar.
+ * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
+ */
 @Composable
 public fun VerticalScrollbar(
     scrollState: ScrollableState,
@@ -91,16 +104,27 @@ public fun VerticalScrollbar(
 ) {
     BaseScrollbar(
         scrollState = scrollState,
-        modifier = modifier,
         reverseLayout = reverseLayout,
         enabled = enabled,
         interactionSource = interactionSource,
         isVertical = true,
         style = style,
         keepVisible = keepVisible,
+        modifier = modifier,
     )
 }
 
+/**
+ * A horizontal scrollbar that can be tied to a [ScrollableState].
+ *
+ * @param scrollState The [ScrollableState] to control.
+ * @param modifier The modifier to apply to this layout node.
+ * @param reverseLayout `true` to reverse the direction of the scrollbar, `false` otherwise.
+ * @param enabled `true` to enable the scrollbar, `false` otherwise.
+ * @param interactionSource The [MutableInteractionSource] that will be used to dispatch events.
+ * @param style The [ScrollbarStyle] to use for this scrollbar.
+ * @param keepVisible `true` to keep the scrollbar visible even when not scrolling, `false` otherwise.
+ */
 @Composable
 public fun HorizontalScrollbar(
     scrollState: ScrollableState,
@@ -113,26 +137,26 @@ public fun HorizontalScrollbar(
 ) {
     BaseScrollbar(
         scrollState = scrollState,
-        modifier = modifier,
         reverseLayout = reverseLayout,
         enabled = enabled,
         interactionSource = interactionSource,
         isVertical = false,
         style = style,
         keepVisible = keepVisible,
+        modifier = modifier,
     )
 }
 
 @Composable
 private fun BaseScrollbar(
     scrollState: ScrollableState,
-    modifier: Modifier,
     reverseLayout: Boolean,
     enabled: Boolean,
     interactionSource: MutableInteractionSource,
     isVertical: Boolean,
     style: ScrollbarStyle,
     keepVisible: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val dragInteraction = remember { mutableStateOf<DragInteraction.Start?>(null) }
     DisposableEffect(interactionSource) {
@@ -250,6 +274,7 @@ private fun BaseScrollbar(
             },
             modifier =
                 modifier
+                    .semantics { hideFromAccessibility() }
                     .thenIf(showScrollbar && canScroll && isExpanded) { background(trackBackground) }
                     .scrollable(
                         state = scrollState,
@@ -332,6 +357,7 @@ private fun getThumbBorderColor(
 
 private fun areTheSameColor(first: Color, second: Color) = first.toArgb() == second.toArgb()
 
+@Suppress("MutableStateParam") // To fix in JEWEL-923
 @Composable
 private fun Thumb(
     showScrollbar: Boolean,
@@ -454,6 +480,7 @@ private fun horizontalMeasurePolicy(
     layout(constraints.maxWidth, placeable.height) { placeable.place(pixelRange.first, 0) }
 }
 
+@Suppress("ModifierComposed") // To fix in JEWEL-921
 private fun Modifier.scrollbarDrag(
     interactionSource: MutableInteractionSource,
     draggedInteraction: MutableState<DragInteraction.Start?>,
@@ -487,6 +514,7 @@ private fun Modifier.scrollbarDrag(
     }
 }
 
+@Suppress("ModifierComposed") // To fix in JEWEL-921
 private fun Modifier.scrollOnPressTrack(
     clickBehavior: TrackClickBehavior,
     isVertical: Boolean,

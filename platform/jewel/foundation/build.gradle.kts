@@ -2,11 +2,12 @@ import org.jetbrains.compose.ComposeBuildConfig
 
 plugins {
     jewel
-    `jewel-publish`
     `jewel-check-public-api`
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.compose.compiler)
 }
+
+sourceSets { main { kotlin { srcDirs("src/main/generated-kotlin") } } }
 
 private val composeVersion
     get() = ComposeBuildConfig.composeVersion

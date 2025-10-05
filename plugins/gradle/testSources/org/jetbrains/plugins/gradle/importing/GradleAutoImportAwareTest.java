@@ -25,15 +25,15 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
 
     final GradleAutoImportAware gradleAutoImportAware = new GradleAutoImportAware();
 
-    final Module module = ModuleManager.getInstance(myProject).getModules()[0];
+    final Module module = ModuleManager.getInstance(getMyProject()).getModules()[0];
     final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
     final String compilerOutputDir = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrl() + "/my/pack/gradle");
     final String testDataOutputDir = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrlForTests() + "/testData.gradle");
 
-    assertNull(gradleAutoImportAware.getAffectedExternalProjectPath(compilerOutputDir, myProject));
-    assertNull(gradleAutoImportAware.getAffectedExternalProjectPath(testDataOutputDir, myProject));
+    assertNull(gradleAutoImportAware.getAffectedExternalProjectPath(compilerOutputDir, getMyProject()));
+    assertNull(gradleAutoImportAware.getAffectedExternalProjectPath(testDataOutputDir, getMyProject()));
 
-    assertNotNull(gradleAutoImportAware.getAffectedExternalProjectPath(file.getPath(), myProject));
+    assertNotNull(gradleAutoImportAware.getAffectedExternalProjectPath(file.getPath(), getMyProject()));
   }
 
   @Test
@@ -51,7 +51,7 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
     importProject();
 
     final GradleAutoImportAware gradleAutoImportAware = new GradleAutoImportAware();
-    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), myProject),
+    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), getMyProject()),
                   new File(getProjectPath() + "/gradle/libs.versions.toml"));
   }
 
@@ -82,7 +82,7 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
     importProject();
 
     final GradleAutoImportAware gradleAutoImportAware = new GradleAutoImportAware();
-    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), myProject),
+    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), getMyProject()),
                   new File(getProjectPath() + "/gradle/custom.versions.toml"));
   }
 
@@ -96,7 +96,7 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
     importProject();
 
     final GradleAutoImportAware gradleAutoImportAware = new GradleAutoImportAware();
-    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), myProject),
+    assertContain(gradleAutoImportAware.getAffectedExternalProjectFiles(getProjectPath(), getMyProject()),
                   new File(getProjectPath() + "/gradle/gradle-daemon-jvm.properties"));
   }
 }

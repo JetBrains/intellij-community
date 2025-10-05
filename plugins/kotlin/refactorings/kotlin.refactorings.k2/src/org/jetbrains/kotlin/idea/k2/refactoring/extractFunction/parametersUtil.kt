@@ -6,6 +6,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -19,12 +20,23 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.builtinTypes
+import org.jetbrains.kotlin.analysis.api.components.callableSymbol
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.expectedType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
+import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.fir.BuiltinTypes
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
@@ -79,6 +91,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isInsideOf
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
 
@@ -102,7 +115,8 @@ private class ParameterWithReference(val parameterOrigin: PsiNamedElement, val r
     }
 }
 
-context(KaSession)
+@OptIn(KaExperimentalApi::class)
+context(session: KaSession)
 internal fun ExtractionData.inferParametersInfo(
     virtualBlock: KtBlockExpression,
     modifiedVariables: Set<String>,
@@ -131,13 +145,40 @@ internal fun ExtractionData.inferParametersInfo(
 
     }
 
+    val unknownContextParameters = analyze(virtualBlock) {
+        val parameters = linkedMapOf<KaType, KtParameter>()
+        for (referenceExpression in virtualBlock.collectDescendantsOfType<KtReferenceExpression> { it.resolveResult != null }) {
+            val call = referenceExpression.resolveToCall()
+            val substitutions = buildSubstitutor {
+                referenceExpression.resolveResult!!.originalRefExpr.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.typeArgumentsMapping?.let {
+                    substitutions(it)
+                }
+            }
+            if (call is KaErrorCallInfo) {
+                val diagnostics = (referenceExpression.parent as? KtCallExpression ?: referenceExpression).diagnostics(
+                        KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
+                    ).takeIf { it.isNotEmpty() } ?: listOf(call.diagnostic)
+                diagnostics.filterIsInstance<KaFirDiagnostic.NoContextArgument>().forEach { diagnostic ->
+                    val parameter = (diagnostic.symbol as? KaContextParameterSymbol)?.psi as? KtParameter
+                    if (parameter != null) {
+                        val implicitContextParameterType = substitutions.substitute(parameter.returnType)
+                        if (extractedDescriptorToParameter.none { it.value.contextParameter && (it.value.originalDescriptor as? KtParameter)?.returnType?.isSubtypeOf(implicitContextParameterType) == true }) {
+                            parameters.putIfAbsent(implicitContextParameterType, parameter)
+                        }
+                    }
+                }
+            }
+        }
+        parameters.mapKeys { it.key.createPointer() }
+    }
+
     val varNameValidator = KotlinDeclarationNameValidator(
         commonParent,
         true,
         KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
     )
 
-    val existingParameterNames = hashSetOf<String>()
+    val nameGenerator = UniqueNameGenerator()
     val generateArguments: (KaType) -> List<KaType> =
         { ktType -> (ktType as? KaClassType)?.typeArguments?.mapNotNull { it.type } ?: emptyList() }
     for ((namedElement, parameter) in extractedDescriptorToParameter) {
@@ -165,14 +206,7 @@ internal fun ExtractionData.inferParametersInfo(
             require(currentName != null || parameter.receiverCandidate)
 
             if (currentName != null) {
-                if ("$currentName" in existingParameterNames) {
-                    var index = 0
-                    while ("$currentName$index" in existingParameterNames) {
-                        index++
-                    }
-                    currentName = "$currentName$index"
-                }
-                currentName?.let { existingParameterNames += it }
+                currentName = nameGenerator.generateUniqueName(currentName!!)
             } else {
                 currentName = "receiver"
             }
@@ -182,6 +216,21 @@ internal fun ExtractionData.inferParametersInfo(
             ) { varNameValidator.validate(it) } else null
             info.parameters.add(this)
         }
+    }
+
+    unknownContextParameters.forEach { (type, contextParam) ->
+        val name = contextParam.name ?: "_"
+        val parameter = MutableParameter(
+            name,
+            contextParam.ownerDeclaration as KtNamedDeclaration,
+            false,
+            with(session) { type.restore() } ?: builtinTypes.any,
+            targetSibling as KtElement,
+            contextParameter = true
+        )
+        parameter.refCount++
+        parameter.currentName = name.takeIf { it == "_" } ?: nameGenerator.generateUniqueName(name)
+        info.parameters.add(parameter)
     }
 
     for (typeToCheck in info.typeParameters.flatMap { it.collectReferencedTypes() }.map { it.type }) {
@@ -197,7 +246,7 @@ internal fun ExtractionData.inferParametersInfo(
     return info
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun ExtractionData.registerParameter(
     info: ParametersInfo<KaType, MutableParameter>,
     refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KaType>,
@@ -252,7 +301,7 @@ private fun ExtractionData.registerParameter(
         if (extractThis || extractOrdinaryParameter || extractFunctionRef) {
             val parameterExpression = getParameterArgumentExpression(originalRef, receiverToExtract, refInfo.smartCast)
             val parameter = extractedDescriptorToParameter.getOrPut(ParameterWithReference(elementToExtract, originalRef.takeUnless { extractThis })) {
-                var argumentText =
+                val argumentText =
                     calculateArgumentText(
                         hasThisReceiver,
                         extractThis,
@@ -269,7 +318,8 @@ private fun ExtractionData.registerParameter(
                     receiverToExtract
                 )
 
-                MutableParameter(argumentText, elementToExtract, extractThis, originalType, targetSibling as KtElement)
+                val asContextParameter = originalDeclaration is KtParameter && originalDeclaration.isContextParameter
+                MutableParameter(argumentText, elementToExtract, extractThis, originalType, targetSibling as KtElement, contextParameter = asContextParameter)
             }
 
             // TODO add type predicate based on called functions https://youtrack.jetbrains.com/issue/KTIJ-29166
@@ -357,7 +407,7 @@ private fun ExtractionData.calculateArgumentText(
 /**
  * Register replacements which expand locally available types to FQ names if possible.
  */
-context(KaSession)
+context(_: KaSession)
 private fun ExtractionData.registerQualifierReplacements(
     referencedClassifierSymbol: KaClassifierSymbol,
     parametersInfo: ParametersInfo<KaType, MutableParameter>,
@@ -387,7 +437,7 @@ private fun ExtractionData.registerQualifierReplacements(
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun getReferencedClassifierSymbol(
     thisSymbol: KaSymbol?,
     originalDeclaration: PsiNamedElement,
@@ -415,8 +465,8 @@ private fun getReferencedClassifierSymbol(
     }
 }
 
-context(KaSession)
-@OptIn(KaExperimentalApi::class)
+context(session: KaSession)
+@OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
 private fun createOriginalType(
     extractFunctionRef: Boolean,
     originalDeclaration: PsiNamedElement,
@@ -443,12 +493,12 @@ private fun createOriginalType(
             append(functionSymbol.returnType.render(position = Variance.INVARIANT))
         }
 
-    // FIXME: KTIJ-34279
-    @OptIn(KaImplementationDetail::class)
-    KaBaseIllegalPsiException.allowIllegalPsiAccess {
-        org.jetbrains.kotlin.psi.KtPsiFactory(originalDeclaration.project).createTypeCodeFragment(typeString, originalDeclaration)
-            .getContentElement()?.type
-    }
+    val contentElement =
+        KtPsiFactory(originalDeclaration.project).createTypeCodeFragment(typeString, originalDeclaration).getContentElement()
+    if (contentElement != null) {
+        analyze(contentElement) { contentElement.type.createPointer() }.restore(session)
+    } else null
+
 } else {
     parameterExpression?.expressionType ?: receiverToExtract?.type
 }) ?: builtinTypes.nullableAny

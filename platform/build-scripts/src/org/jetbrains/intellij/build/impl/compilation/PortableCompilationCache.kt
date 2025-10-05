@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import io.opentelemetry.api.common.AttributeKey
@@ -68,7 +68,7 @@ internal suspend fun downloadCacheAndCompileProject(forceDownload: Boolean, gitU
         throw IllegalStateException("JPS Cache should not be downloaded")
       }
 
-      context.options.incrementalCompilation = true
+      context.options.incrementalCompilation = !context.options.forceRebuild
       // compilation is executed unconditionally here even if the exact commit cache is downloaded
       // to have an additional validation step and not to ignore a local changes, for example, in TeamCity Remote Run
       if (!context.options.useCompiledClassesFromProjectOutput) {

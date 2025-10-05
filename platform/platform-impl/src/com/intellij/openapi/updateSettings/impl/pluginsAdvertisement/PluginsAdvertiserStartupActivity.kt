@@ -5,12 +5,12 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginDataSet
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -24,6 +24,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.EditorNotifications
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -33,14 +34,19 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 
+private val isTestingMode : Boolean by lazy {
+  val application = ApplicationManager.getApplication()
+  application.isUnitTestMode || application.isHeadlessEnvironment || SystemProperties.getBooleanProperty("idea.is.playback", false)
+}
+
 internal class PluginsAdvertiserStartupActivity : ProjectActivity {
+
   suspend fun checkSuggestedPlugins(project: Project, includeIgnored: Boolean) {
-    val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode || application.isHeadlessEnvironment) {
+    if (isTestingMode) {
       return
     }
 
-    val customPlugins = computeDetached { RepositoryHelper.loadPluginsFromCustomRepositories(null) }
+    val customPlugins = computeDetached { RepositoryHelper.loadPluginsFromCustomRepositories(null, PluginNodeModelBuilderFactory) }
 
     coroutineContext.ensureActive()
 
@@ -126,8 +132,7 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
 
 internal fun findSuggestedPlugins(project: Project, customRepositories: Map<String, List<PluginUiModel>>): List<PluginUiModel> {
   return runBlockingMaybeCancellable {
-    val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode || application.isHeadlessEnvironment) {
+    if (isTestingMode) {
       return@runBlockingMaybeCancellable emptyList()
     }
 
@@ -156,6 +161,10 @@ internal fun findSuggestedPlugins(project: Project, customRepositories: Map<Stri
 }
 
 private suspend fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, PluginDataSet> {
+  if (isTestingMode) {
+    return emptyMap()
+  }
+
   val params = mapOf("featureType" to featureType)
   val features = MarketplaceRequests.getInstance().getFeatures(params)
   return features

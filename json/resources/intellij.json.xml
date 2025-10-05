@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker"
                     interface="com.intellij.json.codeinsight.JsonLiteralChecker"
@@ -22,6 +22,10 @@
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
     <lang.parserDefinition language="JSON Lines" implementationClass="com.intellij.json.jsonLines.JsonLinesParserDefinition"/>
+    <syntax.elementTypeConverter language="JSON" implementationClass="com.intellij.json.psi.JsonElementTypeConverterFactory"/>
+    <syntax.elementTypeConverter language="JSON" implementationClass="com.intellij.json.JsonFileTypeConverterFactory"/>
+    <syntax.syntaxDefinition language="JSON" implementationClass="com.intellij.json.JsonLanguageDefinition"/>
+
 
     <!-- Highlighting -->
     <colorSettingsPage implementation="com.intellij.json.highlighting.JsonColorsPage"/>
@@ -37,7 +41,9 @@
 
     <!-- Typing -->
     <applicationService serviceImplementation="com.intellij.json.editor.JsonEditorOptions"/>
+    <applicationService serviceImplementation="com.intellij.json.editor.folding.JsonFoldingSettings"/>
     <applicationSettings service="com.intellij.json.editor.JsonEditorOptions"/>
+    <codeFoldingOptionsProvider instance="com.intellij.json.editor.folding.JsonFoldingOptionsProvider"/>
     <rdct.remoteSettingProvider implementation="com.intellij.json.editor.JSONRemoteSettingInfoProvider"/>
 
     <editorSmartKeysConfigurable instance="com.intellij.json.editor.JsonSmartKeysConfigurable" id="editor.preferences.jsonOptions"/>

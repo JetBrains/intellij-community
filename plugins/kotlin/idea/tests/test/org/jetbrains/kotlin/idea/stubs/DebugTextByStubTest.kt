@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.stubs
 
@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.psi.stubs.KotlinFunctionStub
 import org.jetbrains.kotlin.psi.stubs.KotlinObjectStub
 import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub
 import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementType
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -28,7 +29,7 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
     fun packageDirective(text: String) {
         val (file, tree) = createFileAndStubTree(text)
         val packageDirective = tree.findChildStubByType(KtStubElementTypes.PACKAGE_DIRECTIVE)
-        val psi = KtPackageDirective(packageDirective as KotlinPlaceHolderStub)
+        val psi = KtPackageDirective(packageDirective as KotlinPlaceHolderStub<KtPackageDirective>)
         Assert.assertEquals(file.packageDirective!!.text, psi.getDebugText())
     }
 
@@ -45,7 +46,7 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
         val parameterList = function.findChildStubByType(KtStubElementTypes.VALUE_PARAMETER_LIST)!!
         val valueParameter = parameterList.findChildStubByType(KtStubElementTypes.VALUE_PARAMETER)!!
         val typeReferenceStub = valueParameter.findChildStubByType(KtStubElementTypes.TYPE_REFERENCE)
-        val psiFromStub = KtTypeReference(typeReferenceStub as KotlinPlaceHolderStub)
+        val psiFromStub = KtTypeReference(typeReferenceStub as KotlinPlaceHolderStub<KtTypeReference>)
         val typeReferenceByPsi = file.findChildByClass(KtNamedFunction::class.java)!!.valueParameters[0].typeReference
         Assert.assertEquals(typeReferenceByPsi!!.text, psiFromStub.getDebugText())
     }
@@ -83,7 +84,7 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
     fun importList(text: String) {
         val (file, tree) = createFileAndStubTree(text)
         val importList = tree.findChildStubByType(KtStubElementTypes.IMPORT_LIST)
-        val psi = KtImportList(importList as KotlinPlaceHolderStub)
+        val psi = KtImportList(importList as KotlinPlaceHolderStub<KtImportList>)
         Assert.assertEquals(file.importList!!.text, psi.getDebugText())
     }
 
@@ -131,7 +132,7 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
 
     fun testClass() {
         clazz("class A")
-        clazz("open private class A")
+        clazz("open private class A", expectedText = "private open class A")
         clazz("public class private A")
         clazz("class A()")
         clazz("class A() : B()", expectedText = "class A() : B")
@@ -165,7 +166,7 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
     fun testClassBody() {
         val tree = createStubTree("class A {\n {} fun f(): Int val c: Int}")
         val classBody = tree.findChildStubByType(KtStubElementTypes.CLASS)!!.findChildStubByType(KtStubElementTypes.CLASS_BODY)
-        assertEquals("class body for STUB: class A", KtClassBody(classBody as KotlinPlaceHolderStub).getDebugText())
+        assertEquals("class body for STUB: class A", KtClassBody(classBody as KotlinPlaceHolderStub<KtClassBody>).getDebugText())
     }
 
     fun testClassInitializer() {
@@ -174,7 +175,7 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
             tree.findChildStubByType(KtStubElementTypes.CLASS)!!.findChildStubByType(KtStubElementTypes.CLASS_BODY)!!.findChildStubByType(
                 KtStubElementTypes.CLASS_INITIALIZER
             )
-        assertEquals("initializer in STUB: class A", KtClassInitializer(initializer as KotlinPlaceHolderStub).getDebugText())
+        assertEquals("initializer in STUB: class A", KtClassInitializer(initializer as KotlinPlaceHolderStub<KtClassInitializer>).getDebugText())
     }
 
     fun testClassObject() {
@@ -198,7 +199,11 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
     fun testEnumEntry() {
         val tree = createStubTree("enum class Enum { E1, E2(), E3(1, 2)}")
         val enumClass = tree.findChildStubByType(KtStubElementTypes.CLASS)!!.findChildStubByType(KtStubElementTypes.CLASS_BODY)!!
-        val entries = enumClass.getChildrenByType(KtStubElementTypes.ENUM_ENTRY, KtStubElementTypes.ENUM_ENTRY.arrayFactory)
+        val entries = enumClass.getChildrenByType(
+            KtStubElementTypes.ENUM_ENTRY,
+            (KtStubElementTypes.ENUM_ENTRY as KtStubElementType<*, *>).arrayFactory,
+        )
+
         assertEquals("STUB: enum entry E1", entries[0].getDebugText())
         assertEquals("STUB: enum entry E2 : Enum", entries[1].getDebugText())
         assertEquals("STUB: enum entry E3 : Enum", entries[2].getDebugText())

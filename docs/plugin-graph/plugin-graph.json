@@ -1950,11 +1950,11 @@
   "group": "nodes",
   "data": {
     "id": "s0",
-    "name": "intellij.microservices.ui",
-    "n": "i.microservices.ui",
-    "package": "com.intellij.microservices.ui",
-    "sourceModule": "intellij.microservices.ui",
-    "descriptor": "plugins/microservices/microservices-ui/resources/META-INF/plugin.xml",
+    "name": "intellij.microservices.plugin",
+    "n": "i.microservices.plugin",
+    "package": "com.intellij.microservices.plugin",
+    "sourceModule": "intellij.microservices.plugin",
+    "descriptor": "plugins/microservices/plugin/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.microservices.ui",
     "parent": "cs0",
     "type": 2
@@ -1963,11 +1963,11 @@
   "group": "nodes",
   "data": {
     "id": "mH",
-    "name": "intellij.microservices.ui/diagram",
-    "n": "i.microservices.ui/diagram",
-    "package": "com.intellij.microservices.ui.diagrams",
-    "sourceModule": "intellij.microservices.ui",
-    "descriptor": "plugins/microservices/microservices-ui/resources/intellij.microservices.ui.diagram.xml",
+    "name": "intellij.microservices.backend/diagram",
+    "n": "i.microservices.backend/diagram",
+    "package": "com.intellij.microservices.backend.diagrams",
+    "sourceModule": "intellij.microservices.backend",
+    "descriptor": "plugins/microservices/microservices-backend/resources/intellij.microservices.backend.diagram.xml",
     "parent": "cs0",
     "type": 0
   }
@@ -2752,10 +2752,10 @@
   "group": "nodes",
   "data": {
     "id": "v41",
-    "name": "intellij.sh",
+    "name": "intellij.sh.plugin",
     "n": "i.sh",
-    "package": "com.intellij.sh",
-    "sourceModule": "intellij.sh",
+    "package": "com.intellij.sh.plugin",
+    "sourceModule": "intellij.sh.plugin",
     "descriptor": "community/plugins/sh/resources/META-INF/plugin.xml",
     "pluginId": "com.jetbrains.sh",
     "parent": "cv41",
@@ -2768,7 +2768,7 @@
     "name": "intellij.sh/terminal",
     "n": "i.sh/terminal",
     "package": "com.intellij.sh.run.terminal",
-    "sourceModule": "intellij.sh",
+    "sourceModule": "intellij.sh.plugin",
     "descriptor": "community/plugins/sh/resources/intellij.sh.terminal.xml",
     "parent": "cv41",
     "type": 0
@@ -2780,7 +2780,7 @@
     "name": "intellij.sh/copyright",
     "n": "i.sh/copyright",
     "package": "com.intellij.sh.copyright",
-    "sourceModule": "intellij.sh",
+    "sourceModule": "intellij.sh.plugin",
     "descriptor": "community/plugins/sh/resources/intellij.sh.copyright.xml",
     "parent": "cv41",
     "type": 0
@@ -3808,8 +3808,8 @@
     "name": "intellij.platform.langInjection",
     "n": "i.platform.langInjection",
     "package": null,
-    "sourceModule": "intellij.platform.langInjection",
-    "descriptor": "community/plugins/IntelliLang/src/META-INF/plugin.xml",
+    "sourceModule": "intellij.platform.langInjection.plugin",
+    "descriptor": "community/plugins/IntelliLang/plugin/src/META-INF/plugin.xml",
     "pluginId": "org.intellij.intelliLang",
     "type": 1
   }
@@ -3828,11 +3828,11 @@
   "group": "nodes",
   "data": {
     "id": "Pn",
-    "name": "intellij.css.impl",
+    "name": "intellij.css.plugin",
     "n": "i.css.impl",
     "package": null,
-    "sourceModule": "intellij.css.impl",
-    "descriptor": "CSS/src/META-INF/plugin.xml",
+    "sourceModule": "intellij.css.plugin",
+    "descriptor": "plugins/css/plugin/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.css",
     "type": 1
   }

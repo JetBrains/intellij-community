@@ -5,7 +5,7 @@ jvm_library(
   name = "eel",
   module_name = "intellij.platform.eel",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen-builders/**/*.kt", "gen-builders/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen-builders/**/*.kt", "gen-builders/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -15,14 +15,11 @@ jvm_library(
 ### auto-generated section `build intellij.platform.eel` end
 
 ### auto-generated section `build intellij.platform.eel.codegen` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "eel-codegen_test_lib",
+  module_name = "intellij.platform.eel.codegen",
   visibility = ["//visibility:public"],
-  srcs = glob(["codegen/**/*.kt", "codegen/**/*.java"], allow_empty = True),
+  srcs = glob(["codegen/**/*.kt", "codegen/**/*.java", "codegen/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-analysis-api",
@@ -48,22 +45,23 @@ jvm_library(
   ],
   runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]
 )
+### auto-generated section `build intellij.platform.eel.codegen` end
+
+### auto-generated section `test intellij.platform.eel.codegen` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "eel-codegen_test",
   runtime_deps = [":eel-codegen_test_lib"]
 )
-### auto-generated section `build intellij.platform.eel.codegen` end
+### auto-generated section `test intellij.platform.eel.codegen` end
 
 ### auto-generated section `build intellij.platform.eel.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "eel-tests_test_lib",
+  module_name = "intellij.platform.eel.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/eel",
@@ -72,11 +70,16 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-assertions-core-jvm",
     "@lib//:kotlinx-coroutines-test",
+    "//platform/util-class-loader:util-classLoader",
   ]
 )
+### auto-generated section `build intellij.platform.eel.tests` end
+
+### auto-generated section `test intellij.platform.eel.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "eel-tests_test",
   runtime_deps = [":eel-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.eel.tests` end
+### auto-generated section `test intellij.platform.eel.tests` end

@@ -30,10 +30,15 @@ import kotlin.system.exitProcess
 private class InspectopediaExtractor : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
     val size = args.size
-    if (size != 2) {
-      LOG.error("Usage: inspectopedia-generator <output directory>")
+    if (size < 2) {
+      LOG.error("Usage: inspectopedia-generator <output directory> [plugin-id,plugin-id,...]")
       exitProcess(-1)
     }
+
+    val pluginIdFilter = if (args.size < 3) {
+      Collections.emptySet()
+    }
+    else args[2].split(",").map { it.trim() }.toSet()
 
     val appInfo = ApplicationInfo.getInstance()
     val ideCode = appInfo.build.productCode.lowercase(Locale.getDefault())
@@ -50,12 +55,12 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
     }
     catch (e: IOException) {
       LOG.error("Output directory does not exist and could not be created")
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
     }
 
     if (!Files.isDirectory(outputPath) || !Files.isWritable(outputPath)) {
       LOG.error("Output path is invalid")
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
     }
 
     try {
@@ -65,6 +70,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
       val scopeToolStates = project.serviceAsync<InspectionProjectProfileManager>().currentProfile.allTools
 
       val availablePlugins = getPluginSet().allPlugins.asSequence()
+        .filter { pluginIdFilter.isEmpty() || pluginIdFilter.contains(it.pluginId.idString) }
         .map { Plugin(id = it.pluginId.idString, name = it.name, version = it.version) }
         .distinct()
         .associateByTo(HashMap()) { it.id }
@@ -74,9 +80,14 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
       val inspectionExtraState = serviceAsync<InspectionMetaInformationService>().getState()
 
       for (scopeToolState in scopeToolStates) {
+
         val wrapper = scopeToolState.tool
         val extension = wrapper.extension
+
         val pluginId = extension?.pluginDescriptor?.pluginId?.idString ?: ideName
+        val plugin = availablePlugins.get(pluginId)
+        if (plugin == null) continue
+
         val description = wrapper.loadDescription()?.split("<!-- tooltip end -->")?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList()
                           ?: emptyList()
 
@@ -96,7 +107,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
         try {
           val language = wrapper.language
           val extraState = inspectionExtraState.inspections.get(wrapper.id)
-          availablePlugins.get(pluginId)!!.inspections.add(Inspection(
+          plugin.inspections.add(Inspection(
             id = wrapper.tool.alternativeID ?: wrapper.id,
             name = wrapper.displayName,
             severity = wrapper.defaultLevel.name,
@@ -115,7 +126,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
         catch (e: Throwable) {
           System.err.println("Error while processing ${wrapper.extension}")
           e.printStackTrace()
-          ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+          ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
         }
       }
 
@@ -141,9 +152,9 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
     }
     catch (e: Exception) {
       e.printStackTrace()
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
     }
-    ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true )
+    ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true)
   }
 }
 
@@ -169,7 +180,13 @@ private fun getMyText(cmp: OptComponent): LocMessage? {
 private fun retrievePanelStructure(component: OptComponent, controller: OptionController): OptionsPanelInfo {
   val result = OptionsPanelInfo()
   result.type = component.javaClass.simpleName
-  result.value = if (component is OptControl) controller.getOption(component.bindId()) else null
+
+  if (component is OptControl) {
+    val bindId = component.bindId()
+    result.id = bindId
+    result.value = controller.getOption(bindId)
+  }
+
   if (component is OptDropdown) {
     result.value?.let {
       result.value = component.findOption(it)?.label?.label()

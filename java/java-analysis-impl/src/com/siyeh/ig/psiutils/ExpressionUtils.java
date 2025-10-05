@@ -1214,11 +1214,11 @@ public final class ExpressionUtils {
     PsiExpression initializer = array.getInitializer();
     if (initializer instanceof PsiNewExpression expression) initializer = expression.getArrayInitializer();
     if (!(initializer instanceof PsiArrayInitializerExpression expression)) return null;
-    PsiExpression[] initializers = expression.getInitializers();
     if (array instanceof PsiField && !(array.hasModifierProperty(PsiModifier.PRIVATE) && array.hasModifierProperty(PsiModifier.STATIC))) {
       return null;
     }
     if (!isConstantContent(array)) return null;
+    PsiExpression[] initializers = expression.getInitializers();
     Arrays.asList(initializers).replaceAll(expr -> isIllegalReference(array, expr) ? null : expr);
     return initializers;
   }
@@ -1479,10 +1479,11 @@ public final class ExpressionUtils {
           yield !hasCharArrayParameter(method);
         }
         case "print", "println" -> {
-          if (arguments.length != 1 || hasCharArrayParameter(method)) yield false;
-          yield JAVA_UTIL_FORMATTER.equals(className) ||
-                InheritanceUtil.isInheritor(containingClass, JAVA_IO_PRINT_STREAM) ||
-                InheritanceUtil.isInheritor(containingClass, JAVA_IO_PRINT_WRITER);
+          if (arguments.length != 1) yield false;
+          yield (!hasCharArrayParameter(method) && (JAVA_UTIL_FORMATTER.equals(className) ||
+                                                    InheritanceUtil.isInheritor(containingClass, JAVA_IO_PRINT_STREAM) ||
+                                                    InheritanceUtil.isInheritor(containingClass, JAVA_IO_PRINT_WRITER))) ||
+                JAVA_LANG_IO.equals(className);
         }
         case "printf", "format" -> {
           if (arguments.length < 1) yield false;

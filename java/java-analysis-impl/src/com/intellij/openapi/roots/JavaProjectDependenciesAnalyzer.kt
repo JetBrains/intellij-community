@@ -10,15 +10,15 @@ import com.intellij.util.graph.GraphAlgorithms
 import com.intellij.util.graph.GraphGenerator
 import com.intellij.util.graph.InboundSemiGraph
 
-object JavaProjectDependenciesAnalyzer {
+public object JavaProjectDependenciesAnalyzer {
   /**
    * Returns order entries which are exported to `module` from its direct `dependency`, and which aren't available via other dependencies.
    * @return map from a direct or transitive dependency of `dependency` parameter to a corresponding direct dependency of `dependency` parameter.
    */
   @JvmStatic
-  fun findExportedDependenciesReachableViaThisDependencyOnly(module: Module,
-                                                             dependency: Module,
-                                                             rootModelProvider: RootModelProvider): Map<OrderEntry, OrderEntry> {
+  public fun findExportedDependenciesReachableViaThisDependencyOnly(module: Module,
+                                                                    dependency: Module,
+                                                                    rootModelProvider: RootModelProvider): Map<OrderEntry, OrderEntry> {
     val moduleOrderEntry = OrderEntryUtil.findModuleOrderEntry(rootModelProvider.getRootModel(module), dependency)
                            ?: throw IllegalArgumentException("Cannot find dependency from $module to $dependency")
 
@@ -78,7 +78,7 @@ object JavaProjectDependenciesAnalyzer {
   /**
    * Remove items which are exported by other items.
    */
-  fun removeDuplicatingDependencies(originalDependencies: Collection<Module>): List<Module> {
+  public fun removeDuplicatingDependencies(originalDependencies: Collection<Module>): List<Module> {
     val dependencies = originalDependencies.distinct()
     val moduleToDominatingDependency = MultiMap.createLinkedSet<Module, Module>()
     for (dependency in dependencies) {

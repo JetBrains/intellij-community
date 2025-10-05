@@ -25,7 +25,7 @@ class UvSyncWarningDialogFactoryImpl : UvSyncWarningDialogFactory {
           panel {
             row {
               label(
-                if (isError) {
+                if (!isError) {
                   PyBundle.message("uv.run.configuration.state.sync.warning.body.will")
                 }
                 else {

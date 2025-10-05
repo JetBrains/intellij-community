@@ -7,6 +7,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
@@ -19,16 +20,20 @@ import java.util.function.Function
  *
  * Implemented only by bundled IDE plugins, must not be used outside of distribution.
  */
+@IntellijInternalApi
 @ApiStatus.Internal
 interface PluginSuggestionProvider {
   fun getSuggestion(project: Project, file: VirtualFile): PluginSuggestion?
 }
 
+@IntellijInternalApi
 @ApiStatus.Internal
 interface PluginSuggestion : Function<FileEditor, EditorNotificationPanel?> {
   val pluginIds: List<String>
 }
 
+@IntellijInternalApi
+@ApiStatus.Internal
 internal class DefaultPluginSuggestion(
   private val project: Project,
   override val pluginIds: List<String>,

@@ -27,8 +27,17 @@ com.intellij.execution.InputRedirectAware$InputRedirectOptions
 - a:setRedirectInputPath(java.lang.String):V
 com.intellij.execution.RunConfigurationConverter
 - a:convertRunConfigurationOnDemand(org.jdom.Element):Z
+f:com.intellij.execution.actions.ChooseRunConfigurationManager
+- <init>():V
+- s:createFlatSettingsList(com.intellij.openapi.project.Project):java.util.List
+- s:createSettingsList(com.intellij.execution.impl.RunManagerImpl,com.intellij.execution.actions.ExecutorProvider,Z,Z,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- s:createSettingsList(com.intellij.openapi.project.Project,com.intellij.execution.actions.ExecutorProvider,com.intellij.openapi.actionSystem.DataContext,Z):java.util.List
+- s:deleteConfiguration(com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.openapi.ui.popup.JBPopup):V
 com.intellij.execution.actions.ExecutorProvider
 - a:getExecutor():com.intellij.execution.Executor
+c:com.intellij.execution.actions.StopAction
+- com.intellij.platform.ide.core.permissions.RequiresPermissions
+- getRequiredPermissions():java.util.Collection
 com.intellij.execution.configuration.CompatibilityAwareRunProfile
 - com.intellij.execution.configurations.RunProfile
 - a:mustBeStoppedToRun(com.intellij.execution.configurations.RunConfiguration):Z
@@ -63,6 +72,8 @@ com.intellij.execution.ui.TargetAwareRunConfigurationEditor
 - a:targetChanged(java.lang.String):V
 com.intellij.openapi.module.WorkingDirectoryProvider
 - a:getWorkingDirectoryPath(com.intellij.openapi.module.Module):java.lang.String
+c:com.intellij.terminal.JBTerminalWidget
+- p:getCurrentDirectory():java.lang.String
 com.intellij.terminal.JBTerminalWidgetListener
 - canMoveTabLeft():Z
 - canMoveTabRight():Z
@@ -82,11 +93,14 @@ com.intellij.terminal.TerminalShellCommandHandler
 - sf:Companion:com.intellij.terminal.TerminalShellCommandHandler$Companion
 - a:execute(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String,com.intellij.execution.Executor):Z
 - a:matches(com.intellij.openapi.project.Project,java.lang.String,Z,java.lang.String):Z
+com.intellij.terminal.session.TerminalSession
 com.intellij.terminal.ui.TerminalWidget
 - com.intellij.openapi.ui.ComponentContainer
 - a:addNotification(javax.swing.JComponent,com.intellij.openapi.Disposable):V
 - a:addTerminationCallback(java.lang.Runnable,com.intellij.openapi.Disposable):V
+- connectToSession(com.intellij.terminal.session.TerminalSession):V
 - a:connectToTty(com.jediterm.terminal.TtyConnector,com.jediterm.core.util.TermSize):V
+- getSession():com.intellij.terminal.session.TerminalSession
 - a:getShellCommand():java.util.List
 - a:getTermSize():com.jediterm.core.util.TermSize
 - a:getTerminalTitle():com.intellij.terminal.TerminalTitle

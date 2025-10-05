@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "backend_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.ide.nonModalWelcomeScreen.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":backend_resources"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/non-modal-welcome-screen",
+    "//platform/kernel/rpc.backend",
+    "//platform/project/shared:project",
+    "//platform/platform-api:ide",
+    "//platform/core-ui",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.backend` end

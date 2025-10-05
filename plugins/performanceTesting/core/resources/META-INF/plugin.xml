@@ -6,8 +6,11 @@
   <resource-bundle>messages.PerformanceTestingBundle</resource-bundle>
 
   <description><![CDATA[
-    Plugin for automated execution of test scripts, capturing performance snapshots
-    and gathering performance statistics.
+    <p>Plugin for automated execution of test scripts, capturing performance snapshots
+    and gathering performance statistics.</p>
+
+    <p>Want to report a performance problem? — <a href="https://intellij-support.jetbrains.com/hc/en-us/articles/207241235-Reporting-performance-problems">
+    Read More</a></p>
   ]]></description>
 
   <content>
@@ -68,6 +71,8 @@
 
     <ide.dynamicPluginVetoer implementation="com.jetbrains.performancePlugin.PlaybackRunnerExtended$PlaybackRunnerExtendedPluginUnloadVetoer"/>
     <ApplicationLoadListener implementation="com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener" id="testApplicationLoadListener"/>
+
+    <appStarter id="stopTelemetry" implementation="com.jetbrains.performancePlugin.StopTelemetryStarter"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains">

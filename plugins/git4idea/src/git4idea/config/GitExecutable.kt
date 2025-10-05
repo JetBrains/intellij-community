@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.Throws
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
@@ -108,7 +107,7 @@ sealed class GitExecutable {
 
     override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, executableContext: GitExecutableContext) {
       if (executableContext.isWithLowPriority) setupLowPriorityExecution(commandLine)
-      if (executableContext.isWithNoTty) setupNoTtyExecution(commandLine, wait = true)
+      if (executableContext.isWithNoTty) setupNoTtyExecution(commandLine, wait = false)
     }
 
     override fun getModificationTime(): Long {

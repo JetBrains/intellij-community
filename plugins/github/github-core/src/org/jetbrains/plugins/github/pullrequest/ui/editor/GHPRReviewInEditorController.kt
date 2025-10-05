@@ -4,10 +4,12 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.collaboration.util.getOrNull
+import com.intellij.diff.util.Side
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -26,6 +28,7 @@ import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRInlayUtils
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -68,8 +71,19 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
                 )
               }
 
+              launchNow {
+                try {
+                  editor.putUserData(GHPRReviewFileEditorViewModel.KEY, fileVm)
+                  awaitCancellation()
+                }
+                finally {
+                  editor.putUserData(GHPRReviewFileEditorViewModel.KEY, null)
+                }
+              }
+
               val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
               val syncedFlow = reviewVm.updateRequired.map { !it }
+
               combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.distinctUntilChanged().collectLatest { enabled ->
                 if (enabled) showReview(project, settings, fileVm, editor)
               }
@@ -106,7 +120,14 @@ private suspend fun showReview(project: Project, settings: GithubPullRequestsPro
     }
     launchNow {
       val userIcon = fileVm.iconProvider.getIcon(fileVm.currentUser.url, 16)
-      editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) { createRenderer(it, userIcon) }
+      editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) {
+        launchNow {
+          model.inlays
+            .mapStatefulToStateful { inlayModel -> GHPRInlayUtils.installInlayHoverOutline(this, editor, Side.RIGHT, null, inlayModel) }
+            .collect()
+        }
+        createRenderer(it, userIcon)
+      }
     }
 
     try {

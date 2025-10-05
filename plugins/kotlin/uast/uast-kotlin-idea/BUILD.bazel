@@ -5,7 +5,7 @@ jvm_library(
   name = "uast-kotlin-idea",
   module_name = "kotlin.uast.uast-kotlin-idea",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:vavr",
     "//platform/analysis-api:analysis",
@@ -34,6 +34,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/lang-impl",
     "//uast/uast-common-ide:ide",
+    "//java/java-impl:impl",
   ]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin-idea` end

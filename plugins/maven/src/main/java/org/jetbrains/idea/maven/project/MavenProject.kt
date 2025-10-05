@@ -54,14 +54,20 @@ class MavenProject(val file: VirtualFile) {
 
   @Throws(IOException::class)
   fun write(out: DataOutputStream) {
-    out.writeUTF(path)
+    try {
+      out.writeUTF(path)
 
-    BufferExposingByteArrayOutputStream().use { bs ->
-      ObjectOutputStream(bs).use { os ->
-        os.writeObject(myState)
-        out.writeInt(bs.size())
-        out.write(bs.internalBuffer, 0, bs.size())
+      BufferExposingByteArrayOutputStream().use { bs ->
+        ObjectOutputStream(bs).use { os ->
+          os.writeObject(myState)
+          out.writeInt(bs.size())
+          out.write(bs.internalBuffer, 0, bs.size())
+        }
       }
+    }
+    catch (e: IOException) {
+      MavenLog.LOG.error("Unable to write project " + file.path, e)
+      throw e
     }
   }
 
@@ -97,7 +103,7 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun updateState(
     model: MavenModel,
-    managedDependencies: List<MavenId>,
+    managedDependencies: List<MavenArtifactInfo>,
     dependencyHash: String?,
     readingProblems: Collection<MavenProjectProblem>,
     activatedProfiles: MavenExplicitProfiles,
@@ -105,7 +111,6 @@ class MavenProject(val file: VirtualFile) {
     nativeModelMap: Map<String, String>,
     effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
-    keepPreviousPlugins: Boolean,
   ): MavenProjectChanges {
     val newState = doUpdateState(
       myState,
@@ -119,7 +124,7 @@ class MavenProject(val file: VirtualFile) {
       effectiveRepositoryPath,
       keepPreviousArtifacts,
       true,
-      keepPreviousPlugins,
+      false,
       directory,
       file.extension,
       dependencyHash
@@ -183,10 +188,7 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun setFolders(folders: MavenGoalExecutionResult.Folders): MavenProjectChanges {
     val newState = myState.copy(
-      sources = folders.sources,
-      testSources = folders.testSources,
-      resources = folders.resources,
-      testResources = folders.testResources,
+      mavenSources = folders.mavenSources
     )
     return setState(newState)
   }
@@ -259,17 +261,32 @@ class MavenProject(val file: VirtualFile) {
   val testOutputDirectory: @NlsSafe String
     get() = myState.testOutputDirectory!!
 
+  val mavenSources: List<MavenSource>
+    get() = myState.mavenSources
+
+  /**
+   * use mavenSources instead
+   */
   val sources: List<String>
-    get() = myState.sources
+    @ApiStatus.Obsolete get() = myState.mavenSources.filter { MavenSource.isSource(it) }.map { it.directory }
 
+  /**
+   * use mavenSources instead
+   */
   val testSources: List<String>
-    get() = myState.testSources
+    @ApiStatus.Obsolete get() = myState.mavenSources.filter { MavenSource.isTestSource(it) }.map { it.directory }
 
+  /**
+   * use mavenSources instead
+   */
   val resources: List<MavenResource>
-    get() = myState.resources
+    @ApiStatus.Obsolete get() = myState.mavenSources.filter { MavenSource.isResource(it) }.map { MavenResource(it) }
 
+  /**
+   * use mavenSources instead
+   */
   val testResources: List<MavenResource>
-    get() = myState.testResources
+    @ApiStatus.Obsolete get() = myState.mavenSources.filter { MavenSource.isTestResource(it) }.map { MavenResource(it) }
 
   val filters: List<String>
     get() = myState.filters
@@ -588,7 +605,9 @@ class MavenProject(val file: VirtualFile) {
     setState(newState)
   }
 
-  fun findManagedDependency(groupId: String, artifactId: String): MavenId? = myState.managedDependencies["$groupId:$artifactId"]
+  fun findManagedDependencyVersion(groupId: String, artifactId: String): String? = myState.managedDependencies["$groupId:$artifactId"]?.version
+
+  fun managedDependencies(): Map<String, MavenArtifactInfo> = myState.managedDependencies
 
   fun findDependencies(depProject: MavenProject): List<MavenArtifact> {
     return findDependencies(depProject.mavenId)
@@ -834,7 +853,7 @@ class MavenProject(val file: VirtualFile) {
       state: MavenProjectState,
       incLastReadStamp: Boolean,
       model: MavenModel,
-      managedDependencies: List<MavenId>,
+      managedDependencies: List<MavenArtifactInfo>,
       readingProblems: Collection<MavenProjectProblem>,
       activatedProfiles: MavenExplicitProfiles,
       unresolvedArtifactIds: Set<MavenId>,
@@ -857,7 +876,7 @@ class MavenProject(val file: VirtualFile) {
       val newPluginInfos = LinkedHashSet<MavenPluginWithArtifact>()
       val newExtensions = LinkedHashSet<MavenArtifact>()
       val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
-      val newManagedDeps = LinkedHashMap<String, MavenId>()
+      val newManagedDeps = HashMap<String, MavenArtifactInfo>(managedDependencies.size)
 
       if (keepPreviousArtifacts) {
         newUnresolvedArtifacts.addAll(state.unresolvedArtifactIds)
@@ -887,7 +906,10 @@ class MavenProject(val file: VirtualFile) {
       newDependencyTree.addAll(model.dependencyTree)
       newDependencies.addAll(model.dependencies)
       newExtensions.addAll(model.extensions)
-      managedDependencies.forEach { md -> newManagedDeps.put("${md.groupId}:${md.artifactId}", md) }
+
+      for (md in managedDependencies) {
+        newManagedDeps["${md.groupId}:${md.artifactId}"] = md
+      }
 
       val remoteRepositories = ArrayList(newRepositories)
       val remotePluginRepositories = ArrayList(newPluginRepositories)
@@ -896,7 +918,7 @@ class MavenProject(val file: VirtualFile) {
       val pluginInfos = ArrayList(newPluginInfos)
       val extensions = ArrayList(newExtensions)
       val annotationProcessors = ArrayList(newAnnotationProcessors)
-      val managedDependenciesMap = LinkedHashMap(newManagedDeps)
+      val managedDependenciesMap = HashMap(newManagedDeps)
 
       val newDependencyHash = dependencyHash ?: state.dependencyHash
       val lastReadStamp = state.lastReadStamp + if (incLastReadStamp) 1 else 0
@@ -922,10 +944,7 @@ class MavenProject(val file: VirtualFile) {
         modulesPathsAndNames = collectModulePathsAndNames(model, directory, fileExtension),
         profilesIds = collectProfilesIds(model.profiles) + if (keepPreviousProfiles) state.profilesIds else emptySet(),
         modelMap = nativeModelMap,
-        sources = build.sources,
-        testSources = build.testSources,
-        resources = build.resources,
-        testResources = build.testResources,
+        mavenSources = build.mavenSources,
         unresolvedArtifactIds = newUnresolvedArtifacts,
         remoteRepositories = remoteRepositories,
         remotePluginRepositories = remotePluginRepositories,

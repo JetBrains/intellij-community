@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
@@ -19,7 +20,9 @@ import kotlinx.coroutines.CoroutineScope
 class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope) : ProjectRootManagerComponent(project, coroutineScope) {
   init {
     if (!project.isDefault) {
-      moduleDependencyIndex.addListener(ModuleDependencyListenerImpl())
+      if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
+        moduleDependencyIndex.addListener(ModuleDependencyListenerImpl())
+      }
     }
   }
 
@@ -30,7 +33,7 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
     get() {
       return Runnable {
         super.actionToRunWhenProjectJdkChanges.run()
-        if (moduleDependencyIndex.hasProjectSdkDependency()) {
+        if (!useWsm && moduleDependencyIndex.hasProjectSdkDependency()) {
           val info = BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk().buildInfo()
           fireRootsChanged(info)
         }

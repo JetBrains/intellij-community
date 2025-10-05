@@ -18,9 +18,8 @@ import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.ResolveScopeProvider;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.search.JavaPlatformModuleSystemScope;
 import com.intellij.psi.impl.search.JavaVersionBasedScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
@@ -69,6 +68,7 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
         LanguageLevel level = LanguageLevelUtil.getEffectiveLanguageLevel(module);
         boolean includeTests = TestSourcesFilter.isTestSources(file, project);
         GlobalSearchScope baseScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
+        baseScope = JavaPlatformModuleSystemScope.create(project, file, baseScope);
         return new JavaVersionBasedScope(project, baseScope, level);
       }
       if (file instanceof LightVirtualFile) {
@@ -92,6 +92,7 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
     LanguageLevel level = JavaMultiReleaseUtil.getVersion(file);
     if (level != null && !project.isDefault()) {
       GlobalSearchScope baseScope = LibraryScopeCache.getInstance(project).getLibraryScope(file);
+      baseScope = JavaPlatformModuleSystemScope.create(project, file, baseScope);
       return new JavaVersionBasedScope(project, baseScope, level);
     }
     return null;

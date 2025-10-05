@@ -10,6 +10,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.util.concurrency.createChildContextIgnoreStructuredConcurrency
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.doWhenFirstShown
+import com.intellij.util.ui.update.UiNotifyConnector.Companion.forceNotifyIsShown
 import com.intellij.util.ui.update.UiNotifyConnector.ContextActivatable.Companion.wrapIfNeeded
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -23,7 +24,8 @@ import javax.swing.SwingUtilities
 /**
  * ### Obsolescence notice
  *
- * Use [com.intellij.util.ui.launchOnShow]/[com.intellij.util.ui.launchOnceOnShow] instead.
+ * Use [com.intellij.util.ui.launchOnShow]/[com.intellij.util.ui.initOnShow] instead.
+ * Only use this class if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
  */
 @Obsolete
 open class UiNotifyConnector : Disposable, HierarchyListener {
@@ -55,21 +57,6 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     setupListeners(component)
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(
-    """Use the static method {@link UiNotifyConnector#installOn(Component, Activatable, boolean)}.
-    <p>
-    For inheritance use the non-deprecated constructor.
-    <p>
-    Also, note that non-deprecated constructor is side effect free, and you should call for {@link UiNotifyConnector#setupListeners()}
-    method""")
-  constructor(component: Component, target: Activatable, deferred: Boolean) {
-    this.component = WeakReference(component)
-    this.target = target.wrapIfNeeded()
-    isDeferred = deferred
-    setupListeners(component)
-  }
-
   private class ContextActivatable(private val target: Activatable) : Activatable {
     companion object {
       fun Activatable.wrapIfNeeded(): ContextActivatable = this as? ContextActivatable ?: ContextActivatable(this)
@@ -78,13 +65,13 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     private val childContext = createChildContextIgnoreStructuredConcurrency(ContextActivatable::class.java.name)
 
     override fun showNotify() {
-      resetThreadContext().use {
+      resetThreadContext {
         childContext.runInChildContext { target.showNotify() }
       }
     }
 
     override fun hideNotify() {
-      resetThreadContext().use {
+      resetThreadContext {
         childContext.runInChildContext { target.hideNotify() }
       }
     }
@@ -121,7 +108,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     /**
      * ### Obsolescence notice
      *
-     * Use [com.intellij.util.ui.launchOnceOnShow] instead.
+     * Use [com.intellij.util.ui.initOnShow] instead for modern (frontend) UI code.
+     * Only use this function if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
      */
     @Obsolete
     @JvmStatic
@@ -132,7 +120,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     /**
      * ### Obsolescence notice
      *
-     * Use [com.intellij.util.ui.launchOnceOnShow] instead.
+     * Use [com.intellij.util.ui.initOnShow] instead for modern (frontend) UI code.
+     * Only use this function if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
      */
     @Obsolete
     fun doWhenFirstShown(component: Component, isDeferred: Boolean = true, runnable: () -> Unit) {
@@ -151,7 +140,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     /**
      * ### Obsolescence notice
      *
-     * Use [com.intellij.util.ui.launchOnceOnShow] instead.
+     * Use [com.intellij.util.ui.initOnShow] instead for modern (frontend) UI code.
+     * Only use this function if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
      */
     @JvmOverloads
     @JvmStatic
@@ -182,7 +172,7 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     }
 
     /**
-     * Attention! This does not trigger [com.intellij.util.ui.launchOnShow]/[com.intellij.util.ui.launchOnceOnShow].
+     * Attention! This does not trigger [com.intellij.util.ui.launchOnShow]/[com.intellij.util.ui.initOnShow].
      * See IJPL-175524
      */
     @ApiStatus.Experimental
@@ -272,7 +262,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
   /**
    * ### Obsolescence notice
    *
-   * Use [com.intellij.util.ui.launchOnceOnShow] instead.
+   * Use [com.intellij.util.ui.initOnShow] instead for modern (frontend) UI code.
+   * Only use this function if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
    */
   @Obsolete
   class Once : UiNotifyConnector {
@@ -291,7 +282,8 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
       /**
        * ### Obsolescence notice
        *
-       * Use [com.intellij.util.ui.launchOnceOnShow] instead.
+       * Use [com.intellij.util.ui.initOnShow] instead for modern (frontend) UI code.
+       * Only use this function if you need to support [forceNotifyIsShown] and [com.intellij.ui.ComponentUtil.markAsShowing].
        */
       @Obsolete
       @JvmStatic

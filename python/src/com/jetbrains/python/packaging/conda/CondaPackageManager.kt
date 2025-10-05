@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.conda
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
 import com.jetbrains.python.PyBundle
@@ -20,18 +21,16 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipPackageManagerEngine
-import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  private val condaPackageEngine = CondaPackageManagerEngine(sdk)
-  private val condaRepositoryManger = CondaRepositoryManger(project, sdk)
-  private val pipRepositoryManger = PipRepositoryManager(project)
-  private val pipPackageEngine = PipPackageManagerEngine(project, sdk)
+  override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk).also {
+    Disposer.register(this, it)
+  }
 
-  override var repositoryManager: PythonRepositoryManager = CompositePythonRepositoryManager(project,
-                                                                                             listOf(condaRepositoryManger, pipRepositoryManger))
+  private val condaPackageEngine = CondaPackageManagerEngine(sdk)
+  private val pipPackageEngine = PipPackageManagerEngine(project, sdk)
 
   override fun getDependencyManager(): PythonDependenciesManager {
     return CondaEnvironmentYmlManager.getInstance(project, sdk)

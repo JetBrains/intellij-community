@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.StringEventField
+import com.intellij.internal.statistic.eventLog.events.AnonymizedEventField
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.gradle.statistics.GradleStatisticsEventGroups
 
@@ -14,7 +14,7 @@ class FusFlowSendingStep(
     val addIDEPluginVersion: Boolean = false
 ) {
     companion object {
-        private val buildIdField = StringEventField.ValidatedByRegexp("buildId", "^[a-zA-Z0-9_-]*$")
+        private val buildIdField = AnonymizedEventField("buildId")
     }
 
     private val metrics = metricNames.map { it.metric }

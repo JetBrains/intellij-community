@@ -1,16 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
-import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.selectedChange
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineExceptionHandler
+import com.intellij.openapi.progress.checkCanceled
+import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
@@ -19,21 +20,17 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNotePositionMapping
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
-import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabDiscussionDiffViewModel.PatchHunkResult
+import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabDiscussionDiffViewModel.PatchHunkWithAnchor
+import kotlin.coroutines.cancellation.CancellationException
 
 interface GitLabDiscussionDiffViewModel {
   val position: GitLabNotePosition
-  val mapping: Flow<GitLabMergeRequestNotePositionMapping>
-  val patchHunk: Flow<PatchHunkResult>
+  val patchHunk: StateFlow<ComputedResult<PatchHunkWithAnchor?>>
 
   val showDiffRequests: Flow<ChangesSelection.Precise>
-  val showDiffHandler: Flow<(() -> Unit)?>
+  val showDiffHandler: StateFlow<(() -> Unit)?>
 
-  sealed interface PatchHunkResult {
-    class Loaded(val hunk: PatchHunk, val anchor: DiffLineLocation) : PatchHunkResult
-    object NotLoaded : PatchHunkResult
-    class Error(val error: Throwable) : PatchHunkResult
-  }
+  data class PatchHunkWithAnchor(val hunk: PatchHunk, val anchor: DiffLineLocation)
 }
 
 private val LOG = logger<GitLabDiscussionDiffViewModel>()
@@ -45,43 +42,9 @@ class GitLabDiscussionDiffViewModelImpl(
   override val position: GitLabNotePosition
 ) : GitLabDiscussionDiffViewModel {
 
-  private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
+  private val cs = parentCs.childScope(this::class)
 
-  override val mapping: Flow<GitLabMergeRequestNotePositionMapping> = mr.changes.mapLatest {
-    try {
-      val allChanges = it.getParsedChanges()
-      GitLabMergeRequestNotePositionMapping.map(allChanges, position)
-    }
-    catch (e: Exception) {
-      GitLabMergeRequestNotePositionMapping.Error(e)
-    }
-  }.modelFlow(cs, LOG)
-
-
-  override val patchHunk: Flow<PatchHunkResult> = channelFlow {
-    mr.changes.mapLatest { it.getParsedChanges() }.catch { e ->
-      send(PatchHunkResult.Error(e))
-    }.combine(mapping) { allChanges, mapping ->
-      when {
-        mapping is GitLabMergeRequestNotePositionMapping.Actual && mapping.change.location != null -> {
-          val patch = allChanges.patchesByChange[mapping.change.selectedChange]?.patch ?: run {
-            LOG.warn("Can't find patch for ${mapping.change.selectedChange}")
-            return@combine PatchHunkResult.NotLoaded
-          }
-
-          val (hunk, anchor) = findHunkAndAnchor(patch, mapping.change.location!!) ?: run {
-            LOG.debug("Unable to map location for position $position in patch\n$patch")
-            return@combine PatchHunkResult.NotLoaded
-          }
-          PatchHunkResult.Loaded(hunk, anchor)
-        }
-        mapping is GitLabMergeRequestNotePositionMapping.Error -> PatchHunkResult.Error(mapping.error)
-        else -> PatchHunkResult.NotLoaded
-      }
-    }.collectLatest {
-      send(it)
-    }
-  }.modelFlow(cs, LOG)
+  override val patchHunk: StateFlow<ComputedResult<PatchHunkWithAnchor?>>
 
   private val _showDiffRequests = MutableSharedFlow<ChangesSelection.Precise>(
     extraBufferCapacity = 1,
@@ -89,38 +52,77 @@ class GitLabDiscussionDiffViewModelImpl(
   )
   override val showDiffRequests: Flow<ChangesSelection.Precise> = _showDiffRequests.asSharedFlow()
 
-  override val showDiffHandler: Flow<(() -> Unit)?> = mapping.map {
-    when (it) {
-      is GitLabMergeRequestNotePositionMapping.Actual -> {
-        { requestFullDiff(it.change) }
+  override val showDiffHandler: StateFlow<(() -> Unit)?>
+
+  init {
+    patchHunk = MutableStateFlow(ComputedResult.loading())
+    showDiffHandler = MutableStateFlow(null)
+
+    cs.launch {
+      mr.changes.collectLatest {
+        try {
+          val allChanges = it.getParsedChanges()
+          val mapping = GitLabMergeRequestNotePositionMapping.map(allChanges, position)
+
+          patchHunk.value = ComputedResult.success(getPatchHunk(allChanges, mapping))
+          showDiffHandler.value = when (mapping) {
+            is GitLabMergeRequestNotePositionMapping.Actual -> {
+              {
+                _showDiffRequests.tryEmit(mapping.change)
+              }
+            }
+            is GitLabMergeRequestNotePositionMapping.Outdated -> {
+              {
+                _showDiffRequests.tryEmit(mapping.change)
+              }
+            }
+            else -> null
+          }
+
+        }
+        catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
+          // getParsedChanges can be canceled outside
+          checkCanceled()
+        }
+        catch (e: Exception) {
+          patchHunk.value = ComputedResult.failure(e)
+          showDiffHandler.value = null
+        }
       }
-      is GitLabMergeRequestNotePositionMapping.Outdated -> {
-        { requestFullDiff(it.change) }
-      }
-      else -> null
     }
   }
 
-  private fun requestFullDiff(change: ChangesSelection.Precise) {
-    cs.launch {
-      _showDiffRequests.emit(change)
+  private fun getPatchHunk(
+    allChanges: GitBranchComparisonResult,
+    mapping: GitLabMergeRequestNotePositionMapping,
+  ): PatchHunkWithAnchor? {
+    if (mapping !is GitLabMergeRequestNotePositionMapping.Actual) return null
+    val location = mapping.change.location ?: return null
+
+    val patch = allChanges.patchesByChange[mapping.change.selectedChange]?.patch ?: run {
+      LOG.warn("Can't find patch for ${mapping.change.selectedChange}")
+      return null
+    }
+
+    return findHunkAndAnchor(patch, location) ?: run {
+      LOG.debug("Unable to map location for position $position in patch\n$patch")
+      null
     }
   }
 }
 
-private fun findHunkAndAnchor(patch: TextFilePatch, location: DiffLineLocation): Pair<PatchHunk, DiffLineLocation>? {
+private fun findHunkAndAnchor(patch: TextFilePatch, location: DiffLineLocation): PatchHunkWithAnchor? {
   val (side, index) = location
   return when (side) {
     Side.LEFT -> {
       patch.hunks.find {
         index >= it.startLineBefore && index < it.endLineBefore
-      }?.let { it to location }
+      }
     }
     Side.RIGHT -> {
       patch.hunks.find {
         index >= it.startLineAfter && index < it.endLineAfter
-      }?.let { it to location }
+      }
     }
-    else -> null
-  }
+  }?.let { PatchHunkWithAnchor(it, location) }
 }

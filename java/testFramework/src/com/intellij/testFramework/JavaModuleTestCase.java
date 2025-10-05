@@ -4,10 +4,10 @@ package com.intellij.testFramework;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -63,7 +63,7 @@ public abstract class JavaModuleTestCase extends JavaProjectTestCase {
   }
 
   protected @NotNull Module createModule(@NotNull Path moduleFile) {
-    return createModule(moduleFile, StdModuleTypes.JAVA);
+    return createModule(moduleFile, JavaModuleType.getModuleType());
   }
 
   protected @NotNull Module createModule(@NotNull Path moduleFile, @NotNull ModuleType<?> moduleType) {

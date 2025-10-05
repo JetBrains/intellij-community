@@ -32,7 +32,7 @@ abstract class AbstractKotlinDslSyncListener : ExternalSystemTaskNotificationLis
         // project may be null in case of new project
         val project = id.findProject() ?: return
         task.projectId = id.ideProjectId
-        GradleBuildRootsLocator.getInstance(project)?.markImportingInProgress(projectPath)
+        GradleBuildRootsLocator.getInstance(project).markImportingInProgress(projectPath)
     }
 
     override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
@@ -70,7 +70,7 @@ abstract class AbstractKotlinDslSyncListener : ExternalSystemTaskNotificationLis
         saveScriptModels(project, sync)
     }
 
-    abstract fun reloadDefinitions(project: Project, sync: KotlinDslGradleBuildSync)
+    protected open fun reloadDefinitions(project: Project, sync: KotlinDslGradleBuildSync): Unit = Unit
 
     override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
         if (!id.isGradleRelatedTask()) return
@@ -87,13 +87,13 @@ abstract class AbstractKotlinDslSyncListener : ExternalSystemTaskNotificationLis
         // project may be null in case of new project
         val project = id.findProject() ?: return
 
-        GradleBuildRootsLocator.getInstance(project)?.markImportingInProgress(sync.workingDir, false)
+        GradleBuildRootsLocator.getInstance(project).markImportingInProgress(sync.workingDir, false)
 
         if (sync.failed) {
             reportErrors(project, sync)
         }
     }
 
-    private fun ExternalSystemTaskId.isGradleRelatedTask() = projectSystemId == GradleConstants.SYSTEM_ID &&
-            (type == RESOLVE_PROJECT /*|| type == EXECUTE_TASK*/)
+    private fun ExternalSystemTaskId.isGradleRelatedTask() = /*|| type == EXECUTE_TASK*/
+        projectSystemId == GradleConstants.SYSTEM_ID && type == RESOLVE_PROJECT
 }

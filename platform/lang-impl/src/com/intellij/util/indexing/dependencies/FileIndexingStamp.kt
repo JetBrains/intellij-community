@@ -39,9 +39,9 @@ interface FileIndexingStamp {
   fun isSame(i: IndexingRequestIdAndFileModCount): Boolean
 
   /**
-   * Compares this stamp to Long value obtained via [store]
+   * Compares this stamp to Long value (request id, file mod count) obtained via [store]
    */
-  fun isFileChanged(i: FileModCount): IsFileChangedResult
+  fun isFileChanged(i: IndexingRequestIdAndFileModCount): IsFileChangedResult
 }
 
 internal object NullIndexingStamp : FileIndexingStamp {
@@ -51,12 +51,15 @@ internal object NullIndexingStamp : FileIndexingStamp {
 
   override fun isSame(i: IndexingRequestIdAndFileModCount): Boolean = false
 
-  override fun isFileChanged(i: FileModCount) = IsFileChangedResult.UNKNOWN
+  override fun isFileChanged(i: IndexingRequestIdAndFileModCount) = IsFileChangedResult.UNKNOWN
 }
 
-private fun isFileChanged(i: FileModCount, stamp: Long): IsFileChangedResult {
-  return if (i == stamp.toFileModCount()) IsFileChangedResult.NO
-  else IsFileChangedResult.YES
+private fun isFileChanged(i: IndexingRequestIdAndFileModCount, stamp: Long): IsFileChangedResult {
+  return when(i) {
+    NULL_INDEXING_STAMP -> IsFileChangedResult.UNKNOWN
+    stamp -> IsFileChangedResult.NO
+    else -> IsFileChangedResult.YES
+  }
 }
 
 @ApiStatus.Internal
@@ -70,7 +73,7 @@ data class ReadWriteFileIndexingStampImpl(val stamp: Long, private val allowChec
     return i != NULL_INDEXING_STAMP && i == stamp
   }
 
-  override fun isFileChanged(i: FileModCount): IsFileChangedResult {
+  override fun isFileChanged(i: IndexingRequestIdAndFileModCount): IsFileChangedResult {
     return if (allowCheckingForOutdatedIndexesUsingFileModCount) isFileChanged(i, stamp)
     else IsFileChangedResult.UNKNOWN
   }
@@ -91,7 +94,7 @@ data class WriteOnlyFileIndexingStampImpl(val stamp: Long, private val allowChec
 
   override fun isSame(i: IndexingRequestIdAndFileModCount): Boolean = false
 
-  override fun isFileChanged(i: FileModCount): IsFileChangedResult {
+  override fun isFileChanged(i: IndexingRequestIdAndFileModCount): IsFileChangedResult {
     return if (allowCheckingForOutdatedIndexesUsingFileModCount) isFileChanged(i, stamp)
     else IsFileChangedResult.UNKNOWN
   }

@@ -4,17 +4,17 @@ package org.jetbrains.plugins.terminal.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
 
-internal class TerminalCloseSessionAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalCloseSessionAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.editor ?: return
+    val editor = e.terminalEditor ?: return
     val promptModel = e.promptController?.model
     val isEmptyPrompt = editor.isPromptEditor && editor.document.textLength == promptModel?.commandStartOffset
     val isInOutputWithEmptyPrompt = editor.isOutputEditor
@@ -30,7 +30,7 @@ internal class TerminalCloseSessionAction : TerminalPromotedDumbAwareAction(), A
   }
 
   override fun update(e: AnActionEvent) {
-    val editor = e.editor
+    val editor = e.terminalEditor
     e.presentation.isEnabledAndVisible = editor != null && (editor.isPromptEditor || editor.isOutputEditor || editor.isAlternateBufferEditor)
   }
 

@@ -133,6 +133,14 @@ public class VcsFacade {
   }
 
   /**
+   * @return the list of lines where some code (after it) was removed.
+   */
+  @ApiStatus.Experimental
+  public @NotNull List<Integer> getLinesWithRemovedRangesAfter(@NotNull PsiFile file) {
+    return Collections.emptyList();
+  }
+
+  /**
    * Notify VCS that local file content has changed in a way, that IDE might not detect, and uncommitted changes should be updated.
    *
    * @see com.intellij.openapi.vcs.changes.VcsDirtyScopeManager

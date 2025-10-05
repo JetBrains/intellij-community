@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitVcs
 import git4idea.fetch.GitFetchSupport
@@ -56,7 +56,7 @@ internal class GitUnshallowRepositoryAction : DumbAwareAction() {
         override fun run(indicator: ProgressIndicator) {
           val fetched = fetcher.fetchUnshallow(repository, remote).showNotificationIfFailed(GitBundle.message("action.Git.Unshallow.failure.title"))
           if (fetched) {
-            ProjectLevelVcsManagerEx.getInstance(project).annotationLocalChangesListener.reloadAnnotationsForVcs(GitVcs.getKey())
+            ProjectLevelVcsManager.getInstance(project).annotationLocalChangesListener.reloadAnnotationsForVcs(GitVcs.getKey())
             afterFetch()
             VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.UNSHALLOW_SUCCESS, "", GitBundle.message("unshallow.repository.notification.success.title"))
           }

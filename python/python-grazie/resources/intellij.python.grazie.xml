@@ -1,5 +1,6 @@
-<idea-plugin package="com.intellij.python.grazie">
+<idea-plugin>
 <dependencies>
+  <module name="intellij.python.community.impl"/>
   <plugin id="tanvd.grazi"/>
 </dependencies>
   <extensions defaultExtensionNs="com.intellij.grazie">

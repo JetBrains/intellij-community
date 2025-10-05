@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeWithMe.ClientId
@@ -10,12 +10,20 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
+import com.intellij.util.Consumer
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
+/**
+ * There are two implementations of completion threading:
+ * - [SyncCompletion] - runs [startThread] in the current thread
+ * - [AsyncCompletion] - runs [startThread] in a coroutine
+ *
+ * @see CompletionProgressIndicator.getCompletionThreading
+ */
 internal sealed interface CompletionThreading {
   // Deferred and not Job - client should get error
   fun startThread(progressIndicator: ProgressIndicator?, runnable: Runnable): Deferred<*>
@@ -24,7 +32,7 @@ internal sealed interface CompletionThreading {
 }
 
 @Suppress("UsagesOfObsoleteApi")
-internal interface WeighingDelegate : com.intellij.util.Consumer<CompletionResult> {
+internal interface WeighingDelegate : Consumer<CompletionResult> {
   fun waitFor()
 }
 
@@ -69,13 +77,15 @@ internal class SyncCompletion : CompletionThreadingBase() {
 }
 
 internal fun tryReadOrCancel(indicator: ProgressIndicator, runnable: Runnable) {
-  if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction {
-      indicator.checkCanceled()
-      runnable.run()
-    }) {
-    indicator.cancel()
+  val wasReadActionStarted = ApplicationManagerEx.getApplicationEx().tryRunReadAction {
     indicator.checkCanceled()
+    runnable.run()
   }
+
+  if (wasReadActionStarted) return
+
+  indicator.cancel()
+  indicator.checkCanceled()
 }
 
 internal class AsyncCompletion(project: Project?) : CompletionThreadingBase() {

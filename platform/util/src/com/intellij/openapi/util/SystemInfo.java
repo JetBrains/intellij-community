@@ -1,28 +1,28 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.List;
-import java.util.function.Supplier;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import static com.intellij.openapi.util.NotNullLazyValue.lazy;
 
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
 public final class SystemInfo {
-  /** Use {@link com.intellij.util.system.OS} instead */
+  /** Use {@link OS} instead */
   @ApiStatus.Obsolete
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
-  /** Use {@link com.intellij.util.system.OS#version} instead */
+  /** Use {@link OS#version()} instead */
   @ApiStatus.Obsolete
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
   /** Use {@link CpuArch} instead */
@@ -33,157 +33,137 @@ public final class SystemInfo {
   public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String JAVA_VENDOR = System.getProperty("java.vm.vendor", "Unknown");
 
-  public static final boolean isAarch64 = OS_ARCH.equals("aarch64");
-
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
     return rtVersion != null && Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
   }
 
-  public static final boolean isWindows = SystemInfoRt.isWindows;
-  public static final boolean isMac = SystemInfoRt.isMac;
-  public static final boolean isLinux = SystemInfoRt.isLinux;
-  public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
-  public static final boolean isSolaris = SystemInfoRt.isSolaris;
-  public static final boolean isUnix = SystemInfoRt.isUnix;
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isWindows = OS.CURRENT == OS.Windows;
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isMac = OS.CURRENT == OS.macOS;
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isLinux = OS.CURRENT == OS.Linux;
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isFreeBSD = OS.CURRENT == OS.FreeBSD;
+  /** Use {@link OS#CURRENT} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isUnix = OS.CURRENT != OS.Windows;
 
-  public static final boolean isChromeOS = isLinux && isCrostini();
+  /** @deprecated unimportant; use {@link OS.UnixInfo#getDistro()} if needed */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isChromeOS = false;
 
   public static final boolean isOracleJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Oracle", 0) >= 0;
   public static final boolean isIbmJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "IBM", 0) >= 0;
   public static final boolean isAzulJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "Azul", 0) >= 0;
   public static final boolean isJetBrainsJvm = Strings.indexOfIgnoreCase(JAVA_VENDOR, "JetBrains", 0) >= 0;
 
-  @SuppressWarnings("SpellCheckingInspection")
-  private static boolean isCrostini() {
-    return new File("/dev/.cros_milestone").exists();
-  }
-
+  /** @deprecated use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean isOsVersionAtLeast(@NotNull String version) {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
   }
 
-  public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
-  public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
-  public static final boolean isWin11OrNewer = isWindows && isOsVersionAtLeast("11.0");
+  /** @deprecated always true on Windows */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isWin8OrNewer = OS.CURRENT == OS.Windows;
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isWin10OrNewer = OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(10, 0);
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isWin11OrNewer = OS.CURRENT == OS.Windows && OS.CURRENT.isAtLeast(11, 0);
 
-  /**
-   * Set to true if we are running in a Wayland environment, either through
-   * XWayland or using Wayland directly.
-   */
-  public static final boolean isWayland;
-  public static final boolean isXWindow = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
-  public static final boolean isGNOME, isKDE, isXfce, isI3;
-  static {
-    // http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669
-    // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
-    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
-      isWayland = System.getenv("WAYLAND_DISPLAY") != null;
-      @SuppressWarnings("SpellCheckingInspection") String desktop = System.getenv("XDG_CURRENT_DESKTOP"), gdmSession = System.getenv("GDMSESSION");
-      isGNOME = desktop != null && desktop.contains("GNOME") || gdmSession != null && gdmSession.contains("gnome");
-      isKDE = !isGNOME && (desktop != null && desktop.contains("KDE") || System.getenv("KDE_FULL_SESSION") != null);
-      isXfce = !isGNOME && !isKDE && (desktop != null && desktop.contains("XFCE"));
-      isI3 = !isGNOME && !isKDE && !isXfce && (desktop != null && desktop.contains("i3"));
-    }
-    else {
-      isWayland = isGNOME = isKDE = isXfce = isI3 = false;
-    }
+  /** @deprecated use {@link com.intellij.util.ui.StartupUiUtil#isWayland} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isWayland = OS.isGenericUnix() && System.getenv("WAYLAND_DISPLAY") != null;
+  /** @deprecated use {@link com.intellij.util.ui.UnixDesktopEnv#CURRENT} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("SpellCheckingInspection")
+  public static final boolean isGNOME = OS.isGenericUnix() && (env("XDG_CURRENT_DESKTOP", "GNOME") || env("GDMSESSION", "gnome"));
+  /** @deprecated use {@link com.intellij.util.ui.UnixDesktopEnv#CURRENT} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isKDE = OS.isGenericUnix() && (env("XDG_CURRENT_DESKTOP", "KDE") || System.getenv("KDE_FULL_SESSION") != null);
+  /** @deprecated use {@link com.intellij.util.ui.UnixDesktopEnv#CURRENT} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isXfce = OS.isGenericUnix() && env("XDG_CURRENT_DESKTOP", "XFCE");
+  /** @deprecated use {@link com.intellij.util.ui.UnixDesktopEnv#CURRENT} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isI3 = OS.isGenericUnix() && env("XDG_CURRENT_DESKTOP", "i3");
+
+  private static boolean env(String varName, String marker) {
+    String value = System.getenv(varName);
+    return value != null && value.contains(marker);
   }
-
-  public static final boolean isMacSystemMenu = isMac && (SystemInfoRt.isJBSystemMenu || Boolean.getBoolean("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 
-  private static final Supplier<Boolean> ourHasXdgOpen = SystemInfoRt.isUnix && !SystemInfoRt.isMac
-                                                         ? PathExecLazyValue.create("xdg-open") : () -> false;
+  /** @deprecated use {@link com.intellij.execution.configurations.PathEnvironmentVariableUtil#isOnPath} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean hasXdgOpen() {
     return ourHasXdgOpen.get();
   }
 
-  private static final Supplier<Boolean> ourHasXdgMime = SystemInfoRt.isUnix && !SystemInfoRt.isMac
-                                                         ? PathExecLazyValue.create("xdg-mime") : () -> false;
+  /** @deprecated use {@link com.intellij.execution.configurations.PathEnvironmentVariableUtil#isOnPath} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static boolean hasXdgMime() {
     return ourHasXdgMime.get();
   }
 
-  public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
-  public static final boolean isMacOSBigSur = isMac && isOsVersionAtLeast("10.16");
-  public static final boolean isMacOSMonterey = isMac && isOsVersionAtLeast("12.0");
-  public static final boolean isMacOSVentura = isMac && isOsVersionAtLeast("13.0");
-  public static final boolean isMacOSSonoma = isMac && isOsVersionAtLeast("14.0");
-  public static final boolean isMacOSSequoia = isMac && isOsVersionAtLeast("15.0");
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isMacOSCatalina = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(10, 15);
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isMacOSBigSur = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(10, 16);
+  /** @deprecated use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isMacOSMonterey = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(12, 0);
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isMacOSVentura = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(13, 0);
+  /** @deprecated use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isMacOSSonoma = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(14, 0);
+  /** Use {@link OS#CURRENT} and {@link OS#isAtLeast} instead */
+  @ApiStatus.Obsolete
+  public static final boolean isMacOSSequoia = OS.CURRENT == OS.macOS && OS.CURRENT.isAtLeast(15, 0);
 
-  /**
-   * Build number is the only more or less stable approach to get comparable Windows versions.
-   * See <a href="https://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions">list of builds</a>.
-   */
+  /** Use {@link OS.WindowsInfo#getBuildNumber} instead */
+  @ApiStatus.Obsolete
   public static @Nullable Long getWinBuildNumber() {
     return isWindows ? WinBuildNumber.getWinBuildNumber() : null;
   }
 
-  public static @NotNull String getMacOSMajorVersion() {
-    return getMacOSMajorVersion(OS_VERSION);
-  }
-
-  public static String getMacOSMajorVersion(String version) {
-    int[] parts = getMacOSVersionParts(version);
-    return String.format("%d.%d", parts[0], parts[1]);
-  }
-
-  public static @NotNull String getMacOSVersionCode() {
-    return getMacOSVersionCode(OS_VERSION);
-  }
-
-  public static @NotNull String getMacOSMajorVersionCode() {
-    return getMacOSMajorVersionCode(OS_VERSION);
-  }
-
-  public static @NotNull String getMacOSMinorVersionCode() {
-    return getMacOSMinorVersionCode(OS_VERSION);
-  }
-
-  public static @NotNull String getMacOSVersionCode(@NotNull String version) {
-    int[] parts = getMacOSVersionParts(version);
-    return String.format("%02d%d%d", parts[0], normalize(parts[1]), normalize(parts[2]));
-  }
-
-  public static @NotNull String getMacOSMajorVersionCode(@NotNull String version) {
-    int[] parts = getMacOSVersionParts(version);
-    return String.format("%02d%d%d", parts[0], normalize(parts[1]), 0);
-  }
-
-  public static @NotNull String getMacOSMinorVersionCode(@NotNull String version) {
-    int[] parts = getMacOSVersionParts(version);
-    return String.format("%02d%02d", parts[1], parts[2]);
-  }
-
-  private static int[] getMacOSVersionParts(@NotNull String version) {
-    List<String> parts = StringUtil.split(version, ".");
-    if (parts.size() < 3) {
-      parts = ContainerUtil.append(parts, "0", "0", "0");
-    }
-    return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
-  }
-
+  /** @deprecated use {@link OS#CURRENT} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static String getOsName() {
-    return isMac ? "macOS" : OS_NAME;
+    return OS.CURRENT.name();
   }
 
+  /** @deprecated use {@link OS#CURRENT} and {@link OS#version} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static String getOsNameAndVersion() {
-    return getOsName() + ' ' + OS_VERSION;
-  }
-
-  private static int normalize(int number) {
-    return Math.min(number, 9);
-  }
-
-  private static int toInt(String string) {
-    try {
-      return Integer.parseInt(string);
-    }
-    catch (NumberFormatException e) {
-      return 0;
-    }
+    return OS.CURRENT.name() + ' ' + OS.CURRENT.version();
   }
 
   //<editor-fold desc="Deprecated stuff.">
@@ -203,5 +183,35 @@ public final class SystemInfo {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static final boolean is64Bit = CpuArch.CURRENT.width == 64;
+
+  /** @deprecated use {@link CpuArch#isArm64()} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isAarch64 = CpuArch.isArm64();
+
+  /** @deprecated press 'F' */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isSolaris = false;
+
+  /** @deprecated misleading; consider using {@link OS#isGenericUnix} instead, if appropriate */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean isXWindow = isUnix && !isMac;
+
+  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = isUnix && !isMac ? lazy(() -> isOnPath("xdg-open")) : NotNullLazyValue.createConstantValue(false);
+  private static final NotNullLazyValue<Boolean> ourHasXdgMime = isUnix && !isMac ? lazy(() -> isOnPath("xdg-mime")) : NotNullLazyValue.createConstantValue(false);
+
+  private static boolean isOnPath(String name) {
+    String path = System.getenv("PATH");
+    if (path != null) {
+      for (String dir : StringUtil.tokenize(path, ":")) {
+        if (Files.isExecutable(Paths.get(dir, name))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
   //</editor-fold>
 }

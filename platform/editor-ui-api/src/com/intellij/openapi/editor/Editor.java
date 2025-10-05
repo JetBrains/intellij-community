@@ -427,7 +427,8 @@ public interface Editor extends UserDataHolder {
    */
   default int getAscent() {
     // The actual implementation in EditorImpl is a bit more complex, but this gives an idea of how it's constructed.
-    return ReadAction.compute(() -> (getContentComponent().getFontMetrics(getColorsScheme().getFont(EditorFontType.PLAIN)).getAscent() *
+    return EditorThreading.compute(
+      () -> (getContentComponent().getFontMetrics(getColorsScheme().getFont(EditorFontType.PLAIN)).getAscent() *
                                      getColorsScheme().getLineSpacing())).intValue();
   }
 
@@ -438,8 +439,8 @@ public interface Editor extends UserDataHolder {
    * Can only be called from the EDT.
    */
   default @NotNull ProperTextRange calculateVisibleRange() {
-    ThreadingAssertions.assertEventDispatchThread();
-    return ReadAction.compute(() -> {
+    EditorThreading.assertInteractionAllowed();
+    return EditorThreading.compute(() -> {
       Rectangle rect = getScrollingModel().getVisibleArea();
       LogicalPosition startPosition = xyToLogicalPosition(new Point(rect.x, rect.y));
       int visibleStart = logicalPositionToOffset(startPosition);

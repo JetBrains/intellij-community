@@ -88,7 +88,6 @@ public class GridPasteProvider implements PasteProvider {
         .secondGrid(myGrid)
         .offset(rowOffset, colOffset)
         .build())
-      .filter(Objects::nonNull)
       .filter(DataTypeConversion::isValid)
       .map(c -> {
         try {

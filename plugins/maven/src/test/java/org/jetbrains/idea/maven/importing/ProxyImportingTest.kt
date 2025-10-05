@@ -16,9 +16,9 @@ import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 
 class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
-  lateinit var myRepositoryFixture: MavenHttpRepositoryServerFixture;
-  lateinit var myProxyFixture: MavenHttpProxyServerFixture;
-  lateinit var myHelper: MavenCustomRepositoryHelper;
+  lateinit var myRepositoryFixture: MavenHttpRepositoryServerFixture
+  lateinit var myProxyFixture: MavenHttpProxyServerFixture
+  lateinit var myHelper: MavenCustomRepositoryHelper
 
   override fun setUp() {
     super.setUp()
@@ -49,7 +49,9 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
       "settings.xml",
       """
             <settings>
+            
               <localRepository>$localRepoPath</localRepository>
+              
               <mirrors>
                 <mirror>
                   <id>central-mirror</id>
@@ -66,14 +68,7 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
                   <blocked>false</blocked>
                 </mirror>
               </mirrors>
-              <repositories>
-                <repository>
-                  <id>central</id>
-                  <name>my-mirror</name>
-                  <url>http://mavendummycentral.jetbrains.com/</url>
-                  <blocked>false</blocked>
-                </repository>
-              </repositories>
+              
               <proxies>
                 <proxy>
                   <id>my</id>
@@ -84,6 +79,32 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
                   <port>${myProxyFixture.port}</port>
                 </proxy>
               </proxies>
+              
+              <profiles>
+                <profile>
+                  <id>custom-repos</id>
+                  <repositories>
+                    <repository>
+                      <id>central</id>
+                      <name>my-mirror</name>
+                      <url>http://mavendummycentral.jetbrains.com/</url>
+                      <blocked>false</blocked>
+                    </repository>
+                  </repositories>
+                  <pluginRepositories>
+                    <pluginRepository>
+                      <id>central-plugins</id>
+                      <url>http://mavendummycentral.jetbrains.com/</url>
+                      <blocked>false</blocked>
+                    </pluginRepository>
+                  </pluginRepositories>        
+                </profile>
+              </profiles>
+            
+              <activeProfiles>
+                <activeProfile>custom-repos</activeProfile>
+              </activeProfiles>
+              
             </settings>
             """.trimIndent())
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)

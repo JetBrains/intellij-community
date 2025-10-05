@@ -102,7 +102,7 @@ class MavenLifecyclePluginImportingTest : MavenCompilingTestCase() {
     }.join()
 
     val text = projectPath.resolve("parameters.wrapper.txt").readText().trimEnd()
-    assertTrue(text, text.endsWith("com.intellij.mavenplugin:maven-plugin-test-lifecycle:1.0:second"))
+    assertTrue(text, text.endsWith("com.intellij.mavenplugin:maven-plugin-test-lifecycle:1.0:second -f pom.xml"))
   }
 
   @Test
@@ -120,7 +120,7 @@ class MavenLifecyclePluginImportingTest : MavenCompilingTestCase() {
     val createdFile = projectPath.resolve("parameters.wrapper.txt")
     assertTrue(createdFile.isRegularFile())
     val text = createdFile.readText().trimEnd()
-    assertTrue(text, text.endsWith("com.intellij.mavenplugin:maven-plugin-test-lifecycle:1.0:first"))
+    assertTrue(text, text.endsWith("com.intellij.mavenplugin:maven-plugin-test-lifecycle:1.0:first -f pom.xml"))
   }
 
   private fun setupProjectWithMavenLifecycle(goal: String) {

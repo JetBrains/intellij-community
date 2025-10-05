@@ -33,6 +33,11 @@ public final class ScopeUtilCore {
       final PsiElement context = element.getContext();
       return context instanceof AstScopeOwner ? (AstScopeOwner)context : getScopeOwner(context);
     }
+    return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result
+      .create(calculateScopeOwner(element), PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  private static @Nullable AstScopeOwner calculateScopeOwner(@Nullable PsiElement element) {
     if (element instanceof StubBasedPsiElement<?> stubBasedElement) {
       final StubElement<?> stub = stubBasedElement.getStub();
       if (stub != null) {
@@ -52,11 +57,6 @@ public final class ScopeUtilCore {
         return firstOwner;
       }
     }
-    return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result
-      .create(calculateScopeOwnerByAST(element), PsiModificationTracker.MODIFICATION_COUNT));
-  }
-
-  private static @Nullable AstScopeOwner calculateScopeOwnerByAST(@Nullable PsiElement element) {
     final AstScopeOwner firstOwner = getParentOfType(element, AstScopeOwner.class);
     if (firstOwner == null) {
       return null;

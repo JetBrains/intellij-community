@@ -17,11 +17,7 @@ package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenArchetype;
-import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenModel;
-import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
@@ -55,15 +51,20 @@ public interface MavenServerEmbedder extends Remote {
     MavenToken token) throws RemoteException;
 
   @NotNull
-  MavenArtifactResolveResult resolveArtifactsTransitively(
+  MavenServerResponse<@NotNull MavenArtifactResolveResult> resolveProcessorPathEntries(
+    @NotNull LongRunningTaskInput longRunningTaskInput,
     @NotNull ArrayList<MavenArtifactInfo> artifacts,
     @NotNull ArrayList<MavenRemoteRepository> remoteRepositories,
+    @NotNull HashMap<String, MavenArtifactInfo> managedDependencies,
+    @NotNull MavenExplicitProfiles profiles,
     MavenToken token) throws RemoteException;
+
   HashSet<MavenRemoteRepository> resolveRepositories(@NotNull ArrayList<MavenRemoteRepository> repositories, MavenToken token)
     throws RemoteException;
 
-  @Nullable
-  String evaluateEffectivePom(
+  @NotNull
+  MavenServerResponse<@NotNull String> evaluateEffectivePom(
+    @NotNull LongRunningTaskInput longRunningTaskInput,
     @NotNull File file,
     @NotNull ArrayList<String> activeProfiles,
     @NotNull ArrayList<String> inactiveProfiles,

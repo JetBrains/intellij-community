@@ -1,30 +1,31 @@
 ### auto-generated section `build kotlin.gradle.gradle.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "tests_test_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "tests_test_lib",
+  module_name = "kotlin.gradle.gradle.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  resources = [":tests_test_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "@lib//:guava",
+    "//libraries/guava",
     "@lib//:junit4",
     "@lib//:kotlin-test",
     "//plugins/kotlin/base/util",
@@ -37,8 +38,6 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/platforms",
     "//java/testFramework",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "//plugins/kotlin/base/analysis",
@@ -84,11 +83,15 @@ jvm_library(
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
   ],
-  runtime_deps = [":tests_test_resources"]
+  exports = ["@lib//:kotlin-tooling-core"]
 )
+### auto-generated section `build kotlin.gradle.gradle.tests` end
+
+### auto-generated section `test kotlin.gradle.gradle.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "tests_test",
   runtime_deps = [":tests_test_lib"]
 )
-### auto-generated section `build kotlin.gradle.gradle.tests` end
+### auto-generated section `test kotlin.gradle.gradle.tests` end

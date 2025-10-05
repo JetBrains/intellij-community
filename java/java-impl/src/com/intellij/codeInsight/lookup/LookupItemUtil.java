@@ -39,21 +39,15 @@ public final class LookupItemUtil {
       return new PackageLookupItem((PsiPackage)object);
     }
 
-    String s = null;
-    LookupItem item = new LookupItem(object, "");
-    if (object instanceof PsiElement) {
-      s = PsiUtilCore.getName((PsiElement)object);
-    }
+    LookupItem<Object> item = new LookupItem<>(object, "");
     TailType tailType = TailTypes.noneType();
-    if (object instanceof PsiMetaData) {
-      s = ((PsiMetaData)object).getName();
-    }
-    else if (object instanceof String) {
-      s = (String)object;
-    }
-    else if (object instanceof PresentableLookupValue) {
-      s = ((PresentableLookupValue)object).getPresentation();
-    }
+    String s = switch (object) {
+      case PsiElement element -> PsiUtilCore.getName(element);
+      case PsiMetaData data -> data.getName();
+      case String string -> string;
+      case PresentableLookupValue value -> value.getPresentation();
+      case null, default -> null;
+    };
 
     if (s == null) {
       LOG.error("Null string for object: " + object + " of class " + (object != null ? object.getClass() : null));

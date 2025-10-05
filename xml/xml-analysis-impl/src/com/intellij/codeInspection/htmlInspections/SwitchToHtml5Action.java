@@ -54,6 +54,6 @@ public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
 
   private static void applyFix(Project project) {
     ExternalResourceManagerEx.getInstanceEx().setDefaultHtmlDoctype(Html5SchemaProvider.getHtml5SchemaLocation(), project);
-    DaemonCodeAnalyzer.getInstance(project).restart();
+    DaemonCodeAnalyzer.getInstance(project).restart("SwitchToHtml5Action.applyFix");
   }
 }

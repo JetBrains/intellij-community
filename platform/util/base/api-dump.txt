@@ -299,6 +299,17 @@ f:com.intellij.util.ArrayUtil
 - s:toObjectArray(java.util.Collection):java.lang.Object[]
 - s:toObjectArray(java.util.Collection,java.lang.Class):java.lang.Object[]
 - s:toStringArray(java.util.Collection):java.lang.String[]
+com.intellij.util.DataUrl
+- sf:Companion:com.intellij.util.DataUrl$Companion
+- a:getContentType():java.lang.String
+- a:getData():B[]
+- a:getParams():java.util.List
+- s:isDataUrl(java.lang.String):Z
+- s:parse(java.lang.String):com.intellij.util.DataUrl
+- a:toString(Z,Z):java.lang.String
+f:com.intellij.util.DataUrl$Companion
+- f:isDataUrl(java.lang.String):Z
+- f:parse(java.lang.String):com.intellij.util.DataUrl
 com.intellij.util.Function
 - java.util.function.Function
 - apply(java.lang.Object):java.lang.Object

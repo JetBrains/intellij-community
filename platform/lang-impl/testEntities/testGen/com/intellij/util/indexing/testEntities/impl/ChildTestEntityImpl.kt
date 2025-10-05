@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.ChildTestEntity
 import com.intellij.util.indexing.testEntities.ParentTestEntity
 
@@ -29,8 +30,8 @@ import com.intellij.util.indexing.testEntities.ParentTestEntity
 internal class ChildTestEntityImpl(private val dataSource: ChildTestEntityData) : ChildTestEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENT_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ParentTestEntity::class.java, ChildTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentTestEntity::class.java, ChildTestEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       PARENT_CONNECTION_ID,
@@ -58,8 +59,8 @@ internal class ChildTestEntityImpl(private val dataSource: ChildTestEntityData) 
   }
 
 
-  internal class Builder(result: ChildTestEntityData?) : ModifiableWorkspaceEntityBase<ChildTestEntity, ChildTestEntityData>(result),
-                                                         ChildTestEntity.Builder {
+  internal class Builder(result: ChildTestEntityData?) : ModifiableWorkspaceEntityBase<ChildTestEntity, ChildTestEntityData>(
+    result), ChildTestEntity.Builder {
     internal constructor() : this(ChildTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

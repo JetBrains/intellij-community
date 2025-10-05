@@ -8,9 +8,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.project.Project
@@ -21,24 +21,31 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.getOrThrow
-import com.jetbrains.python.packaging.*
-  import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PyPackageService
+import com.jetbrains.python.packaging.PyPackageVersionNormalizer
+import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCache
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.management.*
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
-import com.jetbrains.python.packaging.management.ui.updatePackagesByNamesBackground
 import com.jetbrains.python.packaging.packageRequirements.PackageNode
 import com.jetbrains.python.packaging.packageRequirements.PythonPackageRequirementsTreeExtractor
+import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.packaging.repository.*
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.model.*
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_DELETED
+import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_INSTALLED
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
@@ -51,7 +58,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   internal var currentSdk: Sdk? = null
   private lateinit var managerUI: PythonPackageManagerUI
 
-  private val manager: PythonPackageManager?
+  private val manager: PythonPackageManager
     get() = managerUI.manager
 
 
@@ -61,55 +68,106 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   fun initialize(toolWindowPanel: PyPackagingToolWindowPanel) {
     this.toolWindowPanel = toolWindowPanel
     serviceScope.launch(Dispatchers.IO) {
-      service<PyPIPackageRanking>().reload()
       initForSdk(project.modules.firstOrNull()?.pythonSdk)
     }
     subscribeToChanges()
   }
 
   suspend fun detailsForPackage(selectedPackage: DisplayablePackage): PythonPackageDetails? {
-    val packageManager = manager ?: return null
+    val packageManager = manager
     return withContext(Dispatchers.IO) {
       PythonPackagesToolwindowStatisticsCollector.requestDetailsEvent.log(project)
-      val pkgName = NormalizedPythonPackageName.from(selectedPackage.name).name
-      val spec = when (selectedPackage) {
-        is InstalledPackage -> packageManager.findPackageSpecification(pkgName)
-        is InstallablePackage -> selectedPackage.repository.findPackageSpecification(pkgName)
-        is ExpandResultNode -> selectedPackage.repository.findPackageSpecification(pkgName)
-        is RequirementPackage -> selectedPackage.repository.findPackageSpecification(pkgName)
-      }
+      val pkgName = PyPackageName.from(selectedPackage.name).name
+      val pyRequirement = pyRequirement(pkgName)
+      val repository = selectedPackage.repository
 
-      if (spec == null) {
-        return@withContext null
-      }
-
-      spec.let { packageManager.repositoryManager.getPackageDetails(it).getOrThrow() }
+      val spec = if (repository != null)
+        PythonRepositoryPackageSpecification(repository, pyRequirement)
+      else
+        packageManager.findPackageSpecification(pkgName) ?: return@withContext null
+      packageManager.repositoryManager.getPackageDetails(spec.name, spec.repository).getOrNull()
     }
   }
 
+  private fun nameMatches(pkg: DisplayablePackage, query: String): Boolean {
+    val shouldUseStraightComparison = when (pkg) {
+      is InstalledPackage -> isNonPipCondaPackage(pkg.instance)
+      is RequirementPackage -> isNonPipCondaPackage(pkg.instance)
+      else -> false
+    }
+
+    return if (shouldUseStraightComparison) {
+      StringUtil.containsIgnoreCase(pkg.name, query)
+    }
+    else {
+      StringUtil.containsIgnoreCase(PyPackageName.normalizePackageName(pkg.name), PyPackageName.normalizePackageName(query))
+    }
+  }
+
+  private fun isNonPipCondaPackage(pkg: PythonPackage): Boolean = pkg is CondaPackage && !pkg.installedWithPip
+
+  private fun traversePackageTree(
+    pkg: DisplayablePackage,
+    visited: MutableSet<String>,
+    matches: MutableList<RequirementPackage>,
+    query: String,
+  ) {
+    if (!visited.add(pkg.name)) return
+
+    if (pkg is RequirementPackage && nameMatches(pkg, query)) {
+      matches.add(pkg)
+    }
+
+    for (requirementPackage in pkg.getRequirements()) {
+      traversePackageTree(requirementPackage, visited, matches, query)
+    }
+  }
+
+  /**
+   * Finds all packages (both installed and requirements) that match the given query.
+   */
+  @ApiStatus.Internal
+  fun findAllMatchingPackages(query: String): List<DisplayablePackage> {
+    val matchingInstalled = installedPackages.values.filter { nameMatches(it, query) }
+    val matchingRequirements = mutableListOf<RequirementPackage>()
+    val visited = mutableSetOf<String>()
+
+    for (pkg in installedPackages.values) {
+      traversePackageTree(pkg, visited, matchingRequirements, query)
+    }
+
+    return unifyPackages(matchingInstalled, matchingRequirements)
+  }
+
+  /**
+   * Unifies packages with the same name according to the following rules:
+   * 1. If both an installed package and a requirement package have the same name, keep only the installed package.
+   * 2. If multiple requirement packages have the same name, keep only one of them.
+   */
+  private fun unifyPackages(installedPackages: List<InstalledPackage>, requirementPackages: List<RequirementPackage>): List<DisplayablePackage> {
+    return (installedPackages + requirementPackages)
+      .groupBy { it.name.lowercase() }
+      .map { (_, packages) ->
+        packages.find { it is InstalledPackage } ?: packages.first()
+      }
+  }
+
   fun handleSearch(query: String) {
-    val manager = manager ?: return
+    val manager = manager
     val prevSelected = toolWindowPanel?.getSelectedPackage()
 
     currentQuery = query
     if (query.isNotEmpty()) {
       searchJob?.cancel()
       searchJob = serviceScope.launch {
-        val installed = installedPackages.values.filter { pkg ->
-          when {
-            pkg.instance is CondaPackage && !pkg.instance.installedWithPip -> StringUtil.containsIgnoreCase(pkg.name, query)
-            else -> StringUtil.containsIgnoreCase(normalizePackageName(pkg.name), normalizePackageName(query))
-          }
-        }
-
-
-        val packagesFromRepos = manager.repositoryManager.searchPackages(query).map {
-          sortPackagesForRepo(it.value, query, it.key)
-        }.toList()
+        val allMatches = findAllMatchingPackages(query)
+        val packagesFromRepos = manager.repositoryManager.searchPackages(query)
+          .map { (repository, packages) -> sortPackagesForRepo(packages, query, repository) }
+          .toList()
 
         if (isActive) {
           withContext(Dispatchers.Main) {
-            toolWindowPanel?.showSearchResult(installed, packagesFromRepos + invalidRepositories)
+            toolWindowPanel?.showSearchResult(allMatches, packagesFromRepos + invalidRepositories)
             prevSelected?.name?.let { toolWindowPanel?.selectPackageName(it) }
           }
         }
@@ -117,8 +175,20 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
     else {
       val packagesByRepository = manager.repositoryManager.packagesByRepository().map { (repository, packages) ->
-        val shownPackages = packages.asSequence().limitResultAndFilterOutInstalled(repository)
-        PyPackagesViewData(repository, shownPackages, moreItems = packages.size - PACKAGES_LIMIT)
+        val shownPackages = if (packages.size < PACKAGES_LIMIT) {
+          packages.asSequence().limitResultAndFilterOutInstalled(repository)
+        }
+        else {
+          emptyList()
+        }
+
+        val moreItems = if (packages.size < PACKAGES_LIMIT) {
+          0
+        }
+        else {
+          packages.size
+        }
+        PyPackagesViewData(repository, shownPackages, moreItems = moreItems)
       }.toList()
 
       toolWindowPanel?.resetSearch(installedPackages.values.toList(), packagesByRepository + invalidRepositories, currentSdk)
@@ -128,43 +198,39 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun installPackage(installRequest: PythonPackageInstallRequest, options: List<String> = emptyList()) {
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-    managerUI.installPackagesBackground(installRequest, options)?.let {
-      handleActionCompleted(message("python.packaging.notification.installed", installRequest.title))
+    managerUI.installPackagesRequestBackground(installRequest, options)?.let {
+      handleActionCompleted(
+        text = message("python.packaging.notification.installed", installRequest.title),
+        displayId = PYTHON_PACKAGE_INSTALLED
+      )
     }
+    toolWindowPanel?.clearFocus()
   }
 
   suspend fun installPackage(pkg: PythonPackage, options: List<String> = emptyList()) {
-    val installRequest = manager?.findPackageSpecification(pkg.name, pkg.version)?.toInstallRequest() ?: return
+    val installRequest = manager.findPackageSpecification(pkg.name, pkg.version)?.toInstallRequest() ?: return
     PythonPackagesToolwindowStatisticsCollector.installPackageEvent.log(project)
-    managerUI.installPackagesBackground(installRequest, options)?.let {
-      handleActionCompleted(message("python.packaging.notification.installed", installRequest.title))
+    managerUI.installPackagesRequestBackground(installRequest, options)?.let {
+      handleActionCompleted(
+        text = message("python.packaging.notification.installed", installRequest.title),
+        displayId = PYTHON_PACKAGE_INSTALLED
+      )
     }
+    toolWindowPanel?.clearFocus()
   }
 
   suspend fun deletePackage(vararg selectedPackages: InstalledPackage) {
     PythonPackagesToolwindowStatisticsCollector.uninstallPackageEvent.log(project)
     managerUI.uninstallPackagesBackground(selectedPackages.map { it.instance.name }) ?: return
-    handleActionCompleted(message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }))
+    handleActionCompleted(
+      text = message("python.packaging.notification.deleted", selectedPackages.joinToString(", ") { it.name }),
+      displayId = PYTHON_PACKAGE_DELETED
+    )
+    toolWindowPanel?.clearFocus()
   }
 
-  suspend fun updatePackages(vararg packages: String) {
-    managerUI.updatePackagesByNamesBackground(packages.toList()) ?: return
-
-
-    val singlePackage = packages.singleOrNull()
-    if (singlePackage != null) {
-      val version = manager?.getInstalledPackage(singlePackage)?.version ?: return
-      handleActionCompleted(message("python.packaging.notification.updated", singlePackage, version))
-    }
-    else {
-      handleActionCompleted(message("python.packaging.notification.all.updated"))
-    }
-
-    refreshInstalledPackages()
-  }
-
-
-  internal suspend fun initForSdk(sdk: Sdk?) {
+  @ApiStatus.Internal
+  suspend fun initForSdk(sdk: Sdk?) {
     if (sdk == null) {
       toolWindowPanel?.packageListController?.setLoadingState(false)
     }
@@ -233,28 +299,21 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     })
   }
 
-  /**
-   * Information about a Python package and its state in the package management system.
-   *
-   * @property packageData Information about the currently installed package
-   * @property repository The package repository where this package is hosted
-   * @property nextVersion The next available version of the package in its repository.
-   *                      Null if the package is already at its latest version
-   * @property dependencies List of packages that this package depends on
-   */
-  data class PackageInfo(
-    val packageData: InstalledPackage,
-    val repository: PyPackageRepository,
-    val nextVersion: String?,
-    val dependencies: List<RequirementPackage>
-  )
-
   suspend fun refreshInstalledPackages() {
     val sdk = currentSdk ?: return
-    val targetModule = findTargetModule(sdk) ?: return
-    val manager = manager ?: return
+    val manager = manager
+
+    val declaredPackages = manager.extractDependencies()?.getOr {
+      withContext(Dispatchers.Main) {
+        val errorMessage = manager.syncErrorMessage() ?: return@withContext
+        showErrorNode(errorMessage.descriptionMessage, errorMessage.fixCommandMessage) {
+          manager.sync()
+        }
+      }
+      return
+    } ?: emptyList()
+
     withContext(Dispatchers.Default) {
-      val declaredPackages = manager.reloadDependencies()
       val installedDeclaredPackages = findInstalledDeclaredPackages(declaredPackages)
       val treeExtractor = PythonPackageRequirementsTreeExtractor.forSdk(sdk)
 
@@ -262,14 +321,13 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
         processPackagesWithRequirementsTree(
           installedDeclaredPackages,
           treeExtractor,
-          targetModule
         )
-      } else {
+      }
+      else {
         emptyList()
       }
 
       val standalonePackages = findStandalonePackages(packagesWithDependencies)
-
       installedPackages = (packagesWithDependencies + standalonePackages)
         .associateBy { it.name }
     }
@@ -279,21 +337,17 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
   }
 
-  private fun findTargetModule(sdk: Sdk): Module? =
-    project.modules.find { it.pythonSdk == sdk }
-
   private suspend fun findInstalledDeclaredPackages(declaredPackages: List<PythonPackage>): List<PythonPackage> =
-    manager?.listInstalledPackages()?.filter {
+    manager.listInstalledPackages().filter {
       it.name in declaredPackages.map { pkg -> pkg.name }
-    } ?: emptyList()
+    }
 
   private suspend fun processPackagesWithRequirementsTree(
     packages: List<PythonPackage>,
     treeExtractor: PythonPackageRequirementsTreeExtractor,
-    targetModule: Module,
   ): List<InstalledPackage> {
-    return packages.mapNotNull { pkg ->
-      val tree = treeExtractor.extract(pkg, targetModule)
+    return packages.map { pkg ->
+      val tree = treeExtractor.extract(pkg)
       createInstalledPackageFromTree(pkg, tree)
     }
   }
@@ -301,8 +355,8 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   private suspend fun createInstalledPackageFromTree(
     pkg: PythonPackage,
     tree: PackageNode,
-  ): InstalledPackage? {
-    val manager = manager ?: return null
+  ): InstalledPackage {
+    val manager = manager
     val spec = manager.findPackageSpecification(pkg.name, pkg.version)
     val repository = spec?.repository
     val nextVersionRaw = manager.listOutdatedPackagesSnapshot()[pkg.name]?.latestVersion
@@ -316,7 +370,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     nodes: List<PackageNode>,
     repository: PyPackageRepository,
   ): List<RequirementPackage> {
-    val manager = manager ?: return emptyList()
+    val manager = manager
 
     return nodes.mapNotNull { node ->
       val packageName = node.name.name
@@ -339,7 +393,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   private suspend fun findStandalonePackages(
     processedPackages: List<InstalledPackage>,
   ): List<InstalledPackage> {
-    val manager = manager ?: return emptyList()
+    val manager = manager
     val processedPackageNames = processedPackages.flatMap { pkg ->
       collectPackageNamesRecursively(pkg)
     }.toSet()
@@ -354,15 +408,16 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       }
   }
 
-  private suspend fun handleActionCompleted(text: @Nls String) {
+  private suspend fun handleActionCompleted(text: @Nls String, displayId: String) {
     VirtualFileManager.getInstance().asyncRefresh()
-    showPackagingNotification(text)
+    showPackagingNotification(text, displayId)
   }
 
-  private suspend fun showPackagingNotification(text: @Nls String) {
-    val notification = NotificationGroupManager.getInstance()
+  private suspend fun showPackagingNotification(text: @Nls String, displayId: String) {
+    val notification = serviceAsync<NotificationGroupManager>()
       .getNotificationGroup("PythonPackages")
       .createNotification(text, NotificationType.INFORMATION)
+      .setDisplayId(displayId)
 
     withContext(Dispatchers.Main) {
       notification.notify(project)
@@ -376,7 +431,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     skipItems: Int = 0,
   ): PyPackagesViewData {
 
-    val comparator = createNameComparator(query, repository.repositoryUrl ?: "")
+    val comparator = createNameComparator(query)
 
     val shownPackages = packageNames.asSequence()
       .sortedWith(comparator)
@@ -420,15 +475,16 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
           .filter { it !in packageService.additionalRepositories }
           .forEach { packageService.addRepository(it) }
 
-        reloadPackages()
+        // LAME: pip based repository manager handles all added repositories via cache...
+        service<PythonSimpleRepositoryCache>().refresh()
+        refreshInstalledPackages()
       }
     }
   }
 
-  fun getMoreResultsForRepo(repository: PyPackageRepository, skipItems: Int): PyPackagesViewData? {
-    val manager = manager ?: return null
+  fun getMoreResultsForRepo(repository: PyPackageRepository, skipItems: Int): PyPackagesViewData {
     if (currentQuery.isNotEmpty()) {
-      return sortPackagesForRepo(manager.repositoryManager.searchPackages(currentQuery, repository), currentQuery, repository, skipItems)
+      return sortPackagesForRepo(this.manager.repositoryManager.searchPackages(currentQuery, repository), currentQuery, repository, skipItems)
     }
     else {
       val packagesFromRepo = repository.getPackages()
@@ -440,9 +496,19 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
   private fun Sequence<String>.limitResultAndFilterOutInstalled(repository: PyPackageRepository, skipItems: Int = 0): List<DisplayablePackage> {
     return drop(skipItems)
       .take(PACKAGES_LIMIT)
-      .filter { pkg -> installedPackages.values.find { it.name.lowercase() == pkg.lowercase() } == null }
+      .filter { pkg -> installedPackages.values.find { it.name.equals(pkg, ignoreCase = true) } == null }
       .map { pkg -> InstallablePackage(pkg, repository) }
       .toList()
+  }
+
+  fun showErrorNode(@Nls description: String, @Nls fixName: String, quickFixAction: (suspend () -> PyResult<*>)) {
+    val quickFix = PackageQuickFix(fixName, quickFixAction)
+    val errorNode = ErrorNode(description, quickFix)
+    serviceScope.launch(Dispatchers.Main) {
+      installedPackages = emptyMap()
+      handleSearch("")
+      toolWindowPanel?.showErrorResult(errorNode)
+    }
   }
 
   companion object {
@@ -450,7 +516,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
     fun getInstance(project: Project): PyPackagingToolWindowService = project.service<PyPackagingToolWindowService>()
 
-    private fun createNameComparator(query: String, url: String): Comparator<String> {
+    private fun createNameComparator(query: String): Comparator<String> {
       val nameComparator = Comparator<String> { name1, name2 ->
         val queryLowerCase = query.lowercase()
         return@Comparator when {
@@ -458,20 +524,6 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
           name1.startsWith(queryLowerCase) -> -1
           name2.startsWith(queryLowerCase) -> 1
           else -> name1.compareTo(name2)
-        }
-      }
-
-      if (PyPIPackageUtil.isPyPIRepository(url)) {
-        val ranking = service<PyPIPackageRanking>().packageRank
-        return Comparator { p1, p2 ->
-          val rank1 = ranking[p1.lowercase()]
-          val rank2 = ranking[p2.lowercase()]
-          return@Comparator when {
-            rank1 != null && rank2 == null -> -1
-            rank1 == null && rank2 != null -> 1
-            rank1 != null && rank2 != null -> rank2 - rank1
-            else -> nameComparator.compare(p1, p2)
-          }
         }
       }
 

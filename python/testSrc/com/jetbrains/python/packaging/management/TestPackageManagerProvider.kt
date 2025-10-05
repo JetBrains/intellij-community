@@ -12,6 +12,7 @@ class TestPackageManagerProvider : PythonPackageManagerProvider {
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null
   private var packageInstalled: List<PythonPackage> = emptyList()
+  private var packageVersions = mapOf<String, List<String>>()
 
   fun withPackageNames(packageNames: List<String>): TestPackageManagerProvider {
     this.packageNames = packageNames
@@ -23,7 +24,22 @@ class TestPackageManagerProvider : PythonPackageManagerProvider {
     return this
   }
 
+  fun withPackageInstalled(vararg packages: PythonPackage): TestPackageManagerProvider {
+    this.packageInstalled = packages.toList()
+    return this
+  }
+
+  fun withRepoPackagesVersions(versions: Map<String, List<String>>): TestPackageManagerProvider {
+    this.packageVersions = versions
+    return this
+  }
+
+
   override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager {
-    return TestPythonPackageManager(project, sdk).withPackageNames(packageNames).withPackageDetails(packageDetails).withPackageInstalled(packageInstalled)
+    return TestPythonPackageManager(project, sdk)
+      .withPackageNames(packageNames)
+      .withPackageDetails(packageDetails)
+      .withPackageInstalled(packageInstalled)
+      .withRepoPackagesVersions(packageVersions)
   }
 }

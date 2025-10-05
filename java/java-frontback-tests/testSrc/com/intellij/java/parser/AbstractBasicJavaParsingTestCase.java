@@ -1,13 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser;
 
 import com.intellij.PathJavaTestUtil;
+import com.intellij.java.frontback.psi.impl.syntax.JavaSyntaxDefinitionExtension;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.BasicJavaParserUtil;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
 import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
+import com.intellij.platform.syntax.tree.SyntaxNode;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
@@ -15,11 +20,14 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
 
   private final AbstractBasicJavaParsingTestConfigurator myConfigurator;
+  private SyntaxNode myKmpTree;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public AbstractBasicJavaParsingTestCase(String dataPath, AbstractBasicJavaParsingTestConfigurator configurator) {
@@ -27,7 +35,7 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   }
 
   public AbstractBasicJavaParsingTestCase(String dataPath, String fileExt, AbstractBasicJavaParsingTestConfigurator configurator) {
-    super("psi/" + dataPath, fileExt, configurator.getJavaParserDefinition());
+    super("psi/" + dataPath, fileExt, new JavaParserDefinition());
     myConfigurator = configurator;
   }
 
@@ -35,7 +43,7 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     getProject().registerService(WorkspaceModelTopics.class, new WorkspaceModelTopics());
-    addExplicit(LanguageSyntaxDefinitions.getINSTANCE(), JavaLanguage.INSTANCE, myConfigurator.getJavaSyntaxDefinition());
+    addExplicit(LanguageSyntaxDefinitions.getINSTANCE(), JavaLanguage.INSTANCE, new JavaSyntaxDefinitionExtension());
     myConfigurator.setUp(this);
   }
 
@@ -46,6 +54,14 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
 
   public final <T> void addExplicit(@NotNull LanguageExtension<T> collector, @NotNull Language language, @NotNull T object) {
     addExplicitExtension(collector, language, object);
+  }
+
+  public final <T> void addExplicit(@NotNull ExtensionPointName<T> extensionPointName, @NotNull T extension) {
+    registerExtension(extensionPointName, extension);
+  }
+
+  public final <T> void addExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<T> extensionClass) {
+    super.registerExtensionPoint(extensionPointName, extensionClass);
   }
 
   @Override
@@ -59,7 +75,8 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   protected void doParserTest(BasicJavaParserUtil.@NotNull ParserWrapper parser) {
     String name = getTestName(false);
     try {
-      doParserTest(loadFile(name + "." + myFileExt), parser);
+      String text = loadFile(name + "." + myFileExt);
+      doParserTest(text, parser);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -71,18 +88,49 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   }
 
   @Override
-  protected void checkResult(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
+  protected void checkResult(@NotNull @TestDataFile String targetDataName,
+                             @NotNull PsiFile file) throws IOException {
     if (myConfigurator.checkPsi()) {
       super.checkResult(targetDataName, file);
     }
 
-    doCheckResult(myFullDataPath, targetDataName + "_node.txt",
-                  DebugUtil.nodeTreeAsElementTypeToString(file.getNode(), !skipSpaces()).trim());
+    String treeDump = DebugUtil.nodeTreeAsElementTypeToString(file.getNode(), !skipSpaces()).trim();
+    assertSameLinesWithFile(getExpectedFileName(targetDataName), treeDump);
+
+    checkKmpTree(targetDataName);
   }
 
-  protected void doParserTest(String text, BasicJavaParserUtil.@NotNull ParserWrapper parser) {
+  private void checkKmpTree(@NotNull String targetDataName) {
+    String kmpTreeDump = JavaTestSyntaxParsingUtil.dumpTree(myKmpTree);
+
+    String expectedFileName = getExpectedFileName(targetDataName);
+    String expectedText;
+    try {
+      expectedText = FileUtil.loadFile(new File(expectedFileName), StandardCharsets.UTF_8);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    String normalizedExpected = JavaTestSyntaxParsingUtil.removeEmptyListLines(expectedText);
+    assertSameLines(normalizedExpected, kmpTreeDump);
+  }
+
+  private @NotNull String getExpectedFileName(@NotNull String targetDataName) {
+    return myFullDataPath + File.separatorChar + targetDataName + "_node.txt";
+  }
+
+  @Override
+  protected @NotNull PsiFile parseFile(@NotNull String name, @NotNull String text) {
+    myKmpTree = myConfigurator.createFileSyntaxNode(text, null);
+    return super.parseFile(name, text);
+  }
+
+  protected void doParserTest(@NotNull String text,
+                              BasicJavaParserUtil.@NotNull ParserWrapper parser) {
     String name = getTestName(false);
     myFile = myConfigurator.createPsiFile(this, name, text, parser);
+    myKmpTree = myConfigurator.createFileSyntaxNode(text, parser);
     try {
       checkResult(name, myFile);
     }

@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UnixDesktopEnv
 import org.jetbrains.annotations.Nls
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -47,13 +47,11 @@ internal class LinuxFrameButton(action: Action, private val type: Type) : JButto
   }
 
   companion object {
-
     private val gnomeSimilarIconThemes = listOf("adwaita", "yaru")
     private val kdeSimilarIconThemes = listOf("breeze")
 
-    private fun getDefaultIconPack(): IconPack {
-      return if (SystemInfo.isKDE) IconPack.KDE else IconPack.GNOME
-    }
+    private fun getDefaultIconPack(): IconPack =
+      if (UnixDesktopEnv.CURRENT == UnixDesktopEnv.KDE) IconPack.KDE else IconPack.GNOME
   }
 
   private val listener = object : MouseAdapter() {

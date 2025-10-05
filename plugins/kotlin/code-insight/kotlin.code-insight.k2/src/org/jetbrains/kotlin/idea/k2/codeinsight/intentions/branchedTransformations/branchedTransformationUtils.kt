@@ -134,7 +134,7 @@ private fun KtPsiFactory.handleWhenGuard(ktExpression: KtExpression?, entry: KtW
  *  }
  * ```
  */
-context(KaSession)
+context(_: KaSession)
 fun KtWhenExpression.introduceSubjectIfPossible(subject: KtExpression?, context: PsiElement = this): KtWhenExpression {
     subject ?: return this
 
@@ -171,7 +171,7 @@ fun KtWhenExpression.introduceSubjectIfPossible(subject: KtExpression?, context:
 /**
  * Returns [KtExpression] as potential subject for [KtWhenExpression].
  */
-context(KaSession)
+context(_: KaSession)
 fun KtWhenExpression.getSubjectToIntroduce(checkConstants: Boolean = true): KtExpression? {
     if (subjectExpression != null) return null
 
@@ -194,7 +194,7 @@ fun KtWhenExpression.getSubjectToIntroduce(checkConstants: Boolean = true): KtEx
     return lastCandidate
 }
 
-context(KaSession)
+context(_: KaSession)
 private fun BuilderByPattern<KtExpression>.appendConditionWithSubjectRemoved(conditionExpression: KtExpression?, subject: KtExpression) {
     when (conditionExpression) {
         is KtIsExpression -> {
@@ -265,7 +265,7 @@ private enum class SearchState {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 fun KtExpression?.getWhenConditionSubjectCandidate(checkConstants: Boolean): KtExpression? {
     if (this == null) return null
     fun KtExpression?.getCandidate(state: SearchState): KtExpression? {
@@ -331,7 +331,7 @@ fun KtExpression.hasCandidateNameReferenceExpression(checkConstants: Boolean): B
     return !(resolved is KtObjectDeclaration || (resolved as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true)
 }
 
-context(KaSession)
+context(_: KaSession)
 fun KtExpression?.matches(right: KtExpression?): Boolean {
     if (this == null && right == null) return true
 

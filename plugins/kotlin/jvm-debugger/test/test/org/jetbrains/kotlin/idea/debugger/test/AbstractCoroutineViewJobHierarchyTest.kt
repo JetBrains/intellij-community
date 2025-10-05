@@ -13,17 +13,15 @@ abstract class AbstractCoroutineViewJobHierarchyTest : KotlinDescriptorTestCaseW
         doOnBreakpoint {
             val suspendContext = this
             try {
-                executeOnDMT(suspendContext, PrioritizedTask.Priority.NORMAL) {
-                    val coroutineDebugProxy = CoroutineDebugProbesProxy(suspendContext)
-                    val coroutineCache = coroutineDebugProxy.dumpCoroutines()
-                    if (coroutineCache.isOk()) {
-                        val cache = coroutineCache.cache
-                        val isHierarchyBuilt = coroutineDebugProxy.fetchAndSetJobsAndParentsForCoroutines(cache)
-                        if (isHierarchyBuilt) {
-                            printCoroutinesJobHierarchy(cache)
-                        } else {
-                            printCoroutineInfos(cache)
-                        }
+                val coroutineDebugProxy = CoroutineDebugProbesProxy(suspendContext)
+                val coroutineCache = coroutineDebugProxy.dumpCoroutines()
+                if (coroutineCache.isOk()) {
+                    val cache = coroutineCache.cache
+                    val isHierarchyBuilt = coroutineDebugProxy.fetchAndSetJobsAndParentsForCoroutines(cache)
+                    if (isHierarchyBuilt) {
+                        printCoroutinesJobHierarchy(cache)
+                    } else {
+                        printCoroutineInfos(cache)
                     }
                 }
             } finally {

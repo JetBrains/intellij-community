@@ -36,6 +36,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -54,6 +55,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.TrackerConte
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileSetFactory
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -90,7 +92,7 @@ class LineStatusTrackerManager(
   private val forcedDocuments = HashMap<Document, Multiset<Any>>()
 
   private var partialChangeListsEnabled: Boolean = false
-  private val documentsInDefaultChangeList = HashSet<Document>()
+  private val documentsInDefaultChangeList: MutableSet<VirtualFile> = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet()
   private var clmFreezeCounter: Int = 0
 
   private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
@@ -399,7 +401,7 @@ class LineStatusTrackerManager(
   override fun arePartialChangelistsEnabled(): Boolean {
     if (!partialChangeListsEnabled) return false
 
-    return ProjectLevelVcsManager.getInstance(project).allActiveVcss
+    return ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()
       .any { it.arePartialChangelistsSupported() }
   }
 
@@ -819,10 +821,11 @@ class LineStatusTrackerManager(
       if (!partialChangeListsEnabled || project.isDisposed) return
 
       val document = event.document
-      if (documentsInDefaultChangeList.contains(document)) return
 
       val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
       if (!virtualFile.isInLocalFileSystem) return
+      if (documentsInDefaultChangeList.contains(virtualFile)) return
+
       if (getLineStatusTracker(document) != null) return
 
       val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
@@ -841,7 +844,7 @@ class LineStatusTrackerManager(
         }
       }
       else {
-        documentsInDefaultChangeList.add(document)
+        documentsInDefaultChangeList.add(virtualFile)
       }
     }
   }
@@ -886,8 +889,8 @@ class LineStatusTrackerManager(
   }
 
   private inner class MyChangeListAvailabilityListener : ChangeListAvailabilityListener {
-    override fun onBefore() {
-      if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
+    override fun onBefore(currentState: Boolean) {
+      if (currentState) {
         val fileStates = getInstanceImpl(project).collectPartiallyChangedFilesStates()
         if (fileStates.isNotEmpty()) {
           PartialLineStatusTrackerManagerState.saveCurrentState(project, fileStates)
@@ -895,11 +898,11 @@ class LineStatusTrackerManager(
       }
     }
 
-    override fun onAfter() {
+    override fun onAfter(newState: Boolean) {
       updatePartialChangeListsAvailability()
       onEverythingChanged()
 
-      if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
+      if (newState) {
         PartialLineStatusTrackerManagerState.restoreState(project)
       }
     }
@@ -909,7 +912,7 @@ class LineStatusTrackerManager(
     override fun commandFinished(event: CommandEvent) {
       if (!partialChangeListsEnabled) return
 
-      if (CommandProcessor.getInstance().currentCommand == null &&
+      if (!CommandProcessor.getInstance().isCommandInProgress &&
           !filesWithDamagedInactiveRanges.isEmpty()) {
         showInactiveRangesDamagedNotification()
       }
@@ -919,7 +922,7 @@ class LineStatusTrackerManager(
   class CheckinFactory : CheckinHandlerFactory() {
     override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
       val project = panel.project
-      return object : CheckinHandler() {
+      return object : CheckinHandler(), DumbAware {
         override fun checkinSuccessful() {
           resetExcludedFromCommit()
         }

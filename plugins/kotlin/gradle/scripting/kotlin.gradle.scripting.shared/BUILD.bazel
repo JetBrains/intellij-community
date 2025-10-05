@@ -1,9 +1,9 @@
 ### auto-generated section `build kotlin.gradle.scripting.shared` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "kotlin-gradle-scripting-shared_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +11,8 @@ jvm_library(
   name = "kotlin-gradle-scripting-shared",
   module_name = "kotlin.gradle.scripting.shared",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  resources = [":kotlin-gradle-scripting-shared_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -23,8 +24,6 @@ jvm_library(
     "//platform/util",
     "//plugins/gradle",
     "//platform/core-impl",
-    "//plugins/kotlin/base/scripting",
-    "//platform/diff-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
     "//platform/backend/observation",
@@ -49,7 +48,8 @@ jvm_library(
     "@lib//:kotlinc-kotlin-script-runtime",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
-  ],
-  runtime_deps = [":kotlin-gradle-scripting-shared_resources"]
+    "//plugins/kotlin/base/scripting/scripting.shared",
+    "//java/java-psi-api:psi",
+  ]
 )
 ### auto-generated section `build kotlin.gradle.scripting.shared` end

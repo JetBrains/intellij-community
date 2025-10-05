@@ -17,14 +17,24 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
   private val feedbackNotificationShown = AtomicBoolean()
   private val enterKeyPressedTimes = AtomicInteger()
 
+  private val completionFeedbackNotificationShown = AtomicBoolean()
+  private val completionPopupShownTimes = AtomicInteger()
+  private val completionItemChosenTimes = AtomicInteger()
+
   override fun getState(): State = State(
     feedbackNotificationShown.get(),
     enterKeyPressedTimes.get(),
+    completionFeedbackNotificationShown.get(),
+    completionPopupShownTimes.get(),
+    completionItemChosenTimes.get(),
   )
 
   override fun loadState(state: State) {
     feedbackNotificationShown.set(state.feedbackNotificationShown)
     enterKeyPressedTimes.set(state.enterKeyPressedTimes)
+    completionFeedbackNotificationShown.set(state.completionFeedbackNotificationShown)
+    completionPopupShownTimes.set(state.completionPopupShownTimes)
+    completionItemChosenTimes.set(state.completionItemChosenTimes)
   }
 
   fun recordFeedbackNotificationShown() {
@@ -35,10 +45,25 @@ class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalSto
     enterKeyPressedTimes.incrementAndGet()
   }
 
+  fun recordCompletionFeedbackNotificationShown() {
+    completionFeedbackNotificationShown.set(true)
+  }
+
+  fun recordCompletionPopupShown() {
+    completionPopupShownTimes.incrementAndGet()
+  }
+
+  fun recordCompletionItemChosen() {
+    completionItemChosenTimes.incrementAndGet()
+  }
+
   @Serializable
   data class State(
     val feedbackNotificationShown: Boolean = false,
     val enterKeyPressedTimes: Int = 0,
+    val completionFeedbackNotificationShown: Boolean = false,
+    val completionPopupShownTimes: Int = 0,
+    val completionItemChosenTimes: Int = 0,
   )
 
   companion object {

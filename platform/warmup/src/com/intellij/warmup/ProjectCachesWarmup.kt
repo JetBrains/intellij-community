@@ -185,7 +185,7 @@ private suspend fun waitForBuilders(project: Project, rebuild: BuildMode, builde
 
 private suspend fun waitForRefreshQueue() {
   runTaskAndLogTime("RefreshQueue") {
-    while (RefreshQueueImpl.isRefreshInProgress()) {
+    while (RefreshQueueImpl.isRefreshInProgress) {
       WarmupLogger.logInfo("RefreshQueue is in progress...")
       delay(500)
     }

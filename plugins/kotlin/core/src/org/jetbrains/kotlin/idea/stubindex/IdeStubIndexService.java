@@ -1,16 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.stubindex;
 
 import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.fileClasses.JvmFileClassInfo;
-import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil;
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics;
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiUtils;
 import org.jetbrains.kotlin.idea.base.psi.KotlinStubUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.load.java.JvmAbi;
@@ -18,14 +13,13 @@ import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 import org.jetbrains.kotlin.psi.stubs.*;
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
 import org.jetbrains.kotlin.psi.stubs.elements.StubIndexService;
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
 import java.util.List;
 
 public class IdeStubIndexService extends StubIndexService {
@@ -35,27 +29,25 @@ public class IdeStubIndexService extends StubIndexService {
         FqName packageFqName = stub.getPackageFqName();
 
         sink.occurrence(KotlinExactPackagesIndex.NAME, packageFqName.asString());
-
         if (stub.isScript()) return;
 
-        FqName facadeFqName = ((KotlinFileStubImpl) stub).getFacadeFqName();
+        KotlinFileStubImpl fileStub = (KotlinFileStubImpl) stub;
+        FqName facadeFqName = fileStub.getFacadeFqName();
         if (facadeFqName != null) {
             sink.occurrence(KotlinFileFacadeFqNameIndex.Helper.getIndexKey(), facadeFqName.asString());
             sink.occurrence(KotlinFileFacadeShortNameIndex.Helper.getIndexKey(), facadeFqName.shortName().asString());
             sink.occurrence(KotlinFileFacadeClassByPackageIndex.Helper.getIndexKey(), packageFqName.asString());
         }
 
-        FqName partFqName = ((KotlinFileStubImpl) stub).getPartFqName();
-        if (partFqName != null) {
+        String partSimpleName = fileStub.getPartSimpleName();
+        if (partSimpleName != null) {
+            FqName partFqName = packageFqName.child(Name.identifier(partSimpleName));
             sink.occurrence(KotlinFilePartClassIndex.Helper.getIndexKey(), partFqName.asString());
         }
 
-        List<String> partNames = ((KotlinFileStubImpl) stub).getFacadePartSimpleNames();
+        List<String> partNames = fileStub.getFacadePartSimpleNames();
         if (partNames != null) {
             for (String partName : partNames) {
-                if (partName == null) {
-                    continue;
-                }
                 FqName multiFileClassPartFqName = packageFqName.child(Name.identifier(partName));
                 sink.occurrence(KotlinMultiFileClassPartIndex.Helper.getIndexKey(), multiFileClassPartFqName.asString());
             }
@@ -96,7 +88,7 @@ public class IdeStubIndexService extends StubIndexService {
             boolean primeGrand = grand instanceof KotlinClassStub && ((KotlinClassStub) grand).isTopLevel();
 
             prime = ((KotlinObjectStub) parent).isTopLevel() ||
-                    primeGrand && ((KotlinObjectStub) parent).isCompanion();
+                    primeGrand && ((KotlinObjectStub) parent).getPsi().isCompanion();
         }
 
         if (prime) {
@@ -194,7 +186,7 @@ public class IdeStubIndexService extends StubIndexService {
                 sink.occurrence(KotlinProbablyInjectedFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
-            if (stub.mayHaveContract()) {
+            if (stub.getMayHaveContract()) {
                 sink.occurrence(KotlinProbablyContractedFunctionShortNameIndex.Helper.getIndexKey(), name);
             }
 
@@ -206,7 +198,7 @@ public class IdeStubIndexService extends StubIndexService {
             FqName fqName = stub.getFqName();
             if (fqName != null) {
                 KtNamedFunction ktNamedFunction = stub.getPsi();
-                if (KotlinPsiUtils.isExpectDeclaration(ktNamedFunction)) {
+                if (KtPsiUtilKt.isExpectDeclaration(ktNamedFunction)) {
                     sink.occurrence(KotlinTopLevelExpectFunctionFqNameIndex.Helper.getIndexKey(), fqName.asString());
                 }
 
@@ -265,7 +257,7 @@ public class IdeStubIndexService extends StubIndexService {
             // can have special fq name in case of syntactically incorrect property with no name
             if (fqName != null) {
                 KtProperty ktProperty = stub.getPsi();
-                if (KotlinPsiUtils.isExpectDeclaration(ktProperty)) {
+                if (KtPsiUtilKt.isExpectDeclaration(ktProperty)) {
                     sink.occurrence(KotlinTopLevelExpectPropertyFqNameIndex.Helper.getIndexKey(), fqName.asString());
                 }
 
@@ -281,7 +273,7 @@ public class IdeStubIndexService extends StubIndexService {
     @Override
     public void indexParameter(@NotNull KotlinParameterStub stub, @NotNull IndexSink sink) {
         String name = stub.getName();
-        if (name != null && stub.hasValOrVar()) {
+        if (name != null && stub.getHasValOrVar()) {
             sink.occurrence(KotlinPropertyShortNameIndex.Helper.getIndexKey(), name);
         }
     }
@@ -311,59 +303,5 @@ public class IdeStubIndexService extends StubIndexService {
     @Override
     public void indexScript(@NotNull KotlinScriptStub stub, @NotNull IndexSink sink) {
         sink.occurrence(KotlinScriptFqnIndex.Helper.getIndexKey(), stub.getFqName().asString());
-    }
-
-    @Override
-    public @NotNull KotlinFileStub createFileStub(@NotNull KtFile file) {
-        String packageFqName =file.getPackageFqNameByTree().asString();
-        boolean isScript = file.isScriptByTree();
-        if (file.hasTopLevelCallables()) {
-            JvmFileClassInfo fileClassInfo = JvmFileClassUtil.getFileClassInfoNoResolve(file);
-            String facadeFqNameRef = fileClassInfo.getFacadeClassFqName().asString();
-            String partSimpleName = fileClassInfo.getFileClassFqName().shortName().asString();
-            return new KotlinFileStubImpl(file, packageFqName, isScript, facadeFqNameRef, partSimpleName, null);
-        }
-        return new KotlinFileStubImpl(file, packageFqName, isScript, null, null, null);
-    }
-
-    @Override
-    public void serializeFileStub(
-            @NotNull KotlinFileStub stub, @NotNull StubOutputStream dataStream
-    ) throws IOException {
-        KotlinFileStubImpl fileStub = (KotlinFileStubImpl) stub;
-        dataStream.writeName(fileStub.getPackageFqName().asString());
-        dataStream.writeBoolean(fileStub.isScript());
-        FqName facadeFqName = fileStub.getFacadeFqName();
-        dataStream.writeName(facadeFqName != null ? facadeFqName.asString() : null);
-        dataStream.writeName(fileStub.getPartSimpleName());
-        List<String> facadePartNames = fileStub.getFacadePartSimpleNames();
-        if (facadePartNames == null) {
-            dataStream.writeInt(0);
-        }
-        else {
-            dataStream.writeInt(facadePartNames.size());
-            for (String partName : facadePartNames) {
-                dataStream.writeName(partName);
-            }
-        }
-    }
-
-    @Override
-    public @NotNull KotlinFileStub deserializeFileStub(@NotNull StubInputStream dataStream) throws IOException {
-        String packageFqNameAsString = dataStream.readNameString();
-        if (packageFqNameAsString == null) {
-            throw new IllegalStateException("Can't read package fqname from stream");
-        }
-
-        boolean isScript = dataStream.readBoolean();
-        String facadeString = dataStream.readNameString();
-        String partSimpleName = dataStream.readNameString();
-        int numPartNames = dataStream.readInt();
-        List<String> facadePartNames = new ArrayList<>();
-        for (int i = 0; i < numPartNames; ++i) {
-            String partNameRef = dataStream.readNameString();
-            facadePartNames.add(partNameRef);
-        }
-        return new KotlinFileStubImpl(null, packageFqNameAsString, isScript, facadeString, partSimpleName, facadePartNames);
     }
 }

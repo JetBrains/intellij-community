@@ -6,7 +6,7 @@ import com.intellij.java.analysis.bytecode.JvmBytecodeAnalysis
 import com.intellij.java.analysis.bytecode.JvmBytecodeDeclarationProcessor
 import com.intellij.java.analysis.bytecode.JvmBytecodeReferenceProcessor
 
-class JvmBytecodeAnalysisImpl : JvmBytecodeAnalysis {
+public class JvmBytecodeAnalysisImpl : JvmBytecodeAnalysis {
   override fun createReferenceAnalyzer(processor: JvmBytecodeReferenceProcessor): ClassFileAnalyzer {
     return ClassFileAnalyzerImpl(null, processor)
   }

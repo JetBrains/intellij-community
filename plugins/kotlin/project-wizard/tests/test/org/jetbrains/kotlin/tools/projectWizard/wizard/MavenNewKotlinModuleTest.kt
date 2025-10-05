@@ -7,6 +7,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -105,13 +106,14 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             assertModules(project, "project", newModuleName)
 
             // verify SKD is inherited
-            val moduleModule = ModuleManager.getInstance(project).findModuleByName(newModuleName)!!
+            val moduleModule = ModuleManager.getInstanceAsync(project).findModuleByName(newModuleName)!!
             Assert.assertTrue(ModuleRootManager.getInstance(moduleModule).modifiableModel.isSdkInherited)
         }
         return@runBlocking
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testNewModuleInJavaProject() = runBlocking {
         waitForProjectCreation {
             createProjectFromTemplate(JAVA) {
@@ -141,6 +143,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testNewModuleInKotlinProjectIndependentHierarchy() {
         runNewProjectAndModuleTestCase(
             independentHierarchy = true
@@ -187,6 +190,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testCreateNewProject() {
         runBlocking {
             waitForProjectCreation {
@@ -199,16 +203,19 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testSimpleProject() {
         runNewProjectAndModuleTestCase()
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testAddSampleCodeEverywhere() {
         runNewProjectAndModuleTestCase(addSampleCodeToProject = true, addSampleCodeToModule = true)
     }
 
     @Test
+    @IJIgnore(issue = "KTIJ-35262")
     fun testAddSampleCodeOnlyInModule() {
         runNewProjectAndModuleTestCase(addSampleCodeToProject = false, addSampleCodeToModule = true)
     }

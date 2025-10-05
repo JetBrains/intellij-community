@@ -6,7 +6,7 @@ package com.jetbrains.python.sdk.configuration
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -20,20 +20,26 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.remote.RemoteSdkException
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.sdk.impl.PySdkBundle
+import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPackageManagers
+import com.jetbrains.python.packaging.PyTargetEnvCreationManager
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.target.ui.PyAddSdkPanelBase
-import com.jetbrains.python.target.ui.PyAddSdkPanelBase.Companion.isLocal
-import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.getInterpreterVersion
+import com.jetbrains.python.target.ui.PyAddSdkPanelBase
+import com.jetbrains.python.target.ui.PyAddSdkPanelBase.Companion.isLocal
+import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.ui.pyModalBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -75,8 +81,7 @@ fun createVirtualEnvAndSdkSynchronously(
       }
 
       try {
-        val packageManager = PyPackageManager.getInstance(sdk)
-        return packageManager.createVirtualEnv(venvRoot, inheritSitePackages)
+        return PyTargetEnvCreationManager(sdk).createVirtualEnv(venvRoot, inheritSitePackages)
       }
       finally {
         PyPackageManagers.getInstance().clearCache(sdk)
@@ -91,7 +96,9 @@ fun createVirtualEnvAndSdkSynchronously(
     }
     else {
       val homePath = ProgressManager.getInstance().run(task)
-      createSdkForTarget(project, it, homePath, existingSdks, targetPanelExtension)
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), "...") {
+        createSdkForTarget(project, it, homePath, existingSdks, targetPanelExtension)
+      }
     }
   }
 
@@ -123,14 +130,14 @@ fun findPreferredVirtualEnvBaseSdk(existingBaseSdks: List<Sdk>): Sdk? {
   }
 }
 
-internal fun createSdkForTarget(
+internal suspend fun createSdkForTarget(
   project: Project?,
   environmentConfiguration: TargetEnvironmentConfiguration,
   interpreterPath: String,
   existingSdks: Collection<Sdk>,
   targetPanelExtension: TargetPanelExtension?,
   sdkName: String? = null,
-): Sdk {
+): Sdk = withContext(Dispatchers.IO) {
   // TODO [targets] Should flavor be more flexible?
   val data = PyTargetAwareAdditionalData(PyFlavorAndData(PyFlavorData.Empty, PyAddSdkPanelBase.virtualEnvSdkFlavor)).also {
     it.interpreterPath = interpreterPath
@@ -138,7 +145,10 @@ internal fun createSdkForTarget(
     targetPanelExtension?.applyToAdditionalData(it)
   }
 
-  val sdkVersion: String? = data.getInterpreterVersion(project, interpreterPath)
+  val sdkVersion = when (val r = data.getInterpreterVersion()) {
+    is Result.Success -> r.result.toPythonVersion()
+    is Result.Failure -> throw RemoteSdkException(r.error.message) // TODO: Return error instead to show it to user
+  }
 
   val name = if (!sdkName.isNullOrEmpty()) {
     sdkName
@@ -157,7 +167,7 @@ internal fun createSdkForTarget(
 
   sdk.sdkModificator.let { modifiableSdk ->
     modifiableSdk.versionString = sdkVersion
-    ApplicationManager.getApplication().runWriteAction {
+    writeAction {
       modifiableSdk.commitChanges()
     }
   }
@@ -165,5 +175,5 @@ internal fun createSdkForTarget(
   // FIXME: should we persist it?
   data.isValid = true
 
-  return sdk
+  return@withContext sdk
 }

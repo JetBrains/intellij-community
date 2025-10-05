@@ -54,7 +54,7 @@ public final class ExtendsAnnotationInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ExtendsAnnotationVisitor();
   }
 

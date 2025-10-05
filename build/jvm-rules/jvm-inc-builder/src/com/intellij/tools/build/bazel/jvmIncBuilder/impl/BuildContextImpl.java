@@ -4,6 +4,7 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl;
 import com.intellij.tools.build.bazel.jvmIncBuilder.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.bazel.jvm.Input;
 import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.NodeSourcePathMapper;
 import org.jetbrains.jps.dependency.impl.PathSourceMapper;
@@ -12,11 +13,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.jetbrains.jps.util.Iterators.map;
 
 /** @noinspection IO_FILE_USAGE*/
 public class BuildContextImpl implements BuildContext {
+  private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.impl.BuildContextImpl");
   private final String myTargetName;
   private final Map<CLFlags, List<String>> myFlags;
   private final boolean myAllowWarnings;
@@ -29,12 +33,13 @@ public class BuildContextImpl implements BuildContext {
 
   private final @NotNull NodeSourceSnapshot mySources;
   private final @NotNull NodeSourceSnapshot myLibraries;
+  private final @NotNull Iterable<ResourceGroup> myResources;
   private final boolean myIsRebuild;
   private final BuilderOptions myBuilderOptions;
 
   private volatile boolean myHasErrors;
 
-  public BuildContextImpl(Path baseDir, Iterable<String> inputs, Iterable<byte[]> inputDigests, Map<CLFlags, List<String>> flags, Appendable messageSink) {
+  public BuildContextImpl(Path baseDir, Iterable<Input> inputs, Map<CLFlags, List<String>> flags, Appendable messageSink) {
     myFlags = Map.copyOf(flags);
     myTargetName = CLFlags.TARGET_LABEL.getMandatoryScalarValue(flags);
     myAllowWarnings = !"off".equals(CLFlags.WARN.getOptionalScalarValue(flags));
@@ -59,27 +64,44 @@ public class BuildContextImpl implements BuildContext {
     
     myIsRebuild = CLFlags.NON_INCREMENTAL.isFlagSet(flags);
 
-    Map<NodeSource, String> sourcesMap = new HashMap<>();
-    Map<Path, String> otherInputsMap = new HashMap<>();
+    Map<String, String> digestsMap = new HashMap<>();
     Base64.Encoder base64 = Base64.getEncoder().withoutPadding();
-    Iterator<String> digestsIterator = map(inputDigests, base64::encodeToString).iterator();
-    for (Path inputPath : map(inputs, input -> baseDir.resolve(input).normalize())) {
-      String inputDigest = digestsIterator.hasNext()? digestsIterator.next() : "";
-      if (isSourceDependency(inputPath)) {
-        sourcesMap.put(myPathMapper.toNodeSource(inputPath), inputDigest);
-      }
-      else {
-        otherInputsMap.put(inputPath, inputDigest);
-      }
+    for (Input input : inputs) {
+      String inputDigest = base64.encodeToString(input.digest);
+      digestsMap.put(input.path, inputDigest);
+    }
+
+    Map<NodeSource, String> sourcesMap = new HashMap<>();
+    for (String src : CLFlags.SRCS.getValue(flags)) {
+      Path inputPath = baseDir.resolve(src).normalize();
+      assert isSourceDependency(inputPath);
+      sourcesMap.put(myPathMapper.toNodeSource(inputPath), Objects.requireNonNull(digestsMap.get(src)));
     }
     mySources = new SourceSnapshotImpl(sourcesMap);
 
     Map<NodeSource, String> libsMap = new LinkedHashMap<>(); // for the classpath order is important
     for (String cpEntry : CLFlags.CP.getValue(flags)) {
       Path path = baseDir.resolve(cpEntry).normalize();
-      libsMap.put(myPathMapper.toNodeSource(path), otherInputsMap.getOrDefault(path, ""));
+      libsMap.put(myPathMapper.toNodeSource(path), Objects.requireNonNull(digestsMap.get(cpEntry)));
     }
     myLibraries = new SourceSnapshotImpl(libsMap);
+
+    List<ResourceGroup> resources = new ArrayList<>();
+    for (String resourcesEntry : CLFlags.RESOURCES.getValue(flags)) {
+      String[] parts = resourcesEntry.split(":", 3);
+      String stripPrefix = parts[0];
+      String addPrefix = parts[1];
+      Map<NodeSource, String> resourcesMap = new HashMap<>();
+      for (String file : parts[2].split(":")) {
+        Path path = baseDir.resolve(file).normalize();
+        String digest = Objects.requireNonNull(digestsMap.get(file));
+        resourcesMap.put(myPathMapper.toNodeSource(path), digest);
+      }
+      if (!resourcesMap.isEmpty()) {
+        resources.add(new ResourceGroupImpl(resourcesMap, stripPrefix, addPrefix));
+      }
+    }
+    myResources = resources;
 
     myBuilderOptions = BuilderOptions.create(buildJavaOptions(flags), buildKotlinOptions(flags, map(myLibraries.getElements(), myPathMapper::toPath)));
   }
@@ -89,8 +111,15 @@ public class BuildContextImpl implements BuildContext {
     options.add("-module-name");
     options.add(CLFlags.KOTLIN_MODULE_NAME.getMandatoryScalarValue(flags));
 
-    options.add("-no-stdlib");
-    options.add("-no-reflect");
+    if (KotlinCompilerConfig.ENABLE_INCREMENTAL_COMPILATION) {
+      options.add("-Xenable-incremental-compilation");
+    }
+    if (!KotlinCompilerConfig.INCLUDE_STDLIB) {
+      options.add("-no-stdlib");
+    }
+    if (!KotlinCompilerConfig.INCLUDE_REFLECTION) {
+      options.add("-no-reflect");
+    }
 
     String apiVersion = CLFlags.API_VERSION.getOptionalScalarValue(flags);
     if (apiVersion != null) {
@@ -125,8 +154,21 @@ public class BuildContextImpl implements BuildContext {
     else if ("error".equals(warn)) {
       options.add("-Werror");
     }
-    else if (warn != null) {
-      throw new IllegalArgumentException("unsupported kotlinc warning option: " + warn);
+    else if (warn != null && !"report".equals(warn)) {
+      throw new IllegalArgumentException("Unsupported kotlinc warning option: " + warn);
+    }
+
+    if (CLFlags.X_ALLOW_RESULT_RETURN_TYPE.isFlagSet(flags)) {
+      options.add("-Xallow-result-return-type");
+    }
+    if (CLFlags.X_STRICT_JAVA_NULLABILITY_ASSERTIONS.isFlagSet(flags)) {
+      options.add("-Xstrict-java-nullability-assertions");
+    }
+    if (CLFlags.X_WASM_ATTACH_JS_EXCEPTION.isFlagSet(flags)) {
+      options.add("-Xwasm-attach-js-exception");
+    }
+    for (String flag : CLFlags.X_X_LANGUAGE.getValue(flags)) {
+      options.add("-XXLanguage:" + flag);
     }
 
     StringBuilder cp = new StringBuilder();
@@ -147,29 +189,46 @@ public class BuildContextImpl implements BuildContext {
   private @NotNull List<String> buildJavaOptions(Map<CLFlags, List<String>> flags) {
     // for now, only options available in the flags map can be specified in the build configuration
     List<String> options = new ArrayList<>();
-    options.add("-g"); // todo: for now hardcoded
+    if (JavaCompilerConfig.GENERATE_DEBUG_INFO) {
+      options.add("-g"); 
+    }
+    if (JavaCompilerConfig.REPORT_DEPRECATION) {
+      options.add("-deprecation");
+    }
 
     String warn = CLFlags.WARN.getOptionalScalarValue(flags);
     if ("off".equals(warn)) {
       options.add("-nowarn");
     }
     else if ("error".equals(warn)) {
-      options.add("-werror");
+      options.add("-Werror");
     }
-    else if (warn != null) {
-      throw new IllegalArgumentException("unsupported javac warning option: " + warn);
+    else if (warn != null && !"report".equals(warn)) {
+      throw new IllegalArgumentException("Unsupported javac warning option: " + warn);
     }
-    
+
+    if (CLFlags.NO_PROC.isFlagSet(flags)) {
+      options.add("-proc:none");
+    }
+
     options.add("-encoding");
     options.add("UTF-8");
 
     String jvmTarget = CLFlags.JVM_TARGET.getOptionalScalarValue(flags);
     if (jvmTarget != null) {
-      options.add("-source");
-      options.add(jvmTarget); // todo: need more flexibility in language level specification?
+      if (shouldUseReleaseOption(jvmTarget)) {
+        options.add("--release");
+        options.add(jvmTarget);
+      }
+      else {
+        options.add("-source");
+        options.add(jvmTarget);
 
-      options.add("-target");
-      options.add(jvmTarget);
+        options.add("-target");
+        options.add(jvmTarget);
+        
+        // todo: support '-system' option to specify the JDK against which the generated code should be linked
+      }
     }
 
     Path trashDir = DataPaths.getTrashDir(this);
@@ -185,6 +244,36 @@ public class BuildContextImpl implements BuildContext {
       options.add(exp);
     }
     return options;
+  }
+
+  private static boolean shouldUseReleaseOption(String jvmTarget) {
+    if (!JavaCompilerConfig.USE_RELEASE_OPTION) {
+      return false;
+    }
+    // todo: if worker's compatibility with jvm versions <= 10 is required, parse Properties.getProperty("java.version")
+    int compilerVersion = Runtime.version().feature();
+    int targetPlatformVersion = parseTargetPlatformVersion(jvmTarget);
+    // --release option is supported in java9+ and higher
+    if (compilerVersion >= 9 && targetPlatformVersion > 0) {
+      // Only specify '--release' when cross-compilation is indeed really required.
+      // Otherwise, '--release' may not be compatible with other compilation options, e.g. exporting a package from system module
+      return compilerVersion != targetPlatformVersion;
+    }
+    return false;
+  }
+
+  private static int parseTargetPlatformVersion(String target) {
+    if (target != null) {
+      target = target.trim();
+      int dotIndex = target.lastIndexOf(".");
+      try {
+        return Integer.parseInt(dotIndex < 0? target : target.substring(dotIndex + 1));
+      }
+      catch (NumberFormatException e) {
+        LOG.log(Level.INFO, "Error parsing JVM target version ", e);
+      }
+    }
+    return -1;
   }
 
   private static boolean isSourceDependency(Path path) {
@@ -242,6 +331,11 @@ public class BuildContextImpl implements BuildContext {
   }
 
   @Override
+  public Iterable<ResourceGroup> getResources() {
+    return myResources;
+  }
+
+  @Override
   public BuilderOptions getBuilderOptions() {
     return myBuilderOptions;
   }
@@ -261,6 +355,21 @@ public class BuildContextImpl implements BuildContext {
     try {
       if (!myAllowWarnings && msg.getKind() == Message.Kind.WARNING) {
         return;
+      }
+      if (!myAllowWarnings) {
+        // Some warnings in javac are impossible to disable
+        // They're also reported as notes, not warnings
+        // It greatly pollutes compilation output
+        String text = msg.getText();
+        if (text.startsWith("Some input files use unchecked or unsafe operations.") ||
+            text.startsWith("Some input files use or override a deprecated API that is marked for removal.") ||
+            text.startsWith("Some input files additionally use or override a deprecated API.") ||
+            text.startsWith("Recompile with -Xlint:unchecked for details.") ||
+            text.startsWith("Recompile with -Xlint:removal for details.") ||
+            text.contains("uses or overrides a deprecated API that is marked for removal") ||
+            text.contains("uses unchecked or unsafe operations"))  {
+          return;
+        }
       }
       if (msg.getSource() != null) {
         myMessageSink.append(msg.getSource().getName()).append(": ");

@@ -46,7 +46,13 @@ fun getKotlinVersion(gradleVersion: GradleVersion): String {
     base >= version("8.12") -> "2.0.21"
     base >= version("8.11") -> "2.0.20"
     base >= version("8.10") -> "1.9.24"
-    base >= version("8.7") -> "1.9.23"
+    base >= version("8.9") -> "1.9.23"
+    base >= version("8.7") -> "1.9.22"
+    base >= version("8.5") -> "1.9.20"
+    base >= version("8.4") -> "1.9.10"
+    base >= version("8.3") -> "1.9.0"
+    base >= version("8.2") -> "1.8.20"
+    base >= version("8.0") -> "1.8.10"
     base >= version("6.7.1") -> "1.7.20"
     base >= version("5.6.2") -> "1.4.32"
     else -> "1.3.50"
@@ -69,8 +75,36 @@ fun isTaskConfigurationAvoidanceSupported(gradleVersion: GradleVersion): Boolean
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.9")
 }
 
+fun isKotlinSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "5.6.2")
+}
+
 fun isJunit5Supported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.7")
+}
+
+fun isSpockSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "5.6")
+}
+
+fun isRobolectricSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.6")
+}
+
+fun isTopLevelJavaConventionsSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.2")
+}
+
+fun isJavaConventionsBlockSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.1")
+}
+
+fun isConfigurationCacheSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.1")
+}
+
+fun isIsolatedProjectsSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.8")
 }
 
 fun isPlatformDependencySupported(gradleVersion: GradleVersion): Boolean {

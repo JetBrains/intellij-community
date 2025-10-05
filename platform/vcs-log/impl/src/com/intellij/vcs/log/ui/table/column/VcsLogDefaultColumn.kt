@@ -10,6 +10,7 @@ import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.LoadingDetails
+import com.intellij.vcs.log.data.roots
 import com.intellij.vcs.log.graph.DefaultColorGenerator
 import com.intellij.vcs.log.history.FileHistoryPaths.filePathOrDefault
 import com.intellij.vcs.log.history.FileHistoryPaths.hasPathsInformation

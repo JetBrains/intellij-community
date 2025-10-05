@@ -11,6 +11,17 @@ class _SupportsGraphident(Protocol):
 # code, filename and packagepath are always initialized to None. But they can be given a value later.
 class Node:
     # Compiled code. See stdlib.builtins.compile
+    __slots__ = [
+        "code",
+        "filename",
+        "graphident",
+        "identifier",
+        "packagepath",
+        "_deferred_imports",
+        "_global_attr_names",
+        "_starimported_ignored_module_names",
+        "_submodule_basename_to_node",
+    ]
     code: CodeType | None
     filename: str | None
     graphident: str

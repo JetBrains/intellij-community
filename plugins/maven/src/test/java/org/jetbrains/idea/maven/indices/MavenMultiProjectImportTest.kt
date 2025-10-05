@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.indices
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
-import com.intellij.maven.testFramework.MavenTestCaseLegacy
+import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -18,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider
@@ -76,7 +77,7 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
     val projectDir = myDir!!.resolve(dir)
     projectDir.createDirectories()
     val pom = projectDir.resolve("pom.xml")
-    pom.write(MavenTestCaseLegacy.createPomXml(xml))
+    pom.write(MavenTestCase.createPomXml(MavenConstants.MODEL_VERSION_4_0_0, xml))
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom)
   }
 

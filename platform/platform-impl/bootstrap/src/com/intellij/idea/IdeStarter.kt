@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.idea
 
 import com.intellij.accessibility.enableScreenReaderSupportIfNeeded
@@ -34,7 +36,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.migrateRegistryToAdvSettings
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.wm.ex.NoProjectStateHandler
+import com.intellij.openapi.wm.ex.findNoProjectStateHandler
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -45,12 +47,11 @@ import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
 import javax.swing.JOptionPane
 
 open class IdeStarter : ModernApplicationStarter() {
   companion object {
-    private var filesToLoad: List<Path> = Collections.emptyList()
+    private var filesToLoad: List<Path> = emptyList()
     private var uriToOpen: String? = null
 
     fun openFilesOnLoading(value: List<Path>) {
@@ -88,14 +89,14 @@ open class IdeStarter : ModernApplicationStarter() {
       }
 
       val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(close = isHeadless || !shouldRunFusStartUpMeasurer())
-      if (starter != null) {
+      if (starter == null) {
+        openProjectBlock()
+      }
+      else {
         if ((app as ApplicationEx).isLightEditMode) {
           FUSProjectHotStartUpMeasurer.lightEditProjectFound()
         }
         withContext(starter, openProjectBlock)
-      }
-      else {
-        openProjectBlock()
       }
 
       app.serviceAsync<PerformanceWatcher>()
@@ -114,7 +115,7 @@ open class IdeStarter : ModernApplicationStarter() {
       }.getOrLogException(thisLogger())
 
       if (!app.isHeadlessEnvironment) {
-        postOpenUiTasks()
+        postOpenUiTasks(scope = this)
       }
     }
   }
@@ -156,12 +157,15 @@ open class IdeStarter : ModernApplicationStarter() {
       if (willOpenProject) {
         return@span true
       }
-      val customHandler = NoProjectStateHandler.EP_NAME.lazySequence().firstOrNull { it.canHandle() }
-      if (customHandler != null) {
-        customHandler.handle()
+
+      val customHandler = findNoProjectStateHandler()
+      if (customHandler == null) {
+        return@span showWelcomeFrame(publisher)
+      }
+      else {
+        customHandler()
         return@span false
       }
-      return@span showWelcomeFrame(publisher)
     }
 
     if (!isOpenProjectNeeded) {
@@ -261,9 +265,7 @@ open class IdeStarter : ModernApplicationStarter() {
       }
     }
 
-    override fun shouldRunFusStartUpMeasurer(): Boolean {
-      return javaClass == StandaloneLightEditStarter::class.java
-    }
+    override fun shouldRunFusStartUpMeasurer(): Boolean = javaClass == StandaloneLightEditStarter::class.java
   }
 }
 
@@ -281,39 +283,40 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
   return result.project
 }
 
-private fun CoroutineScope.postOpenUiTasks() {
+private fun postOpenUiTasks(scope: CoroutineScope) {
   if (PluginManagerCore.isRunningFromSources()) {
     updateAppWindowIcon(JOptionPane.getRootFrame())
   }
 
   if (SystemInfoRt.isMac) {
-    launch(CoroutineName("mac touchbar on app init")) {
+    @Suppress("GrazieInspection")
+    scope.launch(CoroutineName("mac touchbar on app init")) {
       TouchbarSupport.onApplicationLoaded()
     }
   }
   else if (SystemInfoRt.isUnix && SystemInfo.isJetBrainsJvm) {
-    launch(CoroutineName("input method disabling on Linux")) {
+    scope.launch(CoroutineName("input method disabling on Linux")) {
       disableInputMethodsIfPossible()
     }
   }
 
-  launch {
+  scope.launch {
     migrateRegistryToAdvSettings()
   }
 
-  launch {
+  scope.launch {
     SystemHealthMonitor.start()
   }
 
-  launch {
+  scope.launch {
     FUSProjectHotStartUpMeasurer.startWritingStatistics()
   }
 
-  launch {
+  scope.launch {
     serviceAsync<IconDbMaintainer>()
   }
 
-  launch {
+  scope.launch {
     enableScreenReaderSupportIfNeeded()
   }
 }
@@ -330,8 +333,8 @@ private suspend fun reportPluginErrors() {
     val actions = linksToActions(pluginErrorMessages)
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrorMessages).toString()
     @Suppress("DEPRECATION")
-    serviceAsync<NotificationGroupManager>().getNotificationGroup(
-      "Plugin Error").createNotification(title, content, NotificationType.ERROR)
+    serviceAsync<NotificationGroupManager>().getNotificationGroup("Plugin Error")
+      .createNotification(title, content, NotificationType.ERROR)
       .setListener { notification, event ->
         notification.expire()
         PluginManagerMain.onEvent(event.description)
@@ -347,7 +350,7 @@ private fun linksToActions(errors: MutableList<HtmlChunk>): Collection<AnAction>
 
   while (!errors.isEmpty()) {
     val builder = StringBuilder()
-    errors[errors.lastIndex].appendTo(builder)
+    errors.get(errors.lastIndex).appendTo(builder)
     val error = builder.toString()
 
     if (error.startsWith(link)) {

@@ -3,15 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.api.HttpStatusErrorException
-import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
-import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.async.transformConsecutiveSuccesses
-import com.intellij.collaboration.async.withInitial
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
@@ -67,7 +63,7 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
                                              private val currentUser: GitLabUserDTO,
                                              private val tokenRefreshFlow: Flow<Unit>) : GitLabProjectMergeRequestsStore {
 
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(this::class)
 
   private val glProject: GitLabProjectCoordinates = projectMapping.repository
 

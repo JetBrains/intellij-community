@@ -8,12 +8,14 @@ import com.intellij.execution.impl.ConsoleViewUtil
 import com.intellij.openapi.application.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -23,7 +25,8 @@ private data class ComputedFilter(
   val listenersFired: Boolean,
 )
 
-internal class CompositeFilterWrapper(private val project: Project, coroutineScope: CoroutineScope) {
+@ApiStatus.Internal
+class CompositeFilterWrapper(private val project: Project, coroutineScope: CoroutineScope) {
   private val filtersUpdatedListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
 
   private val customFilters: MutableList<Filter> = CopyOnWriteArrayList()
@@ -39,14 +42,14 @@ internal class CompositeFilterWrapper(private val project: Project, coroutineSco
 
   init {
     ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener(coroutineScope, ::rescheduleFilterComputation)
-    coroutineScope.launch { 
+    coroutineScope.launch(CoroutineName("CompositeFilterWrapper computing filters")) {
       filterComputationRequests.collectLatest { 
         filterFlow.value = null // tell the clients the value is being computed
         val newValue = ComputedFilter(computeFilter(), false)
         filterFlow.value = newValue
-        // Using UiDispatcherKind.RELAX because the listeners interact with the editor and its document,
+        // Using UiWithModelAccess because the listeners interact with the editor and its document,
         // so they need to take locks, and therefore the strict dispatcher won't do.
-        withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
+        withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
           fireFiltersUpdated()
           filterFlow.value = newValue.copy(listenersFired = true)
         }
@@ -88,6 +91,14 @@ internal class CompositeFilterWrapper(private val project: Project, coroutineSco
     }
     ensureComputationInitialized()
     return null
+  }
+
+  /**
+   * Returns the flow of computed filters.
+   */
+  fun getFilterFlow(): Flow<CompositeFilter> {
+    ensureComputationInitialized()
+    return filterFlow.mapNotNull { it?.filter }.distinctUntilChanged()
   }
 
   private fun ensureComputationInitialized() {

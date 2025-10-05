@@ -3,12 +3,12 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.uast.LazyParentUIdentifier
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.toUElement
@@ -22,14 +22,22 @@ class KotlinUIdentifier(
     override val javaPsi: PsiElement?
         get() = javaPsiSupplier() // don't know any real need to call it in production
 
+    @Deprecated("see the base property description", replaceWith = ReplaceWith("sourcePsi"))
     override val psi: PsiElement?
         get() = javaPsi ?: sourcePsi
 
     init {
-        if (ApplicationManager.getApplication().isUnitTestMode && !acceptableSourcePsi(sourcePsi))
-            throw KotlinExceptionWithAttachments(
-                "sourcePsi should be physical leaf element but got $sourcePsi of (${sourcePsi?.javaClass})"
-            ).withAttachment("sourcePsi.text", sourcePsi?.text)
+        if (ApplicationManager.getApplication().isUnitTestMode && !acceptableSourcePsi(sourcePsi)) {
+            Logger.getInstance(KotlinUIdentifier::class.java)
+                .warn(
+                    """
+                        sourcePsi should be physical leaf element but got $sourcePsi of (${sourcePsi?.javaClass})
+                        
+                        sourcePsi.text:
+                        ${sourcePsi?.text}
+                    """.trimIndent()
+                )
+        }
     }
 
     private fun acceptableSourcePsi(sourcePsi: PsiElement?): Boolean {

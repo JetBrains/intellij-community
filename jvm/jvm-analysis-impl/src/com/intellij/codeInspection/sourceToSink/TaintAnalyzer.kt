@@ -595,9 +595,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   }
 
   private fun getEmptyParameters(uMethod: UMethod): List<TaintValue> {
-    val values: MutableList<TaintValue> = ArrayList()
-    val parameters = uMethod.uastParameters
-    for (i in parameters.indices) {
+    val values = mutableListOf<TaintValue>()
+    repeat(uMethod.uastParameters.indices.count()) {
       values.add(TaintValue.UNKNOWN)
     }
     return values

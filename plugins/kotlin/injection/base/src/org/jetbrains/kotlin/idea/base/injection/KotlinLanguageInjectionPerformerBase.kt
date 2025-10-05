@@ -73,7 +73,8 @@ abstract class KotlinLanguageInjectionPerformerBase : LanguageInjectionPerformer
                                              ContainerUtil.concat(listOfNotNull(child.left, child.right), tail), pendingPrefix, unparseable, collected)
                 }
                 child is KtStringTemplateExpression -> {
-                    if (child.children.isEmpty()) {
+                    val entries = child.entries
+                    if (entries.isEmpty()) {
                         // empty range to save injection in the empty string
                         collected += injectionRange(
                             child,
@@ -83,7 +84,7 @@ abstract class KotlinLanguageInjectionPerformerBase : LanguageInjectionPerformer
                         )
                     }
                     return collectInjections(child,
-                                             ContainerUtil.concat(child.children.toList(), tail), pendingPrefix, unparseable, collected)
+                        ContainerUtil.concat(entries.toList(), tail), pendingPrefix, unparseable, collected)
                 }
                 literal == null -> {
                     val (prefix, myUnparseable) = makePlaceholder(child)

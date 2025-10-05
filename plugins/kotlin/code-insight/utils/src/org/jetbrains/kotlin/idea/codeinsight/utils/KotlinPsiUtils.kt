@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
@@ -9,13 +10,18 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isUsedAsExpression
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -74,7 +80,7 @@ fun KtPropertyAccessor.canBeCompletelyDeleted(): Boolean {
 
 fun removeRedundantGetter(getter: KtPropertyAccessor) {
     val property = getter.property
-    val accessorTypeReference = getter.returnTypeReference
+    val accessorTypeReference = getter.typeReference
     if (accessorTypeReference != null && property.typeReference == null && property.initializer == null) {
         property.typeReference = accessorTypeReference
     }
@@ -231,6 +237,36 @@ fun KtDotQualifiedExpression.replaceFirstReceiver(
 val KtQualifiedExpression.callExpression: KtCallExpression?
     get() = selectorExpression as? KtCallExpression
 
+/**
+ * For [KtExpression] representing a possibly qualified function call,
+ * returns an absolute [TextRange] which represents only the callee expression with a possible qualifier.
+ *
+ * Some examples:
+ * - `foo(...)` -> `foo`
+ * - `foo.bar(...)` -> `foo.bar`
+ * - `foo.baz(...).bar { ... }` -> `foo.baz(...).bar`
+ * - `(<complex expression>)(...)` -> `(<complex expression>)`
+ */
+@get:ApiStatus.Internal
+val KtExpression.qualifiedCalleeExpressionTextRangeInThis: TextRange?
+    get() {
+        val possiblyQualifiedCall = this
+
+        val callExpression = possiblyQualifiedCall.getPossiblyQualifiedCallExpression() ?: return null
+        val calleeExpression = callExpression.calleeExpression ?: return null
+
+        val calleeExpressionEnd = calleeExpression.textRangeIn(possiblyQualifiedCall).endOffset
+
+        return TextRange.create(0, calleeExpressionEnd)
+    }
+
+/**
+ * Similar to [qualifiedCalleeExpressionTextRangeInThis], but it returns a [TextRange] relative to the whole document.
+ */
+@get:ApiStatus.Internal
+val KtExpression.qualifiedCalleeExpressionTextRange: TextRange?
+    get() = qualifiedCalleeExpressionTextRangeInThis?.shiftRight(startOffset)
+
 fun KtCallExpression.singleArgumentExpression(): KtExpression? {
     return valueArguments.singleOrNull()?.getArgumentExpression()
 }
@@ -321,17 +357,19 @@ tailrec fun KtDotQualifiedExpression.expressionWithoutClassInstanceAsReceiver():
 fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
 fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 
+@OptIn(KaContextParameterApi::class)
 @ApiStatus.Internal
-context(KaSession)
+context(_: KaSession)
 fun KtExpression.isSynthesizedFunction(): Boolean {
     val symbol =
         resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
     return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED
 }
 
+@OptIn(KaContextParameterApi::class)
 @ApiStatus.Internal
-context(KaSession)
-fun KtCallExpression.isCalling(fqNames: Collection<FqName>): Boolean {
+context(_: KaSession)
+fun KtCallExpression.isCallingAnyOf(vararg fqNames: FqName): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
     if (targetFqNames.none()) return false
@@ -352,21 +390,22 @@ operator fun FqName.plus(name: Name): FqName = child(name)
 @ApiStatus.Internal
 operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
 
-private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = setOf(
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = arrayOf(
     StandardKotlinNames.Enum.enumEntries,
     StandardKotlinNames.Enum.enumValues,
     StandardKotlinNames.Enum.enumValueOf
 )
 
-context(KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     val target = (parent.getStrictParentOfType<KtTypeArgumentList>() ?: this)
         .getParentOfTypes(true, KtCallExpression::class.java, KtCallableDeclaration::class.java)
     return when (target) {
-        is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES)
+        is KtCallExpression -> target.isCallingAnyOf(*KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES)
         is KtCallableDeclaration -> {
             target.anyDescendantOfType<KtCallExpression> {
-                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES) && it.isUsedAsExpression
+                it.isCallingAnyOf(*KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES) && it.isUsedAsExpression
             }
         }
 
@@ -374,13 +413,13 @@ fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
     }
 }
 
-context(KaSession)
+context(_: KaSession)
 fun KtCallExpression.isReferenceToBuiltInEnumFunction(): Boolean {
     val calleeExpression = this.calleeExpression ?: return false
     return (calleeExpression as? KtSimpleNameExpression)?.getReferencedNameAsName() in ENUM_STATIC_METHOD_NAMES && calleeExpression.isSynthesizedFunction()
 }
 
-context(KaSession)
+context(_: KaSession)
 fun KtCallableReferenceExpression.isReferenceToBuiltInEnumFunction(): Boolean {
     return this.canBeReferenceToBuiltInEnumFunction() && this.callableReference.isSynthesizedFunction()
 }

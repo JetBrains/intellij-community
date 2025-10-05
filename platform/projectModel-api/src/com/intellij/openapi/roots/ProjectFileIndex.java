@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.SdkEntity;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +64,7 @@ public interface ProjectFileIndex extends FileIndex {
 
   /**
    * Returns module to which content the specified file belongs or null if the file does not belong to content of any module.
+   * todo IJPL-339 deprecate?
    *
    * @param honorExclusion if {@code false} the containing module will be returned even if the file is located under a folder marked as excluded
    */
@@ -75,13 +77,17 @@ public interface ProjectFileIndex extends FileIndex {
    *
    * @param honorExclusion if {@code false} the containing module will be returned even if the file is located under a folder marked as excluded
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @RequiresReadLock
   @NotNull
   @Unmodifiable Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion);
 
   /**
    * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).
+   * <br/>
+   * <strong>Use this method only if you really need to process {@link OrderEntry} instances.</strong>
+   * Otherwise, use {@link ProjectFileIndex#findContainingLibraries(VirtualFile)}</strong> or
+   * {@link ProjectFileIndex#findContainingSdks(VirtualFile)} which are much more efficient.
    */
   @RequiresReadLock
   @NotNull
@@ -183,10 +189,15 @@ public interface ProjectFileIndex extends FileIndex {
 
   /**
    * Returns libraries used in the project which have {@code fileOrDir} under their classes or source roots.
-   * <strong>Currently this method doesn't search for global libraries.</strong>
    */
   @ApiStatus.Experimental
   @NotNull @Unmodifiable Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir);
+
+  /**
+   * Returns SDKs used in the project which have {@code fileOrDir} under their classes or source roots.
+   */
+  @ApiStatus.Experimental
+  @NotNull @Unmodifiable Collection<@NotNull SdkEntity> findContainingSdks(@NotNull VirtualFile fileOrDir);
 
   /**
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is ignored
@@ -210,16 +221,6 @@ public interface ProjectFileIndex extends FileIndex {
    */
   @RequiresReadLock
   boolean isInGeneratedSources(@NotNull VirtualFile file);
-
-  /**
-   * @deprecated use other methods from this class to obtain the information you need to get from {@link SourceFolder} instance, e.g. 
-   * {@link #getContainingSourceRootType} or {@link #isInGeneratedSources}.
-   */
-  @Deprecated(forRemoval = true)
-  @RequiresReadLock
-  default @Nullable SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
-    return null;
-  }
 
   /**
    * Returns name of the unloaded module to which content {@code fileOrDir} belongs, or {@code null} if {@code fileOrDir} doesn't belong

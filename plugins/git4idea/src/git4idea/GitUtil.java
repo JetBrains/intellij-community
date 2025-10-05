@@ -99,6 +99,12 @@ public final class GitUtil {
     // do nothing
   }
 
+  public static void updateHead(@NotNull GitRepository repository,
+                                @NotNull Hash newObjectId,
+                                @Nullable String reflogMessage) throws VcsException {
+    Git.getInstance().updateReference(repository, HEAD, newObjectId, reflogMessage).throwOnError();
+  }
+
   /**
    * Returns the Git repository location for the given repository root directory, or null if nothing can be found.
    * Able to find the real repository root of a submodule or of a working tree.

@@ -1,23 +1,24 @@
 ### auto-generated section `build intellij.javaFX.community` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "community_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "community",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":community_resources"]
 )
 
 jvm_library(
   name = "community_test_lib",
+  module_name = "intellij.javaFX.community",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//plugins/javaFX",
     "//plugins/javaFX:javaFX_test_lib",
@@ -47,11 +48,18 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//java/java-impl-refactorings:impl-refactorings",
   ],
-  runtime_deps = [":community_resources"]
+  exports = [
+    "//plugins/javaFX",
+    "//plugins/javaFX:javaFX_test_lib",
+  ]
 )
+### auto-generated section `build intellij.javaFX.community` end
+
+### auto-generated section `test intellij.javaFX.community` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "community_test",
   runtime_deps = [":community_test_lib"]
 )
-### auto-generated section `build intellij.javaFX.community` end
+### auto-generated section `test intellij.javaFX.community` end

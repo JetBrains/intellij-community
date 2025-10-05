@@ -7,48 +7,90 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.text.CheckerRunner
-import com.intellij.grazie.text.TextChecker
-import com.intellij.grazie.text.TextContent
-import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.*
+import com.intellij.grazie.text.TextExtractor.findAllTextContents
 import com.intellij.lang.Language
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.InspectionProfileManager
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
+import org.jetbrains.annotations.NonNls
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 class GrazieInspection : LocalInspectionTool(), DumbAware {
 
-  override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
+  class Grammar: LocalInspectionTool(), DumbAware {
+    override fun getShortName(): @NonNls String = GRAMMAR_INSPECTION
+
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+  }
+
+  class Style: LocalInspectionTool(), DumbAware {
+    override fun getShortName(): @NonNls String = STYLE_INSPECTION
+
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+  }
+
+  override fun getDisplayName(): String = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val file = holder.file
-    if (ignoreGrammarChecking(file) || InspectionProfileManager.hasTooLowSeverity(session, this)) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
+    if (ignoreGrammarChecking(file) || hasTooLowSeverity(session)) return PsiElementVisitor.EMPTY_VISITOR
 
-    val checkers = TextChecker.allCheckers()
     val checkedDomains = checkedDomains()
     val areChecksDisabled = getDisabledChecker(file)
+    val earlyBreak = AtomicBoolean(false)
 
     return object : PsiElementVisitor() {
+      override fun visitWhiteSpace(space: PsiWhiteSpace) {}
+
       override fun visitElement(element: PsiElement) {
-        if (element is PsiWhiteSpace || areChecksDisabled(element)) return
+        if (earlyBreak.get() || areChecksDisabled(element)) return
 
         val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
-        if (skipCheckingTooLargeTexts(texts)) return
+        if (texts.isEmpty() || skipCheckingTooLargeTexts(texts)) return
+        if (skipCheckingTooLargeFiles(file)) {
+          earlyBreak.set(true)
+          return
+        }
 
-        for (extracted in sortByPriority(texts, session.priorityRange)) {
-          val runner = CheckerRunner(extracted)
-          runner.run(checkers) { problem ->
-            runner.toProblemDescriptors(problem, isOnTheFly).forEach(holder::registerProblem)
+        sortByPriority(texts, session.priorityRange)
+          .map { CheckerRunner(it) }
+          .map { it to it.run() }
+          .forEach { (runner, problems) ->
+            problems.forEach { problem ->
+              runner.toProblemDescriptors(problem, holder.isOnTheFly).forEach(holder::registerProblem)
+            }
           }
+
+        if (element == file) {
+          checkTextLevel(file, holder)
         }
       }
     }
+  }
+
+  private fun checkTextLevel(file: PsiFile, holder: ProblemsHolder) {
+    TreeRuleChecker.checkTextLevelProblems(file).forEach { reportProblem(it, holder) }
+  }
+
+  private fun reportProblem(problem: TextProblem, holder: ProblemsHolder) {
+    CheckerRunner(problem.text).toProblemDescriptors(problem, holder.isOnTheFly)
+      .forEach { holder.registerProblem(it) }
+  }
+
+  private fun hasTooLowSeverity(session: LocalInspectionToolSession): Boolean {
+    return inspections.all { InspectionProfileManager.hasTooLowSeverity(session, it) }
   }
 
   /**
@@ -56,8 +98,12 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
    */
   @Suppress("CompanionObjectInExtension")
   companion object {
+    private val inspections: List<LocalInspectionTool> = listOf(Grammar(), Style())
+
     private const val MAX_TEXT_LENGTH_IN_PSI_ELEMENT = 50_000
     private const val MAX_TEXT_LENGTH_IN_FILE = 200_000
+    const val GRAMMAR_INSPECTION: String = "GrazieInspection"
+    const val STYLE_INSPECTION: String = "GrazieStyle"
 
     private val hasSpellChecking: Boolean by lazy {
       try {
@@ -70,30 +116,16 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
     }
 
     @JvmStatic
-    fun findAllTextContents(vp: FileViewProvider, domains: Set<TextContent.TextDomain>): Set<TextContent> {
-      val allContents: MutableSet<TextContent> = HashSet()
-      for (root in vp.allFiles) {
-        for (element in SyntaxTraverser.psiTraverser(root)) {
-          if (element.firstChild == null) {
-            allContents.addAll(TextExtractor.findTextsAt(element, domains))
-          }
-        }
-      }
-      return allContents
-    }
+    fun skipCheckingTooLargeTexts(texts: List<TextContent>): Boolean = texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_PSI_ELEMENT
 
     @JvmStatic
-    fun skipCheckingTooLargeTexts(texts: List<TextContent>): Boolean {
-      if (texts.isEmpty()) return false
-      if (texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_PSI_ELEMENT) return true
-
-      val file = texts[0].containingFile
+    fun skipCheckingTooLargeFiles(file: PsiFile): Boolean {
       if (file.textLength <= MAX_TEXT_LENGTH_IN_FILE) return false
-
       val allInFile = CachedValuesManager.getProjectPsiDependentCache(file) {
         val contents = findAllTextContents(it.viewProvider, TextContent.TextDomain.ALL)
         TextContentRelatedData(file, contents)
       }.contents
+
       val checkedDomains = checkedDomains()
       return allInFile.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE
     }
@@ -152,8 +184,8 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
                "fileLanguage = ${psiFile.language}, " +
                "viewProviderLanguages = ${psiFile.viewProvider.allFiles.map { it.language }.toSet()}, " +
                "parentLanguages = ${contents.map { it.commonParent }.map { it.language }.toSet()},"
-               "isPhysical = ${psiFile.isPhysical}, " +
-               "contentLengths = ${contents.map { it.length }}]"
+        "isPhysical = ${psiFile.isPhysical}, " +
+        "contentLengths = ${contents.map { it.length }}]"
       }
     }
   }

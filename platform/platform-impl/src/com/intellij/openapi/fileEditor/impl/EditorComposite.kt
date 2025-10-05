@@ -23,6 +23,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ID_ATTRIBUTE
+import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.MANAGING_FS_ATTRIBUTE
+import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.PROTOCOL_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
@@ -33,7 +35,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Weighted
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
@@ -57,6 +58,8 @@ import kotlinx.coroutines.flow.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.concurrent.TimeUnit
@@ -194,7 +197,7 @@ open class EditorComposite internal constructor(
 
     // TODO comment this and log a warning or log something
     if (fileEditorWithProviders.isEmpty()) {
-      withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      withContext(Dispatchers.UiWithModelAccess) {
         compositePanel.removeAll()
         setFileEditors(fileEditors = emptyList(), selectedEditor = null)
       }
@@ -222,12 +225,21 @@ open class EditorComposite internal constructor(
       beforeFileOpen(this, model)
       // cannot be before use as fileOpenedSync by contract should be called in the same EDT event
       val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
-      span("file opening in EDT and repaint", Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      span("file opening in EDT and repaint", Dispatchers.UiWithModelAccess) {
         span("beforeFileOpened event executing") {
           computeOrLogException(
             lambda = { beforePublisher!!.beforeFileOpened(fileEditorManager, file) },
             errorMessage = { "exception during beforeFileOpened notification" },
           )
+        }
+
+        span("Artificially wait if the skeleton has been set recently to avoid flickering") {
+          compositePanel.skeleton?.let { editorSkeleton ->
+            val hasBeenShownFor = System.currentTimeMillis() - editorSkeleton.initialTime.get()
+            if (hasBeenShownFor < SKELETON_DELAY) {
+              delay(SKELETON_DELAY - hasBeenShownFor)
+            }
+          }
         }
 
         applyFileEditorsInEdt(
@@ -252,7 +264,7 @@ open class EditorComposite internal constructor(
         coroutineScope = coroutineScope,
       )
 
-      span("fileOpened event executing", Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      span("fileOpened event executing", Dispatchers.UiWithModelAccess) {
         writeIntentReadAction {
           deprecatedPublisher.fileOpened(fileEditorManager, file)
         }
@@ -583,6 +595,18 @@ open class EditorComposite internal constructor(
       }
       val index = calcComponentInsertionIndex(component, container)
       container.add(wrapper, index)
+
+      // editor components can be hidden if they correspond to an inactive context
+      // when we hide the component, we need to hide its border as well which can be achieved by hiding wrapper
+      component.addComponentListener(object : ComponentAdapter() {
+        override fun componentShown(e: ComponentEvent?) {
+          wrapper.isVisible = true
+        }
+
+        override fun componentHidden(e: ComponentEvent?) {
+          wrapper.isVisible = false
+        }
+      })
       if (top) {
         dispatcher.multicaster.topComponentAdded(editor, index, component, container)
       }
@@ -765,24 +789,33 @@ open class EditorComposite internal constructor(
         stateToElement(state = fileEditor.getState(FileEditorStateLevel.FULL), provider = provider, project = project),
       )
     }
-    return FileEntry(
-      url = file.url,
-      id = FileIdAdapter.getInstance().getId(file),
-      selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider.editorTypeId,
-      isPreview = isPreview,
-      providers = stateMap,
-      tab = FileEntryTab(),
-      pinned = false,
-      currentInTab = false,
-      ideFingerprint = null,
-    )
+    return with(FileIdAdapter.getInstance()) {
+      FileEntry(
+        url = file.url,
+        id = getId(file),
+        selectedProvider = (selectedEditorWithProvider.value ?: fileEditorWithProviderList.first()).provider.editorTypeId,
+        isPreview = isPreview,
+        providers = stateMap,
+        tab = FileEntryTab(),
+        pinned = false,
+        currentInTab = false,
+        ideFingerprint = null,
+        managingFsCreationTimestamp = getManagingFsCreationTimestamp(file),
+        protocol = getProtocol(file)
+      )
+    }
   }
 
   internal fun writeCurrentStateAsHistoryEntry(project: Project): Element {
     val selectedEditorWithProvider = selectedEditorWithProvider.value
     val element = Element(TAG)
     element.setAttribute(FILE_ATTRIBUTE, file.url)
-    FileIdAdapter.getInstance().getId(file)?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
+    with(FileIdAdapter.getInstance()) {
+      getId(file)?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
+      getManagingFsCreationTimestamp(file).let { element.setAttribute(MANAGING_FS_ATTRIBUTE, it.toString()) }
+      getProtocol(file)?.let { element.setAttribute(PROTOCOL_ATTRIBUTE, it) }
+    }
+
     for (fileEditorWithProvider in fileEditorWithProviders.value) {
       val providerElement = Element(PROVIDER_ELEMENT)
       val provider = fileEditorWithProvider.provider
@@ -809,6 +842,7 @@ open class EditorComposite internal constructor(
     val element = Element(TAG)
     element.setAttribute(FILE_ATTRIBUTE, entry.url)
     entry.id?.let { element.setAttribute(FILE_ID_ATTRIBUTE, it.toString()) }
+    entry.managingFsCreationTimestamp?.let { element.setAttribute(MANAGING_FS_ATTRIBUTE, it.toString()) }
     for ((typeId, stateElement) in entry.providers) {
       val providerElement = Element(PROVIDER_ELEMENT)
       providerElement.setAttribute(EDITOR_TYPE_ID_ATTRIBUTE, typeId)
@@ -850,11 +884,13 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     private set
 
   private val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
+  var skeleton: EditorSkeleton? = null
+    private set
 
   init {
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
-        composite.coroutineScope.launch(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
+        composite.coroutineScope.launch(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
           if (!hasFocus()) {
             return@launch
           }
@@ -880,15 +916,19 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
 
     if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
       skeletonScope.launch(Dispatchers.UI) {
-        delay(SKELETON_DELAY)
-        // show skeleton if editor is not added after [SKELETON_DELAY]
-        if (components.isEmpty()) {
-          add(EditorSkeleton(skeletonScope), BorderLayout.CENTER)
-        }
+        setNewSkeleton(EditorCompositeSkeletonFactory.getInstance(composite.project).createSkeleton(skeletonScope))
       }
     }
     else {
       skeletonScope.cancel()
+    }
+  }
+
+  private fun setNewSkeleton(skeleton: EditorSkeleton?) {
+    this.skeleton = skeleton
+    if (skeleton == null) return
+    if (components.isEmpty()) {
+      add(skeleton, BorderLayout.CENTER)
     }
   }
 
@@ -932,11 +972,6 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     sink[PlatformCoreDataKeys.FILE_EDITOR] = composite.selectedEditor
     sink[CommonDataKeys.VIRTUAL_FILE] = composite.file
     sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = arrayOf(composite.file)
-  }
-
-  companion object {
-    private val SKELETON_DELAY
-      get() = Registry.intValue("editor.skeleton.delay.ms", 300).toLong()
   }
 }
 
@@ -1034,11 +1069,12 @@ internal fun focusEditorOnComposite(
   composite: EditorComposite,
   splitters: EditorsSplitters,
   toFront: Boolean = true,
+  forceFocus: Boolean = false,
 ): Boolean {
   val currentWindow = splitters.currentWindow
   val currentSelectedComposite = currentWindow?.selectedComposite
   // while the editor was loading, the user switched to another editor - don't steal focus
-  if (currentSelectedComposite === composite) {
+  if (currentSelectedComposite === composite || forceFocus) {
     val preferredFocusedComponent = composite.preferredFocusedComponent
     if (preferredFocusedComponent == null) {
       LOG.warn("Cannot focus editor (splitters=$splitters, composite=$composite, reason=preferredFocusedComponent is null)")
@@ -1046,8 +1082,7 @@ internal fun focusEditorOnComposite(
     }
     else {
       if (toFront) {
-        IdeFocusManager.getGlobalInstance().toFront(preferredFocusedComponent)
-        preferredFocusedComponent.requestFocus()
+        IdeFocusManager.getGlobalInstance().requestFocusInProject(preferredFocusedComponent, composite.project)
       }
       else {
         preferredFocusedComponent.requestFocusInWindow()

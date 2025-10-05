@@ -80,7 +80,7 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
     if (argumentList == null) return;
     PsiReferenceParameterList typeArgumentList = expression.getTypeArgumentList();
     for (PsiTypeElement typeElement : typeArgumentList.getTypeParameterElements()) {
-      if (typeElement.getAnnotations().length > 0) {
+      if (typeElement.hasAnnotations()) {
         return;
       }
     }
@@ -128,7 +128,7 @@ public final class RedundantTypeArgsInspection extends GenericsInspectionToolBas
             final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
             LOG.assertTrue(parameterList != null);
             for (PsiTypeElement typeElement : parameterList.getTypeParameterElements()) {
-              if (typeElement.getAnnotations().length > 0) {
+              if (typeElement.hasAnnotations()) {
                 return;
               }
             }

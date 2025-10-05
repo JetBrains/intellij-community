@@ -8,21 +8,24 @@ class Events(_util.Events[Any, Listener]):
     class Move(_util.Events.Event):
         x: int
         y: int
-        def __init__(self, x: int, y: int) -> None: ...
+        injected: bool
+        def __init__(self, x: int, y: int, injected: bool) -> None: ...
 
     class Click(_util.Events.Event):
         x: int
         y: int
         button: Button
         pressed: bool
-        def __init__(self, x: int, y: int, button: Button, pressed: bool) -> None: ...
+        injected: bool
+        def __init__(self, x: int, y: int, button: Button, pressed: bool, injected: bool) -> None: ...
 
     class Scroll(_util.Events.Event):
         x: int
         y: int
         dx: int
         dy: int
-        def __init__(self, x: int, y: int, dx: int, dy: int) -> None: ...
+        injected: bool
+        def __init__(self, x: int, y: int, dx: int, dy: int, injected: bool) -> None: ...
 
     def __init__(self) -> None: ...
     def __next__(self) -> Move | Click | Scroll: ...

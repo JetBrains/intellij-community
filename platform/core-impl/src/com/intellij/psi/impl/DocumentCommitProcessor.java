@@ -4,13 +4,10 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 @ApiStatus.Internal
 public interface DocumentCommitProcessor {
@@ -20,6 +17,5 @@ public interface DocumentCommitProcessor {
                             @NotNull PsiDocumentManagerBase documentManager,
                             @NotNull Document document,
                             @NonNls @NotNull Object reason,
-                            @NotNull ModalityState modality,
-                            @NotNull List<FileViewProvider> cachedViewProviders);
+                            @NotNull ModalityState modality);
 }

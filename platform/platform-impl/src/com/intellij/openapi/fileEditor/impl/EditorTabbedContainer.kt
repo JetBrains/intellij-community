@@ -235,14 +235,14 @@ class EditorTabbedContainer internal constructor(
 
     coroutineScope.launch {
       val title = EditorTabPresentationUtil.getCustomEditorTabTitleAsync(window.manager.project, file) ?: return@launch
-      withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+      withContext(Dispatchers.UiWithModelAccess) {
         tab.setText(title)
       }
     }
     val project = window.manager.project
     coroutineScope.launch {
       val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file) }
-      withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
         tab.setTabColor(color)
       }
     }
@@ -637,7 +637,7 @@ private class EditorTabs(
     }
 
     val group = info.tabLabelActions ?: return null
-    val actions: Array<AnAction?> = if (group is DefaultActionGroup) {
+    val actions: Array<AnAction> = if (group is DefaultActionGroup) {
       group.getChildren(ActionManager.getInstance())
     }
     else if (group is CustomisedActionGroup && group.delegate is DefaultActionGroup) {
@@ -651,7 +651,7 @@ private class EditorTabs(
     return closeTabAction?.getIcon(isHovered)
   }
 
-  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance()?.editorTabPainterAdapter ?: DefaultTabPainterAdapter(DEFAULT)
+  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance()?.editorTabPainterAdapter ?: EditorTabPainterAdapter()
 
   override fun createTabBorder(): JBTabsBorder = JBEditorTabsBorder(this)
 

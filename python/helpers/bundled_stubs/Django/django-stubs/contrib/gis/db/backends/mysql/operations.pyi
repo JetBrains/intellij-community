@@ -12,13 +12,15 @@ class MySQLOperations(BaseSpatialOperations, DatabaseOperations):
     geom_func_prefix: str
     Adapter: Any
     @cached_property
-    def mariadb(self) -> bool: ...
+    def mariadb(self) -> bool: ...  # type: ignore[override]
     @cached_property
     def mysql(self) -> bool: ...  # type: ignore[override]
     @cached_property
     def select(self) -> str: ...  # type: ignore[override]
     @cached_property
     def from_text(self) -> str: ...  # type: ignore[override]
+    @cached_property
+    def collect(self) -> str: ...
     @cached_property
     def gis_operators(self) -> dict[str, SpatialOperator]: ...
     disallowed_aggregates: Any

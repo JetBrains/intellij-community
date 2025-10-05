@@ -13,7 +13,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFileSystemItem
@@ -31,7 +30,6 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 @ApiStatus.Internal
-@IntellijInternalApi
 class SearchEverywhereFileFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
 
@@ -39,13 +37,13 @@ class SearchEverywhereFileFeaturesProvider
     val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("fileType", FileTypeUsagesCollector.ValidationRule::class.java)
     val IS_BOOKMARK_DATA_KEY = EventFields.Boolean("isBookmark")
 
-    internal val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("isDirectory")
-    internal val IS_EXACT_MATCH_DATA_KEY = EventFields.Boolean("isExactMatch")
-    internal val FILETYPE_MATCHES_QUERY_DATA_KEY = EventFields.Boolean("fileTypeMatchesQuery")
-    internal val IS_TOP_LEVEL_DATA_KEY = EventFields.Boolean("isTopLevel")
-    internal val IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY = EventFields.Boolean("isExactRelativePath")
+    val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("isDirectory")
+    val IS_EXACT_MATCH_DATA_KEY = EventFields.Boolean("isExactMatch")
+    val FILETYPE_MATCHES_QUERY_DATA_KEY = EventFields.Boolean("fileTypeMatchesQuery")
+    val IS_TOP_LEVEL_DATA_KEY = EventFields.Boolean("isTopLevel")
+    val IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY = EventFields.Boolean("isExactRelativePath")
 
-    internal val REL_PATH_NAME_FEATURE_TO_FIELD = hashMapOf<String, EventField<*>>(
+    val REL_PATH_NAME_FEATURE_TO_FIELD = hashMapOf<String, EventField<*>>(
       "prefix_same_start_count" to EventFields.Int("relPathPrefixSameStartCount"),
       "prefix_greedy_score" to EventFields.Double("relPathPrefixGreedyScore"),
       "prefix_matched_words_score" to EventFields.Double("relPathPrefixMatchedWordsScore"),
@@ -54,7 +52,7 @@ class SearchEverywhereFileFeaturesProvider
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
-    return arrayListOf<EventField<*>>(
+    return listOf(
       IS_DIRECTORY_DATA_KEY, FILETYPE_DATA_KEY, IS_BOOKMARK_DATA_KEY,
       IS_EXACT_MATCH_DATA_KEY, FILETYPE_MATCHES_QUERY_DATA_KEY, IS_TOP_LEVEL_DATA_KEY,
       IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY
@@ -67,28 +65,26 @@ class SearchEverywhereFileFeaturesProvider
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val item = (SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) as? PsiFileSystemItem) ?: return emptyList()
+    val item = (SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element) as? PsiFileSystemItem) ?: return emptyList()
 
-    val data = arrayListOf<EventPair<*>>(
-      IS_BOOKMARK_DATA_KEY.with(isBookmark(item)),
-      IS_DIRECTORY_DATA_KEY.with(item.isDirectory),
-      IS_EXACT_MATCH_DATA_KEY.with(isExactMatch(item, searchQuery, elementPriority)),
-      IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY.with(isExactRelativePath(item, searchQuery))
-    )
+    return buildList {
+      add(IS_BOOKMARK_DATA_KEY.with(isBookmark(item)))
+      add(IS_DIRECTORY_DATA_KEY.with(item.isDirectory))
+      add(IS_EXACT_MATCH_DATA_KEY.with(isExactMatch(item, searchQuery, elementPriority)))
+      add(IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY.with(isExactRelativePath(item, searchQuery)))
 
-    data.addAll(getRelativePathNameMatchingFeatures(item, searchQuery))
+      addAll(getRelativePathNameMatchingFeatures(item, searchQuery))
 
-    data.putIfValueNotNull(IS_TOP_LEVEL_DATA_KEY, isTopLevel(item))
+      putIfValueNotNull(IS_TOP_LEVEL_DATA_KEY, isTopLevel(item))
 
-    if (item.isDirectory) {
-      // Rest of the features are only applicable to files, not directories
-      return data
+      if (item.isDirectory) {
+        // Rest of the features are only applicable to files, not directories
+        return@buildList
+      }
+
+      add(FILETYPE_DATA_KEY.with(item.virtualFile.fileType.name))
+      putIfValueNotNull(FILETYPE_MATCHES_QUERY_DATA_KEY, matchesFileTypeInQuery(item, searchQuery))
     }
-
-    data.add(FILETYPE_DATA_KEY.with(item.virtualFile.fileType.name))
-    data.putIfValueNotNull(FILETYPE_MATCHES_QUERY_DATA_KEY, matchesFileTypeInQuery(item, searchQuery))
-
-    return data
   }
 
   private fun isBookmark(item: PsiFileSystemItem): Boolean {
@@ -158,17 +154,19 @@ class SearchEverywhereFileFeaturesProvider
       return emptyList()
     }
 
-    val features = mutableMapOf<String, Any>()
-    PrefixMatchingUtil.calculateFeatures(relativePath.toString(), searchQuery, features)
 
-    val result = arrayListOf<EventPair<*>>()
-    REL_PATH_NAME_FEATURE_TO_FIELD.forEach { (key, field) ->
-      val matchValue = features[key] ?: return@forEach
-      setMatchValueToField(matchValue, field)?.let {
-        result.add(it)
+    return buildList {
+      val prefixMatchingFeatures = buildMap {
+        PrefixMatchingUtil.calculateFeatures(relativePath.toString(), searchQuery, this)
+      }
+
+      REL_PATH_NAME_FEATURE_TO_FIELD.forEach { (key, field) ->
+        val matchValue = prefixMatchingFeatures[key] ?: return@forEach
+        setMatchValueToField(matchValue, field)?.let {
+          add(it)
+        }
       }
     }
-    return result
   }
 
   private fun isTopLevel(item: PsiFileSystemItem): Boolean? {

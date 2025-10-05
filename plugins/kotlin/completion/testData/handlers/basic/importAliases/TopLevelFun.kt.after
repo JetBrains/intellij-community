@@ -4,5 +4,4 @@ fun foo() {
     veryBad(<caret>)
 }
 
-// IGNORE_K2
 // ELEMENT: "veryBad"

@@ -81,9 +81,7 @@ internal class FloatingPointLiteralPrecisionInspection : KotlinApplicableInspect
 }
 
 private class FloatingPointLiteralPrecisionQuickFix(val replacementText: String) : KotlinModCommandQuickFix<KtConstantExpression>() {
-    override fun getName(): String = KotlinBundle.message("replace.with.0", replacementText)
-
-    override fun getFamilyName(): String = name
+    override fun getFamilyName(): String = KotlinBundle.message("replace.with.0", replacementText)
 
     override fun applyFix(
         project: Project,

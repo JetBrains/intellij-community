@@ -52,7 +52,7 @@ public final class InstallAndEnableTask extends Task.Modal {
   public void run(@NotNull ProgressIndicator indicator) {
     try {
       List<PluginNode> marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(myPluginIds);
-      myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
+      myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator,  PluginNodeModelBuilderFactory.INSTANCE);
 
       List<IdeaPluginDescriptor> descriptors = new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true));
       descriptors.removeIf(descriptor -> !myPluginIds.contains(descriptor.getPluginId()));
@@ -72,7 +72,7 @@ public final class InstallAndEnableTask extends Task.Modal {
               PluginUiModelAdapter marketplaceModel = new PluginUiModelAdapter(node);
               PluginUiModel pluginNode = marketplace.loadPluginDetails(marketplaceModel);
               if (pluginNode != null) {
-                PluginDetailsPageComponentKt.loadAllPluginDetails(marketplaceModel, pluginNode);
+                PluginDetailsPageComponentKt.loadAllPluginDetailsSync(marketplaceModel, pluginNode);
                 descriptors.set(index, pluginNode.getDescriptor());
               }
             }

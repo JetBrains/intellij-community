@@ -710,6 +710,8 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
     )
 
     assertModules("project", "project.main", "project.test")
+    assertDefaultResources("project.main")
+    assertDefaultTestResources("project.test")
     compileModules("project", "project.main", "project.test")
     assertCopied("target/classes/file.properties")
     assertNotCopied("target/classes/file-test.properties")

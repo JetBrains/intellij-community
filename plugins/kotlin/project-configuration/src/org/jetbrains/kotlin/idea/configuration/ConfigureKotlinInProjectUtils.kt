@@ -30,7 +30,6 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.DumbModeAccessType
-import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
@@ -48,7 +47,6 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
@@ -75,7 +73,7 @@ private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.C
 
 val LAST_SNAPSHOT_VERSION: IdeKotlinVersion = IdeKotlinVersion.get("1.5.255-SNAPSHOT")
 
-val SNAPSHOT_REPOSITORY = RepositoryDescription(
+val SNAPSHOT_REPOSITORY: RepositoryDescription = RepositoryDescription(
     "sonatype.oss.snapshots",
     "Sonatype OSS Snapshot Repository",
     "https://oss.sonatype.org/content/repositories/snapshots",
@@ -83,7 +81,7 @@ val SNAPSHOT_REPOSITORY = RepositoryDescription(
     isSnapshot = true
 )
 
-val DEFAULT_GRADLE_PLUGIN_REPOSITORY = RepositoryDescription(
+val DEFAULT_GRADLE_PLUGIN_REPOSITORY: RepositoryDescription = RepositoryDescription(
     "default.gradle.plugins",
     "Default Gradle Plugin Repository",
     "https://plugins.gradle.org/m2/",
@@ -91,7 +89,7 @@ val DEFAULT_GRADLE_PLUGIN_REPOSITORY = RepositoryDescription(
     isSnapshot = false
 )
 
-fun devRepository(version: IdeKotlinVersion) = RepositoryDescription(
+fun devRepository(version: IdeKotlinVersion): RepositoryDescription = RepositoryDescription(
     "teamcity.kotlin.dev",
     "Teamcity Repository of Kotlin Development Builds",
     "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Aggregate),number:${version.rawVersion},branch:(default:any)/artifacts/content/maven",
@@ -99,17 +97,17 @@ fun devRepository(version: IdeKotlinVersion) = RepositoryDescription(
     isSnapshot = false
 )
 
-const val MAVEN_CENTRAL = "mavenCentral()"
+const val MAVEN_CENTRAL: String = "mavenCentral()"
 
-const val JCENTER = "jcenter()"
+const val JCENTER: String = "jcenter()"
 
-const val KOTLIN_GROUP_ID = "org.jetbrains.kotlin"
+const val KOTLIN_GROUP_ID: String = "org.jetbrains.kotlin"
 
 fun isRepositoryConfigured(repositoriesBlockText: String): Boolean =
     repositoriesBlockText.contains(MAVEN_CENTRAL) || repositoriesBlockText.contains(JCENTER)
 
 @Deprecated("Use 'toGradleCompileScope(Module) instead")
-fun DependencyScope.toGradleCompileScope(isAndroidModule: Boolean) = when (this) {
+fun DependencyScope.toGradleCompileScope(isAndroidModule: Boolean): String = when (this) {
     DependencyScope.COMPILE -> "implementation"
     // TODO: We should add testCompile or androidTestCompile
     DependencyScope.TEST -> if (isAndroidModule) "implementation" else "testImplementation"
@@ -118,7 +116,7 @@ fun DependencyScope.toGradleCompileScope(isAndroidModule: Boolean) = when (this)
     else -> "implementation"
 }
 
-fun DependencyScope.toGradleCompileScope(targetModule: Module? = null) = when (this) {
+fun DependencyScope.toGradleCompileScope(targetModule: Module? = null): String = when (this) {
     DependencyScope.COMPILE -> "implementation"
     DependencyScope.TEST -> if (targetModule?.isMultiPlatformModule == true) "implementation" else "testImplementation"
     DependencyScope.RUNTIME -> "runtime"
@@ -126,7 +124,7 @@ fun DependencyScope.toGradleCompileScope(targetModule: Module? = null) = when (t
     else -> "implementation"
 }
 
-fun RepositoryDescription.toGroovyRepositorySnippet() = "maven { url '$url' }"
+fun RepositoryDescription.toGroovyRepositorySnippet(): String = "maven { url '$url' }"
 
 /**
  * This syntax has been released in kotlin-dsl-0.11.1 release and in Gradle 4.2-RC1 release.
@@ -134,7 +132,7 @@ fun RepositoryDescription.toGroovyRepositorySnippet() = "maven { url '$url' }"
  * We already require Gradle distribution of higher version (see `checkGradleCompatibility` function),
  * so it is safe to use this syntax everywhere.
  */
-fun RepositoryDescription.toKotlinRepositorySnippet() = "maven(\"$url\")"
+fun RepositoryDescription.toKotlinRepositorySnippet(): String = "maven(\"$url\")"
 
 fun getRepositoryForVersion(version: IdeKotlinVersion): RepositoryDescription? = when {
     version.isSnapshot -> SNAPSHOT_REPOSITORY
@@ -256,7 +254,7 @@ fun allConfigurators(): Array<KotlinProjectConfigurator> {
 }
 
 fun getCanBeConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): List<Module> {
-    val projectModules = project.modules.filter { module -> module.findSnapshotModuleEntity()?.entitySource !is KotlinScriptEntitySource }
+    val projectModules = project.modules.toList()
     val result = mutableListOf<Module>()
     val progressIndicator = ProgressManager.getGlobalProgressIndicator()
     for ((index, module) in ModuleSourceRootMap(project).groupByBaseModules(projectModules).withIndex()) {
@@ -580,7 +578,7 @@ fun checkModuleJvmTargetCompatibility(
     return ModuleJvmTargetIncompatibilityResults(jvmModulesTargetingUnsupportedJvm, modulesAndJvmTargets)
 }
 
-fun getJvmTargetNumber(jvmTarget: String) = jvmTarget.removePrefix("1.").toIntOrNull()
+fun getJvmTargetNumber(jvmTarget: String): Int? = jvmTarget.removePrefix("1.").toIntOrNull()
 
 fun getTargetBytecodeVersionFromModule(
     module: Module,

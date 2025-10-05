@@ -38,13 +38,13 @@ internal fun DecoratedWindowScope.TitleBarOnWindows(
             JBR.getWindowDecorations().setCustomTitleBar(window, titleBar)
             PaddingValues(start = titleBar.leftInset.dp, end = titleBar.rightInset.dp)
         },
-        backgroundContent = { Spacer(modifier = modifier.fillMaxSize().customTitleBarMouseEventHandler(titleBar)) },
+        backgroundContent = { Spacer(modifier = Modifier.fillMaxSize().customTitleBarMouseEventHandler(titleBar)) },
         content = content,
     )
 }
 
 internal fun Modifier.customTitleBarMouseEventHandler(titleBar: CustomTitleBar): Modifier =
-    pointerInput(Unit) {
+    pointerInput(titleBar) {
         val currentContext = currentCoroutineContext()
         awaitPointerEventScope {
             var inUserControl = false

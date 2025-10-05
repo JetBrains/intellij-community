@@ -8,8 +8,7 @@ import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.UiDispatcherKind
-import com.intellij.openapi.application.ui
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.LoadingOrder
@@ -46,7 +45,7 @@ import javax.swing.JFrame
 @RequiresEdt
 internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): LightEditFrameWrapper {
   return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
-    withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+    withContext(Dispatchers.UiWithModelAccess) {
       val wrapper = allocateLightEditFrame(project) { frame ->
         LightEditFrameWrapper(project = project, frame = frame ?: createIdeFrame(frameInfo ?: FrameInfo()))
       } as LightEditFrameWrapper

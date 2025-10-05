@@ -5,7 +5,7 @@ from __future__ import print_function
 # DO NOT edit manually!
 # DO NOT edit manually!
 import sys
-from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON, IS_IRONPYTHON, ForkSafeLock
+from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON, IS_IRONPYTHON
 from _pydev_bundle import pydev_log
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 pydev_log.debug("Using Cython speedups")
@@ -13,7 +13,7 @@ pydev_log.debug("Using Cython speedups")
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 56
+version = 58
 
 if not hasattr(sys, '_current_frames'):
 
@@ -110,11 +110,11 @@ cdef class PyDBAdditionalThreadInfo:
         self.pydev_smart_step_context = PydevSmartStepContext()
 
     def get_topmost_frame(self, thread):
-        """
+        '''
         Gets the topmost frame for the given thread. Note that it may be None
         and callers should remove the reference to the frame as soon as possible
         to avoid disturbing user code.
-        """
+        '''
         # sys._current_frames(): dictionary with thread id -> topmost frame
         current_frames = _current_frames()
         return current_frames.get(thread.ident)
@@ -152,7 +152,9 @@ cdef class PydevSmartStepContext:
     reset = __init__
 
 
-_set_additional_thread_info_lock = ForkSafeLock()
+from _pydev_imps._pydev_saved_modules import threading
+_set_additional_thread_info_lock = threading.Lock()
+
 
 def set_additional_thread_info(thread):
     try:
@@ -897,11 +899,11 @@ cdef class PyDBFrame:
                     # if the frame is traced after breakpoint stop,
                     # but the file should be ignored while stepping because of filters
                     if step_cmd != -1:
-                        if main_debugger.is_files_filter_enabled and main_debugger.is_ignored_by_filters(filename):
+                        if main_debugger.is_filter_enabled and main_debugger.is_ignored_by_filters(filename):
                             # ignore files matching stepping filters
                             # No need to reset frame.f_trace to keep the same trace function.
                             return self.trace_dispatch
-                        if main_debugger._is_libraries_filter_enabled and not main_debugger.in_project_scope(filename):
+                        if main_debugger.is_filter_libraries and not main_debugger.in_project_scope(filename):
                             # ignore library files while stepping
                             # No need to reset frame.f_trace to keep the same trace function.
                             return self.trace_dispatch
@@ -1565,11 +1567,11 @@ cdef class ThreadTracer:
                     return None
 
             if is_stepping:
-                if py_db.is_files_filter_enabled and py_db.is_ignored_by_filters(filename):
+                if py_db.is_filter_enabled and py_db.is_ignored_by_filters(filename):
                     # ignore files matching stepping filters
                     if event != 'call': frame.f_trace = NO_FTRACE
                     return None
-                if py_db._is_libraries_filter_enabled and not py_db.in_project_scope(filename):
+                if py_db.is_filter_libraries and not py_db.in_project_scope(filename):
                     # ignore library files while stepping
                     if event != 'call': frame.f_trace = NO_FTRACE
                     return None

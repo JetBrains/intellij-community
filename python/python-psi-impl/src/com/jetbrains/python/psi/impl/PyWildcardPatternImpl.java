@@ -20,6 +20,6 @@ public class PyWildcardPatternImpl extends PyElementImpl implements PyWildcardPa
 
   @Override
   public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
-    return PyCapturePatternImpl.getCaptureType(this, context);
+    return PyCaptureContext.getCaptureType(this, context);
   }
 }

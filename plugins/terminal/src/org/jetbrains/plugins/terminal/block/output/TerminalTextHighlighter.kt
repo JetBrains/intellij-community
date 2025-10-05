@@ -12,7 +12,9 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.terminal.TerminalColorPalette
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputTokenTypes
+import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.toTextAttributes
 
 @ApiStatus.Internal
@@ -24,7 +26,8 @@ data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAt
     get() = endOffset - startOffset
 }
 
-internal data class TextWithHighlightings(val text: String, val highlightings: List<HighlightingInfo>)
+@ApiStatus.Internal
+data class TextWithHighlightings(val text: String, val highlightings: List<HighlightingInfo>)
 
 internal data class TextWithAttributes(val text: String, val attributes: TextAttributesProvider)
 
@@ -33,13 +36,27 @@ interface TextAttributesProvider {
   fun getTextAttributes(): TextAttributes
 }
 
-internal object EmptyTextAttributesProvider : TextAttributesProvider {
+@ApiStatus.Internal
+object EmptyTextAttributesProvider : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = TextAttributes.ERASE_MARKER
 }
 
-internal class TextStyleAdapter(private val style: TextStyle,
-                       private val colorPalette: TerminalColorPalette): TextAttributesProvider {
-  override fun getTextAttributes(): TextAttributes = style.toTextAttributes(colorPalette)
+@ApiStatus.Internal
+class TextStyleAdapter(
+  private val style: TextStyle,
+  private val colorPalette: TerminalColorPalette,
+  private val ignoreContrastAdjustment: Boolean = true,
+) : TextAttributesProvider {
+  override fun getTextAttributes(): TextAttributes {
+    val requiredContrast = if (ignoreContrastAdjustment) {
+      TerminalContrastRatio.MIN_VALUE
+    }
+    else {
+      val options = TerminalOptionsProvider.instance
+      if (options.enforceMinContrastRatio) options.minContrastRatio else TerminalContrastRatio.MIN_VALUE
+    }
+    return style.toTextAttributes(colorPalette, requiredContrast)
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -47,15 +64,20 @@ internal class TextStyleAdapter(private val style: TextStyle,
 
     other as TextStyleAdapter
 
-    return style == other.style
+    if (ignoreContrastAdjustment != other.ignoreContrastAdjustment) return false
+    if (style != other.style) return false
+
+    return true
   }
 
   override fun hashCode(): Int {
-    return style.hashCode()
+    var result = ignoreContrastAdjustment.hashCode()
+    result = 31 * result + style.hashCode()
+    return result
   }
 
   override fun toString(): String {
-    return "TextStyleAdapter(style=$style)"
+    return "TextStyleAdapter(style=TextStyle(fg=${style.foreground}, bg=${style.background}, op=${TextStyle.Option.entries.filter { style.hasOption(it) }}))"
   }
 }
 

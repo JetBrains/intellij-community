@@ -23,9 +23,9 @@ data class GitLabMergeRequestShortRestDTO(
   val labels: List<String>,
   val createdAt: Date,
   val draft: Boolean,
-  val webUrl: String
+  val webUrl: String,
+  val userNotesCount: Int?,
 ) {
-
   val stateEnum: GitLabMergeRequestState = parseState(state)
 
   val mergeStatusEnum: GitLabMergeStatus = parseMergeStatus(mergeStatus)

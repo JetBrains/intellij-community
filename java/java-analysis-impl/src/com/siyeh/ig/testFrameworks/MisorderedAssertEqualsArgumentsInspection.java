@@ -84,7 +84,7 @@ public final class MisorderedAssertEqualsArgumentsInspection extends BaseInspect
     final List<PsiExpression> expressions = new SmartList<>();
     expressions.add(expression);
     while (!expressions.isEmpty()) {
-      expressions.remove(expressions.size() - 1).accept(new JavaRecursiveElementWalkingVisitor() {
+      expressions.removeLast().accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
           if (!expectedArgument.get().booleanValue()) {
@@ -146,7 +146,7 @@ public final class MisorderedAssertEqualsArgumentsInspection extends BaseInspect
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new MisorderedAssertEqualsParametersVisitor();
   }
 

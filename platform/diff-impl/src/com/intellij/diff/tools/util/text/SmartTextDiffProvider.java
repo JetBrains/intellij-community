@@ -49,7 +49,7 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     DiffContent content1 = Side.LEFT.select(request.getContents());
     DiffContent content2 = Side.RIGHT.select(request.getContents());
     DiffIgnoredRangeProvider ignoredRangeProvider = getIgnoredRangeProvider(project, content1, content2);
-    DiffLangSpecificProvider diffProvider = DiffLangSpecificProvider.findApplicable(project, content1, content2);
+    DiffLangSpecificProvider diffProvider = DiffLangSpecificProvider.findApplicable(content1, content2);
     IgnorePolicy[] ignorePolicies = getIgnorePolicies();
     return new SmartTextDiffProvider(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider, diffProvider,
                                      ignorePolicies);
@@ -63,7 +63,7 @@ public class SmartTextDiffProvider extends TwosideTextDiffProviderBase implement
     DiffContent content1 = Side.LEFT.select(request.getContents());
     DiffContent content2 = Side.RIGHT.select(request.getContents());
     DiffIgnoredRangeProvider ignoredRangeProvider = getIgnoredRangeProvider(project, content1, content2);
-    DiffLangSpecificProvider diffAdjuster = DiffLangSpecificProvider.findApplicable(project, content1, content2);
+    DiffLangSpecificProvider diffAdjuster = DiffLangSpecificProvider.findApplicable(content1, content2);
     return new SmartTextDiffProvider.NoIgnore(project, content1, content2, settings, rediff, disposable, ignoredRangeProvider, diffAdjuster);
   }
 

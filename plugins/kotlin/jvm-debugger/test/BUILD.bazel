@@ -1,17 +1,44 @@
-### auto-generated section `build kotlin.jvm-debugger.test` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
 
-java_library(
+load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
+
+jps_test(
+  name = "test_test",
+  runtime_deps = [
+    ":test_test_lib",
+    "//:main_test_lib",
+  ],
+  data = [
+    "@debugger_test_deps_debugger_agent//file:debugger-agent.jar",
+    "@community//plugins/kotlin/jvm-debugger/test:testData",
+    "@community//plugins/kotlin/idea/tests:testData",
+  ] + all_test_dep_targets,
+  tags = [
+    "block-network",
+  ],
+)
+
+### skip generation section `test kotlin.jvm-debugger.test`
+
+### auto-generated section `build kotlin.jvm-debugger.test` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
   name = "test",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "test_test_lib",
+  module_name = "kotlin.jvm-debugger.test",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
@@ -28,7 +55,7 @@ jvm_library(
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "@lib//:asm",
     "//java/execution/impl",
-    "@lib//:guava",
+    "//libraries/guava",
     "//java/idea-ui:ui",
     "//java/debugger/openapi:java-debugger",
     "@lib//:jb-jdi",
@@ -53,8 +80,6 @@ jvm_library(
     "//plugins/kotlin/base/code-insight:code-insight_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/fe10/analysis",
-    "//plugins/kotlin/base/scripting",
-    "//plugins/kotlin/base/scripting:scripting_test_lib",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/jvm-debugger/base/util",
@@ -73,6 +98,7 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//platform/xdebugger-testFramework:debugger-testFramework",
     "//java/debugger/impl",
+    "//java/debugger/impl:impl_test_lib",
     "//plugins/stream-debugger:java-debugger-streams",
     "//plugins/stream-debugger:java-debugger-streams_test_lib",
     "//aether-dependency-resolver",
@@ -85,18 +111,14 @@ jvm_library(
     "//java/debugger/shared",
     "//plugins/stream-debugger-core:debugger-streams-core",
     "//plugins/stream-debugger-core/testFramework",
-    "//plugins/kotlin/base/scripting.k1",
-    "//plugins/kotlin/base/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/base/scripting/scripting.k1",
+    "//plugins/kotlin/base/scripting/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/idea/tests:tests_test_lib",
   ],
   runtime_deps = [
     "//platform/core-api:core",
     "//plugins/kotlin/uast/uast-kotlin",
     "//plugins/kotlin/gradle/gradle",
   ]
-)
-
-jps_test(
-  name = "test_test",
-  runtime_deps = [":test_test_lib"]
 )
 ### auto-generated section `build kotlin.jvm-debugger.test` end

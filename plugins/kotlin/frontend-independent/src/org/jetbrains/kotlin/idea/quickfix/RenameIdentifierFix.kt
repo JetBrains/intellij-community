@@ -17,6 +17,10 @@ open class RenameIdentifierFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("rename.identifier.fix.text")
     override fun getFamilyName(): String = name
 
+    override fun availableInBatchMode(): Boolean {
+        return false
+    }
+
     override fun startInWriteAction(): Boolean = false
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

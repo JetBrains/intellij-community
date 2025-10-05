@@ -2,7 +2,7 @@ import datetime
 from collections.abc import Collection, Iterator, Sequence
 from decimal import Decimal
 from re import Pattern
-from typing import Any, Protocol, type_check_only
+from typing import Any, ClassVar, Protocol, TypeAlias, type_check_only
 from uuid import UUID
 
 from django.core.files import File
@@ -11,10 +11,9 @@ from django.db.models.fields import _ErrorMessagesDict, _ErrorMessagesMapping
 from django.forms.boundfield import BoundField
 from django.forms.forms import BaseForm
 from django.forms.widgets import Widget
-from django.utils.choices import CallableChoiceIterator, _Choices, _ChoicesCallable
+from django.utils.choices import CallableChoiceIterator, _ChoicesCallable, _ChoicesInput
 from django.utils.datastructures import _PropertyDescriptor
 from django.utils.functional import _StrOrPromise
-from typing_extensions import TypeAlias
 
 # Problem: attribute `widget` is always of type `Widget` after field instantiation.
 # However, on class level it can be set to `Type[Widget]` too.
@@ -32,7 +31,7 @@ class Field:
     widget: _ClassLevelWidgetT
     hidden_widget: type[Widget]
     default_validators: list[_ValidatorCallable]
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     empty_values: Sequence[Any]
     show_hidden_initial: bool
     help_text: _StrOrPromise
@@ -41,6 +40,7 @@ class Field:
     localize: bool
     error_messages: _ErrorMessagesDict
     validators: list[_ValidatorCallable]
+    bound_field_class: type[BoundField] | None
     def __init__(
         self,
         *,
@@ -56,6 +56,7 @@ class Field:
         disabled: bool = False,
         label_suffix: str | None = None,
         template_name: str | None = None,
+        bound_field_class: type[BoundField] | None = None,
     ) -> None: ...
     def prepare_value(self, value: Any) -> Any: ...
     def to_python(self, value: Any | None) -> Any | None: ...
@@ -317,14 +318,14 @@ class NullBooleanField(BooleanField):
 
 class ChoiceField(Field):
     choices: _PropertyDescriptor[
-        _Choices | _ChoicesCallable | CallableChoiceIterator,
-        _Choices | CallableChoiceIterator,
+        _ChoicesInput | _ChoicesCallable | CallableChoiceIterator,
+        _ChoicesInput | CallableChoiceIterator,
     ]
     widget: _ClassLevelWidgetT
     def __init__(
         self,
         *,
-        choices: _Choices | _ChoicesCallable = (),
+        choices: _ChoicesInput | _ChoicesCallable = (),
         required: bool = ...,
         widget: Widget | type[Widget] | None = ...,
         label: _StrOrPromise | None = ...,
@@ -355,7 +356,7 @@ class TypedChoiceField(ChoiceField):
         *,
         coerce: _CoerceCallable = ...,
         empty_value: str | None = "",
-        choices: _Choices | _ChoicesCallable = ...,
+        choices: _ChoicesInput | _ChoicesCallable = ...,
         required: bool = ...,
         widget: Widget | type[Widget] | None = ...,
         label: _StrOrPromise | None = ...,
@@ -383,7 +384,7 @@ class TypedMultipleChoiceField(MultipleChoiceField):
         *,
         coerce: _CoerceCallable = ...,
         empty_value: list[Any] | None = ...,
-        choices: _Choices | _ChoicesCallable = ...,
+        choices: _ChoicesInput | _ChoicesCallable = ...,
         required: bool = ...,
         widget: Widget | type[Widget] | None = ...,
         label: _StrOrPromise | None = ...,
@@ -459,7 +460,7 @@ class FilePathField(ChoiceField):
         recursive: bool = False,
         allow_files: bool = True,
         allow_folders: bool = False,
-        choices: _Choices | _ChoicesCallable = ...,
+        choices: _ChoicesInput | _ChoicesCallable = ...,
         required: bool = ...,
         widget: Widget | type[Widget] | None = ...,
         label: _StrOrPromise | None = ...,
@@ -547,7 +548,7 @@ class InvalidJSONInput(str): ...
 class JSONString(str): ...
 
 class JSONField(CharField):
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     widget: _ClassLevelWidgetT
     encoder: Any
     decoder: Any
@@ -556,3 +557,34 @@ class JSONField(CharField):
     def bound_data(self, data: Any, initial: Any) -> Any: ...
     def prepare_value(self, value: Any) -> str: ...
     def has_changed(self, initial: Any | None, data: Any | None) -> bool: ...
+
+__all__ = (
+    "Field",
+    "CharField",
+    "IntegerField",
+    "DateField",
+    "TimeField",
+    "DateTimeField",
+    "DurationField",
+    "RegexField",
+    "EmailField",
+    "FileField",
+    "ImageField",
+    "URLField",
+    "BooleanField",
+    "NullBooleanField",
+    "ChoiceField",
+    "MultipleChoiceField",
+    "ComboField",
+    "MultiValueField",
+    "FloatField",
+    "DecimalField",
+    "SplitDateTimeField",
+    "GenericIPAddressField",
+    "FilePathField",
+    "JSONField",
+    "SlugField",
+    "TypedChoiceField",
+    "TypedMultipleChoiceField",
+    "UUIDField",
+)

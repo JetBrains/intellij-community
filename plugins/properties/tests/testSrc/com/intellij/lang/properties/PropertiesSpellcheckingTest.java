@@ -15,20 +15,20 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class PropertiesSpellcheckingTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testPropertiesSpellcheckingStrategy() {
-    myFixture.enableInspections(new SpellCheckingInspection());
+    myFixture.enableInspections(new GrazieSpellCheckingInspection());
 
     myFixture.configureByText("test.properties",
                               """
                                 valid.key=value
                                 # comment is <TYPO descr="Typo: In word 'cheked'">cheked</TYPO>
                                 validWord<TYPO descr="Typo: In word 'Buuundary'">Buuundary</TYPO>=value
-                                i3<TYPO descr="Typo: In word 'nvalid'">nvalid</TYPO>.key=i3<TYPO descr="Typo: In word 'nvalid'">nvalid</TYPO>Value""");
+                                i3<TYPO descr="Typo: In word 'nvalid'">nvalid</TYPO>.key=i3<TYPO descr="Typo: In word 'nvalidValue'">nvalidValue</TYPO>""");
     myFixture.testHighlighting();
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 
-fun List<IntentionAction>.groupActionsByType(language: Language): List<IntentionAction> {
+public fun List<IntentionAction>.groupActionsByType(language: Language): List<IntentionAction> {
   if (ApplicationManager.getApplication().isUnitTestMode) {
     return this
   }

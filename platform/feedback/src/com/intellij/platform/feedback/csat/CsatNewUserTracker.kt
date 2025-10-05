@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.csat
 
-import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
 
 internal class CsatNewUserTracker : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (ConfigImportHelper.isNewUser()) {
+    if (InitialConfigImportState.isNewUser()) {
       val settings = CsatGlobalSettings.getInstance()
       if (settings.newUserCreatedAt == null) {
         settings.newUserCreatedAt = LocalDate.now().format(ISO_LOCAL_DATE)

@@ -702,22 +702,47 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void showInFocusCenter() {
-    final Component focused = getWndManager().getFocusedComponent(myProject);
-    if (focused != null) {
-      showInCenterOf(focused);
+    var parent = getFocusedParent(myProject);
+    if (parent != null) {
+      showInCenterOf(parent);
     }
     else {
-      final WindowManager manager = WindowManager.getInstance();
-      final JFrame frame = myProject != null ? manager.getFrame(myProject) : manager.findVisibleFrame();
-      showInCenterOf(frame.getRootPane());
+      LOG.error(new Throwable("Can't show the popup because no focused component could be found"));
     }
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Component getFocusedParent(@Nullable Project project) {
+    var windowManager = getWndManager();
+    var focused = windowManager == null ? null : windowManager.getFocusedComponent(project);
+    if (focused != null) {
+      LOG.debug("Using the focused component to show the popup " + focused);
+      return focused;
+    }
+    var manager = WindowManager.getInstance();
+    var frame = project != null ? manager.getFrame(project) : manager.findVisibleFrame();
+    if (frame != null) {
+      var pane = frame.getRootPane();
+      LOG.debug("Using the focused frame's root pane to show the popup: frame=" + frame + " rootPane=" + pane);
+      return pane;
+    }
+    // Fall back to using just ANY window.
+    for (Window window : Window.getWindows()) {
+      if (window.isShowing() && window instanceof RootPaneContainer rootPaneContainer) {
+        var pane = rootPaneContainer.getRootPane();
+        LOG.debug("Using a random visible window to show the popup: window=" + window + " rootPane=" + pane);
+        return pane;
+      }
+    }
+    return null;
   }
 
   private @NotNull RelativePoint relativePointByQuickSearch(@NotNull DataContext dataContext) {
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
 
     if (dominantArea != null) {
-      final Component focusedComponent = getWndManager().getFocusedComponent(myProject);
+      var windowManager = getWndManager();
+      Component focusedComponent = windowManager == null ? null : windowManager.getFocusedComponent(myProject);
       if (focusedComponent != null) {
         Window window = SwingUtilities.windowForComponent(focusedComponent);
         JLayeredPane layeredPane;
@@ -980,10 +1005,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public boolean canClose() {
+    Computable<Boolean> callBack = myCallBack;
     return
       (!anyModalWindowsKeepPopupOpen() &&
-      (myCallBack == null || myCallBack.compute().booleanValue()) &&
-      !preventImmediateClosingAfterOpening()) ||
+       (callBack == null || callBack.compute().booleanValue()) &&
+       !preventImmediateClosingAfterOpening()) ||
       myDisposed; // check for myDisposed last to allow `myCallBack` to be executed
   }
 
@@ -1377,6 +1403,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     window.setAutoRequestFocus(myRequestFocus);
 
+    if (myCaption instanceof TitlePanel titlePanel) {
+      window.getAccessibleContext()
+        .setAccessibleName(StringUtil.unescapeXmlEntities(titlePanel.getLabel().getText()).replace("&nbsp;", " "));
+    }
+
     if (roundedCornerParams != null) {
       WindowRoundedCornersManager.setRoundedCorners(window, roundedCornerParams);
     }
@@ -1473,9 +1504,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       if (myPreferredFocusedComponent != null) {
         // `resetThreadContext` here is needed because `setVisible` runs event loop
         // IJPL-161712
-        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        ThreadContext.resetThreadContext(() -> {
           myPreferredFocusedComponent.requestFocus();
-        }
+          return null;
+        });
       }
       else {
         _requestFocus();
@@ -2869,7 +2901,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     // Try forwarding the input method event to various possible speed search handlers
 
     JComponent comp = myPreferredFocusedComponent == null ? myComponent : myPreferredFocusedComponent;
-    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(comp, true);
+    SpeedSearchSupply supply = comp == null ? null : SpeedSearchSupply.getSupply(comp, true);
 
     if (!event.isConsumed() && supply instanceof SpeedSearchBase<?>) {
       ((SpeedSearchBase<?>)supply).processInputMethodEvent(event);

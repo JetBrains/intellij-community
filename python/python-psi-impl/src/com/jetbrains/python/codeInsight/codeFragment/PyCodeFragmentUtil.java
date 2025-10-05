@@ -19,8 +19,10 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,10 @@ public final class PyCodeFragmentUtil {
 
   public static @NotNull PyCodeFragment createCodeFragment(final @NotNull ScopeOwner owner,
                                                            final @NotNull PsiElement startInScope,
-                                                           final @NotNull PsiElement endInScope) throws CannotCreateCodeFragmentException {
+                                                           final @NotNull PsiElement endInScope,
+                                                           final @Nullable PsiElement singleExpression)
+    throws CannotCreateCodeFragmentException {
+
     final int start = startInScope.getTextOffset();
     final int end = endInScope.getTextOffset() + endInScope.getTextLength();
     final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
@@ -50,31 +55,39 @@ public final class PyCodeFragmentUtil {
     final Set<String> globalWrites = getGlobalWrites(subGraph, owner);
     final Set<String> nonlocalWrites = getNonlocalWrites(subGraph, owner);
 
-    final Set<String> inputNames = new HashSet<>();
+    final TypeEvalContext context = TypeEvalContext.userInitiated(startInScope.getProject(), startInScope.getContainingFile());
+    final Set<String> inputNames = new LinkedHashSet<>();
+    final Map<String, Pair<String, PyType>> inputTypes = new HashMap<>();
     for (PsiElement element : filterElementsInScope(getInputElements(subGraph, graph), owner)) {
-      final String name = getName(element);
-      if (name != null) {
-        // Ignore "self" and "cls", they are generated automatically when extracting any method fragment
-        if (resolvesToBoundMethodParameter(element)) {
-          continue;
-        }
-        if (globalWrites.contains(name) || nonlocalWrites.contains(name)) {
-          continue;
-        }
-        inputNames.add(name);
+      // Ignore "self" and "cls", they are generated automatically when extracting any method fragment
+      if (resolvesToBoundMethodParameter(element)) {
+        continue;
+      }
+      Pair<String, PyType> variable = getVariable(globalWrites, nonlocalWrites, element, inputNames, context);
+      if (variable != null && variable.second != null) {
+        String typeName = PythonDocumentationProvider.getTypeHint(variable.second, context);
+        inputTypes.put(variable.first, Pair.create(typeName, variable.second));
       }
     }
 
-    final Set<String> outputNames = new HashSet<>();
+    final Set<String> outputNames = new LinkedHashSet<>();
+    final List<PyType> outputTypes = new ArrayList<>();
     for (PsiElement element : getOutputElements(subGraph, graph)) {
-      final String name = getName(element);
-      if (name != null) {
-        if (globalWrites.contains(name) || nonlocalWrites.contains(name)) {
-          continue;
-        }
-        outputNames.add(name);
+      Pair<String, PyType> variable = getVariable(globalWrites, nonlocalWrites, element, outputNames, context);
+      if (variable != null) {
+        outputTypes.add(variable.second);
       }
     }
+    if (singleExpression != null) {
+      PyType returnType = getType(singleExpression, context);
+      outputTypes.add(returnType);
+    }
+    else if (PsiTreeUtil.getParentOfType(endInScope, PyStatement.class) instanceof PyReturnStatement returnStatement
+             && returnStatement.getExpression() != null) {
+      PyType returnType = getType(returnStatement.getExpression(), context);
+      outputTypes.add(returnType);
+    }
+    final String outputTypeName = getOutputTypeName(startInScope, outputTypes, context);
 
     final boolean yieldsFound = subGraphAnalysis.yieldExpressions > 0;
     if (yieldsFound && LanguageLevel.forElement(owner).isPython2()) {
@@ -82,7 +95,46 @@ public final class PyCodeFragmentUtil {
     }
     final boolean isAsync = owner instanceof PyFunction && ((PyFunction)owner).isAsync();
 
-    return new PyCodeFragment(inputNames, outputNames, globalWrites, nonlocalWrites, subGraphAnalysis.returns > 0, yieldsFound, isAsync);
+    return new PyCodeFragment(inputNames, outputNames, inputTypes, outputTypeName, new LinkedHashSet<>(outputTypes),
+                              globalWrites, nonlocalWrites, subGraphAnalysis.returns > 0, yieldsFound, isAsync);
+  }
+
+  private static @Nullable Pair<String, PyType> getVariable(@NotNull Set<String> globalWrites,
+                                                            @NotNull Set<String> nonlocalWrites,
+                                                            @NotNull PsiElement element,
+                                                            @NotNull Set<String> variableNames,
+                                                            @NotNull TypeEvalContext context) {
+    String name = getName(element);
+    if (name == null || globalWrites.contains(name) || nonlocalWrites.contains(name) || variableNames.contains(name)) {
+      return null;
+    }
+    PyType type = getType(element, context);
+    variableNames.add(name);
+    return Pair.create(name, type);
+  }
+
+  private static @Nullable PyType getType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    if (element instanceof PyTypedElement typedElement) {
+      PyType type = context.getType(typedElement);
+      if (type != null && !(type instanceof PyStructuralType) && !PyNoneTypeKt.isNoneType(type)) {
+        return type;
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable String getOutputTypeName(@NotNull PsiElement startInScope,
+                                                    @NotNull List<PyType> outputTypes,
+                                                    @NotNull TypeEvalContext context) {
+
+    return switch (outputTypes.size()) {
+      case 0 -> null;
+      case 1 -> PythonDocumentationProvider.getTypeHint(outputTypes.get(0), context);
+      default -> {
+        PyType returnType = PyTupleType.create(startInScope, outputTypes);
+        yield PythonDocumentationProvider.getTypeHint(returnType, context);
+      }
+    };
   }
 
   private static boolean resolvesToBoundMethodParameter(@NotNull PsiElement element) {

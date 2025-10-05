@@ -33,7 +33,10 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
     val expectedExtensionMap = buildMap {
       put("ext", "org.gradle.api.internal.plugins.DefaultExtraPropertiesExtension")
       put("idea", "org.gradle.plugins.ide.idea.model.IdeaModel")
-      put("defaultArtifacts", "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet")
+      if (isGradleOlderThan("9.0")) {
+        // See gradle/pull/32742
+        put("defaultArtifacts", "org.gradle.api.internal.plugins.DefaultArtifactPublicationSet")
+      }
       put("reporting", "org.gradle.api.reporting.ReportingExtension")
       if (isGradleAtLeast("4.10")) {
         put("sourceSets", "org.gradle.api.tasks.SourceSetContainer")

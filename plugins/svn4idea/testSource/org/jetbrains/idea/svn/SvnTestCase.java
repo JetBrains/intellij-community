@@ -2,9 +2,6 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -16,7 +13,9 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
-import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
+import com.intellij.openapi.vcs.update.ActionInfo;
+import com.intellij.openapi.vcs.update.ScopeInfo;
+import com.intellij.openapi.vcs.update.VcsUpdateProcess;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ApplicationRule;
@@ -440,11 +439,13 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
   protected void imitUpdate() {
     vcsManager.getOptions(VcsConfiguration.StandardOption.UPDATE).setValue(false);
-    final CommonUpdateProjectAction action = new CommonUpdateProjectAction();
-    action.getTemplatePresentation().setText("1");
-    action
-      .actionPerformed(new AnActionEvent(null, SimpleDataContext.getProjectContext(myProject), "test", new Presentation(), ActionManager.getInstance(), 0));
+    var actionInfo = ActionInfo.UPDATE;
+    var scopeInfo = ScopeInfo.PROJECT;
+    var context = SimpleDataContext.getProjectContext(myProject);
 
+    var roots = VcsUpdateProcess.getRoots(myProject, actionInfo, scopeInfo, context, true);
+    var updateSpec = VcsUpdateProcess.createUpdateSpec(myProject, roots, actionInfo);
+    VcsUpdateProcess.runUpdateBlocking(myProject, roots, updateSpec, actionInfo, "1");
     waitChangesAndAnnotations();
   }
 

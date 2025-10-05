@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.BalloonImpl.ShadowBorderProvider
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.ui.drawImage
+import com.intellij.util.ui.StartupUiUtil
 import java.awt.*
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
@@ -197,25 +197,9 @@ private fun drawLine(component: JComponent,
   //val sourceBounds = Rectangle(0, 0, iconWidth, iconHeight)
   val sourceBounds: Rectangle? = null
   if (horizontal) {
-    drawImage(g = g,
-              image = image,
-              x = start,
-              y = start2,
-              dw = length,
-              dh = iconHeight,
-              sourceBounds = sourceBounds,
-              op = null,
-              observer = component)
+    StartupUiUtil.drawImage(g, image, x = start, y = start2, dw = length, dh = iconHeight, sourceBounds, op = null, component)
   }
   else {
-    drawImage(g = g,
-              image = image,
-              x = start2,
-              y = start,
-              dw = iconWidth,
-              dh = length,
-              sourceBounds = sourceBounds,
-              op = null,
-              observer = component)
+    StartupUiUtil.drawImage(g, image, x = start2, y = start, dw = iconWidth, dh = length, sourceBounds, op = null, component)
   }
 }

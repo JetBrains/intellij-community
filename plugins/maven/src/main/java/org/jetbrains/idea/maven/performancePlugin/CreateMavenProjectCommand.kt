@@ -79,7 +79,7 @@ class CreateMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
       TrustedPaths.getInstance().setProjectPathTrusted(projectPath, true)
       GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
 
-      ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir = projectPath, options = options)
+      ProjectManagerEx.getInstanceEx().openProjectAsync(projectIdentityFile = projectPath, options = options)
       context.setProject(newProject)
     }
   }

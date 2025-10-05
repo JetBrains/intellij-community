@@ -2,29 +2,25 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiPackageStatementStub;
+import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 
-class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatement {
-  static ClsPackageStatementImpl NULL_PACKAGE = new ClsPackageStatementImpl();
+import java.util.Objects;
 
-  private final ClsFileImpl myFile;
-  private final String myPackageName;
+import static java.util.Objects.requireNonNull;
 
-  private ClsPackageStatementImpl() {
-    myFile = null;
-    myPackageName = null;
-  }
+public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageStatementStub> implements PsiPackageStatement {
 
-  ClsPackageStatementImpl(@NotNull ClsFileImpl file, String packageName) {
-    myFile = file;
-    myPackageName = packageName;
-  }
+  private final @NotNull String myPackageName;
 
-  @Override
-  public PsiElement getParent() {
-    return myFile;
+  public ClsPackageStatementImpl(@NotNull PsiPackageStatementStub stub) {
+    super(stub);
+    myPackageName = stub.getPackageName();
   }
 
   @Override
@@ -33,23 +29,27 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   }
 
   @Override
-  public PsiModifierList getAnnotationList() {
-    throw new UnsupportedOperationException("Method not implemented");
+  public @NotNull PsiModifierList getAnnotationList() {
+    return (PsiModifierList)requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
   }
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    throw new UnsupportedOperationException("Method not implemented");
+    return new PsiElement[]{getAnnotationList()};
   }
 
   @Override
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     return myPackageName;
   }
 
   @Override
   public void appendMirrorText(final int indentLevel, final @NotNull StringBuilder buffer) {
-    if (myPackageName != null) {
+    if (!myPackageName.isEmpty()) { // an empty package name should not happen for a well-formed class file
+      for (PsiAnnotation annotation : getAnnotationList().getAnnotations()) {
+        appendText(annotation, indentLevel, buffer);
+        buffer.append("\n");
+      }
       buffer.append("package ").append(getPackageName()).append(';');
     }
   }

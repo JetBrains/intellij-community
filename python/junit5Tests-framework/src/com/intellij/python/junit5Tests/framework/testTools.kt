@@ -60,7 +60,6 @@ private class PathMatcher(private val parent: Path) : TypeSafeMatcher<Path>(Path
         // On Unix, this function resolves symlinks (i.e `~/.venv/python` -> `/usr/bin/python`) which isn't what we want.
         EelOsFamily.Posix -> this
       }
-      toRealPath()
     }
     catch (_: IOException) {
       this

@@ -8,7 +8,6 @@ import com.intellij.util.io.delete
 import com.intellij.util.io.write
 import com.jetbrains.python.Result
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.packaging.PyPIPackageRanking
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.mockito.Mockito
@@ -19,39 +18,29 @@ import kotlin.io.path.setLastModifiedTime
 
 class PypiPackageCacheTest : PyTestCase() {
 
-  fun testCachedPackagesShouldBeOrdered() {
-    withPypiPackages(listOf("c-pkg", "b-pkg", "a-pkg"))
-    withPypiPackagesRanking(mapOf("c-pkg" to 2, "b-pkg" to 1, "a-pkg" to 1))
-    withEmptyCacheStorage()
-    val cache = PypiPackageCache()
-    runBlocking { cache.reloadCache().orThrow() }
-    assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
-  }
 
   fun testCacheShouldNotBeUpdatedIfLocalStorageIsntExpired() {
     withLocalStoredPackages(listOf("c-pkg", "a-pkg", "b-pkg"), Instant.now())
     withPypiLoaderThrowingError()
     val cache = PypiPackageCache()
     runBlocking { cache.reloadCache().orThrow() }
-    assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
+    assertThat(cache.packages).contains("c-pkg", "a-pkg", "b-pkg")
   }
 
   fun testCacheShouldBeUpdatedIfLocalStorageIsExpired() {
     withLocalStoredPackages(listOf("a-pkg"), Instant.now().minus(Duration.ofDays(2)))
     withPypiPackages(listOf("c-pkg", "b-pkg", "a-pkg"))
-    withPypiPackagesRanking(mapOf("c-pkg" to 2, "b-pkg" to 1, "a-pkg" to 1))
     val cache = PypiPackageCache()
     runBlocking { cache.reloadCache().orThrow() }
-    assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
+    assertThat(cache.packages).contains("c-pkg", "a-pkg", "b-pkg")
   }
 
   fun testBrokenLocalStorageShouldBeGracefullyHandled() {
     withBrokenLocalStorage()
     withPypiPackages(listOf("c-pkg", "b-pkg", "a-pkg"))
-    withPypiPackagesRanking(mapOf("c-pkg" to 2, "b-pkg" to 1, "a-pkg" to 1))
     val cache = PypiPackageCache()
     runBlocking { cache.reloadCache().orThrow() }
-    assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
+    assertThat(cache.packages).contains("c-pkg", "a-pkg", "b-pkg")
   }
 
   private fun withEmptyCacheStorage() {
@@ -84,15 +73,6 @@ class PypiPackageCacheTest : PyTestCase() {
     Mockito.`when`(mock.loadPackages()).thenAnswer { error("Should not be invoked") }
     ApplicationManager.getApplication().registerServiceInstance(
       PypiPackageCache.PypiPackageLoader::class.java,
-      mock
-    )
-  }
-
-  private fun withPypiPackagesRanking(ranking: Map<String, Int>) {
-    val mock = Mockito.mock(PyPIPackageRanking::class.java)
-    Mockito.`when`(mock.packageRank).thenReturn(ranking)
-    ApplicationManager.getApplication().registerServiceInstance(
-      PyPIPackageRanking::class.java,
       mock
     )
   }

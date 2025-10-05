@@ -3,7 +3,7 @@ package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
 import org.gradle.api.Project;
 import org.gradle.api.internal.project.DefaultProject;
-import org.gradle.internal.impldep.com.google.gson.GsonBuilder;
+import com.google.gson.GsonBuilder;
 import org.gradle.internal.logging.progress.ProgressLogger;
 import org.gradle.internal.logging.progress.ProgressLoggerFactory;
 import org.jetbrains.annotations.ApiStatus;

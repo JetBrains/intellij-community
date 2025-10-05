@@ -10,6 +10,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Alien;
+import static com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present;
 
 public final class ProjectDictionary implements EditableDictionary {
   public static final @NonNls String DEFAULT_CURRENT_DICT_NAME = "project";
@@ -42,11 +46,11 @@ public final class ProjectDictionary implements EditableDictionary {
 
     int errors = 0;
     for (Dictionary dictionary : dictionaries) {
-      Boolean contains = dictionary.contains(word);
-      if (contains == null) {
+      Dictionary.LookupStatus status = dictionary.lookup(word);
+      if (status == Alien) {
         errors++;
       }
-      else if (contains) {
+      else if (status == Present) {
         return true;
       }
     }
@@ -60,27 +64,30 @@ public final class ProjectDictionary implements EditableDictionary {
 
   @Override
   public void addToDictionary(String word) {
-    getActiveDictionary().addToDictionary(word);
+    getOrCreateActiveDictionary().addToDictionary(word);
   }
 
   @Override
   public void removeFromDictionary(String word) {
-    getActiveDictionary().removeFromDictionary(word);
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return;
+    dictionary.removeFromDictionary(word);
   }
 
-  private @NotNull EditableDictionary getActiveDictionary() {
-    return ensureCurrentUserDictionary();
+  private @Nullable EditableDictionary getActiveDictionary() {
+    if (activeName == null ||  dictionaries == null) return null;
+    return getDictionaryByName(activeName);
   }
 
-  private @NotNull EditableDictionary ensureCurrentUserDictionary() {
+  private @NotNull EditableDictionary getOrCreateActiveDictionary() {
     if (activeName == null) {
       activeName = DEFAULT_CURRENT_DICT_NAME;
     }
-    EditableDictionary result = getDictionaryByName(activeName);
+    EditableDictionary result = getActiveDictionary();
     if (result == null) {
       result = new UserDictionary(activeName);
       if (dictionaries == null) {
-        dictionaries = CollectionFactory.createSmallMemoryFootprintSet();
+        dictionaries = ConcurrentHashMap.newKeySet();
       }
       dictionaries.add(result);
     }
@@ -91,24 +98,25 @@ public final class ProjectDictionary implements EditableDictionary {
     if (dictionaries == null) {
       return null;
     }
-    EditableDictionary result = null;
+
     for (EditableDictionary dictionary : dictionaries) {
       if (dictionary.getName().equals(name)) {
-        result = dictionary;
-        break;
+        return dictionary;
       }
     }
-    return result;
+    return null;
   }
 
   @Override
   public void replaceAll(@Nullable Collection<String> words) {
-    getActiveDictionary().replaceAll(words);
+    getOrCreateActiveDictionary().replaceAll(words);
   }
 
   @Override
   public void clear() {
-    getActiveDictionary().clear();
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return;
+    dictionary.clear();
   }
 
 
@@ -126,19 +134,27 @@ public final class ProjectDictionary implements EditableDictionary {
 
   @Override
   public @NotNull Set<String> getEditableWords() {
-    return getActiveDictionary().getWords();
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return Set.of();
+    return dictionary.getEditableWords();
+  }
+
+  @Override
+  public @NotNull Set<String> getCamelCaseWords() {
+    EditableDictionary dictionary = getActiveDictionary();
+    if (dictionary == null) return Set.of();
+    return dictionary.getCamelCaseWords();
   }
 
 
   @Override
   public void addToDictionary(@Nullable Collection<String> words) {
-    getActiveDictionary().addToDictionary(words);
+    getOrCreateActiveDictionary().addToDictionary(words);
   }
 
   public Set<EditableDictionary> getDictionaries() {
     return dictionaries;
   }
-
 
   @Override
   public boolean equals(Object o) {

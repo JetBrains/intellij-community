@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.FontRasterizationSettings
 import androidx.compose.ui.text.FontSmoothing
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
@@ -28,6 +30,7 @@ import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsUtils
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -43,24 +46,84 @@ import com.intellij.util.ui.JBValue
 import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.UIManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
-import org.jetbrains.jewel.ui.component.Typography
 
 private val logger = Logger.getInstance("JewelBridge")
 
+/**
+ * Converts an AWT [`Color`][java.awt.Color] to a Compose [Color].
+ *
+ * Assumes the AWT [`Color`][java.awt.Color] is expressed in the sRGB color space.
+ */
 public fun java.awt.Color.toComposeColor(): Color = Color(red = red, green = green, blue = blue, alpha = alpha)
 
+/**
+ * Converts a Compose [Color] to an AWT [`Color`][java.awt.Color].
+ *
+ * Assumes the Compose [Color] is expressed in the sRGB color space.
+ */
+@Suppress("UseJBColor") // We specifically do not want to, here
 public fun Color.toAwtColor(): java.awt.Color = java.awt.Color(red, green, blue, alpha)
 
+/**
+ * Converts a Compose [Color] to an AWT [`Color`][java.awt.Color] if the color is specified. If it is unspecified,
+ * returns `null`.
+ *
+ * Assumes the Compose [Color] is expressed in the sRGB color space.
+ */
+@Suppress("UseJBColor") // We specifically do not want to, here
+public fun Color.toAwtColorOrNull(): java.awt.Color? =
+    takeIf { it.isSpecified }?.let { java.awt.Color(red, green, blue, alpha) }
+
+/**
+ * Converts a nullable AWT [`Color`][java.awt.Color] to a Compose [Color], using [Color.Unspecified] if the color is
+ * `null`.
+ *
+ * Assumes the AWT [`Color`][java.awt.Color] is expressed in the sRGB color space.
+ */
 public fun java.awt.Color?.toComposeColorOrUnspecified(): Color = this?.toComposeColor() ?: Color.Unspecified
 
+/**
+ * Retrieves a color from the current LaF using its [key].
+ *
+ * @param key The key to look up the color with.
+ * @param default The color to return if the key is not found.
+ * @return The color from the LaF, or [default] if the key is not found.
+ * @see retrieveColorOrNull
+ */
 public fun retrieveColor(key: String, default: Color): Color = retrieveColorOrNull(key) ?: default
 
+/**
+ * Retrieves a color from the current LaF using its [key]. This is a convenience overload for when you need a different
+ * color for dark themes.
+ *
+ * @param key The key to look up the color with.
+ * @param isDark Whether the current theme is dark.
+ * @param default The color to return if the key is not found in a light theme.
+ * @param defaultDark The color to return if the key is not found in a dark theme.
+ * @return The color from the LaF, or one of the defaults if the key is not found.
+ * @see retrieveColorOrNull
+ */
 public fun retrieveColor(key: String, isDark: Boolean, default: Color, defaultDark: Color): Color =
     retrieveColorOrNull(key) ?: if (isDark) defaultDark else default
 
+/**
+ * Retrieves a color from the current LaF using its [key].
+ *
+ * @param key The key to look up the color with.
+ * @return The color from the LaF, or `null` if the key is not found.
+ * @see JBColor.namedColorOrNull
+ */
 public fun retrieveColorOrNull(key: String): Color? = JBColor.namedColorOrNull(key)?.toComposeColor()
 
+/**
+ * Retrieves a color from the current LaF using its [key], or returns [Color.Unspecified] if the key is not found.
+ *
+ * @param key The key to look up the color with.
+ * @return The color from the LaF, or [Color.Unspecified] if the key is not found.
+ * @see retrieveColorOrNull
+ */
 public fun retrieveColorOrUnspecified(key: String): Color {
     val color = retrieveColorOrNull(key)
     if (color == null) {
@@ -69,8 +132,23 @@ public fun retrieveColorOrUnspecified(key: String): Color {
     return color ?: Color.Unspecified
 }
 
+/**
+ * Retrieves multiple colors from the current LaF using their [keys].
+ *
+ * @param keys The keys to look up the colors with.
+ * @return A list of colors, with [Color.Unspecified] for any keys that are not found.
+ * @see retrieveColorOrUnspecified
+ */
 public fun retrieveColorsOrUnspecified(vararg keys: String): List<Color> = keys.map { retrieveColorOrUnspecified(it) }
 
+/**
+ * Creates a vertical [Brush] from a list of colors.
+ *
+ * @param startY The y-coordinate to start the gradient at.
+ * @param endY The y-coordinate to end the gradient at.
+ * @param tileMode The tile mode to use for the gradient.
+ * @return A [Brush] that will paint a vertical gradient with the given colors.
+ */
 public fun List<Color>.createVerticalBrush(
     startY: Float = 0.0f,
     endY: Float = Float.POSITIVE_INFINITY,
@@ -85,31 +163,64 @@ public fun List<Color>.createVerticalBrush(
     return Brush.verticalGradient(this, startY, endY, tileMode)
 }
 
-public fun retrieveIntAsDp(key: String, default: Dp? = null): Dp {
+/**
+ * Retrieves an integer value from the current LaF as a [Dp].
+ *
+ * @param key The key to look up the integer with.
+ * @param default An optional default value to return if the key is not found.
+ * @return The integer value from the LaF as a [Dp], or [default] if the key is not found and a default is provided.
+ * @throws JewelBridgeException if the key is not found and no default is provided.
+ * @see retrieveIntAsDpOrUnspecified
+ */
+public fun retrieveIntAsDp(key: String, default: Dp? = null): Dp =
+    retrieveIntAsDpOrUnspecified(key).takeIf { it.isSpecified } ?: default ?: keyNotFound(key, "Int")
+
+/**
+ * Retrieves an integer value from the current LaF as a [Dp], or returns [Dp.Unspecified] if the key is not found.
+ *
+ * @param key The key to look up the integer with.
+ * @return The integer value from the LaF as a [Dp], or [Dp.Unspecified] if the key is not found.
+ */
+public fun retrieveIntAsDpOrUnspecified(key: String): Dp {
     val rawValue = UIManager.get(key)
     if (rawValue is Int) return rawValue.dp
-    if (default != null) return default
-
-    keyNotFound(key, "Int")
+    return Dp.Unspecified
 }
 
-public fun retrieveIntAsDpOrUnspecified(key: String): Dp =
-    try {
-        retrieveIntAsDp(key)
-    } catch (_: JewelBridgeException) {
-        Dp.Unspecified
-    }
-
+/**
+ * Retrieves an integer value from the current LaF as a non-negative [Dp], or returns [Dp.Unspecified] if the key is not
+ * found.
+ *
+ * Any negative values read from the LaF will be coerced to `0.dp`.
+ *
+ * @param key The key to look up the integer with.
+ * @return The integer value from the LaF as a [Dp], or [Dp.Unspecified] if the key is not found.
+ * @see retrieveIntAsDpOrUnspecified
+ */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun retrieveIntAsNonNegativeDpOrUnspecified(key: String): Dp =
-    try {
-        retrieveIntAsDp(key).safeValue()
-    } catch (_: JewelBridgeException) {
-        Dp.Unspecified
-    }
+    retrieveIntAsDpOrUnspecified(key).takeIf { it.isSpecified }?.safeValue() ?: Dp.Unspecified
 
+/**
+ * Retrieves insets from the current LaF as [PaddingValues].
+ *
+ * @param key The key to look up the insets with.
+ * @param default An optional default value to return if the key is not found.
+ * @return The insets from the LaF as [PaddingValues], or [default] if the key is not found and a default is provided.
+ * @throws JewelBridgeException if the key is not found and no default is provided.
+ */
 public fun retrieveInsetsAsPaddingValues(key: String, default: PaddingValues? = null): PaddingValues =
-    UIManager.getInsets(key)?.toPaddingValues() ?: default ?: keyNotFound(key, "Insets")
+    retrieveInsetsAsPaddingValuesOrNull(key) ?: default ?: keyNotFound(key, "Insets")
+
+/**
+ * Retrieves insets from the current LaF as [PaddingValues], or null if not found.
+ *
+ * @param key The key to look up the insets with.
+ * @return The insets from the LaF as [PaddingValues], or null if the key is not found.
+ */
+public fun retrieveInsetsAsPaddingValuesOrNull(key: String): PaddingValues? =
+    UIManager.getInsets(key)?.toPaddingValues()
 
 /**
  * Converts a [Insets] to [PaddingValues]. If the receiver is a [JBInsets] instance, this function delegates to the
@@ -148,7 +259,10 @@ public fun JBDimension.toDpSize(): DpSize {
 /**
  * Converts a [Dimension] to a non-negative [DpSize]. If the receiver is a [JBDimension] instance, this function
  * delegates to the specific [toNonNegativeDpSize] for it, which is scaling-aware.
+ *
+ * Any negative values read from the LaF will be coerced to `0.dp`.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun Dimension.toNonNegativeDpSize(): DpSize =
     if (this is JBDimension) {
@@ -160,21 +274,54 @@ public fun Dimension.toNonNegativeDpSize(): DpSize =
 /**
  * Converts a [JBDimension] to a non-negative [DpSize], in a scaling-aware way. This means that the resulting [DpSize]
  * will be constructed by first obtaining the unscaled values. This avoids double scaling.
+ *
+ * Any negative values read from the LaF will be coerced to `0.dp`.
  */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun JBDimension.toNonNegativeDpSize(): DpSize {
     val scaleFactor = scale(1f)
     return DpSize((width2d() / scaleFactor).dp.safeValue(), (height2d() / scaleFactor).dp.safeValue())
 }
 
+/**
+ * Retrieves an arc value from the current LaF as a [CornerSize].
+ *
+ * In Swing, arcs are defined as a diameter, but Compose's [CornerSize] uses a radius, so the value is divided by 2.
+ *
+ * @param key The key to look up the arc with.
+ * @return The arc value from the LaF as a [CornerSize].
+ * @throws JewelBridgeException if the key is not found.
+ */
 public fun retrieveArcAsCornerSize(key: String): CornerSize = CornerSize(retrieveIntAsDp(key) / 2)
 
+/**
+ * Retrieves an arc value from the current LaF as a [CornerSize], or returns a [default] value if the key is not found.
+ *
+ * In Swing, arcs are defined as a diameter, but Compose's [CornerSize] uses a radius, so the value is divided by 2.
+ *
+ * @param key The key to look up the arc with.
+ * @param default The value to return if the key is not found.
+ * @return The arc value from the LaF as a [CornerSize], or [default] if the key is not found.
+ */
 public fun retrieveArcAsCornerSizeOrDefault(key: String, default: CornerSize): CornerSize {
     val intValue = retrieveIntAsDpOrUnspecified(key)
     if (intValue.isUnspecified) return default
     return CornerSize(intValue / 2)
 }
 
+/**
+ * Retrieves an arc value from the current LaF as a non-negative [CornerSize], or returns a [default] value if the key
+ * is not found.
+ *
+ * In Swing, arcs are defined as a diameter, but Compose's [CornerSize] uses a radius, so the value is divided by 2. Any
+ * negative values will be coerced to `0.dp`.
+ *
+ * @param key The key to look up the arc with.
+ * @param default The value to return if the key is not found.
+ * @return The arc value from the LaF as a [CornerSize], or [default] if the key is not found.
+ */
+@ApiStatus.Experimental
 @ExperimentalJewelApi
 public fun retrieveArcAsNonNegativeCornerSizeOrDefault(key: String, default: CornerSize): CornerSize {
     val intValue = retrieveIntAsNonNegativeDpOrUnspecified(key)
@@ -182,7 +329,27 @@ public fun retrieveArcAsNonNegativeCornerSizeOrDefault(key: String, default: Cor
     return CornerSize(intValue / 2)
 }
 
-public fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize {
+/**
+ * Retrieves an arc value from the current LaF as a [CornerSize], trying multiple keys in order until a value is found.
+ *
+ * In Swing, arcs are defined as a diameter, but Compose's [CornerSize] uses a radius, so the value is divided by 2.
+ *
+ * @param keys The keys to look up the arc with, in order of preference.
+ * @return The arc value from the LaF as a [CornerSize].
+ * @throws JewelBridgeException if none of the keys are found.
+ */
+public fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize =
+    retrieveArcAsCornerSizeWithFallbacksOrNull(*keys) ?: keysNotFound(keys.toList(), "Int")
+
+/**
+ * Retrieves an arc value from the current LaF as a [CornerSize], trying multiple keys in order until a value is found.
+ *
+ * In Swing, arcs are defined as a diameter, but Compose's [CornerSize] uses a radius, so the value is divided by 2.
+ *
+ * @param keys The keys to look up the arc with, in order of preference.
+ * @return The arc value from the LaF as a [CornerSize], or `null` if none of the keys are found.
+ */
+public fun retrieveArcAsCornerSizeWithFallbacksOrNull(vararg keys: String): CornerSize? {
     for (key in keys) {
         val rawValue = UIManager.get(key)
         if (rawValue is Int) {
@@ -193,21 +360,32 @@ public fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize
         }
     }
 
-    keysNotFound(keys.toList(), "Int")
+    return null
 }
 
 /**
  * To avoid having Jewel crash due to negative values that third-party themes can define, we need to constrain values
- * that are read from LaF.
+ * that are read from LaF. This by default coerces negative values to 0.
  */
 internal fun Dp.safeValue(minimumValue: Dp = 0.dp) = this.coerceAtLeast(minimumValue)
 
 /**
  * To avoid having Jewel crash due to negative values that third-party themes can define we need to constrain values
- * that are read from LaF.
+ * that are read from LaF. This by default coerces negative values to 0.
  */
 internal fun Int.safeValue(minimumValue: Int = 0) = this.coerceAtLeast(minimumValue)
 
+/**
+ * Retrieves a [TextStyle] from the current LaF.
+ *
+ * @param fontKey The key to look up the font with.
+ * @param colorKey The key to look up the color with. If `null`, the color will be [Color.Unspecified].
+ * @param lineHeight The line height to use for the text style.
+ * @param bold Whether to use a bold font weight.
+ * @param fontStyle The font style to use.
+ * @param size The font size to use.
+ * @return The [TextStyle] from the LaF.
+ */
 public fun retrieveTextStyle(
     fontKey: String,
     colorKey: String? = null,
@@ -218,11 +396,20 @@ public fun retrieveTextStyle(
 ): TextStyle {
     val baseColor = colorKey?.let { retrieveColorOrUnspecified(colorKey) } ?: Color.Unspecified
     val resolvedStyle = retrieveTextStyle(fontKey, color = baseColor, lineHeight, bold, fontStyle, size)
-    return resolvedStyle.copy(
-        lineHeight = lineHeight.takeOrElse { resolvedStyle.fontSize * Typography.DefaultLineHeightMultiplier }
-    )
+    return resolvedStyle.copy(lineHeight = lineHeight.takeOrElse { resolvedStyle.lineHeight })
 }
 
+/**
+ * Retrieves a [TextStyle] from the current LaF.
+ *
+ * @param key The key to look up the font with.
+ * @param color The color to use for the text style.
+ * @param lineHeight The line height to use for the text style.
+ * @param bold Whether to use a bold font weight.
+ * @param fontStyle The font style to use.
+ * @param size The font size to use.
+ * @return The [TextStyle] from the LaF.
+ */
 @OptIn(ExperimentalTextApi::class)
 public fun retrieveTextStyle(
     key: String,
@@ -232,9 +419,7 @@ public fun retrieveTextStyle(
     fontStyle: FontStyle = FontStyle.Normal,
     size: TextUnit = TextUnit.Unspecified,
 ): TextStyle {
-    val lafFont = UIManager.getFont(key) ?: keyNotFound(key, "Font")
-    val jbFont = JBFont.create(lafFont, false)
-
+    val jbFont = retrieveJBFont(key)
     val derivedFont =
         jbFont
             .let { if (bold) it.asBold() else it.asPlain() }
@@ -256,6 +441,16 @@ public fun retrieveTextStyle(
     )
 }
 
+internal fun retrieveJBFont(key: String): JBFont {
+    val lafFont = UIManager.getFont(key) ?: keyNotFound(key, "Font")
+    return JBFont.create(lafFont, false)
+}
+
+/**
+ * Retrieves the platform-specific text style, which includes anti-aliasing and font smoothing settings.
+ *
+ * @return The [PlatformTextStyle] from the LaF.
+ */
 @OptIn(ExperimentalTextApi::class)
 public fun retrievePlatformTextStyle(): PlatformTextStyle {
     val uiSettings = UISettings.instanceOrNull
@@ -285,6 +480,7 @@ private fun AntialiasingType.asComposeFontSmoothing(): FontSmoothing =
         AntialiasingType.OFF -> FontSmoothing.None
     }
 
+/** Converts a [JBValue] to a [Dp]. */
 public val JBValue.dp: Dp
     get() = unscaled.dp
 
@@ -307,10 +503,18 @@ internal fun scaleDensityWithIdeScale(sourceDensity: Density): Density {
 internal fun isNewUiTheme(): Boolean = NewUI.isEnabled()
 
 internal fun lafName(): String {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) return "Unknown"
     val lafInfo = LafManager.getInstance().currentUIThemeLookAndFeel
     return lafInfo.name
 }
 
+internal fun isDarculaTheme(): Boolean = lafName() == "Darcula"
+
+/**
+ * Retrieves the current editor color scheme.
+ *
+ * This is an unstable API, and may be removed in the future.
+ */
 @Suppress("UnstableApiUsage") // We need to use @Internal APIs
 public fun retrieveEditorColorScheme(): EditorColorsScheme {
     val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl

@@ -167,13 +167,15 @@ fun KFunction<*>.asTool(json: Json = Json, thisRef: Any? = null, name: String? =
 
 fun KFunction<*>.asToolDescriptor(name: String? = null, description: String? = null): McpToolDescriptor {
     val toolName = name ?: this.getPreferredToolAnnotation()?.name?.ifBlank { this.name } ?: this.name
-    val toolDescription = description ?: this.getPreferredToolDescriptionAnnotation()?.description ?: this.name
+    val toolDescription = description ?: this.getPreferredToolDescriptionAnnotation()?.description?.trimMargin() ?: this.name
 
   val parametersSchema = this.parametersSchema()
+  val returnTypeSchema = this.returnTypeSchema()
   return McpToolDescriptor(
         name = toolName,
         description = toolDescription,
-        inputSchema = parametersSchema)
+        inputSchema = parametersSchema,
+        outputSchema = returnTypeSchema)
 }
 
 private fun KFunction<*>.getPreferredToolAnnotation(): McpTool? {

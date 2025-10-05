@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,6 +28,8 @@ import java.util.List;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionsButtonBackground;
 
 public final class WelcomeScreenActionsUtil {
+  @ApiStatus.Internal
+  public static final DataKey<Boolean> NON_MODAL_WELCOME_SCREEN = DataKey.create("NON_MODAL_WELCOME_SCREEN");
 
   public static @NotNull CustomComponentAction createToolbarTextButtonAction(@NotNull AnAction action) {
     return new CustomComponentAction() {

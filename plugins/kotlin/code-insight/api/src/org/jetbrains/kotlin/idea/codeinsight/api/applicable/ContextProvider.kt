@@ -5,12 +5,12 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.extensions.KaDanglingFileResolutionModeProvider
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
- * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiBasedModCommandAction.ClassBased]
+ * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction.ClassBased]
  * and [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase].
  */
 interface ContextProvider<E : KtElement, C : Any> {
@@ -37,7 +37,10 @@ fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(
     element: E,
 ): C? = if (element.containingFile.copyOrigin == null) analyze(element) {
     prepareContext(element)
-} else analyzeCopy(element, KaDanglingFileResolutionMode.PREFER_SELF) {
+} else analyzeCopy(
+    element,
+    KaDanglingFileResolutionModeProvider.getDanglingFileResolutionMode(element)
+) {
     prepareContext(element)
 }
 

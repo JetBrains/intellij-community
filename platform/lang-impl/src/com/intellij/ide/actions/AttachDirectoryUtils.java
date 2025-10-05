@@ -13,8 +13,8 @@ import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -144,6 +144,7 @@ public final class AttachDirectoryUtils {
         }
       }
     });
+    AttachDirectoryUtilsKtKt.addRemoveProjectRootEntities(project, files, add);
   }
 
   private static void excludeEntriesInner(@NotNull Module module, @NotNull List<? extends VirtualFile> files, boolean exclude) {

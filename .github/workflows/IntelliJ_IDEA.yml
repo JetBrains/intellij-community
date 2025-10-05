@@ -6,7 +6,7 @@ on:
   push:
     # for each release
     tags:
-      - 'idea/*'
+      - 'idea/20*'
 env:
   artifacts_dir: 'out/idea-ce/artifacts'
 jobs:

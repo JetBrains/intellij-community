@@ -4,12 +4,17 @@ package com.intellij.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.render.RenderersKt;
 import com.intellij.util.ui.FontInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * @deprecated This renderer doesn't support rounded selection. Use {@link RenderersKt#fontInfoRenderer(boolean)} instead.
+ */
+@Deprecated(forRemoval = true)
 public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
   @Override
   protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean focused) {
@@ -17,8 +22,7 @@ public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
     @NlsSafe String text = value == null ? "" : value.toString();
     append(text);
     if (value instanceof FontInfo info) {
-      Integer size = getFontSize();
-      Font f = info.getFont(size != null ? size : font.getSize());
+      Font f = info.getFont(font.getSize());
       if (f.canDisplayUpTo(text) == -1) {
         setFont(f);
       }
@@ -39,10 +43,6 @@ public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
   @Override
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(isEditorFont()));
-  }
-
-  protected Integer getFontSize() {
-    return null;
   }
 
   protected boolean isEditorFont() {

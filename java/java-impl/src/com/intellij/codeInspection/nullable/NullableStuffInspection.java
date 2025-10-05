@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -45,6 +45,8 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       checkbox("REPORT_NOT_ANNOTATED_GETTER", JavaBundle.message("inspection.nullable.problems.not.annotated.getters.for.annotated.fields")),
       checkbox("REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER", JavaBundle.message("inspection.nullable.problems.notnull.parameters.with.null.literal.option")),
       checkbox("REPORT_NULLABILITY_ANNOTATION_ON_LOCALS", JavaBundle.message("inspection.nullable.problems.nullability.on.locals")),
+      checkbox("REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS", JavaBundle.message(
+        "inspection.nullable.problems.notnull.to.nullable.assignment.conflicts")),
       JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.NULLABILITY_ANNOTATIONS)
     );
   }

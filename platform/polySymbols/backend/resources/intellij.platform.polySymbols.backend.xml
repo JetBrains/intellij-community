@@ -26,6 +26,9 @@
     <extensionPoint qualifiedName="com.intellij.polySymbols.codeCompletionItemCustomizer"
                     interface="com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.polySymbols.psiReferenceCacheInfoProvider"
+                    interface="com.intellij.polySymbols.references.PsiPolySymbolReferenceCacheInfoProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -39,6 +42,8 @@
                                  implementationClass="com.intellij.polySymbols.references.impl.PsiPolySymbolReferenceProviderImpl"
                                  targetClass="com.intellij.polySymbols.PolySymbol"
                                  referenceClass="com.intellij.polySymbols.references.PolySymbolReference"/>
+    <polySymbols.psiReferenceCacheInfoProvider
+      implementation="com.intellij.polySymbols.references.impl.DefaultPsiPolySymbolReferenceCacheInfoProvider"/>
 
     <referencesSearch implementation="com.intellij.polySymbols.search.PsiSourcedPolySymbolReferenceSearcher"/>
     <refactoring.helper implementation="com.intellij.polySymbols.refactoring.PsiSourcedPolySymbolRefactoringHelper"/>

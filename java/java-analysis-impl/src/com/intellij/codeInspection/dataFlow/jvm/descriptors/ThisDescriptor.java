@@ -24,6 +24,7 @@ import java.util.Objects;
  */
 public final class ThisDescriptor extends PsiVarDescriptor {
   private final @NotNull PsiClass myQualifier;
+  private final int myHash;
 
   /**
    * Creates a descriptor that represents accessible 'this' variable of a specific class type
@@ -32,6 +33,7 @@ public final class ThisDescriptor extends PsiVarDescriptor {
    */
   public ThisDescriptor(@NotNull PsiClass psiClass) {
     myQualifier = psiClass;
+    myHash = Objects.hashCode(psiClass.getQualifiedName());
   }
 
   @Override
@@ -65,7 +67,7 @@ public final class ThisDescriptor extends PsiVarDescriptor {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myQualifier.getQualifiedName());
+    return myHash;
   }
 
   @Override

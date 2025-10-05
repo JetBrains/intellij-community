@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere
 
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
+import com.intellij.openapi.application.readAction
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
 import fleet.kernel.DurableRef
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 @ApiStatus.Experimental
 @ApiStatus.Internal
-class SeItemData(
+class SeItemData private constructor(
   val uuid: String,
   val providerId: SeProviderId,
   val weight: Int,
@@ -29,10 +30,14 @@ class SeItemData(
     return SeItemData(uuid, providerId, weight, presentation, uuidToReplace, additionalInfo, itemRef)
   }
 
+  fun withPresentation(presentation: SeItemPresentation): SeItemData {
+    return SeItemData(uuid, providerId, weight, presentation, uuidsToReplace, additionalInfo, itemRef)
+  }
+
   @ApiStatus.Internal
   companion object {
     suspend fun createItemData(
-      sessionRef: DurableRef<SeSessionEntity>,
+      session: SeSession,
       uuid: String,
       item: SeItem,
       providerId: SeProviderId,
@@ -41,13 +46,15 @@ class SeItemData(
       additionalInfo: Map<String, String>,
       uuidToReplace: List<String>,
     ): SeItemData? {
-      val entityRef = SeItemEntity.createWith(sessionRef, item) ?: return null
+      val entityRef = SeItemEntity.createWith(session, item) ?: return null
       val additionalInfo = additionalInfo.toMutableMap()
 
       if (item is SeLegacyItem) {
         computeCatchingOrNull(true, { e-> "Couldn't add language info (${providerId.value}): $e" }) {
           PSIPresentationBgRendererWrapper.toPsi(item.rawObject)?.let {
-            additionalInfo[SeItemDataKeys.PSI_LANGUAGE_ID] = it.language.id
+            readAction {
+              additionalInfo[SeItemDataKeys.PSI_LANGUAGE_ID] = it.language.id
+            }
           }
         }
 

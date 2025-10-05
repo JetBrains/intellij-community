@@ -63,4 +63,11 @@ public interface FileDocumentManagerListener extends EventListener {
   default void unsavedDocumentsDropped() { }
 
   default void afterDocumentUnbound(@NotNull VirtualFile file, @NotNull Document document) { }
+
+  /**
+   * Called after the document is saved.
+   * No guarantees about the calling thread or read/write action context.
+   * The listener should not perform too much work here however, to avoid freezing, and delegate it to the background thread instead.
+   */
+  default void afterDocumentSaved(@NotNull Document document) { }
 }

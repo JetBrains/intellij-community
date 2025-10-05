@@ -18,7 +18,7 @@ internal object HatchSdkFlavor : CPythonSdkFlavor<HatchSdkFlavorData>() {
 }
 
 internal class HatchSdkFlavorProvider : PythonFlavorProvider {
-  override fun getFlavor(platformIndependent: Boolean): PythonSdkFlavor<*> = HatchSdkFlavor
+  override fun getFlavor(): PythonSdkFlavor<*> = HatchSdkFlavor
 }
 
 class HatchSdkAdditionalData(

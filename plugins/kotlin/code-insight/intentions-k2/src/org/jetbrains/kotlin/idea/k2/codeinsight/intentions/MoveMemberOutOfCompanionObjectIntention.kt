@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal class MoveMemberOutOfCompanionObjectIntention : MoveMemberIntention(
-    textGetter = KotlinBundle.lazyMessage("move.out.of.companion.object")
+    textGetter = KotlinBundle.messagePointer("move.out.of.companion.object")
 ) {
     private fun getClassForCompanionObjectMember(element: KtNamedDeclaration): KtClassOrObject? {
         val container = element.containingClassOrObject

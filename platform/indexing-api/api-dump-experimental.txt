@@ -13,6 +13,9 @@ f:com.intellij.psi.search.FileTypeIndex
 - *sf:INDEX_CHANGE_TOPIC:com.intellij.util.messages.Topic
 *:com.intellij.psi.search.FileTypeIndex$IndexChangeListener
 - a:onChangedForFileType(com.intellij.openapi.fileTypes.FileType):V
+f:com.intellij.psi.search.FilenameIndex
+- *s:firstVirtualFileWithName(java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):com.intellij.openapi.vfs.VirtualFile
+- *s:hasVirtualFileWithName(java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
 f:com.intellij.psi.search.IndexPattern
 - *:getWordToHighlight():java.lang.String
 a:com.intellij.psi.stubs.StubIndex
@@ -21,7 +24,6 @@ a:com.intellij.psi.stubs.StubIndex
 - com.intellij.openapi.project.RootsChangeRescanningInfo
 - a:addInheritedSdk():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - a:addLibrary(com.intellij.openapi.roots.libraries.Library):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
-- a:addModule(com.intellij.openapi.module.Module):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - a:addSdk(com.intellij.openapi.projectRoots.Sdk):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - a:buildInfo():com.intellij.openapi.project.RootsChangeRescanningInfo
 - s:newInstance():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
@@ -43,6 +45,7 @@ Fa:com.intellij.util.indexing.FileBasedIndex
 - *a:getContainingFilesIterator(com.intellij.util.indexing.ID,java.lang.Object,com.intellij.psi.search.GlobalSearchScope):java.util.Iterator
 - *:ignoreDumbMode(com.intellij.util.indexing.DumbModeAccessType,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - *:ignoreDumbMode(com.intellij.util.indexing.DumbModeAccessType,java.lang.Runnable):V
+- *a:iterateNonIndexableFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFileFilter,com.intellij.openapi.roots.ContentIterator):Z
 - *:processFilesContainingAllKeys(java.util.Collection,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
 *f:com.intellij.util.indexing.FileBasedIndex$AllKeysQuery
 - <init>(com.intellij.util.indexing.ID,java.util.Collection,com.intellij.openapi.util.Condition):V

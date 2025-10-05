@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.junit.Test
 import kotlin.io.path.exists
 import kotlin.time.Duration
@@ -66,7 +67,10 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
   }
 
 
-  protected fun execute(params: MavenRunnerParameters, settings: MavenRunnerSettings = MavenRunnerSettings(), maxTimeToWait: Duration = 1.minutes): ExecutionInfo {
+  protected fun execute(params: MavenRunnerParameters,
+                        settings: MavenRunnerSettings = MavenRunnerSettings(),
+                        generalSettings: MavenGeneralSettings = mavenGeneralSettings,
+                        maxTimeToWait: Duration = 1.minutes): ExecutionInfo {
     val sema = Semaphore()
     val stdout = StringBuilder()
     val stderr = StringBuilder()
@@ -74,7 +78,7 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
     sema.down()
     edt<RuntimeException> {
       MavenRunConfigurationType.runConfiguration(
-        project, params, mavenGeneralSettings,
+        project, params, generalSettings,
         settings,
         ProgramRunner.Callback { descriptor ->
           descriptor.processHandler!!.addProcessListener(MyTestExecutionListener(stdout, stderr, system, sema, descriptor))

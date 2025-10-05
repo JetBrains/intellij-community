@@ -4,11 +4,13 @@ package com.intellij.grazie.spellcheck
 import ai.grazie.detector.heuristics.rule.RuleFilter
 import ai.grazie.utils.toLinkedSet
 import com.intellij.grazie.GrazieConfig
+import com.intellij.grazie.GrazieDynamic.getLangDynamicFolder
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.ide.msg.CONFIG_STATE_TOPIC
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
+import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.components.Service
@@ -19,12 +21,15 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.spellchecker.dictionary.Dictionary
+import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.*
 import com.intellij.spellchecker.grazie.SpellcheckerLifecycle
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
+import java.nio.file.Files
 import java.util.concurrent.Callable
 
 internal class GrazieSpellcheckerLifecycle : SpellcheckerLifecycle {
@@ -37,9 +42,12 @@ internal class GrazieSpellcheckerLifecycle : SpellcheckerLifecycle {
 @Service(Service.Level.APP)
 class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
 
-  private val MAX_SUGGESTIONS_COUNT = 3
-
   private val filter by lazy { RuleFilter.withAllBuiltIn() }
+
+  private fun isHunspellAvailable(lang: Lang, enabledLanguages: Set<Lang>): Boolean {
+    val hunspell = lang.hunspellRemote ?: return false
+    return lang in enabledLanguages && Files.exists(getLangDynamicFolder(lang).resolve(hunspell.file))
+  }
 
   private fun filterCheckers(word: String): Set<SpellerTool> {
     val checkers = this.checkers
@@ -48,12 +56,15 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     }
 
     val preferred = filter.filter(listOf(word)).preferred
+    val enabledLanguages = GrazieConfig.get().enabledLanguages
     return checkers.asSequence()
       .filter { checker -> preferred.any { checker.lang.equalsTo(it) } }
+      // Hunspell dictionary (if it's present) should do spellchecking / suggestions
+      .filterNot { isHunspellAvailable(it.lang, enabledLanguages) }
       .toSet()
   }
 
-  data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule, val suggestLimit: Int) {
+  data class SpellerTool(val tool: JLanguageTool, val lang: Lang, val speller: SpellingCheckRule) {
     fun check(word: String): Boolean? = synchronized(speller) {
       if (word.isBlank()) return true
 
@@ -80,7 +91,7 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
               text.replaceRange(match.fromPos, match.toPos, it)
             }
           }
-          .take(suggestLimit).toSet()
+          .toSet()
       }
     }
   }
@@ -103,9 +114,9 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     for (lang in GrazieConfig.get().availableLanguages) {
       if (lang.isEnglish()) continue
 
-      val tool = LangTool.getTool(lang)
+      val tool = LangTool.getTool(lang, TextStyleDomain.Other)
       tool.allSpellingCheckRules.firstOrNull()
-        ?.let { set.add(SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT)) }
+        ?.let { set.add(SpellerTool(tool, lang, it)) }
     }
 
     return set
@@ -117,19 +128,19 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     }
   }
 
-  fun isCorrect(word: String): Boolean? {
+  fun lookup(word: String): Dictionary.LookupStatus {
     val myCheckers = filterCheckers(word)
 
     var isAlien = true
     for (speller in myCheckers) {
       when (speller.check(word)) {
-        true -> return true
+        true -> return Present
         false -> isAlien = false
         else -> {}
       }
     }
 
-    return if (isAlien) null else false
+    return if (isAlien) Alien else Absent
   }
 
   fun getSuggestions(word: String): Collection<String> {

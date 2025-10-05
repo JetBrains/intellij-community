@@ -33,12 +33,12 @@ class JavaRuntimeLibraryDescription(project: Project?) : CustomLibraryDescriptio
 
     companion object {
         val KOTLIN_JAVA_RUNTIME_KIND: LibraryKind = LibraryKind.create("kotlin-java-runtime")
-        const val LIBRARY_NAME = "KotlinJavaRuntime"
+        const val LIBRARY_NAME: String = "KotlinJavaRuntime"
 
-        val JAVA_RUNTIME_LIBRARY_CREATION
+        val JAVA_RUNTIME_LIBRARY_CREATION: String
             @Nls
             get() = KotlinProjectConfigurationBundle.message("java.runtime.library.creation")
-        val DIALOG_TITLE
+        val DIALOG_TITLE: String
             @Nls
             get() = KotlinProjectConfigurationBundle.message("create.kotlin.java.runtime.library")
         val SUITABLE_LIBRARY_KINDS: Set<LibraryKind> = setOf(KOTLIN_JAVA_RUNTIME_KIND)

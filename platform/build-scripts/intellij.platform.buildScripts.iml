@@ -2,13 +2,13 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
+      <configuration version="5" platform="JVM 21" allPlatforms="JVM [21]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.RequiresOptIn -opt-in=kotlinx.serialization.ExperimentalSerializationApi -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.RequiresOptIn -opt-in=kotlinx.serialization.ExperimentalSerializationApi -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -XXLanguage:+AllowEagerSupertypeAccessibilityChecks" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
-            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="jvmTarget" arg="21" />
             <stringArg name="apiVersion" arg="2.2" />
             <stringArg name="languageVersion" arg="2.2" />
           </stringArguments>
@@ -40,7 +40,7 @@
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
-    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
@@ -49,21 +49,20 @@
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
-    <orderEntry type="library" name="jackson-jr-objects" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.jr.objects" />
     <orderEntry type="library" name="fastutil-min" level="project" />
-    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
-    <orderEntry type="library" name="devkit.runtime.module.repository.jps" level="project" />
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
     <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="library" name="json-schema-validator" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="library" name="kotlinx-serialization-json-io" level="project" />
-    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
     <orderEntry type="library" name="okhttp" level="project" />
@@ -78,39 +77,26 @@
     <orderEntry type="library" name="bouncy-castle-provider" level="project" />
     <orderEntry type="module-library">
       <library name="jetbrains.format.ripper" type="repository">
-        <properties maven-id="com.jetbrains.format-ripper:format-ripper:1.1.1">
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.format-ripper:format-ripper:1.2.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1.jar">
-              <sha256sum>c5edac7046453d487daf26bfce1ebb0ccb2d51e07167d01878a13ffdb9b66b8e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0.jar">
+              <sha256sum>7b47cc1b48092566eaf82c8cd6210151661423b755dc578613000cac90464eef</sha256sum>
             </artifact>
           </verification>
-          <exclude>
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
-            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
-            <dependency maven-id="org.apache.commons:commons-compress" />
-            <dependency maven-id="org.bouncycastle:bcprov-jdk15on" />
-            <dependency maven-id="org.bouncycastle:bcpkix-jdk15on" />
-            <dependency maven-id="org.bouncycastle:bcutil-jdk15on" />
-          </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.1.1/format-ripper-1.1.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/format-ripper/format-ripper/1.2.0/format-ripper-1.2.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="jackson-datatype-joda" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="ktor-serialization-kotlinx-json" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-slf4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.slf4j" />
     <orderEntry type="library" name="ktor-client-content-negotiation" level="project" />
     <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="module-library">
@@ -230,15 +216,16 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="library" name="jbr-api" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="RUNTIME" />
     <orderEntry type="library" name="jackson-dataformat-yaml" level="project" />
-    <orderEntry type="library" name="ion" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.ion" />
     <orderEntry type="module" module-name="intellij.platform.buildData" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
+    <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.generator" />
     <orderEntry type="library" name="ktor-client-core" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="library" scope="RUNTIME" name="snakeyaml" level="project" />
@@ -398,6 +385,42 @@
           <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-epoll/4.2.0.RC2/netty-transport-native-epoll-4.2.0.RC2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.RC2/netty-transport-native-kqueue-4.2.0.RC2-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport-native-kqueue/4.2.0.RC2/netty-transport-native-kqueue-4.2.0.RC2-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="jetbrains.intellij.deps.coverage.reporter" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps:intellij-coverage-reporter:1.0.766">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.766/intellij-coverage-reporter-1.0.766.jar">
+              <sha256sum>25393a60c2f7552955e7f5719a73b044cec83e05a62a3b0b1c75ad3e6953275b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25.jar">
+              <sha256sum>8627281c15b1b5347ca618d0dbc2090aa92a096a867c1d030198a51efcc33bfe</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar">
+              <sha256sum>04d65ec1bde6cea20e3495d5e78ef96ab774d9936434861d3254bd88e7e94f92</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.766/intellij-coverage-agent-1.0.766.jar">
+              <sha256sum>52f66c83318dcacb879f2a07fe448eccd1313b077809190810c83aa4b875611c</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains:annotations" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.766/intellij-coverage-reporter-1.0.766.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.766/intellij-coverage-agent-1.0.766.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.766/intellij-coverage-reporter-1.0.766-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.766/intellij-coverage-agent-1.0.766-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

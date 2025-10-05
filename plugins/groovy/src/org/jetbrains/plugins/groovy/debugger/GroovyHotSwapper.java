@@ -10,7 +10,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -31,6 +31,8 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 final class GroovyHotSwapper extends JavaProgramPatcher {
@@ -108,7 +110,12 @@ final class GroovyHotSwapper extends JavaProgramPatcher {
     if (!project.isDefault() && containsGroovyClasses(project)) {
       String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(getAgentJarPath(), "groovyHotSwap", GROOVY_HOTSWAP_AGENT_PATH);
       if (agentPath != null) {
-        javaParameters.getVMParametersList().add("-javaagent:" + agentPath);
+        if (Files.isRegularFile(Path.of(agentPath))) {
+          javaParameters.getVMParametersList().add("-javaagent:" + agentPath);
+        }
+        else {
+          LOG.error("Groovy hotswap agent is not found at: " + agentPath);
+        }
       }
     }
   }
@@ -118,7 +125,7 @@ final class GroovyHotSwapper extends JavaProgramPatcher {
     if (ourJar.isDirectory()) { //development mode
       return PluginPathManager.getPluginHomePath("groovy") + "/hotswap/gragent.jar";
     }
-    final String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+    final String relevantJarsRoot = ArchivedCompilationContextUtil.getArchivedCompiledClassesLocation();
     if (relevantJarsRoot != null && ourJar.toPath().startsWith(relevantJarsRoot)) {
       return PluginPathManager.getPluginHomePath("groovy") + "/hotswap/gragent.jar";
     }

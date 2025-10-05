@@ -4,14 +4,13 @@
 
 package org.jetbrains.kotlin.idea.base.highlighting
 
-import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
+import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
-import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
@@ -20,11 +19,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
-import org.jetbrains.kotlin.idea.core.script.getScriptReports
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
-import kotlin.script.experimental.api.ScriptDiagnostic
 
 @ApiStatus.Internal
 fun KtFile.shouldHighlightErrors(): Boolean {
@@ -52,26 +48,19 @@ fun KtFile.shouldHighlightFile(): Boolean {
     }
 
     return if (isScript()) { /* isScript() is based on stub index */
-        computeIfAbsent(ProjectRootModificationTracker.getInstance(project), ScriptDependenciesModificationTracker.getInstance(project)) {
-            calculateShouldHighlightScript()
-        }
+        KotlinScriptHighlightingExtension.shouldHighlightScript(project, this)
     } else {
-        computeIfAbsent(ProjectRootModificationTracker.getInstance(project)) {
-            calculateShouldHighlightFile()
+        CachedValuesManager.getManager(this.project).getCachedValue(this) {
+            Result.create(calculateShouldHighlightFile(), ProjectRootModificationTracker.getInstance(project))
         }
     }
 }
 
-private fun KtFile.computeIfAbsent(vararg dependencies: Any, compute: KtFile.() -> Boolean): Boolean =
-    CachedValuesManager.getManager(project).getCachedValue(this) {
-        CachedValueProvider.Result.create(compute(), dependencies)
-    }
-
 private fun isIndexingInProgress(project: Project) = runReadAction { DumbService.getInstance(project).isDumb }
 
-private fun KtFile.shouldDefinitelyHighlight(): Boolean =
+fun KtFile.shouldDefinitelyHighlight(): Boolean =
     (this is KtCodeFragment && context != null) ||
-            OutsidersPsiFileSupport.isOutsiderFile(virtualFile) ||
+            SyntheticPsiFileSupport.isOutsiderFile(virtualFile) ||
             (this !is KtCodeFragment && virtualFile?.fileSystem is NonPhysicalFileSystem)
 
 @OptIn(KaPlatformInterface::class)
@@ -83,18 +72,8 @@ private fun KtFile.calculateShouldHighlightFile(): Boolean =
 
 private fun KtFile.calculateShouldHighlightScript(): Boolean {
     if (shouldDefinitelyHighlight()) return true
-
     if (KotlinPlatformUtils.isCidr) return false // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
-    if (getScriptReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }) return false
 
-    val isReadyToHighlight = AbstractScriptHighlightHelper.getInstance(project).isReadyToHighlight(this)
+    val isReadyToHighlight = KotlinScriptHighlightingExtension.shouldHighlightScript(project, this)
     return isReadyToHighlight && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
-}
-
-abstract class AbstractScriptHighlightHelper {
-    abstract fun isReadyToHighlight(file: KtFile): Boolean
-
-    companion object {
-        fun getInstance(project: Project): AbstractScriptHighlightHelper = project.service<AbstractScriptHighlightHelper>()
-    }
 }

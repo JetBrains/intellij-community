@@ -5,9 +5,12 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.codeInsight.hints.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.modcommand.*
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
@@ -45,6 +48,9 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     protected open fun afterFileNameSuffix(ktFilePath: File): String = ".after"
 
     protected open fun isApplicableDirectiveName(): String = "IS_APPLICABLE"
+
+    private val templateRenameDirectiveName: String = "NEW_NAME"
+    private val noTemplateTestingDirectiveName: String = "NO_TEMPLATE_TESTING"
 
     protected open fun isApplicableDirective(fileText: String): Boolean {
         val isApplicableString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// ${isApplicableDirectiveName()}: ")
@@ -209,12 +215,13 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         val isApplicableOnPooled: Boolean = project.computeOnBackground {
             runReadAction { intentionAction.isAvailable(project, editor, file) }
         }
+
+        val modCommandAction: ModCommandAction? = intentionAction.asModCommandAction()
         Assert.assertTrue(
-            "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
+            "isAvailable() for " + (modCommandAction ?: intentionAction).javaClass + " should return " + isApplicableExpected,
             isApplicableExpected == isApplicableOnPooled
         )
 
-        val modCommandAction: ModCommandAction? = intentionAction.asModCommandAction()
         if (modCommandAction == null) {
             val isApplicableOnEdt = intentionAction.isAvailable(project, editor, file)
 
@@ -240,41 +247,14 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                     KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable) { options -> options.last() }
                 }
 
-                val action = { intentionAction.invoke(project, editor, file) }
-                if (intentionAction.startInWriteAction()) {
-                    project.executeWriteCommand(intentionAction.text, action)
-                } else {
-                    if (modCommandAction == null) {
-                        project.executeCommand(intentionAction.text, null, action)
-                    } else {
-                        val actionContext = ActionContext.from(editor, file)
-                        val command: ModCommand = project.computeOnBackground {
-                            runReadAction {
-                                modCommandAction.perform(actionContext)
-                            }
-                        }
-
-                        if (command is ModDisplayMessage) {
-                            TestCase.assertEquals("Failure message mismatch.", shouldFailString, command.messageText().replace('\n', ' '))
-                            return
-                        } else if (command is ModCompositeCommand && command.commands().first() is ModShowConflicts) {
-                            val showConflictsCommand = command.commands().first() as ModShowConflicts
-                            val actualFailString = showConflictsCommand
-                                .conflicts
-                                .values
-                                .flatMap { it.messages }
-                                .joinToString(separator = ", ") {
-                                    it.replace(Regex("<[^>]+>"), "")
-                                }
-                            TestCase.assertEquals("Failure message mismatch.", shouldFailString, actualFailString)
-                            return
-                        } else {
-                            project.executeCommand(intentionAction.text, null) {
-                                ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
-                            }
-                        }
+                val newName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $templateRenameDirectiveName: ")
+                val isTemplateTestingEnabled = !InTextDirectivesUtils.isDirectiveDefined(fileText, "// $noTemplateTestingDirectiveName")
+                withTemplateRenameAfter(newName, isTemplateTestingEnabled) {
+                    runIntentionCommand(intentionAction, modCommandAction, file, editor) {
+                        intentionAction.invoke(project, editor, file)
                     }
                 }
+
                 UIUtil.dispatchAllInvocationEvents()
                 NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
@@ -296,6 +276,93 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             TestCase.assertEquals("Failure message mismatch.", shouldFailString, StringUtil.join(e.messages.sorted(), ", "))
         } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
             TestCase.assertEquals("Failure message mismatch.", shouldFailString, e.message?.replace('\n', ' '))
+        }
+    }
+
+    private fun runIntentionCommand(
+        intentionAction: IntentionAction,
+        modCommandAction: ModCommandAction?,
+        file: PsiFile,
+        editor: Editor,
+        commandBlock: () -> Unit,
+    ) {
+        if (intentionAction.startInWriteAction()) {
+            project.executeWriteCommand(intentionAction.text, commandBlock)
+        } else {
+            if (modCommandAction == null) {
+                project.executeCommand(intentionAction.text, null, commandBlock)
+            } else {
+                val actionContext = ActionContext.from(editor, file)
+                val command: ModCommand = project.computeOnBackground {
+                    runReadAction {
+                        modCommandAction.perform(actionContext)
+                    }
+                }
+
+                if (command is ModDisplayMessage) {
+                    throw CommonRefactoringUtil.RefactoringErrorHintException(command.messageText().replace('\n', ' '))
+                } else if (command is ModCompositeCommand && command.commands().first() is ModShowConflicts) {
+                    val showConflictsCommand = command.commands().first() as ModShowConflicts
+                    val actualFailString = showConflictsCommand
+                        .conflicts
+                        .values
+                        .flatMap { it.messages }
+                        .joinToString(separator = ", ") {
+                            it.replace(Regex("<[^>]+>"), "")
+                        }
+                    throw BaseRefactoringProcessor.ConflictsInTestsException(listOf(actualFailString))
+                } else {
+                    project.executeCommand(intentionAction.text, null) {
+                        ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Runs the intention action and possibly renames the active template after.
+     *
+     * Enables template testing if not disabled by the directive ([noTemplateTestingDirectiveName]).
+     * Renames the element under the template after the intention if the name is provided ([templateRenameDirectiveName]).
+     * The function dispatches UI events and waits for completion of async tasks to make sure the template is activated.
+     * The presence of a template after the intention is mandatory if [newName] is not `null`.
+     */
+    private fun withTemplateRenameAfter(newName: String?, isTemplateTestingEnabled: Boolean, mainIntentionAction: () -> Unit) {
+        if (!isTemplateTestingEnabled) {
+            mainIntentionAction()
+            return
+        }
+
+        TemplateManagerImpl.setTemplateTesting(testRootDisposable)
+
+        mainIntentionAction()
+
+        UIUtil.dispatchAllInvocationEvents()
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
+        val templateStateAfterIntentionBeforeRename = TemplateManagerImpl.getTemplateState(editor)
+
+        if (newName != null) {
+            assert(templateStateAfterIntentionBeforeRename != null) {
+                "The editor should have an active rename template after the intention"
+            }
+        }
+        if (templateStateAfterIntentionBeforeRename == null) return
+
+        WriteCommandAction.runWriteCommandAction(project) {
+            val range = templateStateAfterIntentionBeforeRename.currentVariableRange
+            check(range != null) { "Rename template is present, but current variable range is null" }
+
+            val templateStateAfter = if (newName != null) {
+                editor.document.replaceString(range.startOffset, range.endOffset, newName)
+                TemplateManagerImpl.getTemplateState(editor).also { templateStateAfterReplacement ->
+                    assert(templateStateAfterReplacement != null) { "Template disappeared unexpectedly after rename replacement" }
+                }
+            } else {
+                templateStateAfterIntentionBeforeRename
+            }
+            templateStateAfter!!.gotoEnd(false)
         }
     }
 

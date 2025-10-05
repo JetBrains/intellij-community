@@ -92,6 +92,8 @@ class KotlinChangeSignatureUsageProvider : ChangeSignatureUsageProvider {
                     }
                     parent is KtConstructorDelegationCall ->
                         return KotlinConstructorDelegationCallUsage(parent, method)
+                    parent is KtCallableReferenceExpression ->
+                        return KotlinCallableReferenceUsage(parent)
                     element is KtSimpleNameExpression && (method is KtProperty || method is KtParameter) ->
                         return KotlinPropertyCallUsage(element, changeInfo as KotlinChangeInfoBase)
                     element is KtSuperTypeCallEntry ->

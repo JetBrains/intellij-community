@@ -5,12 +5,12 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.actions.CodeInsightAction
 import com.intellij.codeInsight.completion.command.*
 import com.intellij.ide.DataManager
-import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
@@ -23,12 +23,14 @@ import org.jetbrains.annotations.Nls
  * in a code completion system.
  */
 abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
+
+  override fun supportNewLineCompletion(): Boolean = true
+
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     val psiFile = context.psiFile
     val project = context.project
     val offset = context.offset
     val editor = context.editor
-    if (InjectedLanguageManager.getInstance(psiFile.project).isInjectedFragment(psiFile)) return emptyList()
     val element = psiFile.findElementAt(if (offset - 1 >= 0) offset - 1 else offset)
     if (element == null) return emptyList()
     if (!generationIsAvailable(element, offset)) return emptyList()
@@ -79,6 +81,19 @@ abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
     var customName: String? = null,
     var customI18nName: @Nls String? = null,
   ) : CompletionCommand() {
+
+    override val synonyms: List<String>
+      get() = listOf("generate")
+
+    override val additionalInfo: String?
+      get() {
+        val shortcutText = KeymapUtil.getFirstKeyboardShortcutText("Generate")
+        if (shortcutText.isNotEmpty()) {
+          return shortcutText
+        }
+        return null
+      }
+
     override val presentableName: @Nls String
       get() = customI18nName ?: (CodeInsightBundle.message("command.completion.generate.text", action.templateText))
 

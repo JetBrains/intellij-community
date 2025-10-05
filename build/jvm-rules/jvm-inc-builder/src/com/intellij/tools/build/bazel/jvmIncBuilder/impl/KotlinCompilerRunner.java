@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.build.GeneratedFile;
 import org.jetbrains.kotlin.build.GeneratedJvmClass;
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
+import org.jetbrains.kotlin.cli.common.config.ContentRoot;
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.jvm.config.VirtualJvmClasspathRoot;
 import org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline;
@@ -43,6 +44,9 @@ import org.jetbrains.kotlin.progress.CompilationCanceledStatus;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -64,6 +68,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   private EnumWhenTrackerImpl enumWhenTracker;
   private ImportTrackerImpl importTracker;
   private final @NotNull Map<@NotNull String, @NotNull String> myPluginIdToPluginClasspath = new HashMap<>();
+  private final @NotNull Map<@NotNull String, List<CliOptionValue>> myInternalPluginIdToOptions = new HashMap<>();
   private final List<String> myJavaSources;
 
   private final @Nullable String myModuleEntryPath;
@@ -79,6 +84,16 @@ public class KotlinCompilerRunner implements CompilerRunner {
     Iterator<String> pluginCp = CLFlags.PLUGIN_CLASSPATH.getValue(flags).iterator();
     for (String pluginId : CLFlags.PLUGIN_ID.getValue(flags)) {
       myPluginIdToPluginClasspath.put(pluginId, pluginCp.hasNext()? pluginCp.next() : "");
+    }
+
+    for (String entry : CLFlags.PLUGIN_OPTIONS.getValue(flags)) {
+      @Nullable CliOptionValue optionValue = parsePluginOptionValue(entry);
+      if (optionValue == null) {
+        context.report(Message.error(this, "Unsupported compiler plugin option flag format: \"" + entry + "\""));
+      }
+      else {
+        myInternalPluginIdToOptions.computeIfAbsent(optionValue.getPluginId(), k -> new ArrayList<>()).add(optionValue);
+      }
     }
 
     myJavaSources = collect(
@@ -125,6 +140,9 @@ public class KotlinCompilerRunner implements CompilerRunner {
   @Override
   public ExitCode compile(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources, DiagnosticSink diagnostic, OutputSink out) throws Exception {
     try {
+      if (isEmpty(sources)) {
+        return ExitCode.OK;
+      }
       K2JVMCompilerArguments kotlinArgs = buildKotlinCompilerArguments(myContext, sources);
       KotlinIncrementalCacheImpl incCache = new KotlinIncrementalCacheImpl(myStorageManager, flat(deletedSources, sources), myModuleEntryPath, myLastGoodModuleEntryContent);
       OutputVirtualFile outputFileSystemRoot = new OutputFileSystem(new KotlinVirtualFileProvider(out)).root;
@@ -245,14 +263,15 @@ public class KotlinCompilerRunner implements CompilerRunner {
                              enumClassesWithStar);
   }
 
-  private static void processLookupTracker(LookupTrackerImpl lookupTracker, OutputSink callback) {
+  private void processLookupTracker(LookupTrackerImpl lookupTracker, OutputSink callback) {
+    Map<String, NodeSource> pathMapperCache = new HashMap<>();
     for (var entry : lookupTracker.getLookups().entrySet()) {
       String symbolOwner = entry.getKey().getScope().replace('.', '/');
       String symbolName = entry.getKey().getName();
       LookupNameUsage usage = new LookupNameUsage(symbolOwner, symbolName);
 
       for (String file : entry.getValue()) {
-        callback.registerUsage(file, usage);
+        callback.registerUsage(pathMapperCache.computeIfAbsent(file, k -> myPathMapper.toNodeSource(k)), usage);
       }
     }
   }
@@ -273,14 +292,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
       new KotlinIncrementalCompilationComponents(moduleName, cacheImpl, outputRoot)
     );
 
-    builder.register(CompilationCanceledStatus.class, new CompilationCanceledStatus() {
-      @Override
-      public void checkCanceled() {
-        if (myContext.isCanceled()) {
-          throw new CompilationCanceledException();
-        }
-      }
-    });
+    builder.register(CompilationCanceledStatus.class, new CancelStatusImpl(myContext));
 
     return builder.build();
   }
@@ -292,8 +304,12 @@ public class KotlinCompilerRunner implements CompilerRunner {
   private @NotNull Function1<? super @NotNull CompilerConfiguration, @NotNull Unit> createCompilerConfigurationUpdater(OutputSink out, VirtualFile outputRoot) throws IOException {
     var abiConsumer = createAbiOutputConsumer(myStorageManager.getAbiOutputBuilder());
     return configuration -> {
-      configuration.add(CLIConfigurationKeys.CONTENT_ROOTS, new VirtualJvmClasspathRoot(outputRoot, false, true));
-      configurePlugins(myPluginIdToPluginClasspath, myContext.getBaseDir(), abiConsumer, out, myStorageManager, registeredPluginInfo -> {
+      List<ContentRoot> contentRootList = new ArrayList<>();
+      contentRootList.add(new VirtualJvmClasspathRoot(outputRoot, false, true));
+      contentRootList.addAll(configuration.getList(CLIConfigurationKeys.CONTENT_ROOTS));
+      configuration.put(CLIConfigurationKeys.CONTENT_ROOTS, contentRootList);
+
+      configurePlugins(myPluginIdToPluginClasspath, myInternalPluginIdToOptions, myContext.getBaseDir(), abiConsumer, out, myStorageManager, registeredPluginInfo -> {
         CompilerPluginRegistrar registrar = Objects.requireNonNull(registeredPluginInfo.getCompilerPluginRegistrar());
         configuration.add(CompilerPluginRegistrar.Companion.getCOMPILER_PLUGIN_REGISTRARS(), registrar);
         List<CliOptionValue> pluginOptions = registeredPluginInfo.getPluginOptions();
@@ -337,7 +353,7 @@ public class KotlinCompilerRunner implements CompilerRunner {
   }
 
   private static @Nullable Function1<? super @NotNull OutputFileCollection, @NotNull Unit> createAbiOutputConsumer(@Nullable ZipOutputBuilder abiOutput) {
-    return abiOutput == null || !OutputSinkImpl.USE_KOTLIN_ABI_BYTECODE? null : outputCollection -> {
+    return abiOutput == null? null : outputCollection -> {
       for (OutputFile generatedOutput : outputCollection.asList()) {
         String relativePath = generatedOutput.getRelativePath().replace(File.separatorChar, '/');
         abiOutput.putEntry(relativePath, generatedOutput.asByteArray());
@@ -354,27 +370,42 @@ public class KotlinCompilerRunner implements CompilerRunner {
     // additional setup directly from flags
     // todo: find corresponding cli option for every setting if possible
     Map<CLFlags, List<String>> flags = context.getFlags();
-    arguments.setSkipPrereleaseCheck(true);
-    arguments.setAllowUnstableDependencies(true);
+    arguments.setSkipPrereleaseCheck(CLFlags.X_SKIP_PRERELEASE_CHECK.isFlagSet(flags));
+    arguments.setSkipMetadataVersionCheck(CLFlags.SKIP_METADATA_VERSION_CHECK.isFlagSet(flags));
+    arguments.setAllowUnstableDependencies(CLFlags.X_ALLOW_UNSTABLE_DEPENDENCIES.isFlagSet(flags));
     arguments.setDisableStandardScript(true);
-    if (arguments.getLanguageVersion() == null && arguments.getApiVersion() == null) {
-      // defaults
-      arguments.setApiVersion("2.2");     // todo: find a way to configure this in input parameters
-      arguments.setLanguageVersion("2.2"); // todo: find a way to configure this in input parameters
+    String apiVersion = CLFlags.API_VERSION.getOptionalScalarValue(flags);
+    if (apiVersion != null) {
+      arguments.setApiVersion(apiVersion);
     }
-    else if (arguments.getLanguageVersion() == null) {
-      arguments.setLanguageVersion(arguments.getApiVersion());
+    String languageVersion = CLFlags.LANGUAGE_VERSION.getOptionalScalarValue(flags);
+    if (languageVersion != null) {
+      arguments.setLanguageVersion(languageVersion);
     }
-    else if (arguments.getApiVersion() == null) {
-      arguments.setApiVersion(arguments.getLanguageVersion());
+    String explicitApiMode = CLFlags.X_EXPLICIT_API_MODE.getOptionalScalarValue(flags);
+    if (explicitApiMode != null) {
+      arguments.setExplicitApi(explicitApiMode);
     }
-    arguments.setAllowKotlinPackage(CLFlags.ALLOW_KOTLIN_PACKAGE.isFlagSet(flags));
-    arguments.setWhenGuards(CLFlags.WHEN_GUARDS.isFlagSet(flags));
-    arguments.setLambdas(CLFlags.LAMBDAS.getOptionalScalarValue(flags));
-    arguments.setJvmDefault(CLFlags.JVM_DEFAULT.getOptionalScalarValue(flags));
-    arguments.setInlineClasses(CLFlags.INLINE_CLASSES.isFlagSet(flags));
-    arguments.setContextReceivers(CLFlags.CONTEXT_RECEIVERS.isFlagSet(flags));
-    arguments.setContextParameters(CLFlags.CONTEXT_PARAMETERS.isFlagSet(flags));
+    arguments.setAllowKotlinPackage(CLFlags.X_ALLOW_KOTLIN_PACKAGE.isFlagSet(flags));
+    arguments.setWhenGuards(CLFlags.X_WHEN_GUARDS.isFlagSet(flags));
+    arguments.setLambdas(CLFlags.X_LAMBDAS.getOptionalScalarValue(flags));
+    
+    String jvmDefault = CLFlags.JVM_DEFAULT.getOptionalScalarValue(flags);
+    if (jvmDefault != null) {
+      arguments.setJvmDefaultStable(jvmDefault);
+    }
+    else {
+      // try to migrate from the deprecated option
+      jvmDefault = CLFlags.X_JVM_DEFAULT.getOptionalScalarValue(flags);
+      arguments.setJvmDefaultStable(migrateXJvmDefaultValue(jvmDefault));
+    }
+    arguments.setInlineClasses(CLFlags.X_INLINE_CLASSES.isFlagSet(flags));
+    arguments.setContextReceivers(CLFlags.X_CONTEXT_RECEIVERS.isFlagSet(flags));
+    arguments.setContextParameters(CLFlags.X_CONTEXT_PARAMETERS.isFlagSet(flags));
+    arguments.setNoCallAssertions(CLFlags.X_NO_CALL_ASSERTIONS.isFlagSet(flags));
+    arguments.setNoParamAssertions(CLFlags.X_NO_PARAM_ASSERTIONS.isFlagSet(flags));
+    arguments.setSamConversions(CLFlags.X_SAM_CONVERSIONS.getOptionalScalarValue(flags));
+    arguments.setConsistentDataClassCopyVisibility(CLFlags.X_CONSISTENT_DATA_CLASS_COPY_VISIBILITY.isFlagSet(flags));
     Iterable<String> friends = CLFlags.FRIENDS.getValue(flags);
     if (!isEmpty(friends)) {
       arguments.setFriendPaths(ensureCollection(map(friends, p -> context.getBaseDir().resolve(p).normalize().toString())).toArray(String[]::new));
@@ -382,6 +413,15 @@ public class KotlinCompilerRunner implements CompilerRunner {
     NodeSourcePathMapper pathMapper = context.getPathMapper();
     arguments.setFreeArgs(collect(flat(map(sources, ns -> pathMapper.toPath(ns).toString()), myJavaSources), new ArrayList<>()));
     return arguments;
+  }
+
+  private static String migrateXJvmDefaultValue(String xjvmDefaultValue) {
+    return xjvmDefaultValue == null? null : switch (xjvmDefaultValue) {
+      case "disable" -> "disable";
+      case "all-compatibility" -> "enable";
+      case "all" -> "no-compatibility";
+      default -> null;
+    };
   }
 
   private static <T> Collection<T> ensureCollection(Iterable<T> seq) {
@@ -400,5 +440,55 @@ public class KotlinCompilerRunner implements CompilerRunner {
         "Following trackers are not initialized: " + String.join(", ", nullTrackers) +
         ". Make sure buildServices() is called before accessing trackers");
     }
+  }
+
+  private static class CancelStatusImpl implements CompilationCanceledStatus {
+    private final Reference<BuildContext> myContextRef;
+
+    CancelStatusImpl(BuildContext context) {
+      myContextRef = new WeakReference<>(context);
+    }
+
+    @Override
+    public void checkCanceled() {
+      BuildContext ctx = myContextRef.get();
+      if (ctx != null && ctx.isCanceled()) {
+        throw new CompilationCanceledException();
+      }
+    }
+  }
+
+  private static final String PREFIX = "plugin:";
+  private static final String ID_DELIMITER = ":";
+  private static final String NAME_VALUE_DELIMITER = "=";
+  private static final String BASE_DIR_MACRO = "$BASE_DIR$";
+
+  @Nullable
+  private CliOptionValue parsePluginOptionValue(String flagValue) {
+    if (flagValue != null && flagValue.startsWith(PREFIX)) {
+      int pluginIdEnd = flagValue.indexOf(ID_DELIMITER, PREFIX.length());
+      if (pluginIdEnd > 0) {
+        String pluginId = flagValue.substring(PREFIX.length(), pluginIdEnd);
+        int optionNameStart = pluginIdEnd + ID_DELIMITER.length();
+        int optionNameEnd = flagValue.indexOf(NAME_VALUE_DELIMITER, optionNameStart);
+        if (optionNameEnd > 0) {
+          String optionName = flagValue.substring(optionNameStart, optionNameEnd);
+          String optionValue = flagValue.substring(optionNameEnd + NAME_VALUE_DELIMITER.length());
+
+          if (optionValue.contains(BASE_DIR_MACRO)) {
+            Path baseDir = myContext.getBaseDir();
+            String separator = baseDir.getFileSystem().getSeparator();
+            String macroSubst = baseDir.toString();
+            if (macroSubst.endsWith(separator)) {
+              macroSubst = macroSubst.substring(0, macroSubst.length() - separator.length());
+            }
+            optionValue = optionValue.replace(BASE_DIR_MACRO, macroSubst);
+          }
+
+          return new CliOptionValue(pluginId, optionName, optionValue);
+        }
+      }
+    }
+    return null;
   }
 }

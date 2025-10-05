@@ -1,0 +1,8 @@
+// NEW_NAME: myName
+
+/* K1 doesn't rename in tests (isUnitTestMode) */
+// IGNORE_K1
+
+fun foo(myName: String, s: String): String {
+    return myName + s
+}

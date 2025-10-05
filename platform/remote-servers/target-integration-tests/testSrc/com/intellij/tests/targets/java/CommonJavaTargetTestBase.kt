@@ -59,9 +59,6 @@ import kotlin.coroutines.resumeWithException
 
 @RunWith(org.junit.runners.Parameterized::class)
 abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMode) : ExecutionWithDebuggerToolsTestCase() {
-  @get:Rule
-  val disableProfilerWidgetInRunConsoleRule = RegistryKeyRule("profiler.widget.in.run.console", false)
-
   /** A [com.intellij.execution.target.ContributedConfigurationBase.displayName] or null for the local target. */
   abstract val targetName: String?
 

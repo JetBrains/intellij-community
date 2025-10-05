@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.cache.impl.idCache;
 
+import com.intellij.html.embedding.HtmlRawTextElementType;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
@@ -67,7 +68,7 @@ public class XmlFilterLexer extends BaseFilterLexer {
     else if (tokenType == XmlTokenType.XML_ENTITY_REF_TOKEN || tokenType == XmlTokenType.XML_CHAR_ENTITY_REF) {
       scanWordsInToken(UsageSearchContext.IN_CODE, false, false);
     }
-    else if (tokenType == XmlElementType.XML_TEXT || tokenType == XmlElementType.HTML_RAW_TEXT) {
+    else if (tokenType == XmlElementType.XML_TEXT || tokenType instanceof HtmlRawTextElementType) {
       scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, false, false);
     }
     else if (tokenType == XmlTokenType.XML_TAG_CHARACTERS) {

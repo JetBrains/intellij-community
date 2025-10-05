@@ -19,23 +19,24 @@ import com.intellij.codeInsight.controlflow.ConditionalInstruction;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Version;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.codeInsight.controlflow.*;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt.evaluateVersionsForElement;
 
@@ -58,105 +59,121 @@ public final class PyDefUseUtil {
   }
 
 
-  public static @NotNull List<Instruction> getLatestDefs(@NotNull ControlFlow controlFlow,
+  public static @NotNull List<Instruction> getLatestDefs(@NotNull PyControlFlow controlFlow,
                                                          @NotNull String varName,
                                                          @NotNull PsiElement anchor,
                                                          boolean acceptTypeAssertions,
                                                          boolean acceptImplicitImports,
                                                          @NotNull TypeEvalContext context) {
     final Instruction[] instructions = controlFlow.getInstructions();
-    int startNum = findStartInstructionId(anchor, instructions);
+    int startNum = findStartInstructionId(anchor, controlFlow);
     if (startNum < 0) {
       return Collections.emptyList();
     }
+    
+    QualifiedName varQname = QualifiedName.fromDottedString(varName);
 
-    LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(anchor.getContainingFile());
+    LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(anchor.getContainingFile());
     final Collection<Instruction> result = new LinkedHashSet<>();
     final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
-    ControlFlowUtil.iteratePrev(startNum, instructions,
-                                instruction -> {
-                                  if (instruction instanceof PyWithContextExitInstruction withExit) {
-                                    if (!withExit.isSuppressingExceptions(context)) {
-                                      return ControlFlowUtil.Operation.CONTINUE;
-                                    }
-                                  }
-                                  if (acceptTypeAssertions && instruction instanceof CallInstruction callInstruction) {
-                                    var typeGuardInstruction = pendingTypeGuard.get(instruction.getElement());
-                                    if (typeGuardInstruction != null) {
-                                      result.add(typeGuardInstruction);
-                                      return ControlFlowUtil.Operation.CONTINUE;
-                                    }
-                                    if (isNotBackEdge(instruction.num(), startNum) && 
-                                        context.getOrigin() == callInstruction.getElement().getContainingFile()) {
-                                      var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
-                                        ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
-                                        : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
-                                      if (callInstruction.isNoReturnCall(newContext)) return ControlFlowUtil.Operation.CONTINUE;
-                                    }
-                                  }
-                                  final PsiElement element = instruction.getElement();
-                                  if (isNotBackEdge(instruction.num(), startNum)
-                                      && acceptTypeAssertions && instruction instanceof ConditionalInstruction conditionalInstruction) {
-                                    if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() == typedElement.getContainingFile()) {
-                                      var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
-                                                       ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
-                                                       : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
-                                      if (newContext.getType(typedElement) instanceof PyNarrowedType narrowedType && narrowedType.isBound()) {
-                                        if (narrowedType.getQname().equals(varName)) {
-                                          pendingTypeGuard.put(narrowedType.getOriginal(), conditionalInstruction);
-                                        }
-                                      }
-                                    }
-                                  }
-                                  if (instruction instanceof ReadWriteInstruction rwInstruction) {
-                                    final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
-                                    if (access.isWriteAccess() || 
-                                        acceptTypeAssertions && access.isAssertTypeAccess() && isNotBackEdge(instruction.num(), startNum)) {
-                                      final String name = elementName(element);
-                                      if (Comparing.strEqual(name, varName)) {
-                                        if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {
-                                          result.add(rwInstruction);
-                                        }
-                                        return ControlFlowUtil.Operation.CONTINUE;
-                                      }
-                                    }
-                                  }
-                                  else if (acceptImplicitImports && element instanceof PyImplicitImportNameDefiner implicit) {
-                                    if (!implicit.multiResolveName(varName).isEmpty()) {
-                                      if (isReachableWithVersionChecks(instruction, languageLevel)) {
-                                        result.add(instruction);
-                                      }
-                                      return ControlFlowUtil.Operation.CONTINUE;
-                                    }
-                                  }
-                                  return ControlFlowUtil.Operation.NEXT;
-                                });
+    final Ref<@NotNull Boolean> foundPrefixWrite = Ref.create(false);
+    iteratePrev(startNum, controlFlow,
+                instruction -> {
+                  if (instruction instanceof PyWithContextExitInstruction withExit) {
+                    if (!withExit.isSuppressingExceptions(context)) {
+                      return ControlFlowUtil.Operation.CONTINUE;
+                    }
+                  }
+                  if (acceptTypeAssertions && instruction instanceof CallInstruction callInstruction) {
+                    var typeGuardInstruction = pendingTypeGuard.get(instruction.getElement());
+                    if (typeGuardInstruction != null) {
+                      result.add(typeGuardInstruction);
+                      return ControlFlowUtil.Operation.CONTINUE;
+                    }
+                    if (instruction.num() < startNum &&
+                        context.getOrigin() == callInstruction.getElement().getContainingFile()) {
+                      var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
+                                       ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
+                                       : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
+                      if (callInstruction.isNoReturnCall(newContext)) return ControlFlowUtil.Operation.CONTINUE;
+                    }
+                  }
+                  if (instruction.num() < startNum
+                      && acceptTypeAssertions && instruction instanceof ConditionalInstruction conditionalInstruction) {
+                    if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() == typedElement.getContainingFile()) {
+                      var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
+                                       ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
+                                       : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
+                      if (newContext.getType(typedElement) instanceof PyNarrowedType narrowedType && narrowedType.isBound()) {
+                        String narrowedQname = narrowedType.getQname();
+                        if (narrowedQname != null) {
+                          if (isQualifiedBy(varQname, narrowedQname)) {
+                            foundPrefixWrite.set(true);
+                            return ControlFlowUtil.Operation.BREAK;
+                          }
+
+                          if (narrowedQname.equals(varName)) {
+                            pendingTypeGuard.put(narrowedType.getOriginal(), conditionalInstruction);
+                          }
+                        }
+                      }
+                    }
+                  }
+                  if (instruction instanceof ReadWriteInstruction rwInstruction) {
+                    final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
+                    if (access.isWriteAccess() ||
+                        acceptTypeAssertions && access.isAssertTypeAccess() && instruction.num() < startNum) {
+
+                      final String name = rwInstruction.getName();
+                      
+                      if (name != null && isQualifiedBy(varQname, name)) {
+                        if (isReachableWithVersionChecks(rwInstruction, languageLevel)){
+                          foundPrefixWrite.set(true);
+                          return ControlFlowUtil.Operation.BREAK;
+                        }
+                      }
+                      
+                      if (Comparing.strEqual(name, varName)) {
+                        if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {
+                          result.add(rwInstruction);
+                        }
+                        return ControlFlowUtil.Operation.CONTINUE;
+                      }
+                    }
+                  }
+                  else if (acceptImplicitImports && instruction.getElement() instanceof PyImplicitImportNameDefiner implicit) {
+                    if (!implicit.multiResolveName(varName).isEmpty()) {
+                      if (isReachableWithVersionChecks(instruction, languageLevel)) {
+                        result.add(instruction);
+                      }
+                      return ControlFlowUtil.Operation.CONTINUE;
+                    }
+                  }
+                  return ControlFlowUtil.Operation.NEXT;
+                });
+    if (foundPrefixWrite.get()) {
+      return Collections.emptyList();
+    }
     return new ArrayList<>(result);
   }
 
-  /**
-   * New analysis handles back edges separately.
-   * @see com.jetbrains.python.psi.impl.PyReferenceExpressionImpl#getTypeByControlFlow(String, TypeEvalContext, PyExpression, ScopeOwner) 
-   */
-  private static boolean isNotBackEdge(int instNum, int startNum) {
-    if (Registry.is("python.use.better.control.flow.type.inference")) {
-      return true;
-    }
-    return instNum < startNum;
+  private static boolean isQualifiedBy(QualifiedName varQname, @NotNull String qualifier) {
+    QualifiedName elementQname = QualifiedName.fromDottedString(qualifier);
+    return varQname.getComponentCount() > elementQname.getComponentCount() && varQname.matchesPrefix(elementQname);
   }
 
-  private static int findStartInstructionId(@NotNull PsiElement startAnchor, Instruction @NotNull [] instructions) {
+  private static int findStartInstructionId(@NotNull PsiElement startAnchor, @NotNull PyControlFlow flow) {
     PsiElement realCfgAnchor = startAnchor;
     final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(startAnchor);
     if (augAssignment != null) {
       realCfgAnchor = augAssignment;
     }
-    int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, realCfgAnchor);
+    int instr = flow.getInstruction(realCfgAnchor);
     if (instr < 0) {
       return instr;
     }
     if (startAnchor instanceof PyTargetExpression) {
-      Collection<Instruction> pred = instructions[instr].allPred();
+      Collection<Instruction> pred = flow.getInstructions()[instr].allPred();
       if (!pred.isEmpty()) {
         instr = pred.iterator().next().num();
       }
@@ -164,24 +181,55 @@ public final class PyDefUseUtil {
     return instr;
   }
 
+  /**
+   * Modified copy of {@link ControlFlowUtil#iteratePrev(int, Instruction[], com.intellij.util.Function)} that uses
+   * {@link PyControlFlow#getPrev(Instruction)} instead of {@link Instruction#allPred()}
+   */
+  private static void iteratePrev(final int startInstruction,
+                                  final @NotNull PyControlFlow controlFlow,
+                                  final @NotNull Function<? super Instruction, ControlFlowUtil.Operation> closure) {
+    Instruction[] instructions = controlFlow.getInstructions();
+    //noinspection SSBasedInspection
+    final IntArrayList stack = new IntArrayList(instructions.length);
+    final boolean[] visited = new boolean[instructions.length];
+
+    visited[startInstruction] = true;
+    stack.push(startInstruction);
+    int count = 0;
+    while (!stack.isEmpty()) {
+      count++;
+      if (count % 512 == 0) {
+        ProgressManager.checkCanceled();
+      }
+      final int num = stack.popInt();
+      final Instruction instr = instructions[num];
+      final ControlFlowUtil.Operation nextOperation = closure.apply(instr);
+      // Just ignore previous instructions for the current node and move further
+      if (nextOperation == ControlFlowUtil.Operation.CONTINUE) {
+        continue;
+      }
+      // STOP iteration
+      if (nextOperation == ControlFlowUtil.Operation.BREAK) {
+        break;
+      }
+      // If we are here, we should process previous nodes in natural way
+      assert nextOperation == ControlFlowUtil.Operation.NEXT;
+      Collection<Instruction> nextToProcess = controlFlow.getPrev(instr);
+      for (Instruction pred : nextToProcess) {
+        final int predNum = pred.num();
+        if (!visited[predNum]) {
+          visited[predNum] = true;
+          stack.push(predNum);
+        }
+      }
+    }
+  }
+
   private static boolean isReachableWithVersionChecks(@NotNull Instruction instruction, @NotNull LanguageLevel languageLevel) {
     PsiElement element = instruction.getElement();
     if (element == null) return true;
     Version version = new Version(languageLevel.getMajorVersion(), languageLevel.getMinorVersion(), 0);
     return evaluateVersionsForElement(element).contains(version);
-  }
-
-  private static @Nullable String elementName(PsiElement element) {
-    if (element instanceof PyImportElement) {
-      return ((PyImportElement) element).getVisibleName();
-    }
-    if (element instanceof PyReferenceExpression || element instanceof PyTargetExpression) {
-      final QualifiedName qname = ((PyQualifiedExpression)element).asQualifiedName();
-      if (qname != null) {
-        return qname.toString();
-      }
-    }
-    return element instanceof PyElement ? ((PyElement)element).getName() : null;
   }
 
   public static PsiElement @NotNull [] getPostRefs(@NotNull ScopeOwner block, @NotNull PyTargetExpression var, PyExpression anchor) {
@@ -208,9 +256,7 @@ public final class PyDefUseUtil {
     if (visited[instr]) return;
     visited[instr] = true;
     if (instructions[instr] instanceof ReadWriteInstruction instruction) {
-      final PsiElement element = instruction.getElement();
-      String name = elementName(element);
-      if (Comparing.strEqual(name, var.getName())) {
+      if (Comparing.strEqual(instruction.getName(), var.getName())) {
         final ReadWriteInstruction.ACCESS access = instruction.getAccess();
         if (access.isWriteAccess()) {
           return;

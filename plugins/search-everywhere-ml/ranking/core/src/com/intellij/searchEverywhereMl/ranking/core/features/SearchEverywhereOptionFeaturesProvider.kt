@@ -31,7 +31,7 @@ internal class SearchEverywhereOptionFeaturesProvider :
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
-    return arrayListOf<EventField<*>>(IS_OPTION, IS_BOOLEAN_OPTION, IS_REGISTRY_OPTION, IS_NOT_DEFAULT, FROM_CONFIGURABLE)
+    return listOf(IS_OPTION, IS_BOOLEAN_OPTION, IS_REGISTRY_OPTION, IS_NOT_DEFAULT, FROM_CONFIGURABLE)
   }
 
   override fun getElementFeatures(element: Any,
@@ -43,22 +43,22 @@ internal class SearchEverywhereOptionFeaturesProvider :
     val value = if (element is GotoActionModel.MatchedValue) element.value else element
     val optionDescription = value as? OptionDescription ?: return emptyList()
 
-    val data = arrayListOf<EventPair<*>>()
-    data.add(IS_OPTION.with(true))
-    data.addIfTrue(FROM_CONFIGURABLE, StringUtil.isNotEmpty(optionDescription.configurableId))
-    data.addIfTrue(IS_BOOLEAN_OPTION, optionDescription is BooleanOptionDescription)
-    if (optionDescription is BooleanOptionDescription) {
-      data.add(IS_ENABLED.with(optionDescription.isOptionEnabled))
-    }
+    return buildList {
+      add(IS_OPTION.with(true))
+      addIfTrue(FROM_CONFIGURABLE, StringUtil.isNotEmpty(optionDescription.configurableId))
+      addIfTrue(IS_BOOLEAN_OPTION, optionDescription is BooleanOptionDescription)
+      if (optionDescription is BooleanOptionDescription) {
+        add(IS_ENABLED.with(optionDescription.isOptionEnabled))
+      }
 
-    if (optionDescription is RegistryTextOptionDescriptor) {
-      data.add(IS_REGISTRY_OPTION.with(true))
-      data.add(IS_NOT_DEFAULT.with(optionDescription.hasChanged()))
+      if (optionDescription is RegistryTextOptionDescriptor) {
+        add(IS_REGISTRY_OPTION.with(true))
+        add(IS_NOT_DEFAULT.with(optionDescription.hasChanged()))
+      }
+      else if (optionDescription is RegistryBooleanOptionDescriptor) {
+        add(IS_REGISTRY_OPTION.with(true))
+        add(IS_NOT_DEFAULT.with(optionDescription.hasChanged()))
+      }
     }
-    else if (optionDescription is RegistryBooleanOptionDescriptor) {
-      data.add(IS_REGISTRY_OPTION.with(true))
-      data.add(IS_NOT_DEFAULT.with(optionDescription.hasChanged()))
-    }
-    return data
   }
 }

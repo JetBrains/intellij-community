@@ -5,11 +5,13 @@ package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
@@ -30,6 +32,7 @@ import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forLi
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forModuleRootsFileBased
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders.forSdkEntity
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.*
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.LibraryRootFileIndexContributor
@@ -40,7 +43,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBrid
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
-import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
@@ -140,10 +142,6 @@ internal data class EntityCustomKindRootsDescription<E : WorkspaceEntity>(val en
 
 internal fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
   return selectRootItems(value) { file -> file.path }
-}
-
-internal fun selectRootVirtualFileUrls(urls: Collection<VirtualFileUrl>): List<VirtualFileUrl> {
-  return selectRootItems(urls) { url -> JpsPathUtil.urlToPath(url.url) }
 }
 
 private fun <T> selectRootItems(items: Collection<T>, toPath: Function<T, String>): List<T> {
@@ -259,14 +257,6 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
       descriptions.add(EntityGenericContentRootsDescription(entry.key, entry.value))
     }
 
-    for ((libraryEntity, roots) in rootData.libraryRoots.entries) {
-      descriptions.add(LibraryRootsDescription(libraryEntity, roots))
-    }
-
-    for ((libraryEntity, roots) in rootData.libraryUrlRoots.entries) {
-      descriptions.add(LibraryUrlRootsDescription(libraryEntity, roots))
-    }
-
     for ((entityReference, roots) in rootData.externalRoots.entries) {
       descriptions.add(EntityExternalRootsDescription(entityReference, roots))
     }
@@ -274,8 +264,16 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
     for ((entityReference, roots) in rootData.customKindRoots.entries) {
       descriptions.add(EntityCustomKindRootsDescription(entityReference, roots))
     }
-    for ((sdkEntity, roots) in rootData.sdkRoots.entries) {
-      descriptions.add(SdkRootsDescription(sdkEntity, roots))
+    if (!Registry.`is`("use.workspace.file.index.for.partial.scanning")) {
+      for ((sdkEntity, roots) in rootData.sdkRoots.entries) {
+        descriptions.add(SdkRootsDescription(sdkEntity, roots))
+      }
+      for ((libraryEntity, roots) in rootData.libraryUrlRoots.entries) {
+        descriptions.add(LibraryUrlRootsDescription(libraryEntity, roots))
+      }
+      for ((libraryEntity, roots) in rootData.libraryRoots.entries) {
+        descriptions.add(LibraryRootsDescription(libraryEntity, roots))
+      }
     }
     reincludedRoots.addAll(rootData.excludedRoots)
   }
@@ -333,6 +331,7 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
   fun <E : WorkspaceEntity> registerEntitiesFromContributor(contributor: WorkspaceFileIndexContributor<E>,
                                                             entityStorage: EntityStorage) {
     entityStorage.entities(contributor.entityClass).forEach { entity ->
+      Cancellation.checkCancelled()
       registerAddedEntity(entity, contributor, entityStorage)
     }
   }
@@ -444,7 +443,7 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
       addRoot(libraryUrlRoots, entity as LibraryEntity, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
     }
     else if (kind == WorkspaceFileKind.CUSTOM) {
-      addRoot(customKindRoots, entityReference, )
+      addRoot(customKindRoots, entityReference)
     }
     else {
       addRoot(externalRoots, entityReference, kind === WorkspaceFileKind.EXTERNAL_SOURCE)
@@ -489,6 +488,18 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
   fun cleanExcludedRoots() {
     excludedRoots.clear()
   }
+}
+
+internal fun processLibraryEntity(entity: LibraryEntity, fileSet: WorkspaceFileSet): Pair<LibraryOrigin, IndexableFilesIterator> {
+  val sourceRoot = fileSet.kind == WorkspaceFileKind.EXTERNAL_SOURCE
+  val origin = if (sourceRoot) {
+    LibraryOriginImpl(emptyList(), listOf(fileSet.root))
+  }
+  else {
+    LibraryOriginImpl(listOf(fileSet.root), emptyList())
+  }
+  val iterator = GenericDependencyIterator.forLibraryEntity(origin, entity.name, fileSet.root, sourceRoot)
+  return origin to iterator
 }
 
 private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: WorkspaceFileIndexContributor<E>,

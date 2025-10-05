@@ -6,6 +6,13 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.components.computeMissingCases
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isNothingType
+import org.jetbrains.kotlin.analysis.api.components.isNullable
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -106,7 +113,7 @@ object BranchedFoldingUtils {
      *     (for the concept of "match", see [collectAssignmentsAndCheck] function below).
      *   Otherwise, the number of all assignments.
      */
-    context(KaSession)
+    context(_: KaSession)
     fun getFoldableAssignmentsFromBranches(expression: KtExpression?): Set<KtBinaryExpression> {
         if (expression == null) return emptySet()
         val assignments = mutableSetOf<KtBinaryExpression>()
@@ -196,7 +203,7 @@ object BranchedFoldingUtils {
      *          - When [leftType] is a non-nullable type, types of right operands of [first] and [second] are both non-nullable, and
      *            they are the same.
      */
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun checkAssignmentsMatch(
         first: KtBinaryExpression,
@@ -225,7 +232,7 @@ object BranchedFoldingUtils {
 
         // Check if they satisfy the first of condition 4.
         val isSecondRightNull = secondRight?.isNull()
-        if (isSecondRightNull == true && leftType.canBeNull) return true
+        if (isSecondRightNull == true && leftType.isNullable) return true
 
 
         // Check if they satisfy the second of condition 4.
@@ -233,8 +240,8 @@ object BranchedFoldingUtils {
 
         // Check if they satisfy the third and fourth of condition 4.
         val rightTypeOfSecond = second.right?.expressionType ?: return false
-        if (!leftType.canBeNull && rightTypeOfSecond.canBeNull) return false
-        val nonNullableRightTypeOfSecond = rightTypeOfSecond.withNullability(KaTypeNullability.NON_NULLABLE)
+        if (!leftType.isNullable && rightTypeOfSecond.isNullable) return false
+        val nonNullableRightTypeOfSecond = rightTypeOfSecond.withNullability(false)
         return nonNullableRightTypeOfFirst.semanticallyEquals(nonNullableRightTypeOfSecond) ||
                 (first.operationToken == KtTokens.EQ && nonNullableRightTypeOfSecond.isSubtypeOf(leftType))
     }
@@ -311,7 +318,7 @@ object BranchedFoldingUtils {
      *       return       // cannot be lifted because of the null returned expression
      *     }
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun getFoldableReturnsFromBranches(branches: List<KtExpression?>): FoldableReturns {
         val foldableReturns = mutableListOf<KtReturnExpression>()
         for (branch in branches) {
@@ -338,7 +345,7 @@ object BranchedFoldingUtils {
      * It returns an empty list with `isFoldable = true` if [expression] is one of [KtBreakExpression], [KtContinueExpression],
      * [KtThrowExpression], and [KtCallExpression].
      */
-    context(KaSession)
+    context(_: KaSession)
     fun getFoldableReturnsFromBranches(expression: KtExpression): FoldableReturns = when (expression) {
         is KtWhenExpression -> {
             val entries = expression.entries
@@ -372,11 +379,11 @@ object BranchedFoldingUtils {
     /**
      * Returns true if the when-expression has a missing case with else-branch.
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun KtWhenExpression.hasMissingCases(): Boolean =
         !KtPsiUtil.checkWhenExpressionHasSingleElse(this) && computeMissingCases().isNotEmpty()
 
-    context(KaSession)
+    context(_: KaSession)
     private fun getFoldableReturns(branches: List<KtExpression?>): List<KtReturnExpression>? =
         branches.fold<KtExpression?, MutableList<KtReturnExpression>?>(mutableListOf()) { prevList, branch ->
             if (prevList == null) return@fold null
@@ -391,7 +398,7 @@ object BranchedFoldingUtils {
         }
 
 
-    context(KaSession)
+    context(_: KaSession)
     fun getFoldableReturns(expression: KtExpression?): List<KtReturnExpression>? = when (expression) {
         is KtWhenExpression -> {
             val entries = expression.entries

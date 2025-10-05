@@ -1,4 +1,4 @@
-package p;
+package refactoring.introduceVariable;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 

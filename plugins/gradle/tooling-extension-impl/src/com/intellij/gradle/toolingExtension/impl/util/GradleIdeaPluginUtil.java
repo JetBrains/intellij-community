@@ -64,21 +64,19 @@ public final class GradleIdeaPluginUtil {
     if (is74OrBetter) {
       return ideaPluginModule.getTestSources().getFiles();
     }
-    //noinspection deprecation
-    return new LinkedHashSet<>(ideaPluginModule.getTestSourceDirs());
+    // getTestResourceDirs was removed in Gradle 9.0
+    Set<File> dirs = GradleReflectionUtil.getValue(ideaPluginModule, "getTestSourceDirs", Set.class);
+    return new LinkedHashSet<>(dirs);
   }
 
   public static @NotNull Set<File> getTestResourceDirectories(@NotNull IdeaModule ideaPluginModule) {
     if (is74OrBetter) {
       return ideaPluginModule.getTestResources().getFiles();
     }
-    if (is47OrBetter) {
-      //noinspection deprecation
-      return new LinkedHashSet<>(ideaPluginModule.getTestResourceDirs());
-    }
     if (GradleReflectionUtil.hasMethod(ideaPluginModule, "getTestResourceDirs")) {
-      //noinspection deprecation
-      return new LinkedHashSet<>(ideaPluginModule.getTestResourceDirs());
+      // getTestResourceDirs was removed in Gradle 9.0
+      Set<File> dirs = GradleReflectionUtil.getValue(ideaPluginModule, "getTestResourceDirs", Set.class);
+      return new LinkedHashSet<>(dirs);
     }
     return Collections.emptySet();
   }

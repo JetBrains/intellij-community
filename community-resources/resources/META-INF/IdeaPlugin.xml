@@ -6,18 +6,22 @@
   <module value="com.intellij.modules.idea.community"/>
   <module value="com.intellij.modules.java-capable"/>
   <module value="com.intellij.modules.python-core-capable"/> <!-- Python plugin can be installed -->
-  <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in Python plugin -->
+  <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in the Python plugin -->
   <module value="com.intellij.platform.ide.provisioner"/>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.debugger.streams.core"/>
+    <module name="intellij.debugger.streams.shared"/>
+    <module name="intellij.debugger.streams.backend"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.platform.ide.newUsersOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
+    <module name="intellij.platform.customization.min"/>
     <module name="intellij.idea.customization.base"/>
+    <module name="intellij.idea.customization.backend"/>
     <module name="intellij.platform.tips"/>
     <module name="intellij.rd.ide.model.generated"/>
     <module name="intellij.rd.platform"/>

@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -12,16 +13,14 @@ import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
  * Default bundled plugins for all editions of IntelliJ IDEA.
  * See also [DEFAULT_BUNDLED_PLUGINS].
  */
-@Suppress("SpellCheckingInspection")
 val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + sequenceOf(
   JavaPluginLayout.MAIN_MODULE_NAME,
   "intellij.java.ide.customization",
   "intellij.copyright",
   "intellij.properties",
   "intellij.terminal",
-  "intellij.textmate",
+  "intellij.textmate.plugin",
   "intellij.editorconfig.plugin",
-  "intellij.settingsSync",
   "intellij.configurationScript",
   "intellij.json",
   "intellij.yaml",
@@ -37,6 +36,8 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.vcs.git.commit.modal",
   "intellij.vcs.svn",
   "intellij.vcs.hg",
+  "intellij.vcs.github",
+  "intellij.vcs.gitlab",
   "intellij.groovy",
   "intellij.junit",
   "intellij.testng",
@@ -45,39 +46,31 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.java.coverage",
   "intellij.java.decompiler",
   "intellij.eclipse",
-  "intellij.platform.langInjection",
   "intellij.java.debugger.streams",
-  "intellij.completionMlRanking",
-  "intellij.completionMlRankingModels",
-  "intellij.statsCollector",
-  "intellij.sh",
+  "intellij.sh.plugin",
   "intellij.markdown",
   "intellij.mcpserver",
-  "intellij.webp",
   "intellij.grazie",
   "intellij.featuresTrainer",
-  "intellij.searchEverywhereMl",
-  "intellij.marketplaceMl",
   "intellij.toml",
   KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
   "intellij.keymap.eclipse",
   "intellij.keymap.visualStudio",
   "intellij.keymap.netbeans",
   "intellij.performanceTesting",
-  "intellij.turboComplete",
   "intellij.compose.ide.plugin",
 )
 
 val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
-  "" to "17",
-  "lib/idea_rt.jar" to "1.7",
+  "" to "21",
+  "lib/idea_rt.jar" to "1.8",
   "lib/forms_rt.jar" to "1.8",
   "lib/annotations.jar" to "1.8",
-  "lib/util_rt.jar" to "1.7",
+  "lib/util_rt.jar" to "1.8",
   "lib/util-8.jar" to "1.8",
   "lib/external-system-rt.jar" to "1.8",
   "plugins/java-coverage/lib/java-coverage-rt.jar" to "1.8",
-  "plugins/junit/lib/junit-rt.jar" to "1.7",
+  "plugins/junit/lib/junit-rt.jar" to "1.8",
   "plugins/junit/lib/junit5-rt.jar" to "1.8",
   "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.8",
   "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.8",
@@ -85,24 +78,33 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/maven/lib/maven3-server-common.jar" to "1.8",
   "plugins/maven/lib/maven3-server.jar" to "1.8",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.8",
-  "plugins/java/lib/jshell-frontend.jar" to "9",
   "plugins/java/lib/sa-jdwp" to "",  // ignored
   "plugins/java/lib/rt/debugger-agent.jar" to "1.7",
-  "plugins/Groovy/lib/groovy-rt.jar" to "1.7",
-  "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.7",
+  "plugins/Groovy/lib/groovy-rt.jar" to "1.8",
+  "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.8",
   "plugins/repository-search/lib/maven-model.jar" to "1.8"
 )
 
+internal val TEST_FRAMEWORK_MODULE_NAMES = linkedSetOf(
+  "intellij.platform.testFramework.common",
+  "intellij.platform.testFramework.junit5",
+  "intellij.platform.testFramework",
+  "intellij.platform.testFramework.core",
+  "intellij.platform.testFramework.impl",
+  "intellij.platform.testFramework.teamCity",
+  "intellij.tools.testsBootstrap",
+)
+
+/**
+ * Describes modules to be added to 'testFramework.jar' in the IDE distribution. This JAR was used to compile and run tests in external plugins.
+ * Since [#477](https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/477) is implemented, it's possible to take test framework JARs from Maven repository,
+ * not from the IDE distribution.
+ * So this JAR is kept for compatibility only, **please do not add new modules here**.
+ * To publish a new test framework module, register it in [MavenArtifactsProperties.additionalModules] for the corresponding IDEs instead.
+ */
+@ApiStatus.Obsolete
 val TEST_FRAMEWORK_LAYOUT_CUSTOMIZER: (PlatformLayout, BuildContext) -> Unit = { layout, _ ->
-  for (name in listOf(
-    "intellij.platform.testFramework.common",
-    "intellij.platform.testFramework.junit5",
-    "intellij.platform.testFramework",
-    "intellij.platform.testFramework.core",
-    "intellij.platform.testFramework.impl",
-    "intellij.platform.testFramework.teamCity",
-    "intellij.tools.testsBootstrap",
-  )) {
+  for (name in TEST_FRAMEWORK_MODULE_NAMES) {
     layout.withModule(name, TEST_FRAMEWORK_JAR)
   }
   layout.withoutProjectLibrary("JUnit4")

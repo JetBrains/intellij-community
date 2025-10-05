@@ -8,9 +8,16 @@ import java.util.Comparator;
 import java.util.NoSuchElementException;
 
 /**
- * An iterator you must {@link #dispose()} after use
+ * An iterator which you must {@link #dispose()} after use.
+ * Alternatively and more preferably, use try-with-resources, e.g.
+ * <pre>
+ * {@code try (MarkupIterator<RangeHighlighterEx> it = markupModel.overlappingIterator(0, 1)) {
+ *     useIterator(it);
+ * }
+ * }
+ * </pre>
  */
-public interface MarkupIterator<T> extends PeekableIterator<T> {
+public interface MarkupIterator<T> extends PeekableIterator<T>, AutoCloseable {
   void dispose();
 
   MarkupIterator EMPTY = new MarkupIterator() {
@@ -37,11 +44,26 @@ public interface MarkupIterator<T> extends PeekableIterator<T> {
     public void remove() {
       throw new NoSuchElementException();
     }
+
+    @Override
+    public String toString() {
+      return "EMPTY";
+    }
   };
+  static <T> @NotNull MarkupIterator<T> emptyIterator() {
+    //noinspection unchecked
+    return EMPTY;
+  }
 
   static @NotNull <T> MarkupIterator<T> mergeIterators(final @NotNull MarkupIterator<T> iterator1,
                                                        final @NotNull MarkupIterator<T> iterator2,
                                                        final @NotNull Comparator<? super T> comparator) {
+    if (iterator1 == MarkupIterator.EMPTY) {
+      return iterator2;
+    }
+    if (iterator2 == MarkupIterator.EMPTY) {
+      return iterator1;
+    }
     return new MarkupIterator<T>() {
       @Override
       public void dispose() {
@@ -61,10 +83,10 @@ public interface MarkupIterator<T> extends PeekableIterator<T> {
 
       private @NotNull MarkupIterator<T> choose() {
         T t1 = iterator1.hasNext() ? iterator1.peek() : null;
-        T t2 = iterator2.hasNext() ? iterator2.peek() : null;
         if (t1 == null) {
           return iterator2;
         }
+        T t2 = iterator2.hasNext() ? iterator2.peek() : null;
         if (t2 == null) {
           return iterator1;
         }
@@ -82,5 +104,10 @@ public interface MarkupIterator<T> extends PeekableIterator<T> {
         return choose().peek();
       }
     };
+  }
+
+  @Override
+  default void close() {
+    dispose();
   }
 }

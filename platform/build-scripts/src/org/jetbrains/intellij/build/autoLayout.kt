@@ -1,9 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.JarPackager
+import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.findFileInModuleSources
 
 private const val VERIFIER_MODULE = "intellij.platform.commercial.verifier"
 
@@ -60,7 +64,8 @@ internal suspend fun computeModuleSourcesByContent(
   layout: PluginLayout,
   addedModules: MutableSet<String>,
   jarPackager: JarPackager,
-  searchableOptionSet: SearchableOptionSetDescriptor?
+  searchableOptionSet: SearchableOptionSetDescriptor?,
+  modulesWithCustomPath: HashSet<String>
 ) {
   val frontendModuleFilter = context.getFrontendModuleFilter()
   val contentModuleFilter = context.getContentModuleFilter()
@@ -70,8 +75,7 @@ internal suspend fun computeModuleSourcesByContent(
       continue
     }
 
-    // CWM plugin is overcomplicated without any valid reason - it must be refactored
-    if (moduleName == "intellij.driver.backend.split" || !addedModules.add(moduleName)) {
+    if (!addedModules.add(moduleName)) {
       continue
     }
 
@@ -79,6 +83,10 @@ internal suspend fun computeModuleSourcesByContent(
     val descriptor = readXmlAsModel(findFileInModuleSources(module, "$moduleName.xml") ?: error("$moduleName.xml not found in module $moduleName sources"))
     val useSeparateJar = (descriptor.getAttributeValue("package") == null || 
                           helper.isPluginModulePackedIntoSeparateJar(module, layout, frontendModuleFilter)) && loadingRule != "embedded"
+    if (!useSeparateJar && modulesWithCustomPath.contains(moduleName)) {
+      addedModules.remove(moduleName)
+      continue
+    }
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,
@@ -93,7 +101,7 @@ internal suspend fun computeModuleSourcesByContent(
 }
 
 private fun PluginLayout.getDefaultJarName(moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
-  return if (moduleName != VERIFIER_MODULE && !frontendModuleFilter.isModuleCompatibleWithFrontend(mainModule) && frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)) {
+  return if (!frontendModuleFilter.isModuleCompatibleWithFrontend(mainModule) && frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)) {
     getMainJarName().removeSuffix(".jar") + "-frontend.jar"
   }
   else {

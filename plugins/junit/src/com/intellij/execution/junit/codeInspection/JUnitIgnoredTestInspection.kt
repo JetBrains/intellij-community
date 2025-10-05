@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInspection.*
@@ -7,7 +7,7 @@ import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.isJUnit4InScope
-import com.intellij.execution.junit.isJUnit5InScope
+import com.intellij.execution.junit.isJUnit5Or6InScope
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -25,7 +25,7 @@ class JUnitIgnoredTestInspection : AbstractBaseUastLocalInspectionTool() {
 
   override fun getOptionsPane() = pane(checkbox("onlyReportWithoutReason", JUnitBundle.message("jvm.inspections.junit.ignored.test.ignore.reason.option")))
 
-  private fun shouldInspect(file: PsiFile) = isJUnit4InScope(file) || isJUnit5InScope(file)
+  private fun shouldInspect(file: PsiFile) = isJUnit4InScope(file) || isJUnit5Or6InScope(file)
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR

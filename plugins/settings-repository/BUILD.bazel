@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.settingsRepository` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "settings-repository_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +11,8 @@ jvm_library(
   name = "settings-repository",
   module_name = "intellij.settingsRepository",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":settings-repository_resources"],
   deps = [
     "//platform/core-api:core",
     "//platform/credential-store",
@@ -32,13 +33,13 @@ jvm_library(
     "//platform/util/progress",
     "//platform/credential-store-ui:credentialStore-ui",
     "//platform/core-impl",
-    "@lib//:jackson",
-    "@lib//:jackson-databind",
+    "//libraries/jackson/jackson",
+    "//libraries/jackson/databind",
     "@lib//:kotlinx-coroutines-core",
     "//platform/vcs-api:vcs",
     "//platform/statistics",
     "//platform/core-ui",
-    "@lib//:caffeine",
+    "//libraries/caffeine",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
     "//platform/credential-store-impl:credentialStore-impl",
@@ -50,20 +51,16 @@ jvm_library(
     "@lib//:settings_repository-eclipse-jgit-ssh-apache",
     "@lib//:jzlib",
     "@lib//:apache-sshd-osgi",
-  ],
-  runtime_deps = [":settings-repository_resources"]
+  ]
 )
 ### auto-generated section `build intellij.settingsRepository` end
 
 ### auto-generated section `build intellij.settingsRepository.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
 jvm_library(
   name = "settingsRepository-tests_test_lib",
+  module_name = "intellij.settingsRepository.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/credential-store",
@@ -93,9 +90,13 @@ jvm_library(
     "//platform/workspace/jps",
   ]
 )
+### auto-generated section `build intellij.settingsRepository.tests` end
+
+### auto-generated section `test intellij.settingsRepository.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "settingsRepository-tests_test",
   runtime_deps = [":settingsRepository-tests_test_lib"]
 )
-### auto-generated section `build intellij.settingsRepository.tests` end
+### auto-generated section `test intellij.settingsRepository.tests` end

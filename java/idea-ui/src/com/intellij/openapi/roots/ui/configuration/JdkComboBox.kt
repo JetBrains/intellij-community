@@ -168,9 +168,9 @@ fun validateJavaVersion(sdkProperty: ObservableProperty<Sdk?>, javaVersion: Stri
   return true
 }
 
-fun validateJdkIntentVersion(jdkIntentProperty: ObservableProperty<ProjectWizardJdkIntent?>, javaVersion: String?, technologyName: String? = null): Boolean {
+fun validateJdkIntentVersion(jdkIntentProperty: ObservableProperty<ProjectWizardJdkIntent>, javaVersion: String?, technologyName: String? = null): Boolean {
   val intent = jdkIntentProperty.get()
-  if (intent != null && javaVersion != null) {
+  if (javaVersion != null) {
     val selectedVersion = JavaSdkVersion.fromVersionString(javaVersion)
     val (name, version) = intent.name to intent.versionString
     if (selectedVersion != null && !intent.isAtLeast(selectedVersion.ordinal) && name != null && version != null) {

@@ -1,6 +1,10 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="xdebugger.consoleViewDataConverter" interface="com.intellij.xdebugger.impl.rpc.XDebuggerConsoleViewConverter"
+    <extensionPoint name="xdebugger.consoleViewDataConverter"
+                    interface="com.intellij.platform.debugger.impl.rpc.XDebuggerConsoleViewConverter"
+                    dynamic="true"/>
+    <extensionPoint name="xdebugger.descriptorStateManager"
+                    interface="com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManagerExtension"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -31,7 +31,7 @@ internal class KotlinConstructorDelegationCallUsage(
 
         delegate.processUsage(changeInfo, elementToWorkWith, allUsages)
 
-        if (changeInfo.newParameters.count { it.isNewParameter } == 0 && !isThisCall && !elementToWorkWith.isImplicit) {
+        if (changeInfo.newParameters.isEmpty() && !isThisCall && !elementToWorkWith.isImplicit) {
             (elementToWorkWith.parent as? KtSecondaryConstructor)?.colon?.delete()
             elementToWorkWith.replace(KtPsiFactory(element.project).creareDelegatedSuperTypeEntry(""))
         }

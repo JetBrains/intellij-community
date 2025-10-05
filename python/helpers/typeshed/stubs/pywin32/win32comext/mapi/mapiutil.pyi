@@ -1,19 +1,12 @@
-from _typeshed import Incomplete
-
-from win32comext.mapi import mapi as mapi, mapitags as mapitags
-
-TupleType = tuple
-ListType = list
-IntType = int
-prTable: Incomplete
+prTable: dict[int, str]
 
 def GetPropTagName(pt): ...
 
-mapiErrorTable: Incomplete
+mapiErrorTable: dict[int, str]
 
 def GetScodeString(hr): ...
 
-ptTable: Incomplete
+ptTable: dict[int, str]
 
 def GetMapiTypeName(propType, rawType: bool = ...): ...
 def GetProperties(obj, propList): ...

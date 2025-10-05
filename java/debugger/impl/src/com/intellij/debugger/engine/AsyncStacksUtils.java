@@ -13,10 +13,13 @@ import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.testFramework.TestDebuggerAgentArtifactsProvider;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.PathManager;
@@ -28,9 +31,12 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.annotations.NativePath;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SlowOperations;
@@ -48,6 +54,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+
+import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
 
 public final class AsyncStacksUtils {
   private static final Logger LOG = Logger.getInstance(AsyncStacksUtils.class);
@@ -69,6 +77,10 @@ public final class AsyncStacksUtils {
 
   public static boolean isAgentEnabled() {
     return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
+  }
+
+  public static boolean isSuspendHelperEnabled() {
+    return isAgentEnabled() && Registry.is("debugger.run.suspend.helper");
   }
 
   /**
@@ -294,6 +306,14 @@ public final class AsyncStacksUtils {
                                       @Nullable Project project,
                                       boolean checkJdkVersion,
                                       @Nullable Disposable disposable) {
+    addDebuggerAgent(parameters, project, checkJdkVersion, disposable, false);
+  }
+
+  public static void addDebuggerAgent(JavaParameters parameters,
+                                      @Nullable Project project,
+                                      boolean checkJdkVersion,
+                                      @Nullable Disposable disposable,
+                                      boolean matchWithExecutionTarget) {
     if (isAgentEnabled()) {
       String prefix = "-javaagent:";
       ParametersList parametersList = parameters.getVMParametersList();
@@ -307,85 +327,164 @@ public final class AsyncStacksUtils {
           LOG.warn("Capture agent is not supported for JRE " + sdkVersion);
           return;
         }
-        Path agentArtifactPath;
 
-        String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
-        Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
-        // isDirectory(classesRoot) is used instead of `PluginManagerCore.isRunningFromSources()`
-        // because we want to use installer's layout when running "IDEA (dev build)" run configuration
-        // where the layout is quite the same as in installers.
-        // but `PluginManagerCore.isRunningFromSources()` still returns `true` in this case
-        if (Files.isDirectory(classesRoot) || (relevantJarsRoot != null && classesRoot.startsWith(relevantJarsRoot))) {
-          // Code runs from IDEA run configuration (code from .class file in out/ directory)
-          try {
-            // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside
-            Path debuggerAgentDir =
-              FileUtil.createTempDirectory(new File(PathManager.getTempPath()), "debugger-agent", "", disposable == null).toPath();
-            if (disposable != null) {
-              Disposer.register(disposable, () -> {
-                try {
-                  FileUtilRt.deleteRecursively(debuggerAgentDir);
-                }
-                catch (IOException ignored) {
-                }
-              });
-            }
-            agentArtifactPath = debuggerAgentDir.resolve(AGENT_JAR_NAME);
-
-            Path communityRoot = Path.of(PathManager.getCommunityHomePath());
-            Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
-            Path downloadedAgent = BuildDependenciesJps.INSTANCE.getModuleLibrarySingleRootSync(
-              iml,
-              "debugger-agent",
-              "https://cache-redirector.jetbrains.com/intellij-dependencies",
-              new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath())));
-
-            Files.copy(downloadedAgent, agentArtifactPath);
-          }
-          catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
-        else {
-          agentArtifactPath = classesRoot.resolveSibling("rt").resolve(AGENT_JAR_NAME);
-        }
-
-        if (Files.exists(agentArtifactPath)) {
-          String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentArtifactPath.toAbsolutePath().toString(),
-                                                                       "captureAgent", null,
-                                                                       f -> f.getName().startsWith("debugger-agent"));
-          if (agentPath != null) {
-            try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307303, EA-835503")) {
-              parametersList.prepend(prefix + agentPath + generateAgentSettings(project));
-            }
-            if (Registry.is("debugger.async.stacks.coroutines", false)) {
-              parametersList.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false");
-              parametersList.addProperty("debugger.agent.enable.coroutines", "true");
-              if (Registry.is("debugger.async.stacks.flows", false)) {
-                parametersList.addProperty("kotlinx.coroutines.debug.enable.flows.stack.trace", "true");
-              }
-              if (Registry.is("debugger.async.stacks.state.flows", false)) {
-                parametersList.addProperty("kotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace", "true");
-              }
-            }
-            if (!Registry.is("debugger.async.stack.trace.for.exceptions.printing", false)) {
-              parametersList.addProperty("debugger.agent.support.throwable", "false");
-            }
-            if (Registry.is("debugger.async.stack.trace.for.all.threads")) {
-              parametersList.addProperty("debugger.async.stack.trace.for.all.threads", "true");
-            }
-          }
-        }
-        else {
-          LOG.error("Capture agent not found: " + agentArtifactPath);
-        }
+        extendParametersForAgent(project, disposable, parametersList, prefix, matchWithExecutionTarget);
       }
     }
   }
 
+  private static void extendParametersForAgent(@Nullable Project project,
+                                               @Nullable Disposable disposable,
+                                               @NotNull ParametersList parametersList,
+                                               @NotNull String prefix,
+                                               boolean targetedPath) {
+    Path agentNativePath = getAgentArtifactPath(project, disposable);
+    if (agentNativePath == null) {
+      LOG.error("Capture agent not found");
+      return;
+    }
+    String agentPath = targetedPath ? asEelPath(agentNativePath).toString() : agentNativePath.toString();
+
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307303, EA-835503")) {
+      parametersList.prepend(prefix + agentPath + generateAgentSettings(project));
+    }
+    if (Registry.is("debugger.async.stacks.coroutines", false)) {
+      parametersList.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false");
+      parametersList.addProperty("debugger.agent.enable.coroutines", "true");
+      if (Registry.is("debugger.async.stacks.flows", false)) {
+        parametersList.addProperty("kotlinx.coroutines.debug.enable.flows.stack.trace", "true");
+      }
+      if (Registry.is("debugger.async.stacks.state.flows", false)) {
+        parametersList.addProperty("kotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace", "true");
+      }
+    }
+    if (!Registry.is("debugger.async.stack.trace.for.exceptions.printing", false)) {
+      parametersList.addProperty("debugger.agent.support.throwable", "false");
+    }
+    if (Registry.is("debugger.async.stack.trace.for.all.threads")) {
+      parametersList.addProperty("debugger.async.stack.trace.for.all.threads", "true");
+    }
+  }
+
+  /**
+   * returns true if Bazel-test specific env variables are set
+   */
+  private static Boolean isBazelTestRun() {
+    return System.getenv("TEST_SRCDIR") != null && System.getenv("TEST_UNDECLARED_OUTPUTS_DIR") != null;
+  }
+
+  private static @Nullable Path getAgentArtifactPath(@Nullable Project project, @Nullable Disposable disposable) {
+    if (PluginManagerCore.isRunningFromSources() && !AppMode.isRunningFromDevBuild()) {
+      return getArtifactPathForDownloadedAgent(project, disposable);
+    }
+    else {
+      Path classesRoot = Path.of(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
+      return getArtifactPathForBundledAgent(classesRoot, project, disposable);
+    }
+  }
+
+  private static @NotNull Path getArtifactPathForDownloadedAgent(@Nullable Project project, @Nullable Disposable disposable) {
+    // Code runs from IDEA run configuration (code from .class file in out/ directory)
+    try {
+      Path agentArtifactPath = createTemporaryAgentPath(project, disposable);
+
+      Path downloadedAgent;
+      // In jps runs we resolve the debugger agent via the standard BuildDependenciesJps path below.
+      // However, when tests are executed under Bazel, they run inside a hermetic sandbox. In this environment:
+      // - Network/downloads and access to arbitrary files are restricted.
+      // - All runtime inputs must come from explicit Bazel-declared dependencies (runfiles).
+      // Therefore, in Bazel unit-test mode we must obtain the agent JAR from the test classpath via a test-only
+      // service. The TestDebuggerAgentArtifactsProvider is implemented in test sources and knows how to locate
+      // the agent artifact provided by Bazel via runfiles, so we use ServiceLoader to find that provider
+      // on the tests classpath and resolve the agent from there. Outside Bazel (regular production/dev runs), we
+      // keep using the standard resolution path that downloads the dependency if needed.
+      if (PluginManagerCore.isUnitTestMode && isBazelTestRun()) {
+        ServiceLoader<TestDebuggerAgentArtifactsProvider> providerClasses = ServiceLoader.load(TestDebuggerAgentArtifactsProvider.class);
+        var iterator = providerClasses.iterator();
+        if (!iterator.hasNext()) {
+          throw new IllegalStateException("TestDebuggerAgentArtifactsProvider service provider not found");
+        }
+        TestDebuggerAgentArtifactsProvider provider = iterator.next();
+        if (iterator.hasNext()) {
+          throw new IllegalStateException("more than one TestDebuggerAgentArtifactsProvider service providers found. Only one is expected");
+        }
+
+        downloadedAgent = provider.getDebuggerAgentJar();
+      } else {
+        Path communityRoot = Path.of(PathManager.getCommunityHomePath());
+        Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
+        downloadedAgent = BuildDependenciesJps.INSTANCE.getModuleLibrarySingleRootSync(
+          iml,
+          "debugger-agent",
+          "https://cache-redirector.jetbrains.com/intellij-dependencies",
+          new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath())));
+      }
+
+      // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside.
+      // The copy operation is used as the rename operation.
+      // toRealPath is required because EEL does not support copying of symbolic links
+      Files.copy(downloadedAgent.toRealPath(), agentArtifactPath);
+      return agentArtifactPath;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static @Nullable Path getArtifactPathForBundledAgent(
+    @NotNull Path classesRoot,
+    @Nullable Project project,
+    @Nullable Disposable disposable
+  ) {
+    Path bundledAgentPath = classesRoot.resolveSibling("rt").resolve(AGENT_JAR_NAME);
+    if (!Files.exists(bundledAgentPath)) {
+      return null;
+    }
+    EelDescriptor projectEelDescriptor = project == null ? null : EelProviderUtil.getEelDescriptor(project);
+    if (project == null || LocalEelDescriptor.INSTANCE.equals(projectEelDescriptor)) {
+      String processedAgentPath = JavaExecutionUtil.handleSpacesInAgentPath(
+        bundledAgentPath.toAbsolutePath().toString(),
+        "captureAgent",
+        null,
+        f -> f.getName().startsWith("debugger-agent")
+      );
+      if (processedAgentPath != null) {
+        return Path.of(processedAgentPath);
+      }
+      return null;
+    }
+    Path temporaryAgentPath = createTemporaryAgentPath(project, disposable);
+    try {
+      // toRealPath is required because EEL does not support copying of symbolic links
+      EelPathUtils.transferLocalContentToRemote(
+        bundledAgentPath.toRealPath(),
+        new EelPathUtils.TransferTarget.Explicit(temporaryAgentPath)
+      );
+    } catch (IOException e) {
+      LOG.error(String.format("Unable to copy the java-debugger agent file from %s to %s", bundledAgentPath, temporaryAgentPath), e);
+      return null;
+    }
+    return temporaryAgentPath;
+  }
+
+  private static @NotNull Path createTemporaryAgentPath(@Nullable Project project, @Nullable Disposable disposable) {
+    // The agent file must have a fixed name (AGENT_JAR_NAME) which is mentioned in MANIFEST.MF inside
+    Path debuggerAgentDir = EelPathUtils.createTemporaryDirectory(project, "debugger-agent", "", disposable == null);
+    if (disposable != null) {
+      Disposer.register(disposable, () -> {
+        try {
+          FileUtilRt.deleteRecursively(debuggerAgentDir);
+        }
+        catch (IOException ignored) {
+        }
+      });
+    }
+    return debuggerAgentDir.resolve(AGENT_JAR_NAME);
+  }
+
   private static String generateAgentSettings(@Nullable Project project) {
     Properties properties = CaptureSettingsProvider.getPointsProperties(project);
-    if (Registry.is("debugger.run.suspend.helper")) {
+    if (isSuspendHelperEnabled()) {
       properties.setProperty("suspendHelper", "true");
     }
     if (!properties.isEmpty()) {

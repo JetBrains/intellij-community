@@ -1,17 +1,17 @@
 ### auto-generated section `build kotlin.refactorings.common.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "kotlin-refactorings-common-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "kotlin-refactorings-common-tests_test_lib",
+  module_name = "kotlin.refactorings.common.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/code-style-api:codeStyle",
@@ -37,9 +37,13 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
   ]
 )
+### auto-generated section `build kotlin.refactorings.common.tests` end
+
+### auto-generated section `test kotlin.refactorings.common.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "kotlin-refactorings-common-tests_test",
   runtime_deps = [":kotlin-refactorings-common-tests_test_lib"]
 )
-### auto-generated section `build kotlin.refactorings.common.tests` end
+### auto-generated section `test kotlin.refactorings.common.tests` end

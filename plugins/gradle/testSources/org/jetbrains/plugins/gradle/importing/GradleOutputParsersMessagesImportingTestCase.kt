@@ -46,7 +46,7 @@ open class GradleOutputParsersMessagesImportingTestCase : BuildViewMessagesImpor
   companion object {
 
     @JvmStatic
-    protected val MAVEN_REPOSITORY = if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+    val MAVEN_REPOSITORY = if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       "https://repo.labs.intellij.net/repo1"
     }
     else {
@@ -54,7 +54,7 @@ open class GradleOutputParsersMessagesImportingTestCase : BuildViewMessagesImpor
     }
 
     @JvmStatic
-    protected fun GradleScriptTreeBuilder.mavenRepository(url: String, useOldStyleMetadata: Boolean) {
+    fun GradleScriptTreeBuilder.mavenRepository(url: String, useOldStyleMetadata: Boolean) {
       call("maven") {
         assign("url", url)
         if (useOldStyleMetadata) {

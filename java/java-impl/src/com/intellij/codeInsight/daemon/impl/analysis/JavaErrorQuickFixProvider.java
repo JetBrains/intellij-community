@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiErrorElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,6 +18,7 @@ public final class JavaErrorQuickFixProvider implements ErrorQuickFixProvider, D
     if (!(errorElement.getLanguage() instanceof JavaLanguage)) return;
     Consumer<CommonIntentionAction> sink = action -> info.registerFix(action.asIntention(), null, null, null, null);
     var error = JavaErrorKinds.SYNTAX_ERROR.create(errorElement);
-    JavaErrorFixProvider.EP_NAME.forEachExtensionSafe(provider -> provider.registerFixes(error, sink));
+    DumbService.getDumbAwareExtensions(errorElement.getProject(), JavaErrorFixProvider.EP_NAME)
+        .forEach(provider -> provider.registerFixes(error, sink));
   }
 }

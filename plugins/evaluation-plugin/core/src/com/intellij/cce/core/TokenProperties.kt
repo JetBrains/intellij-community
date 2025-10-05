@@ -173,6 +173,7 @@ enum class TypeProperty {
   LOCAL_VARIABLE,
   LINE,
   PARAMETER,
+  TEXT_CHUNK,
 
   // TODO: consider constructors separately
   TYPE_REFERENCE,

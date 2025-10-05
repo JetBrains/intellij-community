@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.util.MathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +16,8 @@ public final class CaretVisualAttributes {
   /**
    * @deprecated use {@link #getDefault()} instead
    */
-  @Deprecated
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static final CaretVisualAttributes DEFAULT = new CaretVisualAttributes(null, Weight.NORMAL, Shape.DEFAULT, 1.0f);
 
   public static CaretVisualAttributes getDefault() {

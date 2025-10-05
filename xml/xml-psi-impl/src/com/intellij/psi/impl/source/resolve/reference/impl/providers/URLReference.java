@@ -2,8 +2,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.javaee.ExternalResourceManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,16 +10,13 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.impl.source.resolve.XmlResolveReferenceSupport;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,87 +54,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
 
   @Override
   public @Nullable PsiElement resolve() {
-    myIncorrectResourceMapped = false;
-    final String canonicalText = getCanonicalText();
-
-    if (canonicalText.isEmpty()) {
-      final XmlAttribute attr = PsiTreeUtil.getParentOfType(getElement(), XmlAttribute.class);
-
-      if (attr != null &&
-            attr.isNamespaceDeclaration() &&
-            attr.getNamespacePrefix().isEmpty() ||
-          ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(canonicalText)
-         ) {
-        // Namespaces in XML 1.0 2nd edition, Section 6.2, last paragraph
-        // The attribute value in a default namespace declaration MAY be empty. This has the same effect, within the scope of the declaration,
-        // of there being no default namespace
-        return myElement;
-      }
-      return null;
-    }
-
-    if (ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(canonicalText)) return myElement;
-    final XmlTag tag = PsiTreeUtil.getParentOfType(myElement, XmlTag.class);
-    if (tag != null && canonicalText.equals(tag.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME))) return tag;
-
-    final PsiFile containingFile = myElement.getContainingFile();
-
-    if (tag != null &&
-        tag.getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI) == null
-       ) {
-      final PsiFile file = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, containingFile, tag.getAttributeValue("version"));
-      if (file != null) return file;
-    }
-
-    if (containingFile instanceof XmlFile) {
-      final XmlDocument document = ((XmlFile)containingFile).getDocument();
-      assert document != null;
-      final XmlTag rootTag = document.getRootTag();
-
-     if (rootTag == null) {
-        return ExternalResourceManager.getInstance().getResourceLocation(canonicalText, containingFile, null);
-      }
-      final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(canonicalText, true);
-      if (nsDescriptor != null) return nsDescriptor.getDescriptorFile();
-
-      final String url = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, myElement.getProject());
-      if (!url.equals(canonicalText)) {
-        PsiFile file = XmlUtil.findRelativeFile(canonicalText, myElement.getContainingFile());
-        if (file == null) {
-          myIncorrectResourceMapped = true;
-        }
-        return file;
-      }
-
-      if (tag == rootTag && (tag.getNamespace().equals(XmlUtil.XML_SCHEMA_URI) || tag.getNamespace().equals(XmlUtil.WSDL_SCHEMA_URI))) {
-        for(XmlTag t:tag.getSubTags()) {
-          final String name = t.getLocalName();
-          if ("import".equals(name)) {
-            if (canonicalText.equals(t.getAttributeValue("namespace"))) return t;
-          } else if (!"include".equals(name) && !"redefine".equals(name) && !"annotation".equals(name)) break;
-        }
-      }
-
-      final PsiElement[] result = new PsiElement[1];
-      processWsdlSchemas(rootTag, t -> {
-        if (canonicalText.equals(t.getAttributeValue(TARGET_NAMESPACE_ATTR_NAME))) {
-          result[0] = t;
-          return false;
-        }
-        for (XmlTag anImport : t.findSubTags("import", t.getNamespace())) {
-          if (canonicalText.equals(anImport.getAttributeValue("namespace"))) {
-            final XmlAttribute location = anImport.getAttribute("schemaLocation");
-            if (location != null) {
-              result[0] = FileReferenceUtil.findFile(location.getValueElement());
-            }
-          }
-        }
-        return true;
-      });
-
-      return result[0];
-    }
-    return null;
+    return ApplicationManager.getApplication().getService(XmlResolveReferenceSupport.class).resolveReference(this);
   }
 
   @Override
@@ -208,5 +124,10 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
         }
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public void setIncorrectResourceMapped(boolean incorrectResourceMapped) {
+    myIncorrectResourceMapped = incorrectResourceMapped;
   }
 }

@@ -91,9 +91,6 @@
     <projectService serviceInterface="com.intellij.framework.detection.DetectionExcludesConfiguration"
                     serviceImplementation="com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl"/>
 
-    <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectConfigurator" order="first"
-                                  id="PlatformProjectConfigurator"/>
-
     <jdkDownloader.jdkInstallerListener implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.UnknownJdkInstallerListener"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderLogger"/>
 
@@ -104,14 +101,7 @@
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaModuleSourceRootEditHandler"/>
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestSourceRootEditHandler"/>
 
-    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryPropertyEntityIndexableEntityProvider"/>
-    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.CustomSourceRootPropertyIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleDependencyEntitiesIndexableEntityProvider"/>
-    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleCustomImlDataFilesIndexableEntityProvider"/>
-    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.ModuleGroupPathIndexableEntityProvider"/>
-    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaSourceRootPropertiesIndexableEntityProvider"/>
-    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaResourceRootPropertiesIndexableEntityProvider"/>
-    <indexableEntityProvider implementation="com.intellij.util.indexing.roots.JavaModuleSettingsIndexableEntityProvider"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.ModuleRootsIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SdkIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.LibraryIndexableIteratorHandler"/>
@@ -133,12 +123,18 @@
     <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
     <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
+    <registryKey key="psi.vfs.listener.over.wsm" defaultValue="true" restartRequired="true"
+                 description="Use WSM listeners to invalidate PSI caches (new) in addition to legacy ModuleRootListener"/>
+    <registryKey key="project.root.manager.over.wsm" defaultValue="true" restartRequired="true"
+                 description="Use WSM to hold project settings (java language level, project sdk, compiler outputs)"/>
 
     <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
   </extensions>
   <projectListeners>
     <listener class="com.intellij.psi.impl.file.impl.PsiVFSModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="com.intellij.psi.impl.file.impl.PsiWsmListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
     <listener class="com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener$WorkspaceModelListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
     <listener class="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeCleaner"

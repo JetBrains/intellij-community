@@ -21,3 +21,5 @@ class sha1_crypt(uh.HasManyBackends, uh.HasRounds, uh.HasSalt, uh.GenericHandler
     def from_string(cls, hash: str | bytes) -> Self: ...  # type: ignore[override]
     def to_string(self, config: bool = False) -> str: ...
     backends: ClassVar[tuple[str, ...]]
+
+__all__: list[str] = []

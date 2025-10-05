@@ -25,6 +25,10 @@ public class PyNamedTupleInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  public void testTypingNTFieldsOrderKWOnly() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

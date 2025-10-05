@@ -8,7 +8,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.TextRange
@@ -57,10 +57,10 @@ class PluginXmlRegistrationCheckInspectionTest : JavaCodeInsightFixtureTestCase(
 
   @Throws(IOException::class)
   fun testRegistrationCheck() {
-    val anotherModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, "anotherModule",
+    val anotherModule = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "anotherModule",
                                               myTempDirFixture!!.findOrCreateDir("../anotherModuleDir"))
     ModuleRootModificationUtil.addModuleLibrary(anotherModule, VfsUtil.getUrlForLibraryRoot(File(PathUtil.getJarPathForClass(AnAction::class.java))))
-    val additionalModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, "additionalModule",
+    val additionalModule = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "additionalModule",
                                                  myTempDirFixture!!.findOrCreateDir("../additionalModuleDir"))
     ModuleRootModificationUtil.addModuleLibrary(anotherModule, VfsUtil.getUrlForLibraryRoot(File(PathUtil.getJarPathForClass(LanguageExtensionPoint::class.java))))
     ModuleRootModificationUtil.addDependency(module, anotherModule)

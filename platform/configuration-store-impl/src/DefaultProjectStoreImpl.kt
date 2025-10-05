@@ -14,9 +14,9 @@ import java.io.Writer
 import java.nio.file.Path
 
 @ApiStatus.Internal
-const val PROJECT_DEFAULT_FILE_NAME = StoragePathMacros.PROJECT_DEFAULT_FILE
+const val PROJECT_DEFAULT_FILE_NAME: String = StoragePathMacros.PROJECT_DEFAULT_FILE
 @ApiStatus.Internal
-const val PROJECT_DEFAULT_FILE_SPEC = "${APP_CONFIG}/${PROJECT_DEFAULT_FILE_NAME}"
+const val PROJECT_DEFAULT_FILE_SPEC: String = "${APP_CONFIG}/${PROJECT_DEFAULT_FILE_NAME}"
 
 internal class DefaultProjectStoreImpl(override val project: Project) : ComponentStoreWithExtraComponents() {
   // see note about default state in project store
@@ -30,7 +30,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   private val storage by lazy {
     val file = ApplicationManager.getApplication().stateStore.storageManager.expandMacro(PROJECT_DEFAULT_FILE_SPEC)
-    DefaultProjectStorage(file, PROJECT_DEFAULT_FILE_SPEC, PathMacroManager.getInstance(project), compoundStreamProvider)
+    DefaultProjectStorage(file = file, fileSpec = PROJECT_DEFAULT_FILE_SPEC, pathMacroManager = PathMacroManager.getInstance(project), streamProvider = compoundStreamProvider)
   }
 
   override val serviceContainer: ComponentManagerEx
@@ -68,24 +68,30 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   override fun getPathMacroManagerForDefaults(): PathMacroManager = PathMacroManager.getInstance(project)
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> =
-    listOf(PROJECT_FILE_STORAGE_ANNOTATION)
+  override fun <T : Any> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> {
+    return listOf(FileStorageAnnotation.PROJECT_FILE_STORAGE_ANNOTATION)
+  }
 
   override fun setPath(path: Path) {}
 
   override fun toString(): String = "default project"
 
   private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager, streamProvider: StreamProvider) :
-    FileBasedStorage(file, fileSpec, rootElementName = "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED, streamProvider)
-  {
+    FileBasedStorage(
+      file = file,
+      fileSpec = fileSpec,
+      rootElementName = "defaultProject",
+      pathMacroManager = pathMacroManager.createTrackingSubstitutor(),
+      roamingType = RoamingType.DISABLED,
+      provider = streamProvider,
+    ) {
     override val controller: SettingsController?
       get() = null
 
-    public override fun loadLocalData(): Element? =
-      postProcessLoadedData { super.loadLocalData() }
+    @Suppress("RedundantVisibilityModifier")
+    public override fun loadLocalData(): Element? = postProcessLoadedData { super.loadLocalData() }
 
-    override fun loadFromStreamProvider(stream: InputStream): Element? =
-      postProcessLoadedData { super.loadFromStreamProvider(stream) }
+    override fun loadFromStreamProvider(stream: InputStream): Element? = postProcessLoadedData { super.loadFromStreamProvider(stream) }
 
     private fun postProcessLoadedData(elementProvider: () -> Element?): Element? {
       try {
@@ -97,24 +103,28 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
       }
     }
 
-    override fun createSaveSession(states: StateMap): FileSaveSessionProducer =
-      object : FileSaveSessionProducer(storageData = states, storage = this) {
-        override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
-          val dataWriter = if (dataWriter == null) null else object : StringDataWriter() {
-            override fun hasData(filter: DataWriterFilter): Boolean = dataWriter.hasData(filter)
+    override fun createSaveSession(states: StateMap): FileSaveSessionProducer {
+      return object : FileSaveSessionProducer(storageData = states, storage = this) {
+        override fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?) {
+          super.saveLocally(
+            dataWriter = object : StringDataWriter() {
+              override fun hasData(filter: DataWriterFilter): Boolean = dataWriter.hasData(filter)
 
-            override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
-              val lineSeparatorWithIndent = "${lineSeparator}    "
-              writer.append("<application>").append(lineSeparator)
-              writer.append("""  <component name="ProjectManager">""").append(lineSeparatorWithIndent)
-              (dataWriter as StringDataWriter).writeTo(writer, lineSeparatorWithIndent, filter)
-              writer.append(lineSeparator)
-              writer.append("  </component>").append(lineSeparator)
-              writer.append("</application>")
-            }
-          }
-          super.saveLocally(dataWriter, useVfs, events)
+              override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+                val lineSeparatorWithIndent = "${lineSeparator}    "
+                writer.append("<application>").append(lineSeparator)
+                writer.append("""  <component name="ProjectManager">""").append(lineSeparatorWithIndent)
+                (dataWriter as StringDataWriter).writeTo(writer, lineSeparatorWithIndent, filter)
+                writer.append(lineSeparator)
+                writer.append("  </component>").append(lineSeparator)
+                writer.append("</application>")
+              }
+            },
+            events = events,
+          )
         }
       }
+    }
   }
 }
+

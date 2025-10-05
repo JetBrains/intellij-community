@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope.Type.CUSTOM
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency.Scope.Type.STANDARD
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.dependencies.*
@@ -17,12 +19,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
 import org.jetbrains.plugins.gradle.util.GradleUtil
+import org.jetbrains.plugins.gradle.util.gradleIdentityPathOrNull
 import java.util.concurrent.ConcurrentHashMap
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
@@ -48,13 +50,15 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
     if (projects.isEmpty()) {
       val projectDataManager = ProjectDataManager.getInstance()
       for (projectInfo in projectDataManager.getExternalProjectsData(project, GradleConstants.SYSTEM_ID)) {
-        val projectStructure = projectInfo.externalProjectStructure ?: continue
-        for (moduleNode in ExternalSystemApiUtil.findAll(projectStructure, ProjectKeys.MODULE)) {
+        val projectNode = projectInfo.externalProjectStructure ?: continue
+        val projectData = projectNode.data
+        for (moduleNode in ExternalSystemApiUtil.findAll(projectNode, ProjectKeys.MODULE)) {
           val moduleData = moduleNode.data
           val gradleModuleData = GradleModuleData(moduleNode)
           if (!gradleModuleData.isBuildSrcModule) {
             val module = GradleUtil.findGradleModule(project, moduleData) ?: continue
-            val externalProject = DAProject(module, moduleData.moduleName)
+            val externalProjectName = projectData.externalName + (moduleData.gradleIdentityPathOrNull ?: (":" + moduleData.moduleName))
+            val externalProject = DAProject(module, externalProjectName.removeSuffix(":"))
             projects[externalProject] = gradleModuleData
           }
         }
@@ -65,7 +69,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
   override fun getDependencyScopes(externalProject: DependencyAnalyzerProject): List<Dependency.Scope> {
     val gradleModuleData = projects[externalProject] ?: return emptyList()
-    return getOrCollectDependencyScopeNodes(gradleModuleData).map { it.toScope() }
+    return getOrCollectDependencyScopeNodes(gradleModuleData).map { scope(it.scope) }
   }
 
   override fun getDependencies(externalProject: DependencyAnalyzerProject): List<Dependency> {
@@ -87,10 +91,10 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
     val root = DAModule(moduleData.moduleName)
     root.putUserData(MODULE_DATA, moduleData.moduleData)
 
-    val rootDependency = DADependency(root, defaultConfiguration, null, emptyList())
+    val rootDependency = DADependency(root, DEFAULT_SCOPE, null, emptyList())
     dependencies.add(rootDependency)
     for (scopeNode in scopeNodes) {
-      val scope = scopeNode.toScope()
+      val scope = scope(scopeNode.scope)
       for (dependencyNode in scopeNode.dependencies) {
         addDependencies(rootDependency, scope, dependencyNode, dependencies, moduleData.gradleProjectDir)
       }
@@ -128,15 +132,17 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
   private fun DependencyNode.getStatus(data: Dependency.Data): List<Dependency.Status> {
     val status = mutableListOf<Dependency.Status>()
     if (resolutionState == ResolutionState.UNRESOLVED) {
+      val title = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.unresolved.title")
       val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.unresolved")
-      status.add(DAWarning(message))
+      status.add(DAWarning(title, message))
     }
     val selectionReason = selectionReason
     if (data is Dependency.Data.Artifact && selectionReason != null && selectionReason.startsWith("between versions")) {
       val conflictedVersion = selectionReason.substringAfter("between versions ${data.version} and ", "")
       if (conflictedVersion.isNotEmpty()) {
+        val title = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict.title", conflictedVersion)
         val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion)
-        status.add(DAWarning(message))
+        status.add(DAWarning(title, message))
       }
     }
     return status
@@ -167,12 +173,25 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
     private val LOG = logger<GradleDependencyAnalyzerContributor>()
 
-    internal val defaultConfiguration = scope("default")
-
     internal val MODULE_DATA = Key.create<ModuleData>("GradleDependencyAnalyzerContributor.ModuleData")
 
-    private fun DependencyScopeNode.toScope() = scope(scope)
+    internal val DEFAULT_SCOPE = DAScope(ExternalSystemBundle.message("external.system.dependency.analyzer.scope.default"))
 
-    private fun scope(name: @NlsSafe String) = DAScope(name, StringUtil.toTitleCase(name))
+    private val STANDARD_SCOPES = setOf(
+      "annotationProcessor",
+      "compileClasspath",
+      "runtimeClasspath",
+      "testAnnotationProcessor",
+      "testCompileClasspath",
+      "testRuntimeClasspath"
+    )
+
+    private fun scope(name: @Nls String): DAScope {
+      return DAScope(name, type = scopeType(name))
+    }
+
+    private fun scopeType(name: String): Dependency.Scope.Type {
+      return if (name in STANDARD_SCOPES) STANDARD else CUSTOM
+    }
   }
 }

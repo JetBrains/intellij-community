@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.core
 
+import com.intellij.openapi.diagnostic.thisLogger
 import kotlin.math.max
+
+const val DEFAULT_LOOKUP_ELEMENT_TYPE: String = "No element type associated to textRange"
 
 data class Lookup(
   val prefix: String,
@@ -53,6 +56,18 @@ data class Lookup(
       isNew = this.isNew,
       additionalInfo = additionalInfo
     )
+  }
+
+  /**
+   * if compatibleElementTypes is empty, assume element_type matching is not enabled, mark lookup as compatible
+   * if compatibleElementTypes is not empty, assume element_type matching is enabled and check if element_type exists within lookup and is within compatibleElementTypes
+   */
+  fun checkElementTypeCompatibility(compatibleElementTypes: List<String>): Boolean {
+    if (compatibleElementTypes.isEmpty()) return true
+    val lookupElementType = additionalInfo["element_type"] as? String ?: return true
+    if (compatibleElementTypes.contains(lookupElementType)) return true
+    if(lookupElementType.equals(DEFAULT_LOOKUP_ELEMENT_TYPE)) thisLogger().warn("Element Type matching enabled for metrics calculation, yet No element type associated to lookup")
+    return false
   }
   companion object {
     fun fromExpectedText(

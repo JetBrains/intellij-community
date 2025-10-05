@@ -17,6 +17,25 @@ UNSUPPORTED_KINDS = {"c", "V"}  # complex, void/raw
 OBJECT_SAMPLE_LIMIT = 10
 
 
+class InspectionResultsDict:
+    KEY_INSPECTION_NAME = "inspection"
+
+    KEY_STATUS = "executionStatus"
+    VALUE_STATUS_SUCCESS = "SUCCESS"
+    VALUE_STATUS_FAILED = "FAILED"
+
+    KEY_IS_TRIGGERED = "isTriggered"
+    VALUE_TRIGGERED_NO = "NO"
+    VALUE_TRIGGERED_YES = "YES"
+
+    KEY_DETAILS = "inspectionResultDetails"
+    KEY_DETAILS_TYPE = "type"
+    VALUE_DETAILS_TYPE_ALL = "All"
+    VALUE_DETAILS_TYPE_PER_COLUMN = "PerColumn"
+
+    KEY_DETAILS_VALUE = "value"
+
+
 class ColumnVisualisationType:
     HISTOGRAM = "histogram"
     UNIQUE = "unique"
@@ -122,6 +141,79 @@ def get_value_occurrences_count(table):
 
             bin_counts.append(str({column_visualisation_type:result}))
     return ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR.join(bin_counts)
+
+
+def get_inspection_none_count(table):
+    def _calculate_none_count(cur_table):
+        """Calculate missing values per column"""
+        results_per_column = []
+        for col, missing_count in cur_table.isna().sum().items():
+            if missing_count > 0:
+                results_per_column.append({
+                    "columnName": col,
+                    "value": str(missing_count)
+                })
+
+        is_triggered = len(results_per_column) > 0
+        details = __create_per_column_details(results_per_column) if is_triggered else None
+        return __create_success_result(is_triggered, details)
+
+    return __execute_inspection(table, _calculate_none_count, "NONE_COUNT")
+
+
+def get_inspection_duplicate_rows(table):
+    def _calculate_duplicate_rows(cur_table):
+        duplicate_rows_number = cur_table.duplicated().sum()
+        is_triggered = duplicate_rows_number > 0
+        details = __create_all_details(str(duplicate_rows_number)) if is_triggered else None
+        return __create_success_result(is_triggered, details)
+
+    return __execute_inspection(table, _calculate_duplicate_rows, "DUPLICATE_ROWS")
+
+
+def get_inspection_outliers(table):
+    def _calculate_outliers(cur_table):
+        results_per_column = []
+        for col in cur_table.columns:
+            if pd.api.types.is_numeric_dtype(cur_table[col]):
+                q1 = cur_table[col].quantile(0.25)
+                q3 = cur_table[col].quantile(0.75)
+                iqr = q3 - q1
+                lower_bound = q1 - 1.5 * iqr
+                upper_bound = q3 + 1.5 * iqr
+
+                # Boolean mask for outliers
+                mask = (cur_table[col] < lower_bound) | (cur_table[col] > upper_bound)
+                outliers_count = cur_table[col][mask].count()
+
+                if outliers_count > 0:
+                    results_per_column.append({
+                        "columnName": col,
+                        "value": str(outliers_count)
+                    })
+
+        is_triggered = len(results_per_column) > 0
+        details = __create_per_column_details(results_per_column) if is_triggered else None
+        return __create_success_result(is_triggered, details)
+
+    return __execute_inspection(table, _calculate_outliers, "OUTLIERS")
+
+
+def get_inspection_constant_columns(table):
+    def _calculate_constant_columns(cur_table):
+        results_per_column = []
+        for col in cur_table.columns:
+            if cur_table[col].nunique(dropna=False) == 1:
+                results_per_column.append({
+                    "columnName": col,
+                    "value": str(cur_table[col].iloc[0])
+                })
+
+        is_triggered = len(results_per_column) > 0
+        details = __create_per_column_details(results_per_column) if is_triggered else None
+        return __create_success_result(is_triggered, details)
+
+    return __execute_inspection(table, _calculate_constant_columns, "CONSTANT_COLUMNS")
 
 
 def __get_data_slice(table, start, end):
@@ -376,3 +468,53 @@ def __get_describe(table):
                 return __get_dummy_describe_series(table)
     except:
         return None
+
+
+def __serialize_in_json(result_in_dict, inspection_name):
+    try:
+        import json
+        result_in_dict[InspectionResultsDict.KEY_INSPECTION_NAME] = inspection_name
+        return json.dumps(result_in_dict)
+    except:
+        return '{"%s": "%s" "%s": "%s"}' % (InspectionResultsDict.KEY_INSPECTION_NAME, inspection_name, InspectionResultsDict.KEY_STATUS, InspectionResultsDict.VALUE_STATUS_FAILED)
+
+
+def __execute_inspection(table, inspection_func, inspection_name):
+    """Execute inspection with error handling"""
+    try:
+        result = inspection_func(table)
+        return __serialize_in_json(result, inspection_name)
+    except:
+        failed_result = __create_failed_result()
+        return __serialize_in_json(failed_result, inspection_name)
+
+
+def __create_success_result(is_triggered, details=None):
+     is_triggered_value = InspectionResultsDict.VALUE_TRIGGERED_YES if is_triggered else InspectionResultsDict.VALUE_TRIGGERED_NO
+     result = {
+         InspectionResultsDict.KEY_STATUS: InspectionResultsDict.VALUE_STATUS_SUCCESS,
+         InspectionResultsDict.KEY_IS_TRIGGERED: is_triggered_value
+     }
+     if details:
+         result[InspectionResultsDict.KEY_DETAILS] = details
+     return result
+
+
+def __create_failed_result():
+    return {
+        InspectionResultsDict.KEY_STATUS: InspectionResultsDict.VALUE_STATUS_FAILED,
+        InspectionResultsDict.KEY_IS_TRIGGERED: InspectionResultsDict.VALUE_TRIGGERED_NO
+    }
+
+
+def __create_per_column_details(results_per_column):
+    return {
+        InspectionResultsDict.KEY_DETAILS_TYPE: InspectionResultsDict.VALUE_DETAILS_TYPE_PER_COLUMN,
+        InspectionResultsDict.KEY_DETAILS_VALUE: results_per_column
+    }
+
+def __create_all_details(value):
+    return {
+        InspectionResultsDict.KEY_DETAILS_TYPE: InspectionResultsDict.VALUE_DETAILS_TYPE_ALL,
+        InspectionResultsDict.KEY_DETAILS_VALUE: value
+    }

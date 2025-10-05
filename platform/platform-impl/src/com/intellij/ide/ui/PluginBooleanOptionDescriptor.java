@@ -17,7 +17,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -63,7 +63,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     }
 
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
-    Map<@NotNull String, @NotNull ContentModuleDescriptor> contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap();
+    Map<@NotNull PluginModuleId, @NotNull ContentModuleDescriptor> contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap();
     Collection<? extends IdeaPluginDescriptor> autoSwitchedDescriptors = enable ?
                                                                          getDependenciesToEnable(descriptors, pluginIdMap, contentModuleIdMap) :
                                                                          getDependentsToDisable(descriptors, pluginIdMap, contentModuleIdMap);
@@ -90,7 +90,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
                                                  @NotNull @Nls String content,
                                                  boolean enabled) {
     String title = IdeBundle.message(enabled ? "plugins.auto.enabled.notification.title" : "plugins.auto.disabled.notification.title");
-    Notification switchNotification = UpdateChecker.getNotificationGroupForPluginUpdateResults()
+    Notification switchNotification = ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForPluginUpdateResults()
       .createNotification(content, NotificationType.INFORMATION)
       .setDisplayId("plugin.auto.switch")
       .setTitle(title)
@@ -133,7 +133,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
 
   private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
                                                                                              @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
-                                                                                             @NotNull Map<String, ContentModuleDescriptor> contentModuleIdMap) {
+                                                                                             @NotNull Map<PluginModuleId, ContentModuleDescriptor> contentModuleIdMap) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
@@ -158,7 +158,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
 
   private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependentsToDisable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
                                                                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
-                                                                                            @NotNull Map<String, ContentModuleDescriptor> contentModuleIdMap) {
+                                                                                            @NotNull Map<PluginModuleId, ContentModuleDescriptor> contentModuleIdMap) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
 
@@ -184,7 +184,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
       }
     }
 
-    Notification newNotification = UpdateChecker.getNotificationGroupForIdeUpdateResults()
+    Notification newNotification = ApplicationManager.getApplication().getService(UpdateCheckerFacade.class).getNotificationGroupForIdeUpdateResults()
       .createNotification(
         IdeBundle.message("plugins.changed.notification.content", ApplicationNamesInfo.getInstance().getFullProductName()),
         NotificationType.INFORMATION)

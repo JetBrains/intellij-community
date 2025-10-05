@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,7 @@ public abstract class VirtualFileVisitor<T> {
   private boolean myFollowSymLinks = true;
   private boolean mySkipRoot;
   private int myDepthLimit = -1;
+  private boolean childrenMayBeUnsorted = false;
 
   private int myLevel;
   private Stack<T> myValueStack;
@@ -31,6 +33,9 @@ public abstract class VirtualFileVisitor<T> {
       }
       else if (option instanceof Option.LimitOption) {
         myDepthLimit = ((Option.LimitOption)option).limit;
+      }
+      else if (option == CHILDREN_MAY_BE_UNSORTED) {
+        childrenMayBeUnsorted = true;
       }
     }
   }
@@ -50,6 +55,8 @@ public abstract class VirtualFileVisitor<T> {
   public static final Option NO_FOLLOW_SYMLINKS = new Option();
   public static final Option SKIP_ROOT = new Option();
   public static final Option ONE_LEVEL_DEEP = limit(1);
+  @ApiStatus.Internal
+  public static final Option CHILDREN_MAY_BE_UNSORTED = new Option();
 
   public static @NotNull Option limit(int maxDepth) {
     return new Option.LimitOption(maxDepth);
@@ -162,6 +169,10 @@ public abstract class VirtualFileVisitor<T> {
 
   final boolean depthLimitReached() {
     return myDepthLimit >= 0 && myLevel >= myDepthLimit;
+  }
+
+  final boolean childrenMayBeUnsorted(){
+    return childrenMayBeUnsorted;
   }
 
   final void saveValue() {

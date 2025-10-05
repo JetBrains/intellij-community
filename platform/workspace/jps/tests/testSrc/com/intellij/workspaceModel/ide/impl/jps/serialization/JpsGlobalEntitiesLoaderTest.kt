@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
  import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
@@ -46,7 +47,7 @@ class JpsGlobalEntitiesLoaderTest {
       Assert.assertEquals(librariesNames.size, libraryBridges.size)
       UsefulTestCase.assertSameElements(librariesNames, libraryBridges.map { it.name })
 
-      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
+      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
       val libraryEntities = workspaceModel.currentSnapshot.entities(LibraryEntity::class.java).toList()
       Assert.assertEquals(librariesNames.size, libraryEntities.size)
       UsefulTestCase.assertSameElements(librariesNames, libraryEntities.map { it.name })
@@ -73,7 +74,7 @@ class JpsGlobalEntitiesLoaderTest {
       Assert.assertEquals(sdkInfos.size, sdkBridges.size)
       UsefulTestCase.assertSameElements(sdkInfos, sdkBridges.map { SdkTestInfo(it.name, it.versionString!!, it.sdkType.name) })
 
-      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelDescriptor)
+      val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
       val sdkEntities = workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
       Assert.assertEquals(sdkInfos.size, sdkEntities.size)
       UsefulTestCase.assertSameElements(sdkInfos, sdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })

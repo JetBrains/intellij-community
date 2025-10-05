@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
@@ -21,6 +22,7 @@ kt_jvm_library(
     "//dependency-graph",
     "//jps-builders-6:build-javac-rt",
     "//:jps-javac-extension",
+    "//:opentelemetry-api",
     "//:h2-mvstore",
     "//:hash4j",
     "//:asm-all",
@@ -30,6 +32,7 @@ kt_jvm_library(
     "//:qdox",
     "//src/worker-framework",
     "//src/worker-util",
+    "//zip",
     "patched-kotlin-compiler-for-bazel",
     "//:kotlin-compose-compiler-plugin",
     "//:kotlin-serialization-compiler-plugin",
@@ -40,13 +43,19 @@ kt_jvm_library(
 
 java_binary(
     name = "jvm-inc-builder",
-    jvm_flags = get_jvm_flags([
-        "-Dkotlin.environment.keepalive=true",
-        "-XX:+HeapDumpOnOutOfMemoryError",
-    ]),
+#     jvm_flags = [],  -- Note(k15tfu): ignored w/ deploy jar, use :jvm-inc-builder-jvm_flags
     main_class = "com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncExecutor",
     visibility = ["//visibility:public"],
     runtime_deps = [":jvm-inc-builder-lib"],
+)
+
+string_list_flag(
+    name = "jvm-inc-builder-jvm_flags",
+    build_setting_default = get_jvm_flags([
+        "-Dkotlin.environment.keepalive=true",
+        "-XX:+HeapDumpOnOutOfMemoryError",
+    ]),
+    visibility = ["//visibility:public"],
 )
 
 
@@ -84,72 +93,53 @@ java_binary(
 
 java_library(
   name = "patched-kotlin-compiler-for-bazel",
-  visibility = ["//visibility:private"],
+  visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
   exports = [
-    ":kotlin-compiler-2_2_20-dev-4678_http_import",
-    ":kotlin-stdlib-jdk8-2_2_20-dev-4678_http_import",
-    ":kotlin-stdlib-2_2_20-dev-4678_http_import",
-    ":kotlin-stdlib-jdk7-2_2_20-dev-4678_http_import",
-    ":kotlin-script-runtime-2_2_20-dev-4678_http_import",
-    ":kotlin-reflect-1_6_10_http_import",
+    ":jvm-abi-gen-2_2_21-RC-376_import",
+    ":kotlin-compiler-2_2_21-RC-376_import",
+    ":kotlin-stdlib-jdk8-2_2_21-RC-376_import",
+    ":kotlin-stdlib-2_2_21-RC-376_import",
+    ":kotlin-stdlib-jdk7-2_2_21-RC-376_import",
+    ":kotlin-script-runtime-2_2_21-RC-376_import",
+    ":kotlin-reflect-2_2_21-RC-376_import",
     #":kotlinx-coroutines-core-jvm-1_8_0_http_import",
     #":annotations-23_0_0_http_import",
-    ":expects-compiler-plugin-2_2_0-RC_0_1_http_import",
-    ":rhizomedb-compiler-plugin-2_2_0-RC2-0_2_http_import",
-    ":rpc-compiler-plugin-2_2_0-RC2-0_1_http_import",
-    ":patched-jvm-abi-gen-for-bazel_http_import",
   ],
 )
 
 jvm_import(
-  name = "patched-jvm-abi-gen-for-bazel_http_import",
-  jar = "@jvm-abi-gen-2_2_20-dev-4678_http//file",
+  name = "jvm-abi-gen-2_2_21-RC-376_import",
+  jar = "@jvm-abi-gen-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "expects-compiler-plugin-2_2_0-RC_0_1_http_import",
-    jar = "@expects-compiler-plugin-2_2_0-RC_0_1_http//file",
+    name = "kotlin-compiler-2_2_21-RC-376_import",
+    jar = "@kotlin-compiler-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "rhizomedb-compiler-plugin-2_2_0-RC2-0_2_http_import",
-    jar = "@rhizomedb-compiler-plugin-2_2_0-RC2-0_2_http//file",
-    source_jar = "@rhizomedb-compiler-plugin-2_2_0-RC2-0_2-sources_http//file",
+    name = "kotlin-stdlib-jdk8-2_2_21-RC-376_import",
+    jar = "@kotlin-stdlib-jdk8-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "rpc-compiler-plugin-2_2_0-RC2-0_1_http_import",
-    jar = "@rpc-compiler-plugin-2_2_0-RC2-0_1_http//file",
+    name = "kotlin-stdlib-2_2_21-RC-376_import",
+    jar = "@kotlin-stdlib-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "kotlin-compiler-2_2_20-dev-4678_http_import",
-    jar = "@kotlin-compiler-2_2_20-dev-4678_http//file",
+    name = "kotlin-stdlib-jdk7-2_2_21-RC-376_import",
+    jar = "@kotlin-stdlib-jdk7-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "kotlin-stdlib-jdk8-2_2_20-dev-4678_http_import",
-    jar = "@kotlin-stdlib-jdk8-2_2_20-dev-4678_http//file",
+    name = "kotlin-script-runtime-2_2_21-RC-376_import",
+    jar = "@kotlin-script-runtime-2_2_21-RC-376_http//file",
 )
 
 jvm_import(
-    name = "kotlin-stdlib-2_2_20-dev-4678_http_import",
-    jar = "@kotlin-stdlib-2_2_20-dev-4678_http//file",
-)
-
-jvm_import(
-    name = "kotlin-stdlib-jdk7-2_2_20-dev-4678_http_import",
-    jar = "@kotlin-stdlib-jdk7-2_2_20-dev-4678_http//file",
-)
-
-jvm_import(
-    name = "kotlin-script-runtime-2_2_20-dev-4678_http_import",
-    jar = "@kotlin-script-runtime-2_2_20-dev-4678_http//file",
-)
-
-jvm_import(
-    name = "kotlin-reflect-1_6_10_http_import",
-    jar = "@kotlin-reflect-1_6_10_http//file",
+    name = "kotlin-reflect-2_2_21-RC-376_import",
+    jar = "@kotlin-reflect-2_2_21-RC-376_http//file",
 )
 
 #jvm_import(

@@ -18,7 +18,6 @@ import com.intellij.execution.ui.RunToolbarPopupKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -31,6 +30,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -50,14 +51,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.execution.PermissionsKt.getFullRunAccess;
 import static java.util.Collections.emptyList;
 
 @ApiStatus.Internal
-public class ExecutorAction extends AnAction
-  implements DumbAware, ActionRemotePermissionRequirements.RunAccess, ActionIdProvider {
+public class ExecutorAction extends AnAction implements DumbAware, RequiresPermissions, ActionIdProvider {
 
   public static final Key<Boolean> WOULD_BE_ENABLED_BUT_STARTING = Key.create("WOULD_BE_ENABLED_BUT_STARTING");
 
@@ -141,7 +143,7 @@ public class ExecutorAction extends AnAction
     }
     else {
       if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
-        // don't compute current file to run if editors are not yet loaded
+        // don't compute the current file to run if editors are not yet loaded
         if (!project.isDefault() && !StartupManager.getInstance(project).postStartupActivityPassed()) {
           presentation.setEnabled(false);
           return;
@@ -181,7 +183,7 @@ public class ExecutorAction extends AnAction
                                                  Project project,
                                                  RunnerAndConfigurationSettings selectedSettings,
                                                  Presentation presentation) {
-    // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
+    // We can consider adding spinning to the inlined run actions. But there is a problem with redrawing
     ExecutorActionStatus status = ExecutorActionStatus.NORMAL;
     if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
       RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
@@ -465,11 +467,15 @@ public class ExecutorAction extends AnAction
     ExecutionUtil.doRunConfiguration(runConfig, myExecutor, null, null, dataContext, env -> env.setRunningCurrentFile(true));
   }
 
+  @Override
+  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+    return List.of(getFullRunAccess());
+  }
+
   private record RunCurrentFileInfo(
     long myPsiModCount,
     @NotNull List<RunnerAndConfigurationSettings> myRunConfigs) {
   }
-
 
   private record RunCurrentFileActionStatus(
     boolean enabled,

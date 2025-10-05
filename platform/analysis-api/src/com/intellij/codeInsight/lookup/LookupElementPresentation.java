@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.TextRange;
@@ -255,7 +255,7 @@ public class LookupElementPresentation {
     myTypeIconRightAligned = typeIconRightAligned;
   }
 
-  public static LookupElementPresentation renderElement(LookupElement element) {
+  public static @NotNull LookupElementPresentation renderElement(LookupElement element) {
     LookupElementPresentation presentation = new LookupElementPresentation();
     element.renderElement(presentation);
     return presentation;
@@ -284,7 +284,7 @@ public class LookupElementPresentation {
     private final boolean myItalic;
     private final @Nullable Color myFgColor;
 
-    private TextFragment(String text, boolean grayed, boolean italic, @Nullable Color fgColor) {
+    private TextFragment(@NotNull String text, boolean grayed, boolean italic, @Nullable Color fgColor) {
       this.text = text;
       myGrayed = grayed;
       myItalic = italic;

@@ -62,6 +62,9 @@ internal fun Module.getComposeResourcesDir(): VirtualFile? {
 internal fun Project.getAllComposeResourcesDirs(): List<ComposeResourcesDir> =
   service<ComposeResourcesManager>().composeResourcesByModulePath.flatMap { it.value.directoriesBySourceSetName.values }
 
+/** Return ComposeResourceDir associated with a given resource @param [path] or null if none is found */
+internal fun Project.findComposeResourcesDirFor(path: Path): ComposeResourcesDir? = service<ComposeResourcesManager>().findComposeResourcesDirFor(path)
+
 
 /** Return a map of all the Compose resources directories present in the given [Module] */
 internal val Module.composeResourcesDirsByName: Map<String, ComposeResourcesDir>

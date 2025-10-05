@@ -8,7 +8,7 @@ import com.intellij.openapi.application.PluginAutoUpdateRepository.getAutoUpdate
 import com.intellij.openapi.application.PluginAutoUpdateRepository.safeConsumeUpdates
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.findUnsatisfiedDependencies
@@ -48,13 +48,13 @@ object PluginAutoUpdater {
       val updatesApplied = applyPluginUpdates(updates, logDeferred)
       PluginAutoUpdateStatistics(updatesPrepared = updates.size, pluginsUpdated = updatesApplied)
     }.apply {
-      getOrLogException { e ->
+      getOrHandleException { e ->
         logDeferred.await().error("Error occurred during application of plugin updates", e)
       }
     }
     runCatching {
       clearUpdates()
-    }.getOrLogException { e ->
+    }.getOrHandleException { e ->
       logDeferred.await().warn("Failed to clear plugin auto update directory", e)
     }
   }
@@ -91,7 +91,7 @@ object PluginAutoUpdater {
       updates.mapValues { (_, info) ->
         val updateFile = autoupdatesDir.resolve(info.updateFilename)
         async(Dispatchers.IO) {
-          runCatching { loadAndInitDescriptorFromArtifact(updateFile, null) }
+          runCatching { loadDescriptorFromArtifact(updateFile, null) }
         }
       }.mapValues { it.value.await() }
     }.filter {
@@ -134,7 +134,7 @@ object PluginAutoUpdater {
     // checks mostly duplicate what is written in com.intellij.ide.plugins.PluginInstaller.installFromDisk. FIXME, I guess
     val enabledPluginsAndModulesIds: Set<String> = currentDescriptors.getIdMap().flatMap { entry ->
       val desc = entry.value
-      listOf(desc.pluginId.idString) + desc.pluginAliases.map { it.idString } + desc.contentModules.map { it.moduleName } // FIXME content module aliases are not accounted
+      listOf(desc.pluginId.idString) + desc.pluginAliases.map { it.idString } + desc.contentModules.map { it.moduleId.id } // FIXME content module aliases are not accounted
     }.toSet()
     for ((id, updateDesc) in updates) {
       val existingDesc = currentDescriptors.getIdMap()[id] ?: currentDescriptors.getIncompleteIdMap()[id]

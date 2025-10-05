@@ -57,7 +57,11 @@ internal fun readDefaultDropdownStyle(menuStyle: MenuStyle): DropdownStyle {
                 arrowMinSize = DpSize(arrowWidth, minimumSize.height),
                 minSize = DpSize(minimumSize.width + arrowWidth, minimumSize.height),
                 cornerSize = componentArc,
-                contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
+                contentPadding =
+                    retrieveInsetsAsPaddingValues(
+                        "ComboBox.padding",
+                        PaddingValues(horizontal = 6.dp, vertical = 3.dp),
+                    ),
                 borderWidth = borderWidth,
             ),
         icons = DropdownIcons(chevronDown = AllIconsKeys.General.ChevronDown),

@@ -13,7 +13,6 @@ import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.applyHelperPackageToPythonPath
@@ -99,7 +98,7 @@ class PyPackageDetailsHtmlRender(val project: Project, val currentSdk: Sdk?) {
   }
 
   private fun markdownToHtml(text: String): String {
-    val mdHtml = PyPIPackageRanking::class.java.getResource("/packaging/md.template.html")?.readText() ?: error("Cannot get md template")
+    val mdHtml = this::class.java.getResource("/packaging/md.template.html")?.readText() ?: error("Cannot get md template")
     val quotedText = text.replace("`", "\\`")
 
     val prepared = mdHtml.replace("{MD_TEXT}", "\n" + quotedText)

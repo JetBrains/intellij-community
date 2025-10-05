@@ -12,6 +12,7 @@ import com.intellij.psi.impl.source.tree.TreeCopyHandler;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -24,7 +25,7 @@ import java.util.Map;
 public final class GroovyChangeUtilSupport implements TreeCopyHandler {
 
   @Override
-  public TreeElement decodeInformation(TreeElement element, final Map<Object, Object> decodingState) {
+  public TreeElement decodeInformation(@NotNull TreeElement element, final @NotNull Map<Object, Object> decodingState) {
     if (element instanceof CompositeElement) {
       if (element.getElementType() == GroovyElementTypes.REFERENCE_ELEMENT || element.getElementType() == GroovyElementTypes.REFERENCE_EXPRESSION) {
         GrReferenceElement ref = (GrReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
@@ -51,7 +52,7 @@ public final class GroovyChangeUtilSupport implements TreeCopyHandler {
   }
 
   @Override
-  public void encodeInformation(final TreeElement element, final ASTNode original, final Map<Object, Object> encodingState) {
+  public void encodeInformation(final @NotNull TreeElement element, final @NotNull ASTNode original, final @NotNull Map<Object, Object> encodingState) {
     if (original instanceof CompositeElement && !isInsideImport(original)) {
       IElementType elementType = original.getElementType();
       if (elementType == GroovyElementTypes.REFERENCE_ELEMENT || elementType == GroovyElementTypes.REFERENCE_EXPRESSION) {

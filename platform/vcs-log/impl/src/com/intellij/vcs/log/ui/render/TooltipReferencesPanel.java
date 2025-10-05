@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -22,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 class TooltipReferencesPanel extends ReferencesPanel {
   private static final int REFS_LIMIT = 10;
@@ -40,7 +41,8 @@ class TooltipReferencesPanel extends ReferencesPanel {
     }
     else {
       VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(refs)).getRoot();
-      sortedRefs = ContainerUtil.sorted(refs, logData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
+      VcsLogProvider provider = Objects.requireNonNull(logData.getLogProviders().get(root));
+      sortedRefs = ContainerUtil.sorted(refs, provider.getReferenceManager().getLabelsOrderComparator());
     }
     List<VcsBookmarkRef> sortedBookmarks = ContainerUtil.sorted(bookmarks, Comparator.comparing(b -> b.getType()));
 

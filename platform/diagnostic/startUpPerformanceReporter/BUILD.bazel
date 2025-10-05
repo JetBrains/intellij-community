@@ -3,7 +3,7 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 create_kotlinc_options(
-  name = "custom",
+  name = "custom_startUpPerformanceReporter",
   opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"]
 )
 
@@ -11,11 +11,11 @@ jvm_library(
   name = "startUpPerformanceReporter",
   module_name = "intellij.platform.diagnostic.startUpPerformanceReporter",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_startUpPerformanceReporter",
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:jackson",
+    "//libraries/jackson/jackson",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/util-ex",
@@ -27,7 +27,7 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "//platform/util",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:kotlinx-serialization-core",
+    "//libraries/kotlinx/serialization/core",
     "@lib//:kotlinx-serialization-protobuf",
     "//platform/diagnostic/telemetry-impl",
     "//platform/diagnostic",

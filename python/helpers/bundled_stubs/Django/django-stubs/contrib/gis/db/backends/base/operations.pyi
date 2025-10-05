@@ -5,6 +5,7 @@ from django.utils.functional import cached_property
 class BaseSpatialOperations:
     postgis: bool
     spatialite: bool
+    mariadb: bool
     mysql: bool
     oracle: bool
     spatial_version: Any

@@ -1,9 +1,9 @@
 ### auto-generated section `build intellij.platform.structuralSearch` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+resourcegroup(
   name = "structuralSearch_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,7 +11,8 @@ jvm_library(
   name = "structuralSearch",
   module_name = "intellij.platform.structuralSearch",
   visibility = ["//visibility:public"],
-  srcs = glob(["source/**/*.kt", "source/**/*.java"], allow_empty = True),
+  srcs = glob(["source/**/*.kt", "source/**/*.java", "source/**/*.form"], allow_empty = True),
+  resources = [":structuralSearch_resources"],
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
@@ -37,25 +38,22 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "@lib//:fastutil-min",
   ],
-  exports = ["//platform/duplicates-analysis"],
-  runtime_deps = [":structuralSearch_resources"]
+  exports = ["//platform/duplicates-analysis"]
 )
 ### auto-generated section `build intellij.platform.structuralSearch` end
 
 ### auto-generated section `build intellij.platform.structuralSearch.tests` start
-load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
-java_library(
+jvm_library(
   name = "structuralSearch-tests",
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(
   name = "structuralSearch-tests_test_lib",
+  module_name = "intellij.platform.structuralSearch.tests",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java"], allow_empty = True),
+  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java", "testSource/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/code-style-api:codeStyle",
@@ -66,18 +64,21 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/structuralsearch:structuralSearch",
-    "//java/testFramework",
     "//xml/impl",
-    "//java/structuralsearch-java:structuralSearch",
-    "//java/structuralsearch-java:structuralSearch_test_lib",
     "//platform/util/jdom",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
   ]
 )
+### auto-generated section `build intellij.platform.structuralSearch.tests` end
+
+### auto-generated section `test intellij.platform.structuralSearch.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 
 jps_test(
   name = "structuralSearch-tests_test",
   runtime_deps = [":structuralSearch-tests_test_lib"]
 )
-### auto-generated section `build intellij.platform.structuralSearch.tests` end
+### auto-generated section `test intellij.platform.structuralSearch.tests` end

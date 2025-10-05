@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmClass
@@ -28,6 +29,9 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -47,6 +51,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.base.psi.presentableClassId
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
@@ -69,8 +74,8 @@ object K2CreatePropertyFromUsageBuilder {
         classOrFileName: String?,
         request: CreateFieldRequest,
         lateinit: Boolean
-    ): IntentionAction {
-        if (!request.isValid) null
+    ): IntentionAction? {
+        if (!request.isValid) return null
         return CreatePropertyFromUsageAction(targetContainer, classOrFileName, request, lateinit)
     }
 
@@ -91,7 +96,7 @@ object K2CreatePropertyFromUsageBuilder {
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun buildRequests(ref: KtNameReferenceExpression): List<Pair<JvmClass, CreateFieldRequest>> {
         val requests = mutableListOf<Pair<JvmClass, CreateFieldRequest>>()
         val qualifiedElement = ref.getQualifiedElement()
@@ -139,7 +144,7 @@ object K2CreatePropertyFromUsageBuilder {
                 }
                 val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = true, static = true, false)
                 val classId =
-                    (defaultContainerPsi as? KtClassOrObject)?.takeUnless { it is KtEnumEntry }?.classIdIfNonLocal ?: (defaultContainerPsi as? PsiClass)?.classIdIfNonLocal
+                    (defaultContainerPsi as? KtClassOrObject)?.takeUnless { it is KtEnumEntry }?.presentableClassId ?: (defaultContainerPsi as? PsiClass)?.classIdIfNonLocal
                 if (classId != null) {
                     val targetClassType = buildClassType(if (static) ClassId.fromString(classId.asFqNameString() + ".Companion") else classId)
                     requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, targetClassType, isExtension = true))
@@ -180,8 +185,8 @@ object K2CreatePropertyFromUsageBuilder {
         owner: KtModifierListOwner,
         target: AnnotationUseSiteTarget?,
         request: AnnotationRequest
-    ): IntentionAction {
-        if (!request.isValid) null
+    ): IntentionAction? {
+        if (!request.isValid) return null
 
         return CreateAnnotationAction(owner, target, request)
     }
@@ -191,7 +196,7 @@ object K2CreatePropertyFromUsageBuilder {
         private val classOrFileName: String?,
         private val request: CreateFieldRequest,
         private val lateinit: Boolean
-    ) : IntentionAction {
+    ) : IntentionAction, PriorityAction {
         val pointer: SmartPsiElementPointer<KtElement> = SmartPointerManager.createPointer(targetContainer)
 
         private val varVal: String
@@ -199,6 +204,13 @@ object K2CreatePropertyFromUsageBuilder {
                 val writeable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
                 return if (writeable) "var" else "val"
             }
+
+        override fun getPriority(): PriorityAction.Priority {
+            if ((request as? CreatePropertyFromKotlinUsageRequest)?.isExtension == true) {
+                return PriorityAction.Priority.LOW
+            }
+            return PriorityAction.Priority.NORMAL
+        }
 
         private val kotlinModifiers: List<KtModifierKeywordToken>?
             get() =
@@ -235,14 +247,21 @@ object K2CreatePropertyFromUsageBuilder {
                     } else "fix.create.from.usage.property"
                     KotlinBundle.message(key, request.fieldName)
                 }
-            } else
-            KotlinBundle.message(
-                "quickFix.add.property.text",
-                kotlinModifiers?.joinToString(separator = " ", postfix = " ") ?: "",
-                varVal,
-                request.fieldName,
-                classOrFileName.toString()
-            )
+            } else {
+                val modifier = if (lateinit || kotlinModifiers?.contains(KtTokens.LATEINIT_KEYWORD) == true) {
+                    "lateinit "
+                } else if (request.isConstant) {
+                    "const "
+                } else ""
+
+                KotlinBundle.message(
+                    "quickFix.add.property.text",
+                    modifier,
+                    varVal,
+                    request.fieldName,
+                    classOrFileName.toString()
+                )
+            }
         }
 
         private var declarationText: String = computeDeclarationText()
@@ -250,8 +269,17 @@ object K2CreatePropertyFromUsageBuilder {
         @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
         private fun computeDeclarationText(): String {
             val container = pointer.element ?: return ""
+            val psiFactory = KtPsiFactory(container.project)
 
             return buildString {
+                for (annotation in request.annotations) {
+                    if (isNotEmpty()) append(" ")
+                    append('@')
+                    append(renderAnnotation(container, annotation, psiFactory))
+                }
+
+                if (isNotEmpty()) append(" ")
+
                 if (request is CreateFieldFromJavaUsageRequest && !lateinit) {
                     append("@")
                     append(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
@@ -416,7 +444,6 @@ object K2CreatePropertyFromUsageBuilder {
                 }
             }
         }
-        return false
     }
 
     private val fieldAnnotationTargetCallableId: CallableId =

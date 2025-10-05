@@ -20,7 +20,7 @@ internal fun <M> couldNotResolveEntityError(
             val entityClass = owner.entityInterface
 
             appendLine("[createdWithoutCaching=${data.createdWithoutCaching}] ")
-            appendLine("[createdSource=${data.createdWithoutCaching}, currentSource=${cache.getCacheSourcesTracker().modificationCount}] ")
+            appendLine("[createdSource=${data.createdSourceTrackerValue}, currentSource=${cache.getCacheSourcesTracker().modificationCount}] ")
             appendLine("[createdLibs=${data.createdLibrariesTrackerValue}, currentLibs=${cache.getCacheSdkAndLibrariesTracker().modificationCount}] ")
             runCatching {
                 val allEntries = project.workspaceModel.currentSnapshot.entities(entityClass).toList()

@@ -9,6 +9,9 @@ com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 - a:createHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeHighlighting.TextEditorHighlightingPass
 com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 - a:registerHighlightingPassFactory(com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar,com.intellij.openapi.project.Project):V
+a:com.intellij.codeInsight.AutoPopupController
+- f:scheduleAutoPopup(com.intellij.openapi.editor.Editor):V
+- f:scheduleAutoPopup(com.intellij.openapi.editor.Editor,com.intellij.openapi.util.Condition):V
 com.intellij.codeInsight.TargetElementEvaluatorEx
 - com.intellij.codeInsight.TargetElementEvaluator
 - a:isIdentifierPart(com.intellij.psi.PsiFile,java.lang.CharSequence,I):Z
@@ -19,12 +22,42 @@ com.intellij.codeInsight.completion.CompletionLookupArranger
 - a:addElement(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.CompletionSorter,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.codeInsight.lookup.LookupElementPresentation):V
 - a:arrangeItems():com.intellij.openapi.util.Pair
 - a:itemMatcher(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.completion.PrefixMatcher
+c:com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
+- sf:AUTOREPARSE_DELAY_DEFAULT:I
 com.intellij.codeInsight.daemon.ReferenceImporter
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - autoImportReferenceAtCursor(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - isAddUnambiguousImportsOnTheFlyEnabled(com.intellij.psi.PsiFile):Z
+f:com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
+- <init>():V
+- s:getOriginalFilePath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- s:getOriginalFileUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- s:isOutsiderFile(com.intellij.openapi.vfs.VirtualFile):Z
+- s:isOutsiderFile(com.intellij.psi.PsiFile):Z
+- s:markFile(com.intellij.openapi.vfs.VirtualFile):V
+- s:markFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
+- s:markFileWithUrl(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 - a:requestDescription():org.jetbrains.concurrency.Promise
+Fc:com.intellij.codeInsight.daemon.impl.HighlightInfo
+- f:findRegisteredQuickFix(java.util.function.BiFunction):java.lang.Object
+- f:getActualEndOffset():I
+- f:getActualStartOffset():I
+- f:getEndOffset():I
+- f:getGutterIconRenderer():com.intellij.codeInsight.daemon.GutterMark
+- f:getHighlighter():com.intellij.openapi.editor.ex.RangeHighlighterEx
+- f:getInspectionToolId():java.lang.String
+- f:getProblemGroup():com.intellij.lang.annotation.ProblemGroup
+- f:getSameFamilyFix(com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption):com.intellij.codeInsight.intention.IntentionAction
+- f:getSeverity():com.intellij.lang.annotation.HighlightSeverity
+- f:getStartOffset():I
+- f:getText():java.lang.String
+- f:getTextAttributes(com.intellij.psi.PsiElement,com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.markup.TextAttributes
+- f:hasHint():Z
+- f:isAfterEndOfLine():Z
+- f:registerFix(com.intellij.codeInsight.intention.IntentionAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
+- f:setHighlighter(com.intellij.openapi.editor.ex.RangeHighlighterEx):V
+- f:unregisterQuickFix(com.intellij.openapi.util.Condition):V
 com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - a:create():com.intellij.codeInsight.daemon.impl.HighlightInfo
 - a:createUnconditionally():com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -117,6 +150,13 @@ com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - registerErrorQuickFix(com.intellij.psi.PsiErrorElement,com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder):V
+com.intellij.codeInsight.template.CaretAutoMoveController
+- sf:KEY:com.intellij.openapi.util.Key
+- s:forbidCaretMovementInsideIfNeeded(com.intellij.openapi.editor.Editor,java.lang.Runnable):V
+- s:install(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.template.CaretAutoMoveController):V
+- a:isCaretMovementAllowed():Z
+- s:isCaretMovementAllowed(com.intellij.openapi.editor.Editor):Z
+- a:notifyCaretMovementAllowed(Z):V
 com.intellij.codeInsight.template.TemplateEditingListener
 - a:beforeTemplateFinished(com.intellij.codeInsight.template.impl.TemplateState,com.intellij.codeInsight.template.Template):V
 - beforeTemplateFinished(com.intellij.codeInsight.template.impl.TemplateState,com.intellij.codeInsight.template.Template,Z):V
@@ -164,6 +204,9 @@ com.intellij.codeInspection.InspectionToolResultExporter
 - a:suppressProblem(com.intellij.codeInspection.CommonProblemDescriptor):V
 - a:suppressProblem(com.intellij.codeInspection.reference.RefEntity):V
 - a:updateContent():V
+c:com.intellij.codeInspection.ProblemDescriptorBase
+- <init>(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,java.lang.String,com.intellij.codeInspection.LocalQuickFix[],com.intellij.codeInspection.ProblemHighlightType,Z,com.intellij.openapi.util.TextRange,Z,Z,java.lang.String):V
+- getTooltipTemplate():java.lang.String
 com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 - a:cancel():V
 - a:createClosureState(com.intellij.psi.PsiElement,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):V
@@ -271,6 +314,10 @@ com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue$Trap
 - a:getAnchor():com.intellij.psi.PsiElement
 - getPossibleTargets():I[]
 - link(com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue):V
+c:com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+- createTempVariable(I,com.intellij.codeInspection.dataFlow.types.DfType):com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+- getTempVariableDescriptorsFrom(I):java.util.List
+- s:isTempVariable(com.intellij.codeInspection.dataFlow.value.DfaVariableValue):Z
 com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 - alwaysEqualsToItself(com.intellij.codeInspection.dataFlow.types.DfType):Z
 - canBeCapturedInClosure():Z
@@ -311,6 +358,13 @@ com.intellij.lang.parser.GeneratedParserUtilBase$Hook
 - a:run(com.intellij.lang.PsiBuilder,com.intellij.lang.PsiBuilder$Marker,java.lang.Object):com.intellij.lang.PsiBuilder$Marker
 com.intellij.lang.parser.GeneratedParserUtilBase$Parser
 - a:parse(com.intellij.lang.PsiBuilder,I):Z
+f:com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
+- com.intellij.psi.search.ActualCodeInsightContextInfo
+- com.intellij.psi.search.CodeInsightContextAwareSearchScope
+- com.intellij.psi.search.UnionCapableScope
+c:com.intellij.openapi.module.impl.scopes.ModulesScope
+- com.intellij.psi.search.ActualCodeInsightContextInfo
+- com.intellij.psi.search.CodeInsightContextAwareSearchScope
 com.intellij.packageDependencies.DependenciesBuilder$DependencyProcessor
 - a:process(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
 com.intellij.profile.codeInspection.InspectionProfileManager

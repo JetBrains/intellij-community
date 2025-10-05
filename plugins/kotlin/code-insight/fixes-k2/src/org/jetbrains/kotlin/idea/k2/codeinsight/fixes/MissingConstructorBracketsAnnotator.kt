@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.quickfix.MissingConstructorBracketsFix
 import org.jetbrains.kotlin.psi.KtClass
@@ -14,9 +13,9 @@ class MissingConstructorBracketsAnnotator : Annotator {
         if (element !is KtClass) return
         val primaryConstructor = element.primaryConstructor ?: return
         if (primaryConstructor.valueParameterList != null) return
-        val startRange = primaryConstructor.getConstructorKeyword()?.textRange?.endOffset ?: return
+        val constructorKeyword = primaryConstructor.getConstructorKeyword() ?: return
         holder.newSilentAnnotation(HighlightSeverity.ERROR)
-            .range(TextRange.create(startRange, startRange + 1))
+            .range(constructorKeyword)
             .withFix(MissingConstructorBracketsFix(primaryConstructor))
             .create()
     }

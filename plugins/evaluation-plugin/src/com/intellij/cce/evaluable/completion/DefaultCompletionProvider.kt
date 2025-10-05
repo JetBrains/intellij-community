@@ -51,10 +51,10 @@ class DefaultCompletionProvider : SuggestionsProvider {
     val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC, false, false, true) {
       // Guarantees synchronous execution
       override fun isTestingCompletionQualityMode() = true
-      override fun lookupItemSelected(indicator: CompletionProgressIndicator?,
+      override fun lookupItemSelected(indicator: CompletionProgressIndicator,
                                       item: LookupElement,
                                       completionChar: Char,
-                                      items: MutableList<LookupElement>?) {
+                                      items: List<LookupElement>) {
         afterItemInsertion(indicator, null)
       }
     }

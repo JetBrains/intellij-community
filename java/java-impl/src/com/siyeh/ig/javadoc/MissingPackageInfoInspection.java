@@ -114,7 +114,7 @@ public final class MissingPackageInfoInspection extends PackageGlobalInspection 
     }
 
     @Override
-    public BaseInspectionVisitor buildVisitor() {
+    public @NotNull BaseInspectionVisitor buildVisitor() {
       return new BaseInspectionVisitor() {
         @Override
         public void visitJavaFile(@NotNull PsiJavaFile file) {

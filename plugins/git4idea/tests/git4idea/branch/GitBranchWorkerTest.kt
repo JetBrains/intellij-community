@@ -310,6 +310,37 @@ class GitBranchWorkerTest : GitPlatformTest() {
     `check operation with local changes overwritten by should show smart checkout dialog`("merge", 1)
   }
 
+  fun `test merge with several local changes overwritten by merge should show smart merge dialog`() {
+    `check operation with local changes overwritten by should show smart checkout dialog`("merge", 3)
+  }
+
+  /**
+   * IJPL-200234
+   * In this scenario the error output is the following:
+   * Your local changes to the following files would be overwritten by merge:
+   * <2 whitespaces>dir/other test
+   */
+  fun `test merge with local changes printing paths in a single line`() {
+    val repo = first
+    val fileName = "test"
+    val anotherFileName = "dir/other"
+    val branchName = "feature"
+
+    cd(repo)
+    repo.file(fileName).create("line").addCommit("init")
+
+    repo.git("checkout -b $branchName")
+    repo.file(fileName).write("test").addCommit("alt-branch")
+    repo.git("checkout master")
+    repo.file(fileName).write("content").addCommit("back to master")
+    repo.file(fileName).write("!!!").add()
+    repo.file(anotherFileName).write("test").add()
+    updateChangeListManager()
+
+    val changedPaths = tryMergeAndGetChangedPaths(branchName, repo)
+    assertSameElements(changedPaths, setOf(fileName, anotherFileName))
+  }
+
   // IJPL-173728
   fun `test merge with trailing whitespace changes overwritten by checkout should show smart merge dialog`() {
     val repo = first
@@ -327,13 +358,18 @@ class GitBranchWorkerTest : GitPlatformTest() {
     repo.file(anotherFileName).create().add()
     updateChangeListManager()
 
+    val changedPaths = tryMergeAndGetChangedPaths(branchName, repo)
+    assertSameElements(changedPaths, setOf(fileName, anotherFileName))
+  }
+
+  private fun tryMergeAndGetChangedPaths(branchName: String, repo: GitRepository): MutableList<String> {
     val changedPaths = mutableListOf<String>()
     mergeBranch(branchName, object : TestUiHandler(this.project) {
       override fun showSmartOperationDialog(
         project: Project, changes: List<Change>,
         paths: Collection<String>,
         operation: String,
-        forceButton: String?
+        forceButton: String?,
       ): GitSmartOperationDialog.Choice {
         changes.forEach {
           changedPaths.add(getRelativePath(repo.root.path, it.afterRevision!!.file.path, '/')!!)
@@ -341,7 +377,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
         return CANCEL
       }
     })
-    assertSameElements(changedPaths, setOf(fileName, anotherFileName))
+    return changedPaths
   }
 
   private fun `check operation with local changes overwritten by should show smart checkout dialog`(operation: String, numFiles: Int) {

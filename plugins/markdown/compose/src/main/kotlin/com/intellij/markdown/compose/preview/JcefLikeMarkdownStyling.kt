@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalJewelApi::class)
+
 package com.intellij.markdown.compose.preview
 
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,11 +22,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.times
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.ui.preview.PreviewStyleScheme
 import org.jetbrains.jewel.bridge.retrievePlatformTextStyle
 import org.jetbrains.jewel.bridge.toComposeColor
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.rendering.InlinesStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.*
@@ -33,6 +37,7 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPo
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Indented
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered.NumberFormatStyles.NumberFormatStyle
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
 import java.awt.Font
 
@@ -210,20 +215,27 @@ private fun createCodeStyling(
 private fun createListStyling(baseTextStyle: TextStyle): List = List(
   ordered = Ordered(
     numberStyle = baseTextStyle,
-    numberContentGap = 8.dp,
+    numberContentGap = 4.dp,
     numberMinWidth = 16.dp,
     numberTextAlign = TextAlign.End,
     itemVerticalSpacing = 16.dp,
     itemVerticalSpacingTight = 4.dp,
-    padding = PaddingValues(start = 16.dp),
+    padding = PaddingValues(start = 6.dp),
+    numberFormatStyles = Ordered.NumberFormatStyles(
+      firstLevel = NumberFormatStyle.Decimal,
+      secondLevel = NumberFormatStyle.Roman,
+      thirdLevel = NumberFormatStyle.Alphabetical,
+    )
   ),
   unordered = Unordered(
     bullet = '•',
     bulletStyle = baseTextStyle.copy(fontWeight = FontWeight.Black),
-    bulletContentGap = 16.dp,
+    bulletContentGap = 4.dp,
     itemVerticalSpacing = 16.dp,
     itemVerticalSpacingTight = 4.dp,
-    padding = PaddingValues(start = 16.dp),
+    padding = PaddingValues(start = 6.dp),
+    markerMinWidth = 16.dp,
+    bulletCharStyles = Unordered.BulletCharStyles(firstLevel = '•', secondLevel = '◦', thirdLevel = '▪'),
   )
 )
 

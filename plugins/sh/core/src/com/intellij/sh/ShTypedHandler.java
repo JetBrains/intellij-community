@@ -15,7 +15,7 @@ final class ShTypedHandler extends TypedHandlerDelegate {
     if (!(file instanceof ShFile)) return Result.CONTINUE;
     int currentLine = editor.getCaretModel().getPrimaryCaret().getLogicalPosition().line;
     if ((currentLine == 0 && charTyped == '!') || charTyped == '/') {
-      AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;
     }
     return Result.CONTINUE;

@@ -25,7 +25,7 @@ private class SearchEverywhereRunConfigurationFeaturesProvider
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
-    return arrayListOf(IS_SHARED, IS_TEMPORARY, RUN_CONFIGURATION_TYPE)
+    return listOf(IS_SHARED, IS_TEMPORARY, RUN_CONFIGURATION_TYPE)
   }
 
   override fun getElementFeatures(element: Any,
@@ -39,7 +39,7 @@ private class SearchEverywhereRunConfigurationFeaturesProvider
     }
 
     val settings = element.value as RunnerAndConfigurationSettings
-    return arrayListOf(
+    return listOf(
       IS_SHARED.with(settings.isShared),
       IS_TEMPORARY.with(settings.isTemporary),
       RUN_CONFIGURATION_TYPE.with(settings.type.id),

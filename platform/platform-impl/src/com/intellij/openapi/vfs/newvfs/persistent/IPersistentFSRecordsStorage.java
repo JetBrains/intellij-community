@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Forceable;
@@ -73,8 +73,7 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
 
     int getContentRecordId() throws IOException;
 
-    @PersistentFS.Attributes
-    int getFlags() throws IOException;
+    @PersistentFS.Attributes int getFlags() throws IOException;
   }
 
   interface RecordForUpdate extends RecordForRead {

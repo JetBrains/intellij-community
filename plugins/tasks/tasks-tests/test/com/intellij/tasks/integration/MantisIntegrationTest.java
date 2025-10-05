@@ -16,7 +16,7 @@ public class MantisIntegrationTest extends TaskManagerTestCase {
 
   private MantisRepository myRepository;
 
-  public void testMantis12() throws Exception {
+  public void _testMantis12() throws Exception {
     assertTrue(myRepository.getProjects().size() >= 2);
     final MantisProject mantisProject = myRepository.getProjects().get(1);
     assertEquals(mantisProject.getName(), "Mantis 1.2 project 1");

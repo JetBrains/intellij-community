@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.hints.presentation.InputHandler
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -20,23 +21,56 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
-import java.awt.*
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Cursor
+import java.awt.Graphics
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 
-internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakpointImpl<*>?,
-                                             private val variant: XLineBreakpointType<*>.XLineBreakpointVariant?) : EditorCustomElementRenderer, InputHandler {
+/**
+ * Light breakpoint is a temporary placeholder for an actual breakpoint.
+ * If a breakpoint exists, use [asInlineLightBreakpoint] to wrap it into a light breakpoint.
+ * If a breakpoint is not created on the backend yet, this interface can be used for rendering not-yet-existing breakpoint
+ * for a smooth RemDev experience.
+ */
+@ApiStatus.Internal
+interface InlineLightBreakpoint {
+  val highlightRange: XLineBreakpointHighlighterRange
+  val icon: Icon
+  val tooltipDescription: String
+  val breakpointProxy: XBreakpointProxy?
+
+}
+
+@ApiStatus.Internal
+fun XLineBreakpointProxy.asInlineLightBreakpoint(): InlineLightBreakpoint = object : InlineLightBreakpoint {
+  override val highlightRange: XLineBreakpointHighlighterRange = getHighlightRange()
+  override val icon: Icon = type.enabledIcon
+  override val tooltipDescription: String = getTooltipDescription()
+  override val breakpointProxy: XBreakpointProxy = this@asInlineLightBreakpoint
+
+  override fun toString(): String {
+    return "InlineLightBreakpoint(${this@asInlineLightBreakpoint.id}, $highlightRange)"
+  }
+}
+
+internal class InlineBreakpointInlayRenderer(
+  private val lightBreakpoint: InlineLightBreakpoint?,
+  private val variant: XLineBreakpointInlineVariantProxy?,
+  private val document: Document,
+  private val line: Int,
+) : EditorCustomElementRenderer, InputHandler {
   // There could be three states:
   // * not-null breakpoint and not-null variant -- we have a breakpoint and a matching variant (normal case)
   // * null breakpoint and not-null variant -- we have a variant where breakpoint could be set (normal case)
   // * not-null breakpoint and null variant -- we have a breakpoint but no matching variant (outdated breakpoint?)
   init {
-    require(breakpoint != null || variant != null)
+    require(lightBreakpoint != null || variant != null)
   }
 
   // EditorCustomElementRenderer's methods have inlay as parameter,
@@ -63,12 +97,12 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
 
     val baseIcon: Icon
     val alpha: Float
-    if (breakpoint != null) {
-      baseIcon = breakpoint.icon
+    if (lightBreakpoint != null) {
+      baseIcon = lightBreakpoint.icon
       alpha = 1f
     }
     else {
-      baseIcon = variant!!.type.enabledIcon
+      baseIcon = variant!!.icon
       // We use the same transparency as a breakpoint candidate in gutter.
       alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f).coerceIn(0f, 1f)
     }
@@ -94,7 +128,11 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
 
   private fun invokePopupIfNeeded(event: MouseEvent) {
     if (event.isPopupTrigger) {
-      if (breakpoint != null) {
+      if (lightBreakpoint != null) {
+        val breakpoint = lightBreakpoint.breakpointProxy ?: run {
+          // cannot do anything with a light breakpoint until it is replaced with an actual one
+          return
+        }
         val center = centerPosition() ?: return
         val component = inlay.editor.contentComponent
         DebuggerUIUtil.showXBreakpointEditorBalloon(
@@ -119,7 +157,11 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
 
     val button = event.button
     var action: ClickAction? = null
-    if (breakpoint != null) {
+    if (lightBreakpoint != null) {
+      if (lightBreakpoint.breakpointProxy == null) {
+        // cannot do anything with a light breakpoint until it is replaced with an actual one
+        return
+      }
       // mimic gutter icon
       if (button == MouseEvent.BUTTON2 ||
           (button == MouseEvent.BUTTON1 && BitUtil.isSet(event.modifiersEx, InputEvent.ALT_DOWN_MASK))) {
@@ -145,19 +187,18 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
     val editor = inlay.editor
     val project = editor.project ?: return
     val file = editor.virtualFile ?: return
-    val offset = inlay.offset
 
     when (action) {
       ClickAction.SET -> {
-        val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-        val line = editor.document.getLineNumber(offset)
-        XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, file, line)
+        variant!!.createBreakpoint(project, file, document, line)
       }
       ClickAction.ENABLE_DISABLE -> {
-        breakpoint!!.isEnabled = !breakpoint.isEnabled
+        val proxy = lightBreakpoint!!.breakpointProxy!!
+        proxy.setEnabled(!proxy.isEnabled())
       }
       ClickAction.REMOVE -> {
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint?.asProxy())
+        val proxy = lightBreakpoint!!.breakpointProxy!!
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(proxy)
       }
     }
   }
@@ -179,7 +220,7 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
     if (tooltipHint?.isVisible == true) return
     if (!inlay.editor.contentComponent.isShowing) return
 
-    val text = breakpoint?.description ?: variant!!.tooltipDescription
+    val text = lightBreakpoint?.tooltipDescription ?: variant!!.tooltipDescription
     val hint = LightweightHint(HintUtil.createInformationLabel(text))
 
     // Location policy: mimic gutter tooltip by pointing it to the center of an icon, but show it above the line.

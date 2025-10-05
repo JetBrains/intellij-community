@@ -15,7 +15,7 @@ class InlineCompletionTooltipComponent {
   fun create(session: InlineCompletionSession): DialogPanel {
     val panel = panel {
       row {
-        cell(shortcutActions()).gap(RightGap.SMALL)
+        cell(shortcutActions(InlineCompletionInsertActionIdResolver.getFor(session.editor))).gap(RightGap.SMALL)
         text(IdeBundle.message("inline.completion.tooltip.shortcuts.accept.description"))
 
         cell(session.provider.providerPresentation.getTooltip(session.context.editor.project))

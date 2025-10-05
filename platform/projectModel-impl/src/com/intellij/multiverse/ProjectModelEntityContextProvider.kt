@@ -16,7 +16,6 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
-import com.intellij.workspaceModel.core.fileIndex.impl.LibrariesAndSdkContributors
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -61,16 +60,6 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
       return extractContextFromPointer(entityPointer, storage, project)
     }
 
-    val globalLibrary = LibrariesAndSdkContributors.getGlobalLibrary(fileSet)
-    if (globalLibrary != null) {
-      return DeprecatedLibraryContextImpl(globalLibrary)
-    }
-
-    val sdk = storage.findSdk(fileSet)
-    if (sdk != null) {
-      return DeprecatedSdkContextImpl(sdk)
-    }
-
     return null
   }
 
@@ -103,7 +92,7 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
   }
 
   override fun invalidationRequestFlow(project: Project): Flow<Unit> {
-    val eventLog = WorkspaceModel.Companion.getInstance(project).eventLog
+    val eventLog = WorkspaceModel.getInstance(project).eventLog
     return eventLog.mapNotNull { change ->
       Unit.takeIf { change.getChanges(ModuleEntity::class.java).isNotEmpty() }
     }
@@ -128,6 +117,8 @@ class ModuleContextImpl(
   override fun hashCode(): Int {
     return modulePointer.hashCode()
   }
+
+  override fun toString(): String = "ModuleContextImpl(modulePointer=$modulePointer, project=$project)"
 }
 
 @ApiStatus.Internal
@@ -149,22 +140,8 @@ class LibraryContextImpl(
   override fun hashCode(): Int {
     return libraryPointer.hashCode()
   }
-}
 
-@ApiStatus.Internal
-class DeprecatedLibraryContextImpl(
-  private val library: Library,
-) : LibraryContext {
-
-  override fun getLibrary(): Library? = library
-
-  override fun equals(other: Any?): Boolean {
-    return library == (other as? DeprecatedLibraryContextImpl)?.library
-  }
-
-  override fun hashCode(): Int {
-    return library.hashCode()
-  }
+  override fun toString(): String = "LibraryContextImpl(libraryPointer=$libraryPointer, project=$project)"
 }
 
 @ApiStatus.Internal
@@ -186,20 +163,6 @@ class SdkContextImpl(
   override fun hashCode(): Int {
     return sdkPointer.hashCode()
   }
-}
 
-@ApiStatus.Internal
-class DeprecatedSdkContextImpl(
-  private val sdk: Sdk,
-) : SdkContext {
-
-  override fun getSdk(): Sdk? = sdk
-
-  override fun equals(other: Any?): Boolean {
-    return sdk == (other as? DeprecatedSdkContextImpl)?.sdk
-  }
-
-  override fun hashCode(): Int {
-    return sdk.hashCode()
-  }
+  override fun toString(): String = "SdkContextImpl(sdkPointer=$sdkPointer, project=$project)"
 }

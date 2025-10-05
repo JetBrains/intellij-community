@@ -4,7 +4,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.backend.TerminalSessionsManager
-import com.intellij.terminal.session.TerminalInputEvent
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
+import org.jetbrains.plugins.terminal.session.TerminalInputEvent
 
 /**
  * Service that has separate instances for each [com.intellij.openapi.client.ClientAppSession]

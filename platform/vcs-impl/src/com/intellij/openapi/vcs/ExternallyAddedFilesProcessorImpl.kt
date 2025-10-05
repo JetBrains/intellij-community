@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.vfs.AsyncVfsEventsListener
@@ -87,7 +86,7 @@ internal class ExternallyAddedFilesProcessorImpl(
       return
     }
 
-    val configDir = project.getProjectConfigDir()
+    val configDir = getProjectConfigDir(project)
     val externallyAddedFiles = events.asSequence()
       .filter { it.isFromRefresh && it is VFileCreateEvent && !isProjectConfigDirOrUnderIt(configDir, it.parent) }
       .mapNotNull(VFileEvent::getFile)
@@ -164,12 +163,11 @@ internal class ExternallyAddedFilesProcessorImpl(
     return configDir != null && VfsUtilCore.isAncestor(configDir, file, false)
   }
 
-  private fun Project.getProjectConfigDir(): VirtualFile? {
-    if (!isDirectoryBased || isDefault) return null
-
-    val projectConfigDir = stateStore.directoryStorePath?.let(LocalFileSystem.getInstance()::findFileByNioFile)
+  private fun getProjectConfigDir(project: Project): VirtualFile? {
+    val directoryStorePath = (if (project.isDefault) null else project.stateStore.directoryStorePath) ?: return null
+    val projectConfigDir = LocalFileSystem.getInstance().findFileByNioFile(directoryStorePath)
     if (projectConfigDir == null) {
-      LOG.warn("Cannot find project config directory for non-default and non-directory based project ${name}")
+      LOG.warn("Cannot find project config directory for non-default and non-directory based project ${project.name}")
     }
     return projectConfigDir
   }

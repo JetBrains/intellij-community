@@ -30,6 +30,8 @@ import com.intellij.ui.border.NamedBorder;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
@@ -161,6 +163,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     setOpaque(true);
 
     myLabel.setForeground(mySchemeSupplier.get().getDefaultForeground());
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY);
   }
 
   public EditorNotificationPanel(@NotNull Status status) {

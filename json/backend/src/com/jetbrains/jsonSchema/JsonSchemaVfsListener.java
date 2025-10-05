@@ -124,7 +124,7 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
 
     private static void restartAnalyzer(@NotNull DaemonCodeAnalyzer analyzer, @NotNull PsiManager psiManager, @NotNull VirtualFile file) {
       PsiFile psiFile = !psiManager.isDisposed() && file.isValid() ? psiManager.findFile(file) : null;
-      if (psiFile != null) analyzer.restart(psiFile);
+      if (psiFile != null) analyzer.restart(psiFile, "JsonSchemaUpdater");
     }
 
     private void onFileChange(final @NotNull VirtualFile schemaFile) {

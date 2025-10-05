@@ -1,35 +1,27 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
+import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.management.findPackageSpecification
-import com.jetbrains.python.packaging.normalizePackageName
-import com.jetbrains.python.packaging.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
-
-@ApiStatus.Internal
-@JvmInline
-value class NormalizedPythonPackageName private constructor(val name: String) {
-  companion object {
-    fun from(name: String): NormalizedPythonPackageName =
-      NormalizedPythonPackageName(normalizePackageName(name))
-  }
-}
 
 open class PythonPackage(name: String, val version: String, val isEditableMode: Boolean) {
   companion object {
     private const val HASH_MULTIPLIER = 31
   }
 
-  val name: String = NormalizedPythonPackageName.from(name).name
-  val presentableName: String = name
   @ApiStatus.Internal
-  open val sourceRepoIcon: Icon = PythonPsiApiIcons.Python
+  val normalizedName: PyPackageName = PyPackageName.from(name)
+
+  val name: String = normalizedName.name
+  val presentableName: String = name
+
+  @ApiStatus.Internal
+  open val sourceRepoIcon: Icon? = null
 
   override fun toString(): String {
     return "PythonPackage(name='$name', version='$version')"
@@ -46,6 +38,16 @@ open class PythonPackage(name: String, val version: String, val isEditableMode: 
     result = HASH_MULTIPLIER * result + version.hashCode()
     result = HASH_MULTIPLIER * result + isEditableMode.hashCode()
     return result
+  }
+
+  @ApiStatus.Internal
+  fun matches(requirement: PyRequirement): Boolean {
+    return toPyPackage().matches(requirement)
+  }
+
+  @ApiStatus.Internal
+  fun toPyPackage(): PyPackage {
+    return PyPackage(name, version)
   }
 }
 
@@ -80,9 +82,11 @@ interface PythonPackageDetails {
   val description: String?
   val descriptionContentType: String?
   val documentationUrl: String?
-  fun toPackageSpecification(version: String? = null): PythonRepositoryPackageSpecification? = repository.findPackageSpecification(name, version)
+  fun toPackageSpecification(version: String? = null): PythonRepositoryPackageSpecification? =
+    repository.findPackageSpecification(pyRequirement(name, version?.let { pyRequirementVersionSpec(it) }))
 }
 
+@ApiStatus.Internal
 data class PythonSimplePackageDetails(
   override val name: String,
   override val availableVersions: List<String> = emptyList(),
@@ -109,23 +113,31 @@ data class PythonSimplePackageDetails(
  *   - PyPI (https://pypi.org):  [com.jetbrains.python.packaging.repository.PyPIPackageRepository.findPackageSpecification]
  *   - Conda: [com.jetbrains.python.packaging.conda.CondaPackageRepository.findPackageSpecification]
  */
+@ApiStatus.Internal
 data class PythonRepositoryPackageSpecification(
   val repository: PyPackageRepository,
-  val name: String,
-  val versionSpec: PyRequirementVersionSpec? = null,
+  val requirement: PyRequirement,
 ) {
+  val name: String = requirement.name
+  val versionSpec: PyRequirementVersionSpec? = requirement.versionSpecs.firstOrNull()
+
   val nameWithVersionSpec: String
     get() = "$name${versionSpec?.presentableText ?: ""}"
+
+  val nameWithVersionsSpec: String
+    get() {
+      val versionSpecsString = requirement.versionSpecs.joinToString(",") { it.presentableText }
+      return "$name${versionSpecsString}"
+    }
+
 
   constructor(
     repository: PyPackageRepository,
     packageName: String,
     version: String? = null,
-    relation: PyRequirementRelation = PyRequirementRelation.EQ,
   ) : this(
     repository = repository,
-    name = packageName,
-    versionSpec = version.takeIf { !it.isNullOrBlank() }?.let { pyRequirementVersionSpec(relation, it) }
+    requirement = pyRequirement(packageName, version?.let { pyRequirementVersionSpec(it) }),
   )
 }
 

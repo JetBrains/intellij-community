@@ -5,9 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
-import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executePythonAdvanced
@@ -28,21 +26,26 @@ import kotlin.time.Duration.Companion.minutes
 internal suspend fun ExecService.validatePythonAndGetVersionImpl(python: ExecutablePython): PyResult<LanguageLevel> = withContext(Dispatchers.IO) {
   val options = ExecOptions(timeout = 1.minutes)
 
-  val smokeTestOutput = executePythonAdvanced(python, { addArgs("-c", "print(1)") }, processInteractiveHandler = transformerToHandler(null, ZeroCodeStdoutTransformer), options = options).getOr(message("python.cannot.exec", python.userReadableName)) { return@withContext it }.trim()
+  val smokeTestOutput = executePythonAdvanced(python, Args("-c", "print(1)"), processInteractiveHandler = transformerToHandler(null, ZeroCodeStdoutTransformer), options = options).getOr(message("python.cannot.exec", python.userReadableName)) { return@withContext it }.trim()
   if (smokeTestOutput != "1") {
     return@withContext PyResult.localizedError(message("python.get.version.error", python.userReadableName, smokeTestOutput))
   }
 
-  val versionOutput: EelProcessExecutionResult = executePythonAdvanced(python, options = options, argsBuilder = { addArgs(PYTHON_VERSION_ARG) }, processInteractiveHandler = transformerToHandler<EelProcessExecutionResult>(null, { r ->
+  val versionOutput: EelProcessExecutionResult = executePythonAdvanced(python, options = options, args = Args(PYTHON_VERSION_ARG), processInteractiveHandler = transformerToHandler<EelProcessExecutionResult>(null, { r ->
     if (r.exitCode == 0) Result.success(r) else Result.failure(message("python.get.version.error", python.userReadableName, r.exitCode))
   })).getOr { return@withContext it }
   // Python 2 might return version as stderr, see https://bugs.python.org/issue18338
   val versionString = versionOutput.stdoutString.let { it.ifBlank { versionOutput.stderrString } }
   val languageLevel = getLanguageLevelFromVersionStringStaticSafe(versionString.trim())
   if (languageLevel == null) {
-    return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionOutput))
+    return@withContext PyResult.localizedError(message("python.get.version.wrong.version", python.userReadableName, versionString))
   }
   return@withContext Result.success(languageLevel)
 }
 
-private val ExecutablePython.userReadableName: @NlsSafe String get() = (listOf(binary.pathString) + args).joinToString(" ")
+private val ExecutablePython.userReadableName: @NlsSafe String
+  get() =
+    (listOf(when (binary) {
+              is BinOnEel -> binary.path.pathString
+              is BinOnTarget -> binary
+            }) + args).joinToString(" ")

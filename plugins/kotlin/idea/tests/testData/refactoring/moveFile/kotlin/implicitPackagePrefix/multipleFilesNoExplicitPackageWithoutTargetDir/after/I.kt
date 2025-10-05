@@ -1,0 +1,3 @@
+package implicit
+
+interface I

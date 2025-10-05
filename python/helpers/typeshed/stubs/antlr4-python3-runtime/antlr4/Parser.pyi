@@ -20,6 +20,7 @@ from antlr4.tree.ParseTreePatternMatcher import ParseTreePatternMatcher as Parse
 from antlr4.tree.Tree import ErrorNode as ErrorNode, ParseTreeListener as ParseTreeListener, TerminalNode as TerminalNode
 
 class TraceListener(ParseTreeListener):
+    __slots__ = "_parser"
     def __init__(self, parser) -> None: ...
     def enterEveryRule(self, ctx) -> None: ...
     def visitTerminal(self, node) -> None: ...
@@ -27,6 +28,17 @@ class TraceListener(ParseTreeListener):
     def exitEveryRule(self, ctx) -> None: ...
 
 class Parser(Recognizer):
+    __slots__ = (
+        "_input",
+        "_output",
+        "_errHandler",
+        "_precedenceStack",
+        "_ctx",
+        "buildParseTrees",
+        "_tracer",
+        "_parseListeners",
+        "_syntaxErrors",
+    )
     bypassAltsAtnCache: Incomplete
     buildParseTrees: bool
     def __init__(self, input: TokenStream, output: TextIO = ...) -> None: ...

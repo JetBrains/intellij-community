@@ -16,9 +16,14 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
+import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -113,7 +118,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun Sequence<PsiElement>.anyHasSmartCast(element: KtProperty): Boolean {
         val declarationName = element.name ?: return false
 
@@ -188,7 +193,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun canBeMovedToConstructor(element: KtProperty, initializer: KtExpression): Boolean {
         if (element.isLocal) return false
         if (element.getter != null || element.setter != null || element.delegate != null) return false
@@ -260,7 +265,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     private fun List<PsiElement>.hasComments(): Boolean = any { it is PsiComment }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun findFirstAssignment(property: KtProperty): KtBinaryExpression? {
         if (property.typeReference == null) return null
 
@@ -345,10 +350,10 @@ internal class JoinDeclarationAndAssignmentInspection :
             .asSequence()
             .map { it.resolve() }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun Sequence<PsiElement>.anyOfHasReference(element: KtProperty) = any { it.hasReference(element) }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun PsiElement.hasReference(element: KtProperty): Boolean {
         val declarationName = element.symbol.name.toString()
         return anyDescendantOfType<KtNameReferenceExpression> {
@@ -356,7 +361,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun isSubtype(type: KaType?, superType: KaType?): Boolean {
         if (type == null || superType == null) return false
         return type.isPossiblySubTypeOf(superType)
@@ -366,7 +371,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     private fun PsiElement.nextSiblings(): Sequence<PsiElement> = siblings(forward = true, withItself = false)
 
-    context(KaSession)
+    context(_: KaSession)
     private fun equalNullableTypes(type1: KaType?, type2: KaType?): Boolean {
         if (type1 == null) return type2 == null
         if (type2 == null) return false

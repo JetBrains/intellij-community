@@ -307,6 +307,14 @@ public interface MutableEntityStorage : EntityStorage {
   }
 }
 
+@ApiStatus.Internal
+public sealed interface ReferenceChange<T: WorkspaceEntityWithSymbolicId> {
+  public val symbolicEntityId: SymbolicEntityId<T>
+
+  public data class Added<T : WorkspaceEntityWithSymbolicId>(override val symbolicEntityId: SymbolicEntityId<T>): ReferenceChange<T>
+  public data class Removed<T : WorkspaceEntityWithSymbolicId>(override val symbolicEntityId: SymbolicEntityId<T>): ReferenceChange<T>
+}
+
 /**
  * Describes a change in an entity. Instances of this class are obtained from [VersionedStorageChange].
  */

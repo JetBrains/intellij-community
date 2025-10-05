@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.data.DataPackChangeListener
@@ -11,14 +10,18 @@ import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import git4idea.repo.GitRepository
 import junit.framework.TestCase.fail
+import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance("Git.Test.LogData.Extensions")
 
-internal fun createLogData(repo: GitRepository, logProvider: GitLogProvider, disposable: Disposable): VcsLogData {
-  return VcsLogData(repo.project, mapOf(repo.root to logProvider), LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(repo.project),
-                    disposable)
+internal fun createLogDataIn(cs: CoroutineScope, repo: GitRepository, logProvider: GitLogProvider): VcsLogData {
+  return VcsLogData(repo.project,
+                    cs,
+                    mapOf(repo.root to logProvider),
+                    LoggingErrorHandler(LOG),
+                    VcsLogSharedSettings.isIndexSwitchedOn(repo.project))
 }
 
 internal fun VcsLogData.refreshAndWait(repo: GitRepository, waitIndexFinishing: Boolean) {

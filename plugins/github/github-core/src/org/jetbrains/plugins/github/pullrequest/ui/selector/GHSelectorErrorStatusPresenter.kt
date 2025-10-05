@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel
 import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
+import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -16,6 +17,7 @@ import javax.swing.JComponent
 
 class GHSelectorErrorStatusPresenter(
   private val project: Project,
+  private val loginSource: GHLoginSource,
   private val resetAction: () -> Unit = {}
 ) : ErrorStatusPresenter.Text<RepositoryAndAccountSelectorViewModel.Error> {
   override fun getErrorTitle(error: RepositoryAndAccountSelectorViewModel.Error): String = when (error) {
@@ -33,18 +35,19 @@ class GHSelectorErrorStatusPresenter(
   }
 
   override fun getErrorAction(error: RepositoryAndAccountSelectorViewModel.Error): Action? = when (error) {
-    is RepositoryAndAccountSelectorViewModel.Error.SubmissionError -> LogInAgain(project, error.account as GithubAccount, resetAction)
+    is RepositoryAndAccountSelectorViewModel.Error.SubmissionError -> LogInAgain(project, error.account as GithubAccount, loginSource, resetAction)
     else -> null
   }
 
   private class LogInAgain(
     private val project: Project,
     private val account: GithubAccount,
+    private val loginSource: GHLoginSource,
     private val resetAction: () -> Unit
   ) : AbstractAction(CollaborationToolsBundle.message("login.again.action.text")) {
     override fun actionPerformed(event: ActionEvent) {
       val parentComponent = event.source as? JComponent ?: return
-      val authData = GHAccountsUtil.requestReLogin(account, project, parentComponent, authType = AuthorizationType.UNDEFINED)
+      val authData = GHAccountsUtil.requestReLogin(account, project, parentComponent, authType = AuthorizationType.UNDEFINED, loginSource = loginSource)
       if (authData != null) {
         resetAction()
       }

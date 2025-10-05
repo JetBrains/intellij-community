@@ -17,6 +17,10 @@ import com.intellij.internal.ui.sandbox.dsl.validation.CrossValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationRefactoringPanel
 import com.intellij.internal.ui.sandbox.tests.accessibility.AccessibilityFailedInspectionsPanel
+import com.intellij.internal.ui.sandbox.tests.components.JBTextAreaTestPanel
+import com.intellij.internal.ui.sandbox.tests.components.JEditorPaneCopyableTestPanel
+import com.intellij.internal.ui.sandbox.tests.dsl.CommentRightTestPanel
+import com.intellij.internal.ui.sandbox.tests.dsl.listCellRenderer.LcrPerformanceTestPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -66,12 +70,15 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       JBTextAreaPanel(),
       JCheckBoxPanel(),
       JComboBoxPanel(),
+      JProgressBarPanel(),
       JRadioButtonPanel(),
       JSpinnerPanel(),
       JTextFieldPanel(),
       OnOffButtonPanel(),
       SearchTextFieldPanel(),
-      ThreeStateCheckBoxPanel())),
+      ThreeStateCheckBoxPanel(),
+      TreeWithComplexEditors(),
+    )),
 
     Group("Kotlin UI DSL", children = listOf(
       Group("ListCellRenderer", children = listOf(
@@ -105,10 +112,19 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
 
     Group("Tests", children = listOf(
       Group("Accessibility", children = listOf(
-        AccessibilityFailedInspectionsPanel())
-      )
-    )
-    )
+        AccessibilityFailedInspectionsPanel()
+      )),
+      Group("Components", children = listOf(
+        JEditorPaneCopyableTestPanel(),
+        JBTextAreaTestPanel(),
+      )),
+      Group("Kotlin UI DSL", children = listOf(
+        Group("ListCellRenderer", children = listOf(
+          LcrPerformanceTestPanel(),
+        )),
+        CommentRightTestPanel(),
+      )),
+    ))
   )
 
   private val filter = ElementFilter<SandboxTreeNodeBase> {
@@ -148,7 +164,8 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
 
         KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false),
         KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0, false),
-        KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false) -> {
+        KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0, false),
+          -> {
           if (textEditor.isFocusOwner) {
             tree.processKeyEvent(e)
             return true
@@ -423,13 +440,15 @@ private class SandboxTreeLeaf(parent: SimpleNode?, disposable: Disposable, val s
 
 private class SandboxTreeRenderer : NodeRenderer() {
 
-  override fun customizeCellRenderer(tree: JTree,
-                                     value: Any?,
-                                     selected: Boolean,
-                                     expanded: Boolean,
-                                     leaf: Boolean,
-                                     row: Int,
-                                     hasFocus: Boolean) {
+  override fun customizeCellRenderer(
+    tree: JTree,
+    value: Any?,
+    selected: Boolean,
+    expanded: Boolean,
+    leaf: Boolean,
+    row: Int,
+    hasFocus: Boolean,
+  ) {
     super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
   }
 }

@@ -2,11 +2,13 @@
 package com.intellij.platform.runtime.product.impl;
 
 import com.intellij.platform.runtime.product.IncludedRuntimeModule;
-import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.product.ProductMode;
 import com.intellij.platform.runtime.product.RuntimeModuleGroup;
-import com.intellij.platform.runtime.repository.*;
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
+import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
+import com.intellij.platform.runtime.repository.RuntimeModuleId;
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -21,6 +23,7 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
   private final ProductMode myProductMode;
   private final RuntimeModuleRepository myRepository;
   private volatile List<IncludedRuntimeModule> myIncludedModules;
+  private volatile Map<@NotNull RuntimeModuleId, @NotNull List<@NotNull RuntimeModuleId>> myNotIncludedModules;
 
   public MainRuntimeModuleGroup(@NotNull List<RawIncludedRuntimeModule> rawRootModules, @NotNull ProductMode currentMode, 
                                 @NotNull RuntimeModuleRepository repository) {
@@ -29,6 +32,13 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
     myRepository = repository;
   }
 
+  @Override
+  public @NotNull Map<@NotNull RuntimeModuleId, @NotNull List<@NotNull RuntimeModuleId>> getNotLoadedModuleIds() {
+    if (myNotIncludedModules == null) {
+      updateIncludedAndNotIncludedModules();
+    }
+    return myNotIncludedModules;
+  }
 
   @Override
   public @NotNull Set<@NotNull RuntimeModuleId> getOptionalModuleIds() {
@@ -41,13 +51,14 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
   @Override
   public @NotNull List<@NotNull IncludedRuntimeModule> getIncludedModules() {
     if (myIncludedModules == null) {
-      myIncludedModules = computeIncludedModules();
+      updateIncludedAndNotIncludedModules();
     }
     return myIncludedModules;
   }
 
-  private List<IncludedRuntimeModule> computeIncludedModules() {
+  private void updateIncludedAndNotIncludedModules() {
     List<IncludedRuntimeModule> rootIncludedModules = new ArrayList<>();
+    Map<@NotNull RuntimeModuleId, @NotNull List<@NotNull RuntimeModuleId>> rootNotIncludedModules = new HashMap<>();
     Set<RuntimeModuleDescriptor> rootModules = new HashSet<>();
     ProductModeMatcher matcher = new ProductModeMatcher(myProductMode);
     for (RawIncludedRuntimeModule rawRootModule : myRawRootModules) {
@@ -56,6 +67,9 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
         rootIncludedModules.add(included);
         rootModules.add(included.getModuleDescriptor());
       }
+      else {
+        rootNotIncludedModules.put(rawRootModule.getModuleId(), List.of());
+      }
     }
 
     List<IncludedRuntimeModule> result = new ArrayList<>(rootIncludedModules);
@@ -63,7 +77,9 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
     for (IncludedRuntimeModule rootModule : rootIncludedModules) {
       collectDependencies(rootModule.getModuleDescriptor(), rootModules, visited, result);
     }
-    return result;
+
+    this.myIncludedModules = result;
+    this.myNotIncludedModules = rootNotIncludedModules;
   }
 
   private static void collectDependencies(RuntimeModuleDescriptor descriptor,

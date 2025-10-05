@@ -86,7 +86,7 @@ open class ChangeVariableTypeFix(element: KtCallableDeclaration, type: KotlinTyp
         toShorten.add(element.setTypeReference(replacingTypeReference)!!)
 
         if (element is KtProperty) {
-            val getterReturnTypeRef = element.getter?.returnTypeReference
+            val getterReturnTypeRef = element.getter?.typeReference
             if (getterReturnTypeRef != null) {
                 toShorten.add(getterReturnTypeRef.replace(replacingTypeReference) as KtTypeReference)
             }

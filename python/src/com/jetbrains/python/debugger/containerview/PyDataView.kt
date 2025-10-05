@@ -118,7 +118,7 @@ class PyDataView(private val project: Project) : DumbAware {
   fun updateTabs(handler: ProcessHandler) {
     saveSelectedInfo()
     contentManager.contents.forEach { content ->
-      val panel: PyDataViewerCommunityPanel = getPanel(content.component).component as PyDataViewerCommunityPanel
+      val panel: PyDataViewerAbstractPanel = getPanel(content.component).component
       val accessor = panel.dataViewerModel.frameAccessor
       if (accessor !is PyDebugProcess) {
         return@forEach

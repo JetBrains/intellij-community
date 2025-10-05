@@ -1,13 +1,21 @@
 ### auto-generated section `build intellij.tools.testsBootstrap` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "tools-testsBootstrap_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "tools-testsBootstrap",
   module_name = "intellij.tools.testsBootstrap",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":tools-testsBootstrap_resources"],
   deps = [
     "@lib//:junit4",
+    "@lib//:hamcrest",
     "@lib//:junit5Launcher-provided",
     "@lib//:junit5-provided",
     "@lib//:junit5Vintage-provided",
@@ -15,7 +23,6 @@ jvm_library(
     "@lib//:junit5Jupiter-provided",
     "@lib//:opentest4j",
     "//platform/core-nio-fs",
-    "@lib//:classgraph",
   ],
   runtime_deps = ["//platform/boot"]
 )

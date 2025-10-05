@@ -130,16 +130,6 @@
             icon="AllIcons.Actions.Rollback"/>
     <action id="ChangesView.RevertFiles" class="com.intellij.openapi.vcs.changes.actions.RollbackFilesAction"/>
 
-    <group id="ChangesView.ViewOptions"/>
-
-    <group id="ChangesView.GroupBy" icon="AllIcons.Actions.GroupBy" popup="true"
-           class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
-      <separator key="group.ChangesView.GroupBy.text"/>
-      <action id="ChangesView.GroupBy.Directory"
-              class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
-      <add-to-group group-id="Vcs.KeymapGroup"/>
-    </group>
-
     <group id="ChangesViewToolbar">
       <reference ref="ChangesView.Refresh"/>
       <reference ref="CheckinProject"/>
@@ -215,6 +205,7 @@
       <reference ref="ChangesView.Refresh"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
+      <add-to-group group-id="ChangesViewPopupMenuShared"/>
     </group>
 
     <group id="Unversioned.Files.Dialog">
@@ -641,6 +632,12 @@
 
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
+
+    <action id="CommitView.CloseWindowedFloatingTwOnCommit"
+            class="com.intellij.openapi.vcs.changes.ui.CloseWindowedFloatingTwOnCommitAction">
+      <override-text place="ToolwindowPopup"/>
+      <add-to-group group-id="CommitView.GearActions" anchor="last"/>
+    </action>
 
     <group id="LocalChangesView.GearActions">
       <group id="LocalChangesView.ShowOnDoubleClick" popup="true" searchable="false" class="com.intellij.ide.actions.NonEmptyActionGroup">

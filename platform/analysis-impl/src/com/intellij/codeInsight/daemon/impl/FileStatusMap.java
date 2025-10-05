@@ -3,9 +3,9 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,13 +15,14 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.*;
 
@@ -34,21 +35,19 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
-  public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting, " +
-                                                                       "because it leads to the daemon unnecessary restarts. If you really do need to start write action " +
-                                                                       "during the highlighting, you can pass `canChangeDocument=true` to the CodeInsightTestFixtureImpl#instantiateAndRun() " +
-                                                                       "and accept the daemon unresponsiveness/blinking/slowdowns.";
+  public static final @NonNls String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting, " +
+     "because it leads to the daemon unnecessary restarts. If you really do need to start write action " +
+     "during the highlighting, you can pass `canChangeDocument=true` to the CodeInsightTestFixtureImpl#instantiateAndRun() " +
+     "and accept the daemon unresponsiveness/blinking/slowdowns.";
   private final Project myProject;
-  private final FileStatusMapState myDocumentToStatusMap;
-  // the ranges of last DocumentEvents united; used for "should I really remove invalid PSI highlighters from this range" heuristic
-  private final /*non-static*/Key<RangeMarker> COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY = Key.create("COMPOSITE_DOCUMENT_CHANGE_KEY");
+  private final FileStatusMapState myFileStatusMapState;
   private volatile boolean myAllowDirt = true;
 
   @ApiStatus.Internal
   public FileStatusMap(@NotNull Project project) {
     myProject = project;
-    myDocumentToStatusMap = CodeInsightContexts.isSharedSourceSupportEnabled(project) ? new MultiverseFileStatusMapState(project)
-                                                                                       : new ClassicFileStatusMapState(project);
+    myFileStatusMapState = CodeInsightContexts.isSharedSourceSupportEnabled(project) ? new MultiverseFileStatusMapState(project)
+                                                                                     : new ClassicFileStatusMapState(project);
   }
 
   @Override
@@ -74,12 +73,11 @@ public final class FileStatusMap implements Disposable {
   public static @Nullable("null means the file is clean") TextRange getDirtyTextRange(@NotNull Document document,
                                                                                       @NotNull PsiFile psiFile,
                                                                                       int passId) {
-    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     return getDirtyTextRange(document, context, psiFile, passId);
   }
 
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public static @Nullable("null means the file is clean") TextRange getDirtyTextRange(@NotNull Document document,
                                                                                       @NotNull CodeInsightContext context,
                                                                                       @NotNull PsiFile psiFile,
@@ -93,24 +91,25 @@ public final class FileStatusMap implements Disposable {
   }
 
   /** it's here for compatibility */
+  @Deprecated
+  @ApiStatus.Internal
   public void setErrorFoundFlag(@NotNull Project project, @NotNull Document document, boolean errorFound) {
     setErrorFoundFlag(document, CodeInsightContexts.anyContext(), errorFound);
   }
 
-  // todo IJPL-339 mark experimental
   @ApiStatus.Internal
   public void setErrorFoundFlag(@NotNull Document document, @NotNull CodeInsightContext context, boolean errorFound) {
     //GHP has found error. Flag is used by ExternalToolPass to decide whether to run or not
-    synchronized(myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.getOrCreateStatus(document, context);
+    synchronized(myFileStatusMapState) {
+      FileStatus status = myFileStatusMapState.getOrCreateStatus(document, context);
       status.setErrorFound(errorFound);
     }
   }
 
   @ApiStatus.Internal
   public boolean wasErrorFound(@NotNull Document document, @NotNull CodeInsightContext context) {
-    synchronized(myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.getStatusOrNull(document, context);
+    synchronized(myFileStatusMapState) {
+      FileStatus status = myFileStatusMapState.getStatusOrNull(document, context);
       return status != null && status.isErrorFound();
     }
   }
@@ -118,19 +117,19 @@ public final class FileStatusMap implements Disposable {
   @ApiStatus.Internal
   public void markAllFilesDirty(@NotNull @NonNls Object reason) {
     assertAllowModifications();
-    synchronized (myDocumentToStatusMap) {
-      if (!myDocumentToStatusMap.isEmpty()) {
+    synchronized (myFileStatusMapState) {
+      if (!myFileStatusMapState.isEmpty()) {
         log(null, "Mark all dirty: ", reason, null);
       }
-      myDocumentToStatusMap.clear();
+      myFileStatusMapState.clear();
     }
   }
 
   @ApiStatus.Internal
   @TestOnly
-  public void assertFileStatusScopeIsNull(Document document, @NotNull CodeInsightContext context, int passId) {
-    synchronized(myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.getStatusOrNull(document, context);
+  public void assertFileStatusScopeIsNull(@NotNull Document document, @NotNull CodeInsightContext context, int passId) {
+    synchronized(myFileStatusMapState) {
+      FileStatus status = myFileStatusMapState.getStatusOrNull(document, context);
       assert status != null && status.getDirtyScope(passId) == null : status;
     }
   }
@@ -147,12 +146,11 @@ public final class FileStatusMap implements Disposable {
     markFileUpToDate(document, CodeInsightContexts.anyContext(), passId, null);
   }
 
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public void markFileUpToDate(@NotNull Document document, @NotNull CodeInsightContext context, int passId, ProgressIndicator indicator) {
-    synchronized (myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.getOrCreateStatus(document, context);
-      status.setDefensivelyMarked(false);
+    synchronized (myFileStatusMapState) {
+      FileStatus status = myFileStatusMapState.getOrCreateStatus(document, context);
+      status.setDefensivelyMarked(false, passId);
       if (passId == Pass.WOLF) {
         status.setWolfPassFinished();
       }
@@ -170,8 +168,8 @@ public final class FileStatusMap implements Disposable {
 
   @ApiStatus.Internal
   public @Nullable TextRange getFileDirtyScopeForAllPassesCombined(@NotNull Document document) {
-    synchronized (myDocumentToStatusMap) {
-      Collection<FileStatus> statuses = myDocumentToStatusMap.getFileStatuses(document);
+    synchronized (myFileStatusMapState) {
+      Collection<FileStatus> statuses = myFileStatusMapState.getFileStatuses(document);
       if (statuses.isEmpty()) {
         return null;
       }
@@ -196,29 +194,36 @@ public final class FileStatusMap implements Disposable {
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for the dirty region (optimization)
    */
   public @Nullable TextRange getFileDirtyScope(@NotNull Document document, @NotNull PsiFile psiFile, int passId) {
-    CodeInsightContext context = FileViewProviderUtil.getCodeInsightContext(psiFile);
+    CodeInsightContext context = CodeInsightContextUtil.getCodeInsightContext(psiFile);
     return getFileDirtyScope(document, context, psiFile, passId);
+  }
+
+  @ApiStatus.Internal
+  public void addTouchedPsi(@NotNull Document document, @NotNull PsiElement psiElement) {
+    synchronized (myFileStatusMapState) {
+      FileStatus status = myFileStatusMapState.getOrCreateStatus(document, CodeInsightContexts.anyContext());
+      status.addTouchedPsi(psiElement, document);
+    }
   }
 
   /**
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for the dirty region (optimization)
    */
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public @Nullable TextRange getFileDirtyScope(@NotNull Document document,
                                                @NotNull CodeInsightContext context,
                                                @NotNull PsiFile psiFile,
                                                int passId) {
     RangeMarker marker;
-    synchronized (myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.getStatusOrNull(document, context);
+    synchronized (myFileStatusMapState) {
+      FileStatus status = myFileStatusMapState.getStatusOrNull(document, context);
       if (status == null) {
         marker = WholeFileDirtyMarker.INSTANCE;
       }
       else {
-        if (status.isDefensivelyMarked()) {
-          status.markWholeFileDirty(myProject);
-          status.setDefensivelyMarked(false);
+        if (status.isDefensivelyMarked(passId)) {
+          status.setDirtyScope(passId, WholeFileDirtyMarker.INSTANCE);
+          status.setDefensivelyMarked(false, passId);
         }
         assertPassIsRegistered(passId, status);
         marker = status.getDirtyScope(passId);
@@ -227,11 +232,10 @@ public final class FileStatusMap implements Disposable {
     if (marker == WholeFileDirtyMarker.INSTANCE) {
       return psiFile.getTextRange();
     }
-    TextRange compositeDocumentDirtyRange = getCompositeDocumentDirtyRange(document);
     if (marker == null) {
-      return compositeDocumentDirtyRange;
+      return null;
     }
-    return marker.isValid() ? compositeDocumentDirtyRange == null ? marker.getTextRange() : compositeDocumentDirtyRange.union(marker.getTextRange()) : new TextRange(0, document.getTextLength());
+    return marker.isValid() ? marker.getTextRange() : new TextRange(0, document.getTextLength());
   }
 
   private static void assertPassIsRegistered(int passId, @NotNull FileStatus status) {
@@ -246,9 +250,9 @@ public final class FileStatusMap implements Disposable {
     log(document, "Mark dirty file defensively: ", reason, null);
     // mark the whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
     // e.g., in the case of quick typing/backspacing char
-    synchronized (myDocumentToStatusMap) {
-      for (FileStatus status : myDocumentToStatusMap.getFileStatuses(document)) {
-        status.setDefensivelyMarked(true);
+    synchronized (myFileStatusMapState) {
+      for (FileStatus status : myFileStatusMapState.getFileStatuses(document)) {
+        status.markDefensivelyMarkedForAllPasses(myProject);
       }
     }
   }
@@ -258,7 +262,9 @@ public final class FileStatusMap implements Disposable {
     combineDirtyScopes(document, FileStatus.WHOLE_FILE_TEXT_RANGE, reason);
   }
 
- @ApiStatus.Internal
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  @RequiresReadLock
   public void markScopeDirty(@NotNull Document document,
                              @NotNull TextRange scope,
                              @NotNull @NonNls Object reason) {
@@ -270,43 +276,35 @@ public final class FileStatusMap implements Disposable {
   private void combineDirtyScopes(@NotNull Document document, @NotNull TextRange scope, @NonNls @NotNull Object reason) {
     assertAllowModifications();
     log(document, "Mark scope dirty: ", reason, scope);
-    synchronized(myDocumentToStatusMap) {
-      for (FileStatus status : myDocumentToStatusMap.getFileStatuses(document)) {
-        if (status.isDefensivelyMarked()) {
-          status.setDefensivelyMarked(false);
-        }
+    synchronized(myFileStatusMapState) {
+      for (FileStatus status : myFileStatusMapState.getFileStatuses(document)) {
+        status.clearDefensivelyMarkedForAllPasses();
         status.combineScopesWith(scope, document);
       }
     }
   }
 
-  // todo remove? it's unused in plugins
-  @SuppressWarnings("unused")
-  public boolean allDirtyScopesAreNull(@NotNull Document document) {
-    return allDirtyScopesAreNull(document, CodeInsightContexts.anyContext());
-  }
-
   // todo IJPL-339 do we need context here?
-  // todo IJPL-339 mark experimental
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public boolean allDirtyScopesAreNull(@NotNull Document document, @NotNull CodeInsightContext context) {
-    synchronized (myDocumentToStatusMap) {
-      FileStatus status = myDocumentToStatusMap.getStatusOrNull(document, context);
-      return status != null && !status.isDefensivelyMarked() && status.isWolfPassFinished() && status.allDirtyScopesAreNull();
+    synchronized (myFileStatusMapState) {
+      FileStatus status = myFileStatusMapState.getStatusOrNull(document, context);
+      return status != null && !status.isDefensivelyMarkedForAnyPass() && status.isWolfPassFinished() && status.allDirtyScopesAreNull();
     }
   }
 
-  public String toString(@NotNull Document document) {
-    synchronized (myDocumentToStatusMap) {
-      return myDocumentToStatusMap.toString(document);
+  public @NotNull String toString(@NotNull Document document) {
+    synchronized (myFileStatusMapState) {
+      return myFileStatusMapState.toString(document);
     }
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public void assertAllDirtyScopesAreNull(@NotNull Document document) {
-    synchronized (myDocumentToStatusMap) {
-      for (FileStatus status : myDocumentToStatusMap.getFileStatuses(document)) {
-        assert status != null && !status.isDefensivelyMarked() && status.isWolfPassFinished() && status.allDirtyScopesAreNull() : status;
+    synchronized (myFileStatusMapState) {
+      for (FileStatus status : myFileStatusMapState.getFileStatuses(document)) {
+        assert status != null && !status.isDefensivelyMarkedForAnyPass() && status.isWolfPassFinished() && status.allDirtyScopesAreNull() : status;
       }
     }
   }
@@ -326,69 +324,6 @@ public final class FileStatusMap implements Disposable {
       myAllowDirt = old;
     }
   }
-
-  static final RangeMarker WHOLE_FILE_DIRTY_MARKER =
-    new RangeMarker() {
-      @Override
-      public @NotNull Document getDocument() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public int getStartOffset() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public int getEndOffset() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public boolean isValid() {
-        return false;
-      }
-
-      @Override
-      public void setGreedyToLeft(boolean greedy) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void setGreedyToRight(boolean greedy) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public boolean isGreedyToRight() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public boolean isGreedyToLeft() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void dispose() {
-        // ignore
-      }
-
-      @Override
-      public <T> T getUserData(@NotNull Key<T> key) {
-        return null;
-      }
-
-      @Override
-      public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public @NonNls String toString() {
-        return "WHOLE_FILE";
-      }
-    };
 
   // logging
   private static final ConcurrentMap<Thread, Integer> threads = CollectionFactory.createConcurrentWeakMap();
@@ -412,40 +347,16 @@ public final class FileStatusMap implements Disposable {
   @ApiStatus.Internal
   public void addDocumentCompositeDirtyRange(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
-    RangeMarker oldRange = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
-    if (oldRange != WholeFileDirtyMarker.INSTANCE && oldRange != null && oldRange.isValid() && oldRange.getTextRange().containsRange(event.getOffset(), event.getOffset()+event.getNewLength())) {
-      // optimisation: the change is inside the RangeMarker which should take care of the change by itself
-      return;
-    }
-    TextRange scope = new TextRange(event.getOffset(), Math.min(event.getOffset() + event.getNewLength(), document.getTextLength()));
-    RangeMarker combined = oldRange == WholeFileDirtyMarker.INSTANCE || event.isWholeTextReplaced() ||
-                           scope.getStartOffset() == 0 && scope.getEndOffset() == document.getTextLength() ? WholeFileDirtyMarker.INSTANCE :
-                           FileStatus.combineScopes(oldRange, scope, document);
-    if (combined != WholeFileDirtyMarker.INSTANCE) {
-      combined.setGreedyToRight(true);
-      combined.setGreedyToLeft(true);
-    }
-    document.putUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY, combined);
-  }
-
-  /**
-   * get one big dirty region united from all small document changes before highlighting finished
-   * or null if no changes are recorded
-   */
-  @ApiStatus.Internal
-  public TextRange getCompositeDocumentDirtyRange(@NotNull Document document) {
-    RangeMarker change = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
-    return change == WholeFileDirtyMarker.INSTANCE ? new TextRange(0, document.getTextLength()) :
-           change == null || !change.isValid() ? null :
-           change.getTextRange();
-  }
-
-  @ApiStatus.Internal
-  public void disposeDirtyDocumentRangeStorage(@NotNull Document document) {
-    RangeMarker marker = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
-    if (marker != null) {
-      marker.dispose();
-      ((UserDataHolderEx)document).replace(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY, marker, null);
+    synchronized(myFileStatusMapState) {
+      FileStatus status = myFileStatusMapState.getOrCreateStatus(document, CodeInsightContexts.anyContext());
+      TextRange scope = new TextRange(event.getOffset(), Math.min(event.getOffset() + event.getNewLength(), document.getTextLength()));
+      for (int passId : status.getAllKnownPassIds(myProject)) {
+        status.combineScopesWith(scope, document);
+        if (LOG.isDebugEnabled() && passId == Pass.LOCAL_INSPECTIONS) {
+          RangeMarker newScope = status.getDirtyScope(passId);
+          LOG.debug("FileStatusMap.addDocumentCompositeDirtyRange(" + event + ") = " + (newScope == null ? null : newScope == WholeFileDirtyMarker.INSTANCE ? "whole file" : newScope.getTextRange()));
+        }
+      }
     }
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.DumbService.Companion.isDumb
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
@@ -96,7 +97,7 @@ private suspend fun hatch(proxy: StackFrameProxyEx, pointer: SmartPsiElementPoin
     // Sort qualifiers by depth to ensure that previous qualifiers are already processed
     for (qualifier in qualifiers.sortedBy { it.depth }) {
       val jdiQualifier = varToValueMap[qualifier] ?: continue
-      val map = provider.getJdiValueForDfaVariable(proxy, jdiQualifier, possiblyQualifiedDescriptors, anchor)
+      val map = provider.getJdiValuesForQualifier(proxy, jdiQualifier, possiblyQualifiedDescriptors, anchor)
       for ((descriptor, jdiValue) in map) {
         val dfaVar = readAction { descriptor.createValue(factory, qualifier) as? DfaVariableValue } ?: continue
         varToValueMap[dfaVar] = jdiValue
@@ -133,6 +134,9 @@ private suspend fun makePupa(proxy: StackFrameProxyEx, pointer: SmartPsiElementP
   catch (_: InvalidStackFrameException) {
     null
   }
+  catch (_: IndexNotReadyException) {
+    null
+  }
 
   if (larva == null) return null
   return try {
@@ -154,6 +158,9 @@ private suspend fun makePupa(proxy: StackFrameProxyEx, pointer: SmartPsiElementP
     null
   }
   catch (_: InvalidStackFrameException) {
+    null
+  }
+  catch (_: IndexNotReadyException) {
     null
   }
 }

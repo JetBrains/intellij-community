@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -24,6 +25,14 @@ public interface DocumentEx extends Document {
   }
 
   default void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
+  }
+
+  @ApiStatus.Internal
+  default void addFullUpdateListener(DocumentFullUpdateListener listener) {
+  }
+
+  @ApiStatus.Internal
+  default void removeFullUpdateListener(DocumentFullUpdateListener listener) {
   }
 
   void replaceText(@NotNull CharSequence chars, long newModificationStamp);

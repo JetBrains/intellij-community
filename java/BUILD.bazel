@@ -1,0 +1,11 @@
+filegroup(
+    name = "mockJDK",
+    srcs = glob([
+        "mockJDK-1.4/**",
+        "mockJDK-1.7/**",
+        "mockJDK-1.8/**",
+        "mockJDK-1.9/**",
+        "jdkAnnotations/**",
+    ], allow_empty = False),
+    visibility = ["//visibility:public"],
+)

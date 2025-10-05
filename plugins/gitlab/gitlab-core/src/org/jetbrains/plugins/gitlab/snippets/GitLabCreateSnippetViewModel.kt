@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.snippets.PathHandlingMode
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -168,4 +169,5 @@ internal data class GitLabCreateSnippetViewModelData(
   val isCopyUrl: Boolean,
   val isOpenInBrowser: Boolean,
 
-  val pathHandlingMode: PathHandlingMode)
+  val pathHandlingMode: PathHandlingMode
+)

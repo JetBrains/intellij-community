@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.platform.diagnostic.plugin.freeze
 
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.io.HttpRequests
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

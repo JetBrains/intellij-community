@@ -19,7 +19,7 @@ import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
 import com.intellij.psi.util.parentOfType
 
-fun generateActions(call: PsiMethodCallExpression): List<IntentionAction> {
+public fun generateActions(call: PsiMethodCallExpression): List<IntentionAction> {
   if (!checkCall(call)) return emptyList()
   val methodRequests = CreateMethodRequests(call).collectRequests()
   val extensions = EP_NAME.extensionList

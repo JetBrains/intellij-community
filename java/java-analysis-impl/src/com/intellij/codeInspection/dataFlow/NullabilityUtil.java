@@ -1,9 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;

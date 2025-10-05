@@ -83,6 +83,7 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         groupHeaderStyle = readGroupHeaderStyle(),
         horizontalProgressBarStyle = readHorizontalProgressBarStyle(),
         iconButtonStyle = readIconButtonStyle(),
+        transparentIconButtonStyle = readTransparentIconButton(),
         inlineBannerStyle = readInlineBannerStyle(),
         lazyTreeStyle = readLazyTreeStyle(),
         linkStyle = readLinkStyle(),
@@ -101,6 +102,8 @@ internal fun createBridgeComponentStyling(theme: ThemeDefinition): ComponentStyl
         textFieldStyle = textFieldStyle,
         tooltipStyle = readTooltipStyle(),
         undecoratedDropdownStyle = readUndecoratedDropdownStyle(menuStyle),
+        speedSearchStyle = readSpeedSearchStyle(),
+        searchMatchStyle = readSearchMatchStyle(theme.isDark),
     )
 }
 

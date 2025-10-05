@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.maven
 
 import org.jetbrains.intellij.build.BuildContext
@@ -161,7 +161,7 @@ class IntellijModulesPublication(
         .start()
       val exitCode = process.waitFor()
       if (exitCode != 0) {
-        context.messages.error("Upload of ${file.name} failed with exit code $exitCode")
+        context.messages.logErrorAndThrow("Upload of ${file.name} failed with exit code $exitCode")
       }
     }
   }

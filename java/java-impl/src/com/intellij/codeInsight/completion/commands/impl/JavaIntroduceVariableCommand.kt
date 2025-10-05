@@ -39,7 +39,7 @@ internal class JavaIntroduceVariableCommandProvider : CommandProvider {
   }
 }
 
-internal class JavaIntroduceVariableCommand : CompletionCommand(), CompletionCommandWithPreview {
+internal class JavaIntroduceVariableCommand : CompletionCommand() {
   override val synonyms: List<String>
     get() = listOf("Introduce variable")
 

@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -38,10 +39,7 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.singleRow.WindowTabsLayout;
 import com.intellij.ui.tabs.impl.themes.DefaultTabTheme;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +67,8 @@ public final class WindowTabsComponent extends JBTabsImpl {
   private final Disposable myParentDisposable;
   private final Map<IdeFrameImpl, Integer> myIndexes = new HashMap<>();
 
+  public BorderPainter borderPainter = new DefaultBorderPainter();
+
   public WindowTabsComponent(@NotNull IdeFrameImpl nativeWindow, @Nullable Project project, @NotNull Disposable parentDisposable) {
     super(project, parentDisposable);
 
@@ -79,7 +79,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
       @Override
       public @NotNull UiDecoration getDecoration() {
         //noinspection UseDPIAwareInsets
-        return new UiDecoration(JBFont.medium(), new Insets(-1, getDropInfo() == null ? 0 : -1, -1, -1));
+        return new UiDecoration(JBFont.medium(), new Insets(-1, getDropInfo() == null ? 0 : -1, -1, -1), position -> getContentInsets());
       }
     });
 
@@ -92,6 +92,17 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
     createTabActions();
     installDnD();
+  }
+
+  private static @NotNull Insets getContentInsets() {
+    InternalUICustomization customization = InternalUICustomization.getInstance();
+    if (customization != null) {
+      Insets insets = customization.getProjectTabContentInsets();
+      if (insets != null) {
+        return insets;
+      }
+    }
+    return JBUI.insets(0, 4);
   }
 
   public void selfDispose() {
@@ -111,6 +122,12 @@ public final class WindowTabsComponent extends JBTabsImpl {
   @Override
   public @NotNull Dimension getPreferredSize() {
     return new Dimension(super.getPreferredSize().width, JBUI.scale(TAB_HEIGHT));
+  }
+
+  @Override
+  public void paintChildren(Graphics g) {
+    super.paintChildren(g);
+    borderPainter.paintAfterChildren(this, g);
   }
 
   @Override
@@ -276,8 +293,14 @@ public final class WindowTabsComponent extends JBTabsImpl {
         int index = tabs.getIndexOf(info);
         int lastIndex = tabs.getTabCount() - 1;
         int border = JBUI.scale(1);
+        boolean selected = info.getObject() == myNativeWindow;
 
-        if (info.getObject() == myNativeWindow) {
+        InternalUICustomization customization = InternalUICustomization.getInstance();
+        if (customization != null && customization.paintProjectTab(myNativeWindow, label, g, tabs, selected, index, lastIndex)) {
+          return;
+        }
+
+        if (selected) {
           Window window = ComponentUtil.getWindow(WindowTabsComponent.this);
           Color tabColor = JBUI.CurrentTheme.MainWindow.Tab.background(true, window != null && !window.isActive(), false);
           myTabPainter.paintTab(tabs.getTabsPosition(), g2d, rect, tabs.getBorderThickness(), tabColor, true, false);
@@ -441,11 +464,11 @@ public final class WindowTabsComponent extends JBTabsImpl {
     };
 
     Presentation presentation = closeAction.getTemplatePresentation();
-    boolean isNewUi = ExperimentalUI.isNewUI();
-    presentation.setIcon(isNewUi ?
+    boolean isNewUiAndDark = ExperimentalUI.isNewUI() && (!JBColor.isBright() || ColorUtil.isDark(JBColor.namedColor("MainToolbar.background")));
+    presentation.setIcon(isNewUiAndDark ?
                          IconManager.getInstance().getIcon("expui/general/closeSmall_dark.svg", AllIcons.class.getClassLoader()) :
                          AllIcons.Actions.Close);
-    presentation.setHoveredIcon(isNewUi
+    presentation.setHoveredIcon(isNewUiAndDark
                                 ? IconManager.getInstance()
                                   .getIcon("expui/general/closeSmallHovered_dark.svg", AllIcons.class.getClassLoader())
                                 : AllIcons.Actions.CloseHovered);

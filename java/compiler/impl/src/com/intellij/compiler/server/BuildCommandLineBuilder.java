@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -14,8 +15,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 interface BuildCommandLineBuilder {
-  void addParameter(@NotNull String parameter);
-  void addPathParameter(@NotNull String prefix, @NotNull String path);
+  void addParameter(@NotNull @NonNls String parameter);
+  void addPathParameter(@NotNull @NonNls String prefix, @NotNull @NonNls String path);
 
   default void addPathParameter(@NotNull String prefix, @NotNull Path path) {
     addPathParameter(prefix, path.toString());
@@ -73,6 +74,17 @@ interface BuildCommandLineBuilder {
    */
   @ApiStatus.Experimental
   default @NotNull Path copyProjectSpecificPathToTargetIfRequired(@NotNull Project project, @NotNull Path path) throws FileSystemException {
+    return path;
+  }
+
+  /**
+   * Synchronize the content of the path with the remote. This method replaces all the files located on the remote path with the content
+   * from the local machine.
+   * @param path a path to a project-specific which is available locally to the IDE that can be used only with specific {@link project}.
+   * @return a path which points to a copy on a remote machine.
+   */
+  @ApiStatus.Experimental
+  default @NotNull Path syncProjectSpecificPathWithTarget(@NotNull Project project, @NotNull Path path) throws FileSystemException {
     return path;
   }
 }

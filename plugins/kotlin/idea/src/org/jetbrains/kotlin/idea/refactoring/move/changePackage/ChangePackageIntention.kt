@@ -11,25 +11,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.core.quoteSegmentsIfNeeded
 import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.KtPackageDirective
 
+private const val PACKAGE_NAME_VAR = "PACKAGE_NAME"
+
+@ApiStatus.Internal
 class ChangePackageIntention : SelfTargetingOffsetIndependentIntention<KtPackageDirective>(
     KtPackageDirective::class.java,
-    KotlinBundle.lazyMessage("intention.change.package.text")
+    KotlinBundle.messagePointer("intention.change.package.text")
 ) {
-    companion object {
-        private const val PACKAGE_NAME_VAR = "PACKAGE_NAME"
-    }
-
-    override fun isApplicableTo(element: KtPackageDirective) = element.packageNameExpression != null
+    override fun isApplicableTo(element: KtPackageDirective): Boolean = element.packageNameExpression != null
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
         // Rename template only intention: no reasonable preview possible

@@ -1,3 +1,4 @@
+<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
 <!--
   ~ Copyright 2000-2017 JetBrains s.r.o.
   ~
@@ -143,7 +144,6 @@
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.FragmentManipulator"/>
     <lang.elementManipulator forClass="com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl"
                              implementationClass="com.intellij.psi.impl.source.javadoc.SnippetDocTagManipulator"/>
-    <methodImplementor implementation="com.intellij.codeInsight.javadoc.SnippetDocTagMethodImplementor"/>
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.source.JShellPsiAugmentProvider"/>
     <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />

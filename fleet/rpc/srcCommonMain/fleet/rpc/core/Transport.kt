@@ -3,6 +3,7 @@
 
 package fleet.rpc.core
 
+import fleet.util.async.Resource
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -13,31 +14,43 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.selects.select
 import kotlin.time.TimeSource
 
-private val logger = logger<Transport<*>>()
+private val logger = logger<Transport>()
 
-class Transport<T>(
-  val outgoing: SendChannel<T>,
-  val incoming: ReceiveChannel<T>,
+class Transport(
+  val outgoing: SendChannel<TransportMessage>,
+  val incoming: ReceiveChannel<TransportMessage>,
 )
 
-fun interface FleetTransportFactory {
+typealias FleetTransportFactory = TransportFactory
+
+interface TransportFactory {
   /*
    * [body] should be called with fully operational transport, feel free to suspend.
    * If the connection isn't possible, rethrow the cause as [TransportDisconnectedException].
    * When the underlying transport is broken, e.g. a socket is closed, both channels should be closed with [TransportDisconnectedException]
    */
-  suspend fun connect(
+  suspend fun <T> connect(
     transportStats: MutableStateFlow<TransportStats>?,
-    body: suspend CoroutineScope.(Transport<TransportMessage>) -> Unit,
-  )
+    body: suspend CoroutineScope.(Transport) -> T,
+  ): T
 }
+
+fun TransportFactory(
+  factory: (MutableStateFlow<TransportStats>?) -> Resource<Transport>,
+): TransportFactory =
+  object : TransportFactory {
+    override suspend fun <T> connect(transportStats: MutableStateFlow<TransportStats>?, body: suspend CoroutineScope.(Transport) -> T): T =
+      factory(transportStats).use { body(it) }
+  }
 
 /**
  * Use this function when you want to re-create your factory on each connection attempt.
  */
-fun dynamicTransportFactory(f: suspend () -> FleetTransportFactory): FleetTransportFactory =
-  FleetTransportFactory { socketStats, body ->
-    f().connect(socketStats, body)
+fun dynamicTransportFactory(f: suspend () -> TransportFactory): TransportFactory =
+  object : TransportFactory {
+    override suspend fun <T> connect(transportStats: MutableStateFlow<TransportStats>?, body: suspend CoroutineScope.(Transport) -> T): T {
+      return f().connect(transportStats, body)
+    }
   }
 
 enum class DebugConnectionState {
@@ -54,24 +67,28 @@ fun DebugConnectionState.toggle(): DebugConnectionState {
 
 fun FleetTransportFactory.debugDisconnect(control: StateFlow<DebugConnectionState>, debugToken: String? = null): FleetTransportFactory {
   val underlying = this
-  return FleetTransportFactory { transportStats, body ->
-    logger.debug { "Waiting for control flow to allow connection $debugToken" }
-    val t = TimeSource.Monotonic.markNow()
-    control.first { it == DebugConnectionState.Connect }
-    val nanos = t.elapsedNow().inWholeNanoseconds
-    logger.debug { "Connection $debugToken allowed, ${nanos / 1_000_000}ms spent waiting" }
-    underlying.connect(transportStats) { transport ->
-      val bodyJob = launch { body(transport) }
-      val disconnectCommand = async { control.first { it == DebugConnectionState.Disconnect } }
-      select {
-        bodyJob.onJoin {
-          disconnectCommand.cancel()
-        }
-        disconnectCommand.onJoin {
-          logger.debug { "Breaking connection $debugToken" }
-          transport.incoming.cancel(CancellationException("TransportDisconnected",
-                                                          TransportDisconnectedException("DebugDisconnect", cause = null)))
-          transport.outgoing.close(TransportDisconnectedException("DebugDisconnect", cause = null))
+  return object : FleetTransportFactory {
+    override suspend fun <T> connect(transportStats: MutableStateFlow<TransportStats>?, body: suspend CoroutineScope.(Transport) -> T): T {
+      logger.debug { "Waiting for control flow to allow connection $debugToken" }
+      val t = TimeSource.Monotonic.markNow()
+      control.first { it == DebugConnectionState.Connect }
+      val nanos = t.elapsedNow().inWholeNanoseconds
+      logger.debug { "Connection $debugToken allowed, ${nanos / 1_000_000}ms spent waiting" }
+      return underlying.connect(transportStats) { transport ->
+        val bodyJob = async { body(transport) }
+        val disconnectCommand = async { control.first { it == DebugConnectionState.Disconnect } }
+        select {
+          bodyJob.onAwait {
+            disconnectCommand.cancel()
+            it
+          }
+          disconnectCommand.onJoin {
+            logger.debug { "Breaking connection $debugToken" }
+            transport.incoming.cancel(CancellationException("TransportDisconnected",
+                                                            TransportDisconnectedException("DebugDisconnect", cause = null)))
+            transport.outgoing.close(TransportDisconnectedException("DebugDisconnect", cause = null))
+            bodyJob.await()
+          }
         }
       }
     }

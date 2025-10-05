@@ -2,8 +2,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.Maps;
-import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -24,22 +22,19 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.jetbrains.python.PyLanguageFacade;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -51,6 +46,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
   private static final Key<String> PROJECT_LANGUAGE_LEVEL = new Key<>("python.project.language.level");
   private static final FilePropertyKey<LanguageLevel> KEY =
@@ -161,6 +157,15 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     }
     if (fileOrDir.isDirectory() || isPythonFile(fileOrDir)) {
       clearSdkPathCache(fileOrDir);
+    }
+
+    VirtualFilePyLanguageLevelListener publisher = project.getMessageBus().syncPublisher(VirtualFilePyLanguageLevelListener.TOPIC);
+    publisher.levelChanged(fileOrDir, level);
+
+    for (VirtualFile child : fileOrDir.getChildren()) {
+      if (!child.isDirectory() && isPythonFile(child)) {
+        publisher.levelChanged(child, level);
+      }
     }
   }
 
@@ -289,37 +294,16 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       .orElse(LanguageLevel.getDefault());
   }
 
-  @ApiStatus.Experimental
-  public static @NotNull LanguageLevel getLanguageLevelForFile(@NotNull PsiFile file) {
-    PsiFile originalPythonFile = file.getOriginalFile();
-    if (originalPythonFile != file) {
-      // myOriginalFile could be an instance of base language
-      // see PostfixLiveTemplate#copyFile
-      if (originalPythonFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
-        originalPythonFile = originalPythonFile.getViewProvider().getPsi(PythonLanguage.getInstance());
-      }
-      if (originalPythonFile instanceof PyFile) {
-        return ((PyFile)originalPythonFile).getLanguageLevel();
-      }
-    }
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) {
-      virtualFile = file.getViewProvider().getVirtualFile();
-    }
-    return getLanguageLevelForVirtualFile(file.getProject(), virtualFile);
+  /**
+   * @deprecated Use {@link PyLanguageFacade#getEffectiveLanguageLevel(Project, VirtualFile)}
+   */
+  @Deprecated(forRemoval = true)
+  public static @NotNull LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    return PyLanguageFacade.getINSTANCE().getEffectiveLanguageLevel(project, virtualFile);
   }
 
-  /**
-   * Returns Python language level for a virtual file.
-   *
-   * @see LanguageLevel#forElement
-   */
-  public static @NotNull LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
-    if (virtualFile instanceof VirtualFileWindow) {
-      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
-    }
-    virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
-
+  // Use `PyLanguageFacade.getEffectiveLanguageLevel(Project, VirtualFile)`
+  public static @NotNull LanguageLevel getEffectiveLanguageLevel(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     final LanguageLevel forced = LanguageLevel.FORCE_LANGUAGE_LEVEL;
     if (ApplicationManager.getApplication().isUnitTestMode() && forced != null) return forced;
 

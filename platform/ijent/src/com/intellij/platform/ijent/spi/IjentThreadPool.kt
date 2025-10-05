@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
-import java.util.Collections
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
@@ -59,12 +60,16 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
     override fun newThread(r: Runnable): Thread {
       val thread = object : Thread() {
         init {
-          name = "${IjentThreadPool::class.java.name}-${threadCounter.incrementAndGet()}"
+          name = "IjentThreadPool-${threadCounter.incrementAndGet()}"
         }
 
         override fun run() {
           try {
             r.run()
+          }
+          catch (_: IjentUnavailableException) {
+            // This exception is already logged during its creation.
+            // No need to log it again.
           }
           finally {
             threads.remove(this)

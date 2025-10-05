@@ -1,27 +1,29 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
-import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detection.LangDetector
-import com.intellij.grazie.grammar.LanguageToolChecker.Problem
+import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
-import com.intellij.grazie.utils.html
-import com.intellij.grazie.utils.messageSanitized
+import com.intellij.grazie.utils.NaturalTextDetector
+import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.grazie.utils.getTextDomain
 import com.intellij.grazie.utils.trimToNull
-import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.ClassLoaderUtil.computeWithClassLoader
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Predicates
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
+import com.intellij.util.io.computeDetached
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.html.p
 import kotlinx.html.style
 import org.jetbrains.annotations.ApiStatus
@@ -34,63 +36,46 @@ import org.languagetool.rules.en.EnglishUnpairedQuotesRule
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.function.Predicate
+import kotlin.coroutines.cancellation.CancellationException
 
-open class LanguageToolChecker : TextChecker() {
+
+open class LanguageToolChecker : ExternalTextChecker() {
   @ApiStatus.Internal
   class TestChecker : LanguageToolChecker()
 
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
-    val lang = Lang.values().find { it.jLanguage == language } ?: return emptyList()
-    return grammarRules(LangTool.getTool(lang), lang)
+    val lang = Lang.entries.find { it.jLanguage == language } ?: return emptyList()
+    return grammarRules(LangTool.getTool(lang, TextStyleDomain.Other), lang)
   }
 
-  override fun check(extracted: TextContent): List<Problem> {
-    val cache = extracted.getUserData(cacheKey)
-    val configStamp = service<GrazieConfig>().modificationCount
-    if (cache == null || cache.configStamp != configStamp) {
-      val problems = doCheck(extracted)
-      extracted.putUserData(cacheKey, CachedResults(configStamp, problems))
-      return problems
-    }
-    return cache.problems
-  }
-
-  private fun doCheck(extracted: TextContent): List<Problem> {
-    val text = extracted.toString()
-    if (text.isBlank()) {
+  @OptIn(DelicateCoroutinesApi::class)
+  override suspend fun checkExternally(content: TextContent): List<Problem> {
+    val text = content.toString()
+    if (text.isBlank() || !NaturalTextDetector.seemsNatural(text)) {
       return emptyList()
     }
 
+    val domain = content.getTextDomain()
     val language = LangDetector.getLang(text) ?: return emptyList()
-    try {
-      return runBlockingCancellable {
-        // LT will use indicator for cancelled checks
-        coroutineToIndicator {
-          val indicator = ProgressManager.getGlobalProgressIndicator()
-          checkNotNull(indicator) { "Indicator was not set for current job" }
-          return@coroutineToIndicator ApplicationUtil.runWithCheckCanceled(
-            {
-              ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
-                collectLanguageToolProblems(extracted = extracted, text = text, lang = language)
-              }
-            },
-            indicator
-          )
+    return computeDetached(Dispatchers.Default) {
+      try {
+        computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
+          collectLanguageToolProblems(content, text, language, domain)
         }
       }
-    }
-    catch (exception: Throwable) {
-      if (ExceptionUtil.causedBy(exception, ProcessCanceledException::class.java)) {
-        throw ProcessCanceledException()
+      catch (exception: Throwable) {
+        if (ExceptionUtil.causedBy(exception, CancellationException::class.java)) {
+          throw ProcessCanceledException()
+        }
+        logger.warn("Got exception from LanguageTool", exception)
+        emptyList()
       }
-      logger.warn("Got exception from LanguageTool", exception)
     }
-    return emptyList()
   }
 
-  private fun collectLanguageToolProblems(extracted: TextContent, text: String, lang: Lang): List<Problem> {
-    val tool = LangTool.getTool(lang)
+  private fun collectLanguageToolProblems(extracted: TextContent, text: String, lang: Lang, domain: TextStyleDomain): List<Problem> {
+    val tool = LangTool.getTool(lang, domain)
     val sentences = tool.sentenceTokenize(text)
     if (sentences.any { it.length > 1000 }) {
       return emptyList()
@@ -120,7 +105,7 @@ open class LanguageToolChecker : TextChecker() {
       Predicate { om ->
         ProgressManager.checkCanceled()
         quotedMatches.none { qm ->
-          qm.rule == om.rule &&
+          qm.rule.id == om.rule.id &&
           quotedText.offsetToOriginal(qm.fromPos) == om.fromPos &&
           quotedText.offsetToOriginal(qm.toPos) == om.toPos
         }
@@ -152,13 +137,22 @@ open class LanguageToolChecker : TextChecker() {
     override fun getShortMessage(): String =
       match.shortMessage.trimToNull() ?: match.rule.description.trimToNull() ?: match.rule.category.name
 
+    @Suppress("HardCodedStringLiteral")
     override fun getDescriptionTemplate(isOnTheFly: Boolean): String =
       if (testDescription) match.rule.id
-      else match.messageSanitized
+      else {
+        when (match.rule.id) {
+          "EN_PLAIN_ENGLISH_REPLACE" -> "'there are' is a wordy or complex expression. In some cases, it might be preferable to remove it entirely."
+          else -> match.messageSanitized
+        }
+      }
 
-    override fun getTooltipTemplate(): String = toTooltipTemplate(match)
+    override fun getTooltipTemplate(): String = toTooltipTemplate(this)
 
-    override fun getSuggestions(): List<Suggestion> = match.suggestedReplacements.map { Suggestion.replace(highlightRanges[0], it) }
+    override fun getSuggestions(): List<Suggestion> = when (match.rule.id) {
+      "EN_PLAIN_ENGLISH_REPLACE" -> listOf(Suggestion.replace(highlightRanges[0], ""))
+      else -> match.suggestedReplacements.map { Suggestion.replace(highlightRanges[0], it) }
+    }
 
     override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
 
@@ -184,13 +178,14 @@ open class LanguageToolChecker : TextChecker() {
 
     private fun isAbstractCategory(id: String) =
       id == RuleGroup.SENTENCE_END_PUNCTUATION || id == RuleGroup.SENTENCE_START_CASE || id == RuleGroup.UNLIKELY_OPENING_PUNCTUATION
+
+    override fun isStyleLike(): Boolean {
+      return LanguageToolRule.isStyleLike(match.rule)
+    }
   }
 }
 
-private data class CachedResults(val configStamp: Long, val problems: List<Problem>)
-
 private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
-private val cacheKey = Key.create<CachedResults>("grazie.LT.problem.cache")
 private val interner = Interner.createWeakInterner<String>()
 private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
 private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
@@ -199,10 +194,9 @@ private val quotedLiteralPattern = Regex("['\"]\\S+['\"]")
 
 internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
   return tool.allRules.asSequence()
-    .distinctBy { it.id }
-    .filter { r -> !r.isDictionaryBasedSpellingRule }
-    .map { LanguageToolRule(lang, it) }
-    .toList()
+    .filter { !it.isDictionaryBasedSpellingRule }
+    .groupBy { it.id }
+    .map { (_, rules) -> LanguageToolRule(lang, rules.first(), rules) }
 }
 
 /**
@@ -265,6 +259,9 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
   return false
 }
 
+private val RuleMatch.messageSanitized
+  get() = message.replace("<suggestion>", "").replace("</suggestion>", "")
+
 private fun isPartOfQuotedLiteralText(match: RuleMatch, text: TextContent): Boolean {
   return quotedLiteralPattern.findAll(text.toString())
     .map { TextRange(it.range.first, it.range.last) }
@@ -289,10 +286,10 @@ private fun isPathPart(startOffset: Int, endOffset: Int, text: TextContent): Boo
 }
 
 @NlsSafe
-private fun toTooltipTemplate(match: RuleMatch): String {
+private fun toTooltipTemplate(problem: TextProblem): String {
   val html = html {
     p {
-      +match.messageSanitized
+      +problem.getDescriptionTemplate(true)
     }
 
     p {

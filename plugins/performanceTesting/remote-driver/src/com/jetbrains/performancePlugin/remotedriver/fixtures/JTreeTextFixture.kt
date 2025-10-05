@@ -9,10 +9,13 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextCellRendererReader
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.computeOnEdt
+import org.assertj.swing.awt.AWT
 import org.assertj.swing.core.BasicComponentFinder
+import org.assertj.swing.core.MouseButton
 import org.assertj.swing.core.Robot
 import org.assertj.swing.driver.BasicJTreeCellReader
 import org.assertj.swing.driver.CellRendererReader
+import org.assertj.swing.driver.ComponentPreconditions
 import org.assertj.swing.fixture.JTreeFixture
 import java.awt.Component
 import java.awt.Container
@@ -30,6 +33,21 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
   fun replaceCellRendererReader(reader: CellRendererReader) {
     cellReader = BasicJTreeCellReader(reader)
     replaceCellReader(cellReader)
+  }
+
+  override fun clickRow(row: Int): JTreeFixture {
+    robot().click(target(), scrollToRowAndGetVisibleCenter(row))
+    return this
+  }
+
+  override fun rightClickRow(row: Int): JTreeFixture {
+    robot().click(target(), scrollToRowAndGetVisibleCenter(row), MouseButton.RIGHT_BUTTON, 1)
+    return this
+  }
+
+  override fun doubleClickRow(row: Int): JTreeFixture {
+    robot().click(target(), scrollToRowAndGetVisibleCenter(row), MouseButton.LEFT_BUTTON, 2)
+    return this
   }
 
   fun getRowPoint(row: Int): Point = computeOnEdt {
@@ -94,8 +112,8 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
     val rowComponent = getComponentAtRow(row)
     if (rowComponent is Container) {
       return BasicComponentFinder.finderWithCurrentAwtHierarchy().findAll(rowComponent) {
-        ReflectionUtil.getMethod(it.javaClass,"getIcon") != null
-      }.mapNotNull { ReflectionUtil.getMethod(it.javaClass,"getIcon")!!.invoke(it) as? Icon }
+        ReflectionUtil.getMethod(it.javaClass, "getIcon") != null
+      }.mapNotNull { ReflectionUtil.getMethod(it.javaClass, "getIcon")!!.invoke(it) as? Icon }
     }
     return emptyList()
   }
@@ -111,5 +129,23 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
                                                      row,
                                                      tree.hasFocus() && tree.isRowSelected(row))
     }
+  }
+
+  private fun scrollToRowAndGetVisibleCenter(row: Int): Point {
+    return computeOnEdt {
+      val tree = target()
+      ComponentPreconditions.checkEnabledAndShowing(tree)
+      tree.checkRowInBounds(row)
+      tree.scrollRowToVisible(row)
+      AWT.centerOf(tree.visibleRect.intersection(tree.getRowBounds(row)))
+    }
+  }
+
+  private fun JTree.checkRowInBounds(row: Int): Int {
+    val rowCount = getRowCount()
+    if (row in 0..<rowCount) {
+      return row
+    }
+    throw IndexOutOfBoundsException("The given row <$row> should be between <0> and <$rowCount>")
   }
 }

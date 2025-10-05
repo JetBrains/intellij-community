@@ -15,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service(Service.Level.PROJECT)
 @State(name = "ProjectDictionaryState", storages = @Storage(value = "dictionaries", stateSplitter = ProjectDictionarySplitter.class))
@@ -67,7 +67,7 @@ public final class ProjectDictionaryState implements PersistentStateComponent<Pr
   }
 
   private void retrieveProjectDictionaries() {
-    Set<EditableDictionary> dictionaries = new HashSet<>();
+    Set<EditableDictionary> dictionaries = ConcurrentHashMap.newKeySet();
     List<DictionaryState> dictionaryStates = this.dictionaryStates;
     if (dictionaryStates != null) {
       for (DictionaryState dictionaryState : dictionaryStates) {

@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,12 +50,6 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
           transformTypeFromAssertion(context.getType(typeElement), false, context, typeElement));
       }
     }
-    else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
-      final PyExpression[] args = node.getArguments();
-      if (args.length == 1) {
-        pushAssertion(args[0], myPositive, context -> PyTypingTypeProvider.createTypingCallableType(node));
-      }
-    }
     else if (node.isCalleeText(PyNames.ISSUBCLASS)) {
       final PyExpression[] args = node.getArguments();
       if (args.length == 2) {
@@ -67,7 +62,12 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   private void visitExpressionInCondition(@NotNull PyExpression node) {
-    if (myPositive && (isIfReferenceStatement(node) || isIfReferenceConditionalStatement(node) || isIfNotReferenceStatement(node))) {
+    if (myPositive && (
+      isIfReferenceStatement(node) ||
+      isIfReferenceConditionalStatement(node) ||
+      isBinaryExpressionPart(node)
+    )) {
+      // TODO: we can actually check if the class defines __bool__ or __len__, and use it to exclude the type
       // we could not suggest `None` because it could be a reference to an empty collection
       // so we could push only non-`None` assertions
       pushAssertion(node, !myPositive, context -> PyBuiltinCache.getInstance(node).getNoneType());
@@ -130,9 +130,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   private void processIn(@NotNull PyExpression lhs, @NotNull PyExpression rhs) {
-    if (rhs instanceof PyTupleExpression tupleExpr) {
+    if (rhs instanceof PyTupleExpression || rhs instanceof PyListLiteralExpression || rhs instanceof PySetLiteralExpression) {
       pushAssertion(lhs, myPositive, (TypeEvalContext context) -> {
-        PyExpression[] elements = tupleExpr.getElements();
+        PyExpression[] elements = ((PySequenceExpression)rhs).getElements();
         List<PyType> types = new ArrayList<>(elements.length);
         for (PyExpression element : elements) {
           PyType type = PyLiteralType.isNone(element) ? PyBuiltinCache.getInstance(element).getNoneType() : getLiteralType(element, context);
@@ -168,10 +168,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyPattern(@NotNull PyPattern node) {
-    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyCaseClause.class, PyGroupPattern.class, PyAsPattern.class, PyOrPattern.class);
-    if (parent instanceof PyMatchStatement matchStatement) {
-      pushAssertion(matchStatement.getSubject(), myPositive, context -> context.getType(node));
+  public void visitPyCaseClause(@NotNull PyCaseClause node) {
+    var pattern = node.getPattern();
+    if (pattern == null) return;
+    if (node.getParent() instanceof PyMatchStatement matchStatement) {
+      pushAssertion(matchStatement.getSubject(), myPositive, context -> context.getType(pattern));
     }
   }
 
@@ -184,12 +185,16 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final PyExpression subject = matchStatement.getSubject();
     if (subject == null) return;
     // allowAnyExpr is here because we need negative edges with Never even when subject is not reference expression
-    pushAssertion(subject, true, true, context -> {
+    pushAssertion(subject, true, true, true, context -> {
       PyType subjectType = context.getType(subject);
       for (PyCaseClause cs : matchStatement.getCaseClauses()) {
         if (cs.getPattern() == null) continue;
         if (cs.getGuardCondition() != null) continue;
-        subjectType = Ref.deref(createAssertionType(subjectType, context.getType(cs.getPattern()), false, context));
+        if (cs.getPattern().isIrrefutable()) {
+          subjectType = PyNeverType.NEVER;
+          break;
+        }
+        subjectType = Ref.deref(createAssertionType(subjectType, context.getType(cs.getPattern()), false, true, context));
       }
 
       return subjectType;
@@ -200,13 +205,19 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   public static @Nullable Ref<PyType> createAssertionType(@Nullable PyType initial,
                                                           @Nullable PyType suggested,
                                                           boolean positive,
+                                                          boolean forceStrictNarrow, 
                                                           @NotNull TypeEvalContext context) {
     if (suggested == null) return null;
     if (positive) {
+      // Find all initial type members that are subtypes of the suggested (more specific than the narrowing "suggested" type).
+      // Imagine having `list[int] | int` narrowed by `list[Any]`.
       List<PyType> initialSubtypes = PyTypeUtil.toStream(initial)
         .filter(initialSubtype -> match(suggested, initialSubtype, context))
         .toList();
 
+      // Find all suggested subtype members that are subtypes of the initial (more specific than the initial type)
+      // AND are not subtypes of those more specific initial types. 
+      // This is needed to support generics of `Any`, because `list[Any]` is both a subtype, and a supertype of `list[str]`.
       StreamEx<PyType> suggestedSubtypes = PyTypeUtil.toStream(suggested)
         .filter(suggestedSubtype -> match(initial, suggestedSubtype, context))
         .filter(suggestedSubtype -> !ContainerUtil.exists(initialSubtypes,
@@ -217,10 +228,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     }
     else {
       if (initial instanceof PyUnionType unionType) {
-        return Ref.create(excludeFromUnion(unionType, suggested, context));
+        return Ref.create(excludeFromUnion(unionType, suggested, context, forceStrictNarrow));
       }
       if (match(suggested, initial, context)) {
-        return Ref.create(PyNeverType.NEVER);
+        return (forceStrictNarrow || isStrictNarrowingAllowed()) ? Ref.create(PyNeverType.NEVER) : null;
       }
       Ref<@Nullable PyType> diff = trySubtract(initial, suggested, context);
       return diff != null ? diff : Ref.create(initial);
@@ -229,21 +240,26 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   private static @Nullable PyType excludeFromUnion(@NotNull PyUnionType unionType,
                                                    @Nullable PyType type,
-                                                   @NotNull TypeEvalContext context) {
+                                                   @NotNull TypeEvalContext context,
+                                                   boolean forceStrictNarrow) {
     final List<PyType> members = new ArrayList<>();
     for (PyType m : unionType.getMembers()) {
       Ref<@Nullable PyType> diff = trySubtract(m, type, context);
       if (diff != null) {
         members.add(diff.get());
       }
-      else if (!PyTypeChecker.match(type, m, context)) {
+      else if (!match(type, m, context)) {
         members.add(m);
       }
     }
-    if (members.isEmpty()) {
+    if ((forceStrictNarrow || isStrictNarrowingAllowed()) && members.isEmpty()) {
       return PyNeverType.NEVER;
     }
     return PyUnionType.union(members);
+  }
+
+  public static boolean isStrictNarrowingAllowed() {
+    return Registry.is("python.strict.type.narrow");
   }
 
   private static @Nullable Ref<@Nullable PyType> trySubtract(@Nullable PyType type1,
@@ -282,6 +298,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context) {
     return !(actual instanceof PyStructuralType) &&
            !PyTypeChecker.isUnknown(actual, context) &&
+           !(PyTypeUtil.inheritsAny(actual, context)) &&
            PyTypeChecker.match(expected, actual, context);
   }
 
@@ -331,20 +348,26 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   private void pushAssertion(@Nullable PyExpression expr, boolean positive, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
-    pushAssertion(expr, positive, false, suggestedType);
+    pushAssertion(expr, positive, false, isStrictNarrowingAllowed(), suggestedType);
   }
 
-  private void pushAssertion(@Nullable PyExpression expr, boolean positive, boolean allowAnyExpr, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
+  private void pushAssertion(@Nullable PyExpression expr, boolean positive, boolean allowAnyExpr, boolean forceStrictNarrow, @NotNull Function<TypeEvalContext, PyType> suggestedType) {
     expr = PyPsiUtils.flattenParens(expr);
-    if (expr instanceof PyAssignmentExpression walrus) {
-      pushAssertion(walrus.getTarget(), positive, allowAnyExpr, suggestedType);
+    if (expr instanceof PySequenceExpression seqExpr) {
+      PyExpression[] elements = seqExpr.getElements();
+      for (int i = 0; i < elements.length; i++) {
+        pushAssertion(elements[i], positive, allowAnyExpr, forceStrictNarrow, getIteratedType(suggestedType, i));
+      }
+    }
+    else if (expr instanceof PyAssignmentExpression walrus) {
+      pushAssertion(walrus.getTarget(), positive, allowAnyExpr, forceStrictNarrow, suggestedType);
     }
     else if (expr != null) {
       final var target = expr;
       final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
         @Override
         public Ref<PyType> getType(TypeEvalContext context) {
-          return createAssertionType(context.getType(target), suggestedType.apply(context), positive, context);
+          return createAssertionType(context.getType(target), suggestedType.apply(context), positive, forceStrictNarrow, context);
         }
       };
 
@@ -357,21 +380,42 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     }
   }
 
+  @NotNull
+  private static Function<TypeEvalContext, PyType> getIteratedType(@NotNull Function<TypeEvalContext, PyType> sequenceType, int index) {
+    return context -> {
+      var computedSuggestedType = sequenceType.apply(context);
+      if (computedSuggestedType instanceof PyNeverType) return computedSuggestedType;
+      if (computedSuggestedType instanceof PyTupleType tupleType) {
+        return tupleType.getElementType(index);
+      }
+      return null;
+    };
+  }
+  
+  private static @Nullable PsiElement skipNotAndParens(@Nullable PsiElement element) {
+    if (element == null) return null;
+    for (PsiElement e = element.getParent(); e != null; e = e.getParent()) {
+      if (!(e instanceof PyParenthesizedExpression) && 
+          !(e instanceof PyPrefixExpression prefixExpr && prefixExpr.getOperator() == PyTokenTypes.NOT_KEYWORD)) {
+        return e;
+      }
+    }
+    return null;
+  }
+
   private static boolean isIfReferenceStatement(@NotNull PyExpression node) {
-    return PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class) instanceof PyIfPart;
+    return skipNotAndParens(node) instanceof PyConditionalStatementPart;
   }
 
   private static boolean isIfReferenceConditionalStatement(@NotNull PyExpression node) {
-    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class); 
+    final PsiElement parent = skipNotAndParens(node);
     return parent instanceof PyConditionalExpression cond &&
            PsiTreeUtil.isAncestor(cond.getCondition(), node, false);
   }
 
-  private static boolean isIfNotReferenceStatement(@NotNull PyExpression node) {
-    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyParenthesizedExpression.class);
-    return parent instanceof PyPrefixExpression &&
-           ((PyPrefixExpression)parent).getOperator() == PyTokenTypes.NOT_KEYWORD &&
-           parent.getParent() instanceof PyIfPart;
+  private static boolean isBinaryExpressionPart(@NotNull PyExpression node) {
+    return skipNotAndParens(node) instanceof PyBinaryExpression binExpr &&
+           (binExpr.isOperator(PyNames.AND) || binExpr.isOperator(PyNames.OR));
   }
 
   static class Assertion {

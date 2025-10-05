@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.childScope
+import com.intellij.collaboration.snippets.PathHandlingMode
+import com.intellij.collaboration.snippets.PathHandlingMode.Companion.getFileNameExtractor
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationListener
@@ -17,7 +20,6 @@ import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asSafely
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
@@ -27,13 +29,13 @@ import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.getResultOrThrow
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
+import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter.Companion.isAuthorizationException
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.snippets.GitLabSnippetService.Companion.GL_SNIPPET_FILES_LIMIT
-import org.jetbrains.plugins.gitlab.snippets.PathHandlingMode.Companion.getFileNameExtractor
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.*
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logSnippetActionExecuted
@@ -105,7 +107,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
   private suspend fun attemptLogin(accountManager: GitLabAccountManager): Boolean {
     return coroutineScope {
       async(Dispatchers.Main) {
-        val (account, token) = GitLabLoginUtil.logInViaToken(project, null) { server, name ->
+        val (account, token) = GitLabLoginUtil.logInViaToken(project, null, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>() ?: return@async false
 
@@ -124,7 +126,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
                                      result: GitLabCreateSnippetResult): GitLabApi? {
     return coroutineScope {
       async(Dispatchers.EDT) {
-        val loginResult = GitLabLoginUtil.updateToken(project, null, result.account) { server, name ->
+        val loginResult = GitLabLoginUtil.updateToken(project, null, result.account, loginSource = GitLabLoginSource.SNIPPET) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>() ?: return@async null
 
@@ -247,7 +249,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
           files.map { file -> extractor(file) }.toSet().size == files.size // Check that there are no duplicates when mapped
         }
 
-      val vmCs = childScope()
+      val vmCs = childScope(this::class)
       val vm = GitLabCreateSnippetViewModel(
         vmCs,
         project,

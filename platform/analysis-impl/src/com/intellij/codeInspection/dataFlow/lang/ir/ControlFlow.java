@@ -3,7 +3,6 @@
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
@@ -17,7 +16,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -188,36 +186,13 @@ public final class ControlFlow {
   }
 
   /**
-   * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(DfType)}
-   *
-   * @param variable to check
-   * @return true if supplied variable is a temp variable.
-   */
-  public static boolean isTempVariable(@NotNull DfaVariableValue variable) {
-    return variable.getDescriptor() instanceof Synthetic;
-  }
-
-  /**
    * Create a synthetic variable (not declared in the original code) to be used within this control flow.
    *
    * @param dfType a type of variable to create
    * @return newly created variable
    */
   public @NotNull DfaVariableValue createTempVariable(@NotNull DfType dfType) {
-    return getFactory().getVarFactory().createVariableValue(new Synthetic(getInstructionCount(), dfType));
-  }
-
-  public @NotNull List<VariableDescriptor> getSynthetics(PsiElement element) {
-    int startOffset = getStartOffset(element).getInstructionOffset();
-    List<VariableDescriptor> synthetics = new ArrayList<>();
-    for (DfaValue value : myFactory.getValues()) {
-      if (value instanceof DfaVariableValue var &&
-          var.getDescriptor() instanceof Synthetic synthetic &&
-          synthetic.myLocation >= startOffset) {
-        synthetics.add(synthetic);
-      }
-    }
-    return synthetics;
+    return getFactory().createTempVariable(getInstructionCount(), dfType);
   }
 
   public abstract static class ControlFlowOffset {
@@ -280,31 +255,6 @@ public final class ControlFlow {
     @Override
     public int getInstructionOffset() {
       return myElementMap.getInt(myElement);
-    }
-  }
-
-  public static final class Synthetic implements VariableDescriptor {
-    private final int myLocation;
-    private final DfType myType;
-
-    private Synthetic(int location, DfType type) {
-      myLocation = location;
-      myType = type;
-    }
-
-    @Override
-    public @NotNull String toString() {
-      return "tmp$" + myLocation;
-    }
-
-    @Override
-    public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
-      return myType;
-    }
-
-    @Override
-    public boolean isStable() {
-      return true;
     }
   }
 }

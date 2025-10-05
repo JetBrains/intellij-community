@@ -2,16 +2,11 @@ package com.intellij.database.run.actions;
 
 import com.intellij.database.DataGridBundle;
 import com.intellij.database.DatabaseDataKeys;
-import com.intellij.database.datagrid.DataGrid;
-import com.intellij.database.datagrid.GridHelper;
-import com.intellij.database.datagrid.GridUtilCore;
-import com.intellij.database.run.actions.SetCustomPageSizeAction.SetPageSizeDialogWrapper;
+import com.intellij.database.datagrid.*;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.database.run.actions.ChangePageSizeUtilKt.setPageSizeAndReload;
 
 public class SetDefaultPageSizeAction extends DumbAwareAction {
 
@@ -27,9 +22,7 @@ public class SetDefaultPageSizeAction extends DumbAwareAction {
       return;
     }
     e.getPresentation().setEnabledAndVisible(true);
-    GridHelper helper = GridHelper.get(grid);
-    String pageSize = helper.isLimitDefaultPageSize() ? String.valueOf(helper.getDefaultPageSize()) : DataGridBundle.message("action.ChangePageSize.text.all");
-    e.getPresentation().setText(DataGridBundle.message("action.SetDefaultPageSize.text.2", pageSize));
+    e.getPresentation().setText(DataGridBundle.message("action.SetDefaultPageSize.text"));
   }
 
   @Override
@@ -41,32 +34,11 @@ public class SetDefaultPageSizeAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataGrid grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY);
     if (grid == null) return;
-    new SetPageSizeDialogWrapper(getEventProject(e)) {
 
-      @Override
-      protected int getPageSize() {
-        return GridHelper.get(grid).getDefaultPageSize();
-      }
+    int pageSize = grid.getDataHookup().getPageModel().getPageSize();
+    GridHelper helper = GridHelper.get(grid);
 
-      @Override
-      protected boolean isLimitPageSize() {
-        return GridHelper.get(grid).isLimitDefaultPageSize();
-      }
-
-      @Override
-      protected void doOKAction() {
-        super.doOKAction();
-        GridHelper helper = GridHelper.get(grid);
-        int pageSize = getMyForm().getPageSize();
-        if (GridUtilCore.isPageSizeUnlimited(pageSize)) {
-          helper.setLimitDefaultPageSize(false);
-        }
-        else {
-          helper.setLimitDefaultPageSize(true);
-          helper.setDefaultPageSize(pageSize);
-        }
-        setPageSizeAndReload(pageSize, grid);
-      }
-    }.show();
+    helper.setDefaultPageSize(pageSize);
+    helper.setLimitDefaultPageSize(!GridUtilCore.isPageSizeUnlimited(pageSize));
   }
 }

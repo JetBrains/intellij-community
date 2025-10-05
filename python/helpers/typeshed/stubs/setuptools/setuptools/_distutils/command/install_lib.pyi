@@ -1,16 +1,16 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, MaybeNone
 from typing import ClassVar
 
 from ..cmd import Command
 
 class install_lib(Command):
-    description: str
+    description: ClassVar[str]
     user_options: ClassVar[list[tuple[str, str | None, str]]]
     boolean_options: ClassVar[list[str]]
     negative_opt: ClassVar[dict[str, str]]
     install_dir: Incomplete
     build_dir: Incomplete
-    force: int
+    force: bool
     compile: Incomplete
     optimize: Incomplete
     skip_build: Incomplete
@@ -18,7 +18,7 @@ class install_lib(Command):
     def finalize_options(self) -> None: ...
     def run(self) -> None: ...
     def build(self) -> None: ...
-    def install(self) -> list[str]: ...
+    def install(self) -> list[str] | MaybeNone: ...
     def byte_compile(self, files) -> None: ...
     def get_outputs(self): ...
     def get_inputs(self): ...

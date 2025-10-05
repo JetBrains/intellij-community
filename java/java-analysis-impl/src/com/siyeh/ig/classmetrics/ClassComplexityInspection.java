@@ -51,7 +51,7 @@ public final class ClassComplexityInspection
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ClassComplexityVisitor();
   }
 

@@ -241,12 +241,13 @@ public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStor
   public fun replace(
     newStorage: ImmutableEntityStorage,
     changes: Map<Class<*>, List<EntityChange<*>>>,
+    symbolicEntityIdsChanges: Set<ReferenceChange<*>>,
     beforeChanged: (VersionedStorageChange) -> Unit,
     afterChanged: (VersionedStorageChange) -> Unit,
   ) {
     val oldCopy = currentPointer
     if (oldCopy.storage == newStorage) return
-    val change = VersionedStorageChangeImpl(oldCopy.storage, newStorage, changes)
+    val change = VersionedStorageChangeImpl(oldCopy.storage, newStorage, changes, symbolicEntityIdsChanges)
     try {
       (newStorage as? AbstractEntityStorage)?.isEventHandling = true
       beforeChanged(change)
@@ -271,10 +272,18 @@ private class VersionedStorageChangeImpl(
   override val storageBefore: ImmutableEntityStorage,
   override val storageAfter: ImmutableEntityStorage,
   private val changes: Map<Class<*>, List<EntityChange<*>>>,
+  private val referenceChanges: Set<ReferenceChange<*>>,
 ) : VersionedStorageChangeInternal {
   @Suppress("UNCHECKED_CAST")
   override fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>> {
     return (changes[entityClass] as? List<EntityChange<T>>) ?: emptyList()
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override fun <E: WorkspaceEntityWithSymbolicId> getChangedReferences(
+    referenceSymbolicEntityIdClass: Class<out SymbolicEntityId<E>>,
+  ): Collection<ReferenceChange<E>> {
+    return referenceChanges.filter { referenceSymbolicEntityIdClass.isInstance(it.symbolicEntityId) } as Collection<ReferenceChange<E>>
   }
 
   override fun getAllChanges(): Sequence<EntityChange<*>> = changes.values.asSequence().flatten()

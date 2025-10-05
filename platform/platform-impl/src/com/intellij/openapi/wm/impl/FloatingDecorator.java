@@ -6,7 +6,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.UiDispatcherKind;
+import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;

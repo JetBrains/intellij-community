@@ -269,6 +269,11 @@ public interface Git {
   Hash resolveReference(@NotNull GitRepository repository, @NotNull String reference);
 
   @NotNull
+  GitCommandResult updateReference(@NotNull GitRepository repository, @NotNull String reference,
+                                   @NotNull Hash newObjectId,
+                                   @Nullable String reflogMessage);
+
+  @NotNull
   GitCommandResult getObjectType(@NotNull GitRepository repository, @NotNull String object);
 
   @Nullable

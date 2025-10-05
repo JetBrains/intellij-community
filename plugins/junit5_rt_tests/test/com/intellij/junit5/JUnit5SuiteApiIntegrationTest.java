@@ -107,4 +107,34 @@ public class JUnit5SuiteApiIntegrationTest extends AbstractTestFrameworkCompilin
   private static <T extends BaseTestMessage> Set<String> getTestIds(List<ServiceMessage> messages, Class<T> clazz) {
     return messages.stream().filter(clazz::isInstance).map(clazz::cast).map(o -> o.getAttributes().get("id")).collect(Collectors.toSet());
   }
+
+  public void testRerunFailedFromSuite() throws Exception {
+    ProcessOutput initialOutput = doStartTestsProcess(createRunPackageConfiguration("org.example.api"));
+    assertEmpty(initialOutput.out);
+    assertEmpty(initialOutput.err);
+
+    List<ServiceMessage> initialMessages = initialOutput.messages;
+    Map<String, TestStarted> started = getStartedTests(initialMessages);
+    Set<String> failedIds = getTestIds(initialMessages, TestFailed.class);
+
+    Set<String> failedHints = failedIds.stream()
+      .map(id -> started.get(id))
+      .map(t -> t.getAttributes().get("locationHint"))
+      .collect(Collectors.toSet());
+
+    assertEquals(Set.of(
+      "java:test://org.example.impl.FirstTest/test1",
+      "java:test://org.example.impl.SecondTest/test2"
+    ), failedHints);
+
+    ProcessOutput rerunOutput = doStartTestsProcess(createRunPackageConfiguration("org.example.api"), failedHints);
+    assertEmpty(rerunOutput.out);
+    assertEmpty(rerunOutput.err);
+
+    Map<String, TestStarted> rerunStarted = getStartedTests(rerunOutput.messages);
+    Set<String> rerunHints = rerunStarted.values().stream().map(t -> t.getAttributes().get("locationHint")).collect(Collectors.toSet());
+
+    assertEquals(failedHints, rerunHints);
+    assertEquals(rerunStarted.keySet(), getTestIds(rerunOutput.messages, TestFinished.class));
+  }
 }

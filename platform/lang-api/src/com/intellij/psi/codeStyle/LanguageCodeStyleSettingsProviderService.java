@@ -4,9 +4,9 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.serviceContainer.NonInjectable;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +32,8 @@ final class LanguageCodeStyleSettingsProviderService implements Disposable {
     });
   }
 
-  @SuppressWarnings("unused")
-  @NonInjectable
-  LanguageCodeStyleSettingsProviderService() {
+  @TestOnly
+  LanguageCodeStyleSettingsProviderService(@SuppressWarnings("unused") boolean testOnly) {
   }
 
   public @NotNull List<LanguageCodeStyleSettingsProvider> getAllProviders() {

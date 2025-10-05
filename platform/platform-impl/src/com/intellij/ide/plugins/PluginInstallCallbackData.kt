@@ -4,8 +4,8 @@ package com.intellij.ide.plugins
 import java.nio.file.Path
 
 data class PluginInstallCallbackData(
-  val file: Path,
-  val pluginDescriptor: IdeaPluginDescriptorImpl,
+  val file: Path?,
+  val pluginDescriptor: IdeaPluginDescriptor,
   val restartNeeded: Boolean,
 )
 

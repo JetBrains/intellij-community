@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -55,8 +55,18 @@ public abstract class PersistentFS extends ManagingFS {
     return new DiskQueryRelay<>(function)::accessDiskWithCheckCanceled;
   }
 
+  /**
+   * @deprecated In the current implementation the method does nothing.
+   * It's uses are likely some sort of abstraction leaks, since the details of VFS caching layers shouldn't be of a concern for clients
+   * MAYBE RC: introduce a more generic method like 'drop unused entries from VFS cache' -- which still makes some sense
+   */
+  @Deprecated(forRemoval = true)
   public abstract void clearIdCache();
 
+  /** @return children already cached in VFS (persistent) storage. It may be _not all_ the actual children! */
+  //MAYBE RC: rename to listCachedNames()
+  //MAYBE RC: remove this method, use FSRecordsImpl.list() instead
+  @ApiStatus.Internal
   public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);
 
   @ApiStatus.Internal
@@ -80,17 +90,15 @@ public abstract class PersistentFS extends ManagingFS {
   public static boolean isHidden(@Attributes int attributes) { return isSet(attributes, Flags.IS_HIDDEN); }
   public static boolean isOfflineByDefault(@Attributes int attributes) { return isSet(attributes, Flags.OFFLINE_BY_DEFAULT); }
 
-  public static @NotNull FileAttributes.CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
+  public static @NotNull CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
     if (!isDirectory(attributes)) {
       throw new IllegalArgumentException(
         "CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
     }
     if (!isSet(attributes, Flags.CHILDREN_CASE_SENSITIVITY_CACHED)) {
-      return FileAttributes.CaseSensitivity.UNKNOWN;
+      return CaseSensitivity.UNKNOWN;
     }
-    return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE)
-           ? FileAttributes.CaseSensitivity.SENSITIVE
-           : FileAttributes.CaseSensitivity.INSENSITIVE;
+    return CaseSensitivity.fromBoolean(isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE));
   }
 
   public abstract int storeUnlinkedContent(byte @NotNull [] bytes);
@@ -112,6 +120,11 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
 
-  // 'true' if the FS persisted at least one child, or it has never been queried for children
-  public abstract boolean mayHaveChildren(int id);
+  /**
+   * @return false if fileId's children are known to VFS, and they are empty (=have no children), true otherwise
+   * (=either do have known children, or children are unknown, hence _may_ be present)
+   */
+  //MAYBE RC: rename to maybeHaveChildren() or to !hasZeroChildren()?
+  //MAYBE RC: make it @Internal?
+  public abstract boolean mayHaveChildren(int fileId);
 }

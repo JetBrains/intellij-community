@@ -76,7 +76,7 @@ public final class ExtendsObjectInspection extends BaseInspection implements Cle
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new ExtendsObjectVisitor();
   }
 

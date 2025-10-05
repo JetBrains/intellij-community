@@ -32,6 +32,15 @@ public final class FoldingPolicy {
     }
   }
 
+  static boolean keepExpandedOnFirstCollapseAll(@NotNull FoldingDescriptor foldingDescriptor, @NotNull FoldingBuilder foldingBuilder) {
+    try {
+      return foldingBuilder.keepExpandedOnFirstCollapseAll(foldingDescriptor);
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
+  }
+
   public static @Nullable String getSignature(@NotNull PsiElement element) {
     for(ElementSignatureProvider provider: EP_NAME.getExtensionList()) {
       String signature = provider.getSignature(element);

@@ -15,6 +15,7 @@ import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 
 @ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Unused, see VcsLogTableCommitSelectionListener")
 abstract class CommitSelectionListener<T : VcsCommitMetadata?> protected constructor(
   protected val graphTable: VcsLogGraphTable,
@@ -88,6 +89,7 @@ abstract class CommitSelectionListener<T : VcsCommitMetadata?> protected constru
   }
 
   @RequiresEdt
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("onDetailsLoaded with additional parameter is preferred")
   protected open fun onDetailsLoaded(detailsList: List<T>) {}
 

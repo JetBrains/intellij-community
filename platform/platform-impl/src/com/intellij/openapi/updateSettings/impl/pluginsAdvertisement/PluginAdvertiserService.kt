@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -26,11 +26,10 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.DEPENDENCY_SUPPORT_TYPE
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.EXECUTABLE_DEPENDENCY_KIND
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstallationService
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -44,6 +43,7 @@ import org.jetbrains.annotations.Nls
 import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
+@IntellijInternalApi
 sealed interface PluginAdvertiserService {
 
   companion object {
@@ -78,7 +78,7 @@ sealed interface PluginAdvertiserService {
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
     val pyCharmProfessional: SuggestedIde = SuggestedIde(
-      name = "PyCharm",
+      name = "PyCharm Pro",
       productCode = "PY",
       defaultDownloadUrl = "https://www.jetbrains.com/pycharm/download/",
       platformSpecificDownloadUrlTemplate = "https://www.jetbrains.com/pycharm/download/download-thanks.html?platform={type}",
@@ -147,6 +147,7 @@ sealed interface PluginAdvertiserService {
 }
 
 @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
+@IntellijInternalApi
 open class PluginAdvertiserServiceImpl(
   private val project: Project,
   private val cs: CoroutineScope,
@@ -341,15 +342,7 @@ open class PluginAdvertiserServiceImpl(
   }
 
   private fun getSuggestionReason(it: UnknownFeature): @Nls String {
-    val kind = it.implementationName.substringBefore(":")
-    if (kind == EXECUTABLE_DEPENDENCY_KIND) {
-      val executableName = it.implementationName.substringAfter(":")
-      if (executableName.isNotBlank()) {
-        return IdeBundle.message("plugins.configurable.suggested.features.executable", executableName)
-      }
-    }
-
-    return IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
+    return it.suggestionReason ?: IdeBundle.message("plugins.configurable.suggested.features.dependency", it.implementationDisplayName)
   }
 
   private fun convertToModel(descriptor: IdeaPluginDescriptor?): PluginUiModel? {
@@ -535,20 +528,11 @@ open class PluginAdvertiserServiceImpl(
         )
       }
       else {
-        if (feature.value.size <= 1) {
-          IdeBundle.message(
-            "plugins.advertiser.missing.feature.dependency",
-            pluginsNumber,
-            pluginNames
-          )
-        }
-        else {
-          IdeBundle.message(
-            "plugins.advertiser.missing.features.dependency",
-            pluginsNumber,
-            pluginNames
-          )
-        }
+        IdeBundle.message(
+          "plugins.advertiser.missing.features.dependency",
+          pluginsNumber,
+          pluginNames
+        )
       }
     }
     else {
@@ -582,8 +566,9 @@ open class PluginAdvertiserServiceImpl(
         featuresCollector.registerUnknownFeature(UnknownFeature(
           DEPENDENCY_SUPPORT_FEATURE,
           IdeBundle.message("plugins.advertiser.feature.dependency"),
-          extension.kind + ":" + dependency,
+          extension.kind + ":" + dependency.coordinate,
           null,
+          dependency.reason,
         ))
       }
     }
@@ -622,6 +607,7 @@ open class PluginAdvertiserServiceImpl(
 }
 
 @ApiStatus.Internal
+@IntellijInternalApi
 open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
 
   final override suspend fun run(
@@ -681,19 +667,20 @@ fun tryUltimate(
   suggestedIde: SuggestedIde,
   project: Project?,
   fusEventSource: FUSEventSource? = null,
+  currentFile: VirtualFile? = null,
   fallback: (() -> Unit)? = null,
 ) {
   val eventSource = fusEventSource ?: FUSEventSource.EDITOR
-  if (Registry.`is`("ide.try.ultimate.automatic.installation") && project != null) {
-    eventSource.logTryUltimate(project, pluginId)
-    project.service<UltimateInstallationService>().install(pluginId, suggestedIde, eventSource)
-  }
-  else {
-    fallback?.invoke() ?: eventSource.openDownloadPageAndLog(project = project,
-                                                             url = suggestedIde.defaultDownloadUrl,
-                                                             suggestedIde = suggestedIde,
-                                                             pluginId = pluginId)
-  }
+  OpenAnotherToolHandler.EP_NAME.extensionList
+    .firstOrNull() { it.isApplicable(project, suggestedIde, pluginId) }
+    ?.openTool(project, suggestedIde, pluginId, currentFile?.toNioPath())
+  ?: fallback?.invoke()
+  ?: eventSource.openDownloadPageAndLog(
+    project = project,
+    url = suggestedIde.defaultDownloadUrl,
+    suggestedIde = suggestedIde,
+    pluginId = pluginId
+  )
 }
 
 @ApiStatus.Internal
@@ -701,12 +688,18 @@ fun EditorNotificationPanel.createTryUltimateActionLabel(
   suggestedIde: SuggestedIde,
   project: Project,
   pluginId: PluginId? = null,
+  currentFile: VirtualFile? = null,
   action: (() -> Unit)? = null,
 ) {
   val labelName = IdeBundle.message("plugins.advertiser.action.try.ultimate", suggestedIde.name)
   createActionLabel(labelName) {
     action?.invoke()
-    tryUltimate(pluginId, suggestedIde, project)
+    tryUltimate(
+      pluginId = pluginId,
+      suggestedIde = suggestedIde,
+      project = project,
+      currentFile = currentFile
+    )
   }
 }
 

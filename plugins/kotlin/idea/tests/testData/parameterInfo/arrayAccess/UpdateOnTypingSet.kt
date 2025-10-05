@@ -8,7 +8,3 @@ class A {
 }
 
 // TYPE: "1, "
-
-/*
-Text: (x: String, <highlight>y: Int</highlight>), Disabled: true, Strikeout: false, Green: true
-*/

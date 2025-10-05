@@ -25,6 +25,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService.ExtensionDataProvider
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.getSuggestedCommercialIdeCode
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.isCommunityIde
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -48,6 +49,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 @ApiStatus.Internal
+@IntellijInternalApi
 class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, DumbAware {
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
@@ -165,7 +167,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
 
       val installedPlugin = installedPlugin
       if (hasSuggestedIde) {
-        addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState)
+        addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState, fileEditor.file)
         return panel // Don't show the "Ignore extension" label
       }
       else if (installedPlugin != null) {
@@ -188,7 +190,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
         }
       }
       else if (suggestedIdes.isNotEmpty() && jbProduced.isEmpty()) {
-        addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState)
+        addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState, fileEditor.file)
         return panel    // Don't show the "Ignore extension" label
       }
       else if (thirdParty.isNotEmpty() || jbProduced.isNotEmpty()) {
@@ -224,6 +226,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       panel: EditorNotificationPanel,
       label: JLabel,
       pluginAdvertiserExtensionsState: ExtensionDataProvider,
+      currentFile: VirtualFile? = null,
     ) {
       logSuggestedProducts(project, suggestedIdes)
 
@@ -243,7 +246,12 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
 
       for (suggestedIde in suggestedIdes) {
         val pluginId = guessPluginIdFromFile(extensionOrFileName)?.let { PluginId.getId(it) }
-        panel.createTryUltimateActionLabel(suggestedIde, project, pluginId) {
+        panel.createTryUltimateActionLabel(
+          suggestedIde = suggestedIde,
+          project = project,
+          pluginId = pluginId,
+          currentFile = currentFile
+        ) {
           pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName)
         }
       }
@@ -335,6 +343,7 @@ private fun getSuggestionDataByDetector(project: Project, suggestion: PluginAdve
 }
 
 @ApiStatus.Internal
+@IntellijInternalApi
 @TestOnly
 fun getSuggestionData(
   project: Project,

@@ -47,6 +47,6 @@ public abstract class AddParamBase extends AbstractFix {
 
         RefactoringUtil.addParameter(templateTag, paramTag);
 
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        DaemonCodeAnalyzer.getInstance(project).restart(this);
     }
 }

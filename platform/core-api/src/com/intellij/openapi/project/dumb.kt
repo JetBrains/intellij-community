@@ -4,7 +4,7 @@ package com.intellij.openapi.project
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.resume
 
 fun <T : Any> ExtensionPointName<T>.lazyDumbAwareExtensions(project: Project): Sequence<T> {
@@ -15,9 +15,12 @@ fun <T : Any> ExtensionPointName<T>.lazyDumbAwareExtensions(project: Project): S
  * Suspends until a project becomes smart.
  * NB: One should not rely upon "smartness" after this function resumes, because the project may become dumb again.
  *
+ * In cases when your code needs waiting for the initial import, indexing, configuration and does not change the configuration,
+ * consider using [Observation.awaitConfiguration].
+ *
  * @see DumbService.waitForSmartMode
  */
-@Internal
+@ApiStatus.Experimental
 suspend fun Project.waitForSmartMode() {
   suspendCancellableCoroutine { continuation ->
     DumbService.getInstance(this).runWhenSmart(ContextAwareRunnable {

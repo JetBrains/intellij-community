@@ -11,12 +11,12 @@ import com.intellij.psi.PsiElement
  * This class represents logger which user has after creation of the project. This is fake logger which is only necessary to support
  * "unspecified" state, e.g. where there is no preferred logger selected.
  */
-class UnspecifiedLogger : JvmLogger {
+public class UnspecifiedLogger : JvmLogger {
   override val id: String = UNSPECIFIED_LOGGER_ID
   override val loggerTypeName: String = "Unspecified"
   override val priority: Int = 1000
 
-  override fun isOnlyOnStartup() = true
+  override fun isOnlyOnStartup(): Boolean = true
   override fun insertLoggerAtClass(project: Project,
                                    clazz: PsiClass,
                                    logger: PsiElement): PsiElement = throw UnsupportedOperationException()
@@ -33,7 +33,7 @@ class UnspecifiedLogger : JvmLogger {
 
   override fun toString(): String = JavaBundle.message("java.configurable.logger.unspecified")
 
-  companion object {
-    const val UNSPECIFIED_LOGGER_ID: String = "Unspecified"
+  public companion object {
+    public const val UNSPECIFIED_LOGGER_ID: String = "Unspecified"
   }
 }

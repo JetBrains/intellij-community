@@ -77,7 +77,7 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> protected c
 
   abstract val supportedExtensions: Array<String>
 
-  override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
+  override suspend fun openProjectAsync(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     try {
       val wizardContext = WizardContext(null, null)
       builder.setUpdate(false)
@@ -115,14 +115,14 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> protected c
       var pathToOpen = if (wizardContext.projectStorageFormat == StorageScheme.DEFAULT) projectFile.toAbsolutePath() else dotIdeaFile.parent
       var shouldOpenExisting = false
       var importToProject = true
-      if (Files.exists(projectFile) || Files.exists(dotIdeaFile)) {
+      if (withContext(Dispatchers.IO) { Files.exists(projectFile) || Files.exists(dotIdeaFile) }) {
         if (ApplicationManager.getApplication().isHeadlessEnvironment) {
           shouldOpenExisting = true
           importToProject = true
         }
         else {
           val existingName: String
-          if (Files.exists(dotIdeaFile)) {
+          if (withContext(Dispatchers.IO) { Files.exists(dotIdeaFile) }) {
             existingName = "an existing project"
             pathToOpen = dotIdeaFile.parent
           }

@@ -2,8 +2,7 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
-import com.intellij.driver.client.service
-
+import com.intellij.driver.client.utility
 
 @Remote("com.intellij.openapi.roots.ModuleRootManager")
 interface ModuleRootManager {
@@ -22,5 +21,9 @@ interface ContentEntry {
   fun getFile(): VirtualFile
 }
 
-fun Driver.getContentEntries(module: Module) = utility(ModuleRootManager::class).getInstance(module).getContentEntries().toList()
-fun Driver.getOrderEntries(module: Module) = utility(ModuleRootManager::class).getInstance(module).getOrderEntries().toList()
+fun Driver.getContentEntries(module: Module): List<ContentEntry> {
+  return utility<ModuleRootManager>().getInstance(module).getContentEntries().toList()
+}
+fun Driver.getOrderEntries(module: Module): List<OrderEntry> {
+  return utility<ModuleRootManager>().getInstance(module).getOrderEntries().toList()
+}

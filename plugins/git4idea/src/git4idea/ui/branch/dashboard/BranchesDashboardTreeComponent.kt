@@ -224,7 +224,7 @@ interface BranchesDashboardTreeSelectionHandler {
   fun filterBy(branches: List<String>, repositories: Set<GitRepository> = emptySet())
 
   @RequiresEdt
-  fun navigateTo(navigatable: BranchNodeDescriptor.LogNavigatable, focus: Boolean)
+  fun navigateTo(navigatable: VcsLogNavigatable, focus: Boolean)
 
   /**
    * Mode of handling simple selection without an explicit action

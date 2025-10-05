@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.output.TerminalAlarmManager
 import org.jetbrains.plugins.terminal.block.session.util.FutureTerminalOutputStream
-import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.waitFor
@@ -43,7 +42,8 @@ class BlockTerminalSession(
    * Use [terminalOutputStream] whenever possible instead of this field.
    * @see [terminalOutputStream]
    */
-  internal val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
+  @ApiStatus.Internal
+  val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
 
   /**
    * This stream sends input to the terminal.
@@ -56,12 +56,11 @@ class BlockTerminalSession(
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
   private val textBuffer: TerminalTextBuffer
-  internal val controller: JediTerminal
-  internal val commandManager: ShellCommandManager
-  internal val commandExecutionManager: ShellCommandExecutionManager
+  val controller: JediTerminal
+  val commandManager: ShellCommandManager
+  val commandExecutionManager: ShellCommandExecutionManager
   private val typeAheadManager: TerminalTypeAheadManager
   private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
-  val commandBlockIntegration: CommandBlockIntegration = shellIntegration.commandBlockIntegration!!
 
   init {
     val styleState = StyleState()

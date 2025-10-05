@@ -3,7 +3,6 @@ package com.intellij.util.ui;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -17,6 +16,7 @@ import java.awt.event.InvocationEvent;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
+import java.util.function.Supplier;
 
 /**
  * <p>This class provides a static cache for a current Swing Event Dispatch thread. As {@code EventQueue.isDispatchThread()} calls
@@ -26,21 +26,20 @@ import java.lang.reflect.Method;
  * See {@link #updateEdt()} usage for the details
  */
 public final class EDT {
-  private static Thread myEventDispatchThread;
+  private static volatile Thread ourThread;
 
-  private static boolean disableEdtChecks = false;
+  /** @noinspection ALL*/
+  private static volatile boolean ourDisableEdtChecks;
+  /** @noinspection ALL */
+  private static volatile Supplier<Boolean> ourIsCurrentThreadEDT =
+    () -> EventQueue.isDispatchThread();
 
-  @ApiStatus.Internal
-  public static void disableEdtChecks() {
-    disableEdtChecks = true;
-  }
+  private EDT() { }
 
   @ApiStatus.Internal
   public static boolean isDisableEdtChecks() {
-    return disableEdtChecks;
+    return ourDisableEdtChecks;
   }
-
-  private EDT() { }
 
   /**
    * Updates cached EDT thread.
@@ -48,31 +47,24 @@ public final class EDT {
    */
   @ApiStatus.Internal
   public static void updateEdt() {
-    if (myEventDispatchThread != Thread.currentThread()) {
-      myEventDispatchThread = Thread.currentThread();
-    }
-  }
-
-  @ApiStatus.Internal
-  public static boolean isEdt(@NotNull Thread thread) {
-    return thread == myEventDispatchThread;
+    ourThread = Thread.currentThread();
   }
 
   @ApiStatus.Internal
   public static @NotNull Thread getEventDispatchThread() {
-    return myEventDispatchThread;
+    return ourThread;
   }
 
   @ApiStatus.Internal
   public static @Nullable Thread getEventDispatchThreadOrNull() {
-    return myEventDispatchThread;
+    return ourThread;
   }
 
   /**
    * Checks whether the current thread is EDT.
    *
    * @return {@code true} if the current thread is EDT, {@code false} otherwise
-   * @implNote The {@link #myEventDispatchThread} field is a "thread-local" storage for the current EDT.
+   * @implNote The {@link #ourThread} field is a "thread-local" storage for the current EDT.
    * The value is updated on each Swing event by {@link com.intellij.ide.IdeEventQueue}, so it should be actual value at any time.
    * A {@code null} value observed by any thread leads to honest slow {@code EventQueue.isDispatchThread()} check.
    * Non-null values can point either to the current EDT or one of the previous EDT.
@@ -80,12 +72,12 @@ public final class EDT {
    */
   public static boolean isCurrentThreadEdt() {
     // actually, this `if` is not required, but it makes the class work correctly before `IdeEventQueue` initialization
-    Thread thread = myEventDispatchThread;
-    return thread == null ? EventQueue.isDispatchThread() : Thread.currentThread() == thread;
+    Thread thread = ourThread;
+    return thread != null ? Thread.currentThread() == thread : ourIsCurrentThreadEDT.get();
   }
 
   public static void assertIsEdt() {
-    if (!isCurrentThreadEdt() && !disableEdtChecks) {
+    if (!isCurrentThreadEdt() && !ourDisableEdtChecks) {
       Logger.getInstance(EDT.class).error("Assert: must be called on EDT");
     }
   }
@@ -101,9 +93,10 @@ public final class EDT {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+    ThreadContext.resetThreadContext(() -> {
       dispatchAllInvocationEventsImpl();
-    }
+      return null;
+    });
   }
 
   private static void dispatchAllInvocationEventsImpl() {

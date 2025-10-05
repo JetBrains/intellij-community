@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test typeshed's stdlib using stubtest
+"""Test typeshed's stdlib using stubtest.
 
 stubtest is a script in the mypy project that compares stubs to the actual objects at runtime.
 Note that therefore the output of stubtest depends on which Python version it is run with.
@@ -13,7 +13,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from _utils import allowlist_stubtest_arguments, allowlists_path
+from ts_utils.paths import TS_BASE_PATH, allowlists_path
+from ts_utils.utils import allowlist_stubtest_arguments
 
 
 def run_stubtest(typeshed_dir: Path) -> int:
@@ -26,6 +27,7 @@ def run_stubtest(typeshed_dir: Path) -> int:
         "-m",
         "mypy.stubtest",
         "--check-typeshed",
+        "--show-traceback",
         "--custom-typeshed-dir",
         str(typeshed_dir),
         *allowlist_stubtest_arguments("stdlib"),
@@ -57,4 +59,4 @@ def run_stubtest(typeshed_dir: Path) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(run_stubtest(typeshed_dir=Path(".")))
+    sys.exit(run_stubtest(typeshed_dir=TS_BASE_PATH))

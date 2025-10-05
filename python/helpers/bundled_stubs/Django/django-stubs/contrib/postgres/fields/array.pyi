@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Sequence
-from typing import Any, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 from _typeshed import Unused
 from django.core.validators import _ValidatorCallable
@@ -22,7 +22,7 @@ class ArrayField(CheckFieldDefaultMixin, Field[_ST, _GT]):
     _pyi_private_get_type: list[Any]
 
     empty_strings_allowed: bool
-    default_error_messages: _ErrorMessagesDict
+    default_error_messages: ClassVar[_ErrorMessagesDict]
     base_field: Field
     size: int | None
     default_validators: Sequence[_ValidatorCallable]
@@ -61,3 +61,5 @@ class ArrayField(CheckFieldDefaultMixin, Field[_ST, _GT]):
     def cast_db_type(self, connection: BaseDatabaseWrapper) -> str: ...
     def get_placeholder(self, value: Unused, compiler: Unused, connection: BaseDatabaseWrapper) -> str: ...
     def get_transform(self, name: str) -> type[Transform] | None: ...
+
+__all__ = ["ArrayField"]

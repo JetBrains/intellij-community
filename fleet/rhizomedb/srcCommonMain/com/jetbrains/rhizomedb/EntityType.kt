@@ -6,6 +6,7 @@ import fleet.util.singleOrNullOrThrow
 import fleet.fastutil.ints.IntOpenHashSet
 import kotlinx.serialization.builtins.serializer
 import kotlin.reflect.KClass
+import com.jetbrains.rhizomedb.new as new_cs
 
 /**
  * Base class to define new entity types.
@@ -105,8 +106,8 @@ abstract class EntityType<E : Entity>(
    *
    * @see ChangeScope.new
    * */
-  fun ChangeScope.new(builder: EntityBuilder<E>): E =
-    this@EntityType.new(builder)
+  context(cs: ChangeScope)
+  fun new(builder: EntityBuilder<E> = EntityBuilder {}): E = new_cs(builder)
 
   /**
    * Returns a set of [Entity]'s of a given [EntityType]

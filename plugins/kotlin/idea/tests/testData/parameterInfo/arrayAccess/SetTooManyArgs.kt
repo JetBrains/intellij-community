@@ -1,4 +1,5 @@
-// IGNORE_K2
+
+
 // Here K2 has Disabled: true instead
 class A {
     operator fun get(x: Int) {}
@@ -8,7 +9,3 @@ class A {
         this["", 1<caret>] = 1
     }
 }
-
-/*
-Text: (x: String), Disabled: false, Strikeout: false, Green: true
-*/

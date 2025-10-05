@@ -21,7 +21,7 @@ venv_path = None
 try:
     sync_output = subprocess.check_output(
         [uv_path, "sync", "--script", script_path],
-        stderr=subprocess.STDOUT
+        stderr=subprocess.DEVNULL
     ).decode("utf-8")
 
     result = re.search(r"environment at: (.*)\n", sync_output)
@@ -37,16 +37,16 @@ except subprocess.CalledProcessError as e:
     str_output = e.output.decode("utf-8")
     if "does not contain a PEP 723 metadata tag" in str_output:
         should_sync_project = True
-    print(str_output, file=sys.stderr)
 
 
-sync_segment = "" if should_sync_project else "--no-sync "
-active_segment = "" if venv_path is None else "--active "
+sync_segment = "" if should_sync_project else "--no-sync"
+active_segment = "" if venv_path is None else "--active"
 
 if venv_path is not None:
     os.environ["VIRTUAL_ENV"] = str(venv_path)
 
-command = uv_path + " run " + active_segment + sync_segment + " ".join(sys.argv[4:])
-print()
-print(command)
-os.system(command)
+command = [uv_path, "run", active_segment, sync_segment] + sys.argv[4:]
+command = [segment for segment in command if segment != ""]
+
+print(" ".join([f"\"{segment}\"" if " " in segment else segment for segment in command]))
+subprocess.call(command)

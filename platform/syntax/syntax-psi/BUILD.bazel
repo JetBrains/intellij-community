@@ -1,9 +1,17 @@
 ### auto-generated section `build intellij.platform.syntax.psi` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
-jvm_resources(
+create_kotlinc_options(
+  name = "custom_psi",
+  jvm_target = "8",
+  x_no_call_assertions = True,
+  x_no_param_assertions = True
+)
+
+resourcegroup(
   name = "psi_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -11,8 +19,9 @@ jvm_library(
   name = "psi",
   module_name = "intellij.platform.syntax.psi",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  kotlinc_opts = "@community//:k8",
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":psi_resources"],
+  kotlinc_opts = ":custom_psi",
   deps = [
     "//platform/util",
     "//platform/util-rt",
@@ -24,7 +33,6 @@ jvm_library(
     "//platform/syntax/syntax-util:util",
     "//platform/syntax/syntax-extensions:extensions",
   ],
-  exports = ["//platform/syntax/syntax-api:syntax"],
-  runtime_deps = [":psi_resources"]
+  exports = ["//platform/syntax/syntax-api:syntax"]
 )
 ### auto-generated section `build intellij.platform.syntax.psi` end

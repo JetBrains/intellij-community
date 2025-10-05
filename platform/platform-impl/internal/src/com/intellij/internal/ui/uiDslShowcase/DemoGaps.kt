@@ -4,7 +4,6 @@ package com.intellij.internal.ui.uiDslShowcase
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
 
-@Suppress("DialogTitleCapitalization")
 @Demo(title = "Gaps",
   description = "<br>\u2022 Horizontal gaps are managed by Cell.gap method. Between label and related component RightGap.SMALL is used, " +
                 "otherwise medium gap is used (there is no such enum value)<br>" +
@@ -18,18 +17,23 @@ import com.intellij.ui.dsl.builder.*
 )
 fun demoGaps(): DialogPanel {
   return panel {
-    group("Examples when RightGap.SMALL is needed") {
+    group("Situations Requiring RightGap.SMALL") {
       row {
         val checkBox = checkBox("Use mail:")
           .gap(RightGap.SMALL)
         textField()
           .enabledIf(checkBox.selected)
-      }.rowComment("gaps after check boxes/radio buttons when they are intended to be labels")
+      }.rowComment("Gaps after check boxes/radio buttons when they are intended to serve as labels")
+      row {
+        checkBox("Option")
+          .gap(RightGap.SMALL)
+        contextHelp("Option description")
+      }.rowComment("Gaps before context help")
       row("Width:") {
         textField()
           .gap(RightGap.SMALL)
         label("pixels")
-      }.rowComment("gaps between related components like text field and label after it")
+      }.rowComment("Gaps between related components, such as a text field and the label that follows it")
     }
 
     group("Panel.indent") {
@@ -43,7 +47,7 @@ fun demoGaps(): DialogPanel {
       }
     }
 
-    group("Two columns mode") {
+    group("Two Columns Mode") {
       twoColumnsRow({
         checkBox("First column")
       }, {
@@ -57,7 +61,7 @@ fun demoGaps(): DialogPanel {
         .rowComment("RightGap.COLUMNS is used")
     }
 
-    group("Examples for vertical gaps") {
+    group("Examples for Vertical Gaps") {
       row {
         checkBox("Option 1")
       }

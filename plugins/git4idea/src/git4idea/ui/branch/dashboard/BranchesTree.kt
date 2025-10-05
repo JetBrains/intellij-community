@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
-import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -33,11 +32,11 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchPresentation
 import com.intellij.vcs.branch.LinkedBranchDataImpl
-import com.intellij.vcs.git.shared.branch.GitBranchesMatcherWrapper
-import com.intellij.vcs.git.shared.branch.calcTooltip
-import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil
-import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
-import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
+import com.intellij.vcs.git.branch.GitBranchesMatcherWrapper
+import com.intellij.vcs.git.branch.calcTooltip
+import com.intellij.vcs.git.branch.tree.GitBranchesTreeUtil
+import com.intellij.vcs.git.ui.GitBranchesTreeIconProvider
+import com.intellij.vcs.git.ui.GitIncomingOutgoingUi
 import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
@@ -241,14 +240,19 @@ internal class FilteringBranchesTree(
     }
 
     tree.launchOnShow("Git Dashboard Tree") {
-      updateTree()
-      checkCanceled()
-      model.addListener(listener)
-      try {
-        awaitCancellation()
-      }
-      finally {
-        model.removeListener(listener)
+      // need EDT because of RA in TreeUtil.promiseVisit
+      withContext(Dispatchers.EDT) {
+        model.addListener(listener)
+        try {
+          val currentlyEmpty = searchModel.root.childCount > 0
+          if (!currentlyEmpty || model.root.children.isNotEmpty()) {
+            updateTree()
+          }
+          awaitCancellation()
+        }
+        finally {
+          model.removeListener(listener)
+        }
       }
     }
 

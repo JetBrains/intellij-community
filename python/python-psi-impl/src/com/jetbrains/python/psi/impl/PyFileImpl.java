@@ -18,16 +18,15 @@ import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.PyAstElementVisitor;
-import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
@@ -70,7 +69,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       myModificationStamp = modificationStamp;
 
       final StubElement<?> stub = getStub();
-      LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(PyFileImpl.this);
+      LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(PyFileImpl.this);
       processDeclarations(PyFileImpl.this, stub, languageLevel, element -> {
         if (element instanceof PsiNamedElement namedElement &&
             !(element instanceof PyKeywordArgument) &&
@@ -245,11 +244,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }
     return null;
-  }
-
-  @Override
-  public LanguageLevel getLanguageLevel() {
-    return PythonLanguageLevelPusher.getLanguageLevelForFile(this);
   }
 
   @Override
@@ -774,7 +768,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   private @NotNull <T extends PyElement> List<T> collectChildren(Class<T> type) {
     @Nullable StubElement<?> stub = getGreenStub();
-    @NotNull LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(this);
+    @NotNull LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(this);
     final List<T> result = new ArrayList<>();
     if (stub != null) {
       for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {

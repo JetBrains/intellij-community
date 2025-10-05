@@ -47,10 +47,10 @@ fun PluginSpecBuilder.content(body: ContentScope.() -> Unit) {
   scope.body()
 }
 
-fun ContentScope.module(moduleName: String, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL, body: PluginSpecBuilder.() -> Unit) {
+fun ContentScope.module(moduleId: String, loadingRule: ModuleLoadingRule = ModuleLoadingRule.OPTIONAL, body: PluginSpecBuilder.() -> Unit) {
   val moduleBuilder = PluginSpecBuilder()
   moduleBuilder.body()
-  plugin.content += ContentModuleSpec(moduleName, loadingRule, moduleBuilder.build())
+  plugin.content += ContentModuleSpec(moduleId, loadingRule, moduleBuilder.build())
 }
 
 fun PluginSpecBuilder.extensions(@Language("XML") xml: String, ns: String = "com.intellij") {
@@ -90,16 +90,18 @@ fun PluginSpecBuilder.pluginAlias(id: String) {
   pluginAliases += id
 }
 
-inline fun <reified T> PluginSpecBuilder.includeClassFile(): Unit = includeClassFile(T::class.java.name)
+inline fun <reified T> PluginSpecBuilder.includeClassFile(): Unit =
+  includeClassFile(T::class.java.name, T::class.java.classLoader)
 
-fun PluginSpecBuilder.includeClassFile(classFqn: String) {
-  classFiles += classFqn
+fun PluginSpecBuilder.includeClassFile(classFqn: String, classLoader: ClassLoader? = null) {
+  classFiles += PluginSpecClassReference(classFqn, classLoader)
 }
 
-inline fun <reified T> PluginSpecBuilder.includePackageClassFiles(): Unit = includePackageClassFiles(T::class.java.packageName)
+inline fun <reified T> PluginSpecBuilder.includePackageClassFiles(): Unit =
+  includePackageClassFiles(T::class.java.packageName, T::class.java.classLoader)
 
-fun PluginSpecBuilder.includePackageClassFiles(packageFqn: String) {
-  packageClassFiles += packageFqn
+fun PluginSpecBuilder.includePackageClassFiles(packageFqn: String, classLoader: ClassLoader? = null) {
+  packageClassFiles += PluginSpecClassReference(packageFqn, classLoader)
 }
 
 fun PluginSpecBuilder.dependsIntellijModulesLang(): Unit = depends("com.intellij.modules.lang")

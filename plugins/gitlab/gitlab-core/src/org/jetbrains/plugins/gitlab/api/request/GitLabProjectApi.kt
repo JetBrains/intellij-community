@@ -171,12 +171,14 @@ suspend fun GitLabApi.GraphQL.createMergeRequest(
   sourceBranch: String,
   targetBranch: String,
   title: String,
+  description: String?,
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
   val parameters = mapOf(
     "projectId" to project.projectPath.fullPath(),
     "sourceBranch" to sourceBranch,
     "targetBranch" to targetBranch,
-    "title" to title
+    "title" to title,
+    "description" to description
   )
 
   val request = gitLabQuery(GitLabGQLQuery.MERGE_REQUEST_CREATE, parameters)

@@ -21,8 +21,10 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.configuration.PythonConfigurationFragmentedEditor;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.Objects;
@@ -54,6 +56,12 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
     setUnbufferedEnv();
   }
 
+  @TestOnly
+  @ApiStatus.Internal
+  public static PythonRunConfiguration createRunConfigurationForTests(Project project, ConfigurationFactory factory) {
+    return new PythonRunConfiguration(project, factory);
+  }
+  
   @Override
   protected boolean isNewUiSupported() {
     return true;

@@ -1,19 +1,21 @@
 ### auto-generated section `build kotlin.j2k.shared` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 create_kotlinc_options(
-  name = "custom",
-  context_receivers = True,
+  name = "custom_shared",
   opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
     "org.jetbrains.kotlin.analysis.api.KaIdeApi",
-  ]
+    "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+  ],
+  x_context_parameters = True
 )
 
-jvm_resources(
+resourcegroup(
   name = "shared_resources",
-  files = glob(["resources/**/*"]),
+  srcs = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
@@ -22,7 +24,8 @@ jvm_library(
   module_name = "kotlin.j2k.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  kotlinc_opts = ":custom",
+  resources = [":shared_resources"],
+  kotlinc_opts = ":custom_shared",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-analysis-api",
@@ -51,7 +54,6 @@ jvm_library(
     "//plugins/kotlin/project-configuration",
     "//plugins/kotlin/preferences",
     "//plugins/kotlin/base/statistics",
-  ],
-  runtime_deps = [":shared_resources"]
+  ]
 )
 ### auto-generated section `build kotlin.j2k.shared` end

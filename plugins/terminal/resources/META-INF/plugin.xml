@@ -62,32 +62,8 @@
       <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
     </action>
     <action id="Terminal.CloseTab" class="org.jetbrains.plugins.terminal.action.TerminalCloseTabAction" use-shortcut-of="CloseContent"/>
-    <action id="Terminal.RenameSession" class="org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
-    <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
-    <action id="Terminal.SplitVertically" class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Vertical">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
-    <action id="Terminal.SplitHorizontally" class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Horizontal">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
-    <action id="Terminal.NextSplitter" use-shortcut-of="NextSplitter"
-            class="org.jetbrains.plugins.terminal.action.GotoSplitTerminalActionBase$Next">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
-    <action id="Terminal.PrevSplitter" use-shortcut-of="PrevSplitter"
-            class="org.jetbrains.plugins.terminal.action.GotoSplitTerminalActionBase$Prev">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
-    <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
-    <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
+    <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction"/>
+    <action id="Terminal.MoveToolWindowTabRight" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction"/>
     <action id="Terminal.SwitchFocusToEditor" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
     </action>
@@ -144,9 +120,6 @@
       <keyboard-shortcut first-keystroke="meta C" keymap="Mac OS X 10.5+"/>
     </action>
 
-    <action id="Terminal.InsertInlineCompletionItem" class="org.jetbrains.plugins.terminal.block.completion.TerminalInsertInlineCompletionAction">
-      <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
-    </action>
     <action id="Terminal.ShowDocumentation" class="org.jetbrains.plugins.terminal.action.TerminalShowDocAction"
             use-shortcut-of="QuickJavaDoc"/>
     <action id="Terminal.CloseSession" class="org.jetbrains.plugins.terminal.action.TerminalCloseSessionAction">
@@ -197,6 +170,8 @@
 
     <action id="Terminal.ShowFeedbackNotification" internal="true"
             class="org.jetbrains.plugins.terminal.block.feedback.ShowReworkedTerminalFeedbackNotificationAction"/>
+    <action id="Terminal.Completion.ShowFeedbackNotification" internal="true"
+            class="org.jetbrains.plugins.terminal.block.completion.feedback.ShowTerminalCompletionFeedbackNotificationAction"/>
   </actions>
 
 </idea-plugin>

@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.InternalDecorator
@@ -58,7 +58,7 @@ import javax.swing.text.JTextComponent
 class InternalDecoratorImpl internal constructor(
   @JvmField internal val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
-  private val myDecoratorChild: JComponent
+  private val myDecoratorChild: JComponent,
 ) : InternalDecorator(), Queryable, UiDataProvider, ComponentWithMnemonics {
   companion object {
     val SHARED_ACCESS_KEY: Key<Boolean> = Key.create("sharedAccess")
@@ -217,7 +217,8 @@ class InternalDecoratorImpl internal constructor(
       get() = this == VERTICAL_SPLIT || this == HORIZONTAL_SPLIT
   }
 
-  var mode: Mode? = null
+  var mode: Mode = Mode.SINGLE
+    private set
   private var isSplitUnsplitInProgress = false
   private var isWindowHovered = false
   private var divider: JPanel? = null
@@ -225,8 +226,7 @@ class InternalDecoratorImpl internal constructor(
   private var disposable: CheckedDisposable? = null
   val header: ToolWindowHeader
   private val notificationHeader = Wrapper()
-  private var firstDecorator: InternalDecoratorImpl? = null
-  private var secondDecorator: InternalDecoratorImpl? = null
+  private var nestedDecorators: NestedDecorators? = null
   private var splitter: Splitter? = null
   private val componentsWithEditorLikeBackground = SmartList<Component>()
   private var tabActions: List<AnAction> = emptyList()
@@ -235,7 +235,7 @@ class InternalDecoratorImpl internal constructor(
   init {
     isFocusable = false
     focusTraversalPolicy = LayoutFocusTraversalPolicy()
-    updateMode(Mode.SINGLE)
+    doUpdateMode(Mode.SINGLE)
     header = object : ToolWindowHeader(toolWindow, contentUi, gearProducer = { toolWindow.createPopupGroup(true) }) {
       override val isActive: Boolean
         get() {
@@ -261,17 +261,32 @@ class InternalDecoratorImpl internal constructor(
       override fun contentRemoved(event: ContentManagerEvent) {
         val parentDecorator = findNearestDecorator(this@InternalDecoratorImpl) ?: return
         if (!parentDecorator.isSplitUnsplitInProgress() && !isSplitUnsplitInProgress() && contentManager.isEmpty) {
+          // Find some selected content in the child contents of the parent split to preserve focus in the tool window.
+          val toSelect = parentDecorator.contentManager.contentsRecursively.find { content ->
+            content.manager?.isSelected(content) == true
+          }
+
           parentDecorator.unsplit(null)
+
+          if (toSelect != null) {
+            // Focus the content later, because we are in the middle of removing the content.
+            // Current content remove logic will focus the editor, but then we will focus the chosen content.
+            invokeLater {
+              toSelect.manager?.setSelectedContent(toSelect, true)
+            }
+          }
         }
       }
     })
   }
 
-  fun updateMode(mode: Mode) {
-    if (mode == this.mode) {
-      return
+  private fun updateMode(mode: Mode) {
+    if (mode != this.mode) {
+      doUpdateMode(mode)
     }
+  }
 
+  private fun doUpdateMode(mode: Mode) {
     this.mode = mode
     removeAll()
     border = null
@@ -279,7 +294,10 @@ class InternalDecoratorImpl internal constructor(
       Mode.SINGLE, Mode.CELL -> {
         layout = BorderLayout()
 
-        InternalUICustomization.getInstance()?.toolWindowUIDecorator?.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild)?.let {
+        val decorator = InternalUICustomization.getInstance()?.toolWindowUIDecorator
+          ?.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild, toolWindow) { InnerPanelBorder(toolWindow) }
+
+        decorator?.let {
           add(it, BorderLayout.CENTER)
         } ?: run {
           add(dividerAndHeader, BorderLayout.NORTH)
@@ -287,18 +305,17 @@ class InternalDecoratorImpl internal constructor(
           border = InnerPanelBorder(toolWindow)
         }
 
-        firstDecorator?.let {
-          Disposer.dispose(it.contentManager)
-        }
-        secondDecorator?.let {
-          Disposer.dispose(it.contentManager)
+        nestedDecorators?.let {
+          Disposer.dispose(it.first.contentManager)
+          Disposer.dispose(it.second.contentManager)
         }
         return
       }
       Mode.VERTICAL_SPLIT, Mode.HORIZONTAL_SPLIT -> {
         val splitter = OnePixelSplitter(mode == Mode.VERTICAL_SPLIT)
-        splitter.setFirstComponent(firstDecorator)
-        splitter.setSecondComponent(secondDecorator)
+        val decorators = nestedDecorators!!
+        splitter.setFirstComponent(decorators.first)
+        splitter.setSecondComponent(decorators.second)
         this.splitter = splitter
         layout = BorderLayout()
         add(splitter, BorderLayout.CENTER)
@@ -312,53 +329,58 @@ class InternalDecoratorImpl internal constructor(
                        dropIndex: Int) {
     if (dropSide == -1 || dropSide == SwingConstants.CENTER || dropIndex >= 0) {
       contentManager.addContent(content, dropIndex)
+      contentManager.setSelectedContent(content, true)
       return
     }
-    firstDecorator = toolWindow.createCellDecorator().also {
+    val firstDecorator = toolWindow.createCellDecorator().also {
       it.setTabActions(tabActions)
       it.setTitleActions(titleActions)
     }
     attach(firstDecorator)
-    secondDecorator = toolWindow.createCellDecorator().also {
+    val secondDecorator = toolWindow.createCellDecorator().also {
       it.setTabActions(tabActions)
       it.setTitleActions(titleActions)
     }
     attach(secondDecorator)
+    nestedDecorators = NestedDecorators(firstDecorator, secondDecorator)
+
+    val prevSelectedContent = contentManager.selectedContent
     val contents = contentManager.contents.toMutableList()
     if (!contents.contains(content)) {
       contents.add(content)
     }
     for (c in contents) {
       moveContent(c, this,
-                  (if ((c !== content) xor (dropSide == SwingConstants.LEFT || dropSide == SwingConstants.TOP)) firstDecorator else secondDecorator)!!)
+                  (if ((c !== content) xor (dropSide == SwingConstants.LEFT || dropSide == SwingConstants.TOP)) firstDecorator else secondDecorator))
     }
-    firstDecorator!!.updateMode(Mode.CELL)
-    secondDecorator!!.updateMode(Mode.CELL)
+    firstDecorator.updateMode(Mode.CELL)
+    secondDecorator.updateMode(Mode.CELL)
     updateMode(if (dropSide == SwingConstants.TOP || dropSide == SwingConstants.BOTTOM) Mode.VERTICAL_SPLIT else Mode.HORIZONTAL_SPLIT)
+
+    // Update selected contents in both new split areas
+    prevSelectedContent?.manager?.setSelectedContent(prevSelectedContent)
+    content.manager?.setSelectedContent(content, true)
   }
 
   private fun raise(raiseFirst: Boolean) {
-    val source = if (raiseFirst) firstDecorator!! else secondDecorator!!
-    val first = source.firstDecorator
-    val second = source.secondDecorator
+    val decorators = nestedDecorators!!
+    val source = if (raiseFirst) decorators.first else decorators.second
+    val (first, second) = source.nestedDecorators!!
     val mode = source.mode
     source.detach(first)
     source.detach(second)
-    source.firstDecorator = null
-    source.secondDecorator = null
-    val toRemove1 = firstDecorator
-    val toRemove2 = secondDecorator
-    toRemove1!!.updateMode(Mode.CELL)
-    toRemove2!!.updateMode(Mode.CELL)
-    first!!.setSplitUnsplitInProgress(true)
-    second!!.setSplitUnsplitInProgress(true)
+    source.nestedDecorators = null
+    val (toRemove1, toRemove2) = decorators
+    toRemove1.updateMode(Mode.CELL)
+    toRemove2.updateMode(Mode.CELL)
+    first.setSplitUnsplitInProgress(true)
+    second.setSplitUnsplitInProgress(true)
     try {
-      firstDecorator = first
-      secondDecorator = second
-      this.mode = mode //Previous mode is split too
+      nestedDecorators = NestedDecorators(first, second)
+      this.mode = mode // Previous mode is split too
       splitter!!.orientation = mode == Mode.VERTICAL_SPLIT
-      splitter!!.firstComponent = firstDecorator
-      splitter!!.secondComponent = secondDecorator
+      splitter!!.firstComponent = first
+      splitter!!.secondComponent = second
       attach(first)
       attach(second)
     }
@@ -388,20 +410,14 @@ class InternalDecoratorImpl internal constructor(
 
   fun canUnsplit(): Boolean {
     if (mode != Mode.CELL) return false
-    val parent = findNearestDecorator(this)
-    if (parent != null) {
-      if (parent.firstDecorator == this) {
-        return parent.secondDecorator != null && parent.secondDecorator!!.mode == Mode.CELL
-      }
-      if (parent.secondDecorator == this) {
-        return parent.firstDecorator != null && parent.firstDecorator!!.mode == Mode.CELL
-      }
-    }
-    return false
+    val parent = findNearestDecorator(this) ?: return false
+    val decorators = parent.nestedDecorators ?: return false
+    return this == decorators.first && decorators.second.mode == Mode.CELL ||
+           this == decorators.second && decorators.first.mode == Mode.CELL
   }
 
   fun unsplit(toSelect: Content?) {
-    if (!mode!!.isSplit) {
+    if (!mode.isSplit) {
       findNearestDecorator(this)?.unsplit(toSelect)
       return
     }
@@ -410,29 +426,29 @@ class InternalDecoratorImpl internal constructor(
     }
     setSplitUnsplitInProgress(true)
     try {
+      val decorators = nestedDecorators
       when {
-        firstDecorator == null || secondDecorator == null -> {
+        decorators == null -> {
           return
         }
-        firstDecorator!!.mode!!.isSplit -> {
+        decorators.first.mode.isSplit -> {
           raise(true)
           return
         }
-        secondDecorator!!.mode!!.isSplit -> {
+        decorators.second.mode.isSplit -> {
           raise(false)
           return
         }
         else -> {
-          for (c in firstDecorator!!.contentManager.contents) {
-            moveContent(c, firstDecorator!!, this)
+          for (c in decorators.first.contentManager.contents) {
+            moveContent(c, decorators.first, this)
           }
-          for (c in secondDecorator!!.contentManager.contents) {
-            moveContent(c, secondDecorator!!, this)
+          for (c in decorators.second.contentManager.contents) {
+            moveContent(c, decorators.second, this)
           }
           updateMode(if (findNearestDecorator(this) != null) Mode.CELL else Mode.SINGLE)
-          toSelect?.manager?.setSelectedContent(toSelect)
-          firstDecorator = null
-          secondDecorator = null
+          toSelect?.manager?.setSelectedContent(toSelect, true)
+          nestedDecorators = null
           splitter = null
         }
       }
@@ -447,6 +463,44 @@ class InternalDecoratorImpl internal constructor(
   }
 
   override fun isSplitUnsplitInProgress(): Boolean = isSplitUnsplitInProgress
+
+  fun getNextCell(current: InternalDecoratorImpl): InternalDecoratorImpl? {
+    return getNextPrevCellImpl(current, isNext = true)
+  }
+
+  fun getPrevCell(current: InternalDecoratorImpl): InternalDecoratorImpl? {
+    return getNextPrevCellImpl(current, isNext = false)
+  }
+
+  private fun getNextPrevCellImpl(current: InternalDecoratorImpl, isNext: Boolean): InternalDecoratorImpl? {
+    if (!mode.isSplit) return null
+
+    val cells = getOrderedCells()
+    val curCellIndex = cells.indexOf(current)
+    return if (curCellIndex != -1) {
+      val newIndex = curCellIndex + (if (isNext) 1 else -1)
+      cells[(newIndex + cells.size) % cells.size]
+    }
+    else null
+  }
+
+  private fun getOrderedCells(): List<InternalDecoratorImpl> {
+    val cells = mutableListOf<InternalDecoratorImpl>()
+
+    fun collectCell(decorator: InternalDecoratorImpl) {
+      if (decorator.mode.isSplit) {
+        val decorators = nestedDecorators!!
+        collectCell(decorators.first)
+        collectCell(decorators.second)
+      }
+      else {
+        cells.add(decorator)
+      }
+    }
+
+    collectCell(this)
+    return cells
+  }
 
   override fun getContentManager(): ContentManager = contentUi.contentManager
 
@@ -534,21 +588,31 @@ class InternalDecoratorImpl internal constructor(
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.TOOL_WINDOW] = toolWindow
+    sink[PlatformDataKeys.CONTENT_MANAGER] = contentManager
+    if (contentManager.contentCount > 1) {
+      sink[PlatformDataKeys.NONEMPTY_CONTENT_MANAGER] = contentManager
+    }
+    sink[PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER] = contentManager
+    sink[ToolWindowContentUi.DATA_KEY] = contentUi
   }
 
   fun setTitleActions(actions: List<AnAction>) {
     titleActions.clear()
     titleActions.addAll(actions)
     header.setAdditionalTitleActions(titleActions)
-    firstDecorator?.setTitleActions(actions)
-    secondDecorator?.setTitleActions(actions)
+    nestedDecorators?.let {
+      it.first.setTitleActions(actions)
+      it.second.setTitleActions(actions)
+    }
   }
 
   fun setTabActions(actions: List<AnAction>) {
     tabActions = actions
     contentUi.setTabActions(actions)
-    firstDecorator?.setTabActions(actions)
-    secondDecorator?.setTabActions(actions)
+    nestedDecorators?.let {
+      it.first.setTabActions(actions)
+      it.second.setTabActions(actions)
+    }
   }
 
   private inner class InnerPanelBorder(private val window: ToolWindowImpl) : Border {
@@ -870,7 +934,7 @@ class InternalDecoratorImpl internal constructor(
     contentUi.update()
 
     if ((toolWindow.type == ToolWindowType.WINDOWED || toolWindow.type == ToolWindowType.FLOATING) &&
-        Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
+        ToolWindowContentUi.isTabsReorderingAllowed(toolWindow)) {
       ToolWindowInnerDragHelper(disposable, this).start()
     }
   }
@@ -1014,8 +1078,10 @@ class InternalDecoratorImpl internal constructor(
   /** Executes the given action for this and nested decorators. */
   private fun forAllNestedDecorators(action: (InternalDecoratorImpl) -> Unit) {
     action(this)
-    firstDecorator?.forAllNestedDecorators(action)
-    secondDecorator?.forAllNestedDecorators(action)
+    nestedDecorators?.let {
+      it.first.forAllNestedDecorators(action)
+      it.second.forAllNestedDecorators(action)
+    }
   }
 
   /** Requests focus transfer to the preferred focusable component of the selected content. */
@@ -1025,6 +1091,12 @@ class InternalDecoratorImpl internal constructor(
       component.requestFocusInWindow()
     }
   }
+
+  // Specify "data" for the destructuring methods.
+  private data class NestedDecorators(
+    val first: InternalDecoratorImpl,
+    val second: InternalDecoratorImpl,
+  )
 
   private inner class AccessibleInternalDecorator : AccessibleJPanel() {
     override fun getAccessibleName(): String {

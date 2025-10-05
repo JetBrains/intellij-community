@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.openapi.util.ClassConditionKey;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -41,7 +40,6 @@ public enum AutoCompletionPolicy {
   }
 
   private static final class PolicyDecorator extends LookupElementDecorator<LookupElement> {
-    public static final ClassConditionKey<PolicyDecorator> CLASS_CONDITION_KEY = ClassConditionKey.create(PolicyDecorator.class);
     private final AutoCompletionPolicy myPolicy;
 
     PolicyDecorator(LookupElement element, AutoCompletionPolicy policy) {

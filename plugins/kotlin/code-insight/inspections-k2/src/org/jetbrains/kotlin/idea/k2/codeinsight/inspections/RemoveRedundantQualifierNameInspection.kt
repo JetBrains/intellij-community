@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
+import org.jetbrains.kotlin.analysis.api.components.collectPossibleReferenceShorteningsInElement
+import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -43,7 +45,7 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
      * See KTIJ-16225 and KTIJ-15232 for the details about why we have
      * special treatment for enums.
      */
-    context(KaSession)
+    context(_: KaSession)
     private fun collectShortenings(declaration: KtElement): ShortenCommand =
         collectPossibleReferenceShorteningsInElement(
             declaration,
@@ -92,7 +94,7 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
     }
 }
 
-context (KaSession)
+context(_: KaSession)
 private fun KaDeclarationSymbol.getContainingClassForCompanionObject(): KaNamedClassSymbol? {
     if (this !is KaClassSymbol || this.classKind != KaClassKind.COMPANION_OBJECT) return null
 
@@ -105,7 +107,7 @@ private fun KaDeclarationSymbol?.isEnumClass(): Boolean {
     return classSymbol.classKind == KaClassKind.ENUM_CLASS
 }
 
-context (KaSession)
+context(_: KaSession)
 private fun KaDeclarationSymbol?.isEnumCompanionObject(): Boolean =
   this?.getContainingClassForCompanionObject().isEnumClass()
 

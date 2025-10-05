@@ -197,10 +197,11 @@ public final class InspectionVisitorOptimizer {
   }
 
   @ApiStatus.Internal
-  public void acceptElements(@NotNull List<? extends PsiElement> elements,
-                      @NotNull List<? extends Class<?>> acceptingPsiTypes,
-                      @NotNull Consumer<? super PsiElement> consumer) {
+  public void acceptElements(@NotNull @Unmodifiable List<? extends PsiElement> elements,
+                             @NotNull @Unmodifiable List<? extends Class<?>> acceptingPsiTypes,
+                             @NotNull Consumer<? super PsiElement> consumer) {
     if (acceptingPsiTypes == ALL_ELEMENTS_VISIT_LIST) {
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < elements.size(); i++) {
         PsiElement element = elements.get(i);
         ProgressManager.checkCanceled();
@@ -210,6 +211,7 @@ public final class InspectionVisitorOptimizer {
     else {
       Set<Class<?>> accepts = getVisitorAcceptClasses(acceptingPsiTypes);
       if (accepts != null && !accepts.isEmpty()) {
+        //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < elements.size(); i++) {
           PsiElement element = elements.get(i);
           if (accepts.contains(element.getClass())) {

@@ -21,7 +21,9 @@ class _ActionResult:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _ActionResultEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_ActionResult.ValueType], builtins.type):
+class _ActionResultEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_ActionResult.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     Success: _ActionResult.ValueType  # 1
     NotSupported: _ActionResult.ValueType  # 2

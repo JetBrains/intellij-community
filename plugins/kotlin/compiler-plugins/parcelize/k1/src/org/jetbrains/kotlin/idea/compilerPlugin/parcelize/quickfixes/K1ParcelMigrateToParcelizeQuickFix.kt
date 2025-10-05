@@ -35,51 +35,51 @@ internal class K1ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : KotlinQuickF
     }
 
     private object Resolver : ParcelMigrateToParcelizeResolver<BindingContext> {
-        context(BindingContext)
+        context(context: BindingContext)
         private fun KtTypeReference.getClassId() =
-            this@BindingContext[BindingContext.TYPE, this]
+            context[BindingContext.TYPE, this]
                 ?.constructor
                 ?.declarationDescriptor
                 ?.let { DescriptorUtils.getClassIdForNonLocalClass(it) }
 
-        context(BindingContext)
+        context(_: BindingContext)
         override val KtCallableDeclaration.returnTypeClassId: ClassId?
             get() = typeReference?.getClassId()
 
-        context(BindingContext)
+        context(_: BindingContext)
         override val KtCallableDeclaration.receiverTypeClassId: ClassId?
             get() = receiverTypeReference?.getClassId()
 
-        context(BindingContext)
+        context(context: BindingContext)
         override val KtCallableDeclaration.overrideCount: Int
-            get() = this@BindingContext[BindingContext.FUNCTION, this]?.overriddenDescriptors?.size ?: 0
+            get() = context[BindingContext.FUNCTION, this]?.overriddenDescriptors?.size ?: 0
 
-        context(BindingContext)
+        context(_: BindingContext)
         override val KtProperty.isJvmField: Boolean
             get() = findAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME) != null
 
         private fun ClassifierDescriptor.hasSuperType(superTypeClassId: ClassId): Boolean =
             getAllSuperClassifiers().any { DescriptorUtils.getClassIdForNonLocalClass(it) == superTypeClassId }
 
-        context(BindingContext)
+        context(context: BindingContext)
         override fun KtClassOrObject.hasSuperClass(superTypeClassId: ClassId): Boolean =
-            this@BindingContext[BindingContext.CLASS, this]?.hasSuperType(superTypeClassId) ?: false
+            context[BindingContext.CLASS, this]?.hasSuperType(superTypeClassId) ?: false
 
-        context(BindingContext)
+        context(context: BindingContext)
         override fun KtTypeReference.hasSuperClass(superTypeClassId: ClassId): Boolean =
-            this@BindingContext[BindingContext.TYPE, this]?.constructor?.declarationDescriptor?.hasSuperType(superTypeClassId) ?: false
+            context[BindingContext.TYPE, this]?.constructor?.declarationDescriptor?.hasSuperType(superTypeClassId) ?: false
 
-        context(BindingContext)
+        context(context: BindingContext)
         override fun KtCallExpression.resolveToConstructedClass(): KtClassOrObject? =
-            (getResolvedCall(this@BindingContext)?.resultingDescriptor as? ConstructorDescriptor)
+            (getResolvedCall(context)?.resultingDescriptor as? ConstructorDescriptor)
                 ?.constructedClass
                 ?.source
                 ?.getPsi()
                 as? KtClassOrObject
 
-        context(BindingContext)
+        context(context: BindingContext)
         override fun KtExpression.evaluateAsConstantInt(): Int? =
-            this@BindingContext[BindingContext.COMPILE_TIME_VALUE, this]?.getValue(TypeUtils.NO_EXPECTED_TYPE) as? Int
+            context[BindingContext.COMPILE_TIME_VALUE, this]?.getValue(TypeUtils.NO_EXPECTED_TYPE) as? Int
     }
 
     companion object {

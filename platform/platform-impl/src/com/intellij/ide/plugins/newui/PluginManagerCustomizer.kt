@@ -4,27 +4,36 @@ package com.intellij.ide.plugins.newui
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import javax.swing.Action
+import javax.swing.JComponent
 
 @ApiStatus.Internal
+@IntellijInternalApi
 interface PluginManagerCustomizer {
-  fun getInstallButonCustomizationModel(
+
+  fun isEnabled(): Boolean
+
+  fun initCustomizer(parentComponent: JComponent)
+
+  suspend fun getInstallButonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginToInstallModel: PluginUiModel,
     modalityState: ModalityState,
   ): OptionsButonCustomizationModel?
 
-  fun getDisableButtonCustomizationModel(
+  suspend fun getDisableButtonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginModel: PluginUiModel,
+    installedDescriptorForMarketplace: PluginUiModel?,
     modalityState: ModalityState,
   ): OptionsButonCustomizationModel?
 
-  fun getUpdateButtonCustomizationModel(
+  suspend fun getUpdateButtonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
     pluginModel: PluginUiModel,
     updateModel: PluginUiModel?,
@@ -33,10 +42,25 @@ interface PluginManagerCustomizer {
 
   fun updateAfterModification(updateUi: () -> Unit)
 
+  suspend fun updateAfterModificationAsync(updateUi: suspend () -> Unit)
+
+  fun getExtraPluginsActions(): List<AnAction>
+
+  fun onPluginDeleted(pluginModel: PluginUiModel, pluginSource: PluginSource)
+
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?
 
+  @Nls
+  fun getUpdateSourceText(pluginModel: PluginUiModel): String?
+
   fun ensurePluginStatesLoaded()
+
+  fun updateCustomRepositories(repoUrls: List<String>, updateUi: () -> Unit)
+
+  fun requestRestart(pluginModelFacade: PluginModelFacade, parentComponent: JComponent? = null)
+
+  fun getAllPluginIds(pluginId: PluginId): Set<PluginId>
 
   companion object {
     @JvmField
@@ -44,8 +68,8 @@ interface PluginManagerCustomizer {
 
     @JvmStatic
     fun getInstance(): PluginManagerCustomizer? {
-      if (Registry.`is`("reworked.plugin.manager.enabled")) {
-        return EP_NAME.extensionList.firstOrNull()
+      if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
+        return EP_NAME.extensionList.firstOrNull { it.isEnabled() }
       }
       return null
     }
@@ -56,7 +80,7 @@ interface PluginManagerCustomizer {
 data class OptionsButonCustomizationModel(
   val additionalActions: List<AnAction>,
   val isVisible: Boolean = true,
-  val mainAction: Action? = null,
+  val mainAction: (() -> Unit)? = null,
   @param:NlsSafe val text: String? = null,
 )
 

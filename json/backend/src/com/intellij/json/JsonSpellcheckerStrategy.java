@@ -5,7 +5,10 @@ import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
@@ -13,11 +16,15 @@ import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Mikhail Golubev
  */
 public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
+
+  private static final Pattern CODE_LIKE_PATTERN = Pattern.compile("\"" + CODE_IDENTIFIER_LIKE + "\"");
+
   private final Tokenizer<JsonStringLiteral> ourStringLiteralTokenizer = new Tokenizer<>() {
     @Override
     public void tokenize(@NotNull JsonStringLiteral element, @NotNull TokenConsumer consumer) {
@@ -40,6 +47,20 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements D
   };
 
   @Override
+  protected boolean isLiteral(@NotNull PsiElement element) {
+    if (element instanceof JsonStringLiteral || PsiUtilCore.getElementType(element) == JsonElementTypes.DOUBLE_QUOTED_STRING) {
+      String text = element.getText();
+      if (text.contains(" ")) return true;
+      return !CODE_LIKE_PATTERN.matcher(text).matches();
+    }
+    return super.isLiteral(element);
+  }
+  @Override
+  public boolean useTextLevelSpellchecking() {
+    return Registry.is("spellchecker.grazie.enabled", false);
+  }
+
+  @Override
   public @NotNull Tokenizer<?> getTokenizer(PsiElement element) {
     if (element instanceof JsonStringLiteral) {
       if (isInjectedLanguageFragment(element)) {
@@ -53,10 +74,10 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements D
     return super.getTokenizer(element);
   }
 
-  private static final class JsonSchemaSpellcheckerClientForJson extends JsonSchemaSpellcheckerClient {
+  public static final class JsonSchemaSpellcheckerClientForJson extends JsonSchemaSpellcheckerClient {
     private final @NotNull JsonStringLiteral element;
 
-    private JsonSchemaSpellcheckerClientForJson(@NotNull JsonStringLiteral element) {
+    public JsonSchemaSpellcheckerClientForJson(@NotNull JsonStringLiteral element) {
       this.element = element;
     }
 

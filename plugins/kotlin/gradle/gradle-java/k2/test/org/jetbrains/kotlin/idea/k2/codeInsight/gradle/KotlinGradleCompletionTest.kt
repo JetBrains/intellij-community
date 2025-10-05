@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.test.UseK2PluginMode
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
@@ -251,8 +252,12 @@ class KotlinGradleCompletionTest : AbstractGradleCodeInsightTest() {
         verifyCompletion(gradleVersion)
     }
 
+    /**
+     * This test is incompatible with Gradle 9.0.
+     * KTIJ-34791
+     */
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @GradleTestSource("8.14.1")
     @TestMetadata("buildSrcDir/suggestionsInsideLambdaInBuildGradleKtsInBuildSrc.test")
     fun testSuggestionsInsideLambdaInBuildGradleKtsInBuildSrc(gradleVersion: GradleVersion) {
         verifyCompletion(gradleVersion)

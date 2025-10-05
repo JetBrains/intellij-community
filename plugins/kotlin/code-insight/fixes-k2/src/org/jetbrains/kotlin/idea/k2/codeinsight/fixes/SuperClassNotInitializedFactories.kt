@@ -10,12 +10,20 @@ import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.arrayElementType
+import org.jetbrains.kotlin.analysis.api.components.containingModule
+import org.jetbrains.kotlin.analysis.api.components.createInheritanceTypeSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
+import org.jetbrains.kotlin.analysis.api.components.memberScope
+import org.jetbrains.kotlin.analysis.api.components.render
+import org.jetbrains.kotlin.analysis.api.components.substitute
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic.SupertypeNotInitialized
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.useSiteModule
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -50,7 +58,7 @@ internal object SuperClassNotInitializedFactories {
             }
         }
 
-    context(KaSession)
+    context(_: KaSession)
     private fun KaNamedClassSymbol.isInheritableWithSuperConstructorCall(superTypeEntry: KtSuperTypeEntry): Boolean {
         if (classKind != KaClassKind.CLASS) return false
         return when (modality) {
@@ -174,7 +182,7 @@ internal object SuperClassNotInitializedFactories {
         return superTypeEntry.parents.match(KtSuperTypeList::class, last = KtClass::class)
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createAddParametersFixes(superTypeEntry: KtSuperTypeEntry, superClassSymbol: KaNamedClassSymbol): List<AddParametersFix> {
         val containingClass = getContainingClass(superTypeEntry) ?: return emptyList()
@@ -190,7 +198,7 @@ internal object SuperClassNotInitializedFactories {
         }.toList()
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createSingleConstructorFix(
         superClassSymbol: KaNamedClassSymbol,
@@ -224,7 +232,7 @@ internal object SuperClassNotInitializedFactories {
         )
     }
 
-    context(KaSession)
+    context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun prepareParameterInfo(
         superParameter: KaVariableSignature<KaValueParameterSymbol>,

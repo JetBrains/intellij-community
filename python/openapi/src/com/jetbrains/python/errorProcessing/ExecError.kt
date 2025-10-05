@@ -4,24 +4,53 @@ package com.jetbrains.python.errorProcessing
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.jetbrains.python.PyCommunityBundle
 import org.jetbrains.annotations.Nls
+import kotlin.io.path.Path
+
+/**
+ * Exe might sit on eel (new one) or on target (legacy)
+ */
+sealed interface Exe {
+  companion object {
+    fun fromString(path: String): Exe {
+      try {
+        return OnEel(Path(path).asEelPath())
+      }
+      catch (_: EelPathException) {
+        return OnTarget(path)
+      }
+    }
+  }
+
+  data class OnEel(val eelPath: EelPath) : Exe {
+    override fun toString(): String = eelPath.toString()
+  }
+
+  data class OnTarget(val path: String) : Exe {
+    override fun toString(): String = path
+  }
+}
+
+typealias ExecError = ExecErrorImpl<*>
 
 /**
  * External process error.
  */
-class ExecError(
-  val exe: EelPath,
+class ExecErrorImpl<T : ExecErrorReason>(
+  val exe: Exe,
   /**
    * I.e ['-v']
    */
   val args: Array<out String>,
 
-  val errorReason: ExecErrorReason,
+  val errorReason: T,
   /**
    * optional message to be displayed to the user: Why did we run this process. I.e "running pip to install package".
    */

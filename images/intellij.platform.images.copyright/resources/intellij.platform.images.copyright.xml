@@ -1,6 +1,5 @@
 <idea-plugin package="org.intellij.images.copyright">
   <dependencies>
-    <plugin id="com.intellij.platform.images"/>
     <plugin id="com.intellij.copyright"/>
   </dependencies>
 

@@ -20,6 +20,9 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.jetbrains.python.PYTHON_FREE_PLUGIN_ID
+import com.jetbrains.python.PYTHON_PROF_PLUGIN_ID
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -30,7 +33,6 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
@@ -45,11 +47,6 @@ private class SetupPythonInterpreterStep(
   private val project: Project,
   private val preferences: SetupSdkPreferences,
 ) : ForegroundEvaluationStep {
-  companion object {
-    private const val pythonPluginId = "PythonCore"
-    private const val pythonPluginProId = "Pythonid"
-  }
-
   override val name: String = "Set up Python Interpreter step"
   override val description: String = "Configure project Python Interpreter and install deps from requirements.txt"
 
@@ -102,8 +99,8 @@ private class SetupPythonInterpreterStep(
   }
 
   private fun getSdk(sdkHomePath: String): Sdk? {
-    val pythonPluginEnabled = PluginManagerCore.getPlugin(PluginId.getId(pythonPluginId))?.isEnabled ?: false
-    val pythonPluginProEnabled = PluginManagerCore.getPlugin(PluginId.getId(pythonPluginProId))?.isEnabled ?: false
+    val pythonPluginEnabled = PluginManagerCore.getPlugin(PluginId.getId(PYTHON_FREE_PLUGIN_ID))?.isEnabled ?: false
+    val pythonPluginProEnabled = PluginManagerCore.getPlugin(PluginId.getId(PYTHON_PROF_PLUGIN_ID))?.isEnabled ?: false
     if (!pythonPluginEnabled && !pythonPluginProEnabled) {
       println("Python plugin isn't installed. Install it before evaluation on python project")
       return null
@@ -129,9 +126,16 @@ private class SetupPythonInterpreterStep(
             }
             sdkTable.addJdk(sdk)
           }
-          for (module in ModuleManager.getInstance(project).modules) {
+        }
+
+        for (module in ModuleManager.getInstance(project).modules) {
+          @Suppress("HardCodedStringLiteral")
+          runWithModalProgressBlocking(project, "Set Sdk") {
             PyProjectSdkConfiguration.setReadyToUseSdk(project, module, sdk)
           }
+        }
+
+        WriteAction.run<Throwable> {
           if (ProjectRootManager.getInstance(project).projectSdk == null) {
             ProjectRootManager.getInstance(project).projectSdk = sdk
           }
@@ -175,7 +179,7 @@ private class SetupPythonInterpreterStep(
   private fun isProjectLocal(path: String?): Boolean {
     if (path == null) return false
     val projectDir = project.basePath ?: return false
-    return Path(path).startsWith(Path(projectDir))
+    return Path.of(path).startsWith(Path.of(projectDir))
   }
 }
 

@@ -13,9 +13,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.progress.ProgressUIUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -119,7 +119,7 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
     abortRediff();
 
     if (UIUtil.isShowing(getComponent())) {
-      taskAlarm.addRequest(() -> rediff(), ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+      taskAlarm.addRequest(() -> rediff(), ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS);
     }
   }
 
@@ -145,7 +145,7 @@ public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataPr
     onBeforeRediff();
 
     boolean forceEDT = forceRediffSynchronously();
-    int waitMillis = trySync || tryRediffSynchronously() ? ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
+    long waitMillis = trySync || tryRediffSynchronously() ? ProgressUIUtil.DEFAULT_PROGRESS_DELAY_MILLIS : 0;
 
     myTaskExecutor.executeAndTryWait(
       indicator -> {

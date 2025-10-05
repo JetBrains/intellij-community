@@ -23,6 +23,40 @@ public abstract class K2SharedQuickFixTestGenerated extends AbstractK2SharedQuic
     @TestMetadata("../testData/quickfix")
     public abstract static class Quickfix extends AbstractK2SharedQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/quickfix/objectInheritsException")
+        public static class ObjectInheritsException extends AbstractK2SharedQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../testData/quickfix/objectInheritsException/simple.kt");
+            }
+
+            @TestMetadata("withCallSites.kt")
+            public void testWithCallSites() throws Exception {
+                runTest("../testData/quickfix/objectInheritsException/withCallSites.kt");
+            }
+
+            @TestMetadata("withInnerDeclarations.kt")
+            public void testWithInnerDeclarations() throws Exception {
+                runTest("../testData/quickfix/objectInheritsException/withInnerDeclarations.kt");
+            }
+
+            @TestMetadata("withInnerDeclarations2.kt")
+            public void testWithInnerDeclarations2() throws Exception {
+                runTest("../testData/quickfix/objectInheritsException/withInnerDeclarations2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/quickfix/redundantSemicolon")
         public static class RedundantSemicolon extends AbstractK2SharedQuickFixTest {
             @java.lang.Override

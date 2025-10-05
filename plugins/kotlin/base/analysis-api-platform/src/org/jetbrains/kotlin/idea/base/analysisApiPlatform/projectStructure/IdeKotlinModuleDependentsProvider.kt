@@ -31,8 +31,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ideProjectStructureProvid
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.symbolicId
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModules
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -101,24 +101,20 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
                 // The set of dependents should not include `module` itself.
                 if (moduleEntity.symbolicId == symbolicId) return@forEach
 
-                // We can skip the module entity if `findModule` returns `null` because the module won't have been added to the project
-                // model yet and thus cannot be a proper `KaModule`. If there is a production source `KaModule`, we only need to add that
-                // because the test source `KaModule` will be a direct friend dependent of the production source `KaModule`.
-                addIfNotNull(moduleEntity.symbolicId.toKaSourceModuleForProductionOrTest(project))
+                addAll(moduleEntity.symbolicId.toKaSourceModules(project))
             }
     }
 
     /**
      * Caching transitive dependents is crucial. [getTransitiveDependents] will frequently be called by session invalidation when typing in
      * a Kotlin file. Large projects might have core modules with over a hundred or even a thousand transitive dependents. At the same time,
-     * we can keep the size of this cache small, because transitive dependents will usually only be requested for a single module (e.g. the
+     * we can keep the size of this cache small because transitive dependents will usually only be requested for a single module (e.g., the
      * module to be invalidated after an out-of-block modification).
      *
      * The timing of invalidation is important, since the [IdeKotlinModuleDependentsProvider] may be used in workspace model listeners when
      * project structure changes. Using a *before change* workspace model listener is not an option, because we'd have to guarantee that
-     * this listener is placed after all other listeners which might use `IdeKotlinModuleDependentsProvider`. It's not entirely impossible
-     * due to the existence of `Fe10/FirOrderedWorkspaceModelChangeListener`, but a simpler solution such as the project root modification
-     * tracker, which is incremented after *before change* events have been handled, seems preferable.
+     * this listener is placed after all other listeners which might use `IdeKotlinModuleDependentsProvider`. So a simpler solution such as
+     * the project root modification tracker, which is incremented after *before change* events have been handled, seems preferable.
      */
     private val transitiveDependentsCache: CachedValue<Cache<KaModule, Set<KaModule>>> =
         CachedValuesManager.getManager(project).createCachedValue {
@@ -138,6 +134,6 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
     override fun getRefinementDependents(module: KaModule): Set<KaModule> {
         if (module !is KaSourceModule) return emptySet()
         val implementingModules = module.openapiModule.implementingModules
-        return implementingModules.mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProductionOrTest() }.ifEmpty { emptySet() }
+        return implementingModules.flatMapTo(mutableSetOf()) { it.toKaSourceModules() }.ifEmpty { emptySet() }
     }
 }

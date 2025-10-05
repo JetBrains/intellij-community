@@ -9,8 +9,10 @@ import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.TerminalColorPalette
 import com.jediterm.core.Color
 import com.jediterm.terminal.ui.AwtTransformers
+import org.jetbrains.annotations.ApiStatus
 
-internal class BlockTerminalColorPalette : TerminalColorPalette() {
+@ApiStatus.Internal
+class BlockTerminalColorPalette : TerminalColorPalette() {
   private val colorKeys = BlockTerminalColors.KEYS
 
   private val colorsScheme: EditorColorsScheme
@@ -18,8 +20,7 @@ internal class BlockTerminalColorPalette : TerminalColorPalette() {
 
   override val defaultForeground: Color
     get() {
-      val foregroundColor = colorsScheme.getColor(BlockTerminalColors.DEFAULT_FOREGROUND)
-      return AwtTransformers.fromAwtColor(foregroundColor ?: colorsScheme.defaultForeground)!!
+      return AwtTransformers.fromAwtColor(TerminalUi.defaultForeground())!!
     }
   override val defaultBackground: Color
     get() {

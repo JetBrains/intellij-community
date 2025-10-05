@@ -1,11 +1,8 @@
-from typing import Literal
-
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.migrations import AddConstraint, AddIndex, RemoveIndex
 from django.db.migrations.operations.base import Operation
 
 class CreateExtension(Operation):
-    reversible: bool
     name: str
     def __init__(self, name: str) -> None: ...
     def extension_exists(self, schema_editor: BaseDatabaseSchemaEditor, extension: str) -> bool: ...
@@ -37,11 +34,8 @@ class UnaccentExtension(CreateExtension):
 class NotInTransactionMixin:
     def _ensure_not_in_transaction(self, schema_editor: BaseDatabaseSchemaEditor) -> None: ...
 
-class AddIndexConcurrently(NotInTransactionMixin, AddIndex):
-    atomic: Literal[False]
-
-class RemoveIndexConcurrently(NotInTransactionMixin, RemoveIndex):
-    atomic: Literal[False]
+class AddIndexConcurrently(NotInTransactionMixin, AddIndex): ...
+class RemoveIndexConcurrently(NotInTransactionMixin, RemoveIndex): ...
 
 class CollationOperation(Operation):
     name: str

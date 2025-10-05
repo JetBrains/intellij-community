@@ -1,20 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
-import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.asProxy
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.xdebugger.impl.rpc.XExecutionStackId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
+import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -37,10 +38,14 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
     }
   }
 
-  override fun getSessionIdByContentDescriptor(project: Project, descriptor: RunContentDescriptor): XDebugSessionId? {
-    val sessions = XDebuggerManagerImpl.getInstance(project).debugSessions
-    val session = sessions.firstOrNull { it.runContentDescriptor === descriptor } ?: return null
-    return (session as XDebugSessionImpl).id
+  // This method is not supported in monolith mode
+  override fun getXValueId(value: XValue): XValueId? = null
+
+  override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
+    val sessionImpl = (session as XDebugSessionProxy.Monolith).session as XDebugSessionImpl
+    return withCoroutineScopeForId(block) { scope ->
+      stack.getOrStoreGlobally(scope, sessionImpl)
+    }
   }
 
   override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
@@ -57,7 +62,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
     return XBreakpointManagerProxy.Monolith(XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl)
   }
 
-  override fun canUpdateInlineDebuggerFrames(): Boolean {
+  override fun hasBackendCounterpart(xValue: XValue): Boolean {
     return true
   }
 }

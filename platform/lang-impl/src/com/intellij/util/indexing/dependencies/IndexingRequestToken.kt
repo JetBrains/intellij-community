@@ -27,6 +27,6 @@ data class IndexingRequestTokenImpl(val appIndexingRequest: AppIndexingDependenc
     // we assume that appIndexingRequestId and file.modificationStamp never decrease => their sum only grow up
     // in the case of overflow we hope that new value does not match any previously used value
     // (which is hopefully true in most cases, because (new value)==(old value) was used veeeery long time ago)
-    return WriteOnlyFileIndexingStampImpl.create(appIndexingRequestId, fileStamp, false)
+    return WriteOnlyFileIndexingStampImpl.create(appIndexingRequestId, fileStamp, true)
   }
 }

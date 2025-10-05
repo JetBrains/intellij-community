@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -23,6 +23,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 private const val MAX_PART_COUNT = 10
 
 private const val WITH_THROWABLE = "withThrowable"
+
 private const val SET_CAUSE = "setCause"
 
 class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
@@ -75,9 +76,9 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
   ) : AbstractUastNonRecursiveVisitor() {
 
     override fun visitFile(node: UFile): Boolean {
-      val calls = collectCalls(node).toMutableSet()
+      val calls = collectUsagesWithSuppressions(node)
       if (calls.isEmpty()) return true
-      val groupedCalls: List<List<UCallExpression>> = calls.groupBy { it.receiver?.tryResolve().toUElementOfType<UVariable>() }
+      val groupedCalls: List<List<UCallExpression>> = calls.keys.groupBy { it.receiver?.tryResolve().toUElementOfType<UVariable>() }
         .values.map { group ->
           group.groupBy { it.methodName }.values
         }.flatten()
@@ -126,13 +127,27 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
           val alreadyHasWarning = mutableSetOf<Int>()
           for (firstIndex in 0..currentGroup.lastIndex) {
             for (secondIndex in firstIndex + 1..currentGroup.lastIndex) {
-              if (similar(currentGroup[firstIndex].parts, currentGroup[secondIndex].parts, myMinTextLength) &&
-                !sequenceOfCalls(currentGroup[firstIndex].call, currentGroup[secondIndex].call)) {
+              val firstCall = currentGroup[firstIndex]
+              val secondCall = currentGroup[secondIndex]
+              if (similar(firstCall.parts, secondCall.parts, myMinTextLength) &&
+                  !sequenceOfCalls(firstCall.call, secondCall.call)) {
+                if (calls[firstCall.call] == true) {
+                  if (alreadyHasWarning.add(firstIndex)) {
+                    registerProblem(holder, firstCall.call, secondCall.call)
+                  }
+                  continue
+                }
+                if (calls[secondCall.call] == true) {
+                  if (alreadyHasWarning.add(secondIndex)) {
+                    registerProblem(holder, secondCall.call, firstCall.call)
+                  }
+                  continue
+                }
                 if (alreadyHasWarning.add(firstIndex)) {
-                  registerProblem(holder, currentGroup[firstIndex].call, currentGroup[secondIndex].call)
+                  registerProblem(holder, firstCall.call, secondCall.call)
                 }
                 if (alreadyHasWarning.add(secondIndex)) {
-                  registerProblem(holder, currentGroup[secondIndex].call, currentGroup[firstIndex].call)
+                  registerProblem(holder, secondCall.call, firstCall.call)
                 }
               }
             }
@@ -149,11 +164,11 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
         val uastParent1 = call1.uastParent?.uastParent
         val uastParent2 = call2.uastParent?.uastParent
         if (uastParent1 == commonParent ||
-            (uastParent1?.uastParent is UIfExpression && uastParent1.uastParent?.uastParent == commonParent) ||
-            (uastParent1 is UIfExpression && uastParent1.uastParent == commonParent) ||
+            uastParent1?.uastParent is UIfExpression && uastParent1.uastParent?.uastParent == commonParent ||
+            uastParent1 is UIfExpression && uastParent1.uastParent == commonParent ||
             uastParent2 == commonParent ||
-            (uastParent2?.uastParent is UIfExpression && uastParent2.uastParent?.uastParent == commonParent) ||
-            (uastParent2 is UIfExpression && uastParent2.uastParent == commonParent)
+            uastParent2?.uastParent is UIfExpression && uastParent2.uastParent?.uastParent == commonParent ||
+            uastParent2 is UIfExpression && uastParent2.uastParent == commonParent
         ) {
           return true
         }
@@ -161,13 +176,13 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
       return false
     }
 
-    private fun collectCalls(file: UFile): Set<UCallExpression> {
-      val result = mutableSetOf<UCallExpression>()
+    private fun collectUsagesWithSuppressions(file: UFile): Map<UCallExpression, Boolean> {
+      val result = mutableMapOf<UCallExpression, Boolean>()
       file.accept(object : AbstractUastVisitor() {
         override fun visitCallExpression(node: UCallExpression): Boolean {
           val place = node.sourcePsi ?: return false
-          if (SuppressionUtil.inspectionResultSuppressed(place, this@LoggingSimilarMessageInspection)) return false
           val loggerTypeSearcher = LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return false
+          val inspectionResultSuppressed = SuppressionUtil.inspectionResultSuppressed(place, this@LoggingSimilarMessageInspection)
           if (mySkipErrorLogLevel) {
             val hasSetMessage = hasSetThrowable(node, loggerTypeSearcher)
             if (hasSetMessage) return false
@@ -177,7 +192,7 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
             if (loggerTypeSearcher != SLF4J_BUILDER_HOLDER && loggerTypeSearcher != LOG4J_LOG_BUILDER_HOLDER &&
                 !valueArguments.isEmpty() && hasThrowableType(valueArguments.last())) return false
           }
-          result.add(node)
+          result[node] = inspectionResultSuppressed
           return true
         }
       })
@@ -196,7 +211,7 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
       return false
     }
     var currentCall = node.receiver
-    (0..MAX_BUILDER_LENGTH).forEach { ignore ->
+    (0..MAX_BUILDER_LENGTH).forEach { _ ->
       if (currentCall is UQualifiedReferenceExpression) {
         currentCall = currentCall.selector
         return@forEach
@@ -233,14 +248,10 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
   private fun registerProblem(holder: ProblemsHolder, current: UCallExpression, other: UCallExpression) {
     val anchor = current.sourcePsi ?: return
     val otherElement = other.sourcePsi ?: return
-    val commonParent = PsiTreeUtil.findCommonParent(anchor, otherElement) ?: return
-    val textRange = anchor.textRange
-    val delta = commonParent.textRange?.startOffset ?: return
-    holder.registerProblem(commonParent, textRange.shiftLeft(delta),
+    holder.registerProblem(anchor,
                            JvmAnalysisBundle.message("jvm.inspection.logging.similar.message.problem.descriptor"),
                            NavigateToDuplicateFix(otherElement))
   }
-
 }
 
 private class NavigateToDuplicateFix(call: PsiElement) : ModCommandQuickFix() {

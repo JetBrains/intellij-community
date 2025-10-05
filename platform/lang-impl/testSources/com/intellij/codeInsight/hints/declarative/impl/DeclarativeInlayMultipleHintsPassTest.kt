@@ -119,7 +119,12 @@ class DeclarativeInlayMultipleHintsPassTest : DeclarativeInlayHintPassTestBase()
     val inlays1 = getBlockInlays()
     assertEquals(listOf("one|two"), inlays1.map { it.toText() })
     // expand hints
-    inlays1.flatMap { it.renderer.presentationLists }.forEach { it.getEntries().single().simulateClick(myFixture.editor, it) }
+    inlays1
+      .zip(inlays1.map { it.renderer.presentationLists })
+      .flatMap { (inlay, lists) -> lists.map { inlay to it } }
+      .forEach { (inlay, list) ->
+        list.getEntries().single().simulateClick(inlay, list)
+      }
     assertEquals(listOf("1|2"), inlays1.map { it.toText() })
 
     provider.hintAdder = adder
@@ -160,7 +165,13 @@ class DeclarativeInlayMultipleHintsPassTest : DeclarativeInlayHintPassTestBase()
     val inlays1 = getBlockInlays()
     assertEquals(listOf("two|one"), inlays1.map { it.toText() })
     // expand hints
-    inlays1.flatMap { it.renderer.presentationLists }.first().let { it.getEntries().single().simulateClick(myFixture.editor, it) }
+    inlays1
+      .zip(inlays1.map { it.renderer.presentationLists })
+      .flatMap { (inlay, lists) -> lists.map { inlay to it } }
+      .first()
+      .let { (inlay, list) ->
+        list.getEntries().single().simulateClick(inlay, list)
+      }
     assertEquals(listOf("2|one"), inlays1.map { it.toText() })
 
     text2 = null

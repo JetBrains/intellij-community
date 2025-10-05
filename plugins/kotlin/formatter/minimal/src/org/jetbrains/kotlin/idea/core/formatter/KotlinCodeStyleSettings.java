@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,10 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
     public int BLANK_LINES_AROUND_BLOCK_WHEN_BRANCHES = 0;
     public int WRAP_EXPRESSION_BODY_FUNCTIONS = 0;
     public int WRAP_ELVIS_EXPRESSIONS = 1;
+    @CommonCodeStyleSettings.WrapConstant
+    public int PROPERTY_CONTEXT_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    @CommonCodeStyleSettings.WrapConstant
+    public int FUNCTION_CONTEXT_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     public boolean IF_RPAREN_ON_NEW_LINE = false;
     public boolean ALLOW_TRAILING_COMMA = false;
     public boolean ALLOW_TRAILING_COMMA_ON_CALL_SITE = false;

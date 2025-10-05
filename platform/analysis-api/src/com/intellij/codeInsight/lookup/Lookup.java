@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -34,13 +34,13 @@ public interface Lookup {
   @Nullable
   LookupElement getCurrentItem();
 
-  void addLookupListener(LookupListener listener);
-  void removeLookupListener(LookupListener listener);
+  void addLookupListener(@NotNull LookupListener listener);
+  void removeLookupListener(@NotNull LookupListener listener);
 
   /**
    * @return bounds in layered pane coordinate system
    */
-  Rectangle getBounds();
+  @NotNull Rectangle getBounds();
 
   /**
    * @return bounds of the current item in the layered pane coordinate system.
@@ -77,10 +77,15 @@ public interface Lookup {
   @Nullable
   PsiFile getPsiFile();
 
+  /**
+   * Returns {@code true} if this lookup is used in completion mode, meaning that it's created as a result of completion action or autocompletion.
+   * Lookup can be shown by other clients as well, e.g., refactorings, templates, etc. In this case, this method returns {@code false}.
+   * @return {@code true} if this lookup is shown in completion mode, {@code false} otherwise.
+   */
   boolean isCompletion();
 
   @Unmodifiable
-  List<LookupElement> getItems();
+  @NotNull List<LookupElement> getItems();
 
   boolean isFocused();
 

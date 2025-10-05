@@ -220,7 +220,7 @@ public final class DuplicatesFinder {
       }
 
     }
-    final Match match = new Match(candidates.get(0), candidates.get(candidates.size() - 1), ignoreParameterTypesAndPostVariableUsages);
+    final Match match = new Match(candidates.getFirst(), candidates.getLast(), ignoreParameterTypesAndPostVariableUsages);
     for (int i = 0; i < myPattern.length; i++) {
       if (!matchPattern(myPattern[i], candidates.get(i), candidates, match)) return null;
     }

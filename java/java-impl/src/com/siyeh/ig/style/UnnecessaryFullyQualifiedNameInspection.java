@@ -175,7 +175,7 @@ public final class UnnecessaryFullyQualifiedNameInspection extends BaseInspectio
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryFullyQualifiedNameVisitor();
   }
 

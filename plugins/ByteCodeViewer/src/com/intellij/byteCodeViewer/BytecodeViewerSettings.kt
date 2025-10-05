@@ -6,7 +6,10 @@ import com.intellij.openapi.components.*
 @Service(Service.Level.APP)
 @State(name = "BytecodeViewerSettings", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
 internal class BytecodeViewerSettings : PersistentStateComponent<BytecodeViewerSettings.State> {
-  data class State(var showDebugInfo: Boolean = true)
+  data class State(
+    var showDebugInfo: Boolean = true,
+    var syncWithEditor: Boolean = true,
+  )
 
   private var myState = State()
 

@@ -181,9 +181,9 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           }
           writeDataValue(out, effects.returnValue);
         }
-        else if (rhs instanceof FieldAccess fieldAccess) {
+        else if (rhs instanceof FieldAccess(String name)) {
           DataInputOutputUtil.writeINT(out, maxFinal + 1);
-          out.writeUTF(fieldAccess.name());
+          out.writeUTF(name);
         }
         else {
           throw new UnsupportedOperationException("Unsupported result: " + rhs + " in " + eqs);

@@ -6,8 +6,8 @@ com/google/gson/reflect/TypeToken
 com/google/gson/stream/JsonToken
 com/intellij/util/ui/MenuItemLayoutHelper
 com/intellij/util/ui/MenuItemLayoutHelper$LayoutResult
+fleet/util/UID
 io/netty/buffer/ByteBuf
-it/unimi/dsi/fastutil/ints/IntSet
 it/unimi/dsi/fastutil/longs/Long2ObjectMap
 it/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap
 kotlin/jvm/internal/DefaultConstructorMarker

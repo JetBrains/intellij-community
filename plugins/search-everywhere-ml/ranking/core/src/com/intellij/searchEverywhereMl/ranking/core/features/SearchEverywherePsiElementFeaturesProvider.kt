@@ -1,6 +1,7 @@
 package com.intellij.searchEverywhereMl.ranking.core.features
 
 import com.intellij.ide.actions.searcheverywhere.*
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.PsiItemWithPresentation
 import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator
 import com.intellij.internal.statistic.eventLog.events.EventField
@@ -9,6 +10,8 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.LanguageUsageStatistics
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
+import com.intellij.navigation.NavigationItem
+import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.io.FileUtil
@@ -31,7 +34,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.Time.DAY
 import com.intellij.util.Time.WEEK
 
-internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeaturesProvider(
+class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElementFeaturesProvider(
   FileSearchEverywhereContributor::class.java,
   RecentFilesSEContributor::class.java,
   ClassSearchEverywhereContributor::class.java,
@@ -64,35 +67,36 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?,
                                   correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
-    val result = mutableListOf<EventPair<*>>()
-    var similarityScore: Double? = null
+    return buildList {
+      var similarityScore: Double? = null
 
-    val item = if (element is PsiItemWithSimilarity<*>) {
-      result.add(IS_SEMANTIC_ONLY.with(element.isPureSemantic))
-      element.similarityScore?.let { similarityScore = it }
-      element.value
-    }
-    else {
-      result.add(IS_SEMANTIC_ONLY.with(false))
-      element
-    }
+      val item = if (element is PsiItemWithSimilarity<*>) {
+        add(IS_SEMANTIC_ONLY.with(element.isPureSemantic))
+        element.similarityScore?.let { similarityScore = it }
+        element.value
+      }
+      else {
+        add(IS_SEMANTIC_ONLY.with(false))
+        element
+      }
 
-    if (similarityScore != null) {
-      result.add(SIMILARITY_SCORE.with(roundDouble(similarityScore)))
-    }
-    else if (ApplicationManager.getApplication().isEAP) { // for now, we can collect the data only from EAP builds
-      val elementName = getElementName(item)
-      val elementEmbedding = elementName?.let { TextEmbeddingProvider.getProvider()?.embed(convertNameToNaturalLanguage(it)) }
-      val queryEmbedding = getQueryEmbedding(searchQuery, split = true)
-      if (elementEmbedding != null && queryEmbedding != null) {
-        result.add(SIMILARITY_SCORE.with(roundDouble(elementEmbedding.cosine(queryEmbedding).toDouble())))
+      if (similarityScore != null) {
+        add(SIMILARITY_SCORE.with(roundDouble(similarityScore)))
+      }
+      else if (ApplicationManager.getApplication().isEAP) { // for now, we can collect the data only from EAP builds
+        val elementName = getElementName(item)
+        val elementEmbedding = elementName?.let { TextEmbeddingProvider.getProvider()?.embed(convertNameToNaturalLanguage(it)) }
+        val queryEmbedding = getQueryEmbedding(searchQuery, split = true)
+        if (elementEmbedding != null && queryEmbedding != null) {
+          add(SIMILARITY_SCORE.with(roundDouble(elementEmbedding.cosine(queryEmbedding).toDouble())))
+        }
+      }
+
+      SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(item)?.let { psiElement ->
+        addAll(getLanguageFeatures(psiElement, cache))
+        addAll(getNameFeatures(item, searchQuery))
       }
     }
-
-    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(item) ?: return emptyList()
-    result.addAll(getLanguageFeatures(psiElement, cache))
-    result.addAll(getNameFeatures(item, searchQuery))
-    return result
   }
 
   private fun getLanguageFeatures(element: PsiElement, cache: FeaturesProviderCache?): List<EventPair<*>> {
@@ -111,39 +115,46 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
 
     val timeSinceLastUsage = System.currentTimeMillis() - stats.lastUsed
 
-    val features = mutableListOf(
-      LANGUAGE_DATA_KEY.with(elementLanguage.id),
-      LANGUAGE_IS_MOST_USED_DATA_KEY.with(isMostUsed),
-      LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY.with(isInTop3MostUsed),
-      LANGUAGE_USED_IN_LAST_DAY.with(timeSinceLastUsage <= DAY),
-      LANGUAGE_USED_IN_LAST_WEEK.with(timeSinceLastUsage <= WEEK),
-      LANGUAGE_USED_IN_LAST_MONTH.with(timeSinceLastUsage <= WEEK * 4L),
-      LANGUAGE_NEVER_USED_DATA_KEY.with(stats == LanguageUsageStatistics.NEVER_USED),
-    )
+    return buildList {
+      add(LANGUAGE_DATA_KEY.with(elementLanguage.id))
+      add(LANGUAGE_IS_MOST_USED_DATA_KEY.with(isMostUsed))
+      add(LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY.with(isInTop3MostUsed))
+      add(LANGUAGE_USED_IN_LAST_DAY.with(timeSinceLastUsage <= DAY))
+      add(LANGUAGE_USED_IN_LAST_WEEK.with(timeSinceLastUsage <= WEEK))
+      add(LANGUAGE_USED_IN_LAST_MONTH.with(timeSinceLastUsage <= WEEK * 4L))
+      add(LANGUAGE_NEVER_USED_DATA_KEY.with(stats == LanguageUsageStatistics.NEVER_USED))
 
-    if (cache.currentlyOpenedFile != null) {
-      val openedFileLanguage = LanguageUtil.getFileLanguage(cache.currentlyOpenedFile)
-      features.add(LANGUAGE_IS_SAME_AS_OPENED_FILE.with(openedFileLanguage == elementLanguage))
+      if (cache.currentlyOpenedFile != null) {
+        val openedFileLanguage = LanguageUtil.getFileLanguage(cache.currentlyOpenedFile)
+        add(LANGUAGE_IS_SAME_AS_OPENED_FILE.with(openedFileLanguage == elementLanguage))
+      }
     }
-
-    return features
   }
 
   private fun getNameFeatures(element: Any, searchQuery: String): Collection<EventPair<*>> {
-    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element)
-    if (psiElement is PsiFileSystemItem) return getFileNameMatchingFeatures(psiElement, searchQuery)
+    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element)
+    if (psiElement is PsiFileSystemItem) {
+      return getFileNameMatchingFeatures(psiElement, searchQuery)
+    }
 
-    return getElementName(element)?.let {
-      getNameMatchingFeatures(it, searchQuery)
-    } ?: emptyList()
+    val name = getElementName(psiElement ?: element) ?: return emptyList()
+    return getNameMatchingFeatures(name, searchQuery)
   }
 
-  private fun getElementName(element: Any) = when (element) {
-      is PsiItemWithPresentation -> element.item as? PsiNamedElement
-      is PsiNamedElement -> element
-      else -> null
-    }?.let {
-      ReadAction.compute<String, Nothing> { it.name }
+  private fun getElementName(element: Any): String? {
+    if (element is ItemWithPresentation<*>) {
+      return element.presentation.presentableText
+    }
+
+    if (element is PsiNamedElement) {
+      return ReadAction.compute<String, Nothing> { element.name }
+    }
+
+    if (element is NavigationItem) {
+      return element.name
+    }
+
+    return null
   }
 
   /**
@@ -159,10 +170,12 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
 }
 
 object SearchEverywherePsiElementFeaturesProviderUtils {
-  fun getPsiElement(element: Any): PsiElement? = when (element) {
-    is PsiItemWithSimilarity<*> -> getPsiElement(element.value)
+  fun getPsiElementOrNull(element: Any): PsiElement? = when (element) {
+    is PsiItemWithSimilarity<*> -> getPsiElementOrNull(element.value)
     is PsiItemWithPresentation -> element.item
+    is PsiElementNavigationItem -> element.targetElement!!
     is PsiElement -> element
+    is ItemWithPresentation<*> -> getPsiElementOrNull(element.item)
     else -> null
   }
 }

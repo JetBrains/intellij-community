@@ -341,6 +341,7 @@ public final class FoldingUpdate {
     public final PsiElement element;
     final String signature;
     final boolean collapsedByDefault;
+    final boolean keepExpandedOnFirstCollapseAll;
 
     private RegionInfo(@NotNull FoldingDescriptor descriptor,
                        @NotNull PsiElement psiElement,
@@ -349,6 +350,7 @@ public final class FoldingUpdate {
       element = psiElement;
       Boolean hardCoded = descriptor.isCollapsedByDefault();
       collapsedByDefault = hardCoded == null ? FoldingPolicy.isCollapsedByDefault(descriptor, foldingBuilder) : hardCoded;
+      keepExpandedOnFirstCollapseAll = FoldingPolicy.keepExpandedOnFirstCollapseAll(descriptor, foldingBuilder);
       signature = createSignature(psiElement);
     }
 

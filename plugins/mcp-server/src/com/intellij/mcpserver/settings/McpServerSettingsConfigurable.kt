@@ -2,35 +2,73 @@
 package com.intellij.mcpserver.settings
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
+import com.intellij.ide.BrowserUtil.browse
+import com.intellij.ide.IdeBundle.messagePointer
 import com.intellij.mcpserver.McpServerBundle
+import com.intellij.mcpserver.McpserverIcons
+import com.intellij.mcpserver.clientConfiguration.McpClient
 import com.intellij.mcpserver.createSseServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.util.getHelpLink
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.JBOptionButton
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValueComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
+import com.intellij.util.ui.ColorizeProxyIcon
 import com.intellij.util.ui.TextTransferable
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
+import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
 import java.nio.file.Path
-import javax.swing.JComponent
+import javax.swing.*
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
+
+private class UpdatableBrowserLink(icon: Icon?, text: @Nls String?, tooltip: @Nls String?, var url: @NonNls String) : ActionLink() {
+  constructor(text: @Nls String, url: @NonNls String) : this(AllIcons.Ide.External_link_arrow, text, null, url)
+
+  init {
+    addActionListener { browse(url) }
+    icon?.let { setIcon(it, true) }
+    text?.let { setText(it) }
+    tooltip?.let { toolTipText = it }
+    ActionManagerEx.withLazyActionManager(scope = null) {
+      val group = DefaultActionGroup(object : DumbAwareAction(messagePointer("action.text.open.link.in.browser"), AllIcons.Nodes.PpWeb){
+        override fun actionPerformed(e: AnActionEvent) {
+          browse(url)
+        }
+      }, object: DumbAwareAction(messagePointer("action.text.copy.link.address"), AllIcons.Actions.Copy) {
+        override fun actionPerformed(e: AnActionEvent) {
+          CopyPasteManager.getInstance().setContents(StringSelection(url))
+        }
+      })
+      componentPopupMenu = it.createActionPopupMenu("popup@browser.link.context.menu", group).component
+    }
+  }
+}
 
 class McpServerSettingsConfigurable : SearchableConfigurable {
   private var settingsPanel: DialogPanel? = null
@@ -38,95 +76,133 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
 
   override fun getDisplayName(): String = McpServerBundle.message("configurable.name.mcp.plugin")
 
+  override fun getHelpTopic(): @NonNls String {
+    return "settings.mcp.server"
+  }
+
   override fun createComponent(): JComponent {
     val settings = McpServerSettings.getInstance()
 
     val panel = panel {
       row {
-        enabledCheckboxState = checkBox(McpServerBundle.message("enable.mcp.server")).bindSelected(settings.state::enableMcpServer).selected
-      }
-      panel {
-
-        fun getLabelText(): String = if (McpServerService.getInstance().isRunning) McpServerBundle.message("mcp.server.is.running.on") else ""
-        fun getLinkText(): String = if (McpServerService.getInstance().isRunning) McpServerService.getInstance().serverSseUrl else ""
-
-        row {
-          val label = label(getLabelText())
-          val link = link(getLinkText()) {
-            BrowserUtil.browse(it.actionCommand!!)
-          }
-
-          enabledCheckboxState!!.addListener {
-            McpServerService.getInstance().settingsChanged(it)
-            val isServerRunning = McpServerService.getInstance().isRunning
-            label.component.text = if (isServerRunning) getLabelText() else ""
-            link.component.text = if (isServerRunning) McpServerService.getInstance().serverSseUrl else ""
+        val checkboxWithValidation = CheckboxWithValidation(if (McpServerService.getInstance().isRunning) {
+          McpServerBundle.message("enable.mcp.server.when.enabled")
+        }
+                                                            else {
+          McpServerBundle.message("enable.mcp.server")
+        }, ConsentValidator)
+        cell(checkboxWithValidation).bind(componentGet = { it.isValidatedSelected }, componentSet = { component, value -> component.isValidatedSelected = value }, prop = MutableProperty(getter = { settings.state.enableMcpServer }, setter = { settings.state.enableMcpServer = it })).gap(RightGap.SMALL)
+        enabledCheckboxState = ValueComponentPredicate(checkboxWithValidation.isValidatedSelected).also { predicate ->
+          checkboxWithValidation.addPropertyChangeListener(CheckboxWithValidation.IS_VALIDATED_SELECTED_PROPERTY) { evt ->
+            predicate.set(evt.newValue as Boolean)
           }
         }
 
+        fun getLinkText(): String = if (McpServerService.getInstance().isRunning) McpServerService.getInstance().serverSseUrl else ""
+        val link = cell(UpdatableBrowserLink(getLinkText(), getLinkText())).visibleIf(enabledCheckboxState!!)
 
+        enabledCheckboxState!!.addListener {
+          McpServerService.getInstance().settingsChanged(it)
+          val isServerRunning = McpServerService.getInstance().isRunning
+          link.component.text = getLinkText()
+          link.component.url = getLinkText()
+          checkboxWithValidation.text = if (isServerRunning) McpServerBundle.message("enable.mcp.server.when.enabled") else McpServerBundle.message("enable.mcp.server")
+        }
+      }.bottomGap(BottomGap.SMALL)
 
-        McpClientDetector.detectGlobalMcpClients().forEach { mcpClient ->
-          val isConfigured = ValueComponentPredicate(mcpClient.isConfigured() ?: false)
-          val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
-          val json = mcpClient.json
-          group(mcpClient.name) {
+      row {
+        comment(McpServerBundle.message("settings.explanation.when.server.disabled", getHelpLink("mcp-server.html#supported-tools"),
+                                        McpClientDetector.detectGlobalMcpClients().joinToString("<br/>") { " • " + it.name.displayName }))
+      }.bottomGap(BottomGap.NONE).visibleIf(enabledCheckboxState!!.not())
+
+      group(McpServerBundle.message("settings.client.group"), indent = false) {
+        row {
+          comment(McpServerBundle.message("settings.setup.description"))
+        }
+        indent {
+          McpClientDetector.detectGlobalMcpClients().forEach { mcpClient ->
+            val isConfigured = ValueComponentPredicate(mcpClient.isConfigured() ?: false)
+            val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
             row {
-              text(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
-              text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect))
-              text(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
-            }
+              text(mcpClient.name.displayName)
+            }.topGap(TopGap.SMALL)
             val autoconfiguredPressed = ValueComponentPredicate(false)
+            val errorDuringConfiguration = ValueComponentPredicate(false)
             val configExists = ValueComponentPredicate(mcpClient.configPath.exists() && mcpClient.configPath.isRegularFile())
             row {
-              icon(AllIcons.General.Information)
-              comment(McpServerBundle.message("mcp.server.client.restart.info"))
-            }.visibleIf(autoconfiguredPressed)
-            row {
-              button(McpServerBundle.message("autoconfigure.mcp.server"), {
-                mcpClient.configure()
-                isConfigured.set(true)
-                isPortCorrect.set(true)
-                configExists.set(true)
-                autoconfiguredPressed.set(true)
+              cell(JBOptionButton(object : AbstractAction(McpServerBundle.message("autoconfigure.mcp.server")) {
+                override fun actionPerformed(e: ActionEvent?) {
+                  runCatching {
+                    mcpClient.configure()
+                  }.onFailure {
+                    thisLogger().info(it)
+                    errorDuringConfiguration.set(true)
+                  }.onSuccess {
+                    errorDuringConfiguration.set(false)
+                    isConfigured.set(true)
+                    isPortCorrect.set(true)
+                    configExists.set(true)
+                    autoconfiguredPressed.set(true)
+                  }
+                }
+              }, options = arrayOf(object : AbstractAction(McpServerBundle.message("open.settings.json")) {
+                override fun actionPerformed(e: ActionEvent?) {
+                  openFileInEditor(mcpClient.configPath)
+                }
+              }, object : AbstractAction(McpServerBundle.message("copy.mcp.server.configuration")) {
+                override fun actionPerformed(e: ActionEvent?) {
+                  CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(buildJsonObject {
+                    put("jetbrains", McpClient.json.encodeToJsonElement(mcpClient.getConfig()))
+                  }) as CharSequence))
+                  if (e != null) showCopiedBallon(e)
+                }
+              })).apply {
+                addSeparator = false
               })
-              button(McpServerBundle.message("open.settings.json"), { openFileInEditor(mcpClient.configPath) }).visibleIf(configExists)
-              button(McpServerBundle.message("copy.mcp.server.configuration"), {
-                CopyPasteManager.getInstance().setContents(TextTransferable(json.encodeToString(buildJsonObject {
-                  put("jetbrains", json.encodeToJsonElement(mcpClient.getConfig()))
-                }) as CharSequence))
-                showCopiedBallon(it)
-              })
+              icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
+              text(McpServerBundle.message("mcp.server.configured")).visibleIf(isConfigured.and(isPortCorrect).and(autoconfiguredPressed.not()))
+
+              icon(McpserverIcons.Expui.StatusEnabled).gap(RightGap.SMALL).visibleIf(autoconfiguredPressed)
+              text(McpServerBundle.message("mcp.server.client.restart.info.settings")).visibleIf(autoconfiguredPressed)
+
+              icon(ColorizeProxyIcon.Simple(McpserverIcons.Expui.StatusDisabled, JBColor.GRAY)).gap(RightGap.SMALL).visibleIf(isConfigured.not())
+              comment(McpServerBundle.message("mcp.server.not.configured")).visibleIf(isConfigured.not())
+
+              icon(AllIcons.General.Error).gap(RightGap.SMALL).visibleIf(isConfigured.and(isPortCorrect.not()))
+              comment(McpServerBundle.message("mcp.server.configured.port.invalid")).visibleIf(isConfigured.and(isPortCorrect.not()))
+
+              icon(AllIcons.General.Error).gap(RightGap.SMALL).visibleIf(errorDuringConfiguration)
+              comment(McpServerBundle.message("mcp.server.client.autoconfig.error")).visibleIf(errorDuringConfiguration)
             }
           }
         }
-        group(McpServerBundle.message("mcp.general.client")){
-          row{
+      }.visibleIf(enabledCheckboxState!!)
+
+      group(McpServerBundle.message("mcp.general.client"), indent = false) {
+        row {
+          comment(McpServerBundle.message("settings.comment.manual.config"))
+        }
+        indent {
+          row {
             button(McpServerBundle.message("copy.mcp.server.sse.configuration"), {
-              val json = createSseServerJsonEntry(McpServerService.getInstance().port)
-              CopyPasteManager.getInstance().setContents(TextTransferable(json.toString() as CharSequence))
+              val json = createSseServerJsonEntry(McpServerService.getInstance().port, null)
+              CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(json) as CharSequence))
               showCopiedBallon(it)
             })
             button(McpServerBundle.message("copy.mcp.server.stdio.configuration"), {
               val json = createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, null)
-              CopyPasteManager.getInstance().setContents(TextTransferable(json.toString() as CharSequence))
+              CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(json) as CharSequence))
               showCopiedBallon(it)
             })
           }
         }
-
       }.visibleIf(enabledCheckboxState!!)
-      panel {
-        group(McpServerBundle.message("border.title.terminal.commands")) {
-          row {
-            checkBox(McpServerBundle.message("checkbox.enable.brave.mode.skip.command.execution.confirmations")).bindSelected(settings.state::enableBraveMode)
-          }
-          row {
-            icon(AllIcons.General.Warning)
-            comment(McpServerBundle.message("text.warning.enabling.brave.mode.will.allow.terminal.commands.to.execute.without.confirmation.use.with.caution"))
-          }
+
+      group(McpServerBundle.message("border.title.commands.execution")) {
+        row {
+          checkBox(McpServerBundle.message("checkbox.enable.brave.mode.skip.command.execution.confirmations")).comment(McpServerBundle.message("text.warning.enabling.brave.mode.will.allow.terminal.commands.to.execute.without.confirmation.use.with.caution")).bindSelected(settings.state::enableBraveMode)
         }
-      }.enabledIf(enabledCheckboxState!!)
+      }.visibleIf(enabledCheckboxState!!)
     }
 
     settingsPanel = panel
@@ -134,11 +210,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
   }
 
   private fun showCopiedBallon(event: ActionEvent) {
-    JBPopupFactory
-      .getInstance()
-      .createHtmlTextBalloonBuilder(McpServerBundle.message("json.configuration.copied.to.clipboard"), null, null, null)
-      .createBalloon()
-      .showInCenterOf(event.source as JComponent)
+    JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(McpServerBundle.message("json.configuration.copied.to.clipboard"), null, null, null).createBalloon().showInCenterOf(event.source as JComponent)
   }
 
   private fun openFileInEditor(filePath: Path) {
@@ -177,4 +249,45 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
   }
 
   override fun getId(): @NonNls String = "com.intellij.mcpserver.settings"
+}
+
+private class CheckboxWithValidation(@Nls checkboxText: String, var validator: CheckboxValidator) : JCheckBox() {
+  companion object {
+    const val IS_VALIDATED_SELECTED_PROPERTY: String = "isValidatedSelected"
+  }
+
+  var isValidatedSelected: Boolean = false
+    set(value) {
+      val oldValue = field
+      field = value
+      isSelected = value
+      firePropertyChange(IS_VALIDATED_SELECTED_PROPERTY, oldValue, value)
+    }
+
+  init {
+    this.text = checkboxText
+    addActionListener {
+      val newValue = isSelected
+      isSelected = isValidatedSelected
+      SwingUtilities.invokeLater {
+        if (validator.isValidNewValue(newValue)) {
+          isValidatedSelected = newValue
+        }
+      }
+    }
+  }
+}
+
+private object ConsentValidator : CheckboxValidator {
+  override fun isValidNewValue(isSelected: Boolean): Boolean = if (isSelected) {
+    MessageDialogBuilder.yesNo(McpServerBundle.message("dialog.title.mcp.server.consent"), McpServerBundle.message("dialog.message.mcp.server.consent", getHelpLink("mcp-server.html#supported-tools")), Messages.getWarningIcon())
+      .yesText(McpServerBundle.message("dialog.mcp.server.consent.enable.button"))
+      .noText(McpServerBundle.message("dialog.mcp.server.consent.cancel.button"))
+      .ask(getLastFocusedOrOpenedProject())
+  }
+  else true
+}
+
+private interface CheckboxValidator {
+  fun isValidNewValue(isSelected: Boolean): Boolean
 }

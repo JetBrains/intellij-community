@@ -8,15 +8,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class StatsHttpResponse {
-  private static final SimpleDateFormat RFC1123_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-  private static final SimpleDateFormat RFC1036_FORMAT = new SimpleDateFormat("EEE, dd-MMM-yy HH:mm:ss zzz");
-  private static final SimpleDateFormat ASCTIME_FORMAT = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy");
-  private static final SimpleDateFormat[] DATE_FORMATS = new SimpleDateFormat[]{RFC1123_FORMAT, RFC1036_FORMAT, ASCTIME_FORMAT};
+  private static final DateTimeFormatter RFC1123_FORMAT = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss zzz");
+  private static final DateTimeFormatter RFC1036_FORMAT = DateTimeFormatter.ofPattern("EEE, dd-MMM-yy HH:mm:ss zzz");
+  private static final DateTimeFormatter ASCTIME_FORMAT = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy");
+  private static final DateTimeFormatter[] DATE_FORMATS = new DateTimeFormatter[]{RFC1123_FORMAT, RFC1036_FORMAT, ASCTIME_FORMAT};
 
   private final HttpResponse<String> myHttpResponse;
   private final int myCode;
@@ -32,7 +32,7 @@ public class StatsHttpResponse {
   public @Nullable Long lastModified() {
     return myHttpResponse == null ? null : myHttpResponse.headers().
       allValues("Last-Modified").stream().
-      map(value -> parseDate(value)).filter(date -> date != null).map(date -> date.getTime()).
+      map(value -> parseDate(value)).filter(date -> date != null).
       max(Long::compareTo).orElse(null);
   }
 
@@ -45,15 +45,12 @@ public class StatsHttpResponse {
            ? new ByteArrayInputStream(myHttpResponse.body().getBytes(StandardCharsets.UTF_8)) : null;
   }
 
-  private static @Nullable Date parseDate(String string) {
-    for (SimpleDateFormat format : DATE_FORMATS) {
+  private static @Nullable Long parseDate(String string) {
+    for (DateTimeFormatter format : DATE_FORMATS) {
       try {
-        Date date = format.parse(string, new ParsePosition(0));
-        if (date != null) {
-          return date;
-        }
+        return ZonedDateTime.parse(string, format).toInstant().toEpochMilli();
       }
-      catch (NumberFormatException ignored) {
+      catch (DateTimeParseException ignored) {
       }
     }
     return null;

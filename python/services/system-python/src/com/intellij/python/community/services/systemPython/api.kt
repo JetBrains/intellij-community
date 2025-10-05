@@ -8,8 +8,8 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.shared.LanguageLevelWithUiComparator
 import com.intellij.python.community.services.shared.PythonWithUi
-import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
+import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.CheckReturnValue
  * Service to register and obtain [SystemPython]s
  */
 @ApiStatus.NonExtendable
-sealed interface SystemPythonService {
+interface SystemPythonService {
   /**
    * The result of this function might be cached. Use [forceRefresh] to reload it forcibly.
    * @return system pythons installed on OS sorted by type, then by lang.level: in order from highest (hence, the first one is usually the best one)
@@ -56,7 +56,7 @@ fun SystemPythonService(): SystemPythonService = ApplicationManager.getApplicati
  *
  * Instances could be obtained with [SystemPythonService]
  */
-class SystemPython internal constructor(private val delegate: VanillaPythonWithLanguageLevel, override val ui: UICustomization?) : VanillaPythonWithLanguageLevel by delegate, PythonWithUi, Comparable<SystemPython> {
+class SystemPython internal constructor(private val delegate: VanillaPythonWithLanguageLevel, override val ui: PyToolUIInfo?) : VanillaPythonWithLanguageLevel by delegate, PythonWithUi, Comparable<SystemPython> {
 
   private companion object {
     val comparator = LanguageLevelWithUiComparator<SystemPython>()
@@ -91,7 +91,7 @@ class SystemPython internal constructor(private val delegate: VanillaPythonWithL
  * Tool to install python on OS.
  */
 @ApiStatus.NonExtendable
-sealed interface PythonInstallerService {
+interface PythonInstallerService {
 
   /**
    * Installs latest stable python on OS.
