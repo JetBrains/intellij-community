@@ -41,7 +41,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     formattingRanges: List<TextRange>,
     formattingContext: FormattingContext,
     canChangeWhiteSpaceOnly: Boolean,
-    quickFormat: Boolean
+    quickFormat: Boolean,
   ) {
     val currRequest = pendingRequests[document]
     val isSync = isSyncFormat(document)
@@ -124,14 +124,14 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     private val _ranges: List<TextRange>,
     private val _canChangeWhitespaceOnly: Boolean,
     private val _quickFormat: Boolean,
-    private val isSync: Boolean
+    private val isSync: Boolean,
   ) : AsyncFormattingRequest {
     private val initialModificationStamp = document.getModificationStamp()
 
     @Volatile
     private var task: FormattingTask? = null
 
-    private var result = CompletableDeferred<String?>()
+    private val result = CompletableDeferred<String?>()
 
     private val stateRef: AtomicReference<FormattingRequestState> = AtomicReference(
       FormattingRequestState.NOT_STARTED)
@@ -301,7 +301,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     override fun onError(
       @NlsContexts.NotificationTitle title: @NlsContexts.NotificationTitle String,
       @NlsContexts.NotificationContent message: @NlsContexts.NotificationContent String,
-      displayId: String?
+      displayId: String?,
     ) {
       if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
         result.complete(null)
@@ -318,7 +318,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       @NlsContexts.NotificationTitle title: @NlsContexts.NotificationTitle String,
       @NlsContexts.NotificationContent message: @NlsContexts.NotificationContent String,
       displayId: String?,
-      offset: Int
+      offset: Int,
     ) {
       if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
         result.complete(null)
