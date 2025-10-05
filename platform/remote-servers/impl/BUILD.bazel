@@ -28,7 +28,7 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/xdebugger-api:debugger",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/util/jdom",

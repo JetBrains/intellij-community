@@ -239,7 +239,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="library" scope="RUNTIME" name="jetbrains-annotations" level="project" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module-library">
       <library name="tech.uom.lib:uom-lib-common:1.1" type="repository">

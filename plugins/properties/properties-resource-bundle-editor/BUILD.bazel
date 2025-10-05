@@ -31,7 +31,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
   ],
   runtime_deps = ["//platform/backend"]
@@ -63,7 +63,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
   ]
 )

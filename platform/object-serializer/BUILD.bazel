@@ -17,7 +17,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/object-serializer:objectSerializer-annotations",
     "//libraries/lz4",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//platform/util/xmlDom",
@@ -42,7 +42,7 @@ jvm_library(
     "//platform/object-serializer:objectSerializer-annotations",
     "//libraries/lz4",
     "@lib//:assert_j",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "//platform/util/xmlDom",
@@ -94,7 +94,7 @@ jvm_library(
     "//platform/util-ex",
     "//platform/object-serializer:objectSerializer-annotations",
     "//libraries/ion",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ]
 )
 ### auto-generated section `build intellij.platform.objectSerializer.tests` end

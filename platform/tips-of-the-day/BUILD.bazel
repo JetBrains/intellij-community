@@ -23,7 +23,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/core-ui",
     "@lib//:jsoup",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//platform/ide-core-impl",

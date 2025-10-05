@@ -35,7 +35,7 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//platform/refactoring",
     "//platform/usageView",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/libraries/cglib",
   ],

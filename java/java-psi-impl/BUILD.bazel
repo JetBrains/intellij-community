@@ -22,7 +22,7 @@ jvm_library(
     "//libraries/asm",
     "//platform/util",
     "@lib//:stream_ex",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//java/java-syntax:syntax",
     "//platform/syntax/syntax-psi:psi",
   ],

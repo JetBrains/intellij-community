@@ -11,7 +11,7 @@ jvm_library(
     "//libraries/aalto-xml",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
   ]

@@ -65,7 +65,7 @@ jvm_library(
     "//platform/util/jdom",
     "//java/java-impl:impl",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ]
 )
 
@@ -116,7 +116,7 @@ jvm_library(
     "//java/java-impl:impl",
     "@lib//:junit4",
     "@lib//:kotlinc-analysis-api-impl-base",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ]
 )
 ### auto-generated section `build kotlin.base.project-structure` end

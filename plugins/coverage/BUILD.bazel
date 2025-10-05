@@ -45,7 +45,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/platform-impl:ide-impl",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ],
   exports = [
     "//plugins/coverage-common:coverage",
@@ -99,7 +99,7 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/platform-impl:ide-impl",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//java/java-runtime:rt",
   ],
   exports = [

@@ -32,7 +32,7 @@ jvm_library(
     "//platform/diff-api:diff",
     "@lib//:kotlin-stdlib",
     "@lib//:netty-codec-http",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/jackson/jackson",
     "//libraries/jackson/jr-objects:libraries-jackson-jr-objects",
     "@lib//:netty-buffer",

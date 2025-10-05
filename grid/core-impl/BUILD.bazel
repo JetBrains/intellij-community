@@ -30,7 +30,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ]
 )
 ### auto-generated section `build intellij.grid.core.impl` end

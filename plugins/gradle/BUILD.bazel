@@ -49,7 +49,7 @@ jvm_library(
     "//libraries/ion",
     "@lib//:stream_ex",
     "//platform/statistics",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:commons-cli",
     "//platform/workspace/storage",
     "//plugins/properties/properties-psi-impl:backend-psi",

@@ -21,7 +21,7 @@ jvm_library(
     "//libraries/asm",
     "@lib//:stream_ex",
     "//platform/util",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
     "//platform/syntax/syntax-psi:psi",

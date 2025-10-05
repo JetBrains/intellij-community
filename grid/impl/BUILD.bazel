@@ -47,7 +47,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/diff-api:diff",
     "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",

@@ -37,7 +37,7 @@ jvm_library(
     "//platform/testFramework/core",
     "//platform/util-class-loader:util-classLoader",
     "//libraries/jackson/jr-objects:libraries-jackson-jr-objects",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/gson",
     "@lib//:protobuf",
     "//build/tasks",

@@ -25,7 +25,7 @@ jvm_library(
     "//libraries/guava",
     "//platform/util",
     "//platform/util/coroutines",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
   ]

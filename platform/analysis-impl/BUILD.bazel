@@ -31,7 +31,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util:util-ui",
     "//libraries/gson",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",
     "//platform/platform-util-io:ide-util-io",

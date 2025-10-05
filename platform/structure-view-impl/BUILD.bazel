@@ -25,7 +25,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/util:util-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/statistics",
   ],

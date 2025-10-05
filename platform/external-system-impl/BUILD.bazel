@@ -39,7 +39,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:commons-cli",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",

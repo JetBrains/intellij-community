@@ -33,7 +33,7 @@ jvm_library(
     "//tools/intellij.tools.ide.util.common:ide-util-common",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ]
 )
 
@@ -63,7 +63,7 @@ jvm_library(
     "//tools/intellij.tools.ide.util.common:ide-util-common",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:assert_j",
   ]
 )

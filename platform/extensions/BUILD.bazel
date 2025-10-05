@@ -10,7 +10,7 @@ jvm_library(
   deps = [
     "//platform/util/jdom",
     "//platform/util",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlin-stdlib",
     "//platform/util/xmlDom",
     "@lib//:kotlinx-coroutines-core",

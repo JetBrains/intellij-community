@@ -37,7 +37,7 @@ jvm_library(
     "//platform/lang-impl",
     "@lib//:xml-resolver",
     "//platform/util:util-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",

@@ -348,6 +348,7 @@ libraries/compose-foundation-desktop-junit
 libraries/compose-runtime-desktop
 libraries/detekt-compose-rules
 libraries/dokka
+libraries/fastutil
 libraries/grpc
 libraries/grpc-netty-shaded
 libraries/gson
@@ -393,8 +394,6 @@ libraries/testcontainers
 libraries/testng
 libraries/winp
 libraries/xerces
-libraries/xml-rpc
-libraries/xstream
 libraries/xz
 notebooks/notebook-ui
 notebooks/visualization

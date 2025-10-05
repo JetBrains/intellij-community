@@ -9,6 +9,7 @@
     <module name="intellij.libraries.aalto.xml" loading="embedded"/>
     <module name="intellij.libraries.asm" loading="embedded"/>
     <module name="intellij.libraries.caffeine" loading="embedded"/>
+    <module name="intellij.libraries.fastutil" loading="embedded"/>
     <module name="intellij.libraries.gson" loading="embedded"/>
     <module name="intellij.libraries.guava" loading="embedded"/>
     <module name="intellij.libraries.hash4j" loading="embedded"/>
@@ -28,16 +29,11 @@
     <module name="intellij.libraries.kotlinx.coroutines.slf4j" loading="embedded"/>
 
     <module name="intellij.libraries.lz4" loading="embedded"/>
-
     <module name="intellij.libraries.miglayout.swing" loading="embedded"/>
     <module name="intellij.libraries.mvstore" loading="embedded"/>
-
     <module name="intellij.libraries.proxy.vole" loading="embedded"/>
-
     <module name="intellij.libraries.rhino" loading="embedded"/>
-
     <module name="intellij.libraries.winp" loading="embedded"/>
-
     <module name="intellij.libraries.xz" loading="embedded"/>
   </content>
 </idea-plugin>

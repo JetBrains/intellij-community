@@ -126,7 +126,7 @@ jvm_library(
     "@lib//:jaxb-api",
     "//platform/core-ui",
     "//platform/lang-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/structuralsearch:structuralSearch",
     "//platform/duplicates-analysis",
     "//platform/code-style-impl:codeStyle-impl",

@@ -43,7 +43,7 @@ jvm_library(
     "//platform/external-system-api:externalSystem",
     "//jvm/jvm-analysis-api:analysis",
     "//jvm/jvm-analysis-quickFix:analysis-quickFix",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/util/jdom",

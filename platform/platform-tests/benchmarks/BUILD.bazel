@@ -15,7 +15,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/util/storages",

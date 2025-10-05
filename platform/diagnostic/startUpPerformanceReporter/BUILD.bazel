@@ -20,7 +20,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/util-ex",
     "//platform/util:util-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util-class-loader:util-classLoader",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "@lib//:opentelemetry",

@@ -19,7 +19,7 @@ jvm_library(
     "//platform/util",
     "//platform/platform-impl:ide-impl",
     "@lib//:netty-codec-http",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:netty-buffer",
   ],
   runtime_deps = ["//platform/backend"]

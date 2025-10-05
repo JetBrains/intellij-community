@@ -83,7 +83,7 @@ jvm_library(
     "//platform/external-system-api/dependency-updater",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/util/concurrency",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlinx-coroutines-core",
     "//platform/platform-util-io:ide-util-io",
     "//build/deps:dependencies",

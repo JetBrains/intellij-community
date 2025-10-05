@@ -31,7 +31,7 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:assert_j",
     "@lib//:snakeyaml",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "@lib//:junit5",
     "//java/java-runtime:rt",

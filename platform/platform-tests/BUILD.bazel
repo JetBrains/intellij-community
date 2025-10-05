@@ -88,7 +88,7 @@ jvm_library(
     "//platform/statistics:statistics_test_lib",
     "//platform/platform-impl/concurrency",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:jcef",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:netty-buffer",

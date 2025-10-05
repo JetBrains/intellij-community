@@ -31,7 +31,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
     "//platform/util/jdom",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:stream_ex",
   ]
@@ -62,7 +62,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//libraries/kotlinx/serialization/core",
     "//platform/util/jdom",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:stream_ex",
   ]

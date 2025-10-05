@@ -36,7 +36,7 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/diagnostic",
     "//platform/statistics",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/todo",
   ]
 )

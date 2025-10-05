@@ -23,7 +23,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "//platform/util:util-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/util/jdom",
     "//platform/statistics",

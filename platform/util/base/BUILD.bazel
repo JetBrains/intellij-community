@@ -10,7 +10,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-coroutines-debug",

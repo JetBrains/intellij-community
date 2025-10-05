@@ -21,7 +21,7 @@ jvm_library(
     "//python/python-ast:ast",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/code-style-api:codeStyle",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util",
     "//platform/core-impl",
     "//libraries/guava",

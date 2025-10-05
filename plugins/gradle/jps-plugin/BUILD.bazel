@@ -24,7 +24,7 @@ jvm_library(
     "@lib//:gradle-jps-ant",
     "//libraries/gson",
     "//plugins/groovy/jps-plugin:jps",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
     "//libraries/hash4j",
   ]
@@ -49,7 +49,7 @@ jvm_library(
     "//plugins/groovy/jps-plugin:jps",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
     "//jps/jps-builders:build-tests_test_lib",
     "//libraries/hash4j",

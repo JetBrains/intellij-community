@@ -41,7 +41,7 @@ jvm_library(
     "//platform/observable",
     "//platform/util-ex",
     "//platform/projectModel-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "@lib//:jediterm-core",

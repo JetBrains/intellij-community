@@ -32,7 +32,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/analysis-impl",
     "//platform/service-container",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-api:codeStyle",
     "//platform/editor-ui-api:editor-ui",

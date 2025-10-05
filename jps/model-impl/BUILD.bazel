@@ -17,7 +17,7 @@ jvm_library(
   deps = [
     "//platform/util",
     "//jps/model-api:model",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ]
 )
 ### auto-generated section `build intellij.platform.jps.model.impl` end

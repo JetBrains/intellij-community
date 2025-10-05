@@ -29,7 +29,7 @@ jvm_library(
     "//platform/usageView",
     "//java/java-impl-refactorings:impl-refactorings",
     "@lib//:stream_ex",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ]
 )
 
@@ -57,7 +57,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/java-impl-refactorings:impl-refactorings",
     "@lib//:stream_ex",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ]
 )
 ### auto-generated section `build intellij.java.rareRefactorings` end

@@ -33,7 +33,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//libraries/caffeine",
     "//fleet/fastutil",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/xmlDom",
   ],
   exports = [

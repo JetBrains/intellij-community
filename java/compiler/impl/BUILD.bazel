@@ -59,7 +59,7 @@ jvm_library(
     "@lib//:protobuf",
     "@lib//:netty-codec-http",
     "@lib//:stream_ex",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:jps-javac-extension",
     "@lib//:netty-buffer",
     "//libraries/winp",

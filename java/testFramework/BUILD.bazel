@@ -45,7 +45,7 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//jps/jps-builders:build",
     "@lib//:stream_ex",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",

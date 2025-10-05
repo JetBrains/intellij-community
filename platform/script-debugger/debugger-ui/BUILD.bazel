@@ -27,7 +27,7 @@ jvm_library(
     "//libraries/guava",
     "//platform/execution-impl",
     "@lib//:netty-codec-http",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:netty-buffer",
     "//platform/core-ui",
     "//platform/projectModel-api:projectModel",

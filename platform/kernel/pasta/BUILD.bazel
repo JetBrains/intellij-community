@@ -14,7 +14,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-collections-immutable",
     "//libraries/kotlinx/serialization/core",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-api:core",
     "//platform/util",
     "//platform/util/coroutines",

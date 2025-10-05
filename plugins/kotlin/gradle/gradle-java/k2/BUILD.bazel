@@ -50,7 +50,7 @@ jvm_library(
     "//java/testFramework",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
     "//plugins/gradle:gradle-tests_test_lib",

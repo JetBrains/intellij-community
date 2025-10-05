@@ -28,7 +28,7 @@ jvm_library(
     "//platform/kernel/backend",
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/concurrency",
     "//platform/platform-impl:ide-impl",
     "//platform/project/shared:project",

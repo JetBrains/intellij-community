@@ -10,7 +10,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util",
     "//platform/util/jdom",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
     "@lib//:kaml",

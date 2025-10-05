@@ -14,7 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":usageView_resources"],
   deps = [
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/statistics",
     "//platform/core-ui",
     "//platform/util",

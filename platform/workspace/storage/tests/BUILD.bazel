@@ -37,7 +37,7 @@ jvm_library(
     "//platform/workspace/storage/testEntities:testEntities_test_lib",
     "//libraries/guava",
     "//libraries/kotlin-reflect",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/analysis-api:analysis",
     "@lib//:kotlin-test",
     "@lib//:kryo5",

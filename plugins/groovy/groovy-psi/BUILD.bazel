@@ -40,7 +40,7 @@ jvm_library(
     "//plugins/properties/properties-psi-api:psi",
     "//platform/core-ui",
     "//libraries/kotlin-reflect",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/asm",
     "//platform/util/jdom",
   ],

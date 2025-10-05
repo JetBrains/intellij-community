@@ -35,7 +35,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/util/concurrency",
     "//platform/vcs-api/shared",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
     "//platform/ide-core-impl",
   ]

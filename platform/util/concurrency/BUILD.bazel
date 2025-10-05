@@ -11,7 +11,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/util",
     "//platform/core-api:core",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/diagnostic",
     "//platform/util/coroutines",
   ]
@@ -27,7 +27,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//platform/util",
     "//platform/core-api:core",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/diagnostic",
     "//platform/util/coroutines",
     "@lib//:assert_j",

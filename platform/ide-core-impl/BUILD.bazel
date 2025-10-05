@@ -26,7 +26,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/analysis-impl",
     "//libraries/icu4j",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//jps/model-impl",

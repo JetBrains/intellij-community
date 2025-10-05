@@ -114,7 +114,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "@lib//:jaxb-api",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/platform-impl:ide-impl",
     "//jps/model-impl",
     "//platform/core-ui",

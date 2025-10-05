@@ -27,7 +27,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/guava",
     "//libraries/kotlinx/serialization/core",
   ]

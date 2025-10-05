@@ -25,7 +25,7 @@ jvm_library(
     "//platform/refactoring",
     "//platform/statistics",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/jdom",

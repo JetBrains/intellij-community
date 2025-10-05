@@ -27,7 +27,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/workspace/storage",
     "//platform/workspace/jps",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/guava",
     "//platform/util/jdom",
     "@lib//:kryo5",

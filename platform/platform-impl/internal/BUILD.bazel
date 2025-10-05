@@ -45,7 +45,7 @@ jvm_library(
     "//libraries/guava",
     "//libraries/miglayout-swing",
     "//libraries/kotlinx/serialization/json",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/hash4j",
     "//libraries/gson",
     "//libraries/kotlinx/serialization/core",

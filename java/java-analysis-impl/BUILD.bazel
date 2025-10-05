@@ -44,7 +44,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//java/openapi:java",
     "//platform/util:util-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/workspace/storage",
     "//libraries/icu4j",
     "//platform/util/jdom",

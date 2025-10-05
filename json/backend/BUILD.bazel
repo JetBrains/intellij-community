@@ -35,7 +35,7 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/refactoring",
     "//platform/statistics",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:kotlin-stdlib",

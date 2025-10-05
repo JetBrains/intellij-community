@@ -54,7 +54,7 @@ jvm_library(
     "//platform/usageView",
     "//libraries/gson",
     "//libraries/guava",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/usageView-impl",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl/shared",

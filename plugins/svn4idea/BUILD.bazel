@@ -40,7 +40,7 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/statistics",
     "//platform/lvcs-api:lvcs",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/external-process-auth-helper",

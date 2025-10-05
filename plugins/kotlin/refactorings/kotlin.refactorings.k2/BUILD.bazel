@@ -70,7 +70,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2",
     "//platform/util/text-matching",
     "//plugins/kotlin/base/indices",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//plugins/kotlin/j2k/shared",
     "//platform/ide-core-impl",
     "//plugins/kotlin/kotlin.ide:ide",

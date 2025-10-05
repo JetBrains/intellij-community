@@ -73,7 +73,7 @@ jvm_library(
     "//platform/util-class-loader:util-classLoader",
     "@lib//:netty-buffer",
     "//platform/core-ui",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",

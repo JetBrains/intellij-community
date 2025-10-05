@@ -31,7 +31,7 @@ jvm_library(
     "//libraries/guava",
     "//libraries/kotlin-reflect",
     "//platform/util",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/caffeine",
     "@lib//:kryo5",
     "//platform/diagnostic/telemetry",

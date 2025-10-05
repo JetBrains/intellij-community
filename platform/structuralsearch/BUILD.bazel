@@ -36,7 +36,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/core-ui",
     "//xml/xml-psi-api:psi",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
   ],
   exports = ["//platform/duplicates-analysis"]
 )

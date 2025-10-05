@@ -48,7 +48,7 @@ jvm_library(
     "//platform/util/nanoxml",
     "//libraries/jackson/databind",
     "//platform/xdebugger-impl:debugger-impl",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/statistics",
     "//platform/util-class-loader:util-classLoader",
     "//platform/diff-api:diff",

@@ -7,7 +7,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//libraries/jackson/jackson",
     "@lib//:kotlinx-coroutines-core",
     "//platform/code-style-api:codeStyle",

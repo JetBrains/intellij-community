@@ -31,7 +31,7 @@ jvm_library(
     "//jps/model-impl",
     "//jps/model-serialization",
     "//platform/util",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/jdom",
     "@lib//:kryo5",
     "@lib//:kotlinx-coroutines-core",

@@ -31,7 +31,7 @@ jvm_library(
     "//platform/smRunner:smRunner_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/lang-impl:lang-tests",
     "//platform/lang-impl:lang-tests_test_lib",
     "//platform/workspace/storage/tests:tests_test_lib",

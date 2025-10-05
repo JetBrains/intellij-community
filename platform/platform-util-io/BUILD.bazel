@@ -17,7 +17,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//libraries/guava",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/util/base",
     "//platform/util",
     "@lib//:jna",

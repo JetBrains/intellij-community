@@ -46,7 +46,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-impl-base",
     "//plugins/kotlin/base/platforms",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//java/openapi:java",
     "//plugins/kotlin/base/scripting/scripting.k2",
   ]
@@ -100,7 +100,7 @@ jvm_library(
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//plugins/kotlin/base/platforms",
     "@lib//:kotlinc-kotlin-jps-common",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//java/openapi:java",
     "//plugins/kotlin/base/scripting/scripting.k2",
     "//plugins/kotlin/base/scripting/scripting.k2:scripting.k2_test_lib",

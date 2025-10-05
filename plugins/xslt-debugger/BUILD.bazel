@@ -33,7 +33,7 @@ jvm_library(
     "//xml/impl",
     "//platform/platform-impl:ide-impl",
     "//platform/util/nanoxml",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
   ]

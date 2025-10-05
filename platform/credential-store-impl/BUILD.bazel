@@ -35,7 +35,7 @@ jvm_library(
     "//libraries/guava",
     "@lib//:bouncy-castle-provider",
     "@lib//:snakeyaml",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:platform-credential_store-impl-dbus-java",
     "//libraries/caffeine",
   ]
@@ -69,7 +69,7 @@ jvm_library(
     "//libraries/guava",
     "@lib//:bouncy-castle-provider",
     "@lib//:snakeyaml",
-    "@lib//:fastutil-min",
+    "//libraries/fastutil",
     "@lib//:platform-credential_store-impl-dbus-java",
     "//libraries/caffeine",
     "//platform/testFramework",
