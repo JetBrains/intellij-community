@@ -14,3 +14,31 @@ class LoggerJulWithDifferentName {
 	@java.lang.SuppressWarnings("all")
 	private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger("DifferentName");
 }
+
+class LoggerJulAccessPublic {
+	@java.lang.SuppressWarnings("all")
+	public static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(LoggerJulAccessPublic.class.getName());
+}
+
+class LoggerJulAccessModule {
+	@java.lang.SuppressWarnings("all")
+	static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(LoggerJulAccessModule.class.getName());
+}
+
+class LoggerJulAccessProtected {
+	@java.lang.SuppressWarnings("all")
+	protected static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(LoggerJulAccessProtected.class.getName());
+}
+
+class LoggerJulAccessPackage {
+	@java.lang.SuppressWarnings("all")
+	static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(LoggerJulAccessPackage.class.getName());
+}
+
+class LoggerJulAccessPrivate {
+	@java.lang.SuppressWarnings("all")
+	private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(LoggerJulAccessPrivate.class.getName());
+}
+
+class LoggerJulAccessNone {
+}
