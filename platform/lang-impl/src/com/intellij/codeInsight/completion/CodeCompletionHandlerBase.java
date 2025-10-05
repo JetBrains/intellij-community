@@ -573,10 +573,10 @@ public class CodeCompletionHandlerBase {
     return context;
   }
 
-  private static WatchingInsertionContext insertItemHonorBlockSelection(CompletionProcessEx indicator,
-                                                                        LookupElement item,
-                                                                        char completionChar,
-                                                                        StatisticsUpdate update) {
+  private static @NotNull WatchingInsertionContext insertItemHonorBlockSelection(@NotNull CompletionProcessEx indicator,
+                                                                                 @NotNull LookupElement item,
+                                                                                 char completionChar,
+                                                                                 @NotNull StatisticsUpdate update) {
     Editor editor = indicator.getEditor();
     int caretOffset = indicator.getCaret().getOffset();
     OffsetMap offsetMap = indicator.getOffsetMap();
@@ -587,16 +587,18 @@ public class CodeCompletionHandlerBase {
     int idEndOffset = CompletionUtil.calcIdEndOffset(offsetMap, editor, caretOffset);
     int idEndOffsetDelta = idEndOffset - caretOffset;
 
-    WatchingInsertionContext context = doInsertItem(indicator.getHostOffsets(),
+    WatchingInsertionContext context = doInsertItem(
+      indicator.getHostOffsets(),
       item,
       completionChar,
-                                                    editor,
+      editor,
       indicator.getProject(),
       caretOffset,
       offsetMap,
       items,
       idEndOffset,
-      idEndOffsetDelta);
+      idEndOffsetDelta
+    );
 
     if (lookup != null) {
       update.addSparedChars(lookup, item, context);
