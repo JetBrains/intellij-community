@@ -170,7 +170,8 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       if (isNeeded) {
         withBackgroundProgress(context.project,
                                CodeStyleBundle.message("async.formatting.service.running", getName(service)),
-                               TaskCancellation.cancellable().withButtonText(CodeStyleBundle.message("async.formatting.service.cancel", getName(service)))) {
+                               TaskCancellation.cancellable()
+                                 .withButtonText(CodeStyleBundle.message("async.formatting.service.cancel", getName(service)))) {
           coroutineToIndicator {
             block()
           }
@@ -206,10 +207,9 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       val taskStarted = CompletableDeferred<Unit>()
       val taskJob = GlobalScope.launch(dispatcher) {
         underProgressIfNeeded(task.isRunUnderProgress) {
-          if (stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
-            taskStarted.complete(Unit)
-            task.run()
-          }
+          check(stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING))
+          taskStarted.complete(Unit)
+          task.run()
         }
       }
       try {
