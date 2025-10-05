@@ -629,13 +629,7 @@ public class CodeCompletionHandlerBase {
       boolean wasInjected = hostEditor != editor;
       PsiDocumentManager.getInstance(project).commitDocument(hostEditor.getDocument());
       hostEditor.getCaretModel().runForEachCaret(caret -> {
-        OffsetsInFile targetOffsets;
-        if (!wasInjected) {
-          targetOffsets = topLevelOffsets;
-        }
-        else {
-          targetOffsets = topLevelOffsets.toInjectedIfAny(caret.getOffset());
-        }
+        OffsetsInFile targetOffsets = wasInjected ? topLevelOffsets.toInjectedIfAny(caret.getOffset()) : topLevelOffsets;
         lastContext.set(doInsertItemForSingleCaret(item, completionChar, items, idEndOffsetDelta, hostEditor, targetOffsets));
       });
       context = lastContext.get();
