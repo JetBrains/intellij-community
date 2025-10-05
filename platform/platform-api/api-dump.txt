@@ -50,6 +50,16 @@ com.intellij.ide.FrameStateListener
 - onFrameActivated(com.intellij.openapi.wm.IdeFrame):V
 - onFrameDeactivated():V
 - onFrameDeactivated(com.intellij.openapi.wm.IdeFrame):V
+c:com.intellij.ide.HelpTooltip
+- p:createIsOverTipMouseListener():java.awt.event.MouseListener
+- p:shouldForceHiding():Z
+pc:com.intellij.ide.HelpTooltip$OverTipMouseListener
+- java.awt.event.MouseAdapter
+- p:<init>(com.intellij.ide.HelpTooltip):V
+- p:doEnter():V
+- p:doExit():V
+- mouseEntered(java.awt.event.MouseEvent):V
+- mouseExited(java.awt.event.MouseEvent):V
 com.intellij.ide.OccurenceNavigator
 - com.intellij.openapi.actionSystem.ActionUpdateThreadAware
 - sf:EMPTY:com.intellij.ide.OccurenceNavigator
