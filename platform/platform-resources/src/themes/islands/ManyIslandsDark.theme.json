@@ -130,7 +130,10 @@
     },
 
     "Editor": {
-      "SearchField.background": "BackgroundDark",
+      "SearchField": {
+        "background": "#212224",
+        "borderColor": "#2A2B2E"
+      },
       "Toolbar.borderColor": "BorderDark",
       "ToolTip": {
         "background": "BackgroundLight",

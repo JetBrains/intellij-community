@@ -97,7 +97,10 @@
       "tabContentActionsRightInsets": "0,2,0,2"
     },
 
-    "Editor.SearchField.background": "BackgroundLight",
+    "Editor.SearchField": {
+      "background": "Gray13",
+      "borderColor": "Gray12"
+    },
 
     "Editor.ToolTip": {
       "background": "TooltipBackground",

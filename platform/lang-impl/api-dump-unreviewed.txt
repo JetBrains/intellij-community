@@ -6530,8 +6530,8 @@ f:com.intellij.find.FindUtil
 com.intellij.find.FindUtil$ReplaceDelegate
 - a:shouldReplace(com.intellij.openapi.util.TextRange,java.lang.String):Z
 f:com.intellij.find.SearchReplaceComponent
-- com.intellij.openapi.editor.impl.EditorHeaderComponent
 - com.intellij.openapi.actionSystem.UiDataProvider
+- com.intellij.openapi.editor.impl.EditorHeaderComponent
 - sf:RIGHT_PANEL_WEST_OFFSET:I
 - addListener(com.intellij.find.SearchReplaceComponent$Listener):V
 - addNotify():V

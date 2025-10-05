@@ -7,10 +7,14 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
 import com.intellij.openapi.application.impl.TopNavBarComponentFacade
+import com.intellij.openapi.editor.impl.EditorHeaderComponent
+import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -36,18 +40,17 @@ import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLayeredPane
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.RectanglePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBSwingUtilities
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.HierarchyEvent
@@ -202,6 +205,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
           is ManyIslandDivider -> {
             it.configure(true)
           }
+          is SearchReplaceFacade -> {
+            configureSearchReplaceComponent(it as EditorHeaderComponent, true)
+          }
         }
       }
 
@@ -250,6 +256,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
           }
           is ManyIslandDivider -> {
             it.configure(false)
+          }
+          is SearchReplaceFacade -> {
+            configureSearchReplaceComponent(it as EditorHeaderComponent, false)
           }
         }
       }
@@ -487,6 +496,77 @@ internal class IslandsUICustomization : InternalUICustomization() {
     if (isManyIslandEnabled) {
       ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
     }
+  }
+
+  override fun configureSearchReplaceComponent(component: EditorHeaderComponent): JComponent {
+    component.putClientProperty("originalBorder", component.border)
+
+    val wrapper = SearchReplaceWrapper(component)
+    wrapper.background = JBUI.CurrentTheme.EditorTabs.background()
+    wrapper.isOpaque = true
+
+    if (isManyIslandEnabled) {
+      configureSearchReplaceComponent(component, true)
+    }
+
+    return wrapper
+  }
+
+  private inner class SearchReplaceWrapper(private val component: EditorHeaderComponent) : Wrapper(component), UiDataProvider {
+    val fillColor = JBColor.namedColor("Editor.SearchField.background")
+    val borderColor = JBColor.namedColor("Editor.SearchField.borderColor")
+
+    override fun paintComponent(g: Graphics) {
+      super.paintComponent(g)
+
+      if (isManyIslandEnabled) {
+        val rect = Rectangle(size)
+        JBInsets.removeFrom(rect, JBInsets.create(0, 7))
+
+        g as Graphics2D
+
+        g.color = fillColor
+
+        RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble(),
+                                      12.0, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
+
+        g.color = borderColor
+
+        RectanglePainter2D.DRAW.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble(),
+                                      12.0, LinePainter2D.StrokeType.CENTERED, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
+      }
+    }
+
+    override fun uiDataSnapshot(sink: DataSink) {
+      (component as UiDataProvider).uiDataSnapshot(sink)
+    }
+  }
+
+  private fun configureSearchReplaceComponent(component: EditorHeaderComponent, enabled: Boolean) {
+    val originalBorder = component.getClientProperty("originalBorder")
+    val parent = component.parent
+
+    if (originalBorder !is Border || parent !is JComponent) {
+      return
+    }
+
+    if (enabled) {
+      component.border = null
+      parent.border = JBUI.Borders.empty(2, 10)
+    }
+    else {
+      component.border = originalBorder
+      parent.border = null
+    }
+
+    (component as SearchReplaceFacade).configureUI(enabled)
+  }
+
+  override fun shouldPaintEditorTabsBottomBorder(editorCompositePanel: JComponent): Boolean {
+    if (isManyIslandEnabled) {
+      return UIUtil.findComponentOfType(editorCompositePanel, SearchReplaceWrapper::class.java) == null
+    }
+    return true
   }
 
   override fun configureEditorsSplitters(component: EditorsSplitters) {

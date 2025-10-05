@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
@@ -103,6 +104,10 @@ open class InternalUICustomization {
   open fun installBackgroundUpdater(component: JComponent) {}
 
   open fun installEditorBackground(component: JComponent) {}
+
+  open fun configureSearchReplaceComponent(component: EditorHeaderComponent): JComponent = component
+
+  open fun shouldPaintEditorTabsBottomBorder(editorCompositePanel: JComponent): Boolean = true
 
   open fun frameHeaderBackgroundConverter(color: Color?): Color? = color
 
