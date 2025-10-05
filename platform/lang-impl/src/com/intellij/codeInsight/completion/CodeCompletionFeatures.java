@@ -19,8 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 @ApiStatus.Internal
-public interface
-  CodeCompletionFeatures {
+public interface CodeCompletionFeatures {
   @NonNls String EXCLAMATION_FINISH = "editing.completion.finishByExclamation";
   @NonNls String SECOND_BASIC_COMPLETION = "editing.completion.second.basic";
   @NonNls String EDITING_COMPLETION_SMARTTYPE_GENERAL = "editing.completion.smarttype.general";
