@@ -8,9 +8,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.NonExtendable
 public class InsertionContext {
   public static final OffsetKey TAIL_OFFSET = OffsetKey.create("tailOffset", true);
 

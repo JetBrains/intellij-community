@@ -298,7 +298,7 @@ e:com.intellij.codeInsight.completion.CompletionType
 a:com.intellij.codeInsight.completion.CompletionWeigher
 - <init>():V
 - a:weigh(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.CompletionLocation):java.lang.Comparable
-c:com.intellij.codeInsight.completion.InsertionContext
+Fc:com.intellij.codeInsight.completion.InsertionContext
 - sf:TAIL_OFFSET:com.intellij.codeInsight.completion.OffsetKey
 - <init>(com.intellij.codeInsight.completion.OffsetMap,C,com.intellij.codeInsight.lookup.LookupElement[],com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,Z):V
 - commitDocument():V
