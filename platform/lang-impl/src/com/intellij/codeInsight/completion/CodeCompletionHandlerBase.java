@@ -417,9 +417,9 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private AutoCompletionDecision shouldAutoComplete(@NotNull CompletionProgressIndicator indicator,
-                                                    @NotNull List<? extends LookupElement> items,
-                                                    @NotNull CompletionParameters parameters) {
+  private @NotNull AutoCompletionDecision shouldAutoComplete(@NotNull CompletionProgressIndicator indicator,
+                                                             @NotNull List<? extends LookupElement> items,
+                                                             @NotNull CompletionParameters parameters) {
     if (!invokedExplicitly) {
       return AutoCompletionDecision.SHOW_LOOKUP;
     }
@@ -662,7 +662,7 @@ public class CodeCompletionHandlerBase {
     return currentContext;
   }
 
-  private static void checkPsiTextConsistency(CompletionProcessEx indicator) {
+  private static void checkPsiTextConsistency(@NotNull CompletionProcessEx indicator) {
     PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()), indicator.getProject());
     if (psiFile != null) {
       if (Registry.is("ide.check.stub.text.consistency") ||
@@ -832,7 +832,7 @@ public class CodeCompletionHandlerBase {
     caret.putUserData(CARET_PROCESSED, Boolean.TRUE);
   }
 
-  private static Caret getNextCaretToProcess(@NotNull Editor editor) {
+  private static @Nullable Caret getNextCaretToProcess(@NotNull Editor editor) {
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       if (caret.getUserData(CARET_PROCESSED) == null) {
         return caret;
