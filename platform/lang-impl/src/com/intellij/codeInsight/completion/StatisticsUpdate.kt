@@ -31,6 +31,7 @@ class StatisticsUpdate
 
   override fun dispose() {}
 
+  /** reports how many chars the user was able NOT to type manually because of the completion */
   fun addSparedChars(lookup: Lookup, item: LookupElement, context: InsertionContext) {
     val textInserted: String
     if (context.offsetMap.containsOffset(CompletionInitializationContext.START_OFFSET) &&
