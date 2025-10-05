@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,8 +16,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface InsertHandler<T extends LookupElement> {
 
-  /**
-   * Invoked inside write action.
-   */
+  @RequiresWriteLock
   void handleInsert(@NotNull InsertionContext context, @NotNull T item);
 }
