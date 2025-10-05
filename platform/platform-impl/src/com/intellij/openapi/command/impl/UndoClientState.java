@@ -172,9 +172,7 @@ final class UndoClientState implements Disposable {
     if (!isInsideCommand()) {
       boolean isTransparent = CommandProcessor.getInstance().isUndoTransparentActionInProgress();
       currentCommandMerger = new CommandMerger(project != null, isTransparent, isTransparentSupported);
-      if (commandProject != null) {
-        currentProject = commandProject;
-      }
+      currentProject = commandProject;
       if (project != null && project == commandProject && recordOriginalReference) {
         // note: originatorReference depends on FocusedComponent :sad_trombone_for_rd:, see IJPL-192250
         originatorReference = UndoDocumentUtil.getDocReference(project, editorProvider);
