@@ -39,7 +39,7 @@ public class InsertionContext {
     myAddCompletionChar = addCompletionChar;
   }
 
-  public void setTailOffset(final int offset) {
+  public void setTailOffset(int offset) {
     myOffsetMap.addOffset(TAIL_OFFSET, offset);
   }
 
@@ -72,7 +72,7 @@ public class InsertionContext {
   }
 
   public @NotNull OffsetKey trackOffset(int offset, boolean movableToRight) {
-    final OffsetKey key = OffsetKey.create("tracked", movableToRight);
+    OffsetKey key = OffsetKey.create("tracked", movableToRight);
     getOffsetMap().addOffset(key, offset);
     return key;
   }
@@ -101,14 +101,14 @@ public class InsertionContext {
     return myLaterRunnable;
   }
 
-  public void setLaterRunnable(final @Nullable Runnable laterRunnable) {
+  public void setLaterRunnable(@Nullable Runnable laterRunnable) {
     myLaterRunnable = laterRunnable;
   }
 
   /**
    * @param addCompletionChar Whether completionChar should be added to document at tail offset (see {@link #TAIL_OFFSET}) after insert handler (default: {@code true}).
    */
-  public void setAddCompletionChar(final boolean addCompletionChar) {
+  public void setAddCompletionChar(boolean addCompletionChar) {
     myAddCompletionChar = addCompletionChar;
   }
 
