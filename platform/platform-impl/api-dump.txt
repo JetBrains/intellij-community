@@ -1558,6 +1558,11 @@ c:com.intellij.ui.tree.ui.DefaultTreeUI
 - p:updateCachedPreferredSize():V
 - p:updateSize():V
 com.intellij.ui.tree.ui.PlainSelectionTree
+f:com.intellij.util.NetworkUtils
+- sf:INSTANCE:com.intellij.util.NetworkUtils
+- f:findFreePort():I
+- f:findFreePort(I):I
+- f:findFreePort(I,java.util.Set):I
 com.intellij.util.textCompletion.TextCompletionCache
 - a:getItems(java.lang.String,com.intellij.codeInsight.completion.CompletionParameters):java.util.Collection
 - a:setItems(java.util.Collection):V
