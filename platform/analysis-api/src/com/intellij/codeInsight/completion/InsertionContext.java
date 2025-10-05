@@ -26,7 +26,7 @@ public class InsertionContext {
 
   public InsertionContext(@NotNull OffsetMap offsetMap,
                           char completionChar,
-                          LookupElement @NotNull [] elements,
+                          @NotNull LookupElement @NotNull [] elements,
                           @NotNull PsiFile psiFile,
                           @NotNull Editor editor,
                           boolean addCompletionChar) {
@@ -63,7 +63,7 @@ public class InsertionContext {
     return getEditor().getDocument();
   }
 
-  public int getOffset(OffsetKey key) {
+  public int getOffset(@NotNull OffsetKey key) {
     return getOffsetMap().getOffset(key);
   }
 
@@ -85,7 +85,7 @@ public class InsertionContext {
     return myCompletionChar;
   }
 
-  public @NotNull LookupElement[] getElements() {
+  public @NotNull LookupElement @NotNull[] getElements() {
     return myElements;
   }
 
