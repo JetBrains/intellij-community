@@ -294,6 +294,10 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       }
     }
 
+    override fun onError(title: @NlsContexts.NotificationTitle String, message: @NlsContexts.NotificationContent String) {
+      onError(title, message, null)
+    }
+
     override fun onError(
       @NlsContexts.NotificationTitle title: @NlsContexts.NotificationTitle String,
       @NlsContexts.NotificationContent message: @NlsContexts.NotificationContent String,
@@ -304,6 +308,10 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         FormattingNotificationService.getInstance(_context.project)
           .reportError(getNotificationGroupId(service), displayId, title, message)
       }
+    }
+
+    override fun onError(title: @NlsContexts.NotificationTitle String, message: @NlsContexts.NotificationContent String, offset: Int) {
+      onError(title, message, null, offset)
     }
 
     override fun onError(

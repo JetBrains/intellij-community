@@ -345,7 +345,7 @@ private abstract class TestTask(val cancellationType: CancellationCheckType, val
 private class RecordingFormattingNotificationService : FormattingNotificationService {
   val errorsReported = ContainerUtil.createConcurrentList<String>()
 
-  override fun reportError(groupId: String, displayId: String?, title: @NlsContexts.NotificationTitle String, message: @NlsContexts.NotificationContent String) {
+  override fun reportError(groupId: String, displayId: String?, title: @NlsContexts.NotificationTitle String, message: @NlsContexts.NotificationContent String, vararg actions: AnAction?) {
     errorsReported.add(message)
   }
 

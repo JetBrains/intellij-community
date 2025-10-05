@@ -13,13 +13,6 @@ private class FormattingNotificationServiceImpl(private val project: Project) : 
     displayId: String?,
     title: @NlsContexts.NotificationTitle String,
     message: @NlsContexts.NotificationContent String,
-  ) = this.reportError(groupId, displayId, title, message, *emptyArray())
-
-  override fun reportError(
-    groupId: String,
-    displayId: String?,
-    title: @NlsContexts.NotificationTitle String,
-    message: @NlsContexts.NotificationContent String,
     vararg actions: AnAction,
   ) = logIfHeadlessOrRun(title, message) {
     FormattingNotificationUtil.reportError(project, groupId, displayId, title, message, *actions)
