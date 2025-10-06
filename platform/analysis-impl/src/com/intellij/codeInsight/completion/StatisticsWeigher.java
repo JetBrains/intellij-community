@@ -73,13 +73,14 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return JBIterable.from(initialList).append(JBIterable.from(byWeight).flatten(group -> myNext.classify(group, context)));
     }
 
-    private static Iterable<LookupElement> withoutInitial(Iterable<? extends LookupElement> allItems,
-                                                          List<? extends LookupElement> initial) {
+    private static @NotNull Iterable<LookupElement> withoutInitial(@NotNull Iterable<? extends LookupElement> allItems,
+                                                                   @NotNull List<? extends LookupElement> initial) {
       Set<LookupElement> initialSet = new ReferenceOpenHashSet<>(initial);
       return JBIterable.<LookupElement>from(allItems).filter(element -> !initialSet.contains(element));
     }
 
-    private List<LookupElement> getInitialNoStatElements(Iterable<? extends LookupElement> source, ProcessingContext context) {
+    private @NotNull List<LookupElement> getInitialNoStatElements(@NotNull Iterable<? extends LookupElement> source,
+                                                                  @NotNull ProcessingContext context) {
       List<LookupElement> initialList = new ArrayList<>();
       for (LookupElement next : myNext.classify(source, context)) {
         if (myNoStats.contains(next)) {
@@ -92,7 +93,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return initialList;
     }
 
-    private TreeMap<Integer, List<LookupElement>> buildMapByWeight(Iterable<? extends LookupElement> source) {
+    private @NotNull TreeMap<Integer, List<LookupElement>> buildMapByWeight(@NotNull Iterable<? extends LookupElement> source) {
       MultiMap<String, LookupElement> byName = MultiMap.create();
       List<LookupElement> noStats = new ArrayList<>();
       for (LookupElement element : source) {
@@ -115,7 +116,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return map;
     }
 
-    private int getMaxWeight(List<? extends LookupElement> group) {
+    private int getMaxWeight(@NotNull List<? extends LookupElement> group) {
       int max = 0;
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < group.size(); i++) {
@@ -124,12 +125,12 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return max;
     }
 
-    private int getScalarWeight(LookupElement e) {
+    private int getScalarWeight(@NotNull LookupElement e) {
       StatisticsComparable comparable = myWeights.get(e);
       return comparable == null ? 0 : comparable.getScalar();
     }
 
-    private StatisticsComparable getWeight(LookupElement t) {
+    private @NotNull StatisticsComparable getWeight(@NotNull LookupElement t) {
       StatisticsComparable w = myWeights.get(t);
       if (w == null) {
         StatisticsInfo info = getBaseStatisticsInfo(t);
@@ -138,7 +139,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return w;
     }
 
-    private static int weigh(StatisticsInfo baseInfo) {
+    private static int weigh(@NotNull StatisticsInfo baseInfo) {
       if (baseInfo == StatisticsInfo.EMPTY) {
         return 0;
       }
@@ -161,7 +162,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
       super.removeElement(element, context);
     }
 
-    private @NotNull StatisticsInfo getBaseStatisticsInfo(LookupElement item) {
+    private @NotNull StatisticsInfo getBaseStatisticsInfo(@NotNull LookupElement item) {
       StatisticsInfo info = BASE_STATISTICS_INFO.get(item);
       if (info == null) {
         BASE_STATISTICS_INFO.set(item, info = calcBaseInfo(item));
@@ -169,7 +170,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return info;
     }
 
-    private @NotNull StatisticsInfo calcBaseInfo(LookupElement item) {
+    private @NotNull StatisticsInfo calcBaseInfo(@NotNull LookupElement item) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !myLocation.getCompletionParameters().isTestingMode()) {
         ApplicationManager.getApplication().assertIsNonDispatchThread();
       }
@@ -183,11 +184,11 @@ public final class StatisticsWeigher extends CompletionWeigher {
     }
   }
 
-  public static void clearBaseStatisticsInfo(LookupElement item) {
+  public static void clearBaseStatisticsInfo(@NotNull LookupElement item) {
     item.putUserData(BASE_STATISTICS_INFO, null);
   }
 
-  public static @NotNull StatisticsInfo getBaseStatisticsInfo(LookupElement item, @Nullable CompletionLocation location) {
+  public static @NotNull StatisticsInfo getBaseStatisticsInfo(@NotNull LookupElement item, @Nullable CompletionLocation location) {
     StatisticsInfo info = BASE_STATISTICS_INFO.get(item);
     if (info == null) {
       if (location == null) {
@@ -198,7 +199,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
     return info;
   }
 
-  private static @NotNull StatisticsInfo calcBaseInfo(LookupElement item, @NotNull CompletionLocation location) {
+  private static @NotNull StatisticsInfo calcBaseInfo(@NotNull LookupElement item, @NotNull CompletionLocation location) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !location.getCompletionParameters().isTestingMode()) {
       ApplicationManager.getApplication().assertIsNonDispatchThread();
     }
