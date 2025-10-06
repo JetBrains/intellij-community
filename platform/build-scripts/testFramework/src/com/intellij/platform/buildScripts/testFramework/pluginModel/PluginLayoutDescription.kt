@@ -78,10 +78,11 @@ private class YamlFileBasedPluginLayoutProvider(
     val pluginDescriptorPath = "META-INF/plugin.xml"
     if (JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(mainModule, pluginDescriptorPath) == null) {
       throw PluginModuleConfigurationError(
-        mainModule.name, """
-        '$pluginDescriptorPath' file is not found in source and resource roots of module '"${mainModule.name}', but '$pluginContentPath' is present in it.
-        If '${mainModule.name}' is not the main module of a plugin anymore, delete '$pluginContentPath' to avoid confusion. 
-      """.trimIndent()
+        pluginModelModuleName = mainModule.name,
+        errorMessage = """
+                '$pluginDescriptorPath' file is not found in source and resource roots of module '"${mainModule.name}', but '$pluginContentPath' is present in it.
+                If '${mainModule.name}' is not the main module of a plugin anymore, delete '$pluginContentPath' to avoid confusion. 
+              """.trimIndent(),
       )
     }
 

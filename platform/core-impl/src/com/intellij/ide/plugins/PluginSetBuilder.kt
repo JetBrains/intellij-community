@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -30,7 +31,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
   private val enabledPluginIds = HashMap<PluginId, PluginModuleDescriptor>(unsortedPlugins.size)
   private val enabledModuleV2Ids = HashMap<PluginModuleId, PluginModuleDescriptor>(unsortedPlugins.size * 2)
 
-  internal fun checkPluginCycles(errors: MutableList<Supplier<String>>) {
+  internal fun checkPluginCycles(errors: MutableList<PluginLoadingError>) {
     if (builder.isAcyclic) {
       return
     }
@@ -45,7 +46,14 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<PluginMainDescriptor>)
       }
 
       val pluginString = component.joinToString(separator = ", ") { "'${it.name}'" }
-      errors.add(CoreBundle.messagePointer("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString))
+      errors.add(PluginLoadingError(
+        reason = null,
+        htmlMessageSupplier = Supplier {
+          val message = CoreBundle.message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginString)
+          HtmlChunk.text(message)
+        },
+        error = null,
+      ))
       val detailedMessage = StringBuilder()
       val pluginToString: (IdeaPluginDescriptorImpl) -> String = { "id = ${it.pluginId.idString}@${it.contentModuleId} (${it.name})" }
       detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n")

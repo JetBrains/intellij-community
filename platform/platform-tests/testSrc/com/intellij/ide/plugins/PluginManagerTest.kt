@@ -282,7 +282,7 @@ class PluginManagerTest {
       }
       text.append("\n\n")
       for (html in PluginManagerCore.getAndClearPluginLoadingErrors()) {
-        text.append(html.get().toString().replace("<br/>", "\n").replace("&#39;", "")).append('\n')
+        text.append(html.htmlMessage.toString().replace("<br/>", "\n").replace("&#39;", "")).append('\n')
       }
       UsefulTestCase.assertSameLinesWithFile(File(testDataPath, "$testDataName.txt").path, text.toString())
     }

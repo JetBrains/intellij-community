@@ -207,7 +207,7 @@ internal class PluginDependenciesTest {
   private fun assertFirstErrorContains(vararg messagePart: String) {
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).isNotEmpty
-    assertThat(errors.first().get().toString()).contains(*messagePart)
+    assertThat(errors.first().htmlMessage.toString()).contains(*messagePart)
   }
 
   @Test

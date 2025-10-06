@@ -242,7 +242,7 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).hasSizeGreaterThan(0)
-    assertThat(errors[0].get().toString()).contains("conflicts with", "bar.module", "foo.module", "package prefix")
+    assertThat(errors[0].htmlMessage.toString()).contains("conflicts with", "bar.module", "foo.module", "package prefix")
   }
   
   @Test
@@ -274,7 +274,7 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).hasSizeGreaterThan(0)
-    assertThat(errors[0].get().toString()).contains("conflicts with", "foo.module", "package prefix")
+    assertThat(errors[0].htmlMessage.toString()).contains("conflicts with", "foo.module", "package prefix")
   }
 
   @Test
@@ -295,7 +295,7 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).hasExactlyEnabledModulesWithoutMainDescriptors("foo.module")
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).isNotEmpty()
-    assertThat(errors[0].get().toString()).contains("conflicts with", "bar", "foo.module", "package prefix")
+    assertThat(errors[0].htmlMessage.toString()).contains("conflicts with", "bar", "foo.module", "package prefix")
   }
 
   @Test
@@ -441,7 +441,7 @@ class PluginSetLoadingTest {
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
     val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
     assertThat(errors).hasSizeGreaterThan(0)
-    assertThat(errors[0].get().toString()).contains("foo", "duplicate", "content module")
+    assertThat(errors[0].htmlMessage.toString()).contains("foo", "duplicate", "content module")
   }
 
   @Test

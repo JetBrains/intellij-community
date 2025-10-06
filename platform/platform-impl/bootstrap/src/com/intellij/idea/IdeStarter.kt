@@ -329,7 +329,7 @@ private suspend fun reportPluginErrors() {
 
   withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
     val title = IdeBundle.message("title.plugin.error")
-    val pluginErrorMessages = pluginErrors.map { it.get() }.toMutableList()
+    val pluginErrorMessages = pluginErrors.map { it.htmlMessage }.toMutableList()
     val actions = linksToActions(pluginErrorMessages)
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrorMessages).toString()
     @Suppress("DEPRECATION")

@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.ModuleLoadingRule
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginDescriptorLoadingContext
+import com.intellij.ide.plugins.PluginLoadingError
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleId
@@ -38,7 +39,6 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import java.io.InputStream
 import java.nio.file.Path
-import java.util.function.Supplier
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -99,9 +99,9 @@ class PluginDependenciesValidator private constructor(
     checkPluginSet(pluginSet)
   }
 
-  private fun reportPluginLoadingErrors(loadingErrors: List<Supplier<HtmlChunk>>) {
+  private fun reportPluginLoadingErrors(loadingErrors: List<PluginLoadingError>) {
     for (error in loadingErrors) {
-      val errorMessage = error.get().toString()
+      val errorMessage = error.htmlMessage.toString()
       if (options.pluginErrorPrefixesToIgnore.any { errorMessage.startsWith(it) }) {
         continue
       }
@@ -113,12 +113,25 @@ class PluginDependenciesValidator private constructor(
         //just ignore the problem on this OS
         continue
       }
-      val pluginErrorRegexp = Regex("Plugin &#39;(.*?)&#39;.*")
-      val matchResult = pluginErrorRegexp.matchEntire(errorMessage)
-      val moduleName =
-        if (matchResult != null) "plugin_${matchResult.groupValues[1].replace(Regex("[^a-zA-Z0-9_+/]"), "_")}"
-        else "unknown"
-      errors.add(PluginModuleConfigurationError(moduleName, errorMessage))
+
+      // Use structured error data instead of parsing HTML
+      val moduleName = when (val reason = error.reason) {
+        null -> {
+          // Fallback to regex for errors without structured data
+          val pluginErrorRegexp = Regex("Plugin &#39;(.*?)&#39;.*")
+          val matchResult = pluginErrorRegexp.matchEntire(errorMessage)
+          if (matchResult == null) "unknown" else "plugin_${matchResult.groupValues[1].replace(Regex("[^a-zA-Z0-9_+/]"), "_")}"
+        }
+        else -> {
+          "plugin_${reason.plugin.name}"
+        }
+      }
+
+      errors.add(PluginModuleConfigurationError(
+        pluginModelModuleName = moduleName,
+        errorMessage = errorMessage,
+        pluginLoadingError = error
+      ))
     }
   }
 
@@ -158,7 +171,7 @@ class PluginDependenciesValidator private constructor(
     }
     if (modulesToCheck.size < options.minimumNumberOfModulesToBeChecked) {
       errors.add(PluginModuleConfigurationError(
-        moduleName = "too-few-modules",
+        pluginModelModuleName = "too-few-modules",
         errorMessage = """
           |Too few modules (${modulesToCheck.size}) are checked (at least ${options.minimumNumberOfModulesToBeChecked} are expected).
           |Most probably this indicates a problem in the validation code which caused the validator to skip too many modules.
@@ -223,7 +236,7 @@ class PluginDependenciesValidator private constructor(
             |
             |$messageDescribingHowToUpdateLayoutData 
             |""".trimMargin()
-          errors.add(PluginModuleConfigurationError(moduleName = sourceModule.name, errorMessage = errorMessage))
+          errors.add(PluginModuleConfigurationError(pluginModelModuleName = sourceModule.name, errorMessage = errorMessage))
         }
       }
     }
@@ -314,7 +327,11 @@ class PluginDependenciesValidator private constructor(
           createPluginDescriptor(it, loadingContext)
         }
         catch (e: Exception) {
-          errors.add(PluginModuleConfigurationError(moduleName = it.mainJpsModule, errorMessage = e.message ?: e.toString(), cause = e))
+          errors.add(PluginModuleConfigurationError(
+            pluginModelModuleName = it.mainJpsModule,
+            errorMessage = e.message ?: e.toString(),
+            pluginLoadingError = PluginLoadingError(reason = null, htmlMessageSupplier = { HtmlChunk.text(e.message ?: e.toString()) }, error = e),
+          ))
           null
         } 
       }
@@ -350,6 +367,7 @@ class PluginDependenciesValidator private constructor(
   }
 
   private fun getModuleOutputDir(moduleName: String): Path = tempDir.resolve("module-output").resolve(moduleName)
+
   private fun getModuleName(outputDir: Path): String? = outputDir.name.takeIf { outputDir.parent.name == "module-output" }
 
   private inner class LoadFromSourceDataLoader(private val mainPluginModule: JpsModule) : DataLoader {

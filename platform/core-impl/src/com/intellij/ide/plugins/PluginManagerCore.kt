@@ -92,7 +92,7 @@ object PluginManagerCore {
   @Volatile
   private var nullablePluginSet: PluginSet? = null
   private var pluginLoadingErrors: Map<PluginId, PluginNonLoadReason>? = null
-  private val pluginErrors = ArrayList<Supplier<HtmlChunk>>()
+  private val pluginErrors = ArrayList<PluginLoadingError>()
   private var pluginsToDisable: Set<PluginId>? = null
   private var pluginsToEnable: Set<PluginId>? = null
 
@@ -170,7 +170,7 @@ object PluginManagerCore {
   fun isLoaded(plugin: PluginDescriptor): Boolean = (plugin as? IdeaPluginDescriptorImpl)?.pluginClassLoader != null
 
   @ApiStatus.Internal
-  fun getAndClearPluginLoadingErrors(): List<Supplier<HtmlChunk>> {
+fun getAndClearPluginLoadingErrors(): List<PluginLoadingError> {
     synchronized(pluginErrors) {
       if (pluginErrors.isEmpty()) {
         return emptyList()
@@ -292,16 +292,17 @@ object PluginManagerCore {
   }
 
   @Suppress("LoggingSimilarMessage")
-  private fun preparePluginErrors(globalErrorsSuppliers: List<Supplier<@Nls String>>): List<Supplier<HtmlChunk>> {
+  private fun preparePluginErrors(globalErrors: List<PluginLoadingError>): List<PluginLoadingError> {
     val pluginLoadingErrors = pluginLoadingErrors ?: emptyMap()
-    if (pluginLoadingErrors.isEmpty() && globalErrorsSuppliers.isEmpty()) {
+    if (pluginLoadingErrors.isEmpty() && globalErrors.isEmpty()) {
       return emptyList()
     }
+
     // the log includes all messages, not only those which need to be reported to the user
     val loadingErrors = pluginLoadingErrors.values
     val logMessage =
       "Problems found loading plugins:\n  " +
-      (globalErrorsSuppliers.asSequence().map { it.get() } + loadingErrors.asSequence().map { it.logMessage })
+      (globalErrors.asSequence().map { it.htmlMessage.toString() } + loadingErrors.asSequence().map { it.logMessage })
         .joinToString(separator = "\n  ")
     if (isUnitTestMode || !GraphicsEnvironment.isHeadless()) {
       if (!isUnitTestMode) {
@@ -310,10 +311,10 @@ object PluginManagerCore {
       else {
         logger.info(logMessage)
       }
-      @Suppress("HardCodedStringLiteral") // drop after KTIJ-32161
-      return (globalErrorsSuppliers.asSequence() + loadingErrors.asSequence().filter { it.shouldNotifyUser }.map { Supplier { it.detailedMessage } })
-        .map { Supplier { HtmlChunk.text(it.get()) } }
-        .toList()
+      val mappedLoadingErrors = loadingErrors.asSequence()
+        .filter { it.shouldNotifyUser }
+        .map { reason -> PluginLoadingError(reason = reason, htmlMessageSupplier = { HtmlChunk.text(reason.detailedMessage) }, error = null) }
+      return (globalErrors.asSequence() + mappedLoadingErrors).toList()
     }
     else if (PlatformUtils.isFleetBackend()) {
       logger.warn(logMessage)
@@ -492,7 +493,7 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   fun initializePlugins(
-    descriptorLoadingErrors: List<Supplier<@Nls String>>,
+    descriptorLoadingErrors: List<PluginLoadingError>,
     initContext: PluginInitializationContext,
     loadingResult: PluginLoadingResult,
     coreLoader: ClassLoader,
@@ -502,11 +503,15 @@ object PluginManagerCore {
     val globalErrors = descriptorLoadingErrors.toMutableList()
     if (loadingResult.duplicateModuleMap != null) {
       for ((key, value) in loadingResult.duplicateModuleMap!!) {
-        globalErrors.add(Supplier {
-          CoreBundle.message("plugin.loading.error.module.declared.by.multiple.plugins",
-                             key,
-                             value.joinToString(separator = ("\n  ")) { it.toString() })
-        })
+        globalErrors.add(PluginLoadingError(
+          reason = null,
+          htmlMessageSupplier = Supplier {
+            HtmlChunk.text(CoreBundle.message("plugin.loading.error.module.declared.by.multiple.plugins",
+                                              key,
+                                              value.joinToString(separator = ("\n  ")) { it.toString() }))
+          },
+          error = null,
+        ))
       }
     }
 
@@ -571,7 +576,7 @@ object PluginManagerCore {
     if (!errorList.isEmpty()) {
       synchronized(pluginErrors) {
         pluginErrors.addAll(errorList)
-        pluginErrors.addAll(actions)
+        pluginErrors.addAll(actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
       }
     }
 
@@ -744,7 +749,7 @@ object PluginManagerCore {
   }
 
   internal suspend fun initializeAndSetPlugins(
-    descriptorLoadingErrors: List<Supplier<@Nls String>>,
+    descriptorLoadingErrors: List<PluginLoadingError>,
     initContext: PluginInitializationContext,
     loadingResult: PluginLoadingResult,
   ): PluginSet {
