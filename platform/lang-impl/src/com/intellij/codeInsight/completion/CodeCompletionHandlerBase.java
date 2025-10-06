@@ -116,9 +116,7 @@ public class CodeCompletionHandlerBase {
     this.autopopup = autopopup;
     this.synchronous = synchronous;
 
-    if (autopopup) {
-      assert !invokedExplicitly;
-    }
+    assert !(autopopup && invokedExplicitly): "autopopup and invokedExplicitly can't be both true as they are mutually exclusive";
   }
 
   public void handleCompletionElementSelected(@NotNull LookupElement item,
