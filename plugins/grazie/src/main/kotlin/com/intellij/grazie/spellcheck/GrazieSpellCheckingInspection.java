@@ -37,6 +37,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import com.intellij.openapi.project.DumbService;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
@@ -322,6 +324,19 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
   private static boolean hasSameNamedReferencesInFile(String word, PsiFile file) {
     int[] occurrences = new StringSearcher(word, true, true).findAllOccurrences(file.getText());
     if (occurrences.length <= 1) {
+      return false;
+    }
+
+    if (DumbService.isDumb(file.getProject())) {
+      for (int occurrence : occurrences) {
+        PsiElement element = file.findElementAt(occurrence);
+        if (element != null) {
+          SpellcheckingStrategy strategy = getSpellcheckingStrategy(element);
+          if (strategy != null && !strategy.elementFitsScope(element, Set.of(SpellCheckingScope.Comments))) {
+            return true;
+          }
+        }
+      }
       return false;
     }
 

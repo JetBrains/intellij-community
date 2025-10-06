@@ -49,7 +49,8 @@ public class JavaSpellcheckerInspectionTest extends LightJavaCodeInsightFixtureT
   public void testNonNlsField() { doTestInAllModes(); }
   public void testNonNlsField2() { doTestInAllModes(); }
   public void testNonNlsLocalVariable() { doTestInAllModes(); }
-  public void testNonNlsLocalVariableAndComment() { doTestInAllModes(); }
+  public void testNonNlsLocalVariableAndComment() { doTest(false); }
+  public void testNonNlsLocalVariableAndCommentDumb() { doTest(true); }
   public void testFieldComment() { doTestInAllModes(); }
   public void testDoNotCheckDerivedNames() { doTestInAllModes(); }
   public void testSkipDateTime() { doTestInAllModes(); }

@@ -1,15 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.language
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.spellchecker.ProjectDictionaryLayer
 import com.intellij.spellchecker.SpellCheckerManager
 import com.intellij.spellchecker.dictionary.Loader
 import com.intellij.spellchecker.settings.SpellCheckerSettings
+import com.intellij.testFramework.DumbModeTestUtils.runInDumbModeSynchronously
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
@@ -69,6 +71,9 @@ class JavaSupportTest : GrazieTestBase() {
 
   fun testCommentIsNotHighlightedIfThereIsReference() {
     runHighlightTestForFile("ide/language/java/VectorablexxClass.java")
+
+    (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, testRootDisposable)
+    runInDumbModeSynchronously(project) { runHighlightTestForFile("ide/language/java/VectorablexxClass.java") }
   }
 
   fun `test spellchecking normalization`() {
