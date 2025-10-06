@@ -41,8 +41,8 @@ class XDebuggerThreadsList(
   companion object {
     val THREADS_LIST: DataKey<XDebuggerThreadsList> = DataKey.create("THREADS_LIST")
 
-    fun createDefault(withDescription: Boolean): XDebuggerThreadsList {
-      val renderer = if (withDescription) XDebuggerGroupedFrameListRendererWithDescription() else XDebuggerGroupedFrameListRenderer()
+    fun createDefault(): XDebuggerThreadsList {
+      val renderer = XDebuggerGroupedFrameListRenderer()
       val list = XDebuggerThreadsList(renderer)
       list.doInit()
       return list
@@ -137,14 +137,6 @@ class XDebuggerThreadsList(
     override fun createItemComponent(): JComponent {
       createLabel()
       return XDebuggerThreadsListRenderer()
-    }
-  }
-
-  private class XDebuggerGroupedFrameListRendererWithDescription : XDebuggerGroupedFrameListRenderer() {
-
-    override fun createItemComponent(): JComponent {
-      createLabel()
-      return XDebuggerThreadsListRendererWithDescription()
     }
   }
 

@@ -1,28 +1,23 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.OccurenceNavigator
-import com.intellij.ide.ui.text.StyledTextPane
-import com.intellij.ide.ui.text.paragraph.TextParagraph
-import com.intellij.ide.ui.text.parts.RegularTextPart
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SpeedSearchComparator
-import com.intellij.util.concurrency.EdtExecutorService
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.TextTransferable
+import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSessionListener
-import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -32,49 +27,31 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab3
 import com.intellij.xdebugger.impl.util.SequentialDisposables
 import com.intellij.xdebugger.impl.util.isNotAlive
 import com.intellij.xdebugger.impl.util.onTermination
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.time.Duration
-import java.util.*
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.JScrollPane
-import javax.swing.event.ListDataEvent
-import javax.swing.event.ListDataListener
-import javax.swing.text.StyleConstants
-import kotlin.time.toKotlinDuration
-
-private val logger = Logger.getInstance(XThreadsFramesView::class.java)
 
 @Internal
-class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
+class XThreadsFramesView(val debugTab: XDebugSessionTab3, private val sessionProxy: XDebugSessionProxy) : XDebugView() {
   private val myPauseDisposables = SequentialDisposables(this)
 
-  private val supportsDescription: Boolean = debugTab.project.service<XDebuggerExecutionStackDescriptionService>().isAvailable()
+  private val myThreadsList = XDebuggerThreadsList.createDefault()
+  private val myFramesList = XDebuggerFramesList(debugTab.project, sessionProxy)
 
-  private val myThreadsList = XDebuggerThreadsList.createDefault(supportsDescription)
-  private val myFramesList = XDebuggerFramesList(debugTab.project)
-
-  private val myCurrentThreadDescriptionComponent = StyledTextPane().apply {
-    Disposer.register(this@XThreadsFramesView, this)
-    background = JBUI.CurrentTheme.ToolWindow.background()
+  private val myDescriptionPanel = JPanel(BorderLayout()).apply {
+    border = JBEmptyBorder(0, 20, 0, 0)
   }
 
   private val mySplitter: NonProportionalOnePixelSplitter
@@ -91,7 +68,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
   private val mainPanel = JPanel(BorderLayout())
 
-  private var stackInfoDescriptionRequester: StackInfoDescriptionRequester?
+  private var stackInfoDescriptionRequester: XDebuggerDescriptionComponentProvider?
 
   override fun getMainComponent(): JComponent {
     return mainPanel
@@ -177,14 +154,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
     val frameListWrapper = JPanel(BorderLayout(0, 0))
 
-    if (supportsDescription) {
-      frameListWrapper.add(
-        JPanel(BorderLayout()).apply {
-          border = JBEmptyBorder(0, 20, 0, 0)
-          add(myCurrentThreadDescriptionComponent)
-        },
-        BorderLayout.NORTH)
-    }
+    frameListWrapper.add(myDescriptionPanel, BorderLayout.NORTH)
     addFramesNavigationAd(frameListWrapper)
     frameListWrapper.add(myFramesList.withSpeedSearch().toScrollPane(), BorderLayout.CENTER)
     frameListWrapper.minimumSize = minimumDimension
@@ -192,25 +162,31 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     splitter.secondComponent = frameListWrapper
 
     stackInfoDescriptionRequester = debugTab.sessionProxy?.let { session ->
-      if (supportsDescription) {
-        val requester = StackInfoDescriptionRequester(myThreadsList, session, mainPanel)
-        threadsScrollPane.viewport.addChangeListener(requester)
-        myThreadsList.model.addListDataListener(requester)
-        session.addSessionListener(object : XDebugSessionListener {
-          override fun sessionStopped() {
-            myThreadsList.model.removeListDataListener(requester)
-            threadsScrollPane.viewport.removeChangeListener(requester)
-            stackInfoDescriptionRequester = null
-            myCurrentThreadDescriptionComponent.paragraphs = emptyList()
-            myCurrentThreadDescriptionComponent.revalidate()
-            myCurrentThreadDescriptionComponent.repaint()
+      val descriptionComponentProvider = session.project
+        .service<XDebuggerExecutionStackDescriptionService>().getLoadDescriptionComponent(sessionProxy, this)
+
+      descriptionComponentProvider?.let {
+        sessionProxy.coroutineScope.launch(Dispatchers.Main) {
+          descriptionComponentProvider.currentDescriptionComponent.collect {
+            myDescriptionPanel.removeAll()
+            if (it != null) {
+              myDescriptionPanel.add(it)
+            }
+            myDescriptionPanel.revalidate()
+            myDescriptionPanel.repaint()
           }
-        }, this)
-        requester
+        }
       }
-      else {
-        null
-      }
+
+      session.addSessionListener(object : XDebugSessionListener {
+        override fun sessionStopped() {
+          stackInfoDescriptionRequester = null
+          myDescriptionPanel.removeAll()
+          myDescriptionPanel.revalidate()
+          myDescriptionPanel.repaint()
+        }
+      }, this)
+      descriptionComponentProvider
     }
 
     mySplitter = splitter
@@ -284,16 +260,6 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     action(session, stack, frame)
   }
 
-  private fun setActiveThreadDescription(@Nls text: String) {
-    myCurrentThreadDescriptionComponent.paragraphs = listOf(TextParagraph(listOf(RegularTextPart(text).apply {
-      this.editAttributes {
-        StyleConstants.setForeground(this, NamedColorUtil.getInactiveTextColor())
-      }
-    })))
-    myCurrentThreadDescriptionComponent.revalidate()
-    myCurrentThreadDescriptionComponent.repaint()
-  }
-
   override fun processSessionEvent(event: SessionEvent, session: XDebugSessionProxy) {
     if (event == SessionEvent.BEFORE_RESUME) {
       return
@@ -357,17 +323,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   private fun XExecutionStack.setActive(sessionProxy: XDebugSessionProxy) {
     myFramesManager.setActive(this)
 
-    setActiveThreadDescription(IdeBundle.message("progress.text.loading"))
-    stackInfoDescriptionRequester?.requestDescription(this) { description, exception ->
-      if (exception != null) {
-        logger.error(exception)
-      }
-
-      @Nls
-      val longDescription = description?.longDescription ?: XDebuggerBundle.message("xdebugger.execution.stack.description.not.available.message")
-
-      setActiveThreadDescription(longDescription)
-    }
+    stackInfoDescriptionRequester?.onExecutionStackSelected(this, sessionProxy)
 
     val currentFrame = myFramesManager.tryGetCurrentFrame(this) ?: return
 
@@ -391,9 +347,9 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     myThreadsContainer.clear()
     myFramesPresentationCache.clear()
     stackInfoDescriptionRequester?.clear()
-    myCurrentThreadDescriptionComponent.paragraphs = emptyList()
-    myCurrentThreadDescriptionComponent.revalidate()
-    myCurrentThreadDescriptionComponent.repaint()
+    myDescriptionPanel.removeAll()
+    myDescriptionPanel.revalidate()
+    myDescriptionPanel.repaint()
   }
 
   override fun dispose() {}
@@ -622,85 +578,12 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
   }
 }
 
-@OptIn(FlowPreview::class)
-internal class StackInfoDescriptionRequester(
-  private val threadsList: XDebuggerThreadsList,
-  val sessionProxy: XDebugSessionProxy,
-  val viewComponent: JComponent,
-) : javax.swing.event.ChangeListener, ListDataListener {
+@ApiStatus.Experimental
+@Internal
+interface XDebuggerDescriptionComponentProvider {
+  val currentDescriptionComponent: MutableStateFlow<JComponent?>
 
-  companion object {
-    private val logger = Logger.getInstance(StackInfoDescriptionRequester::class.java)
-    private val DESCRIPTION_GROUPING_EVENT_TIMEOUT: kotlin.time.Duration = Duration.ofMillis(500).toKotlinDuration()
-  }
+  fun onExecutionStackSelected(stack: XExecutionStack, sessionProxy: XDebugSessionProxy)
 
-  private val descriptionCalculationMap = Collections.synchronizedMap(mutableMapOf<XExecutionStack, CompletableFuture<XDebuggerExecutionStackDescription>>())
-  private val descriptionRequestsFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-  init {
-    sessionProxy.coroutineScope.launch(Dispatchers.EDT) {
-      descriptionRequestsFlow.debounce(DESCRIPTION_GROUPING_EVENT_TIMEOUT).collectLatest {
-        val firstIndex = threadsList.firstVisibleIndex
-        var lastIndex = threadsList.lastVisibleIndex
-
-        if (firstIndex < 0) return@collectLatest
-        lastIndex = if (lastIndex < 0) threadsList.model.size - 1 else lastIndex
-        for (stackInfo in threadsList.model.items.subList(firstIndex, lastIndex + 1)) {
-          requestDescription(stackInfo)
-        }
-      }
-    }
-  }
-
-  override fun stateChanged(e: javax.swing.event.ChangeEvent) {
-    triggerDescriptionCalculationForVisiblePart()
-    return
-  }
-
-  internal fun clear() {
-    descriptionCalculationMap.forEach { (_, future) -> future.cancel(true) }
-    descriptionCalculationMap.clear()
-  }
-
-  internal fun triggerDescriptionCalculationForVisiblePart() {
-    descriptionRequestsFlow.tryEmit(Unit)
-  }
-
-  internal fun requestDescription(executionStack: XExecutionStack, onFinished: (XDebuggerExecutionStackDescription?, Throwable?) -> Unit) {
-    val descriptionService = sessionProxy.project.service<XDebuggerExecutionStackDescriptionService>()
-    if (!(descriptionService.isAvailable())) return
-
-    descriptionCalculationMap.getOrPut(executionStack) {
-      descriptionService.getExecutionStackDescription(executionStack, sessionProxy).asCompletableFuture()
-    }.whenCompleteAsync({ result: XDebuggerExecutionStackDescription?, exception: Throwable? ->
-      onFinished(result, exception)
-      viewComponent.repaint()
-    }, EdtExecutorService.getInstance())
-  }
-
-  internal fun requestDescription(stackInfo: StackInfo) {
-    val executionStack = stackInfo.stack ?: return
-
-    requestDescription(executionStack) { result, exception ->
-      if (exception is CancellationException) {
-        return@requestDescription
-      }
-      if (exception != null) {
-        logger.error(exception)
-      }
-      stackInfo.description = result?.shortDescription ?: XDebuggerBundle.message("xdebugger.execution.stack.description.not.available.message")
-    }
-  }
-
-  override fun intervalAdded(e: ListDataEvent?) {
-    triggerDescriptionCalculationForVisiblePart()
-  }
-
-  override fun intervalRemoved(e: ListDataEvent?) {
-    triggerDescriptionCalculationForVisiblePart()
-  }
-
-  override fun contentsChanged(e: ListDataEvent?) {
-    triggerDescriptionCalculationForVisiblePart()
-  }
+  fun clear()
 }
