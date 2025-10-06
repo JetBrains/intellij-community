@@ -1,4 +1,4 @@
 // WITH_STDLIB
 
-val nullableList: List<String>? = listOf("1", "")
-val x = nullableList?.<caret>filter { it.isNotEmpty() }?.first()
+val nullableSequence: Sequence<String>? = sequenceOf("1", "")
+val x = nullableSequence?.<caret>filter { it.isNotEmpty() }?.first()

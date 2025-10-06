@@ -1,4 +1,4 @@
 // WITH_STDLIB
-fun test(list: List<Int>) {
-    list.sumOf { 1 + 2L }
+fun test(sequence: Sequence<Int>) {
+    sequence.sumOf { 1 + 2L }
 }

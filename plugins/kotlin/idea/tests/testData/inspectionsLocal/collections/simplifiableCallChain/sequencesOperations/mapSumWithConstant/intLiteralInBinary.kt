@@ -1,5 +1,5 @@
 // PROBLEM: none
 // WITH_STDLIB
-fun test(list: List<Int>, i: Int) {
-    list.map<caret> { 1 + 2 }.sum()
+fun test(sequence: Sequence<Int>, i: Int) {
+    sequence.map<caret> { 1 + 2 }.sum()
 }

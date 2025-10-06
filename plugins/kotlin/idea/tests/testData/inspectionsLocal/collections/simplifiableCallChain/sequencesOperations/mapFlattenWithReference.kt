@@ -2,5 +2,5 @@
 package test
 
 fun testMe() {
-    listOf("hello").<caret>map(String::toList).flatten()
+    sequenceOf("hello").<caret>map(String::asSequence).flatten()
 }

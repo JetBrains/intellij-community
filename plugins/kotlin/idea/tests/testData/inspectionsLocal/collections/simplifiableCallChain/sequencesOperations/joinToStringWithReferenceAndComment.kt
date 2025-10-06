@@ -1,6 +1,6 @@
 // WITH_STDLIB
 
-val x = listOf(1, 2, 3).<caret>map(
+val x = sequenceOf(1, 2, 3).<caret>map(
         // comment1
         Int::toString
 ).joinToString(

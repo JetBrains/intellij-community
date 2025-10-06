@@ -6,6 +6,6 @@
 
 fun getKey(i: Int): Long = 1L
 
-fun test(list: List<Int>) {
-    val map: Map<Long, Int> = list.<caret>map { getKey(it) to it }.toMap()
+fun test(sequence: Sequence<Int>) {
+    val map: Map<Long, Int> = sequence.<caret>map { getKey(it) to it }.toMap()
 }

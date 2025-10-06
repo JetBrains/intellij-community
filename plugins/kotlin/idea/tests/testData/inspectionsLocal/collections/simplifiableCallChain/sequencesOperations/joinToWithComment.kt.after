@@ -1,7 +1,7 @@
 // WITH_STDLIB
 
 val sb = StringBuilder()
-val x = listOf(1, 2, 3).joinTo(
+val x = sequenceOf(1, 2, 3).joinTo(
     // comment1
     buffer = sb,
     // comment2

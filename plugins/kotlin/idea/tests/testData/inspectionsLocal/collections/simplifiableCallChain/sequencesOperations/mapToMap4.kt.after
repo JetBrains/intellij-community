@@ -6,8 +6,8 @@
 
 fun foo() {}
 
-fun test(list: List<Int>) {
-    val map: Map<Int, Int> = list.associateWith {
+fun test(sequence: Sequence<Int>) {
+    val map: Map<Int, Int> = sequence.associateWith {
         foo()
         foo()
         it

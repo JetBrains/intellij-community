@@ -6,7 +6,7 @@
 
 fun getValue(i: Int): String = ""
 
-fun test(list: List<Int>) {
+fun test(sequence: Sequence<Int>) {
     val target = mutableMapOf<Int, String>()
-    list.<caret>map { it to getValue(it) }.toMap(target)
+    sequence.<caret>map { it to getValue(it) }.toMap(target)
 }

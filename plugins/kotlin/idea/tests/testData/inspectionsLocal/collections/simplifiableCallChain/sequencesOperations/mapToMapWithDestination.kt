@@ -3,7 +3,7 @@
 fun getKey(i: Int): Long = 1L
 fun getValue(i: Int): String = ""
 
-fun test(list: List<Int>) {
+fun test(sequence: Sequence<Int>) {
     val target = mutableMapOf<Long, String>()
-    list.<caret>map { getKey(it) to getValue(it) }.toMap(target)
+    sequence.<caret>map { getKey(it) to getValue(it) }.toMap(target)
 }

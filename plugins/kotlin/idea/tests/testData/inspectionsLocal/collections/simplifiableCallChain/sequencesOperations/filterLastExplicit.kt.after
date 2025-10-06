@@ -1,3 +1,3 @@
 // WITH_STDLIB
 
-val x = listOf("1", "").last { element -> element.isNotEmpty() }
+val x = sequenceOf("1", "").last { element -> element.isNotEmpty() }

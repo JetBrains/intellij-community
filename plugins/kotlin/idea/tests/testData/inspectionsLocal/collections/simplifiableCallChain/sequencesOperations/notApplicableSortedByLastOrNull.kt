@@ -1,4 +1,4 @@
 // PROBLEM: none
 // WITH_STDLIB
-val list = listOf(1, 2, null)
-val x = list.sortedBy<caret> { it }.lastOrNull()
+val sequence = sequenceOf(1, 2, null)
+val x = sequence.sortedBy<caret> { it }.lastOrNull()

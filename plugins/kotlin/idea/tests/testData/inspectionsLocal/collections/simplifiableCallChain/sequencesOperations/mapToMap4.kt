@@ -6,8 +6,8 @@
 
 fun foo() {}
 
-fun test(list: List<Int>) {
-    val map: Map<Int, Int> = list.<caret>map {
+fun test(sequence: Sequence<Int>) {
+    val map: Map<Int, Int> = sequence.<caret>map {
         foo()
         foo()
         it to it

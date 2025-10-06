@@ -2,5 +2,5 @@
 package test
 
 fun testMe() {
-    listOf("hello").flatMap(String::toList)
+    sequenceOf("hello").flatMap(String::asSequence)
 }

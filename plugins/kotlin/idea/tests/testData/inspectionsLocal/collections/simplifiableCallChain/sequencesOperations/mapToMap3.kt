@@ -6,6 +6,6 @@
 
 fun getValue(i: Int): String = ""
 
-fun test(list: List<Int>) {
-    val map: Map<Int, String> = list.<caret>map { it to getValue(it) }.toMap()
+fun test(sequence: Sequence<Int>) {
+    val map: Map<Int, String> = sequence.<caret>map { it to getValue(it) }.toMap()
 }

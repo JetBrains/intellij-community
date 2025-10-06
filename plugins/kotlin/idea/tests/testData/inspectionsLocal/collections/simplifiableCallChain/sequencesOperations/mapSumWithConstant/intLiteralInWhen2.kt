@@ -1,7 +1,7 @@
 // PROBLEM: none
 // WITH_STDLIB
-fun test(list: List<Int>, i: Int) {
-    list.map<caret> {
+fun test(sequence: Sequence<Int>, i: Int) {
+    sequence.map<caret> {
         when (i) {
             1 -> {
                 if (true) 1 else 0

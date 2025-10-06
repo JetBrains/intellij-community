@@ -1,6 +1,6 @@
 // WITH_STDLIB
-fun test(): List<Int> {
-    return listOf(1, null, 2)
+fun test(): Sequence<Int> {
+    return sequenceOf(1, null, 2)
         // TEXT1
         // TEXT1
         // TEXT1
