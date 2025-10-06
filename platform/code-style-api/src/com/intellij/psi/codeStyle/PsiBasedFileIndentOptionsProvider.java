@@ -1,14 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,19 +26,10 @@ public abstract class PsiBasedFileIndentOptionsProvider extends FileIndentOption
   public final @Nullable CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project,
                                                                                 @NotNull CodeStyleSettings settings,
                                                                                 @NotNull VirtualFile file) {
-    FileType type = file.getFileType();
-    FileDocumentManager documentManager = FileDocumentManager.getInstance();
-
-    //calling getDocument causes decompilation, which is unnecessary
-    if (type.isBinary() && BinaryFileTypeDecompilers.getInstance().forFileType(type) != null) {
-      return null;
-    }
-    Document document = documentManager.getDocument(file);
-    if (document != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-      if (psiFile != null) {
-        return getIndentOptionsByPsiFile(settings, psiFile);
-      }
+    //avoid calling getDocument, because it causes decompilation, which is unnecessary
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    if (psiFile != null) {
+      return getIndentOptionsByPsiFile(settings, psiFile);
     }
     return null;
   }

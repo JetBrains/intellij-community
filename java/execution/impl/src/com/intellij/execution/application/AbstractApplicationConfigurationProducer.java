@@ -30,8 +30,8 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
     if (contextLocation == null) {
       return false;
     }
-    //IDEA doesn't run compiled elements
-    if (contextLocation.getPsiElement() instanceof PsiCompiledElement compiledElement) {
+    // IDEA doesn't run compiled elements
+    if (contextLocation.getPsiElement() instanceof PsiCompiledElement) {
       return false;
     }
     final Location<?> location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
