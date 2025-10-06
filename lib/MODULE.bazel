@@ -3983,6 +3983,20 @@ http_file(
 )
 
 http_file(
+  name = "com_jetbrains_mlapi-mlapi-catboost-0_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-catboost/0.2.0/mlapi-catboost-0.2.0.jar",
+  sha256 = "81d40889aba4f259f59787bf9d953501668fc4f49081c75792618bba1cc6c661",
+  downloaded_file_path = "mlapi-catboost-0.2.0.jar"
+)
+
+http_file(
+  name = "com_jetbrains_mlapi-mlapi-catboost-0_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-catboost/0.2.0/mlapi-catboost-0.2.0-sources.jar",
+  sha256 = "7da5d2518a30d2777d0238eb88cb6ebb7327d957889d6ba259d1e73afc264660",
+  downloaded_file_path = "mlapi-catboost-0.2.0-sources.jar"
+)
+
+http_file(
   name = "com_jetbrains_mlapi-catboost-shadow-need-slf4j-1_2_5_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/catboost-shadow-need-slf4j/1.2.5/catboost-shadow-need-slf4j-1.2.5.jar",
   sha256 = "94a06c3fdd4aa638df59c8c783a379ca43a5b933187760e219e09e84f1633d76",
@@ -3990,31 +4004,17 @@ http_file(
 )
 
 http_file(
-  name = "com_jetbrains_mlapi-ml-api-0_1_94_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-api/0.1.94/ml-api-0.1.94.jar",
-  sha256 = "1050f9b58c8d71833d075ae7302881cb9d905dcda4025a21c59657ac823ac105",
-  downloaded_file_path = "ml-api-0.1.94.jar"
+  name = "com_jetbrains_mlapi-mlapi-core-0_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-core/0.2.0/mlapi-core-0.2.0.jar",
+  sha256 = "6e07a48c74982f31a55b5099791e45b6af42a8e540c591732a10f8493abb56fe",
+  downloaded_file_path = "mlapi-core-0.2.0.jar"
 )
 
 http_file(
-  name = "com_jetbrains_mlapi-ml-api-0_1_94-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-api/0.1.94/ml-api-0.1.94-sources.jar",
-  sha256 = "79eb26365ce9f536733d96fc16e40e7e89e1daba9312a8d06449718430d7d499",
-  downloaded_file_path = "ml-api-0.1.94-sources.jar"
-)
-
-http_file(
-  name = "com_jetbrains_mlapi-ml-tools-0_1_94_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools/0.1.94/ml-tools-0.1.94.jar",
-  sha256 = "b2d36677ba73f2f7974199823b5f4323b2a16ea718ed506297402c6a7605af1c",
-  downloaded_file_path = "ml-tools-0.1.94.jar"
-)
-
-http_file(
-  name = "com_jetbrains_mlapi-ml-tools-0_1_94-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/ml-tools/0.1.94/ml-tools-0.1.94-sources.jar",
-  sha256 = "8c5b021724a9b8dab25e33b09812aadbd160cf8e64e89a3dd17c40449dbdedae",
-  downloaded_file_path = "ml-tools-0.1.94-sources.jar"
+  name = "com_jetbrains_mlapi-mlapi-core-0_2_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/mlapi/mlapi-core/0.2.0/mlapi-core-0.2.0-sources.jar",
+  sha256 = "ac917198906a6dfac091713d55d29ebe0ce347df9b3537bd458f6fcdab3af5c8",
+  downloaded_file_path = "mlapi-core-0.2.0-sources.jar"
 )
 
 http_file(
@@ -13160,17 +13160,17 @@ http_file(
 )
 
 http_file(
-  name = "com_jetbrains_ml_models-python-imports-ranking-model-coral-panda-republished-4_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-4/python-imports-ranking-model-coral-panda-republished-4.jar",
-  sha256 = "cff0591184b48356a622f7635c6de1399fdbeb161f98d68206d09807c83fa98c",
-  downloaded_file_path = "python-imports-ranking-model-coral-panda-republished-4.jar"
+  name = "com_jetbrains_ml_models-python-imports-ranking-model-coral-panda-republished-6_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-6/python-imports-ranking-model-coral-panda-republished-6.jar",
+  sha256 = "2dbd0ae71bac24a83db76238f0a0cf2bd6b0fd1963b6827371ae8813a0434827",
+  downloaded_file_path = "python-imports-ranking-model-coral-panda-republished-6.jar"
 )
 
 http_file(
-  name = "com_jetbrains_ml_models-python-imports-ranking-model-coral-panda-republished-4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-4/python-imports-ranking-model-coral-panda-republished-4-sources.jar",
-  sha256 = "4aecfba9498dff7e199c7db2a718b53c77834347daf8b96cafc8b02b392c5e6c",
-  downloaded_file_path = "python-imports-ranking-model-coral-panda-republished-4-sources.jar"
+  name = "com_jetbrains_ml_models-python-imports-ranking-model-coral-panda-republished-6-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-6/python-imports-ranking-model-coral-panda-republished-6-sources.jar",
+  sha256 = "3b0e9358cb7dfa787a28ce3502655f39cd73c6f65a2b1eed7074f04acb562584",
+  downloaded_file_path = "python-imports-ranking-model-coral-panda-republished-6-sources.jar"
 )
 
 http_file(

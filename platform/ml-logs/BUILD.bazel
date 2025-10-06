@@ -15,16 +15,11 @@ jvm_library(
   resources = [":ml-logs_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/util",
     "//platform/statistics",
     "@lib//:jetbrains-annotations",
-    "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
-    "@lib//:jetbrains-mlapi-ml-api",
-    "@lib//:jetbrains-mlapi-ml-tools",
+    "@lib//:jetbrains-mlapi-core",
   ],
-  exports = [
-    "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
-    "@lib//:jetbrains-mlapi-ml-api",
-    "@lib//:jetbrains-mlapi-ml-tools",
-  ]
+  exports = ["@lib//:jetbrains-mlapi-core"]
 )
 ### auto-generated section `build intellij.platform.ml.logs` end

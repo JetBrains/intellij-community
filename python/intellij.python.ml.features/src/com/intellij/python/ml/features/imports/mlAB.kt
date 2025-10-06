@@ -6,8 +6,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.ml.features.imports.FinalImportRankingStatusService.RegistryOption
-import com.jetbrains.ml.tools.model.MLModel
-import com.jetbrains.ml.tools.model.catboost.prediction.CatBoostRegressionResult
+import com.jetbrains.mlapi.model.MLModel
+import com.jetbrains.mlapi.model.prediction.RegressionResult
 
 @Service
 internal class FinalImportRankingStatusService {
@@ -47,6 +47,6 @@ internal sealed class FinalImportRankingStatus(
   val mlModelUnavailable: Boolean,
   val registryOption: RegistryOption,
 ) {
-  class Enabled(val mlModel: MLModel<CatBoostRegressionResult>, registryOption: RegistryOption) : FinalImportRankingStatus(true, false, registryOption)
+  class Enabled(val mlModel: MLModel<RegressionResult>, registryOption: RegistryOption) : FinalImportRankingStatus(true, false, registryOption)
   class Disabled(mlModelUnavailable: Boolean, registryOption: RegistryOption) : FinalImportRankingStatus(false, mlModelUnavailable, registryOption)
 }

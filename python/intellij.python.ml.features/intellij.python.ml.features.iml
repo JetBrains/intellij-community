@@ -25,21 +25,23 @@
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="module-library">
       <library name="jetbrains.ml.models.python.imports.ranking.model" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.jetbrains.ml.models:python-imports-ranking-model:coral-panda-republished-4">
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.ml.models:python-imports-ranking-model:coral-panda-republished-6">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-4/python-imports-ranking-model-coral-panda-republished-4.jar">
-              <sha256sum>cff0591184b48356a622f7635c6de1399fdbeb161f98d68206d09807c83fa98c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-6/python-imports-ranking-model-coral-panda-republished-6.jar">
+              <sha256sum>2dbd0ae71bac24a83db76238f0a0cf2bd6b0fd1963b6827371ae8813a0434827</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-4/python-imports-ranking-model-coral-panda-republished-4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-6/python-imports-ranking-model-coral-panda-republished-6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-4/python-imports-ranking-model-coral-panda-republished-4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-6/python-imports-ranking-model-coral-panda-republished-6-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="jetbrains.mlapi.catboost" level="project" />
+    <orderEntry type="library" name="jetbrains.mlapi.catboost.shadow.need.slf4j" level="project" />
   </component>
 </module>

@@ -12,20 +12,10 @@
   module: intellij.searchEverywhereMl
   files:
   - name: $MAVEN_REPOSITORY$/ai/grazie/model/swagger-annotations-jvm/0/swagger-annotations-jvm-0.jar
-- name: lib/jetbrains.mlapi.catboost.shadow.need.slf4j.jar
-  library: jetbrains.mlapi.catboost.shadow.need.slf4j
+- name: lib/jetbrains.mlapi.core.jar
+  library: jetbrains.mlapi.core
   files:
-  - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/catboost-shadow-need-slf4j/1/catboost-shadow-need-slf4j-1.jar
-  reason: <- intellij.platform.ml.logs
-- name: lib/jetbrains.mlapi.ml.api.jar
-  library: jetbrains.mlapi.ml.api
-  files:
-  - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-api/0/ml-api-0.jar
-  reason: <- intellij.platform.ml.logs
-- name: lib/jetbrains.mlapi.ml.tools.jar
-  library: jetbrains.mlapi.ml.tools
-  files:
-  - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/ml-tools/0/ml-tools-0.jar
+  - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-core/0/mlapi-core-0.jar
   reason: <- intellij.platform.ml.logs
 - name: lib/modules/intellij.searchEverywhereMl.ranking.core.jar
   contentModules:

@@ -2,9 +2,9 @@ package com.intellij.findUsagesMl
 
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.ml.api.feature.Feature
-import com.jetbrains.ml.api.feature.FeatureDeclaration
-import com.jetbrains.ml.api.feature.FeatureSet
+import com.jetbrains.mlapi.feature.Feature
+import com.jetbrains.mlapi.feature.FeatureDeclaration
+import com.jetbrains.mlapi.feature.FeatureSet
 import org.apache.commons.text.similarity.JaroWinklerSimilarity
 import org.junit.jupiter.api.Test
 import java.lang.reflect.Method

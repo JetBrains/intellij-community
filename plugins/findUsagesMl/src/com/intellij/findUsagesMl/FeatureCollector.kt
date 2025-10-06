@@ -3,7 +3,7 @@ package com.intellij.findUsagesMl
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.platform.ml.logs.IntelliJFusEventRegister
-import com.jetbrains.ml.tools.logs.MLTreeLoggers.withOneEvent
+import com.jetbrains.mlapi.logs.MLTreeLogger
 
 
 internal object FindUsagesFileRankerFeatureCollector : CounterUsagesCollector() {
@@ -11,13 +11,13 @@ internal object FindUsagesFileRankerFeatureCollector : CounterUsagesCollector() 
   const val eventGroupId: String = "findUsages.fileRanking"
   const val fusEventName: String = "find_usages_file_ranking"
 
-  private val GROUP = EventLogGroup(eventGroupId, 3, recorderId)
+  private val GROUP = EventLogGroup(eventGroupId, 4, recorderId)
 
-  val mlLogger = withOneEvent(
-    fusEventName = fusEventName,
-    fusEventRegister = IntelliJFusEventRegister(GROUP),
-    treeFeatures = FindUsagesFileRankerFeatures.declarations(),
-    treeAnalysis = FindUsagesFileRankerAnalysisTargets.eventFields()
+  val mlLogger = MLTreeLogger.withOneEvent(
+    eventName = fusEventName,
+    logsEventRegister = IntelliJFusEventRegister(GROUP),
+    treeFeatures = listOf(FindUsagesFileRankerFeatures.extractFeatureDeclarations()),
+    treeAnalysis = listOf(FindUsagesFileRankerAnalysisTargets.extractFeatureDeclarations())
   )
 
   override fun getGroup() = GROUP

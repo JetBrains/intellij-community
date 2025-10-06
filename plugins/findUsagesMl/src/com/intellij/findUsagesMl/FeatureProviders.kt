@@ -1,7 +1,7 @@
 package com.intellij.findUsagesMl
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.ml.api.feature.*
+import com.jetbrains.mlapi.feature.*
 import org.apache.commons.text.similarity.JaroWinklerSimilarity
 
 
@@ -14,7 +14,7 @@ data class FindUsagesRankingFileInfo(
   val projectPath: String,
 )
 
-object FindUsagesFileRankerFeatures {
+object FindUsagesFileRankerFeatures : FeatureContainer {
   val QUERY_JARO_WINKLER_SIMILARITY: FeatureDeclaration<Double?> = FeatureDeclaration.double(name = "query_jaro_winkler_similarity") { "Jaro-Winkler similarity of syntactic element to file name" }.nullable()
   val FILENAME_JARO_WINKLER_SIMILARITY: FeatureDeclaration<Double?> = FeatureDeclaration.double(name = "filename_jaro_winkler_similarity") { "Jaro-Winkler similarity of the files' names" }.nullable()
   val QUERY_FILE_TYPE: FeatureDeclaration<String?> = FeatureDeclaration.string(name = "query_file_type", "file_type") { "Query file's type" }.nullable()
@@ -26,12 +26,9 @@ object FindUsagesFileRankerFeatures {
   val TIME_SINCE_LAST_MODIFIED_MS: FeatureDeclaration<Long?> = FeatureDeclaration.long(name = "time_since_modified_ms") { "Time since candidate file's modified timestamp in ms at the time of feature calculation" }.nullable()
   val RECENT_FILES_INDEX: FeatureDeclaration<Int?> = FeatureDeclaration.int(name = "recent_files_index") { "Index of the candidate file in the list of the most recent files" }.nullable()
   val DIRECTORY_DISTANCE: FeatureDeclaration<Double?> = FeatureDeclaration.double(name = "directory_distance") { "Normalized distance between the query file and candidate file" }.nullable()
-
-  fun declarations(): List<List<FeatureDeclaration<*>>> = listOf(extractFeatureDeclarations(FindUsagesFileRankerFeatures))
 }
 
-class FindUsagesFileRankerFeatureProvider : FeatureProvider<FindUsagesRankingFileInfo>() {
-  override val featureDeclarations: List<FeatureDeclaration<*>> = extractFeatureDeclarations(FindUsagesFileRankerFeatures)
+class FindUsagesFileRankerFeatureProvider : FeatureProvider<FindUsagesRankingFileInfo>(FindUsagesFileRankerFeatures) {
 
   override fun computeFeatures(instance: FindUsagesRankingFileInfo, requiredOutput: FeatureSet): List<Feature> = buildLazyFeaturesList(requiredOutput) {
     if (instance.candidateFile != null) {

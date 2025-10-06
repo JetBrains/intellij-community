@@ -116,11 +116,20 @@
   contentModules:
   - name: intellij.python.markdown
 - name: lib/modules/intellij.python.ml.features.jar
+  projectLibraries:
+  - name: jetbrains.mlapi.catboost
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/mlapi-catboost/0/mlapi-catboost-0.jar
+    reason: <- intellij.python.ml.features
+  - name: jetbrains.mlapi.catboost.shadow.need.slf4j
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/mlapi/catboost-shadow-need-slf4j/1/catboost-shadow-need-slf4j-1.jar
+    reason: <- intellij.python.ml.features
   contentModules:
   - name: intellij.python.ml.features
     libraries:
       jetbrains.ml.models.python.imports.ranking.model:
-      - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-4/python-imports-ranking-model-coral-panda-republished-4.jar
+      - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/coral-panda-republished-6/python-imports-ranking-model-coral-panda-republished-6.jar
 - name: lib/modules/intellij.python.parser.jar
   contentModules:
   - name: intellij.python.parser

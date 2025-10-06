@@ -15,7 +15,6 @@ jvm_library(
   resources = [":findUsagesMl_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-mlapi-ml-api",
     "@lib//:commons-text",
     "//platform/indexing-api:indexing",
     "//platform/util",
@@ -35,7 +34,6 @@ jvm_library(
   associates = [":findUsagesMl"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "@lib//:jetbrains-mlapi-ml-api",
     "@lib//:commons-text",
     "//platform/indexing-api:indexing",
     "//platform/util",
