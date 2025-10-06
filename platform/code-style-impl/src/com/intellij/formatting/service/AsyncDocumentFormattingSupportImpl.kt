@@ -30,6 +30,8 @@ import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.Volatile
+import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.TimeSource
 
 @ApiStatus.Internal
 class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentFormattingService) : AsyncDocumentFormattingSupport {
@@ -197,41 +199,49 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
           task.run()
         }
       }
+      val timeout = getTimeout(service).toNanos().nanoseconds
+      val markStarted = TimeSource.Monotonic.markNow()
       try {
         withContext(NonCancellable) {
           taskStarted.await()
         }
-        val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
+        val formattedText = withTimeout(timeout) {
           result.await()
+        } ?: return@coroutineScope
+        if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+          updateDocument(formattedText)
         }
-        // If `result` was not completed by now by e.g. onTextReady, it has expired
-        if (result.complete(null)) {
-          notifyExpired()
-        }
-        else if (formattedText != null) {
-          if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-            updateDocument(formattedText)
-          }
-          else {
-            withContext(Dispatchers.EDT) {
-              CommandProcessor.getInstance().runUndoTransparentAction {
-                try {
-                  WriteAction.run<Throwable> {
-                    updateDocument(formattedText)
-                  }
+        else {
+          withContext(Dispatchers.EDT) {
+            CommandProcessor.getInstance().runUndoTransparentAction {
+              try {
+                WriteAction.run<Throwable> {
+                  updateDocument(formattedText)
                 }
-                catch (throwable: Throwable) {
-                  LOG.error(throwable)
-                }
+              }
+              catch (throwable: Throwable) {
+                LOG.error(throwable)
               }
             }
           }
         }
       }
+      catch (e: CancellationException) {
+        if (!result.isCompleted) {
+          this@FormattingRequestImpl.cancel()
+        }
+        taskJob.cancel()
+        throw e
+      }
       finally {
-        this@FormattingRequestImpl.cancel()
+        val elapsed = markStarted.elapsedNow()
+        val remainingToTimeout = timeout - elapsed
         withContext(NonCancellable) {
-          taskJob.cancelAndJoin()
+          withTimeoutOrNull(remainingToTimeout) {
+            taskJob.join()
+          } ?: run {
+            notifyExpired()
+          }
         }
       }
     }
