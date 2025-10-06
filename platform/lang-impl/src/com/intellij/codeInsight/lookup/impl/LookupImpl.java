@@ -1070,6 +1070,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return SwingUtilities.convertRectangle(list, itemBounds, getComponent());
   }
 
+  /**
+   * @return false if the lookup string must not be inserted
+   */
   private boolean fireBeforeItemSelected(@Nullable LookupElement item, char completionChar) {
     boolean result = true;
     if (!myListeners.isEmpty()) {
