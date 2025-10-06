@@ -3,19 +3,24 @@ package com.intellij.python.community.testFramework.testEnv
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
+import java.nio.file.FileSystemException
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.Result.Companion.failure
-import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
+import kotlin.io.path.readAttributes
 
 /**
  * Gradle script installs two types of python: conda and vanilla. Env could be obtained by [createSdkClosableEnv] which also provides closable
@@ -67,16 +72,44 @@ abstract class PythonType<T : Any>(private val tag: @NonNls String) {
         """.trimIndent())
       }
       val pythonPath = Path.of(pythonStr)
-      val pythonBinary = when {
-                           pythonPath.isDirectory() -> VirtualEnvReader.Instance.findPythonInPythonRoot(pythonPath)
-                           pythonPath.exists() -> pythonPath
-                           else -> null
-                         } ?: error("$PYTHON_FOR_TESTS env var points to something that is not a python: $pythonPath")
-      pythonBinary.parent
+
+      withContext(Dispatchers.IO) {
+        var pythonBinary: Path? = null
+        val err = IllegalStateException("$PYTHON_FOR_TESTS env var points to something that is not a python: $pythonPath")
+
+        try {
+          val attrs = pythonPath.readAttributes<BasicFileAttributes>()
+
+          pythonBinary = if (attrs.isDirectory) {
+            VirtualEnvReader.Instance.findPythonInPythonRoot(pythonPath)
+          }
+          else {
+            pythonPath
+          }
+        }
+        catch (err2: FileSystemException) {
+          err.initCause(err2)
+
+          // Handling a possible reparse point from WindowsApps.
+          if (SystemInfo.isWindows && err2.javaClass == FileSystemException::class.java) {
+            try {
+              if (pythonPath in pythonPath.parent!!.listDirectoryEntries()) {
+                pythonBinary = pythonPath
+              }
+            }
+            catch (err3: FileSystemException) {
+              err.addSuppressed(err3)
+            }
+          }
+        }
+
+        pythonBinary?.parent ?: throw err
+      }
     }
     else {
       null
     }
+
     if (customPythonDir != null) {
       pythons.add(customPythonDir)
     }
