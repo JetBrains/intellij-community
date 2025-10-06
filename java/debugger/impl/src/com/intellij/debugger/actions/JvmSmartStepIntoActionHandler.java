@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.util.TextRange;
@@ -67,16 +68,16 @@ public class JvmSmartStepIntoActionHandler extends XSmartStepIntoHandler<JvmSmar
 
   @Override
   public void startStepInto(@NotNull JvmSmartStepIntoVariant variant, @Nullable XSuspendContext context) {
-    mySession.stepInto(true, variant.myHandler.createMethodFilter(variant.myTarget));
+    mySession.stepInto(true, variant.myMethodFilter);
   }
 
   static class JvmSmartStepIntoVariant extends XSmartStepIntoVariant implements ForceSmartStepIntoSource {
     private final SmartStepTarget myTarget;
-    private final JvmSmartStepIntoHandler myHandler;
+    private final MethodFilter myMethodFilter;
 
     JvmSmartStepIntoVariant(SmartStepTarget target, JvmSmartStepIntoHandler handler) {
       myTarget = target;
-      myHandler = handler;
+      myMethodFilter = handler.createMethodFilter(target);
     }
 
     @Override

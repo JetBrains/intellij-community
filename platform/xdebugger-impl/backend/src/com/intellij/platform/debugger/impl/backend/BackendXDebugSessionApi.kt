@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
@@ -135,13 +136,18 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val scope = session.currentSuspendCoroutineScope ?: return emptyList()
     val handler = session.debugProcess.smartStepIntoHandler ?: return emptyList()
     val sourcePosition = session.topFramePosition ?: return emptyList()
-    return computeVariants(handler, sourcePosition).map { variant ->
-      val id = variant.storeGlobally(scope, session)
-      readAction {
-        val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
-        val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
-        XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
+    try {
+      return computeVariants(handler, sourcePosition).map { variant ->
+        val id = variant.storeGlobally(scope, session)
+        readAction {
+          val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
+          val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
+          XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
+        }
       }
+    }
+    catch (_: IndexNotReadyException) {
+      return emptyList()
     }
   }
 
