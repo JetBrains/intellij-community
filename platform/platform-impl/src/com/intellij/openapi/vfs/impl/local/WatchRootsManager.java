@@ -113,7 +113,7 @@ public final class WatchRootsManager {
         oldDataById.removeRequest(this);
       }
 
-      if (!isDataConsistent(fileId, linkPath, linkTarget, oldDataById, oldDataByPath)){
+      if (!isDataConsistent(fileId, linkPath, linkTarget, oldDataById, oldDataByPath)) {
         return;
       }
 
@@ -127,29 +127,41 @@ public final class WatchRootsManager {
     }
   }
 
+  /** @return true if symlink data is consistent, false otherwise */
   private static boolean isDataConsistent(int fileId,
                                           @NotNull String linkPath,
                                           @Nullable String linkTarget,
-                                          SymlinkData oldDataById, SymlinkData oldDataByPath) {
-    boolean dataIsConsistent = (oldDataByPath == oldDataById)
-                               && (oldDataByPath == null || FileUtil.pathsEqual(oldDataByPath.path, linkPath));
-    if (!dataIsConsistent) {
-      //TODO RC: How this could happen: seems like the main reason is case-sensitivity.
-      //         In this class we assume that local file-system case-sensitivity is constant (=SystemInfoRt.isFileSystemCaseSensitive)
-      //         but it is not always true: Windows/MacOS allows to override default case-sensitivity on per-directory
-      //         or per-partition basis. Which lead to conflicts here, since VFS treats files as different, while WatchRootsManager
-      //         as the same.
-      //         But it is not the only reason, so better improve diagnostics!
-      LOG.error("Path conflict. Existing symlink: \n" +
+                                          @Nullable SymlinkData oldDataById,
+                                          @Nullable SymlinkData oldDataByPath) {
+    //TODO RC: How inconsistency could arise:
+    //         1) seems like one of the reasons is case-sensitivity: in this class we assume that local file-system
+    //            case-sensitivity is constant (=SystemInfoRt.isFileSystemCaseSensitive) but it is not always true:
+    //            Windows/MacOS allows to override default case-sensitivity on per-directory or per-partition basis.
+    //            Which lead to conflicts here, since VFS treats files as different, while WatchRootsManager as the same.
+    //         2) another reason seems to be the move/rename operations, that currently do NOT update symlink
+    //         But these could be not all the reasons, so better improve diagnostics!
+
+    if (oldDataById != oldDataByPath) {
+      LOG.error("Symlink update is inconsistent. Existing symlink data by id: \n" +
                 oldDataById + "\n" +
-                "existing symlink by path: \n" +
+                " != existing symlink data by path: \n" +
                 oldDataByPath + "\n" +
                 "incoming symlink: \n" +
                 "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
                 "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
+      return false;
     }
-
-    return dataIsConsistent;
+    else if (oldDataByPath != null && !FileUtil.pathsEqual(oldDataByPath.path, linkPath)) {
+      LOG.error("Symlink update is inconsistent. Existing symlink data by id: \n" +
+                oldDataById + "\n" +
+                " == existing symlink data by path: \n" +
+                oldDataByPath + "\n" +
+                "but dataByPath.path != incoming linkPath. incoming symlink: \n" +
+                "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
+                "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
+      return false;
+    }
+    return true;
   }
 
   void removeSymlink(int fileId) {
