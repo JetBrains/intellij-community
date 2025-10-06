@@ -447,10 +447,7 @@ public final class ConfigImportHelper {
   }
 
   private static boolean shouldAskForConfig() {
-    return canAskForConfig() && (
-      System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null ||
-      Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY)
-    );
+    return canAskForConfig() && Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
   }
 
   private static boolean canAskForConfig() {
