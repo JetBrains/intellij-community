@@ -11,7 +11,7 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 @ApiStatus.Internal
-class InlineCompletionShortcutBelowLineElement(
+class InlineCompletionShortcutBelowLineElement @JvmOverloads constructor(
   lineNumber: Int,
   insertActionId: String,
   forcedHint: InlineCompletionShortcutHint? = null,
