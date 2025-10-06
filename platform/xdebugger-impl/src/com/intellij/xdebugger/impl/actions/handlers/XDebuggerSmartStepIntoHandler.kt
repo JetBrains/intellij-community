@@ -45,6 +45,7 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerBundle
@@ -241,16 +242,21 @@ class SmartStepData(
     myHighlighters[index].setTextAttributesKey(attributesKey)
   }
 
-  internal suspend fun stepInto(variant: VariantInfo) {
-    clear()
-    XDebugSessionApi.getInstance().smartStepInto(variant.target.id)
+  internal fun stepInto(variant: VariantInfo) {
+    UIUtil.invokeLaterIfNeeded {
+      clear()
+    }
+    session.coroutineScope.launch {
+      XDebugSessionApi.getInstance().smartStepInto(variant.target.id)
+    }
   }
 
-  internal suspend fun stepIntoCurrent() {
+  internal fun stepIntoCurrent() {
     stepInto(myCurrentVariant!!)
   }
 
   internal fun clear() {
+    EDT.assertIsEdt()
     editor.putUserData(SMART_STEP_INPLACE_DATA, null)
     editor.putUserData(SMART_STEP_HINT_DATA, null)
     val highlightManager = HighlightManager.getInstance(session.project) as HighlightManagerImpl
@@ -348,7 +354,7 @@ private class RightHandler(original: EditorActionHandler) : SmartStepEditorActio
 
 private class EscHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
   override fun myPerform(editor: Editor, caret: Caret?, dataContext: DataContext, stepData: SmartStepData) {
-    editor.putUserData(SMART_STEP_INPLACE_DATA, null)
+    editor.getUserData(SMART_STEP_INPLACE_DATA)?.clear()
     if (myOriginalHandler.isEnabled(editor, caret, dataContext)) {
       myOriginalHandler.execute(editor, caret, dataContext)
     }
@@ -358,9 +364,7 @@ private class EscHandler(original: EditorActionHandler) : SmartStepEditorActionH
 @ApiStatus.Internal
 open class XDebugSmartStepIntoEnterHandler(original: EditorActionHandler) : SmartStepEditorActionHandler(original) {
   override fun myPerform(editor: Editor, caret: Caret?, dataContext: DataContext, stepData: SmartStepData) {
-    stepData.session.coroutineScope.launch {
-      stepData.stepIntoCurrent()
-    }
+    stepData.stepIntoCurrent()
   }
 }
 
@@ -457,11 +461,9 @@ private fun inplaceChoose(
       highlightManager.addOccurrenceHighlight(editor, range.startOffset, range.endOffset,
                                               DebuggerColors.SMART_STEP_INTO_TARGET,
                                               HighlightManager.HIDE_BY_ESCAPE or HighlightManager.HIDE_BY_TEXT_CHANGE, highlighters)
-      val highlighter = highlighters[0]
+      val highlighter = highlighters.first()
       hyperlinkSupport.createHyperlink(highlighter, HyperlinkInfo {
-        session.coroutineScope.launch {
-          data.stepInto(info)
-        }
+        data.stepInto(info)
       })
       data.myHighlighters.add(highlighter)
     }
