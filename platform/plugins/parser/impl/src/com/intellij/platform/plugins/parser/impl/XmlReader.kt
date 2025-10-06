@@ -655,7 +655,7 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Scoped
 
 private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuilder, readContext: PluginDescriptorReaderContext) {
   for (i in 0 until reader.attributeCount) {
-    if (reader.getAttributeLocalName(i) == PluginXmlConst.CONTENT_MODULE_NAMESPACE_ATTR) {
+    if (reader.getAttributeLocalName(i) == PluginXmlConst.CONTENT_NAMESPACE_ATTR) {
       val namespace = readContext.interner.name(reader.getAttributeValue(i))
       if (builder.namespace == null) {
         builder.namespace = namespace
