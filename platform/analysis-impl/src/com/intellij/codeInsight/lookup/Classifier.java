@@ -4,15 +4,16 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
 /**
  * A classifier is used to sort completion items.
+ * <p>
+ * This class is not intended to be subclassed by clients. Use {@link LookupElementWeigher} instead.
+ *
+ * <p>
  * {@link #myNext} classifier has lower priority than the current classifier.
  * <p>
  * Methods in this class are not externally synchronized and may be called from several threads;
@@ -20,11 +21,11 @@ import java.util.List;
  * It's the responsibility of subclasses to synchronize properly.
  * Please don't call superclass methods like addElement under the lock.
  * <p>
- * <p>
  * Several methods of the Classifier get an instance of {@link ProcessingContext} as an argument.
  * It's storage for the contextual information used for sorting. The same context is used for all classifiers in a classifier chain.
  * You can find {@link CompletionLookupArranger#PREFIX_CHANGES} and {@link CompletionLookupArranger#WEIGHING_CONTEXT} keys in this context.
  */
+@ApiStatus.NonExtendable
 public abstract class Classifier<T> {
   protected final Classifier<T> myNext;
   private final String myName;

@@ -853,9 +853,7 @@ c:com.intellij.codeInsight.intention.impl.config.LazyEditor
 - xyToLogicalPosition(java.awt.Point):com.intellij.openapi.editor.LogicalPosition
 - xyToVisualPosition(java.awt.Point):com.intellij.openapi.editor.VisualPosition
 - xyToVisualPosition(java.awt.geom.Point2D):com.intellij.openapi.editor.VisualPosition
-a:com.intellij.codeInsight.lookup.Classifier
-- pf:myNext:com.intellij.codeInsight.lookup.Classifier
-- p:<init>(com.intellij.codeInsight.lookup.Classifier,java.lang.String):V
+Fa:com.intellij.codeInsight.lookup.Classifier
 - addElement(java.lang.Object,com.intellij.util.ProcessingContext):V
 - a:classify(java.lang.Iterable,com.intellij.util.ProcessingContext):java.lang.Iterable
 - f:getNext():com.intellij.codeInsight.lookup.Classifier
