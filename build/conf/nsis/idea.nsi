@@ -370,15 +370,35 @@ Function uninstallOldVersionDialog
 
   StrCpy $R0 0  ; HKLM
   StrCpy $R1 "Software"
+  StrCpy $R2 "${MUI_PRODUCT}"
   Call enumerateInstalledVersions
 
   StrCpy $R0 0  ; HKLM
   StrCpy $R1 "Software\Wow6432Node"
+  StrCpy $R2 "${MUI_PRODUCT}"
   Call enumerateInstalledVersions
 
   StrCpy $R0 1  ; HKCU
   StrCpy $R1 "Software"
+  StrCpy $R2 "${MUI_PRODUCT}"
   Call enumerateInstalledVersions
+
+  ${If} "${MUI_PRODUCT_ALT}" != ""
+    StrCpy $R0 0  ; HKLM
+    StrCpy $R1 "Software"
+    StrCpy $R2 "${MUI_PRODUCT_ALT}"
+    Call enumerateInstalledVersions
+
+    StrCpy $R0 0  ; HKLM
+    StrCpy $R1 "Software\Wow6432Node"
+    StrCpy $R2 "${MUI_PRODUCT_ALT}"
+    Call enumerateInstalledVersions
+
+    StrCpy $R0 1  ; HKCU
+    StrCpy $R1 "Software"
+    StrCpy $R2 "${MUI_PRODUCT_ALT}"
+    Call enumerateInstalledVersions
+  ${EndIf}
 
   !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Settings" "NumFields" "$R8"
   ${If} $R8 > $control_fields
@@ -405,24 +425,25 @@ FunctionEnd
 
 ; $R0 - root key (`0` = HKLM, `1` = HKCU)
 ; $R1 - subkey
+; $R2 - product name
 ; $R8(in,out) - a counter of fields added to the dialog
 Function enumerateInstalledVersions
-  StrCpy $R2 0
+  StrCpy $R4 0
 
   ${Do}
     ${If} $R0 = 0
-      EnumRegKey $R3 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $R2
+      EnumRegKey $R3 HKLM "$R1\${MANUFACTURER}\$R2" $R4
     ${Else}
-      EnumRegKey $R3 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $R2
+      EnumRegKey $R3 HKCU "$R1\${MANUFACTURER}\$R2" $R4
     ${EndIf}
     ${If} $R3 == ""
       ${Break}
     ${EndIf}
 
     ${If} $R0 = 0
-      ReadRegStr $R3 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$R3" ""
+      ReadRegStr $R3 HKLM "$R1\${MANUFACTURER}\$R2\$R3" ""
     ${Else}
-      ReadRegStr $R3 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$R3" ""
+      ReadRegStr $R3 HKCU "$R1\${MANUFACTURER}\$R2\$R3" ""
     ${EndIf}
     ${If} $R3 != ""
     ${AndIf} ${FileExists} "$R3\bin\${PRODUCT_EXE_FILE}"
@@ -451,7 +472,7 @@ Function enumerateInstalledVersions
       ${EndIf}
     ${EndIf}
 
-    IntOp $R2 $R2 + 1
+    IntOp $R4 $R4 + 1
   ${Loop}
 FunctionEnd
 
