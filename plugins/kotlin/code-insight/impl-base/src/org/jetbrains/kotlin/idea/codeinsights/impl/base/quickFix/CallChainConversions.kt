@@ -132,7 +132,34 @@ object CallChainConversions {
     private val KOTLIN_COLLECTIONS_SORTED_DESCENDING = FqName("kotlin.collections.sortedDescending")
     private val KOTLIN_COLLECTIONS_SUM = FqName("kotlin.collections.sum")
     private val KOTLIN_COLLECTIONS_TO_MAP = FqName("kotlin.collections.toMap")
-    
+
+    // sequences
+    private val KOTLIN_SEQUENCES_ANY = FqName("kotlin.sequences.any")
+    private val KOTLIN_SEQUENCES_COUNT = FqName("kotlin.sequences.count")
+    private val KOTLIN_SEQUENCES_FILTER = FqName("kotlin.sequences.filter")
+    private val KOTLIN_SEQUENCES_FILTER_NOT_NULL = FqName("kotlin.sequences.filterNotNull")
+    private val KOTLIN_SEQUENCES_FIRST = FqName("kotlin.sequences.first")
+    private val KOTLIN_SEQUENCES_FIRST_OR_NULL = FqName("kotlin.sequences.firstOrNull")
+    private val KOTLIN_SEQUENCES_FLATTEN = FqName("kotlin.sequences.flatten")
+    private val KOTLIN_SEQUENCES_JOIN_TO = FqName("kotlin.sequences.joinTo")
+    private val KOTLIN_SEQUENCES_JOIN_TO_STRING = FqName("kotlin.sequences.joinToString")
+    private val KOTLIN_SEQUENCES_LAST = FqName("kotlin.sequences.last")
+    private val KOTLIN_SEQUENCES_LAST_OR_NULL = FqName("kotlin.sequences.lastOrNull")
+    private val KOTLIN_SEQUENCES_MAP = FqName("kotlin.sequences.map")
+    private val KOTLIN_SEQUENCES_MAP_NOT_NULL = FqName("kotlin.sequences.mapNotNull")
+    private val KOTLIN_SEQUENCES_MAX = FqName("kotlin.sequences.max")
+    private val KOTLIN_SEQUENCES_MAX_OR_NULL = FqName("kotlin.sequences.maxOrNull")
+    private val KOTLIN_SEQUENCES_MIN = FqName("kotlin.sequences.min")
+    private val KOTLIN_SEQUENCES_MIN_OR_NULL = FqName("kotlin.sequences.minOrNull")
+    private val KOTLIN_SEQUENCES_NONE = FqName("kotlin.sequences.none")
+    private val KOTLIN_SEQUENCES_SINGLE = FqName("kotlin.sequences.single")
+    private val KOTLIN_SEQUENCES_SINGLE_OR_NULL = FqName("kotlin.sequences.singleOrNull")
+    private val KOTLIN_SEQUENCES_SORTED = FqName("kotlin.sequences.sorted")
+    private val KOTLIN_SEQUENCES_SORTED_BY = FqName("kotlin.sequences.sortedBy")
+    private val KOTLIN_SEQUENCES_SORTED_BY_DESCENDING = FqName("kotlin.sequences.sortedByDescending")
+    private val KOTLIN_SEQUENCES_SORTED_DESCENDING = FqName("kotlin.sequences.sortedDescending")
+    private val KOTLIN_SEQUENCES_SUM = FqName("kotlin.sequences.sum")
+
     // text
     private val KOTLIN_TEXT_ANY = FqName("kotlin.text.any")
     private val KOTLIN_TEXT_COUNT = FqName("kotlin.text.count")
@@ -183,6 +210,10 @@ object CallChainConversions {
     const val SUM: String = "sum"
     const val TO_MAP: String = "toMap"
 
+    /**
+     * N.B. This list should closely mirror [sequencesOperationsConversions].
+     * If you add a new conversion for collections, consider adding it for sequences if applicable.
+     */
     private val collectionsOperationsConversions: List<CallChainConversion> by lazy {
         listOf(
             CallChainConversion(KOTLIN_COLLECTIONS_FILTER, KOTLIN_COLLECTIONS_FIRST, FIRST),
@@ -263,8 +294,95 @@ object CallChainConversions {
             ),
 
             CallChainConversion(KOTLIN_COLLECTIONS_MAP, KOTLIN_COLLECTIONS_FLATTEN, FLAT_MAP),
-        ).flatMap { 
-            it.withAdditionalMinMaxConversions() 
+        ).flatMap {
+            it.withAdditionalMinMaxConversions()
+        }
+    }
+
+    /**
+     * N.B. This list should closely mirror [collectionsOperationsConversions].
+     * If you add a new conversion for sequences, consider adding it for collections if applicable.
+     */
+    private val sequencesOperationsConversions: List<CallChainConversion> by lazy {
+        listOf(
+            CallChainConversion(KOTLIN_SEQUENCES_FILTER, KOTLIN_SEQUENCES_FIRST, FIRST),
+            CallChainConversion(KOTLIN_SEQUENCES_FILTER, KOTLIN_SEQUENCES_FIRST_OR_NULL, FIRST_OR_NULL),
+            CallChainConversion(KOTLIN_SEQUENCES_FILTER, KOTLIN_SEQUENCES_LAST, LAST),
+            CallChainConversion(KOTLIN_SEQUENCES_FILTER, KOTLIN_SEQUENCES_LAST_OR_NULL, LAST_OR_NULL),
+            CallChainConversion(KOTLIN_SEQUENCES_FILTER, KOTLIN_SEQUENCES_SINGLE, SINGLE),
+            CallChainConversion(KOTLIN_SEQUENCES_FILTER, KOTLIN_SEQUENCES_SINGLE_OR_NULL, SINGLE_OR_NULL),
+            CallChainConversion(KOTLIN_SEQUENCES_FILTER, KOTLIN_SEQUENCES_COUNT, COUNT),
+            CallChainConversion(KOTLIN_SEQUENCES_FILTER, KOTLIN_SEQUENCES_ANY, ANY),
+            CallChainConversion(KOTLIN_SEQUENCES_FILTER, KOTLIN_SEQUENCES_NONE, NONE),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED, KOTLIN_SEQUENCES_FIRST_OR_NULL, MIN),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED, KOTLIN_SEQUENCES_LAST_OR_NULL, MAX),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_DESCENDING, KOTLIN_SEQUENCES_FIRST_OR_NULL, MAX),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_DESCENDING, KOTLIN_SEQUENCES_LAST_OR_NULL, MIN),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_BY, KOTLIN_SEQUENCES_FIRST_OR_NULL, MIN_BY),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_BY, KOTLIN_SEQUENCES_LAST_OR_NULL, MAX_BY),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_BY_DESCENDING, KOTLIN_SEQUENCES_FIRST_OR_NULL, MAX_BY),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_BY_DESCENDING, KOTLIN_SEQUENCES_LAST_OR_NULL, MIN_BY),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED, KOTLIN_SEQUENCES_FIRST, MIN, addNotNullAssertion = true),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED, KOTLIN_SEQUENCES_LAST, MAX, addNotNullAssertion = true),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_DESCENDING, KOTLIN_SEQUENCES_FIRST, MAX, addNotNullAssertion = true),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_DESCENDING, KOTLIN_SEQUENCES_LAST, MIN, addNotNullAssertion = true),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_BY, KOTLIN_SEQUENCES_FIRST, MIN_BY, addNotNullAssertion = true),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_BY, KOTLIN_SEQUENCES_LAST, MAX_BY, addNotNullAssertion = true),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_BY_DESCENDING, KOTLIN_SEQUENCES_FIRST, MAX_BY, addNotNullAssertion = true),
+            CallChainConversion(KOTLIN_SEQUENCES_SORTED_BY_DESCENDING, KOTLIN_SEQUENCES_LAST, MIN_BY, addNotNullAssertion = true),
+
+            CallChainConversion(KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_JOIN_TO, JOIN_TO, enableSuspendFunctionCall = false),
+            CallChainConversion(KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_JOIN_TO_STRING, JOIN_TO_STRING, enableSuspendFunctionCall = false),
+            CallChainConversion(KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_FILTER_NOT_NULL, MAP_NOT_NULL),
+            CallChainConversion(KOTLIN_SEQUENCES_MAP, KOTLIN_COLLECTIONS_TO_MAP, ASSOCIATE),
+            CallChainConversion(KOTLIN_SEQUENCES_MAP, KOTLIN_COLLECTIONS_TO_MAP, ASSOCIATE_TO),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_SUM, SUM_OF, replaceableApiVersion = ApiVersion.KOTLIN_1_4
+            ),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_MAX, MAX_OF,
+                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
+            ),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_MAX, MAX_OF_OR_NULL,
+                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+            ),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_MAX_OR_NULL, MAX_OF,
+                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
+            ),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_MAX_OR_NULL, MAX_OF_OR_NULL,
+                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+            ),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_MIN, MIN_OF,
+                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
+            ),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_MIN, MIN_OF_OR_NULL,
+                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+            ),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_MIN_OR_NULL, MIN_OF,
+                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
+            ),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_MIN_OR_NULL, MIN_OF_OR_NULL,
+                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+            ),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP_NOT_NULL, KOTLIN_SEQUENCES_FIRST, FIRST_NOT_NULL_OF,
+                replaceableApiVersion = ApiVersion.KOTLIN_1_5
+            ),
+            CallChainConversion(
+                KOTLIN_SEQUENCES_MAP_NOT_NULL, KOTLIN_SEQUENCES_FIRST_OR_NULL, FIRST_NOT_NULL_OF_OR_NULL,
+                replaceableApiVersion = ApiVersion.KOTLIN_1_5
+            ),
+
+            CallChainConversion(KOTLIN_SEQUENCES_MAP, KOTLIN_SEQUENCES_FLATTEN, FLAT_MAP),
+        ).flatMap {
+            it.withAdditionalMinMaxConversions()
         }
     }
 
@@ -293,6 +411,7 @@ object CallChainConversions {
     val conversionsList: List<CallChainConversion> by lazy {
         listOf(
             collectionsOperationsConversions,
+            sequencesOperationsConversions,
             collectionCreationConversions,
             textOperationsConversions,
         ).flatten()
