@@ -97,6 +97,7 @@ jvm_library(
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",
     "//java/java-runtime:rt",
+    "//plugins/kotlin/kotlin.searching:searching-k2",
   ]
 )
 ### auto-generated section `build kotlin.fir.tests` end

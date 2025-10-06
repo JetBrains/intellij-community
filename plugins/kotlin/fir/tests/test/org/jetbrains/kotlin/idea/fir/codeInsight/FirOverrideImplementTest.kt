@@ -2,11 +2,17 @@
 
 package org.jetbrains.kotlin.idea.fir.codeInsight
 
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementTest
+import org.jetbrains.kotlin.idea.core.overrideImplement.AbstractGenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
+import org.jetbrains.kotlin.idea.refactoring.isAbstract
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -17,12 +23,46 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
     override val pluginMode: KotlinPluginMode
         get() = KotlinPluginMode.K2
 
+    override fun collectAndCheckChooserObjectsByClasses(
+        fileNameWithoutExtension: String,
+        handler: AbstractGenerateMembersHandler<KtClassMember>,
+        classOrObject: KtClassOrObject
+    ): Map<KtClassOrObject, Collection<KtClassMember>> {
+        val inheritor = if (classOrObject is KtClass && classOrObject.isAbstract()) {
+            allowAnalysisFromWriteActionInEdt(classOrObject) {
+                DirectKotlinClassInheritorsSearch.search(classOrObject).firstOrNull() as? KtClass
+            }
+        } else {
+            null
+        }
+
+        val klass = inheritor ?: classOrObject
+
+        return mapOf(klass to collectAndCheckChooserObjects(fileNameWithoutExtension, handler, klass))
+    }
+
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
             { super.tearDown() },
         )
     }
+
+    // K2 only tests
+
+    fun testImplementFromInterface() {
+        doImplementDirectoryTest(memberToOverride = "foo")
+    }
+
+    fun testContextParameters() {
+        doImplementFileTest()
+    }
+
+    fun testImplementContextFunction() {
+        doImplementFileTest()
+    }
+
+    // Shared with K1
 
     override fun testNoCallToAbstractSuper() {
         super.testNoCallToAbstractSuper()
@@ -40,10 +80,6 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testEmptyClassBodyFunctionMethod()
     }
 
-    fun testContextParameters() {
-         doImplementFileTest()
-    }
-
     override fun testFunctionMethod() {
         super.testFunctionMethod()
     }
@@ -58,10 +94,6 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testGenericTypesSeveralMethods() {
         super.testGenericTypesSeveralMethods()
-    }
-
-    fun testImplementContextFunction() {
-        doImplementFileTest()
     }
 
     override fun testSuspendOverride() {

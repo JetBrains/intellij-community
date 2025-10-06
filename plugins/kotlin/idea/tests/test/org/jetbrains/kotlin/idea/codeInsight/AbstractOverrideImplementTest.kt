@@ -6,6 +6,7 @@ import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.generation.PsiMethodMember
 import com.intellij.grazie.utils.toLinkedSet
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiMethod
@@ -102,12 +103,14 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
     }
 
     private fun doDirectoryTest(handler: AbstractGenerateMembersHandler<T>, memberToOverride: String? = null) {
-        myFixture.copyDirectoryToProject(getTestName(true), "")
+        val testName = getTestName(true)
+        myFixture.copyDirectoryToProject(testName, "")
         myFixture.configureFromTempProjectFile("foo/Impl.kt")
 
-        val filePathWithoutExtension = getTestName(true) + "/foo/Impl"
+        val filePathWithoutExtension = "$testName/foo/Impl"
         doOverrideImplement(handler, memberToOverride, filePathWithoutExtension)
-        checkResultByFile(getTestName(true) + "/foo/Impl")
+        val editorFileName = FileEditorManager.getInstance(project).currentFile?.nameWithoutExtension ?: "Impl"
+        checkResultByFile("$testName/foo/$editorFileName")
     }
 
     private fun doMultiDirectoryTest(handler: AbstractGenerateMembersHandler<T>) {
@@ -128,19 +131,21 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         val classOrObject = PsiTreeUtil.getParentOfType(elementAtCaret, KtClassOrObject::class.java)
             ?: error("Caret should be inside class or object")
 
-        val chooserObjects = collectAndCheckChooserObjects(fileNameWithoutExtension, handler, classOrObject)
+        val chooserObjects = collectAndCheckChooserObjectsByClasses(fileNameWithoutExtension, handler, classOrObject)
 
-        val singleToOverride = if (memberToOverride == null) {
-            val filtered = chooserObjects.filter { !isMemberOfAny(classOrObject, it) }
-            assertEquals(1, filtered.size, "Invalid number of available chooserObjects for override")
-            filtered.single()
-        } else {
-            chooserObjects.single { chooserObject ->
-                getMemberName(classOrObject, chooserObject) == memberToOverride
+        chooserObjects.forEach { (ktClassOrObject, objects) ->
+            val singleToOverride = if (memberToOverride == null) {
+                val filtered = objects.filter { !isMemberOfAny(ktClassOrObject, it) }
+                assertEquals(1, filtered.size, "Invalid number of available chooserObjects for override")
+                filtered.single()
+            } else {
+                objects.single { chooserObject ->
+                    getMemberName(ktClassOrObject, chooserObject) == memberToOverride
+                }
             }
-        }
 
-        performGenerateCommand(handler, classOrObject, listOf(singleToOverride))
+            performGenerateCommand(handler, ktClassOrObject, listOf(singleToOverride))
+        }
     }
 
     private fun doMultiOverrideImplement(handler: AbstractGenerateMembersHandler<T>, fileNameWithoutExtension: String) {
@@ -154,6 +159,14 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         val chooserObjects = collectAndCheckChooserObjects(fileNameWithoutExtension, handler, classOrObject)
             .sortedBy { getMemberName(classOrObject, it) + " in " + getContainingClassName(classOrObject, it) }
         performGenerateCommand(handler, classOrObject, chooserObjects)
+    }
+
+    protected open fun collectAndCheckChooserObjectsByClasses(
+        fileNameWithoutExtension: String,
+        handler: AbstractGenerateMembersHandler<T>,
+        classOrObject: KtClassOrObject
+    ): Map<KtClassOrObject, Collection<T>> {
+        return mapOf(classOrObject to collectAndCheckChooserObjects(fileNameWithoutExtension, handler, classOrObject))
     }
 
     private fun generateImplementation(method: PsiMethod) {
@@ -214,6 +227,10 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         }
         Assert.assertTrue(resultFile.exists())
         val errorLines = myFixture.dumpErrorLines()
+        val currentFile = FileEditorManager.getInstance(project).currentFile!!
+        if (myFixture.file.virtualFile != currentFile) {
+            myFixture.openFileInEditor(currentFile)
+        }
         val file = myFixture.file as KtFile
         val fileLines = file.text.lines()
         val newTextContent = if (firIdenticalIsPresent) {
@@ -230,7 +247,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
 
         try {
             myFixture.checkResultByFile(resultFile.relativeTo(File(myFixture.testDataPath)).path)
-        } catch (error: AssertionError) {
+        } catch (_: AssertionError) {
             KotlinTestUtils.assertEqualsToFile(resultFile, myFixture.editor.document.text)
         }
 
@@ -244,7 +261,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         }
     }
 
-    private fun collectAndCheckChooserObjects(
+    protected fun collectAndCheckChooserObjects(
         fileNameWithoutExtension: String,
         handler: AbstractGenerateMembersHandler<T>,
         classOrObject: KtClassOrObject,
