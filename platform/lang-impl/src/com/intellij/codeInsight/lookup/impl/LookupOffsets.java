@@ -24,10 +24,10 @@ public final class LookupOffsets implements DocumentListener {
   private @Nullable Supplier<String> myStartMarkerDisposeInfo = null;
   private @NotNull RangeMarker myLookupStartMarker;
   private int myRemovedPrefix;
-  private RangeMarker myLookupOriginalStartMarker;
-  private final Editor myEditor;
+  private @NotNull RangeMarker myLookupOriginalStartMarker;
+  private final @NotNull Editor myEditor;
 
-  public LookupOffsets(Editor editor) {
+  public LookupOffsets(@NotNull Editor editor) {
     myEditor = editor;
     int caret = getPivotOffset();
     myLookupOriginalStartMarker = createLeftGreedyMarker(caret);
@@ -62,7 +62,7 @@ public final class LookupOffsets implements DocumentListener {
     }
   }
 
-  private RangeMarker createLeftGreedyMarker(int start) {
+  private @NotNull RangeMarker createLeftGreedyMarker(int start) {
     RangeMarker marker = myEditor.getDocument().createRangeMarker(start, start);
     marker.setGreedyToLeft(true);
     return marker;
@@ -105,7 +105,7 @@ public final class LookupOffsets implements DocumentListener {
     myStableStart = false;
   }
 
-  void checkMinPrefixLengthChanges(Collection<? extends LookupElement> items, LookupImpl lookup) {
+  void checkMinPrefixLengthChanges(@NotNull Collection<? extends LookupElement> items, @NotNull LookupImpl lookup) {
     if (myStableStart) return;
     if (!lookup.isCalculating() && !items.isEmpty()) {
       myStableStart = true;
@@ -151,7 +151,7 @@ public final class LookupOffsets implements DocumentListener {
     return myLookupOriginalStartMarker.isValid() ? myLookupOriginalStartMarker.getStartOffset() : -1;
   }
 
-  boolean performGuardedChange(Runnable change) {
+  boolean performGuardedChange(@NotNull Runnable change) {
     if (!myLookupStartMarker.isValid()) {
       throw new AssertionError("Invalid start: " + myEditor + ", trace=" + (myStartMarkerDisposeInfo == null ? null : myStartMarkerDisposeInfo
         .get()));
