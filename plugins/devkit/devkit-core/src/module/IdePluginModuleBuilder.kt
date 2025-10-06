@@ -35,7 +35,6 @@ internal val DEVKIT_NEWLY_GENERATED_PROJECT: Key<Boolean> = Key.create("devkit.n
 
 internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
-  @Suppress("PrivatePropertyName")
   private val PLUGIN_TYPE_KEY: Key<PluginType> = Key.create("ide.plugin.type")
 
   override fun getBuilderId(): String = "idea-plugin"
@@ -124,6 +123,8 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
       assets.add(GeneratorTemplateFile("settings.gradle.kts", ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.SETTINGS_GRADLE_KTS)))
       assets.add(GeneratorTemplateFile(standardAssetsProvider.gradleWrapperPropertiesLocation,
                                        ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.GRADLE_WRAPPER_PROPERTIES)))
+
+      assets.add(GeneratorResourceFile("README.md", javaClass.getResource("/assets/devkit-README.md")!!))
 
       assets.addAll(standardAssetsProvider.getGradlewAssets())
       if (starterContext.isCreatingNewProject) {
