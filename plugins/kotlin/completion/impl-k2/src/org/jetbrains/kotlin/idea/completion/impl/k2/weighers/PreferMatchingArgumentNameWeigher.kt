@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -33,7 +34,7 @@ internal object PreferMatchingArgumentNameWeigher {
     }
 
     private const val WEIGHT_MATCHING_NAME = 0.0f
-    private const val WEIGHT_MATCHING_ALL_PARTS = 0.01f
+    private const val WEIGHT_MATCHING_ALL_WORDS = 0.01f
     private const val WEIGHT_UNRELATED = 1.0f
 
     // Lower number means matching more
@@ -43,15 +44,18 @@ internal object PreferMatchingArgumentNameWeigher {
         val parameterNameParts = NameUtil.nameToWordsLowerCase(parameterName)
         val variableNameParts = NameUtil.nameToWordsLowerCase(variableName)
 
-        fun isNonNumber(word: String) = !word[0].isDigit()
-        val matchedWords =  parameterNameParts.intersect(variableNameParts).filter { it.isNotBlank() && isNonNumber(it) }
+        val matchedWords = parameterNameParts.intersect(variableNameParts).filter { !StringUtil.isNumeric(it) }
         if (matchedWords.isEmpty()) return WEIGHT_UNRELATED
 
-        val matchingPercentage = matchedWords.size.toFloat() / parameterNameParts.size.toFloat()
-        val weight = 1f - matchingPercentage
+        val matchingProportion = matchedWords.size.toFloat() / parameterNameParts.size.toFloat()
 
-        if (weight <= WEIGHT_MATCHING_NAME) return WEIGHT_MATCHING_ALL_PARTS
-        return weight
+        // This happens when a variable contains all names of the parameter but in a different order.
+        // Example: someLongWord for someWordLong.
+        // In these cases, the match is not as good as an exact match, so we need to slightly deprioritize.
+        if (matchingProportion >= 1) return WEIGHT_MATCHING_ALL_WORDS
+
+        // Since ordering is lower numbers first, we need to do subtract our proportion from 1
+        return 1f - matchingProportion
     }
 
     context(_: KaSession, scopeContext: K2CompletionSectionContext<*>)
