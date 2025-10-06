@@ -29,7 +29,6 @@ public interface PluginDescriptor {
    *
    * @see com.intellij.ide.plugins.PluginManagerCore#isUpdatedBundledPlugin
    */
-  @SuppressWarnings("JavadocReference")
   default boolean isBundled() {
     return false;
   }
@@ -108,7 +107,6 @@ public interface PluginDescriptor {
    * Instead, use {@link com.intellij.ide.plugins.PluginManagerCore#isLoaded(PluginId)},
    * {@link com.intellij.ide.plugins.PluginManagerCore#isDisabled(PluginId)}.
    */
-  @SuppressWarnings("JavadocReference")
   @Deprecated
   boolean isEnabled();
 
