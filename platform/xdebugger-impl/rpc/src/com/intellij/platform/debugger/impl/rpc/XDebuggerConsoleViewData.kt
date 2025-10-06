@@ -8,6 +8,7 @@ import com.intellij.ide.rpc.AnActionId
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.project.ProjectId
 import com.intellij.xdebugger.XDebugProcess
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
@@ -30,9 +31,9 @@ data class RemoteXDebuggerConsoleViewData(
 )
 
 @ApiStatus.Internal
-suspend fun ConsoleView.toRpc(contentDescriptor: RunContentDescriptor, debugProcess: XDebugProcess?): XDebuggerConsoleViewData {
+suspend fun ConsoleView.toRpc(lifetimeScope: CoroutineScope, debugProcess: XDebugProcess?): XDebuggerConsoleViewData {
   val remoteData = XDebuggerConsoleViewConverter.EP_NAME.extensionList.firstNotNullOfOrNull {
-    it.convert(this, contentDescriptor, debugProcess)
+    it.convert(this, lifetimeScope, debugProcess)
   }
   return XDebuggerConsoleViewData(remoteData, this)
 }
@@ -65,7 +66,7 @@ interface XDebuggerConsoleViewConverter {
     internal val EP_NAME = ExtensionPointName.create<XDebuggerConsoleViewConverter>("com.intellij.xdebugger.consoleViewDataConverter")
   }
 
-  suspend fun convert(consoleView: ConsoleView, contentDescriptor: RunContentDescriptor, debugProcess: XDebugProcess?): RemoteXDebuggerConsoleViewData?
+  suspend fun convert(consoleView: ConsoleView, lifetimeScope: CoroutineScope, debugProcess: XDebugProcess?): RemoteXDebuggerConsoleViewData?
 
   suspend fun convert(remoteData: RemoteXDebuggerConsoleViewData, processHandler: ProcessHandler): ConsoleView?
 }
