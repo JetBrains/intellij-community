@@ -22,7 +22,7 @@ public final class CompletionSorterImpl extends CompletionSorter {
   }
 
   public static @NotNull ClassifierFactory<LookupElement> weighingFactory(@NotNull LookupElementWeigher weigher) {
-    final String id = weigher.toString();
+    String id = weigher.toString();
     return new ClassifierFactory<>(id) {
       @Override
       public @NotNull Classifier<LookupElement> createClassifier(@NotNull Classifier<LookupElement> next) {
@@ -66,7 +66,7 @@ public final class CompletionSorterImpl extends CompletionSorter {
   public @NotNull CompletionSorterImpl withClassifier(@NotNull String anchorId,
                                                       boolean beforeAnchor,
                                                       @NotNull ClassifierFactory<LookupElement> classifierFactory) {
-    final int i = idIndex(anchorId);
+    int i = idIndex(anchorId);
     return enhanced(classifierFactory, beforeAnchor ? Math.max(0, i) : i + 1);
   }
 
@@ -78,12 +78,12 @@ public final class CompletionSorterImpl extends CompletionSorter {
    * @return a copy of sorter with classifierFactory added to the specified index
    */
   private @NotNull CompletionSorterImpl enhanced(@NotNull ClassifierFactory<LookupElement> classifierFactory, int index) {
-    final List<ClassifierFactory<LookupElement>> copy = new ArrayList<>(myMembers);
+    List<ClassifierFactory<LookupElement>> copy = new ArrayList<>(myMembers);
     copy.add(index, classifierFactory);
     return new CompletionSorterImpl(copy);
   }
 
-  private int idIndex(final String id) {
+  private int idIndex(String id) {
     return ContainerUtil.indexOf(myMembers, factory -> id.equals(factory.getId()));
   }
 
