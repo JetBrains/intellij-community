@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-dependencies" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.3.0-dev-9317">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.3.0-dev-9992">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.0-dev-9317/kotlin-scripting-dependencies-2.3.0-dev-9317.jar">
-          <sha256sum>c08503b1ef93a927ed1a5c41b2fdf07db92edf979659e45876a8d30f6a9f04f6</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.0-dev-9992/kotlin-scripting-dependencies-2.3.0-dev-9992.jar">
+          <sha256sum>f5ef2b617341930b3e66e9652ebce7fd5e13569c75fdd55b08078974ff9ef1c1</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.0-dev-9317/kotlin-scripting-dependencies-2.3.0-dev-9317.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.0-dev-9992/kotlin-scripting-dependencies-2.3.0-dev-9992.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.0-dev-9317/kotlin-scripting-dependencies-2.3.0-dev-9317-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.3.0-dev-9992/kotlin-scripting-dependencies-2.3.0-dev-9992-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
