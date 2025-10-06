@@ -12,8 +12,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT;
 
 public final class JUnitUtil {
   public static final String TEST_CASE_CLASS = "junit.framework.TestCase";
@@ -362,8 +365,20 @@ public final class JUnitUtil {
     return isJUnit5(element.getResolveScope(), element.getProject());
   }
 
-  public static boolean isJUnit5(GlobalSearchScope scope, Project project) {
+  public static boolean isJUnit5(@NotNull GlobalSearchScope scope, @NotNull Project project) {
     return hasPackageWithDirectories(JavaPsiFacade.getInstance(project), TEST5_PACKAGE_FQN, scope);
+  }
+
+  public static boolean isJUnit6(@NotNull GlobalSearchScope scope, @NotNull Project project) {
+    return ReadAction.nonBlocking(() -> {
+      DumbService dumbService = DumbService.getInstance(project);
+      ThrowableComputable<Boolean, RuntimeException> computable =
+        () -> JavaPsiFacade.getInstance(project).findClass(ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT, scope) != null;
+
+      return dumbService.isAlternativeResolveEnabled()
+             ? computable.compute()
+             : dumbService.computeWithAlternativeResolveEnabled(computable);
+    }).executeSynchronously();
   }
 
   public static boolean hasPackageWithDirectories(JavaPsiFacade facade, String packageQName, GlobalSearchScope globalSearchScope) {
