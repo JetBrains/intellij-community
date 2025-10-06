@@ -11,6 +11,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
@@ -251,18 +252,14 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     if (!document.documentVersionMatches(project, documentPatchVersion)) return null
     val lineToVariants = InlineBreakpointsVariantsManager.getInstance(project).calculateBreakpointsVariants(document, lines)
     return lineToVariants.map { (line, variants) ->
-      InlineBreakpointVariantsOnLine(line, variants.map { it.toRpc() })
+      InlineBreakpointVariantsOnLine(line, variants.map { it.toRpc(project, document) })
     }
   }
 
-  override suspend fun createVariantBreakpoint(projectId: ProjectId, fileId: VirtualFileId, line: Int, variantIndex: Int) {
+  override suspend fun createVariantBreakpoint(projectId: ProjectId, fileId: VirtualFileId, line: Int, variantId: XInlineBreakpointVariantId) {
     val project = projectId.findProject()
     val file = fileId.virtualFile() ?: return
-    val document = readAction { file.findDocument() } ?: return
-    // TODO avoid collecting variants again
-    val variants = InlineBreakpointsVariantsManager.getInstance(project).calculateBreakpointsVariants(document, setOf(line))
-      .getOrDefault(line, emptyList())
-    val variant = variants.getOrNull(variantIndex)?.variant ?: return
+    val variant = variantId.findValue() ?: return
     edtWriteAction {
       val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
       XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, file, line)
@@ -347,15 +344,16 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
 @Service(Service.Level.PROJECT)
 private class BackendXBreakpointTypeApiProjectCoroutineScope(val cs: CoroutineScope)
 
-private suspend fun InlineVariantWithMatchingBreakpoint.toRpc(): InlineBreakpointVariantWithMatchingBreakpointDto {
+private suspend fun InlineVariantWithMatchingBreakpoint.toRpc(project: Project, document: Document): InlineBreakpointVariantWithMatchingBreakpointDto {
   return InlineBreakpointVariantWithMatchingBreakpointDto(
-    variant = variant?.toRpc(),
+    variant = variant?.toRpc(project, document),
     breakpointId = breakpoint?.breakpointId,
   )
 }
 
-private suspend fun XLineBreakpointType<*>.XLineBreakpointVariant.toRpc(): XInlineBreakpointVariantDto {
+private suspend fun XLineBreakpointType<*>.XLineBreakpointVariant.toRpc(project: Project, document: Document): XInlineBreakpointVariantDto {
   return XInlineBreakpointVariantDto(
+    InlineBreakpointsIdManager.getInstance(project).createId(this, document),
     highlightRange = readAction { highlightRange?.toRpc() },
     icon = type.enabledIcon.rpcId(),
     tooltipDescription = tooltipDescription,

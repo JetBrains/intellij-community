@@ -140,10 +140,10 @@ internal class FrontendInlineBreakpointsCache(
       XBreakpointTypeApi.getInstance().computeInlineBreakpointVariants(project.projectId(), file.rpcId(), lines, version)
     }
     return variantsOnLines.associate { (line, variants) ->
-      line to variants.mapIndexed { index, dto ->
+      line to variants.map { dto ->
         val (variantDto, breakpointId) = dto
         val breakpoint = breakpointId?.let { breakpointsManager.getBreakpointById(it) } as? XLineBreakpointProxy
-        val variant = variantDto?.let { FrontendXLineBreakpointInlineVariantProxy(it, cs, index, this) }
+        val variant = variantDto?.let { FrontendXLineBreakpointInlineVariantProxy(it, cs, this) }
         InlineVariantWithMatchingBreakpointProxy(variant, breakpoint?.asInlineLightBreakpoint())
       }
     }
@@ -203,7 +203,6 @@ private fun InlineVariantWithMatchingBreakpointProxy.isBreakpointDisposed(): Boo
 private class FrontendXLineBreakpointInlineVariantProxy(
   private val variant: XInlineBreakpointVariantDto,
   private val cs: CoroutineScope,
-  private val index: Int,
   private val cache: FrontendInlineBreakpointsCache,
 ) : XLineBreakpointInlineVariantProxy {
   override val highlightRange: TextRange?
@@ -219,7 +218,7 @@ private class FrontendXLineBreakpointInlineVariantProxy(
       try {
         cache.replaceVariantWithBreakpoint(this@FrontendXLineBreakpointInlineVariantProxy, document, line, lightBreakpoint)
         InlineBreakpointInlayManager.getInstance(project).redrawLine(document, line)
-        XBreakpointTypeApi.getInstance().createVariantBreakpoint(project.projectId(), file.rpcId(), line, index)
+        XBreakpointTypeApi.getInstance().createVariantBreakpoint(project.projectId(), file.rpcId(), line, variant.id)
       }
       finally {
         lightBreakpoint.unlockedBeforeRequestId = cache.incrementRequestId()
