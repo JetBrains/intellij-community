@@ -22,6 +22,9 @@ private const val RECEIPT_FILE_NAME: String = "receipt.json"
  * or from any other sites that create projects with a necessary receipt.json format).
  * Fields are validated as strings to allow adding values from the FUS server.
  *
+ * When creating new campaigns, a single framework name should be associated with the campaign name. This correspondence is kept
+ * in some excel file, knowledge keeper Leonid Stashevsky.
+ *
  * The receipt.json file will be deleted once it has been read.
  */
 internal class KotlinProjectOpenerCollector : ProjectUsagesCollector() {
