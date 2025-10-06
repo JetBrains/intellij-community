@@ -52,7 +52,7 @@ public class OrderRootType {
    * {@link #EP_NAME} and are combined with this list in {@link #getAllPersistentTypesList()}.
    */
   private static final @NotNull @Unmodifiable List<PersistentOrderRootType> PREDEFINED_PERSISTENT_TYPES =
-    ContainerUtil.map(List.of(CLASSES, SOURCES), PersistentOrderRootType.class::cast);
+    List.of((PersistentOrderRootType)CLASSES, (PersistentOrderRootType)SOURCES);
 
   /**
    * Generic documentation order root type
