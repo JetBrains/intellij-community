@@ -178,7 +178,7 @@ open class ModuleBridgeImpl(
 
     internal suspend fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>, project: Project) {
       val facetManagerFactory = project.serviceAsync<FacetManagerFactory>() as FacetManagerFactoryImpl
-      span("init facets in EDT", Dispatchers.UiWithModelAccess) {
+      span("init facets in EDT", Dispatchers.EDT) {
         facetsInitializationTimeMs.addMeasuredTime {
           doInitFacetsInEdt(modules, facetManagerFactory)
         }

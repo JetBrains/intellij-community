@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.menu
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -111,7 +111,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     coroutineScope.launch {
       initJob.join()
 
-      withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         updateRequests.throttle(500).collectLatest { forceRebuild ->
           runCatching {
             if (canUpdate()) {
