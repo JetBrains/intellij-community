@@ -26,7 +26,7 @@ open class LinuxDistributionCustomizer {
    * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of hardcoding into a script).
    * It's now recommended to use the new launcher, so it must always be built. Setting this property to `false` will have no effect.
    */
-  var useXPlatLauncher = true
+  var useXPlatLauncher: Boolean = true
 
   /**
    * Relative paths to files in Linux distribution which should take 'executable' permissions
@@ -41,28 +41,28 @@ open class LinuxDistributionCustomizer {
       "bin/restarter",
       "bin/${context.productProperties.baseFileName}",
     )
+
     val rtPatterns = if (includeRuntime) {
-      val distribution = if (targetLibcImpl == LinuxLibcImpl.MUSL) {
-        JetBrainsRuntimeDistribution.LIGHTWEIGHT
-      } else {
-        context.productProperties.runtimeDistribution
-      }
+      val distribution =
+        if (targetLibcImpl == LinuxLibcImpl.MUSL) JetBrainsRuntimeDistribution.LIGHTWEIGHT
+        else context.productProperties.runtimeDistribution
       context.bundledRuntime.executableFilesPatterns(OsFamily.LINUX, distribution)
     }
     else {
       emptySequence()
     }
 
-    return basePatterns + rtPatterns +
+    return basePatterns +
+           rtPatterns +
            RepairUtilityBuilder.executableFilesPatterns(context) +
            extraExecutables +
            context.getExtraExecutablePattern(OsFamily.LINUX)
   }
 
   /**
-   * If `true`, a separate *[org.jetbrains.intellij.build.impl.LinuxDistributionBuilder.NO_RUNTIME_SUFFIX].tar.gz artifact without a runtime will be produced.
+   * If `true`, a separate `*${LinuxDistributionBuilder.NO_RUNTIME_SUFFIX}.tar.gz` artifact without a runtime will be produced.
    */
-  var buildArtifactWithoutRuntime = false
+  var buildArtifactWithoutRuntime: Boolean = false
 
   /**
    * Set both properties if a .snap package should be produced.
@@ -82,6 +82,6 @@ open class LinuxDistributionCustomizer {
    * Override this method to copy additional files to the Linux distribution of the product.
    */
   open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
-    RepairUtilityBuilder.bundle(context = context, os = OsFamily.LINUX, arch = arch, distributionDir = targetDir)
+    RepairUtilityBuilder.bundle(context, OsFamily.LINUX, arch, targetDir)
   }
 }

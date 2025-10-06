@@ -13,16 +13,11 @@ import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import java.nio.file.Path
 
 internal suspend fun createCommunityBuildContext(
-  options: BuildOptions = BuildOptions(),
+  options: BuildOptions,
   projectHome: Path = COMMUNITY_ROOT.communityRoot,
-): BuildContext {
-  return BuildContextImpl.createContext(
-    projectHome = projectHome,
-    productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
-    setupTracer = true,
-    options = options,
-  )
-}
+): BuildContext = BuildContextImpl.createContext(
+  projectHome, IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot), setupTracer = true, options = options
+)
 
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIdeaProperties() {
   companion object {
@@ -151,9 +146,8 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
 
     override fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String = "IntelliJ IDEA Community Edition"
 
-    override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String {
-      return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
-    }
+    override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String =
+      "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
   }
 
   protected open inner class CommunityLinuxDistributionCustomizer : LinuxDistributionCustomizer() {
@@ -173,11 +167,10 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       includeRuntime: Boolean,
       arch: JvmArchitecture,
       targetLibcImpl: LibcImpl,
-    ): Sequence<String> {
-      return super.generateExecutableFilesPatterns(context, includeRuntime, arch, targetLibcImpl)
+    ): Sequence<String> =
+      super.generateExecutableFilesPatterns(context, includeRuntime, arch, targetLibcImpl)
         .plus(KotlinBinaries.kotlinCompilerExecutables)
         .filterNot { it == "plugins/**/*.sh" }
-    }
   }
 
   protected open inner class CommunityMacDistributionCustomizer : MacDistributionCustomizer() {
@@ -191,25 +184,18 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       dmgImagePath = "${communityHomeDir}/build/conf/ideaCE/mac/images/dmg_background.tiff"
     }
 
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-      if (appInfo.isEAP) {
-        return "IntelliJ IDEA ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} CE EAP.app"
-      }
-      else {
-        return "IntelliJ IDEA CE.app"
-      }
-    }
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String =
+      if (appInfo.isEAP) "IntelliJ IDEA ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} CE EAP.app"
+      else "IntelliJ IDEA CE.app"
 
-    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
-      return super.generateExecutableFilesPatterns(context, includeRuntime, arch)
+    override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> =
+      super.generateExecutableFilesPatterns(context, includeRuntime, arch)
         .plus(KotlinBinaries.kotlinCompilerExecutables)
         .filterNot { it == "plugins/**/*.sh" }
-    }
   }
 
-  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-    return "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
-  }
+  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
+    "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
   override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "ideaIC-$buildNumber"
 

@@ -61,7 +61,7 @@ internal class ApplicationInfoPropertiesImpl(
     get() = if (edition == null) fullProductName else "$fullProductName $edition"
 
   init {
-    val root = readXmlAsModel(findApplicationInfoInSources(project = project, productProperties = productProperties))
+    val root = readXmlAsModel(findApplicationInfoInSources(project, productProperties))
     @Suppress("DEPRECATION")
     val applicationInfoOverrides = productProperties.applicationInfoOverride(project)
     val versionTag = root.getChild("version")!!

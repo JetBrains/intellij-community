@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.ApplicationInfoProperties
@@ -25,7 +25,6 @@ open class PyCharmMacDistributionCustomizer(projectHome: Path) : MacDistribution
     PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-mac*.zip")
   }
 
-  override fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> {
-    return mapOf("ide.mac.useNativeClipboard" to "false")
-  }
+  override fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> =
+    mapOf("ide.mac.useNativeClipboard" to "false")
 }
