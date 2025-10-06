@@ -348,9 +348,6 @@ fun ModalityState.asContextElement(): CoroutineContext = asContextElement()
  *
  * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
  *
- * This dispatcher does **not** have ordering guarantees for scheduled coroutines.
- * If the scheduling of coroutine `A` happens-before scheduling of coroutine `B`, then `A` could be executed after `B`.
- *
  * Prefer [Dispatchers.UI] for computations on EDT.
  */
 @Suppress("UnusedReceiverParameter")
@@ -374,9 +371,6 @@ fun Dispatchers.ui(kind: UiDispatcherKind = UiDispatcherKind.STRICT, immediate: 
  * The computations scheduled by this dispatcher are **not** protected by any lock, and it is forbidden to initiate Read or Write actions.
  *
  * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.nonModal] modality state.
- *
- * This dispatcher has ordering guarantees for scheduled coroutines.
- * If the scheduling of coroutine `A` happens-before scheduling of coroutine `B`, then `A` will be executed before `B`.
  *
  * Use [Dispatchers.UI] when in doubt, use [Dispatchers.Main] if the coroutine doesn't care about IntelliJ Platform model (PSI, VFS, etc.),
  * e.g., when it can be executed outside of IJ process.
