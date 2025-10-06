@@ -1,12 +1,15 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.toLanguage
 import com.intellij.grazie.ide.ui.components.utils.html
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.grazie.utils.getAssociatedGrazieRule
+import com.intellij.grazie.utils.isEnabledInState
 import kotlinx.html.*
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.Categories
@@ -16,11 +19,16 @@ import java.net.URL
 import java.util.*
 
 // ltRule used in ReSharper
-class LanguageToolRule(
+class LanguageToolRule @JvmOverloads constructor(
   private val lang: Lang, val ltRule: org.languagetool.rules.Rule, private val similarLtRules: List<org.languagetool.rules.Rule> = emptyList(),
+  private val isEnabledByLanguageTool: Boolean = false
 ) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, lang.toLanguage(), ltRule.description, categories(ltRule, lang)) {
 
-  override fun isEnabledByDefault(domain: TextStyleDomain): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id, domain)
+  override fun isEnabledByDefault(domain: TextStyleDomain): Boolean {
+    val isEnabledByDefault = isEnabledByLanguageTool || LangTool.isRuleEnabledByDefault(lang, ltRule.id, domain)
+    val rule = getAssociatedGrazieRule(LangTool.globalIdPrefix(lang) + ltRule.id) ?: return isEnabledByDefault
+    return isEnabledByDefault && rule.isEnabledInState(GrazieConfig.get(), domain)
+  }
 
   override fun getUrl(): URL? = similarLtRules.map { it.url }.toSet().singleOrNull()
 

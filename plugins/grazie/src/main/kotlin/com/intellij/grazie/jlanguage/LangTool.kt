@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.jlanguage
 
-import ai.grazie.nlp.similarity.Levenshtein
+import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.LanguageISO
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
@@ -11,8 +12,7 @@ import com.intellij.grazie.jlanguage.hunspell.LuceneHunspellDictionary
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
-import org.apache.commons.text.similarity.LevenshteinDistance
+import com.intellij.util.containers.CollectionFactory.createConcurrentSoftValueMap
 import org.languagetool.JLanguageTool
 import org.languagetool.ResultCache
 import org.languagetool.Tag
@@ -24,12 +24,10 @@ import org.languagetool.rules.patterns.AbstractPatternRule
 import org.languagetool.rules.patterns.PatternToken
 import org.languagetool.rules.patterns.RepeatedPatternRuleTransformer
 import org.languagetool.rules.spelling.hunspell.Hunspell
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
-import kotlin.math.min
 
 object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, MutableMap<TextStyleDomain, JLanguageTool>> = ConcurrentHashMap()
@@ -48,13 +46,15 @@ object LangTool : GrazieStateLifecycle {
     Hunspell.setHunspellDictionaryFactory(::LuceneHunspellDictionary)
   }
 
-  internal fun globalIdPrefix(lang: Lang): String = "LanguageTool." + lang.ltRemote!!.iso.name + "."
+  internal fun globalIdPrefix(lang: Lang): String = globalIdPrefix(lang.iso)
+  internal fun globalIdPrefix(lang: Language): String = globalIdPrefix(lang.iso)
+  internal fun globalIdPrefix(iso: LanguageISO): String = "LanguageTool.${iso.name}."
 
   fun getTool(lang: Lang, domain: TextStyleDomain): JLanguageTool {
     // this is equivalent to computeIfAbsent, but allows multiple threads to create tools concurrently,
     // so that threads can be interrupted (with checkCanceled on their own indicator) instead of waiting on a lock
     while (true) {
-      val tools = langs.computeIfAbsent(lang) { Collections.synchronizedMap(ContainerUtil.createSoftValueMap()) }
+      val tools = langs.computeIfAbsent(lang) { createConcurrentSoftValueMap() }
       var tool = tools[domain]
       if (tool != null) return tool
 

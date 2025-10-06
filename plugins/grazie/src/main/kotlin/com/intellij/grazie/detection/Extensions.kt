@@ -12,8 +12,6 @@ fun Language.toLang(): Lang = Lang.entries.find { it.iso == this.iso }!!
 
 fun Language.toAvailableLang(): Lang = GrazieConfig.get().availableLanguages.find { it.iso == this.iso }!!
 
-fun Language.toAvailableLangOrNull(): Lang? = GrazieConfig.get().availableLanguages.find { it.iso == this.iso }
-
 fun Language.toLangOrNull(): Lang? = Lang.entries.find { it.iso == this.iso }
 
 val Language.hasWhitespaces: Boolean

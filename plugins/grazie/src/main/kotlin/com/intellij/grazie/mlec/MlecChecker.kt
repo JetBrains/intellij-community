@@ -4,6 +4,7 @@ import ai.grazie.gec.model.problem.Problem
 import ai.grazie.gec.model.problem.SentenceWithProblems
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.locale
+import ai.grazie.rules.settings.RuleSetting
 import ai.grazie.text.exclusions.SentenceWithExclusions
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.GrazieConfig
@@ -12,8 +13,7 @@ import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceTokenizer.Sentence
 import com.intellij.grazie.rule.SentenceTokenizer.tokenize
 import com.intellij.grazie.text.*
-import com.intellij.grazie.utils.Text
-import com.intellij.grazie.utils.underline
+import com.intellij.grazie.utils.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -177,6 +177,14 @@ class MlecChecker : ExternalTextChecker() {
     private fun mlecRule(id: String, language: Language, presentableName: String, category: String, description: String): Rule =
       object : Rule(id, language, presentableName, category) {
         override fun getDescription(): String = description
+        override fun isEnabledByDefault(domain: TextStyleDomain): Boolean {
+          if (this.globalId != enMissingArticle.globalId) return super.isEnabledByDefault(domain)
+          return featuredSettings(Language.ENGLISH).asSequence()
+            .filterIsInstance<RuleSetting>()
+            .map { it.rule }
+            .find { it.id == "Grammar.MISSING_ARTICLE" }!!
+            .isEnabledInState(GrazieConfig.get(), domain)
+        }
       }
   }
 
