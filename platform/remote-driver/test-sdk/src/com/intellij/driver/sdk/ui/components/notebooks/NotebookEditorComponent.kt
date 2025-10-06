@@ -93,13 +93,13 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   val lastNotebookOutput: String
     get() = notebookCellOutputs.last().getAllTexts().asString()
   val statusBar: UiComponent
-    get() = xx("//div[@class='JupyterFileEditorToolbar']//div[@class='ActionToolbarImpl']").list().last()
+    get() = x("//div[@class='JupyterFileEditorToolbar']")
   val cellIndexPanel: UiComponent
-    get() = xx("//div[@class='MyScrollPane']//div[@class='JBViewport']").list().first()
-  val selectedCellActions: UiComponent
-    get() = xx("//div[@class='JupyterCellActionsToolbar']").list().first()
-  val firstFoldingBar: UiComponent
-    get() = xx("//div[@class='EditorCellFoldingBarComponent']").list().first()
+    get() = x("//div[@class='MyScrollPane']//div[@class='JBViewport']//div[@class='EditorGutterComponentImpl']")
+  val cellActions: List<UiComponent>
+    get() = xx("//div[@class='JupyterCellActionsToolbar']").list()
+  val foldingBars: List<UiComponent>
+    get() = xx("//div[@class='EditorCellFoldingBarComponent']").list()
 
   override val editorComponent: EditorComponentImpl
     get() = when {
