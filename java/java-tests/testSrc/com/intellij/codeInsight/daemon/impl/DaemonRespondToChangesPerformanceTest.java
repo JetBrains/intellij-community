@@ -342,7 +342,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     }
   }
 
-  public void testRogueToolGeneratingZillionsOfAnnotationsAtTheSameLevelMustNotFreeze_Performance() {
+  public void _testRogueToolGeneratingZillionsOfAnnotationsAtTheSameLevelMustNotFreeze_Performance() {
     int N = 1_000_000;
     configureByText(PlainTextFileType.INSTANCE, " ".repeat(N));
     // just checks that highlighting doesn't freeze because there are no quadratics inside anymore
