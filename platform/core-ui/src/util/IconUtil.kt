@@ -509,7 +509,12 @@ object IconUtil {
   fun addText(base: Icon, text: String): Icon {
     val icon = LayeredIcon(2)
     icon.setIcon(base, 0)
-    icon.setIcon(textToIcon(text, JLabel(), scale(6.0f)), 1, SwingConstants.SOUTH_EAST)
+    val component = if (EDT.isCurrentThreadEdt()) {
+      JLabel()
+    } else {
+      object : Component() {}
+    }
+    icon.setIcon(textToIcon(text, component, scale(6.0f)), 1, SwingConstants.SOUTH_EAST)
     return icon
   }
 
