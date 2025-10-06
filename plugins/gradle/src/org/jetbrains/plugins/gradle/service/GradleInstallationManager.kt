@@ -1,14 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
-import com.intellij.concurrency.installThreadContext
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager.Companion.getInstance
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -16,10 +12,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getExtensions
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
-import com.intellij.openapi.progress.CeProcessCanceledException
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.getLockPermitContext
-import com.intellij.openapi.progress.prepareThreadContext
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -31,10 +24,6 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -56,13 +45,10 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.exists
 import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
-import kotlin.use
 
 /**
  * Provides discovery utilities about Gradle build environment/layout based on current system environment and IDE configuration.
@@ -155,41 +141,14 @@ open class GradleInstallationManager : Disposable.Default {
     val settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath) ?: return getAvailableJavaHome(project)
     val gradleJvm = settings.gradleJvm
     val sdkLookupProvider = getGradleJvmLookupProvider(project, settings)
-    val sdkInfo = runBlockingCancellableInternalIgnoreError { sdkLookupProvider.resolveGradleJvmInfo(project, linkedProjectPath, gradleJvm) }
+    // Android Studio: b/411744564 workaround to avoid failure assertion given method invocations from EDT
+    val sdkInfo = runBlockingMaybeCancellable { sdkLookupProvider.resolveGradleJvmInfo(project, linkedProjectPath, gradleJvm) }
     if (sdkInfo is SdkLookupProvider.SdkInfo.Resolved) {
       return sdkInfo.homePath
     }
     return null
   }
 
-  // Android Studio: b/411744564 and https://youtrack.jetbrains.com/issue/IDEA-370663
-  private fun <T> runBlockingCancellableInternalIgnoreError(action: suspend CoroutineScope.() -> T): T {
-    return prepareThreadContext { ctx ->
-      val (context, cleanup) = getLockContext(ctx)
-      try {
-          @OptIn(InternalCoroutinesApi::class)
-          IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + context, action)
-      }
-      catch (pce: ProcessCanceledException) {
-        throw pce
-      }
-      catch (ce: CancellationException) {
-        throw CeProcessCanceledException(ce)
-      }
-      finally {
-        cleanup.finish()
-      }
-    }
-  }
-  // Android Studio: b/411744564 this is copied form com.intellij.openapi.progress.coroutines
-  private fun getLockContext(currentThreadContext: CoroutineContext): Pair<CoroutineContext, AccessToken> {
-    val parallelize = with(ApplicationManager.getApplication()) {
-      installThreadContext(currentThreadContext).use {
-        isReadAccessAllowed
-      }
-    }
-    return getLockPermitContext(currentThreadContext, parallelize)
-  }
   /**
    * Tries to discover the Gradle installation path from the configured system path.
    *
