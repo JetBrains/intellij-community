@@ -3108,17 +3108,17 @@ http_file(
 )
 
 http_file(
-  name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_6_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-jvm/0.6.0/kotlin-sdk-jvm-0.6.0.jar",
-  sha256 = "10b00c7af47c7a0fb510fb9d7519a9d2476f8e815a5005282734821082f9dc21",
-  downloaded_file_path = "kotlin-sdk-jvm-0.6.0.jar"
+  name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_6_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-jvm/0.6.1/kotlin-sdk-jvm-0.6.1.jar",
+  sha256 = "b1d152f70209b9fd42165afc7b98beeae87cabe688f8e82429928958dc61c411",
+  downloaded_file_path = "kotlin-sdk-jvm-0.6.1.jar"
 )
 
 http_file(
-  name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_6_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-jvm/0.6.0/kotlin-sdk-jvm-0.6.0-sources.jar",
-  sha256 = "a7dec8c0b7df080e7e234f5ca683b28a6e6a4b7bfcdafa75a8aeca20b753ea81",
-  downloaded_file_path = "kotlin-sdk-jvm-0.6.0-sources.jar"
+  name = "io_modelcontextprotocol-kotlin-sdk-jvm-0_6_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/modelcontextprotocol/kotlin-sdk-jvm/0.6.1/kotlin-sdk-jvm-0.6.1-sources.jar",
+  sha256 = "8a681b8948a231946d47deaa38100351ad154cea8f15cbfc0361e10d5fa95eed",
+  downloaded_file_path = "kotlin-sdk-jvm-0.6.1-sources.jar"
 )
 
 http_file(

@@ -2291,8 +2291,8 @@ jvm_import(
 
 jvm_import(
   name = "io-modelcontextprotocol-kotlin-sdk",
-  jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_6_0_http//file",
-  source_jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_6_0_http//file",
+  jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_6_1_http//file",
+  source_jar = "@io_modelcontextprotocol-kotlin-sdk-jvm-0_6_1_http//file",
   visibility = ["//visibility:public"]
 )
 
