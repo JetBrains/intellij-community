@@ -214,24 +214,22 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         else {
           withContext(Dispatchers.EDT) {
             CommandProcessor.getInstance().runUndoTransparentAction {
-              try {
-                WriteAction.run<Throwable> {
-                  updateDocument(formattedText)
-                }
-              }
-              catch (throwable: Throwable) {
-                LOG.error(throwable)
+              WriteAction.run<Throwable> {
+                updateDocument(formattedText)
               }
             }
           }
         }
       }
-      catch (e: CancellationException) {
+      catch (t: Throwable) {
+        if (t !is CancellationException) {
+          LOG.error(t)
+        }
         if (!result.isCompleted) {
           this@FormattingRequestImpl.cancel()
         }
         taskJob.cancel()
-        throw e
+        throw t
       }
       finally {
         val elapsed = markStarted.elapsedNow()
