@@ -17,10 +17,12 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -41,7 +43,22 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
+
 public final class DivideByZeroInspection extends BaseInspection {
+
+
+  @SuppressWarnings("PublicField")
+  public boolean reportMayBeZero = true;
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportMayBeZero",
+               InspectionGadgetsBundle.message("divide.by.zero.problem.may.option"))
+        .description(InspectionGadgetsBundle.message("divide.by.zero.problem.may.option.description")));
+  }
 
   @Pattern(VALID_ID_PATTERN)
   @Override
@@ -69,6 +86,11 @@ public final class DivideByZeroInspection extends BaseInspection {
         }
       }
     }
+    if (infos.length > 1 && infos[1] instanceof ThreeState threeState && threeState == ThreeState.UNSURE) {
+      return LocalQuickFix.from(new UpdateInspectionOptionFix(
+        this, "reportMayBeZero",
+        InspectionGadgetsBundle.message("divide.by.zero.problem.may.option.disabled", false), false));
+    }
     return null;
   }
 
@@ -77,7 +99,7 @@ public final class DivideByZeroInspection extends BaseInspection {
     return new DivisionByZeroVisitor();
   }
 
-  private static class DivisionByZeroVisitor extends BaseInspectionVisitor {
+  private class DivisionByZeroVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
@@ -112,7 +134,7 @@ public final class DivideByZeroInspection extends BaseInspection {
     }
   }
 
-  private static ThreeState isZero(PsiExpression expression) {
+  private ThreeState isZero(PsiExpression expression) {
     final Object value = ConstantExpressionUtil.computeCastTo(expression, PsiTypes.doubleType());
     if (value instanceof Double) {
       final double constantValue = ((Double)value).doubleValue();
@@ -123,6 +145,7 @@ public final class DivideByZeroInspection extends BaseInspection {
     if (val != null) {
       return val.doubleValue() == 0.0 ? ThreeState.YES : ThreeState.NO;
     }
+    if(!reportMayBeZero) return ThreeState.NO;
     if (dfType instanceof DfIntType dfIntType) {
       LongRangeSet range = dfIntType.getRange();
       List<LongRangeSet> ranges = range.asRanges();
