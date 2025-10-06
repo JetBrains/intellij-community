@@ -2,9 +2,12 @@
 @file:JvmName("TestMain")
 package com.intellij.idea
 
-import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.scheduleDescriptorLoading
+import com.intellij.ide.plugins.PluginModuleId
+import com.intellij.openapi.diagnostic.DefaultLogger
+import com.intellij.openapi.diagnostic.LogLevel
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
@@ -18,6 +21,7 @@ import java.io.File
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
 fun main(rawArgs: Array<String>) {
@@ -26,6 +30,17 @@ fun main(rawArgs: Array<String>) {
   val testEntryPointClass = System.getProperty("idea.dev.build.test.entry.point.class")
                             ?: error("idea.dev.build.test.entry.point.class property must be defined")
   val testAdditionalModules = System.getProperty("idea.dev.build.test.additional.modules")
+  val useLoggerFactoryWithCache = System.getProperty("intellij.force.plugin.logging.stdout") == "true"
+
+  // Set the log level to info for the Plugin Manager to log root causes of the plugin loading issues in the console.
+  // DefaultFactory by creates a new logger object on each getLogger call, so we cannot override its log level,
+  // therefore, we use the factory which caches loggers for the requested categories and adjust it to log product layout messages.
+  val initialFactory = Logger.getFactory()
+  if(useLoggerFactoryWithCache) {
+    Logger.setFactory(DefaultFactoryWithCaching())
+    PluginManagerCore.logger.setLevel(LogLevel.INFO)
+  }
+
   @Suppress("SSBasedInspection")
   val pluginSet = runBlocking(Dispatchers.Default) {
     val zipPoolDeferred = async {
@@ -41,6 +56,10 @@ fun main(rawArgs: Array<String>) {
     ).await()
   }
 
+  if(useLoggerFactoryWithCache) {
+    Logger.setFactory(initialFactory)
+  }
+
   val testModule = pluginSet.findEnabledModule(PluginModuleId(testEntryPointModule)) ?: error("module ${testEntryPointModule} not found in product layout")
   val testMainClassLoader = if (!testAdditionalModules.isNullOrEmpty()) {
     PathClassLoader(UrlClassLoader.build().files(testAdditionalModules.split(File.pathSeparator).map(Path::of)).parent(testModule.classLoader))
@@ -52,4 +71,12 @@ fun main(rawArgs: Array<String>) {
   val main = MethodHandles.lookup().findStatic(testMainClass, "main", MethodType.methodType(Void.TYPE, Array<String>::class.java))
   Thread.currentThread().contextClassLoader = testMainClassLoader
   main.invoke(rawArgs)
+}
+
+private class DefaultFactoryWithCaching : Logger.Factory {
+  private val loggers = ConcurrentHashMap<String, Logger>()
+
+  override fun getLoggerInstance(category: String): Logger {
+    return loggers.computeIfAbsent(category) { DefaultLogger(it) }
+  }
 }
