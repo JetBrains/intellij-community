@@ -1669,91 +1669,634 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain")
         public abstract static class SimplifiableCallChain extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant")
-            public static class MapSumWithConstant extends AbstractLocalInspectionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
+            @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations")
+            public abstract static class CollectionsOperations extends AbstractLocalInspectionTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant")
+                public static class MapSumWithConstant extends AbstractLocalInspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("const.kt")
+                    public void testConst() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/const.kt");
+                    }
+
+                    @TestMetadata("intLiteral.kt")
+                    public void testIntLiteral() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/intLiteral.kt");
+                    }
+
+                    @TestMetadata("intLiteralInAnonymousFun.kt")
+                    public void testIntLiteralInAnonymousFun() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/intLiteralInAnonymousFun.kt");
+                    }
+
+                    @TestMetadata("intLiteralInBinary.kt")
+                    public void testIntLiteralInBinary() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/intLiteralInBinary.kt");
+                    }
+
+                    @TestMetadata("intLiteralInIf.kt")
+                    public void testIntLiteralInIf() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/intLiteralInIf.kt");
+                    }
+
+                    @TestMetadata("intLiteralInIf2.kt")
+                    public void testIntLiteralInIf2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/intLiteralInIf2.kt");
+                    }
+
+                    @TestMetadata("intLiteralInTryCatch.kt")
+                    public void testIntLiteralInTryCatch() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/intLiteralInTryCatch.kt");
+                    }
+
+                    @TestMetadata("intLiteralInWhen.kt")
+                    public void testIntLiteralInWhen() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/intLiteralInWhen.kt");
+                    }
+
+                    @TestMetadata("intLiteralInWhen2.kt")
+                    public void testIntLiteralInWhen2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/intLiteralInWhen2.kt");
+                    }
+
+                    @TestMetadata("longLiteral.kt")
+                    public void testLongLiteral() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/longLiteral.kt");
+                    }
+
+                    @TestMetadata("longLiteralInBinary.kt")
+                    public void testLongLiteralInBinary() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/longLiteralInBinary.kt");
+                    }
+
+                    @TestMetadata("longLiteralInIf.kt")
+                    public void testLongLiteralInIf() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/longLiteralInIf.kt");
+                    }
+
+                    @TestMetadata("variable.kt")
+                    public void testVariable() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/variable.kt");
+                    }
+
+                    @TestMetadata("variableInBinary.kt")
+                    public void testVariableInBinary() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/variableInBinary.kt");
+                    }
+
+                    @TestMetadata("variableInIf.kt")
+                    public void testVariableInIf() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithConstant/variableInIf.kt");
+                    }
                 }
 
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                }
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations")
+                public static class Uncategorized extends AbstractLocalInspectionTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
 
-                @TestMetadata("const.kt")
-                public void testConst() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/const.kt");
-                }
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
 
-                @TestMetadata("intLiteral.kt")
-                public void testIntLiteral() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteral.kt");
-                }
+                    @TestMetadata("commentInFirstCallLambda.kt")
+                    public void testCommentInFirstCallLambda() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/commentInFirstCallLambda.kt");
+                    }
 
-                @TestMetadata("intLiteralInAnonymousFun.kt")
-                public void testIntLiteralInAnonymousFun() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInAnonymousFun.kt");
-                }
+                    @TestMetadata("commentOutsideLambda.kt")
+                    public void testCommentOutsideLambda() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/commentOutsideLambda.kt");
+                    }
 
-                @TestMetadata("intLiteralInBinary.kt")
-                public void testIntLiteralInBinary() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInBinary.kt");
-                }
+                    @TestMetadata("commentOutsideLambda2.kt")
+                    public void testCommentOutsideLambda2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/commentOutsideLambda2.kt");
+                    }
 
-                @TestMetadata("intLiteralInIf.kt")
-                public void testIntLiteralInIf() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInIf.kt");
-                }
+                    @TestMetadata("commentOutsideLambda3.kt")
+                    public void testCommentOutsideLambda3() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/commentOutsideLambda3.kt");
+                    }
 
-                @TestMetadata("intLiteralInIf2.kt")
-                public void testIntLiteralInIf2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInIf2.kt");
-                }
+                    @TestMetadata("filterAny.kt")
+                    public void testFilterAny() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/filterAny.kt");
+                    }
 
-                @TestMetadata("intLiteralInTryCatch.kt")
-                public void testIntLiteralInTryCatch() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInTryCatch.kt");
-                }
+                    @TestMetadata("filterCount.kt")
+                    public void testFilterCount() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/filterCount.kt");
+                    }
 
-                @TestMetadata("intLiteralInWhen.kt")
-                public void testIntLiteralInWhen() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInWhen.kt");
-                }
+                    @TestMetadata("filterFirst.kt")
+                    public void testFilterFirst() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/filterFirst.kt");
+                    }
 
-                @TestMetadata("intLiteralInWhen2.kt")
-                public void testIntLiteralInWhen2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/intLiteralInWhen2.kt");
-                }
+                    @TestMetadata("filterFirstFake.kt")
+                    public void testFilterFirstFake() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/filterFirstFake.kt");
+                    }
 
-                @TestMetadata("longLiteral.kt")
-                public void testLongLiteral() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/longLiteral.kt");
-                }
+                    @TestMetadata("filterFirstFakeReference.kt")
+                    public void testFilterFirstFakeReference() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/filterFirstFakeReference.kt");
+                    }
 
-                @TestMetadata("longLiteralInBinary.kt")
-                public void testLongLiteralInBinary() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/longLiteralInBinary.kt");
-                }
+                    @TestMetadata("filterFirstOrNullReference.kt")
+                    public void testFilterFirstOrNullReference() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/filterFirstOrNullReference.kt");
+                    }
 
-                @TestMetadata("longLiteralInIf.kt")
-                public void testLongLiteralInIf() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/longLiteralInIf.kt");
-                }
+                    @TestMetadata("filterIsEmpty.kt")
+                    public void testFilterIsEmpty() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/filterIsEmpty.kt");
+                    }
 
-                @TestMetadata("variable.kt")
-                public void testVariable() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/variable.kt");
-                }
+                    @TestMetadata("filterIsNotEmpty.kt")
+                    public void testFilterIsNotEmpty() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/filterIsNotEmpty.kt");
+                    }
 
-                @TestMetadata("variableInBinary.kt")
-                public void testVariableInBinary() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/variableInBinary.kt");
-                }
+                    @TestMetadata("filterLastExplicit.kt")
+                    public void testFilterLastExplicit() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/filterLastExplicit.kt");
+                    }
 
-                @TestMetadata("variableInIf.kt")
-                public void testVariableInIf() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithConstant/variableInIf.kt");
+                    @TestMetadata("filterNone.kt")
+                    public void testFilterNone() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/filterNone.kt");
+                    }
+
+                    @TestMetadata("joinTo.kt")
+                    public void testJoinTo() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinTo.kt");
+                    }
+
+                    @TestMetadata("joinToFake.kt")
+                    public void testJoinToFake() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToFake.kt");
+                    }
+
+                    @TestMetadata("joinToFakeWithLambda.kt")
+                    public void testJoinToFakeWithLambda() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToFakeWithLambda.kt");
+                    }
+
+                    @TestMetadata("joinToForHashMap.kt")
+                    public void testJoinToForHashMap() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToForHashMap.kt");
+                    }
+
+                    @TestMetadata("joinToForMap.kt")
+                    public void testJoinToForMap() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToForMap.kt");
+                    }
+
+                    @TestMetadata("joinToString.kt")
+                    public void testJoinToString() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToString.kt");
+                    }
+
+                    @TestMetadata("joinToStringOnHashMap.kt")
+                    public void testJoinToStringOnHashMap() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToStringOnHashMap.kt");
+                    }
+
+                    @TestMetadata("joinToStringOnHashMap2.kt")
+                    public void testJoinToStringOnHashMap2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToStringOnHashMap2.kt");
+                    }
+
+                    @TestMetadata("joinToStringOnMap.kt")
+                    public void testJoinToStringOnMap() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToStringOnMap.kt");
+                    }
+
+                    @TestMetadata("joinToStringViaBuilder.kt")
+                    public void testJoinToStringViaBuilder() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToStringViaBuilder.kt");
+                    }
+
+                    @TestMetadata("joinToStringWithReference.kt")
+                    public void testJoinToStringWithReference() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToStringWithReference.kt");
+                    }
+
+                    @TestMetadata("joinToStringWithReferenceAndComment.kt")
+                    public void testJoinToStringWithReferenceAndComment() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToStringWithReferenceAndComment.kt");
+                    }
+
+                    @TestMetadata("joinToStringWithReferenceFake.kt")
+                    public void testJoinToStringWithReferenceFake() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToStringWithReferenceFake.kt");
+                    }
+
+                    @TestMetadata("joinToStringWithSuspendFunctionCall.kt")
+                    public void testJoinToStringWithSuspendFunctionCall() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToStringWithSuspendFunctionCall.kt");
+                    }
+
+                    @TestMetadata("joinToStringWithTrailingComma.kt")
+                    public void testJoinToStringWithTrailingComma() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToStringWithTrailingComma.kt");
+                    }
+
+                    @TestMetadata("joinToStringWithTrailingCommaAndImplicitReceiver.kt")
+                    public void testJoinToStringWithTrailingCommaAndImplicitReceiver() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToStringWithTrailingCommaAndImplicitReceiver.kt");
+                    }
+
+                    @TestMetadata("joinToWithComment.kt")
+                    public void testJoinToWithComment() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToWithComment.kt");
+                    }
+
+                    @TestMetadata("joinToWithSuspendFunctionCall.kt")
+                    public void testJoinToWithSuspendFunctionCall() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/joinToWithSuspendFunctionCall.kt");
+                    }
+
+                    @TestMetadata("listOfNotNull.kt")
+                    public void testListOfNotNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/listOfNotNull.kt");
+                    }
+
+                    @TestMetadata("listOfNotNullWithComment.kt")
+                    public void testListOfNotNullWithComment() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/listOfNotNullWithComment.kt");
+                    }
+
+                    @TestMetadata("mapFlatten.kt")
+                    public void testMapFlatten() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapFlatten.kt");
+                    }
+
+                    @TestMetadata("mapFlattenWithReference.kt")
+                    public void testMapFlattenWithReference() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapFlattenWithReference.kt");
+                    }
+
+                    @TestMetadata("mapMax.kt")
+                    public void testMapMax() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMax.kt");
+                    }
+
+                    @TestMetadata("mapMax2.kt")
+                    public void testMapMax2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMax2.kt");
+                    }
+
+                    @TestMetadata("mapMax3.kt")
+                    public void testMapMax3() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMax3.kt");
+                    }
+
+                    @TestMetadata("mapMaxOrNull.kt")
+                    public void testMapMaxOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMaxOrNull.kt");
+                    }
+
+                    @TestMetadata("mapMaxOrNull2.kt")
+                    public void testMapMaxOrNull2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMaxOrNull2.kt");
+                    }
+
+                    @TestMetadata("mapMin.kt")
+                    public void testMapMin() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMin.kt");
+                    }
+
+                    @TestMetadata("mapMin2.kt")
+                    public void testMapMin2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMin2.kt");
+                    }
+
+                    @TestMetadata("mapMin3.kt")
+                    public void testMapMin3() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMin3.kt");
+                    }
+
+                    @TestMetadata("mapMinOrNull.kt")
+                    public void testMapMinOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMinOrNull.kt");
+                    }
+
+                    @TestMetadata("mapMinOrNull2.kt")
+                    public void testMapMinOrNull2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapMinOrNull2.kt");
+                    }
+
+                    @TestMetadata("mapNotNull.kt")
+                    public void testMapNotNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapNotNull.kt");
+                    }
+
+                    @TestMetadata("mapNotNullFirst.kt")
+                    public void testMapNotNullFirst() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapNotNullFirst.kt");
+                    }
+
+                    @TestMetadata("mapNotNullFirstOrNull.kt")
+                    public void testMapNotNullFirstOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapNotNullFirstOrNull.kt");
+                    }
+
+                    @TestMetadata("mapNotNullWithSuspendFunctionCall.kt")
+                    public void testMapNotNullWithSuspendFunctionCall() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapNotNullWithSuspendFunctionCall.kt");
+                    }
+
+                    @TestMetadata("mapSum.kt")
+                    public void testMapSum() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSum.kt");
+                    }
+
+                    @TestMetadata("mapSum2.kt")
+                    public void testMapSum2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSum2.kt");
+                    }
+
+                    @TestMetadata("mapSumWithDouble.kt")
+                    public void testMapSumWithDouble() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithDouble.kt");
+                    }
+
+                    @TestMetadata("mapSumWithFloat.kt")
+                    public void testMapSumWithFloat() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithFloat.kt");
+                    }
+
+                    @TestMetadata("mapSumWithInt.kt")
+                    public void testMapSumWithInt() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithInt.kt");
+                    }
+
+                    @TestMetadata("mapSumWithLong.kt")
+                    public void testMapSumWithLong() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithLong.kt");
+                    }
+
+                    @TestMetadata("mapSumWithUInt.kt")
+                    public void testMapSumWithUInt() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithUInt.kt");
+                    }
+
+                    @TestMetadata("mapSumWithULong.kt")
+                    public void testMapSumWithULong() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapSumWithULong.kt");
+                    }
+
+                    @TestMetadata("mapToMap.kt")
+                    public void testMapToMap() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapToMap.kt");
+                    }
+
+                    @TestMetadata("mapToMap2.kt")
+                    public void testMapToMap2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapToMap2.kt");
+                    }
+
+                    @TestMetadata("mapToMap3.kt")
+                    public void testMapToMap3() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapToMap3.kt");
+                    }
+
+                    @TestMetadata("mapToMap4.kt")
+                    public void testMapToMap4() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapToMap4.kt");
+                    }
+
+                    @TestMetadata("mapToMapWithDestination.kt")
+                    public void testMapToMapWithDestination() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapToMapWithDestination.kt");
+                    }
+
+                    @TestMetadata("mapToMapWithDestination2.kt")
+                    public void testMapToMapWithDestination2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapToMapWithDestination2.kt");
+                    }
+
+                    @TestMetadata("mapToMapWithDestination3.kt")
+                    public void testMapToMapWithDestination3() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapToMapWithDestination3.kt");
+                    }
+
+                    @TestMetadata("mapWithReturn.kt")
+                    public void testMapWithReturn() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/mapWithReturn.kt");
+                    }
+
+                    @TestMetadata("notApplicableSortedByFirst.kt")
+                    public void testNotApplicableSortedByFirst() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/notApplicableSortedByFirst.kt");
+                    }
+
+                    @TestMetadata("notApplicableSortedByFirst2.kt")
+                    public void testNotApplicableSortedByFirst2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/notApplicableSortedByFirst2.kt");
+                    }
+
+                    @TestMetadata("notApplicableSortedByFirst3.kt")
+                    public void testNotApplicableSortedByFirst3() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/notApplicableSortedByFirst3.kt");
+                    }
+
+                    @TestMetadata("notApplicableSortedByFirstOrNull.kt")
+                    public void testNotApplicableSortedByFirstOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/notApplicableSortedByFirstOrNull.kt");
+                    }
+
+                    @TestMetadata("notApplicableSortedByLast.kt")
+                    public void testNotApplicableSortedByLast() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/notApplicableSortedByLast.kt");
+                    }
+
+                    @TestMetadata("notApplicableSortedByLastOrNull.kt")
+                    public void testNotApplicableSortedByLastOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/notApplicableSortedByLastOrNull.kt");
+                    }
+
+                    @TestMetadata("onMapImplementationClass.kt")
+                    public void testOnMapImplementationClass() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/onMapImplementationClass.kt");
+                    }
+
+                    @TestMetadata("sortedByDescendingFirst.kt")
+                    public void testSortedByDescendingFirst() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByDescendingFirst.kt");
+                    }
+
+                    @TestMetadata("sortedByDescendingFirst2.kt")
+                    public void testSortedByDescendingFirst2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByDescendingFirst2.kt");
+                    }
+
+                    @TestMetadata("sortedByDescendingFirstOrNull.kt")
+                    public void testSortedByDescendingFirstOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByDescendingFirstOrNull.kt");
+                    }
+
+                    @TestMetadata("sortedByDescendingFirstOrNull2.kt")
+                    public void testSortedByDescendingFirstOrNull2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByDescendingFirstOrNull2.kt");
+                    }
+
+                    @TestMetadata("sortedByDescendingLast.kt")
+                    public void testSortedByDescendingLast() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByDescendingLast.kt");
+                    }
+
+                    @TestMetadata("sortedByDescendingLast2.kt")
+                    public void testSortedByDescendingLast2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByDescendingLast2.kt");
+                    }
+
+                    @TestMetadata("sortedByDescendingLastOrNull.kt")
+                    public void testSortedByDescendingLastOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByDescendingLastOrNull.kt");
+                    }
+
+                    @TestMetadata("sortedByDescendingLastOrNull2.kt")
+                    public void testSortedByDescendingLastOrNull2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByDescendingLastOrNull2.kt");
+                    }
+
+                    @TestMetadata("sortedByFirst.kt")
+                    public void testSortedByFirst() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByFirst.kt");
+                    }
+
+                    @TestMetadata("sortedByFirst2.kt")
+                    public void testSortedByFirst2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByFirst2.kt");
+                    }
+
+                    @TestMetadata("sortedByFirstOrNull.kt")
+                    public void testSortedByFirstOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByFirstOrNull.kt");
+                    }
+
+                    @TestMetadata("sortedByFirstOrNull2.kt")
+                    public void testSortedByFirstOrNull2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByFirstOrNull2.kt");
+                    }
+
+                    @TestMetadata("sortedByLast.kt")
+                    public void testSortedByLast() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByLast.kt");
+                    }
+
+                    @TestMetadata("sortedByLast2.kt")
+                    public void testSortedByLast2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByLast2.kt");
+                    }
+
+                    @TestMetadata("sortedByLastOrNull.kt")
+                    public void testSortedByLastOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByLastOrNull.kt");
+                    }
+
+                    @TestMetadata("sortedByLastOrNull2.kt")
+                    public void testSortedByLastOrNull2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedByLastOrNull2.kt");
+                    }
+
+                    @TestMetadata("sortedDescendingFirst.kt")
+                    public void testSortedDescendingFirst() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedDescendingFirst.kt");
+                    }
+
+                    @TestMetadata("sortedDescendingFirst2.kt")
+                    public void testSortedDescendingFirst2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedDescendingFirst2.kt");
+                    }
+
+                    @TestMetadata("sortedDescendingFirstOrNull.kt")
+                    public void testSortedDescendingFirstOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedDescendingFirstOrNull.kt");
+                    }
+
+                    @TestMetadata("sortedDescendingFirstOrNull2.kt")
+                    public void testSortedDescendingFirstOrNull2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedDescendingFirstOrNull2.kt");
+                    }
+
+                    @TestMetadata("sortedDescendingLast.kt")
+                    public void testSortedDescendingLast() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedDescendingLast.kt");
+                    }
+
+                    @TestMetadata("sortedDescendingLast2.kt")
+                    public void testSortedDescendingLast2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedDescendingLast2.kt");
+                    }
+
+                    @TestMetadata("sortedDescendingLastOrNull.kt")
+                    public void testSortedDescendingLastOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedDescendingLastOrNull.kt");
+                    }
+
+                    @TestMetadata("sortedDescendingLastOrNull2.kt")
+                    public void testSortedDescendingLastOrNull2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedDescendingLastOrNull2.kt");
+                    }
+
+                    @TestMetadata("sortedFirst.kt")
+                    public void testSortedFirst() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedFirst.kt");
+                    }
+
+                    @TestMetadata("sortedFirst2.kt")
+                    public void testSortedFirst2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedFirst2.kt");
+                    }
+
+                    @TestMetadata("sortedFirstOrNull.kt")
+                    public void testSortedFirstOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedFirstOrNull.kt");
+                    }
+
+                    @TestMetadata("sortedFirstOrNull2.kt")
+                    public void testSortedFirstOrNull2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedFirstOrNull2.kt");
+                    }
+
+                    @TestMetadata("sortedLast.kt")
+                    public void testSortedLast() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedLast.kt");
+                    }
+
+                    @TestMetadata("sortedLast2.kt")
+                    public void testSortedLast2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedLast2.kt");
+                    }
+
+                    @TestMetadata("sortedLastOrNull.kt")
+                    public void testSortedLastOrNull() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedLastOrNull.kt");
+                    }
+
+                    @TestMetadata("sortedLastOrNull2.kt")
+                    public void testSortedLastOrNull2() throws Exception {
+                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/collectionsOperations/sortedLastOrNull2.kt");
+                    }
                 }
             }
 
@@ -1827,8 +2370,8 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain")
-            public static class Uncategorized extends AbstractLocalInspectionTest {
+            @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain/text")
+            public static class Text extends AbstractLocalInspectionTest {
                 @java.lang.Override
                 @org.jetbrains.annotations.NotNull
                 public final KotlinPluginMode getPluginMode() {
@@ -1839,554 +2382,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
-                @TestMetadata("commentInFirstCallLambda.kt")
-                public void testCommentInFirstCallLambda() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentInFirstCallLambda.kt");
-                }
-
-                @TestMetadata("commentOutsideLambda.kt")
-                public void testCommentOutsideLambda() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentOutsideLambda.kt");
-                }
-
-                @TestMetadata("commentOutsideLambda2.kt")
-                public void testCommentOutsideLambda2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentOutsideLambda2.kt");
-                }
-
-                @TestMetadata("commentOutsideLambda3.kt")
-                public void testCommentOutsideLambda3() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/commentOutsideLambda3.kt");
-                }
-
-                @TestMetadata("filterAny.kt")
-                public void testFilterAny() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterAny.kt");
-                }
-
-                @TestMetadata("filterCount.kt")
-                public void testFilterCount() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterCount.kt");
-                }
-
-                @TestMetadata("filterFirst.kt")
-                public void testFilterFirst() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterFirst.kt");
-                }
-
-                @TestMetadata("filterFirstFake.kt")
-                public void testFilterFirstFake() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterFirstFake.kt");
-                }
-
-                @TestMetadata("filterFirstFakeReference.kt")
-                public void testFilterFirstFakeReference() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterFirstFakeReference.kt");
-                }
-
-                @TestMetadata("filterFirstOrNullReference.kt")
-                public void testFilterFirstOrNullReference() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterFirstOrNullReference.kt");
-                }
-
-                @TestMetadata("filterIsEmpty.kt")
-                public void testFilterIsEmpty() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterIsEmpty.kt");
-                }
-
-                @TestMetadata("filterIsNotEmpty.kt")
-                public void testFilterIsNotEmpty() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterIsNotEmpty.kt");
-                }
-
-                @TestMetadata("filterLastExplicit.kt")
-                public void testFilterLastExplicit() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterLastExplicit.kt");
-                }
-
-                @TestMetadata("filterNone.kt")
-                public void testFilterNone() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterNone.kt");
-                }
-
                 @TestMetadata("filterTextAny.kt")
                 public void testFilterTextAny() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterTextAny.kt");
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/text/filterTextAny.kt");
                 }
 
                 @TestMetadata("filterTextCount.kt")
                 public void testFilterTextCount() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterTextCount.kt");
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/text/filterTextCount.kt");
                 }
 
                 @TestMetadata("filterTextIsEmpty.kt")
                 public void testFilterTextIsEmpty() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterTextIsEmpty.kt");
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/text/filterTextIsEmpty.kt");
                 }
 
                 @TestMetadata("filterTextNone.kt")
                 public void testFilterTextNone() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterTextNone.kt");
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/text/filterTextNone.kt");
                 }
 
                 @TestMetadata("filterTextSingleOrNull.kt")
                 public void testFilterTextSingleOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/filterTextSingleOrNull.kt");
-                }
-
-                @TestMetadata("joinTo.kt")
-                public void testJoinTo() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinTo.kt");
-                }
-
-                @TestMetadata("joinToFake.kt")
-                public void testJoinToFake() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToFake.kt");
-                }
-
-                @TestMetadata("joinToFakeWithLambda.kt")
-                public void testJoinToFakeWithLambda() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToFakeWithLambda.kt");
-                }
-
-                @TestMetadata("joinToForHashMap.kt")
-                public void testJoinToForHashMap() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToForHashMap.kt");
-                }
-
-                @TestMetadata("joinToForMap.kt")
-                public void testJoinToForMap() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToForMap.kt");
-                }
-
-                @TestMetadata("joinToString.kt")
-                public void testJoinToString() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToString.kt");
-                }
-
-                @TestMetadata("joinToStringOnHashMap.kt")
-                public void testJoinToStringOnHashMap() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToStringOnHashMap.kt");
-                }
-
-                @TestMetadata("joinToStringOnHashMap2.kt")
-                public void testJoinToStringOnHashMap2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToStringOnHashMap2.kt");
-                }
-
-                @TestMetadata("joinToStringOnMap.kt")
-                public void testJoinToStringOnMap() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToStringOnMap.kt");
-                }
-
-                @TestMetadata("joinToStringViaBuilder.kt")
-                public void testJoinToStringViaBuilder() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToStringViaBuilder.kt");
-                }
-
-                @TestMetadata("joinToStringWithReference.kt")
-                public void testJoinToStringWithReference() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToStringWithReference.kt");
-                }
-
-                @TestMetadata("joinToStringWithReferenceAndComment.kt")
-                public void testJoinToStringWithReferenceAndComment() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToStringWithReferenceAndComment.kt");
-                }
-
-                @TestMetadata("joinToStringWithReferenceFake.kt")
-                public void testJoinToStringWithReferenceFake() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToStringWithReferenceFake.kt");
-                }
-
-                @TestMetadata("joinToStringWithSuspendFunctionCall.kt")
-                public void testJoinToStringWithSuspendFunctionCall() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToStringWithSuspendFunctionCall.kt");
-                }
-
-                @TestMetadata("joinToStringWithTrailingComma.kt")
-                public void testJoinToStringWithTrailingComma() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToStringWithTrailingComma.kt");
-                }
-
-                @TestMetadata("joinToStringWithTrailingCommaAndImplicitReceiver.kt")
-                public void testJoinToStringWithTrailingCommaAndImplicitReceiver() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToStringWithTrailingCommaAndImplicitReceiver.kt");
-                }
-
-                @TestMetadata("joinToWithComment.kt")
-                public void testJoinToWithComment() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToWithComment.kt");
-                }
-
-                @TestMetadata("joinToWithSuspendFunctionCall.kt")
-                public void testJoinToWithSuspendFunctionCall() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/joinToWithSuspendFunctionCall.kt");
-                }
-
-                @TestMetadata("listOfNotNull.kt")
-                public void testListOfNotNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/listOfNotNull.kt");
-                }
-
-                @TestMetadata("listOfNotNullWithComment.kt")
-                public void testListOfNotNullWithComment() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/listOfNotNullWithComment.kt");
-                }
-
-                @TestMetadata("mapFlatten.kt")
-                public void testMapFlatten() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapFlatten.kt");
-                }
-
-                @TestMetadata("mapFlattenWithReference.kt")
-                public void testMapFlattenWithReference() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapFlattenWithReference.kt");
-                }
-
-                @TestMetadata("mapMax.kt")
-                public void testMapMax() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMax.kt");
-                }
-
-                @TestMetadata("mapMax2.kt")
-                public void testMapMax2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMax2.kt");
-                }
-
-                @TestMetadata("mapMax3.kt")
-                public void testMapMax3() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMax3.kt");
-                }
-
-                @TestMetadata("mapMaxOrNull.kt")
-                public void testMapMaxOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMaxOrNull.kt");
-                }
-
-                @TestMetadata("mapMaxOrNull2.kt")
-                public void testMapMaxOrNull2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMaxOrNull2.kt");
-                }
-
-                @TestMetadata("mapMin.kt")
-                public void testMapMin() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMin.kt");
-                }
-
-                @TestMetadata("mapMin2.kt")
-                public void testMapMin2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMin2.kt");
-                }
-
-                @TestMetadata("mapMin3.kt")
-                public void testMapMin3() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMin3.kt");
-                }
-
-                @TestMetadata("mapMinOrNull.kt")
-                public void testMapMinOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMinOrNull.kt");
-                }
-
-                @TestMetadata("mapMinOrNull2.kt")
-                public void testMapMinOrNull2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMinOrNull2.kt");
-                }
-
-                @TestMetadata("mapNotNull.kt")
-                public void testMapNotNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapNotNull.kt");
-                }
-
-                @TestMetadata("mapNotNullFirst.kt")
-                public void testMapNotNullFirst() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapNotNullFirst.kt");
-                }
-
-                @TestMetadata("mapNotNullFirstOrNull.kt")
-                public void testMapNotNullFirstOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapNotNullFirstOrNull.kt");
-                }
-
-                @TestMetadata("mapNotNullWithSuspendFunctionCall.kt")
-                public void testMapNotNullWithSuspendFunctionCall() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapNotNullWithSuspendFunctionCall.kt");
-                }
-
-                @TestMetadata("mapSum.kt")
-                public void testMapSum() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSum.kt");
-                }
-
-                @TestMetadata("mapSum2.kt")
-                public void testMapSum2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSum2.kt");
-                }
-
-                @TestMetadata("mapSumWithDouble.kt")
-                public void testMapSumWithDouble() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithDouble.kt");
-                }
-
-                @TestMetadata("mapSumWithFloat.kt")
-                public void testMapSumWithFloat() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithFloat.kt");
-                }
-
-                @TestMetadata("mapSumWithInt.kt")
-                public void testMapSumWithInt() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithInt.kt");
-                }
-
-                @TestMetadata("mapSumWithLong.kt")
-                public void testMapSumWithLong() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithLong.kt");
-                }
-
-                @TestMetadata("mapSumWithUInt.kt")
-                public void testMapSumWithUInt() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithUInt.kt");
-                }
-
-                @TestMetadata("mapSumWithULong.kt")
-                public void testMapSumWithULong() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithULong.kt");
-                }
-
-                @TestMetadata("mapToMap.kt")
-                public void testMapToMap() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap.kt");
-                }
-
-                @TestMetadata("mapToMap2.kt")
-                public void testMapToMap2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap2.kt");
-                }
-
-                @TestMetadata("mapToMap3.kt")
-                public void testMapToMap3() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap3.kt");
-                }
-
-                @TestMetadata("mapToMap4.kt")
-                public void testMapToMap4() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap4.kt");
-                }
-
-                @TestMetadata("mapToMapWithDestination.kt")
-                public void testMapToMapWithDestination() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMapWithDestination.kt");
-                }
-
-                @TestMetadata("mapToMapWithDestination2.kt")
-                public void testMapToMapWithDestination2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMapWithDestination2.kt");
-                }
-
-                @TestMetadata("mapToMapWithDestination3.kt")
-                public void testMapToMapWithDestination3() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMapWithDestination3.kt");
-                }
-
-                @TestMetadata("mapWithReturn.kt")
-                public void testMapWithReturn() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapWithReturn.kt");
-                }
-
-                @TestMetadata("notApplicableSortedByFirst.kt")
-                public void testNotApplicableSortedByFirst() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByFirst.kt");
-                }
-
-                @TestMetadata("notApplicableSortedByFirst2.kt")
-                public void testNotApplicableSortedByFirst2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByFirst2.kt");
-                }
-
-                @TestMetadata("notApplicableSortedByFirst3.kt")
-                public void testNotApplicableSortedByFirst3() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByFirst3.kt");
-                }
-
-                @TestMetadata("notApplicableSortedByFirstOrNull.kt")
-                public void testNotApplicableSortedByFirstOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByFirstOrNull.kt");
-                }
-
-                @TestMetadata("notApplicableSortedByLast.kt")
-                public void testNotApplicableSortedByLast() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByLast.kt");
-                }
-
-                @TestMetadata("notApplicableSortedByLastOrNull.kt")
-                public void testNotApplicableSortedByLastOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/notApplicableSortedByLastOrNull.kt");
-                }
-
-                @TestMetadata("onMapImplementationClass.kt")
-                public void testOnMapImplementationClass() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/onMapImplementationClass.kt");
-                }
-
-                @TestMetadata("sortedByDescendingFirst.kt")
-                public void testSortedByDescendingFirst() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByDescendingFirst.kt");
-                }
-
-                @TestMetadata("sortedByDescendingFirst2.kt")
-                public void testSortedByDescendingFirst2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByDescendingFirst2.kt");
-                }
-
-                @TestMetadata("sortedByDescendingFirstOrNull.kt")
-                public void testSortedByDescendingFirstOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByDescendingFirstOrNull.kt");
-                }
-
-                @TestMetadata("sortedByDescendingFirstOrNull2.kt")
-                public void testSortedByDescendingFirstOrNull2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByDescendingFirstOrNull2.kt");
-                }
-
-                @TestMetadata("sortedByDescendingLast.kt")
-                public void testSortedByDescendingLast() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByDescendingLast.kt");
-                }
-
-                @TestMetadata("sortedByDescendingLast2.kt")
-                public void testSortedByDescendingLast2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByDescendingLast2.kt");
-                }
-
-                @TestMetadata("sortedByDescendingLastOrNull.kt")
-                public void testSortedByDescendingLastOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByDescendingLastOrNull.kt");
-                }
-
-                @TestMetadata("sortedByDescendingLastOrNull2.kt")
-                public void testSortedByDescendingLastOrNull2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByDescendingLastOrNull2.kt");
-                }
-
-                @TestMetadata("sortedByFirst.kt")
-                public void testSortedByFirst() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByFirst.kt");
-                }
-
-                @TestMetadata("sortedByFirst2.kt")
-                public void testSortedByFirst2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByFirst2.kt");
-                }
-
-                @TestMetadata("sortedByFirstOrNull.kt")
-                public void testSortedByFirstOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByFirstOrNull.kt");
-                }
-
-                @TestMetadata("sortedByFirstOrNull2.kt")
-                public void testSortedByFirstOrNull2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByFirstOrNull2.kt");
-                }
-
-                @TestMetadata("sortedByLast.kt")
-                public void testSortedByLast() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByLast.kt");
-                }
-
-                @TestMetadata("sortedByLast2.kt")
-                public void testSortedByLast2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByLast2.kt");
-                }
-
-                @TestMetadata("sortedByLastOrNull.kt")
-                public void testSortedByLastOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByLastOrNull.kt");
-                }
-
-                @TestMetadata("sortedByLastOrNull2.kt")
-                public void testSortedByLastOrNull2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedByLastOrNull2.kt");
-                }
-
-                @TestMetadata("sortedDescendingFirst.kt")
-                public void testSortedDescendingFirst() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedDescendingFirst.kt");
-                }
-
-                @TestMetadata("sortedDescendingFirst2.kt")
-                public void testSortedDescendingFirst2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedDescendingFirst2.kt");
-                }
-
-                @TestMetadata("sortedDescendingFirstOrNull.kt")
-                public void testSortedDescendingFirstOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedDescendingFirstOrNull.kt");
-                }
-
-                @TestMetadata("sortedDescendingFirstOrNull2.kt")
-                public void testSortedDescendingFirstOrNull2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedDescendingFirstOrNull2.kt");
-                }
-
-                @TestMetadata("sortedDescendingLast.kt")
-                public void testSortedDescendingLast() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedDescendingLast.kt");
-                }
-
-                @TestMetadata("sortedDescendingLast2.kt")
-                public void testSortedDescendingLast2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedDescendingLast2.kt");
-                }
-
-                @TestMetadata("sortedDescendingLastOrNull.kt")
-                public void testSortedDescendingLastOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedDescendingLastOrNull.kt");
-                }
-
-                @TestMetadata("sortedDescendingLastOrNull2.kt")
-                public void testSortedDescendingLastOrNull2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedDescendingLastOrNull2.kt");
-                }
-
-                @TestMetadata("sortedFirst.kt")
-                public void testSortedFirst() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedFirst.kt");
-                }
-
-                @TestMetadata("sortedFirst2.kt")
-                public void testSortedFirst2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedFirst2.kt");
-                }
-
-                @TestMetadata("sortedFirstOrNull.kt")
-                public void testSortedFirstOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedFirstOrNull.kt");
-                }
-
-                @TestMetadata("sortedFirstOrNull2.kt")
-                public void testSortedFirstOrNull2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedFirstOrNull2.kt");
-                }
-
-                @TestMetadata("sortedLast.kt")
-                public void testSortedLast() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedLast.kt");
-                }
-
-                @TestMetadata("sortedLast2.kt")
-                public void testSortedLast2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedLast2.kt");
-                }
-
-                @TestMetadata("sortedLastOrNull.kt")
-                public void testSortedLastOrNull() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedLastOrNull.kt");
-                }
-
-                @TestMetadata("sortedLastOrNull2.kt")
-                public void testSortedLastOrNull2() throws Exception {
-                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sortedLastOrNull2.kt");
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/text/filterTextSingleOrNull.kt");
                 }
             }
         }
