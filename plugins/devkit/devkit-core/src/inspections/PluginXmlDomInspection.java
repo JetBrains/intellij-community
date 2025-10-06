@@ -342,7 +342,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkMaxLength(ideaPlugin.getId(), 255, holder);
 
     checkTemplateText(project, ideaPlugin.getName(), "Plugin display name here", holder);
-    checkTemplateTextContainsWord(project, ideaPlugin.getName(), holder, "plugin", "IntelliJ", "JetBrains");
+    checkTemplateTextContainsWord(project, ideaPlugin.getName(), holder, "plugin", "support", "integration", "tool", "tools", "IntelliJ", "JetBrains");
     checkMaxLength(ideaPlugin.getName(), 255, holder);
 
     checkMaxLength(ideaPlugin.getDescription(), 65535, holder);
@@ -567,7 +567,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       return false;
     }
 
-    String epName = fragments.get(fragments.size() - 1);
+    String epName = fragments.getLast();
     List<String> butLast = fragments.subList(0, fragments.size() - 1);
     List<String> words = StringUtil.getWordsIn(epName);
     return !ContainerUtil.exists(words, w -> ContainerUtil.exists(butLast, f -> StringUtil.equalsIgnoreCase(w, f)));
@@ -891,7 +891,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkMaxLength(vendor, 255, holder);
 
     //noinspection HttpUrlsUsage
-    checkTemplateText(project, vendor.getUrl(), "http://www.yourcompany.com", holder); // used in old template
+    checkTemplateText(project, vendor.getUrl(), "http://www.yourcompany.com", holder); // used in the old template
     checkTemplateText(project, vendor.getUrl(), "https://www.yourcompany.com", holder);
     checkMaxLength(vendor.getUrl(), 255, holder);
     checkValidWebsite(vendor.getUrl(), holder);
@@ -1356,7 +1356,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     private boolean isFirstDuplicateDeclaration(Component checkedComponent) {
       if (checkedComponent == component) return false;
       XmlElement element = checkedComponent.getXmlElement();
-      if (element != null && element.getTextOffset() >= componentTextOffset) return false; // do not check after component's offset
+      if (element != null && element.getTextOffset() >= componentTextOffset) return false; // do not check after a component's offset
       if (componentLevelsEqual(component, checkedComponent)) {
         if (componentInterfaceClass.equals(checkedComponent.getInterfaceClass().getValue())) {
           if (component instanceof Component.Module) {
