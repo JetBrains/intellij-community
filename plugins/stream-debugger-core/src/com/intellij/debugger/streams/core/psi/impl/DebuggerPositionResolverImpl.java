@@ -21,7 +21,7 @@ public final class DebuggerPositionResolverImpl implements DebuggerPositionResol
     final VirtualFile file = position.getFile();
     if (file.isValid() && 0 <= offset && offset < file.getLength()) {
       @Nullable PsiFile psiFile = PsiManager.getInstance(session.getProject()).findFile(file);
-      return psiFile != null ? psiFile.findElementAt(offset) : null;
+      return psiFile != null && psiFile.isValid() ? psiFile.findElementAt(offset) : null;
     }
 
     return null;
