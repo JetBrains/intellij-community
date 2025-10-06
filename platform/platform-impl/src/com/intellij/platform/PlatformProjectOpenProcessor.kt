@@ -8,7 +8,6 @@ import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
@@ -21,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.checkTrustedState
 import com.intellij.openapi.project.impl.doCreateFakeModuleForDirectoryProjectConfigurators
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Key
@@ -31,13 +29,16 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.workspaceModel.ide.ProjectRootEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -65,6 +66,8 @@ fun isConfiguredByPlatformProcessor(project: Project): Boolean = project.getUser
 internal fun isLoadedFromCacheButHasNoModules(project: Project): Boolean {
   return project.getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
 }
+
+private object TempProjectEntitySource : EntitySource
 
 class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectOpenProcessor {
   enum class Option {
@@ -157,34 +160,20 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       val baseDir = Files.createTempDirectory(dummyProjectName)
       val copy = options.copy(
         isNewProject = true,
+        createModule = false,
         projectName = dummyProjectName,
         runConfigurators = true,
-        preparedToOpen = { module ->
-          // adding content root for chosen (single) file
-          val model = readAction { ModuleRootManager.getInstance(module).modifiableModel }
-          try {
-            val entries = model.contentEntries
-            // remove custom content entry created for temp directory
-            if (entries.size == 1) {
-              model.removeContentEntry(entries.first())
-            }
-            model.addContentEntry(VfsUtilCore.pathToUrl(file.toString()))
+        beforeOpen = { project ->
+          // adding chosen (single) file to non-indexable project roots
+          val vfuManager = project.workspaceModel.getVirtualFileUrlManager()
+          val fileToAdd = vfuManager.getOrCreateFromUrl(file.toUri().toString())
+          val entityFile = ProjectRootEntity.invoke(fileToAdd, TempProjectEntitySource)
+          project.workspaceModel.update("Open temp project") { storage ->
+            storage.addEntity(entityFile)
+          }
 
-            withContext(Dispatchers.EDT) {
-              if (!module.isDisposed) {
-                ApplicationManager.getApplication().runWriteAction(model::commit)
-              }
-            }
-          }
-          finally {
-            if (!model.isDisposed) {
-              model.dispose()
-            }
-          }
-        },
-        beforeOpen = {
-          it.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
-          options.beforeOpen?.invoke(it) ?: true
+          project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
+          options.beforeOpen?.invoke(project) ?: true
         }
       )
       TrustedPaths.getInstance().setProjectPathTrusted(path = baseDir, value = true)
