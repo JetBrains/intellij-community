@@ -58,9 +58,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     )
 
     val consoleView = if (useFeProxy()) {
-      currentSession.getRunContentDescriptorIfInitialized()?.coroutineScope?.let { scope ->
-        currentSession.consoleView!!.toRpc(scope, debugProcess)
-      }
+      currentSession.consoleView!!.toRpc(currentSession.tabCoroutineScope, debugProcess)
     }
     else {
       null
