@@ -197,7 +197,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return myDisplayStrategy.getBackgroundColor();
   }
 
-  private CollectionListModelWithBatchUpdate<LookupElement> getListModel() {
+  private @NotNull CollectionListModelWithBatchUpdate<LookupElement> getListModel() {
     return (CollectionListModelWithBatchUpdate<LookupElement>)list.getModel();
   }
 
@@ -371,7 +371,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myResizePending = true;
   }
 
-  public Collection<LookupElementAction> getActionsFor(LookupElement element) {
+  public @NotNull Collection<LookupElementAction> getActionsFor(LookupElement element) {
     CollectConsumer<LookupElementAction> consumer = new CollectConsumer<>();
     for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
       provider.fillActions(element, this, consumer);
@@ -382,7 +382,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return consumer.getResult();
   }
 
-  public JList<LookupElement> getList() {
+  public @NotNull JList<LookupElement> getList() {
     return list;
   }
 
@@ -589,7 +589,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  private void updateListHeight(ListModel<LookupElement> model) {
+  private void updateListHeight(@NotNull ListModel<LookupElement> model) {
     int index = 0;
     LookupElement element = model.getElementAt(0);
     if (element.as(SeparatorLookupElement.class) != null && model.getSize() > 1) {
@@ -601,7 +601,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     list.setVisibleRowCount(Math.min(model.getSize(), myPresentation.getMaxVisibleItemsCount()));
   }
 
-  private void addEmptyItem(CollectionListModel<? super LookupElement> model) {
+  private void addEmptyItem(@NotNull CollectionListModel<? super LookupElement> model) {
     LookupElement item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), false);
     model.add(item);
 
@@ -773,7 +773,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @ApiStatus.Internal
-  protected void updateLocation(Point p) {
+  protected void updateLocation(@NotNull Point p) {
     myDisplayStrategy.updateLocation(this, editor, p);
   }
 
@@ -1035,7 +1035,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
-  public LookupElement getCurrentItemOrEmpty() {
+  public @Nullable LookupElement getCurrentItemOrEmpty() {
     return list.getSelectedValue();
   }
 
@@ -1137,7 +1137,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  public void replacePrefix(String presentPrefix, String newPrefix) {
+  public void replacePrefix(@NotNull String presentPrefix, @NotNull String newPrefix) {
     if (!performGuardedChange(() -> {
       EditorModificationUtilEx.deleteSelectedText(editor);
       int offset = editor.getCaretModel().getOffset();
@@ -1163,7 +1163,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @Override
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     PsiFile file = getPsiFile();
     if (file == null) return null;
 
@@ -1227,7 +1227,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return list.getLastVisibleIndex();
   }
 
-  public List<LookupElement> getVisibleItems() {
+  public @NotNull List<LookupElement> getVisibleItems() {
     ThreadingAssertions.assertEventDispatchThread();
 
     var itemsCount = list.getItemsCount();
@@ -1330,7 +1330,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  private String formatDisposeTrace() {
+  private @NotNull String formatDisposeTrace() {
     return ExceptionUtil.getThrowableText(disposeTrace) + "\n============";
   }
 
@@ -1420,11 +1420,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return myPresentableArranger.getRelevanceObjects(items, hideSingleValued);
   }
 
-  public void setPrefixChangeListener(PrefixChangeListener listener) {
+  public void setPrefixChangeListener(@NotNull PrefixChangeListener listener) {
     myPrefixChangeListeners.add(listener);
   }
 
-  public void addPrefixChangeListener(PrefixChangeListener listener, Disposable parentDisposable) {
+  public void addPrefixChangeListener(@NotNull PrefixChangeListener listener, @NotNull Disposable parentDisposable) {
     ContainerUtil.add(listener, myPrefixChangeListeners, parentDisposable);
   }
 
