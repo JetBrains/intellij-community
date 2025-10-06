@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
-import org.jetbrains.kotlin.idea.completion.impl.k2.completionSessionProperty
+import org.jetbrains.kotlin.idea.completion.impl.k2.LazyCompletionSessionProperty
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -20,27 +20,16 @@ import org.jetbrains.kotlin.psi.UserDataProperty
 internal object PreferMatchingArgumentNameWeigher {
     private const val WEIGHER_ID = "kotlin.preferMatchingArgumentName"
 
-    private var K2CompletionSectionContext<*>.callCandidates: List<KaFunctionCall<*>>? by completionSessionProperty()
+    private var K2CompletionSectionContext<*>.callCandidates: List<KaFunctionCall<*>> by LazyCompletionSessionProperty {
+        val scopeContext = contextOf<K2CompletionSectionContext<*>>()
+        val nameExpression = scopeContext.positionContext.position.parent as? KtSimpleNameExpression
 
-    context(_: KaSession, scopeContext: K2CompletionSectionContext<*>)
-    private fun initializeOrGetCallCandidates(nameExpression: KtSimpleNameExpression): List<KaFunctionCall<*>> {
-        scopeContext.callCandidates?.let { return it }
+        val valueArgument = nameExpression?.let(::findValueArgument)
+        val valueArgumentList = valueArgument?.parent as? KtValueArgumentList
+        val callElement = valueArgumentList?.parent as? KtCallElement
+        val callCandidates = callElement?.let { collectCallCandidates(it) } ?: emptyList()
 
-        val candidates: List<KaFunctionCall<*>> = run {
-
-            val valueArgument = findValueArgument(nameExpression) ?: return emptyList()
-
-            val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return@run emptyList()
-
-            val callElement = valueArgumentList.parent as? KtCallElement ?: return@run emptyList()
-
-            collectCallCandidates(callElement)
-                .mapNotNull { it.candidate as? KaFunctionCall<*> }
-        }
-
-        scopeContext.callCandidates = candidates
-
-        return candidates
+        callCandidates.mapNotNull { it.candidate as? KaFunctionCall<*> }
     }
 
     private const val WEIGHT_MATCHING_NAME = 0.0f
@@ -70,8 +59,7 @@ internal object PreferMatchingArgumentNameWeigher {
         if (element.`object` is NamedArgumentLookupObject) return
         val nameExpression = scopeContext.positionContext.position.parent as? KtSimpleNameExpression ?: return
 
-        val candidates = initializeOrGetCallCandidates(nameExpression)
-
+        val candidates = scopeContext.callCandidates
         if (candidates.isEmpty()) return
 
         val availableNames = candidates.mapNotNull { it.argumentMapping[nameExpression]?.name }
