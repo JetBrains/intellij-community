@@ -102,6 +102,7 @@ data class ConversionId(val firstFqName: String, val secondFqName: String) {
 
 @Suppress("MemberVisibilityCanBePrivate")
 object CallChainConversions {
+    // collections
     private val KOTLIN_COLLECTIONS_ANY = FqName("kotlin.collections.any")
     private val KOTLIN_COLLECTIONS_COUNT = FqName("kotlin.collections.count")
     private val KOTLIN_COLLECTIONS_FILTER = FqName("kotlin.collections.filter")
@@ -131,6 +132,8 @@ object CallChainConversions {
     private val KOTLIN_COLLECTIONS_SORTED_DESCENDING = FqName("kotlin.collections.sortedDescending")
     private val KOTLIN_COLLECTIONS_SUM = FqName("kotlin.collections.sum")
     private val KOTLIN_COLLECTIONS_TO_MAP = FqName("kotlin.collections.toMap")
+    
+    // text
     private val KOTLIN_TEXT_ANY = FqName("kotlin.text.any")
     private val KOTLIN_TEXT_COUNT = FqName("kotlin.text.count")
     private val KOTLIN_TEXT_FILTER = FqName("kotlin.text.filter")
@@ -180,7 +183,7 @@ object CallChainConversions {
     const val SUM: String = "sum"
     const val TO_MAP: String = "toMap"
 
-    val conversionsList: List<CallChainConversion> by lazy {
+    private val collectionsOperationsConversions: List<CallChainConversion> by lazy {
         listOf(
             CallChainConversion(KOTLIN_COLLECTIONS_FILTER, KOTLIN_COLLECTIONS_FIRST, FIRST),
             CallChainConversion(KOTLIN_COLLECTIONS_FILTER, KOTLIN_COLLECTIONS_FIRST_OR_NULL, FIRST_OR_NULL),
@@ -209,18 +212,6 @@ object CallChainConversions {
             CallChainConversion(KOTLIN_COLLECTIONS_SORTED_BY, KOTLIN_COLLECTIONS_LAST, MAX_BY, addNotNullAssertion = true),
             CallChainConversion(KOTLIN_COLLECTIONS_SORTED_BY_DESCENDING, KOTLIN_COLLECTIONS_FIRST, MAX_BY, addNotNullAssertion = true),
             CallChainConversion(KOTLIN_COLLECTIONS_SORTED_BY_DESCENDING, KOTLIN_COLLECTIONS_LAST, MIN_BY, addNotNullAssertion = true),
-
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_FIRST, FIRST),
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_FIRST_OR_NULL, FIRST_OR_NULL),
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_LAST, LAST),
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_LAST_OR_NULL, LAST_OR_NULL),
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_SINGLE, SINGLE),
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_SINGLE_OR_NULL, SINGLE_OR_NULL),
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_IS_NOT_EMPTY, ANY),
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_IS_EMPTY, NONE),
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_COUNT, COUNT),
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_ANY, ANY),
-            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_NONE, NONE),
 
             CallChainConversion(KOTLIN_COLLECTIONS_MAP, KOTLIN_COLLECTIONS_JOIN_TO, JOIN_TO, enableSuspendFunctionCall = false),
             CallChainConversion(KOTLIN_COLLECTIONS_MAP, KOTLIN_COLLECTIONS_JOIN_TO_STRING, JOIN_TO_STRING, enableSuspendFunctionCall = false),
@@ -272,11 +263,39 @@ object CallChainConversions {
             ),
 
             CallChainConversion(KOTLIN_COLLECTIONS_MAP, KOTLIN_COLLECTIONS_FLATTEN, FLAT_MAP),
-
-            CallChainConversion(KOTLIN_COLLECTIONS_LIST_OF, KOTLIN_COLLECTIONS_FILTER_NOT_NULL, LIST_OF_NOT_NULL)
-        ).flatMap {
-            it.withAdditionalMinMaxConversions()
+        ).flatMap { 
+            it.withAdditionalMinMaxConversions() 
         }
+    }
+
+    val collectionCreationConversions: List<CallChainConversion> by lazy {
+        listOf(
+            CallChainConversion(KOTLIN_COLLECTIONS_LIST_OF, KOTLIN_COLLECTIONS_FILTER_NOT_NULL, LIST_OF_NOT_NULL)
+        )
+    }
+
+    val textOperationsConversions: List<CallChainConversion> by lazy {
+        listOf(
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_FIRST, FIRST),
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_FIRST_OR_NULL, FIRST_OR_NULL),
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_LAST, LAST),
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_LAST_OR_NULL, LAST_OR_NULL),
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_SINGLE, SINGLE),
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_SINGLE_OR_NULL, SINGLE_OR_NULL),
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_IS_NOT_EMPTY, ANY),
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_IS_EMPTY, NONE),
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_COUNT, COUNT),
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_ANY, ANY),
+            CallChainConversion(KOTLIN_TEXT_FILTER, KOTLIN_TEXT_NONE, NONE),
+        )
+    }
+
+    val conversionsList: List<CallChainConversion> by lazy {
+        listOf(
+            collectionsOperationsConversions,
+            collectionCreationConversions,
+            textOperationsConversions,
+        ).flatten()
     }
 
     private fun CallChainConversion.withAdditionalMinMaxConversions(): List<CallChainConversion> {
