@@ -210,9 +210,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         if (t !is CancellationException) {
           LOG.error(t)
         }
-        if (!result.isCompleted) {
-          this@FormattingRequestImpl.cancel()
-        }
+        this@FormattingRequestImpl.cancel()
         taskJob.cancel()
         throw t
       }
