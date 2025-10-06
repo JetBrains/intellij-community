@@ -1,0 +1,15 @@
+<problems>
+  <problem>
+    <file>SampleK.kt</file>
+    <line>7</line>
+    <module>testKotlinImportAlias</module>
+    <package>com.example</package>
+    <entry_point TYPE="method" FQNAME="com.example.SampleK void main()" />
+    <problem_class id="ReplaceWithImportAlias" severity="INFORMATION" attribute_key="INFORMATION_ATTRIBUTES">Fully qualified name can be replaced with existing import alias</problem_class>
+    <description>Replace with import alias</description>
+    <highlighted_element>SampleJ</highlighted_element>
+    <language>kotlin</language>
+    <offset>30</offset>
+    <length>7</length>
+  </problem>
+</problems>

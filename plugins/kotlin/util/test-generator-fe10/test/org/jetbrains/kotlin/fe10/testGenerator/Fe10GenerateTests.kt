@@ -898,7 +898,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
     testGroup("idea/tests", category = INSPECTIONS) {
         testClass<AbstractMultiFileInspectionTest> {
-            model("multiFileInspections", pattern = TEST, flatten = true)
+            model("multiFileInspections", pattern = TEST, flatten = true,
+            excludedDirectories = listOf(
+                "kotlinImportAlias", // K2
+            ))
         }
     }
 

@@ -118,6 +118,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/mapGetWithNotNullAssertionOperator")
             model("${idea}/inspectionsLocal/replaceSubstring")
             model("${idea}/inspectionsLocal/replaceWithIgnoreCaseEquals")
+            model("${idea}/inspectionsLocal/replaceWithImportAlias")
             model("${idea}/inspectionsLocal/replaceToWithInfixForm")
             model("${idea}/inspectionsLocal/addOperatorModifier")
             model("${idea}/inspectionsLocal/kotlinUnreachableCode")
