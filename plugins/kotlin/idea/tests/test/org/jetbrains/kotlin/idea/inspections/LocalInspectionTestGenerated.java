@@ -4282,11 +4282,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/extensionMethodSuitableForList.kt");
         }
 
-        @TestMetadata("featureDisabled.kt")
-        public void testFeatureDisabled() throws Exception {
-            runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/featureDisabled.kt");
-        }
-
         @TestMetadata("forEachInsideEnumBody.kt")
         public void testForEachInsideEnumBody() throws Exception {
             runTest("testData/inspectionsLocal/enumValuesSoftDeprecate/forEachInsideEnumBody.kt");
@@ -8712,11 +8707,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantCompanionReference/enumEntries2.kt");
         }
 
-        @TestMetadata("enumEntries3.kt")
-        public void testEnumEntries3() throws Exception {
-            runTest("testData/inspectionsLocal/redundantCompanionReference/enumEntries3.kt");
-        }
-
         @TestMetadata("enumValueOf.kt")
         public void testEnumValueOf() throws Exception {
             runTest("testData/inspectionsLocal/redundantCompanionReference/enumValueOf.kt");
@@ -11702,11 +11692,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notApplicableEnumEntries.kt")
         public void testNotApplicableEnumEntries() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumEntries.kt");
-        }
-
-        @TestMetadata("notApplicableEnumEntries2.kt")
-        public void testNotApplicableEnumEntries2() throws Exception {
-            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableEnumEntries2.kt");
         }
 
         @TestMetadata("notApplicableEnumEntry.kt")
@@ -17322,11 +17307,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("unusedEnumEntries5.kt")
             public void testUnusedEnumEntries5() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntries5.kt");
-            }
-
-            @TestMetadata("unusedEnumEntries6.kt")
-            public void testUnusedEnumEntries6() throws Exception {
-                runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntries6.kt");
             }
 
             @TestMetadata("unusedEnumEntry.kt")
