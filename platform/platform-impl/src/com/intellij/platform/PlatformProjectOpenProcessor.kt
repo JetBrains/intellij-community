@@ -301,7 +301,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return project
     }
 
-    suspend fun runDirectoryProjectConfigurators(projectFile: Path, project: Project, newProject: Boolean, createModule: Boolean): Module? {
+    @JvmOverloads
+    suspend fun runDirectoryProjectConfigurators(
+      projectFile: Path,
+      project: Project,
+      newProject: Boolean,
+      createModule: Boolean = true
+    ): Module? {
       project.putUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR, true)
 
       val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectFile)!!
