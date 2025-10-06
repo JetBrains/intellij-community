@@ -19,7 +19,19 @@ interface EelMountRoot {
   val targetRoot: EelPath
   val localRoot: EelPath
 
-  fun canReadPermissionsDirectly(targetEel: EelFileSystemApi, localEel: EelFileSystemApi): Boolean
+  @ApiStatus.Internal
+  sealed class DirectAccessOptions {
+    object BasicAttributes : DirectAccessOptions()
+    object PosixAttributes : DirectAccessOptions()
+    object PosixAttributesAndAllAccess : DirectAccessOptions()
+    object CaseSensitivity : DirectAccessOptions()
+    object BasicAttributesAndWritable : DirectAccessOptions()
+  }
+
+  /**
+   * Whether the operations with
+   */
+  fun canReadPermissionsDirectly(targetEel: EelFileSystemApi, localEel: EelFileSystemApi, options: DirectAccessOptions): Boolean
 }
 
 @ApiStatus.Internal
@@ -29,6 +41,6 @@ fun EelMountRoot.transformPath(targetPath: EelPath): EelPath {
 }
 
 @ApiStatus.Internal
-suspend fun EelMountRoot.canReadPermissionsDirectly(): Boolean {
-  return canReadPermissionsDirectly(targetRoot.descriptor.toEelApi().fs, localRoot.descriptor.toEelApi().fs)
+suspend fun EelMountRoot.canReadPermissionsDirectly(options: EelMountRoot.DirectAccessOptions): Boolean {
+  return canReadPermissionsDirectly(targetRoot.descriptor.toEelApi().fs, localRoot.descriptor.toEelApi().fs, options)
 }

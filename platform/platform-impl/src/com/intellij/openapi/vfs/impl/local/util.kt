@@ -21,16 +21,16 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.*
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
-import com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttributes
 import com.intellij.platform.ijent.community.impl.nio.fsBlocking
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.toByteArray
-import fleet.util.cast
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
+import java.time.Instant
 
 private val map = ContainerUtil.createConcurrentWeakMap<Path, EelApi>()
 
@@ -89,25 +89,24 @@ internal fun toEelPath(parent: VirtualFile, childName: String): EelPath? =
 internal fun fetchCaseSensitivityUsingEel(eelPath: EelPath): FileAttributes.CaseSensitivity {
   val directAccessPath = eelPath.descriptor.mountProvider()?.getMountRoot(eelPath)?.takeIf {
     runBlocking {
-      it.canReadPermissionsDirectly()
+      it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.CaseSensitivity)
     }
   }?.transformPath(eelPath)
-  val eelPathToCheck: EelPath
-  if (directAccessPath != null && directAccessPath.descriptor == LocalEelDescriptor) {
+  val eelPathToCheck: EelPath = if (directAccessPath != null && directAccessPath.descriptor == LocalEelDescriptor) {
     if (Registry.`is`("vfs.fetch.case.sensitivity.using.eel.local")) {
-      eelPathToCheck = directAccessPath
+      directAccessPath
     }
     else {
       val ioFile = directAccessPath.parent?.asNioPath()?.toFile()
-      if (ioFile != null) {
-        return FileSystemUtil.readParentCaseSensitivity(ioFile)
+      return if (ioFile != null) {
+        FileSystemUtil.readParentCaseSensitivity(ioFile)
       }
       else {
-        return FileAttributes.CaseSensitivity.UNKNOWN
+        FileAttributes.CaseSensitivity.UNKNOWN
       }
     }
   } else {
-    eelPathToCheck = eelPath
+    eelPath
   }
 
   return runBlocking {
@@ -140,7 +139,7 @@ internal fun readAttributesUsingEel(nioPath: Path): FileAttributes {
   else {
     val directAccessPath = eelPath.descriptor.mountProvider()?.getMountRoot(eelPath)?.takeIf {
       fsBlocking {
-        it.canReadPermissionsDirectly()
+        it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.BasicAttributesAndWritable)
       }
     }?.transformPath(eelPath)
     if (directAccessPath != null && directAccessPath.descriptor == LocalEelDescriptor) {
@@ -152,7 +151,7 @@ internal fun readAttributesUsingEel(nioPath: Path): FileAttributes {
       when (val eelFsApi = eelPath.descriptor.toEelApi().fs) {
         is EelFileSystemPosixApi -> {
           val fileInfo = eelFsApi.stat(eelPath).eelIt().getOrThrowFileSystemException()
-          fileInfo.toVfs(eelFsApi)
+          fileInfo.toVfs(fileInfo.isWritable(eelFsApi))
         }
         else -> TODO()
       }
@@ -175,7 +174,7 @@ internal fun listWithAttributesUsingEel(
     }
     val directAccessPath = eelPath.descriptor.mountProvider()?.getMountRoot(eelPath)?.takeIf {
       fsBlocking {
-        it.canReadPermissionsDirectly()
+        it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.BasicAttributesAndWritable)
       }
     }?.transformPath(eelPath)
     if (directAccessPath != null && directAccessPath.descriptor === LocalEelDescriptor) {
@@ -189,7 +188,7 @@ internal fun listWithAttributesUsingEel(
     visitDirectory(eelPath, filter) { file: EelPath, attributes: EelPosixFileInfo, eelFsApi: EelFileSystemPosixApi ->
       try {
         //val attributes = amendAttributes(file, fromNio(file, attributes))
-        childrenWithAttributes[file.fileName] = attributes.toVfs(eelFsApi)
+        childrenWithAttributes[file.fileName] = attributes.toVfs(attributes.isWritable(eelFsApi))
       }
       catch (e: Exception) {
         LOG.debug(e)
@@ -242,17 +241,19 @@ private fun visitDirectory(
   }
 }
 
-fun EelPosixFileInfo.toVfs(eelFsApi: EelFileSystemPosixApi): FileAttributes {
+fun EelPosixFileInfo.isWritable(eelFsApi: EelFileSystemPosixApi): Boolean {
+  return EelPathUtils.checkAccess(eelFsApi.user, this, AccessMode.WRITE) == null
+}
+
+fun EelFileInfo.toVfs(isWritable: Boolean): FileAttributes {
   val attrs = this
-  val nioAttributes = IjentNioPosixFileAttributes(attrs)
 
   val isDirectory = attrs.type is EelFileInfo.Type.Directory
   val isSpecial = attrs.type is EelFileInfo.Type.Other
   val isSymLink = attrs.type is EelPosixFileInfo.Type.Symlink
   val isHidden = false
-  val length = nioAttributes.size()
-  val lastModified = nioAttributes.lastModifiedTime().toMillis()
-  val isWritable: Boolean = EelPathUtils.checkAccess(eelFsApi.user, attrs, AccessMode.WRITE) == null
+  val length = (attrs.type as? EelFileInfo.Type.Regular)?.size ?: 0
+  val lastModified = FileTime.from(attrs.lastModifiedTime?.toInstant() ?: Instant.MIN).toMillis()
   val caseSensitivity = when (val type = attrs.type) {
     is EelFileInfo.Type.Directory -> EelPathUtils.getCaseSensitivity(type)
     else -> FileAttributes.CaseSensitivity.UNKNOWN

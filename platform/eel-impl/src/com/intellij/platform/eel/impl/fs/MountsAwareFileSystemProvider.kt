@@ -7,6 +7,7 @@ import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelMountProvider
+import com.intellij.platform.eel.provider.EelMountRoot
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.transformPath
@@ -23,10 +24,6 @@ import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ExecutorService
-
-interface EelWrappedPath {
-  val eelPath: EelPath?
-}
 
 /**
  * A file system provider that optimizes access to files in Docker containers by directly accessing
@@ -48,32 +45,22 @@ abstract class MountsAwareFileSystemProvider(
    * Checks if the given path is in a mounted volume and can be accessed directly.
    * Returns the local path if it can be accessed directly, null otherwise.
    */
-  private fun getDirectAccessPath(path: Path?, vararg attrs: FileAttribute<*>, needPermissions: Boolean = false): Path? {
+  private fun getDirectAccessPath(path: Path?, directAccess: EelMountRoot.DirectAccessOptions = EelMountRoot.DirectAccessOptions.BasicAttributes): Path? {
     if (path == null) return null
     val (eelPath, eelFsApi) = unwrapEelPath(path) ?: return null
     val mountRoot = mountProvider.getMountRoot(eelPath) ?: return null
     val directAccessPath = mountRoot.transformPath(eelPath).asNioPath()
-    if (attrs.containsPosixAttribute() && !directAccessPath.isPosixSupported()) return null
-    if (needPermissions && !mountRoot.canReadPermissionsDirectly(eelFsApi, localEel.fs)) return null
+    if (!mountRoot.canReadPermissionsDirectly(eelFsApi, localEel.fs, directAccess)) return null
     return directAccessPath
   }
   private fun <T : FileAttribute<*>> Array<T>.containsPosixAttribute(): Boolean {
     return any { attr -> attr.name().startsWith("posix:") }
   }
-  private fun Path.isPosixSupported(): Boolean {
-    return try {
-      Files.getFileStore(this).supportsFileAttributeView("posix")
-    }
-    catch (e: IOException) {
-      LOG.debug("Could not determine POSIX attribute support for $this", e)
-      false
-    }
-  }
 
 
   protected fun <T> tryUseDirectAccess(source: Path, target: Path, vararg attrs: FileAttribute<*>, block: (Path, Path) -> T): T? {
-    val sourceDirect = getDirectAccessPath(source, *attrs) ?: return null
-    val targetDirect = getDirectAccessPath(target, *attrs) ?: return null
+    val sourceDirect = getDirectAccessPath(source, -attrs) ?: return null
+    val targetDirect = getDirectAccessPath(target, -attrs) ?: return null
 
     try {
       return block(sourceDirect, targetDirect)
@@ -85,8 +72,15 @@ abstract class MountsAwareFileSystemProvider(
     return null
   }
 
-  protected fun <T> Path.tryUseDirectAccess(vararg attrs: FileAttribute<*>, needPermissions: Boolean = false, block: (directPath: Path) -> T): T? {
-    val directPath = getDirectAccessPath(this, *attrs, needPermissions = needPermissions) ?: return null
+  private operator fun Array<out FileAttribute<*>>.unaryMinus(): EelMountRoot.DirectAccessOptions {
+    return if (this.containsPosixAttribute()) {
+      EelMountRoot.DirectAccessOptions.PosixAttributes
+    }
+    else EelMountRoot.DirectAccessOptions.BasicAttributes
+  }
+
+  protected fun <T> Path.tryUseDirectAccess(directAccess: EelMountRoot.DirectAccessOptions = EelMountRoot.DirectAccessOptions.BasicAttributes, block: (directPath: Path) -> T): T? {
+    val directPath = getDirectAccessPath(this, directAccess) ?: return null
 
     try {
       return block(directPath)
@@ -111,19 +105,19 @@ abstract class MountsAwareFileSystemProvider(
   }
 
   override fun newByteChannel(path: Path?, options: Set<OpenOption>, vararg attrs: FileAttribute<*>): SeekableByteChannel {
-    return path?.tryUseDirectAccess(*attrs) {
+    return path?.tryUseDirectAccess(-attrs) {
       Files.newByteChannel(it, options, *attrs)
     } ?: delegate.newByteChannel(path, options, *attrs)
   }
 
   override fun newFileChannel(path: Path?, options: Set<OpenOption>, vararg attrs: FileAttribute<*>): FileChannel {
-    return path?.tryUseDirectAccess(*attrs) {
+    return path?.tryUseDirectAccess(-attrs) {
       FileChannel.open(it, options, *attrs)
     } ?: delegate.newFileChannel(path, options, *attrs)
   }
 
   override fun newAsynchronousFileChannel(path: Path?, options: Set<OpenOption?>?, executor: ExecutorService?, vararg attrs: FileAttribute<*>): AsynchronousFileChannel? {
-    return path?.tryUseDirectAccess(*attrs) {
+    return path?.tryUseDirectAccess(-attrs) {
       AsynchronousFileChannel.open(it, options, executor, *attrs)
     } ?: delegate.newAsynchronousFileChannel(path, options, executor, *attrs)
   }
@@ -135,7 +129,7 @@ abstract class MountsAwareFileSystemProvider(
   }
 
   override fun createDirectory(dir: Path?, vararg attrs: FileAttribute<*>) {
-    dir?.tryUseDirectAccess(*attrs) {
+    dir?.tryUseDirectAccess(-attrs) {
       Files.createDirectory(it, *attrs)
     } ?: delegate.createDirectory(dir, *attrs)
   }
@@ -217,7 +211,7 @@ abstract class MountsAwareFileSystemProvider(
   }
 
   override fun checkAccess(path: Path?, vararg modes: AccessMode) {
-    path?.tryUseDirectAccess(needPermissions = true) {
+    path?.tryUseDirectAccess(EelMountRoot.DirectAccessOptions.PosixAttributesAndAllAccess) {
       it.fileSystem.provider().checkAccess(it, *modes)
     } ?: delegate.checkAccess(path, *modes)
   }
