@@ -2034,6 +2034,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/listOfNotNullWithComment.kt");
                 }
 
+                @TestMetadata("mapFlatten.kt")
+                public void testMapFlatten() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapFlatten.kt");
+                }
+
+                @TestMetadata("mapFlattenWithReference.kt")
+                public void testMapFlattenWithReference() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapFlattenWithReference.kt");
+                }
+
                 @TestMetadata("mapMax.kt")
                 public void testMapMax() throws Exception {
                     runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapMax.kt");

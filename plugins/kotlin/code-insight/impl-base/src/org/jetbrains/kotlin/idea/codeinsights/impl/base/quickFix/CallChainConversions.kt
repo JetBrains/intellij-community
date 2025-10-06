@@ -108,6 +108,7 @@ object CallChainConversions {
     private val KOTLIN_COLLECTIONS_FILTER_NOT_NULL = FqName("kotlin.collections.filterNotNull")
     private val KOTLIN_COLLECTIONS_FIRST = FqName("kotlin.collections.first")
     private val KOTLIN_COLLECTIONS_FIRST_OR_NULL = FqName("kotlin.collections.firstOrNull")
+    private val KOTLIN_COLLECTIONS_FLATTEN = FqName("kotlin.collections.flatten")
     private val KOTLIN_COLLECTIONS_IS_NOT_EMPTY = FqName("kotlin.collections.isNotEmpty")
     private val KOTLIN_COLLECTIONS_JOIN_TO = FqName("kotlin.collections.joinTo")
     private val KOTLIN_COLLECTIONS_JOIN_TO_STRING = FqName("kotlin.collections.joinToString")
@@ -146,6 +147,7 @@ object CallChainConversions {
     // replacements
     const val FIRST: String = "first"
     const val FIRST_OR_NULL: String = "firstOrNull"
+    const val FLAT_MAP: String = "flatMap"
     const val LAST: String = "last"
     const val LAST_OR_NULL: String = "lastOrNull"
     const val SINGLE: String = "single"
@@ -268,6 +270,9 @@ object CallChainConversions {
                 KOTLIN_COLLECTIONS_MAP_NOT_NULL, KOTLIN_COLLECTIONS_FIRST_OR_NULL, FIRST_NOT_NULL_OF_OR_NULL,
                 replaceableApiVersion = ApiVersion.KOTLIN_1_5
             ),
+
+            CallChainConversion(KOTLIN_COLLECTIONS_MAP, KOTLIN_COLLECTIONS_FLATTEN, FLAT_MAP),
+
             CallChainConversion(KOTLIN_COLLECTIONS_LIST_OF, KOTLIN_COLLECTIONS_FILTER_NOT_NULL, LIST_OF_NOT_NULL)
         ).map {
             when (val replacement = it.replacement) {

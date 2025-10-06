@@ -11143,6 +11143,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCallChain/listOfNotNullWithComment.kt");
             }
 
+            @TestMetadata("mapFlatten.kt")
+            public void testMapFlatten() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCallChain/mapFlatten.kt");
+            }
+
+            @TestMetadata("mapFlattenWithReference.kt")
+            public void testMapFlattenWithReference() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCallChain/mapFlattenWithReference.kt");
+            }
+
             @TestMetadata("mapMax.kt")
             public void testMapMax() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/simplifiableCallChain/mapMax.kt");
