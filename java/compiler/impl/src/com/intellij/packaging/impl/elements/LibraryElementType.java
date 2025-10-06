@@ -47,7 +47,7 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
 
   private static List<Library> getAllLibraries(ArtifactEditorContext context) {
     List<Library> libraries = new ArrayList<>();
-    ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraries());
+    ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getGlobalLibraryTable(context.getProject()).getLibraries());
     ContainerUtil.addAll(libraries, LibraryTablesRegistrar.getInstance().getLibraryTable(context.getProject()).getLibraries());
     return libraries;
   }

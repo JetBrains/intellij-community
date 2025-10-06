@@ -692,6 +692,8 @@ com.intellij.ide.bookmark.BookmarksManager
 - f:setBoilerplate(Z):V
 - f:setFrameworkLanguage(java.lang.String):V
 - f:setFrameworkVersion(java.lang.String):V
+com.intellij.openapi.roots.ModifiableModelsProvider
+- *a:getGlobalLibraryTableModifiableModel(com.intellij.openapi.project.Project):com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
 *:com.intellij.openapi.roots.SkipAddingToWatchedRoots
 *a:com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
 - <init>():V

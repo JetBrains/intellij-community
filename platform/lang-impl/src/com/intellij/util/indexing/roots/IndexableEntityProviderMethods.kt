@@ -54,7 +54,7 @@ object IndexableEntityProviderMethods {
 
   fun createLibraryIterators(name: String, project: Project): List<IndexableFilesIterator> = runReadAction {
     val registrar = LibraryTablesRegistrar.getInstance()
-    getLibIteratorsByName(registrar.libraryTable, name)?.also { return@runReadAction it }
+    getLibIteratorsByName(registrar.getGlobalLibraryTable(project), name)?.also { return@runReadAction it }
     for (customLibraryTable in registrar.customLibraryTables) {
       getLibIteratorsByName(customLibraryTable, name)?.also { return@runReadAction it }
     }

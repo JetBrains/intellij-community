@@ -10,7 +10,10 @@ import com.intellij.openapi.roots.libraries.CustomLibraryTableDescription;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.platform.eel.EelMachine;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelMachine;
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +37,16 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
 
   @Override
   public @NotNull LibraryTable getLibraryTable() {
-    // todo: IJPL-175225 add possibility to select non-local global library tables
     return GlobalLibraryTableBridge.Companion.getInstance(LocalEelMachine.INSTANCE);
+  }
+
+  @Override
+  public @NotNull LibraryTable getGlobalLibraryTable(@NotNull Project project) {
+    if (!Registry.is("ide.workspace.model.per.environment.model.separation", false)) {
+      return getLibraryTable();
+    }
+    EelMachine eelMachine = EelProviderUtil.getEelDescriptor(project).getMachine();
+    return GlobalLibraryTableBridge.Companion.getInstance(eelMachine);
   }
 
   @Override
@@ -47,7 +58,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
   public LibraryTable getLibraryTableByLevel(String level, @NotNull Project project) {
     return switch (level) {
       case LibraryTablesRegistrar.PROJECT_LEVEL -> getLibraryTable(project);
-      case LibraryTablesRegistrar.APPLICATION_LEVEL -> getLibraryTable();
+      case LibraryTablesRegistrar.APPLICATION_LEVEL -> getGlobalLibraryTable(project);
       default -> getCustomLibraryTableByLevel(level);
     };
   }

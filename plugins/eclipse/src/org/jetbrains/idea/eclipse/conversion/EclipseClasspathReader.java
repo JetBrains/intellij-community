@@ -252,7 +252,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
 
   public static Library findLibraryByName(Project project, String name) {
     final LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
-    Library lib = tablesRegistrar.getLibraryTable().getLibraryByName(name);
+    Library lib = tablesRegistrar.getGlobalLibraryTable(project).getLibraryByName(name);
     if (lib == null) {
       lib = tablesRegistrar.getLibraryTable(project).getLibraryByName(name);
     }
