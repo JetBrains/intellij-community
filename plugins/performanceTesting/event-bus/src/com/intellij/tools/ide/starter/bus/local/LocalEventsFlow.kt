@@ -93,28 +93,22 @@ class LocalEventsFlow : EventsFlow {
         val result = CompletableDeferred<Unit>()
         LOG.debug("Post event $eventClassName for $subscriber.")
         // Launching a new coroutine for each subscriber
-        scope.launch {
+        scope.launch(Dispatchers.IO) {
           LOG.debug("Start execution $eventClassName for $subscriber")
-          // Blocking the current coroutine to enforce timeout and interruptibility
-          runBlocking {
-            // Enforces a timeout for the entire subscriber execution
-            withTimeout(subscriber.timeout) {
-              // Ensures the operation inside is interruptible — if the thread is blocked,
-              // it will be interrupted when the coroutine is cancelled (e.g. by timeout)
-              runInterruptible {
+          // Enforces a timeout for the entire subscriber execution
+          withTimeout(subscriber.timeout) {
+            // Ensures the operation inside is interruptible — if the thread is blocked,
+            // it will be interrupted when the coroutine is cancelled (e.g. by timeout)
+            runInterruptible {
+              try {
                 runBlocking {
-                  // Switch to IO dispatcher for potentially blocking I/O operations and for more workers
-                  withContext(Dispatchers.IO) {
-                    try {
-                      subscriber.callback(event)
-                      result.complete(Unit)
-                    }
-                    catch (e: Throwable) {
-                      exceptions.add(e)
-                      result.complete(Unit)
-                    }
-                  }
+                  subscriber.callback(event)
                 }
+                result.complete(Unit)
+              }
+              catch (e: Throwable) {
+                exceptions.add(e)
+                result.complete(Unit)
               }
             }
           }
