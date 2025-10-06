@@ -178,7 +178,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                         }
                     }
                     .toList()
-                    .toTypedArray()
+                    .toTypedArray<PsiElement>()
             }
             return super.getPrimaryElements()
         }

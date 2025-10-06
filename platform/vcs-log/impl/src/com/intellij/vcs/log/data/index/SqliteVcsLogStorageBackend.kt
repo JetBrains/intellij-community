@@ -604,7 +604,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     val position = rootsToPosition.getInt(id.root)
     val hashStr = id.hash.asString()
     return !connection.selectBoolean("select not exists (select 1 from commit_hashes where position = ? and hash = ?)",
-                                     arrayOf(position, hashStr))
+                                     arrayOf<Any>(position, hashStr))
   }
 
   override fun getRefIndex(ref: VcsRef): Int {

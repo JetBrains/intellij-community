@@ -151,7 +151,7 @@ class MoveKotlinDeclarationsHandlerTest : KotlinMultiFileTestCase() {
             rootDir,
             "test2.kt"
         )
-        assert(!handler.canMove(elements.toTypedArray(), null, null))
+        assert(!handler.canMove(elements.toTypedArray<PsiElement>(), null, null))
     }
 
     fun testCommonTargets() = doTest { rootDir, handler ->
