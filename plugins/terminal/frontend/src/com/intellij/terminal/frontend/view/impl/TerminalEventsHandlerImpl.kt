@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
@@ -407,10 +406,7 @@ internal open class TerminalEventsHandlerImpl(
     return Character.isLetterOrDigit(char) || char == '-'
   }
 
-  private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe String {
-    val cursorOffset = cursorOffsetState.value.toRelative()
-    return document.getText(TextRange(cursorOffset, document.textLength))
-  }
+  private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe String = getText(cursorOffset, endOffset)
 
   companion object {
     private val LOG = Logger.getInstance(TerminalEventsHandlerImpl::class.java)

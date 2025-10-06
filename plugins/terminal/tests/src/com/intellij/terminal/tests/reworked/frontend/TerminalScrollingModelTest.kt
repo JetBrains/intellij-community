@@ -17,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
@@ -502,7 +502,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
   }
 
   private class ScrollingModelTestContext(
-    private val outputModel: TerminalOutputModel,
+    private val outputModel: MutableTerminalOutputModel,
     private val scrollingModel: TerminalOutputScrollingModelImpl,
   ) {
     suspend fun updateText(absoluteLineIndex: Long, text: String) {

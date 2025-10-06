@@ -88,12 +88,12 @@ class TerminalLookupPrefixUpdater private constructor(
   }
 
   private fun calculateUpdatedPrefix(): String? {
-    val startOffset = lookup.lookupStart
-    val caretOffset = model.cursorOffsetState.value.toRelative()
+    val startOffset = model.relativeOffset(lookup.lookupStart)
+    val caretOffset = model.cursorOffset
     if (caretOffset < startOffset) {
       return null  // It looks like the lookup is not valid
     }
-    return model.document.immutableCharSequence.substring(startOffset, caretOffset)
+    return model.getText(startOffset, caretOffset)
   }
 
   private fun truncatePrefix(times: Int) {

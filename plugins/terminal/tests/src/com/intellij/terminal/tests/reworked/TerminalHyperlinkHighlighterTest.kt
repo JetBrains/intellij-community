@@ -28,7 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
@@ -42,7 +42,7 @@ import kotlin.time.Duration.Companion.seconds
 internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
 
   private lateinit var editor: Editor
-  private lateinit var model: TerminalOutputModel
+  private lateinit var model: MutableTerminalOutputModel
   private lateinit var hyperlinkHighlighter: TerminalHyperlinkHighlighter
 
   override fun runInDispatchThread(): Boolean = false

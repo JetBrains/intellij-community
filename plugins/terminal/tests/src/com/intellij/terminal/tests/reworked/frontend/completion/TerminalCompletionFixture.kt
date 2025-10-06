@@ -26,6 +26,7 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
@@ -40,8 +41,8 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
 
   private val view: TerminalViewImpl
 
-  val outputModel: TerminalOutputModel
-    get() = view.activeOutputModel()
+  val outputModel: MutableTerminalOutputModel
+    get() = view.activeOutputModel() as MutableTerminalOutputModel
 
   init {
     val terminalScope = terminalProjectScope(project).childScope("TerminalViewImpl")

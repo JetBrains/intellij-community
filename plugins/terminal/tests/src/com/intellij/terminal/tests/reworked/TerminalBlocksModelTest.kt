@@ -7,8 +7,8 @@ import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModelImpl
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
 import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 import org.junit.Assert.assertNotEquals
@@ -413,7 +413,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
     assertEquals(expectedSecondBlock, state.blocks[1])
   }
 
-  private fun TerminalOutputModel.getText(startOffset: Int, endOffset: Int): String {
+  private fun MutableTerminalOutputModel.getText(startOffset: Int, endOffset: Int): String {
     return document.charsSequence.substring(startOffset, endOffset)
   }
 }

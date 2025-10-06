@@ -15,8 +15,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.isCommandTypingMode
 import org.jetbrains.plugins.terminal.block.reworked.updateContent
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
@@ -36,11 +36,11 @@ import java.lang.Runnable
 @OptIn(FlowPreview::class)
 internal class TerminalTypeAheadOutputModelController(
   private val project: Project,
-  private val outputModel: TerminalOutputModel,
+  private val outputModel: MutableTerminalOutputModel,
   private val blocksModel: TerminalBlocksModel,
   coroutineScope: CoroutineScope,
 ) : TerminalOutputModelController, TerminalTypeAhead {
-  override val model: TerminalOutputModel = outputModel
+  override val model: MutableTerminalOutputModel = outputModel
 
   private val delayedUpdateRequests: MutableSharedFlow<Unit> = MutableSharedFlow(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -205,7 +205,7 @@ internal class TerminalTypeAheadOutputModelController(
   }
 }
 
-private fun TerminalOutputModel.insertAtCursor(string: String) {
+private fun MutableTerminalOutputModel.insertAtCursor(string: String) {
   withTypeAhead {
     val remainingLinePart = getRemainingLinePart()
     val replaceLength = string.length.coerceAtMost(remainingLinePart.length)
@@ -218,7 +218,7 @@ private fun TerminalOutputModel.insertAtCursor(string: String) {
   }
 }
 
-private fun TerminalOutputModel.backspace() {
+private fun MutableTerminalOutputModel.backspace() {
   val offset = cursorOffsetState.value.toRelative()
   if (offset < 1) return
   val replaceOffset = relativeOffset(offset - 1)
@@ -226,7 +226,7 @@ private fun TerminalOutputModel.backspace() {
   updateCursorPosition(replaceOffset)
 }
 
-private fun TerminalOutputModel.getRemainingLinePart(): @NlsSafe String {
+private fun MutableTerminalOutputModel.getRemainingLinePart(): @NlsSafe String {
   val cursorOffset = cursorOffsetState.value.toRelative()
   val document = document
   val line = document.getLineNumber(cursorOffset)
@@ -235,7 +235,7 @@ private fun TerminalOutputModel.getRemainingLinePart(): @NlsSafe String {
   return remainingLinePart
 }
 
-private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe String {
+private fun MutableTerminalOutputModel.getTextAfterCursor(): @NlsSafe String {
   val cursorOffset = cursorOffsetState.value.toRelative()
   return document.getText(TextRange(cursorOffset, document.textLength))
 }

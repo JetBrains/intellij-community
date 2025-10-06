@@ -21,7 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.CoroutineStart.UNDISPATCHED
 import kotlinx.coroutines.flow.*
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.updateContent
 import org.jetbrains.plugins.terminal.session.*
 import org.junit.Test
@@ -615,7 +615,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
         return lineStart + column
       }
 
-      fun locateLink(outputModel: TerminalOutputModel, backendFacade: BackendTerminalHyperlinkFacade): TerminalFilterResultInfo {
+      fun locateLink(outputModel: MutableTerminalOutputModel, backendFacade: BackendTerminalHyperlinkFacade): TerminalFilterResultInfo {
         val offset = outputModel.relativeOffset(locateOffset(outputModel.document))
         val links = backendFacade.dumpState().hyperlinks
         return links.single { offset.toAbsolute() in it.absoluteStartOffset until it.absoluteEndOffset }

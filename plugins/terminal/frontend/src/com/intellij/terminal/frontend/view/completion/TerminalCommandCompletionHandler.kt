@@ -80,7 +80,7 @@ internal class TerminalCommandCompletionHandler(
   private fun prepareCaret(commonEditor: Editor, outputModel: TerminalOutputModel): Caret {
     val caret = commonEditor.caretModel
     val primaryCaret = caret.primaryCaret
-    primaryCaret.moveToOffset(outputModel.cursorOffsetState.value.toRelative())
+    primaryCaret.moveToOffset(outputModel.cursorOffset.toRelative())
     clearCaretMarkers(commonEditor)
     markCaretAsProcessed(primaryCaret)
     return primaryCaret

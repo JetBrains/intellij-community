@@ -42,9 +42,9 @@ internal class StateAwareTerminalSession(
   private val outputFlowProducer = IncrementalUpdateFlowProducer(State())
 
   private val sessionModel: TerminalSessionModel = TerminalSessionModelImpl()
-  private val outputModel: TerminalOutputModel
+  private val outputModel: MutableTerminalOutputModel
   private val outputHyperlinkFacade: BackendTerminalHyperlinkFacade?
-  private val alternateBufferModel: TerminalOutputModel
+  private val alternateBufferModel: MutableTerminalOutputModel
   private val alternateBufferHyperlinkFacade: BackendTerminalHyperlinkFacade?
   private val blocksModel: TerminalBlocksModel
 
@@ -237,11 +237,11 @@ internal class StateAwareTerminalSession(
       return listOf(listOf(event))
     }
 
-    private fun getCurrentOutputModel(): TerminalOutputModel {
+    private fun getCurrentOutputModel(): MutableTerminalOutputModel {
       return if (sessionModel.terminalState.value.isAlternateScreenBuffer) alternateBufferModel else outputModel
     }
 
-    private fun updateOutputModelContent(model: TerminalOutputModel, event: TerminalContentUpdatedEvent) {
+    private fun updateOutputModelContent(model: MutableTerminalOutputModel, event: TerminalContentUpdatedEvent) {
       val startTime = TimeSource.Monotonic.markNow()
 
       model.updateContent(event)

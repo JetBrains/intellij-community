@@ -415,7 +415,7 @@ class TerminalViewImpl(
         editor.repaint(startOffset, editor.document.textLength)
 
         // Update the PSI file content
-        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(model.document) as? TerminalOutputPsiFile
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile((model as MutableTerminalOutputModel).document) as? TerminalOutputPsiFile
         psiFile?.charsSequence = model.document.immutableCharSequence  // must be the snapshot
       }
     })

@@ -152,7 +152,7 @@ class TerminalOutputScrollingModelImpl(
       }
     }
 
-    appliedOutputModelState.value = OutputModelState(cursorOffset, outputModel.document.modificationStamp)
+    appliedOutputModelState.value = OutputModelState(cursorOffset, outputModel.modificationStamp)
   }
 
   private fun findLastNotBlankVisualLine(startVisualLine: Int): Int {
@@ -195,7 +195,7 @@ class TerminalOutputScrollingModelImpl(
   }
 
   private fun getCurrentOutputModelState(): OutputModelState {
-    return OutputModelState(outputModel.cursorOffsetState.value.toRelative(), outputModel.document.modificationStamp)
+    return OutputModelState(outputModel.cursorOffsetState.value.toRelative(), outputModel.modificationStamp)
   }
 
   private data class OutputModelState(val cursorOffset: Int, val docStamp: Long)

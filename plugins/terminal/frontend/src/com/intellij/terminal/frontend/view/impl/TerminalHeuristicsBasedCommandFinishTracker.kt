@@ -117,13 +117,12 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
   }
 
   private fun getTextBeforeCursor(cursorOffset: Int): String? {
-    val document = outputModel.document
-    val lineNumber = document.getLineNumber(cursorOffset)
-    val lineStartOffset = document.getLineStartOffset(lineNumber)
+    val lineNumber = outputModel.lineByOffset(outputModel.relativeOffset(cursorOffset))
+    val lineStartOffset = outputModel.lineStartOffset(lineNumber)
 
-    val length = cursorOffset - lineStartOffset
+    val length = cursorOffset - lineStartOffset.toRelative()
     return if (length <= MAX_LINE_LENGTH) {
-      document.immutableCharSequence.substring(lineStartOffset, lineStartOffset + length)
+      outputModel.getText(lineStartOffset, outputModel.relativeOffset(lineStartOffset.toRelative() + length))
     }
     else null // Line is too long, let's do not try to track it.
   }

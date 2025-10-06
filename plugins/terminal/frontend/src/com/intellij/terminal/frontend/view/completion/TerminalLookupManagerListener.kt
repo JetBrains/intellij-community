@@ -9,7 +9,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.TextRange
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.view.impl.TerminalInput
@@ -17,6 +16,7 @@ import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
+import org.jetbrains.plugins.terminal.block.reworked.endOffset
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import kotlin.math.max
@@ -185,10 +185,9 @@ private class TerminalLookupOutputModelListener(
   }
 
   private fun TerminalOutputModel.getTextBelowCursorLine(): String {
-    val cursorOffset = cursorOffsetState.value.toRelative()
-    val line = document.getLineNumber(cursorOffset)
-    val lineEndOffset = document.getLineEndOffset(line)
-    return document.getText(TextRange(lineEndOffset, document.textLength))
+    val line = lineByOffset(this.cursorOffset)
+    val lineEndOffset = lineEndOffset(line)
+    return getText(lineEndOffset, endOffset)
   }
 }
 
