@@ -1334,7 +1334,7 @@ object CommunityLibraryLicenses {
       .apache("https://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/xmlbeans-2.3.0/xmlbeans.LICENSE")
       .suppliedByPersons("Cezar Andrei", "Radu Preotiuc", "Radu Preotiuc", "Wing Yew Poon", "Jacob Danner", "POI Team"),
 
-    LibraryLicense("XmlRPC", libraryName = "XmlRPC", url = "https://ws.apache.org/xmlrpc/xmlrpc2/")
+    LibraryLicense("XmlRPC", libraryName = "xml-rpc", url = "https://ws.apache.org/xmlrpc/xmlrpc2/")
       .apache("https://ws.apache.org/xmlrpc/xmlrpc2/license.html")
       .suppliedByPersons(
         "Daniel Rall", "Jon Scott Stevens", "John Wilson",
@@ -1343,7 +1343,7 @@ object CommunityLibraryLicenses {
         "Leonard Richarson", "Hannes Wallnoefer"
       ),
 
-    LibraryLicense("XStream", libraryName = "XStream", url = "https://x-stream.github.io/")
+    LibraryLicense("XStream", libraryName = "xstream", url = "https://x-stream.github.io/")
       .newBsd("https://x-stream.github.io/license.html")
       .suppliedByOrganizations("XStream Committers"),
 

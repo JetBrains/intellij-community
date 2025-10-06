@@ -24,7 +24,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/vcs-impl",
     "//plugins/tasks/tasks-core/lib:axis-1-4",
-    "@lib//:xml_r_p_c",
+    "//libraries/xml-rpc",
     "//libraries/gson",
     "//xml/impl",
     "//platform/core-api:core",

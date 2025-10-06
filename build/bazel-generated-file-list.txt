@@ -394,6 +394,8 @@ libraries/testcontainers
 libraries/testng
 libraries/winp
 libraries/xerces
+libraries/xml-rpc
+libraries/xstream
 libraries/xz
 notebooks/notebook-ui
 notebooks/visualization

@@ -121,6 +121,7 @@ private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
 After creating the module, run the following tests to ensure project structure consistency:
 
 - **`IdeaUltimatePluginStructureTest`** - Verifies the plugin structure for IDEA Ultimate
+- **`IdeaUltimatePluginModuleDependenciesTest`** - Verifies the plugin structure for IDEA Ultimate
 - **`CommunityProjectConsistencyTest`** - Verifies community project consistency
 
 ## Examples

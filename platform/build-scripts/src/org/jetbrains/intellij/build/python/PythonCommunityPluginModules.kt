@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.io.copyDir
 import java.nio.file.Files

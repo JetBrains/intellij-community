@@ -13,12 +13,16 @@
 ]]></description>
   <vendor>JetBrains</vendor>
 
+  <content>
+    <module name="intellij.tasks.jira"/>
+  </content>
   <dependencies>
     <plugin id="com.intellij.modules.xml" />
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.tasks.impl"/>
     <module name="intellij.regexp"/>
   </dependencies>
+
   <depends optional="true" config-file="java-contexts.xml">com.intellij.java</depends>
   <!--
     Optional dependency on XPath plugin for syntax highlighting in GenericRepository configuration dialog
@@ -117,7 +121,6 @@
 
     <lang.documentationProvider language="TEXT" implementationClass="com.intellij.tasks.doc.TaskDocumentationProvider"/>
 
-    <tasks.repositoryType implementation="com.intellij.tasks.jira.JiraRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.lighthouse.LighthouseRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.pivotal.PivotalTrackerRepositoryType"/>
@@ -129,16 +132,6 @@
     <tasks.repositoryType implementation="com.intellij.tasks.trello.TrelloRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.gitlab.GitlabRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.bugzilla.BugzillaRepositoryType"/>
-
-    <!-- JQL support -->
-    <fileType name="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlFileType" fieldName="INSTANCE" language="JQL" extensions="jql" />
-    <lang.parserDefinition language="JQL"
-                           implementationClass="com.intellij.tasks.jira.jql.JqlParserDefinition"/>
-    <lang.syntaxHighlighterFactory language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlHighlighterFactory"/>
-    <lang.braceMatcher language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlBraceMatcher"/>
-    <completion.contributor language="JQL"
-                            implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlCompletionContributor"/>
-    <annotator language="JQL" implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlAnnotator"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
     <!-- YouTrack support -->
@@ -155,9 +148,5 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.tasks.impl.TaskManagementUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.impl.TaskManagementConfigurationCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.tasks.core.fus.TasksStateCollector"/>
-
-    <registryKey key="tasks.jira.use.rest.api.version" defaultValue="" restartRequired="true"
-                 description="Use &quot;2&quot; for REST API version 2,
-                              &quot;3&quot; for REST API version 3 in Cloud, leave empty for autodetection (legacy non-REST API included)"/>
   </extensions>
 </idea-plugin>

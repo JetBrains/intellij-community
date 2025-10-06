@@ -39,10 +39,6 @@
   - name: intellij.python.community.impl.installer
 - name: lib/modules/intellij.python.community.impl.jar
   projectLibraries:
-  - name: XmlRPC
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
-    reason: <- intellij.python.community.impl
   - name: jackson-dataformat-yaml
     files:
     - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2/jackson-dataformat-yaml-2.jar
@@ -146,10 +142,6 @@
 - name: lib/modules/intellij.python.pydev.jar
   contentModules:
   - name: intellij.python.pydev
-  library: XmlRPC
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
-  reason: <- intellij.python.pydev
 - name: lib/modules/intellij.python.pyproject.jar
   contentModules:
   - name: intellij.python.pyproject

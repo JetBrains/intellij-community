@@ -683,6 +683,8 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/testng/intellij.libraries.testng.iml" filepath="$PROJECT_DIR$/libraries/testng/intellij.libraries.testng.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/winp/intellij.libraries.winp.iml" filepath="$PROJECT_DIR$/libraries/winp/intellij.libraries.winp.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/xerces/intellij.libraries.xerces.iml" filepath="$PROJECT_DIR$/libraries/xerces/intellij.libraries.xerces.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/xml-rpc/intellij.libraries.xml.rpc.iml" filepath="$PROJECT_DIR$/libraries/xml-rpc/intellij.libraries.xml.rpc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/xstream/intellij.libraries.xstream.iml" filepath="$PROJECT_DIR$/libraries/xstream/intellij.libraries.xstream.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/xz/intellij.libraries.xz.iml" filepath="$PROJECT_DIR$/libraries/xz/intellij.libraries.xz.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lombok/intellij.lombok.iml" filepath="$PROJECT_DIR$/plugins/lombok/intellij.lombok.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lombok/generated/intellij.lombok.generated.iml" filepath="$PROJECT_DIR$/plugins/lombok/generated/intellij.lombok.generated.iml" />

@@ -23,15 +23,12 @@
   - name: $MAVEN_REPOSITORY$/net/minidev/json-smart/2/json-smart-2.jar
   - name: $MAVEN_REPOSITORY$/net/minidev/accessors-smart/2/accessors-smart-2.jar
   reason: <- intellij.tasks.core
+- name: lib/modules/intellij.tasks.jira.jar
+  contentModules:
+  - name: intellij.tasks.jira
 - name: lib/tasks-core.jar
   modules:
   - name: intellij.tasks
   - name: intellij.tasks.compatibility
-  - name: intellij.tasks.jira
   - name: intellij.tasks.java
   - name: intellij.tasks.core
-- name: lib/xmlrpc.jar
-  library: XmlRPC
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
-  reason: <- intellij.tasks.jira

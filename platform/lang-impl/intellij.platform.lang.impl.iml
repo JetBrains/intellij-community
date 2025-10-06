@@ -67,7 +67,7 @@
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
-    <orderEntry type="library" name="XStream" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.xstream" />
     <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />
     <orderEntry type="library" name="jna" level="project" />

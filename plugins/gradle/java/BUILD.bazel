@@ -52,7 +52,7 @@ jvm_library(
     "//libraries/gson",
     "//jps/jps-builders:build",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    "@lib//:x_stream",
+    "//libraries/xstream",
     "//plugins/groovy/groovy-psi:psi",
     "//java/execution/openapi:java-execution",
     "//plugins/maven",

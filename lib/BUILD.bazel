@@ -5242,6 +5242,40 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-xml-rpc-xml-rpc",
+  jar = "@org_apache_ws_xmlrpc-xmlrpc-2_0_1_http//file",
+  source_jar = "@org_apache_ws_xmlrpc-xmlrpc-2_0_1_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "libraries-xstream-xstream",
+  exports = [
+    ":com_thoughtworks_xstream-xstream-1_4_21_http_import",
+    ":io_github_x-stream-mxparser-1_2_2_http_import",
+    ":xmlpull-xmlpull-1_1_3_1_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_thoughtworks_xstream-xstream-1_4_21_http_import",
+  jar = "@com_thoughtworks_xstream-xstream-1_4_21_http//file",
+  source_jar = "@com_thoughtworks_xstream-xstream-1_4_21_http//file"
+)
+
+jvm_import(
+  name = "io_github_x-stream-mxparser-1_2_2_http_import",
+  jar = "@io_github_x-stream-mxparser-1_2_2_http//file",
+  source_jar = "@io_github_x-stream-mxparser-1_2_2_http//file"
+)
+
+jvm_import(
+  name = "xmlpull-xmlpull-1_1_3_1_http_import",
+  jar = "@xmlpull-xmlpull-1_1_3_1_http//file"
+)
+
+jvm_import(
   name = "libthrift",
   jar = "@org_apache_thrift-libthrift-0_19_0_http//file",
   source_jar = "@org_apache_thrift-libthrift-0_19_0_http//file",
@@ -9540,33 +9574,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "x_stream",
-  exports = [
-    ":com_thoughtworks_xstream-xstream-1_4_21_http_import",
-    ":io_github_x-stream-mxparser-1_2_2_http_import",
-    ":xmlpull-xmlpull-1_1_3_1_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "com_thoughtworks_xstream-xstream-1_4_21_http_import",
-  jar = "@com_thoughtworks_xstream-xstream-1_4_21_http//file",
-  source_jar = "@com_thoughtworks_xstream-xstream-1_4_21_http//file"
-)
-
-jvm_import(
-  name = "io_github_x-stream-mxparser-1_2_2_http_import",
-  jar = "@io_github_x-stream-mxparser-1_2_2_http//file",
-  source_jar = "@io_github_x-stream-mxparser-1_2_2_http//file"
-)
-
-jvm_import(
-  name = "xmlpull-xmlpull-1_1_3_1_http_import",
-  jar = "@xmlpull-xmlpull-1_1_3_1_http//file"
-)
-
 jvm_import(
   name = "xml-resolver",
   jar = "@xml-resolver-xml-resolver-1_2_http//file",
@@ -9600,13 +9607,6 @@ jvm_import(
   name = "org_apache_logging_log4j-log4j-api-2_20_0_http_import",
   jar = "@org_apache_logging_log4j-log4j-api-2_20_0_http//file",
   source_jar = "@org_apache_logging_log4j-log4j-api-2_20_0_http//file"
-)
-
-jvm_import(
-  name = "xml_r_p_c",
-  jar = "@org_apache_ws_xmlrpc-xmlrpc-2_0_1_http//file",
-  source_jar = "@org_apache_ws_xmlrpc-xmlrpc-2_0_1_http//file",
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(

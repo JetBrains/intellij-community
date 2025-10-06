@@ -57,6 +57,8 @@ private val LIBRARY_MODULE_NAMES: Set<String> = setOf(
   "intellij.libraries.rhino",
   "intellij.libraries.testng",
   "intellij.libraries.winp",
+  "intellij.libraries.xml.rpc",
+  "intellij.libraries.xstream",
   "intellij.libraries.xz",
   "intellij.libraries.dokka",
   "intellij.libraries.guava",

@@ -59,7 +59,6 @@
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.python.pydev" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
-    <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.regexp" exported="" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
@@ -74,7 +73,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
-    <orderEntry type="library" name="XStream" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.xstream" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
     <orderEntry type="library" name="libthrift" level="project" />
     <orderEntry type="library" name="slf4j-api" level="project" />

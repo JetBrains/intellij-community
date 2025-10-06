@@ -7525,6 +7525,55 @@ http_file(
 )
 
 http_file(
+  name = "org_apache_ws_xmlrpc-xmlrpc-2_0_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/ws/xmlrpc/xmlrpc/2.0.1/xmlrpc-2.0.1.jar",
+  sha256 = "36efda6efee96e83602c9ba246db19bf4c5e733324390d2fa8213417d6b681e7",
+  downloaded_file_path = "xmlrpc-2.0.1.jar"
+)
+
+http_file(
+  name = "org_apache_ws_xmlrpc-xmlrpc-2_0_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/ws/xmlrpc/xmlrpc/2.0.1/xmlrpc-2.0.1-sources.jar",
+  sha256 = "34d3755800c35568aab53447c576d3ab8fb63e6e9df32d6acb1fe7187bf5383c",
+  downloaded_file_path = "xmlrpc-2.0.1-sources.jar"
+)
+
+http_file(
+  name = "com_thoughtworks_xstream-xstream-1_4_21_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar",
+  sha256 = "f56586f3de59ae2a49430acbc9f27942b8c5cebec9245c869fae7136733333ec",
+  downloaded_file_path = "xstream-1.4.21.jar"
+)
+
+http_file(
+  name = "io_github_x-stream-mxparser-1_2_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar",
+  sha256 = "aeeee23a3303d811bca8790ea7f25b534314861c03cff36dafdcc2180969eb97",
+  downloaded_file_path = "mxparser-1.2.2.jar"
+)
+
+http_file(
+  name = "xmlpull-xmlpull-1_1_3_1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar",
+  sha256 = "34e08ee62116071cbb69c0ed70d15a7a5b208d62798c59f2120bb8929324cb63",
+  downloaded_file_path = "xmlpull-1.1.3.1.jar"
+)
+
+http_file(
+  name = "com_thoughtworks_xstream-xstream-1_4_21-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21-sources.jar",
+  sha256 = "c9ebc3613b053588aab70e2381951761e24ed94af3dae20df207c32a4fc14dbe",
+  downloaded_file_path = "xstream-1.4.21-sources.jar"
+)
+
+http_file(
+  name = "io_github_x-stream-mxparser-1_2_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2-sources.jar",
+  sha256 = "b2e72350ce8b2f287c0cd435a338c17705f9047857c52a709e223af2f5cbb0de",
+  downloaded_file_path = "mxparser-1.2.2-sources.jar"
+)
+
+http_file(
   name = "org_apache_thrift-libthrift-0_19_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/thrift/libthrift/0.19.0/libthrift-0.19.0.jar",
   sha256 = "2b6e6550b40467ede7b3034a1a9eb9148fbf920cfdae5bf0b1d2bb3d4e780625",
@@ -13986,41 +14035,6 @@ http_file(
 )
 
 http_file(
-  name = "com_thoughtworks_xstream-xstream-1_4_21_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21.jar",
-  sha256 = "f56586f3de59ae2a49430acbc9f27942b8c5cebec9245c869fae7136733333ec",
-  downloaded_file_path = "xstream-1.4.21.jar"
-)
-
-http_file(
-  name = "io_github_x-stream-mxparser-1_2_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2.jar",
-  sha256 = "aeeee23a3303d811bca8790ea7f25b534314861c03cff36dafdcc2180969eb97",
-  downloaded_file_path = "mxparser-1.2.2.jar"
-)
-
-http_file(
-  name = "xmlpull-xmlpull-1_1_3_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar",
-  sha256 = "34e08ee62116071cbb69c0ed70d15a7a5b208d62798c59f2120bb8929324cb63",
-  downloaded_file_path = "xmlpull-1.1.3.1.jar"
-)
-
-http_file(
-  name = "com_thoughtworks_xstream-xstream-1_4_21-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/thoughtworks/xstream/xstream/1.4.21/xstream-1.4.21-sources.jar",
-  sha256 = "c9ebc3613b053588aab70e2381951761e24ed94af3dae20df207c32a4fc14dbe",
-  downloaded_file_path = "xstream-1.4.21-sources.jar"
-)
-
-http_file(
-  name = "io_github_x-stream-mxparser-1_2_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/x-stream/mxparser/1.2.2/mxparser-1.2.2-sources.jar",
-  sha256 = "b2e72350ce8b2f287c0cd435a338c17705f9047857c52a709e223af2f5cbb0de",
-  downloaded_file_path = "mxparser-1.2.2-sources.jar"
-)
-
-http_file(
   name = "xml-resolver-xml-resolver-1_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xml-resolver/xml-resolver/1.2/xml-resolver-1.2.jar",
   sha256 = "47dcde8986019314ef78ae7280a94973a21d2ed95075a40a000b42da956429e1",
@@ -14074,20 +14088,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.20.0/log4j-api-2.20.0-sources.jar",
   sha256 = "54b4514536902d4d677192928b6a661c3a301c5da47b8e8b18a9bc8d7238f301",
   downloaded_file_path = "log4j-api-2.20.0-sources.jar"
-)
-
-http_file(
-  name = "org_apache_ws_xmlrpc-xmlrpc-2_0_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/ws/xmlrpc/xmlrpc/2.0.1/xmlrpc-2.0.1.jar",
-  sha256 = "36efda6efee96e83602c9ba246db19bf4c5e733324390d2fa8213417d6b681e7",
-  downloaded_file_path = "xmlrpc-2.0.1.jar"
-)
-
-http_file(
-  name = "org_apache_ws_xmlrpc-xmlrpc-2_0_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/ws/xmlrpc/xmlrpc/2.0.1/xmlrpc-2.0.1-sources.jar",
-  sha256 = "34d3755800c35568aab53447c576d3ab8fb63e6e9df32d6acb1fe7187bf5383c",
-  downloaded_file_path = "xmlrpc-2.0.1-sources.jar"
 )
 
 http_file(
