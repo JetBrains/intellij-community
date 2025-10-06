@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -23,26 +22,24 @@ import java.util.*;
 import java.util.function.Function;
 
 public final class StatisticsWeigher extends CompletionWeigher {
-  private static final Logger LOG = Logger.getInstance(StatisticsWeigher.class);
   private static final Key<StatisticsInfo> BASE_STATISTICS_INFO = Key.create("Base statistics info");
 
   @Override
-  public Comparable weigh(final @NotNull LookupElement item, final @NotNull CompletionLocation location) {
+  public Comparable<?> weigh(final @NotNull LookupElement item, final @NotNull CompletionLocation location) {
     throw new UnsupportedOperationException();
   }
 
   public static class LookupStatisticsWeigher extends Classifier<LookupElement> {
-    private final CompletionLocation myLocation;
+    private final @NotNull CompletionLocation myLocation;
     private final Map<LookupElement, StatisticsComparable> myWeights = new IdentityHashMap<>();
     private final Set<String> myStringsWithWeights = CollectionFactory.createSmallMemoryFootprintSet();
     private final Set<LookupElement> myNoStats = new ReferenceOpenHashSet<>();
     private final List<Function<@NotNull LookupElement, @Nullable StatisticsInfo>> mySerializers;
 
-    public LookupStatisticsWeigher(CompletionLocation location, Classifier<LookupElement> next) {
+    public LookupStatisticsWeigher(@NotNull CompletionLocation location, @Nullable Classifier<LookupElement> next) {
       super(next, "stats");
       myLocation = location;
-      mySerializers = myLocation == null ? List.of() :
-                      ContainerUtil.map(StatisticsManager.COLLECTOR.forKey(CompletionService.STATISTICS_KEY),
+      mySerializers = ContainerUtil.map(StatisticsManager.COLLECTOR.forKey(CompletionService.STATISTICS_KEY),
                                         stat -> ((CompletionStatistician)stat).forLocation(myLocation));
     }
 
@@ -164,9 +161,6 @@ public final class StatisticsWeigher extends CompletionWeigher {
     private @NotNull StatisticsInfo getBaseStatisticsInfo(LookupElement item) {
       StatisticsInfo info = BASE_STATISTICS_INFO.get(item);
       if (info == null) {
-        if (myLocation == null) {
-          return StatisticsInfo.EMPTY;
-        }
         BASE_STATISTICS_INFO.set(item, info = calcBaseInfo(item));
       }
       return info;
