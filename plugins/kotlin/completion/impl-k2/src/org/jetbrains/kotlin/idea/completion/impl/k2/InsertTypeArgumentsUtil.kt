@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
 
+// Note: this file is ported to K2 from `org.jetbrains.kotlin.idea.completion.KotlinInsertTypeArgument.kt`
 
 // Debugging tip: use 'PsiTreeUtilsKt.printTree' to see PSI trees in the runtime. See fun documentation for details.
 
