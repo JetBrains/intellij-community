@@ -143,17 +143,6 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
     connection.subscribe(MarkdownPreviewSettings.ChangeListener.TOPIC, MarkdownPreviewSettings.ChangeListener { settings ->
       changeFontSize(settings.state.fontSize)
     })
-    connection.subscribe(UISettingsListener.TOPIC, UISettingsListener { settings ->
-      val scale = settings.currentIdeScale
-      // language=JavaScript
-      val code = """
-      |(function() {
-      |  const styles = document.querySelector(":root").style;
-      |  styles.setProperty("${PreviewLAFThemeStyles.Variables.Scale}", "${scale}");
-      |})();
-      """.trimMargin()
-      executeJavaScript(code)
-    })
 
     coroutineScope.launch {
       val projectRoot = projectRoot.await()
