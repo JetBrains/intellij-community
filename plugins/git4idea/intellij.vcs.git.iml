@@ -123,5 +123,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.ide.recentProjects" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" />
   </component>
 </module>

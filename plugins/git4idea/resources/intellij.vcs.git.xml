@@ -7,6 +7,7 @@
     <module name="intellij.platform.vcs.dvcs"/>
     <module name="intellij.platform.vcs.log.graph.impl"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.ide.impl.wsl"/>
   </dependencies>
 
   <actions resource-bundle="messages.GitBundle">
