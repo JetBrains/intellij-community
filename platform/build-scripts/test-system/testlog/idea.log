@@ -1,0 +1,3 @@
+2025-11-19 14:13:23,912 [     84]   INFO - #c.i.t.c.PlatformPrefix - Platform prefix (IDE that is emulated by this test): Idea. File file:/home/Andrey.Vorobev/WorkProjects/intellij2/intellij/out/classes/production/intellij.idea.community.customization/META-INF/IdeaPlugin.xml
+2025-11-19 14:13:28,353 [   4525]   WARN - #com.github.weisj.jsvg.parser.NodeMap - unsupported foreignObject
+2025-11-19 14:13:28,354 [   4526]   WARN - #com.github.weisj.jsvg.parser.NodeMap - unsupported foreignObject
