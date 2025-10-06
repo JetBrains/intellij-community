@@ -1,7 +1,5 @@
 PsiJavaFile:IncompleteAnnotation.java
   PsiPackageStatement:foo
-    PsiModifierList:
-      <empty list>
     PsiKeyword:package('package')
     PsiWhiteSpace(' ')
     PsiJavaCodeReferenceElement:foo

@@ -1,7 +1,5 @@
 PsiJavaFile:ExtraSemicolons.java
   PsiPackageStatement:p
-    PsiModifierList:
-      <empty list>
     PsiKeyword:package('package')
     PsiWhiteSpace(' ')
     PsiJavaCodeReferenceElement:p

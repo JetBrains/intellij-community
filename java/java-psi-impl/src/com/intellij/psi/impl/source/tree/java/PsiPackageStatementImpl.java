@@ -55,8 +55,8 @@ public class PsiPackageStatementImpl extends JavaStubPsiElement<PsiPackageStatem
   }
 
   @Override
-  public @NotNull PsiModifierList getAnnotationList() {
-    return getRequiredStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
+  public PsiModifierList getAnnotationList() {
+    return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST, PsiModifierList.class);
   }
 
   @Override

@@ -6,8 +6,6 @@ PsiJavaFile:BindDocComment1.java
     PsiDocToken:DOC_COMMENT_END('*/')
   PsiWhiteSpace('\n')
   PsiPackageStatement:a
-    PsiModifierList:
-      <empty list>
     PsiKeyword:package('package')
     PsiWhiteSpace(' ')
     PsiJavaCodeReferenceElement:a

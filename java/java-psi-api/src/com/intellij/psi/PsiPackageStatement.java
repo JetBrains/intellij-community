@@ -40,5 +40,5 @@ public interface PsiPackageStatement extends PsiElement {
    *
    * @return the modifier list containing the annotations applied to the package statement.
    */
-  @NotNull PsiModifierList getAnnotationList();
+  PsiModifierList getAnnotationList();
 }

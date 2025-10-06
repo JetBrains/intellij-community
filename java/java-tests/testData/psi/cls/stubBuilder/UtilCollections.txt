@@ -1,6 +1,5 @@
 PsiJavaFileStub [java.util]
   PsiPackageStatementStub[java.util]
-    PsiModifierListStub[mask=0]
   PsiClassStub[name=Collections fqn=java.util.Collections]
     PsiModifierListStub[mask=1]
     PsiTypeParameterListStub

@@ -1,7 +1,5 @@
 java.FILE
   ERROR_ELEMENT
-    MODIFIER_LIST
-      <empty list>
     PACKAGE_KEYWORD
   WHITE_SPACE
   IMPORT_LIST

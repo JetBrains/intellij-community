@@ -158,23 +158,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private void cleanupBrokenPackageKeyword() {
     PsiElement child = getFirstChild();
     while (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiErrorElement) {
-      if (isErrorElementThatContainsPackageStatement(child)) {
+      if (child instanceof PsiErrorElement && child.getFirstChild() != null && child.getFirstChild().textMatches(JavaKeywords.PACKAGE)) {
         child.delete();
         break;
       }
       child = child.getNextSibling();
     }
-  }
-
-  private static boolean isErrorElementThatContainsPackageStatement(PsiElement element) {
-    if (!(element instanceof PsiErrorElement)) return false;
-    PsiElement firstChild = element.getFirstChild();
-    if (firstChild == null) return false;
-    if (firstChild.textMatches(JavaKeywords.PACKAGE)) return true;
-    if (!(firstChild instanceof PsiModifierList)) return false;
-    PsiElement secondChild = firstChild.getNextSibling();
-    if (secondChild == null) return false;
-    return secondChild.textMatches(JavaKeywords.PACKAGE);
   }
 
   @Override

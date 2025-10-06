@@ -435,7 +435,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
         if (file instanceof PsiJavaFile) {
           PsiPackageStatement stmt = ((PsiJavaFile)file).getPackageStatement();
           if (stmt != null) {
-            modifiers.add(stmt.getAnnotationList());
+            ContainerUtil.addIfNotNull(modifiers, stmt.getAnnotationList());
           }
         }
       }

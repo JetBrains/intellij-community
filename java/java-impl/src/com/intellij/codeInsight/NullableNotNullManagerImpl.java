@@ -380,8 +380,11 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       if (packageFile instanceof PsiJavaFile javaFile) {
         PsiPackageStatement stmt = javaFile.getPackageStatement();
         if (stmt != null) {
-          for (PsiAnnotation annotation : stmt.getAnnotationList().getAnnotations()) {
-            info = info.orElse(checkNullityDefault(annotation, placeTargetTypes, superPackage));
+          PsiModifierList modifierList = stmt.getAnnotationList();
+          if (modifierList != null) {
+            for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+              info = info.orElse(checkNullityDefault(annotation, placeTargetTypes, superPackage));
+            }
           }
         }
       }

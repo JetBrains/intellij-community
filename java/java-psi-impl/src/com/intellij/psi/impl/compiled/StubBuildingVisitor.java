@@ -102,18 +102,17 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
     String packageName = !(myParent instanceof PsiFileStub) || name.lastIndexOf('/') == -1 ? "" : 
                          name.substring(0, name.lastIndexOf('/')).replace('/', '.');
-    PsiModifierListStubImpl packageModList = null;
+    PsiPackageStatementStub packageStatement = null;
     if (!packageName.isEmpty()) {
-      PsiPackageStatementStub packageStatement = new PsiPackageStatementStubImpl(myParent, packageName);
-      packageModList = new PsiModifierListStubImpl(packageStatement, 0);
+      packageStatement = new PsiPackageStatementStubImpl(myParent, packageName);
     }
     myResult =
       new PsiClassStubImpl<>(JavaStubElementTypes.CLASS, myParent, fqn == null ? TypeInfo.SimpleTypeInfo.NULL : fqn, shortName, null,
                              stubFlags);
     myModList = new PsiModifierListStubImpl(myResult, classFlags);
-    if (PsiPackage.PACKAGE_INFO_CLASS.equals(shortName) && packageModList != null) {
+    if (PsiPackage.PACKAGE_INFO_CLASS.equals(shortName)) {
       // Attach annotations to the package statement
-      myModList = packageModList;
+      myModList = new PsiModifierListStubImpl(packageStatement, 0);
     }
     if (isRecord) {
       myHeaderStub = new PsiRecordHeaderStubImpl(myResult);

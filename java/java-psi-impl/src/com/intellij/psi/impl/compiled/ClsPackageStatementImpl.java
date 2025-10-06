@@ -4,15 +4,10 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiPackageStatementStub;
-import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
-
-import static java.util.Objects.requireNonNull;
 
 public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageStatementStub> implements PsiPackageStatement {
 
@@ -29,13 +24,16 @@ public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageS
   }
 
   @Override
-  public @NotNull PsiModifierList getAnnotationList() {
-    return (PsiModifierList)requireNonNull(getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST)).getPsi();
+  public PsiModifierList getAnnotationList() {
+    @SuppressWarnings("unchecked") final StubElement<PsiModifierList> child =
+      (StubElement<PsiModifierList>)getStub().findChildStubByElementType(JavaStubElementTypes.MODIFIER_LIST);
+    return child == null ? null : child.getPsi();
   }
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    return new PsiElement[]{getAnnotationList()};
+    PsiModifierList list = getAnnotationList();
+    return list == null ? EMPTY_ARRAY : new PsiElement[]{list}; 
   }
 
   @Override
@@ -46,9 +44,12 @@ public class ClsPackageStatementImpl extends ClsRepositoryPsiElement<PsiPackageS
   @Override
   public void appendMirrorText(final int indentLevel, final @NotNull StringBuilder buffer) {
     if (!myPackageName.isEmpty()) { // an empty package name should not happen for a well-formed class file
-      for (PsiAnnotation annotation : getAnnotationList().getAnnotations()) {
-        appendText(annotation, indentLevel, buffer);
-        buffer.append("\n");
+      PsiModifierList list = getAnnotationList();
+      if (list != null) {
+        for (PsiAnnotation annotation : list.getAnnotations()) {
+          appendText(annotation, indentLevel, buffer);
+          buffer.append("\n");
+        }
       }
       buffer.append("package ").append(getPackageName()).append(';');
     }

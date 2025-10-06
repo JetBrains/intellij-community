@@ -1,7 +1,5 @@
 PsiJavaFile:OnlyMarkdownBeforeMarkdown.java
   PsiPackageStatement:test.pkg
-    PsiModifierList:
-      <empty list>
     PsiKeyword:package('package')
     PsiWhiteSpace(' ')
     PsiJavaCodeReferenceElement:test.pkg

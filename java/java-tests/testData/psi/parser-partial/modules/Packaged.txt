@@ -1,7 +1,5 @@
 PsiJavaFile:Packaged.java
   PsiPackageStatement:pkg
-    PsiModifierList:
-      <empty list>
     PsiKeyword:package('package')
     PsiWhiteSpace(' ')
     PsiJavaCodeReferenceElement:pkg

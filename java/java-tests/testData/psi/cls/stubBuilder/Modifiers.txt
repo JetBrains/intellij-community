@@ -1,6 +1,5 @@
 PsiJavaFileStub [pack]
   PsiPackageStatementStub[pack]
-    PsiModifierListStub[mask=0]
   PsiClassStub[name=Modifiers fqn=pack.Modifiers]
     PsiModifierListStub[mask=1]
     PsiTypeParameterListStub

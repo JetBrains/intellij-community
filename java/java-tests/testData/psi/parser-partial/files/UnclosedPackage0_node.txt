@@ -1,7 +1,5 @@
 test.java.file
   ERROR_ELEMENT
-    MODIFIER_LIST
-      <empty list>
     PACKAGE_KEYWORD
   IMPORT_LIST
     <empty list>

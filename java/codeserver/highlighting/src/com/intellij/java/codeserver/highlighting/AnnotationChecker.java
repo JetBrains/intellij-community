@@ -73,7 +73,8 @@ final class AnnotationChecker {
   }
 
   void checkPackageAnnotationContainingFile(@NotNull PsiPackageStatement statement) {
-    if (statement.getAnnotationList().getAnnotations().length > 0 && !PsiPackage.PACKAGE_INFO_FILE.equals(myVisitor.file().getName())) {
+    PsiModifierList annotationList = statement.getAnnotationList();
+    if (annotationList != null && !PsiPackage.PACKAGE_INFO_FILE.equals(myVisitor.file().getName())) {
       myVisitor.report(JavaErrorKinds.ANNOTATION_NOT_ALLOWED_ON_PACKAGE.create(statement));
     }
   }
