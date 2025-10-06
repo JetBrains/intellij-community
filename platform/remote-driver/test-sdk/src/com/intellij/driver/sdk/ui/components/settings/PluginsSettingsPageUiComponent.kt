@@ -16,6 +16,8 @@ import com.intellij.driver.sdk.ui.xQuery
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JLabel
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 fun DialogUiComponent.pluginsSettingsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
   onPluginsPage().apply(action)
@@ -31,6 +33,10 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   val installedTab = x { and(byType(JLabel::class.java), byAccessibleName("Installed")) }
   val marketplaceTab = x { and(byType(JLabel::class.java), byAccessibleName ("Marketplace")) }
   val gearButton = x { byAccessibleName("Manage Repositories, Configure Proxy or Install Plugin from Disk") }
+
+  fun waitLoaded(timeout: Duration = 1.minutes) {
+    x { byType("com.intellij.util.ui.AsyncProcessIcon") }.waitNotFound(timeout)
+  }
 
   fun listPluginComponent(pluginName: String, action: ListPluginComponent.() -> Unit = {}): ListPluginComponent =
     x(ListPluginComponent::class.java) {
