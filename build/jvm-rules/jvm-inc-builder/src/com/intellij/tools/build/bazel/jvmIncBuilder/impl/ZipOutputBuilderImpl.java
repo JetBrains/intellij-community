@@ -182,25 +182,24 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         boolean useTempOutput = myReadZipFile != null /*srcZip exists*/ && Files.exists(myWriteZipPath) && Files.isSameFile(myReadZipPath, myWriteZipPath);
         Path outputPath = useTempOutput? getTempOutputPath() : myWriteZipPath;
         try {
-
-          // augment entry map with all currently present directory entries
-          for (String dirName : myDirIndex.keySet()) {
-            ZipEntry existingEntry = myExistingDirectories.get(dirName);
-            if (existingEntry == null && "/".equals(dirName)) {
-              continue; // keep root '/' entry if it were present in the original zip
-            }
-            if (existingEntry != null) {
-              myEntries.put(dirName, createEntryData(myReadZipFile, existingEntry));
-            }
-            else {
-              myEntries.put(dirName, createEntryData(dirName, EntryData.NO_DATA_BYTES));
-            }
-          }
-
           if (myCreateIndex) {
             saveToIndexedArchive(outputPath);
           }
           else {
+            // augment entry map with all currently present directory entries
+            for (String dirName : myDirIndex.keySet()) {
+              ZipEntry existingEntry = myExistingDirectories.get(dirName);
+              if (existingEntry == null && "/".equals(dirName)) {
+                continue; // keep root '/' entry if it were present in the original zip
+              }
+              if (existingEntry != null) {
+                myEntries.put(dirName, createEntryData(myReadZipFile, existingEntry));
+              }
+              else {
+                myEntries.put(dirName, createEntryData(dirName, EntryData.NO_DATA_BYTES));
+              }
+            }
+
             saveToArchive(outputPath);
           }
         }
@@ -250,6 +249,9 @@ public class ZipOutputBuilderImpl implements ZipOutputBuilder {
         if (!zipEntry.isDirectory()) {
           indexBuilder.addFile(zipEntry.getName());
           zos.uncompressedData(zipEntry.getName().getBytes(StandardCharsets.UTF_8), data.getContent(), myCrc);
+        }
+        else {
+          throw new IOException("Unexpected directory entry in archive content: " + zipEntry.getName());
         }
         it.remove();
       }
