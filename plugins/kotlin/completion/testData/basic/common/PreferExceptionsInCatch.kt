@@ -1,6 +1,6 @@
-class A
-class B: Exception()
-class C
+class ANotException
+class BException: Exception()
+class CNotException
 
 fun test() {
     try {
@@ -11,8 +11,8 @@ fun test() {
 }
 
 // WITH_ORDER
-// EXIST: B
-// EXIST: A
-// EXIST: C
+// EXIST: BException
+// EXIST: ANotException
+// EXIST: CNotException
 
 // IGNORE_K1
