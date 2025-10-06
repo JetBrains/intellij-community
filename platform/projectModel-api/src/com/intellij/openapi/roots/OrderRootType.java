@@ -89,10 +89,22 @@ public class OrderRootType {
     return false;
   }
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * Returns the same elements as {@link #getAllPersistentTypesList()}, but as an array.
+   * Kept for compatibility; prefer {@link #getAllPersistentTypesList()}.
+   */
+  @ApiStatus.Obsolete
   public static OrderRootType @NotNull [] getAllTypes() {
     return getAllPersistentTypes();
   }
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * Returns the same elements as {@link #getAllPersistentTypesList()}, but as an array.
+   * Kept for compatibility; prefer {@link #getAllPersistentTypesList()}.
+   */
+  @ApiStatus.Obsolete
   public static PersistentOrderRootType @NotNull [] getAllPersistentTypes() {
     return getAllPersistentTypesList().toArray(new PersistentOrderRootType[0]);
   }
