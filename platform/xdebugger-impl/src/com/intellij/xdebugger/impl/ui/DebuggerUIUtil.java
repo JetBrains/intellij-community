@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -60,6 +61,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.visualizedtext.VisualizedTextPopupUtil;
+import com.intellij.xdebugger.impl.util.MonolithUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -72,9 +74,13 @@ import java.awt.event.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.intellij.xdebugger.impl.breakpoints.XBreakpointProxyKt.asProxy;
+import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.showFeWarnings;
+import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
 
 public final class DebuggerUIUtil {
   public static final @NonNls String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
+
+  private final static Logger LOG = Logger.getInstance(DebuggerUIUtil.class);
 
   private DebuggerUIUtil() {
   }
@@ -547,8 +553,11 @@ public final class DebuggerUIUtil {
   /**
    * Use {@link DebuggerUIUtil#getSessionProxy(AnActionEvent)} instead.
    */
-  @ApiStatus.Obsolete
   public static @Nullable XDebugSession getSession(@NotNull AnActionEvent e) {
+    if (showFeWarnings() && useFeProxy() && !MonolithUtils.isMonolith()) {
+      LOG.error("In Split mode DebuggerUIUtil#getSession(AnActionEvent) should not be called from the frontend. " +
+                "Please use DebuggerUIUtil#getSessionProxy(AnActionEvent) instead.");
+    }
     XDebugSession session = e.getData(XDebugSession.DATA_KEY);
     if (session == null) {
       Project project = e.getProject();
