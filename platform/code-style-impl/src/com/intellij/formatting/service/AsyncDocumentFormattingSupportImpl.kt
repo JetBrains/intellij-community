@@ -112,8 +112,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     RUNNING,
     CANCELLED,
     COMPLETED,
-    EXPIRED,
-    EXPIRED_CANCELLED
   }
 
   private inner class FormattingRequestImpl(
@@ -142,13 +140,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
           FormattingRequestState.RUNNING -> {
             val formattingTask = checkNotNull(task)
             if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLED)) {
-              result.cancel()
-              return formattingTask.cancel()
-            }
-          }
-          FormattingRequestState.EXPIRED -> {
-            val formattingTask = checkNotNull(task)
-            if (stateRef.compareAndSet(FormattingRequestState.EXPIRED, FormattingRequestState.EXPIRED_CANCELLED)) {
               result.cancel()
               return formattingTask.cancel()
             }
@@ -213,7 +204,8 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         val formattedText = withTimeoutOrNull(getTimeout(service).toMillis()) {
           result.await()
         }
-        if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
+        // If `result` was not completed by now by e.g. onTextReady, it has expired
+        if (result.complete(null)) {
           notifyExpired()
         }
         else if (formattedText != null) {
