@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @ApiStatus.Internal
@@ -63,6 +64,8 @@ public final class StubIndexImpl extends StubIndexEx {
 
   private final AtomicBoolean myForcedClean = new AtomicBoolean();
   private volatile CompletableFuture<AsyncState> myStateFuture;
+  // computation that initializes StubIndexExtension's. If the IDE decides to terminate early, this future gets canceled
+  private volatile Future<?> myGenesisFuture;
   private volatile AsyncState myState;
   private volatile boolean myInitialized;
 
@@ -241,7 +244,7 @@ public final class StubIndexImpl extends StubIndexEx {
       FileBasedIndex.getInstance();
 
       myStateFuture = new CompletableFuture<>();
-      IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
+      myGenesisFuture = IndexDataInitializer.submitGenesisTask(new StubIndexInitialization());
     }
   }
 
@@ -249,6 +252,10 @@ public final class StubIndexImpl extends StubIndexEx {
     try {
       myPerFileElementTypeStubModificationTracker.dispose();
       Collection<UpdatableIndex<?, Void, FileContent, ?>> values = getAsyncState().myIndices.values();
+      Future<?> genesisFuture = myGenesisFuture;
+      if (genesisFuture != null) {
+        genesisFuture.cancel(false);
+      }
       IndexDataInitializer.runParallelTasks(ContainerUtil.map(values, index -> (ThrowableRunnable<Throwable>)() -> {
         try {
           index.dispose();
@@ -392,6 +399,7 @@ public final class StubIndexImpl extends StubIndexEx {
       boolean forceClean = myForcedClean.getAndSet(false);
       List<ThrowableRunnable<?>> tasks = new ArrayList<>();
       while (extensionsIterator.hasNext()) {
+        ProgressManager.checkCanceled();
         StubIndexExtension<?, ?> extension = extensionsIterator.next();
         if (extension == null) {
           break;
