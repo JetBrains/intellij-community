@@ -110,12 +110,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     }
   }
 
-  private enum class FormattingRequestState {
-    RUNNING,
-    CANCELLED,
-    COMPLETED,
-  }
-
   private inner class FormattingRequestImpl(
     private val _context: FormattingContext,
     val document: Document,
@@ -132,23 +126,14 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     private val taskStarted = CompletableDeferred<Unit>()
     private val result = CompletableDeferred<String?>()
 
-    private val stateRef: AtomicReference<FormattingRequestState> = AtomicReference(
-      FormattingRequestState.RUNNING)
-
     fun cancel(): Boolean {
       if (!taskStarted.isCompleted) return false
-      while (true) {
-        when (stateRef.get()) {
-          FormattingRequestState.RUNNING -> {
-            val formattingTask = checkNotNull(task)
-            if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLED)) {
-              result.cancel()
-              return formattingTask.cancel()
-            }
-          }
-          else -> return false
-        }
+      // for our purpose, result.cancel is equivalent, but we need the CAS semantics
+      if (result.completeExceptionally(CancellationException())) {
+        val formattingTask = checkNotNull(task)
+        return formattingTask.cancel()
       }
+      return false
     }
 
     fun setTask(formattingTask: FormattingTask) {
@@ -288,9 +273,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     }
 
     override fun onTextReady(updatedText: String?) {
-      if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        result.complete(updatedText)
-      }
+      result.complete(updatedText)
     }
 
     override fun onError(title: @NlsContexts.NotificationTitle String, message: @NlsContexts.NotificationContent String) {
@@ -302,8 +285,7 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       @NlsContexts.NotificationContent message: @NlsContexts.NotificationContent String,
       displayId: String?,
     ) {
-      if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        result.complete(null)
+      if (result.complete(null)) {
         FormattingNotificationService.getInstance(_context.project)
           .reportError(getNotificationGroupId(service), displayId, title, message)
       }
@@ -319,11 +301,9 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       displayId: String?,
       offset: Int,
     ) {
-      if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
-        result.complete(null)
+      if (result.complete(null)) {
         FormattingNotificationService.getInstance(_context.project)
-          .reportErrorAndNavigate(getNotificationGroupId(service), displayId, title, message, _context,
-                                  offset)
+          .reportErrorAndNavigate(getNotificationGroupId(service), displayId, title, message, _context, offset)
       }
     }
 
