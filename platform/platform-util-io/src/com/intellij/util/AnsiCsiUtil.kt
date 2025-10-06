@@ -15,11 +15,11 @@ object AnsiCsiUtil {
    * see [CSI](https://en.wikipedia.org/wiki/ANSI_escape_code#CSIsection)
    */
   @JvmStatic
-  fun stripAnsi(text: String): String = text.replace(AnsiCsiRegexCapturing, "").trim()
+  fun stripAnsi(text: CharSequence): String = AnsiCsiRegexCapturing.replace(text, "").trim()
 
   /**
    * see [CSI](https://en.wikipedia.org/wiki/ANSI_escape_code#CSIsection)
    */
   @JvmStatic
-  fun containsAnsi(text: String): Boolean = AnsiCsiRegexCapturing.containsMatchIn(text)
+  fun containsAnsi(text: CharSequence): Boolean = AnsiCsiRegexCapturing.containsMatchIn(text)
 }
