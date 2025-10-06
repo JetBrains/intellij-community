@@ -80,7 +80,6 @@ import java.util.jar.Manifest;
 
 import static com.intellij.execution.junit.JUnitExternalLibraryDescriptor.JUNIT5;
 import static com.intellij.execution.junit.JUnitExternalLibraryDescriptor.JUNIT6;
-import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> implements PossiblyDumbAware {
   private static final String LAUNCHER_MODULE_NAME = "org.junit.platform.launcher";
@@ -106,6 +105,14 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     JUnitStarter.JUNIT5_PARAMETER, "5",
     JUnitStarter.JUNIT6_PARAMETER, "6"
   );
+
+  private static final Set<String> STANDARD_JUNIT_ENGINE_CLASSES = Set.of(
+    "org.junit.jupiter.engine.JupiterTestEngine",
+    "org.junit.vintage.engine.VintageTestEngine",
+    "org.junit.platform.launcher.core.SuiteTestEngine",
+    "org.junit.platform.suite.engine.SuiteTestEngine"
+  );
+
   protected static final Set<String> JUPITER_RUNNERS = Set.of(JUnitStarter.JUNIT5_PARAMETER, JUnitStarter.JUNIT6_PARAMETER);
 
   protected TestObject(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -509,6 +516,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                 @NotNull List<String> classPath,
                                                 @NotNull RepositoryLibraryProperties properties) throws CantRunException {
     Collection<OrderRoot> roots;
+    if (DumbService.isDumb(project)) {
+      throw new CantRunException(JUnitBundle.message("downloading.tests.disabled.during.index.update.error.message"));
+    }
+    //noinspection IncorrectCancellationExceptionHandling
     try {
       Application application = ApplicationManager.getApplication();
       application.assertIsNonDispatchThread();
@@ -748,7 +759,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   private String getRunner(@NotNull GlobalSearchScope scope, @NotNull Project project) {
-    if (JavaPsiFacade.getInstance(project).findClass(ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT, scope) != null ||
+    if (JUnitUtil.isJUnit6(scope, project) ||
         isCustomJUnit(scope, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_CANCELLATION_TOKEN)) {
       return JUnitStarter.JUNIT6_PARAMETER;
     }
@@ -877,8 +888,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   private static boolean isCustomJupiterTestEngineName(@Nullable String engineImplClassName) {
-    return !"org.junit.jupiter.engine.JupiterTestEngine".equals(engineImplClassName) &&
-           !"org.junit.vintage.engine.VintageTestEngine".equals(engineImplClassName);
+    return !STANDARD_JUNIT_ENGINE_CLASSES.contains(engineImplClassName);
   }
 
   @Override
