@@ -27,20 +27,13 @@ internal class NonSelectableNodeFilteringSelectionModel : DefaultTreeSelectionMo
       super.setSelectionPaths(null)
       return
     }
-    val len = paths.size
-    var firstNonSelectable = -1
-    for (i in 0 until len) {
-      if (paths[i].isNonSelectable()) { firstNonSelectable = i; break }
-    }
+    val firstNonSelectable = paths.indexOfFirst { it.isNonSelectable() }
     if (firstNonSelectable < 0) {
       super.setSelectionPaths(paths)
       return
     }
-    val filtered = ArrayList<TreePath>(len - 1)
-    for (i in 0 until len) {
-      val p = paths[i]
-      if (!p.isNonSelectable()) filtered.add(p)
-    }
+    val filtered = ArrayList<TreePath>(paths.size - 1)
+    paths.filterTo(filtered) { !it.isNonSelectable() }
     super.setSelectionPaths(filtered.toTypedArray())
   }
 
@@ -50,20 +43,13 @@ internal class NonSelectableNodeFilteringSelectionModel : DefaultTreeSelectionMo
 
   override fun addSelectionPaths(paths: Array<out TreePath>?) {
     if (paths == null) return
-    val len = paths.size
-    var firstNonSelectable = -1
-    for (i in 0 until len) {
-      if (paths[i].isNonSelectable()) { firstNonSelectable = i; break }
-    }
+    val firstNonSelectable = paths.indexOfFirst { it.isNonSelectable() }
     if (firstNonSelectable < 0) {
       super.addSelectionPaths(paths)
       return
     }
-    val filtered = ArrayList<TreePath>(len - 1)
-    for (i in 0 until len) {
-      val p = paths[i]
-      if (!p.isNonSelectable()) filtered.add(p)
-    }
+    val filtered = ArrayList<TreePath>(paths.size - 1)
+    paths.filterTo(filtered) { !it.isNonSelectable() }
     if (filtered.isNotEmpty()) super.addSelectionPaths(filtered.toTypedArray())
   }
 }

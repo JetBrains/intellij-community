@@ -2,6 +2,7 @@
 package com.intellij.platform.vcs.impl.shared.changes
 
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeList
@@ -36,7 +37,20 @@ interface ChangesTreeNodeFactory {
                        parent: ChangesBrowserNode<*>): ChangesBrowserNode<*>?
 
   companion object {
-    @JvmStatic
-    fun getInstanceOrNull(project: Project): ChangesTreeNodeFactory? = project.serviceOrNull()
+    private val EP_NAME: ExtensionPointName<ChangesTreeNodeFactory> = ExtensionPointName.create("com.intellij.vcs.changes.changesTreeNodeFactory")
+
+    fun createChangeListNode(project: Project,
+                             list: ChangeList,
+                             listRemoteState: ChangeListRemoteState): ChangesBrowserChangeListNode?{
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createChangeListNode(project, list, listRemoteState) }
+    }
+
+    fun createChangeNode(project: Project?,
+                         change: Change,
+                         decorator: ChangeNodeDecorator?,
+                         parent: ChangesBrowserNode<*>): ChangesBrowserNode<*>?{
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createChangeNode(project, change, decorator, parent) }
+    }
+
   }
 }

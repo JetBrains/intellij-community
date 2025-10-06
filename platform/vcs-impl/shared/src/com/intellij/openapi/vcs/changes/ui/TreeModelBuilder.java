@@ -205,8 +205,6 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
     assert myProject != null;
     TreeModelBuilderEx modelBuilderEx = TreeModelBuilderEx.getInstanceOrNull(myProject);
-    ChangesTreeNodeFactory nodeFactory =
-      ChangesTreeNodeFactory.getInstanceOrNull(myProject);
     boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
     ChangesBrowserConflictsNode conflictsRoot = null;
 
@@ -216,11 +214,9 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
       ChangesBrowserNode<?> changesParent;
       if (!skipChangeListNode) {
-        ChangesBrowserChangeListNode listNode = nodeFactory != null
-                                                ? Objects.requireNonNullElseGet(
-          nodeFactory.createChangeListNode(myProject, list, listRemoteState),
-          () -> new ChangesBrowserChangeListNode(myProject, list, listRemoteState))
-                                                : new ChangesBrowserChangeListNode(myProject, list, listRemoteState);
+        ChangesBrowserChangeListNode listNode = Objects.requireNonNullElseGet(
+          ChangesTreeNodeFactory.Companion.createChangeListNode(myProject, list, listRemoteState),
+          () -> new ChangesBrowserChangeListNode(myProject, list, listRemoteState));
         listNode.markAsHelperNode();
 
         insertSubtreeRoot(listNode);
@@ -242,19 +238,15 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
             conflictsRoot.markAsHelperNode();
             myModel.insertNodeInto(conflictsRoot, myRoot, myModel.getChildCount(myRoot));
           }
-          ChangesBrowserNode<?> changeNode = nodeFactory != null
-                                             ? Objects.requireNonNullElseGet(
-            nodeFactory.createChangeNode(myProject, change, decorator, conflictsRoot),
-            () -> createChangeNode(change, decorator))
-                                             : createChangeNode(change, decorator);
+          ChangesBrowserNode<?> changeNode = Objects.requireNonNullElseGet(
+            ChangesTreeNodeFactory.Companion.createChangeNode(myProject, change, decorator, conflictsRoot),
+            () -> createChangeNode(change, decorator));
           insertChangeNode(change, conflictsRoot, changeNode);
         }
         else {
-          ChangesBrowserNode<?> changeNode = nodeFactory != null
-                                             ? Objects.requireNonNullElseGet(
-            nodeFactory.createChangeNode(myProject, change, decorator, changesParent),
-            () -> createChangeNode(change, decorator))
-                                             : createChangeNode(change, decorator);
+          ChangesBrowserNode<?> changeNode = Objects.requireNonNullElseGet(
+            ChangesTreeNodeFactory.Companion.createChangeNode(myProject, change, decorator, changesParent),
+            () -> createChangeNode(change, decorator));
           insertChangeNode(change, changesParent, changeNode);
         }
       }

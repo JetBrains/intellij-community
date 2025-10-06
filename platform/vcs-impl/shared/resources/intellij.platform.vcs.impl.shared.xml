@@ -39,6 +39,9 @@
                     interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
+    <extensionPoint name="vcs.changes.changesTreeNodeFactory"
+                    interface="com.intellij.platform.vcs.impl.shared.changes.ChangesTreeNodeFactory"
+                    dynamic="true"/>
   </extensionPoints>
 
   <actions>
