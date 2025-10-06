@@ -7,6 +7,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @see CompletionResultSet#withRelevanceSorter(CompletionSorter)
+ *
+ * @see #emptySorter
+ * @see #defaultSorter
  */
 @ApiStatus.NonExtendable
 public abstract class CompletionSorter {
