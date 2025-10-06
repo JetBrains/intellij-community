@@ -5,8 +5,10 @@ import com.intellij.execution.configurations.RemoteRunProfile;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -54,6 +56,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.showFeWarnings;
+import static com.intellij.xdebugger.impl.frame.XDebugSessionProxy.useFeProxy;
+
 public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvider, Disposable {
   private final ComponentListener myMoveListener = new ComponentAdapter() {
     @Override
@@ -62,6 +67,7 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
     }
   };
 
+  private static final Logger LOG = Logger.getInstance(XDebuggerTree.class);
   public static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   public static final DataKey<List<XValueNodeImpl>> SELECTED_NODES = DataKey.create("xdebugger.selected.nodes");
 
@@ -470,6 +476,12 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
   }
 
   public static @NotNull List<XValueNodeImpl> getSelectedNodes(@NotNull DataContext context) {
+    if (showFeWarnings() && useFeProxy() && AppMode.isRemoteDevHost()) {
+      LOG.error("""
+        XDebuggerTree.getSelectedNodes should not be called on the backend as it returns frontend node instances (XValueNodeImpl) which are only available on the frontend.
+        The action will not work correctly in Split mode. Please use XDebuggerTreeBackendOnlyActionBase to make your action backend-only and operates with XValue instances instead."""
+      );
+    }
     return ContainerUtil.notNullize(SELECTED_NODES.getData(context));
   }
 
