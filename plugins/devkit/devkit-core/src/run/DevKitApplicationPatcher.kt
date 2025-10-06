@@ -175,9 +175,6 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
     vmParameters.addProperty("idea.is.internal", "true")
     vmParameters.addProperty("fus.internal.test.mode", "true")
     vmParameters.addProperty("jdk.attach.allowAttachSelf")
-    if (!vmParameters.hasParameter("-Didea.initially.ask.config=never")) {
-      vmParameters.addProperty("idea.initially.ask.config", "true")
-    }
   }
 
   override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean =

@@ -97,7 +97,6 @@ java_binary(
     "-Didea.debug.mode=true",
     "-Didea.config.path=$${BUILD_WORKSPACE_DIRECTORY}/config/idea",
     "-Didea.system.path=$${BUILD_WORKSPACE_DIRECTORY}/system/idea",
-    "-Didea.initially.ask.config=true",
     "-Didea.diagnostic.opentelemetry.file=opentelemetry.json",
     "-Dfus.internal.test.mode=true",
     "-Dcompose.swing.render.on.graphics=true",
