@@ -860,8 +860,7 @@ Fa:com.intellij.codeInsight.lookup.Classifier
 - f:getPresentableName():java.lang.String
 - a:getSortingWeights(java.lang.Iterable,com.intellij.util.ProcessingContext):java.util.List
 - removeElement(java.lang.Object,com.intellij.util.ProcessingContext):V
-a:com.intellij.codeInsight.lookup.ClassifierFactory
-- p:<init>(java.lang.String):V
+Fa:com.intellij.codeInsight.lookup.ClassifierFactory
 - a:createClassifier(com.intellij.codeInsight.lookup.Classifier):com.intellij.codeInsight.lookup.Classifier
 - equals(java.lang.Object):Z
 - getId():java.lang.String
