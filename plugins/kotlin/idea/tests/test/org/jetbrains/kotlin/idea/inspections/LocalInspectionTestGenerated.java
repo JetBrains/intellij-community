@@ -2524,16 +2524,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/filterFirstOrNullReference.kt");
                     }
 
-                    @TestMetadata("filterIsEmpty.kt")
-                    public void testFilterIsEmpty() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/filterIsEmpty.kt");
-                    }
-
-                    @TestMetadata("filterIsNotEmpty.kt")
-                    public void testFilterIsNotEmpty() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/filterIsNotEmpty.kt");
-                    }
-
                     @TestMetadata("filterLastExplicit.kt")
                     public void testFilterLastExplicit() throws Exception {
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/filterLastExplicit.kt");
@@ -2559,34 +2549,9 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToFakeWithLambda.kt");
                     }
 
-                    @TestMetadata("joinToForHashMap.kt")
-                    public void testJoinToForHashMap() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToForHashMap.kt");
-                    }
-
-                    @TestMetadata("joinToForMap.kt")
-                    public void testJoinToForMap() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToForMap.kt");
-                    }
-
                     @TestMetadata("joinToString.kt")
                     public void testJoinToString() throws Exception {
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToString.kt");
-                    }
-
-                    @TestMetadata("joinToStringOnHashMap.kt")
-                    public void testJoinToStringOnHashMap() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToStringOnHashMap.kt");
-                    }
-
-                    @TestMetadata("joinToStringOnHashMap2.kt")
-                    public void testJoinToStringOnHashMap2() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToStringOnHashMap2.kt");
-                    }
-
-                    @TestMetadata("joinToStringOnMap.kt")
-                    public void testJoinToStringOnMap() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToStringOnMap.kt");
                     }
 
                     @TestMetadata("joinToStringViaBuilder.kt")
@@ -2609,11 +2574,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToStringWithReferenceFake.kt");
                     }
 
-                    @TestMetadata("joinToStringWithSuspendFunctionCall.kt")
-                    public void testJoinToStringWithSuspendFunctionCall() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToStringWithSuspendFunctionCall.kt");
-                    }
-
                     @TestMetadata("joinToStringWithTrailingComma.kt")
                     public void testJoinToStringWithTrailingComma() throws Exception {
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToStringWithTrailingComma.kt");
@@ -2627,21 +2587,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     @TestMetadata("joinToWithComment.kt")
                     public void testJoinToWithComment() throws Exception {
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToWithComment.kt");
-                    }
-
-                    @TestMetadata("joinToWithSuspendFunctionCall.kt")
-                    public void testJoinToWithSuspendFunctionCall() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/joinToWithSuspendFunctionCall.kt");
-                    }
-
-                    @TestMetadata("listOfNotNull.kt")
-                    public void testListOfNotNull() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/listOfNotNull.kt");
-                    }
-
-                    @TestMetadata("listOfNotNullWithComment.kt")
-                    public void testListOfNotNullWithComment() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/listOfNotNullWithComment.kt");
                     }
 
                     @TestMetadata("mapFlatten.kt")
@@ -2719,11 +2664,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/mapNotNullFirstOrNull.kt");
                     }
 
-                    @TestMetadata("mapNotNullWithSuspendFunctionCall.kt")
-                    public void testMapNotNullWithSuspendFunctionCall() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/mapNotNullWithSuspendFunctionCall.kt");
-                    }
-
                     @TestMetadata("mapSum.kt")
                     public void testMapSum() throws Exception {
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/mapSum.kt");
@@ -2799,11 +2739,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/mapToMapWithDestination3.kt");
                     }
 
-                    @TestMetadata("mapWithReturn.kt")
-                    public void testMapWithReturn() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/mapWithReturn.kt");
-                    }
-
                     @TestMetadata("notApplicableSortedByFirst.kt")
                     public void testNotApplicableSortedByFirst() throws Exception {
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/notApplicableSortedByFirst.kt");
@@ -2832,11 +2767,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     @TestMetadata("notApplicableSortedByLastOrNull.kt")
                     public void testNotApplicableSortedByLastOrNull() throws Exception {
                         runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/notApplicableSortedByLastOrNull.kt");
-                    }
-
-                    @TestMetadata("onMapImplementationClass.kt")
-                    public void testOnMapImplementationClass() throws Exception {
-                        runTest("testData/inspectionsLocal/collections/simplifiableCallChain/sequencesOperations/onMapImplementationClass.kt");
                     }
 
                     @TestMetadata("sortedByDescendingFirst.kt")
