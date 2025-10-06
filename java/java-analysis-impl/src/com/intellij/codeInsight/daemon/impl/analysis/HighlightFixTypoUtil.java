@@ -110,6 +110,7 @@ public final class HighlightFixTypoUtil {
   }
 
   private static @Nullable ModCommandAction createThrowsTypoFix(@NotNull PsiErrorElement psiErrorElement) {
+    // class A throw<caret> SomeException
     PsiElement prevVisibleLeaf = PsiTreeUtil.prevVisibleLeaf(psiErrorElement);
     if (!(prevVisibleLeaf instanceof PsiJavaToken token && token.getTokenType() == JavaTokenType.RPARENTH)) return null;
     if (!(token.getParent() instanceof PsiParameterList parameterList && parameterList.getParent() instanceof PsiMethod)) {
@@ -130,6 +131,7 @@ public final class HighlightFixTypoUtil {
 
   @Nullable
   private static CommonIntentionAction createSynchronizedSwitchTypoFix(@NotNull PsiMethodCallExpression methodCallExpression) {
+    // switc<caret>()
     PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     PsiExpression[] expressions = argumentList.getExpressions();
     if (expressions.length != 0 && expressions.length != 1) return null;
@@ -395,6 +397,7 @@ public final class HighlightFixTypoUtil {
 
   @Nullable
   private static CommonIntentionAction createBreakContinueTypoFix(@NotNull PsiJavaCodeReferenceElement ref) {
+    // contine<caret>;
     if (ref.getParent() instanceof PsiExpressionStatement expressionStatement) {
       PsiElement[] children = expressionStatement.getChildren();
       if (children.length == 2 &&
@@ -418,6 +421,7 @@ public final class HighlightFixTypoUtil {
 
   private static CommonIntentionAction createBooleanNullTypoFix(@NotNull PsiJavaCodeReferenceElement ref) {
     if (ref instanceof PsiReferenceExpression expression) {
+      //call(tru<caret>)
       Set<String> targetKeywords = new HashSet<>();
       PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
       if (expectedType != null) {
@@ -461,6 +465,7 @@ public final class HighlightFixTypoUtil {
       return QuickFixFactory.getInstance().createChangeToSimilarKeyword(typeElement, targetKeywords);
     }
     if (ref.getParent() instanceof PsiExpressionStatement expressionStatement) {
+      // val<caret> something = something();
       PsiElement[] children = expressionStatement.getChildren();
       if (children.length == 2 && children[0] == ref && children[1] instanceof PsiErrorElement) {
         Set<String> targetKeywords = new HashSet<>(PsiTypes.primitiveTypeNames());
