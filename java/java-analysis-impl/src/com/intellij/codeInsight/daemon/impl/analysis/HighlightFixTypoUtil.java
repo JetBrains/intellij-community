@@ -176,6 +176,7 @@ public final class HighlightFixTypoUtil {
 
   @Nullable
   private static CommonIntentionAction createNewTypoFix(@NotNull PsiJavaCodeReferenceElement ref) {
+    //return ne<caret> Something();
     if (!(ref instanceof PsiReferenceExpression)) return null;
     if (!(ref.getNextSibling() instanceof PsiErrorElement)) return null;
     PsiElement nextVisibleLeaf = PsiTreeUtil.nextVisibleLeaf(ref);
@@ -200,9 +201,13 @@ public final class HighlightFixTypoUtil {
       if (codeBlock == null) return null;
       PsiStatement[] statements = codeBlock.getStatements();
       if (statements.length == 0) return null;
+      //  static int test() {
+      //    retur<caret>
+      //  }
       if (PsiTreeUtil.isAncestor(statements[statements.length - 1], ref, false)) {
         possiblePlace = true;
       }
+      //retur<caret> a();
       if (statements.length > 1 &&
           PsiTreeUtil.isAncestor(statements[statements.length - 2], ref, false) &&
           PsiTreeUtil.hasErrorElements(statements[statements.length - 2])) {
