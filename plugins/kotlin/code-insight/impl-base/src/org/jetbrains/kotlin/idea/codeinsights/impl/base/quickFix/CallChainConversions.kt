@@ -274,25 +274,31 @@ object CallChainConversions {
             CallChainConversion(KOTLIN_COLLECTIONS_MAP, KOTLIN_COLLECTIONS_FLATTEN, FLAT_MAP),
 
             CallChainConversion(KOTLIN_COLLECTIONS_LIST_OF, KOTLIN_COLLECTIONS_FILTER_NOT_NULL, LIST_OF_NOT_NULL)
-        ).map {
-            when (val replacement = it.replacement) {
-                MIN, MAX, MIN_BY, MAX_BY -> {
-                    val additionalConversion = if ((replacement == MIN || replacement == MAX) && it.addNotNullAssertion) {
-                        it.copy(
-                            replacement = "${replacement}Of",
-                            replaceableApiVersion = ApiVersion.KOTLIN_1_4,
-                            addNotNullAssertion = false,
-                            additionalArgument = "{ it }"
-                        )
-                    } else {
-                        it.copy(replacement = "${replacement}OrNull", replaceableApiVersion = ApiVersion.KOTLIN_1_4)
-                    }
-                    listOf(additionalConversion, it)
-                }
+        ).flatMap {
+            it.withAdditionalMinMaxConversions()
+        }
+    }
 
-                else -> listOf(it)
+    private fun CallChainConversion.withAdditionalMinMaxConversions(): List<CallChainConversion> {
+        val original = this
+
+        return when (val replacement = original.replacement) {
+            MIN, MAX, MIN_BY, MAX_BY -> {
+                val additionalConversion = if ((replacement == MIN || replacement == MAX) && original.addNotNullAssertion) {
+                    original.copy(
+                        replacement = "${replacement}Of",
+                        replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+                        addNotNullAssertion = false,
+                        additionalArgument = "{ it }"
+                    )
+                } else {
+                    original.copy(replacement = "${replacement}OrNull", replaceableApiVersion = ApiVersion.KOTLIN_1_4)
+                }
+                listOf(additionalConversion, original)
             }
-        }.flatten()
+
+            else -> listOf(original)
+        }
     }
 
     val conversionGroups: Map<ConversionId, List<CallChainConversion>> by lazy {
