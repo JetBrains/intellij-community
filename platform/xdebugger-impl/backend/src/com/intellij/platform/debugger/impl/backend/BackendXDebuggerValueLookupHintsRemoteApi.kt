@@ -6,7 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorId
-import com.intellij.openapi.editor.impl.findEditor
+import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.debugger.impl.rpc.RemoteValueHintId
@@ -32,9 +32,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.await
 
 internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupHintsRemoteApi {
-  override suspend fun adjustOffset(projectId: ProjectId, editorId: EditorId, offset: Int): Int {
+  override suspend fun adjustOffset(projectId: ProjectId, editorId: EditorId, offset: Int): Int? {
     val project = projectId.findProject()
-    val editor = editorId.findEditor()
+    val editor = editorId.findEditorOrNull() ?: return null
     return readAction {
       // adjust offset to match with other actions, like go to declaration
       val document = editor.document
@@ -45,7 +45,7 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
   override suspend fun getExpressionInfo(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): ExpressionInfo? {
     return withContext(Dispatchers.EDT) {
       val project = projectId.findProject()
-      val editor = editorId.findEditor()
+      val editor = editorId.findEditorOrNull() ?: return@withContext null
       val evaluator = XDebuggerManager.getInstance(project).getCurrentSession()?.debugProcess?.evaluator ?: return@withContext null
       val expressionInfo = getExpressionInfo(evaluator, project, hintType, editor, offset)
 
@@ -92,7 +92,7 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
   ): RemoteValueHintId? {
     return withContext(Dispatchers.EDT) {
       val project = projectId.findProject()
-      val editor = editorId.findEditor()
+      val editor = editorId.findEditorOrNull() ?: return@withContext null
       val point = editor.offsetToXY(offset)
       val session = XDebuggerManager.getInstance(project).getCurrentSession()
       if (session == null) {

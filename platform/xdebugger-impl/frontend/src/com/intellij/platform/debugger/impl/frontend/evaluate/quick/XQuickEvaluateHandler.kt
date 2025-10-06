@@ -47,12 +47,12 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
       XDebuggerValueLookupHintsRemoteApi.getInstance().adjustOffset(projectId, editorId, offset)
     }
     val expressionInfoDeferred = documentCoroutineScope.async(Dispatchers.IO) {
-      val adjustedOffset = adjustedOffsetDeferred.await()
+      val adjustedOffset = adjustedOffsetDeferred.await() ?: return@async null
       val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
       remoteApi.getExpressionInfo(projectId, editorId, adjustedOffset, type)
     }
     val hintDeferred: Deferred<AbstractValueHint?> = documentCoroutineScope.async(Dispatchers.IO) {
-      val adjustedOffset = adjustedOffsetDeferred.await()
+      val adjustedOffset = adjustedOffsetDeferred.await() ?: return@async null
       val expressionInfo = expressionInfoDeferred.await()
       val textLength = document.textLength
       if (expressionInfo == null) {

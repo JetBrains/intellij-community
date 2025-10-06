@@ -6,8 +6,6 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
-import com.intellij.platform.rpc.topics.RemoteTopic
-import com.intellij.platform.rpc.topics.ApplicationRemoteTopic
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
@@ -21,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface XDebuggerValueLookupHintsRemoteApi : RemoteApi<Unit> {
-  suspend fun adjustOffset(projectId: ProjectId, editorId: EditorId, offset: Int): Int
+  suspend fun adjustOffset(projectId: ProjectId, editorId: EditorId, offset: Int): Int?
 
   suspend fun getExpressionInfo(projectId: ProjectId, editorId: EditorId, offset: Int, hintType: ValueHintType): ExpressionInfo?
 
