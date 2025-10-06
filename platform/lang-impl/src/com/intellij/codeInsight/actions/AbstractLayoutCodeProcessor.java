@@ -183,7 +183,7 @@ public abstract class AbstractLayoutCodeProcessor {
    *                       of the files. The modal error dialog will appear: "Following files affected by this action have been already
    *                       changed".</li>
    *                       <li>if <code>false</code> then it won't be possible to Undo the action for all files in one shot, even right
-   *                       after the action. The advantage is that Undo chain for each file won't be broken, and it will be
+   *                       after the action. The advantage is that the Undo chain for each file won't be broken, and it will be
    *                       possible to undo this action and previous changes in each file regardless of the state of other processed files.</li>
    *                       </ul>
    */
@@ -431,20 +431,27 @@ public abstract class AbstractLayoutCodeProcessor {
         PsiFile psiFile = next;
         myFilesProcessed++;
 
-        if (shouldProcessFile(psiFile)) {
-          updateIndicatorText(ApplicationBundle.message("bulk.reformat.process.progress.text"), ReadAction.compute(() -> getPresentablePath(myProject, psiFile)));
-          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiFile);
-          if (virtualFile != null) {
-            DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> performFileProcessing(virtualFile));
-          }
+        FileAndStatus status = shouldProcessFile(psiFile);
+        if (status != null) {
+          DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> performFileProcessing(status.file));
         }
       }
 
       return true;
     }
 
-    private Boolean shouldProcessFile(PsiFile psiFile) {
-      return ReadAction.compute(() -> psiFile.isWritable() && canBeFormatted(psiFile) && acceptedByFilters(psiFile));
+    private record FileAndStatus(VirtualFile file, @NlsSafe String statusText) {}
+
+    private @Nullable FileAndStatus shouldProcessFile(PsiFile psiFile) {
+      return ReadAction.compute(() -> {
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiFile);
+        if (virtualFile == null) return null;
+
+        if (psiFile.isWritable() && canBeFormatted(psiFile) && acceptedByFilters(psiFile)) {
+          return new FileAndStatus(virtualFile, getPresentablePath(myProject, psiFile));
+        }
+        return null;
+      });
     }
 
     private void performFileProcessing(@NotNull VirtualFile file) {
