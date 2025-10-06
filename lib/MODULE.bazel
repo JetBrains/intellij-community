@@ -10710,17 +10710,17 @@ http_file(
 )
 
 http_file(
-  name = "com_github_marschall-memoryfilesystem-2_8_1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.1/memoryfilesystem-2.8.1.jar",
-  sha256 = "4926485c107e0f44c0037a3cca7c10f1ef1c57844a13837f99fd8e848a74a00b",
-  downloaded_file_path = "memoryfilesystem-2.8.1.jar"
+  name = "com_github_marschall-memoryfilesystem-2_8_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.2/memoryfilesystem-2.8.2.jar",
+  sha256 = "8b94840d71ad0caa36b3309425b2d23084bc8788ce84d71f2d805b0fc84d1f5a",
+  downloaded_file_path = "memoryfilesystem-2.8.2.jar"
 )
 
 http_file(
-  name = "com_github_marschall-memoryfilesystem-2_8_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.1/memoryfilesystem-2.8.1-sources.jar",
-  sha256 = "3a77a98bac219228f3ddb301e4650ec03176e6f52c67130f4eddbbfe0d9212e4",
-  downloaded_file_path = "memoryfilesystem-2.8.1-sources.jar"
+  name = "com_github_marschall-memoryfilesystem-2_8_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/marschall/memoryfilesystem/2.8.2/memoryfilesystem-2.8.2-sources.jar",
+  sha256 = "112a99bacb1f3740515dadc9d52a4cdcf260c100e3cc915644183900b2f4a7e5",
+  downloaded_file_path = "memoryfilesystem-2.8.2-sources.jar"
 )
 
 http_file(

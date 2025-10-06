@@ -2,7 +2,6 @@
 package com.intellij.testFramework.rules
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
-import com.github.marschall.memoryfilesystem.StringTransformers
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.system.OS
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -74,11 +73,6 @@ private fun fs(os: OS, name: String): FileSystem {
     OS.macOS -> MemoryFileSystemBuilder.newMacOs().setCurrentWorkingDirectory("/")
     OS.Linux -> MemoryFileSystemBuilder.newLinux().setCurrentWorkingDirectory("/")
     else -> throw UnsupportedOperationException("Unsupported: ${os}")
-  }
-
-  if (os != OS.Linux) {
-    // https://github.com/marschall/memoryfilesystem/issues/56
-    builder.setLookUpTransformer(StringTransformers.IDENTIY).setStoreTransformer(StringTransformers.IDENTIY)
   }
 
   val sanitizedName = URLEncoder.encode(name, Charsets.UTF_8)

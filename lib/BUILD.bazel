@@ -7494,8 +7494,8 @@ java_library(
 
 jvm_import(
   name = "memoryfilesystem",
-  jar = "@com_github_marschall-memoryfilesystem-2_8_1_http//file",
-  source_jar = "@com_github_marschall-memoryfilesystem-2_8_1_http//file",
+  jar = "@com_github_marschall-memoryfilesystem-2_8_2_http//file",
+  source_jar = "@com_github_marschall-memoryfilesystem-2_8_2_http//file",
   visibility = ["//visibility:public"]
 )
 
