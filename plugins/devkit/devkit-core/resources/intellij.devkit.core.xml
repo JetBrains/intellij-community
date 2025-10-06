@@ -722,6 +722,8 @@
                  description="Enables commit messages validation for IntelliJ Monorepo"/>
     <registryKey key="aia.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for AI Assistant project"/>
+    <registryKey key="toolbox.commit.message.validation.enabled" defaultValue="true"
+                 description="Enables commit messages validation for Toolbox project"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.contentReport.ContentReportGeneratedSourcesFilter"/>
 
