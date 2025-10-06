@@ -7,13 +7,13 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.NonExtendable
 public abstract class ClassifierFactory<T> {
-  private final String myId;
+  private final @NotNull String myId;
 
-  protected ClassifierFactory(@NonNls String id) {
+  protected ClassifierFactory(@NotNull @NonNls String id) {
     myId = id;
   }
 
-  public String getId() {
+  public @NotNull @NonNls String getId() {
     return myId;
   }
 
@@ -21,12 +21,7 @@ public abstract class ClassifierFactory<T> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ClassifierFactory that)) return false;
-
-    if (!myId.equals(that.myId)) return false;
-
-    return true;
+    return this == o || o instanceof ClassifierFactory that && myId.equals(that.myId);
   }
 
   @Override
