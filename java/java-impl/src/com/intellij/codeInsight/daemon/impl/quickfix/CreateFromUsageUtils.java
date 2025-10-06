@@ -210,7 +210,7 @@ public final class CreateFromUsageUtils {
         newEditor.getCaretModel().moveToOffset(end + 1);
         CodeStyleManager styleManager = CodeStyleManager.getInstance(body.getProject());
         PsiFile containingFile = body.getContainingFile();
-        final String lineIndent = styleManager.getLineIndent(containingFile, end);
+        final String lineIndent = Objects.requireNonNullElse(styleManager.getLineIndent(containingFile, end), "");
         PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
         manager.doPostponedOperationsAndUnblockDocument(newEditor.getDocument());
         EditorModificationUtilEx.insertStringAtCaret(newEditor, lineIndent);
