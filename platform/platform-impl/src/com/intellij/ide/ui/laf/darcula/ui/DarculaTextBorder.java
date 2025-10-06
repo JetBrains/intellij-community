@@ -101,6 +101,11 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
 
   @ApiStatus.Internal
   public static void paintDarculaSearchArea(Graphics2D g, Rectangle r, JComponent c, boolean fillBackground, boolean enabled) {
+    paintDarculaSearchArea(g, r, c, null, fillBackground, enabled);
+  }
+
+  @ApiStatus.Internal
+  public static void paintDarculaSearchArea(Graphics2D g, Rectangle r, JComponent c, Color bgColor, boolean fillBackground, boolean enabled) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -115,7 +120,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
       float bw = BW.getFloat();
       Shape outerShape = new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc);
       if (fillBackground) {
-        g2.setColor(c.getBackground());
+        g2.setColor(bgColor == null ? c.getBackground() : bgColor);
         g2.fill(outerShape);
       }
 

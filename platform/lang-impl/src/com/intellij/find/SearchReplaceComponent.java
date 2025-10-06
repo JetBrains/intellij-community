@@ -746,7 +746,9 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
         @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
           Rectangle r = new Rectangle(x, y, width, height);
-          paintDarculaSearchArea((Graphics2D)g, r, (JComponent)c, false, c.isEnabled());
+          boolean fillBackground = JBColor.isBright();
+          Color bgColor = fillBackground ? UIUtil.getTextFieldBackground() : null;
+          paintDarculaSearchArea((Graphics2D)g, r, (JComponent)c, bgColor, fillBackground, c.isEnabled());
         }
       });
     }
