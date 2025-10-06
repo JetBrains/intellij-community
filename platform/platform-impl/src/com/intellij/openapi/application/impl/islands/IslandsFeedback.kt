@@ -21,10 +21,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.application
-import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class IslandsFeedback : ProjectActivity {
   internal companion object {
@@ -52,16 +53,9 @@ internal class IslandsFeedback : ProjectActivity {
           Registry.`is`("idea.islands.feedback2.enabled", true) &&
           !Registry.`is`("llm.riderNext.enabled", false) && ExperimentalUI.isNewUI()) {
 
-        application.service<IslandsFeedbackService>().run(project)
+        handleFeedback(project)
       }
     }
-  }
-}
-
-@Service(Service.Level.APP)
-private class IslandsFeedbackService {
-  fun run(project: Project) {
-    handleFeedback(project)
   }
 }
 
@@ -179,5 +173,11 @@ private fun scheduleNotification(time: Long) {
     return
   }
 
-  AppExecutorUtil.getAppScheduledExecutorService().schedule(Runnable { showNotification() }, delta, TimeUnit.MILLISECONDS)
+  service<ScopeHolder>().scope.launch {
+    delay(delta.milliseconds)
+    showNotification()
+  }
 }
+
+@Service(Service.Level.APP)
+private class ScopeHolder(val scope: CoroutineScope)
