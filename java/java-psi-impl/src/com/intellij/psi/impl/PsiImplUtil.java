@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -52,9 +52,10 @@ public final class PsiImplUtil {
   private PsiImplUtil() { }
 
   public static PsiMethod @NotNull [] getConstructors(@NotNull PsiClass aClass) {
+    if (aClass instanceof PsiAnonymousClass) return PsiMethod.EMPTY_ARRAY;
     List<PsiMethod> result = null;
     for (PsiMethod method : aClass.getMethods()) {
-      if (method.isConstructor() && method.getName().equals(aClass.getName())) {
+      if (method.isConstructor()) {
         if (result == null) result = new SmartList<>();
         result.add(method);
       }

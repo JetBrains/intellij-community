@@ -9,7 +9,7 @@ class Test {
   static abstract class D implements A, B {}
 
   interface I<T> {
-    <error descr="Invalid method declaration; return type required">m</error>(T arg);
+    <error descr="Method return type missing">m</error>(T arg);
   }
 
   void bar(C c) {
@@ -24,7 +24,7 @@ class Test {
 class Test2 {
 
   interface F {
-    <X>  <error descr="Invalid method declaration; return type required">m</error>();
+    <X>  <error descr="Method return type missing">m</error>();
   }
 
   void g() {}

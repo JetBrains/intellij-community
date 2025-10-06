@@ -318,12 +318,15 @@ public final class DefaultJavaErrorFixProvider extends AbstractJavaErrorFixProvi
       }
     });
     fix(VARARG_CSTYLE_DECLARATION, error -> new NormalizeBracketsFix(error.psi()));
+    fix(METHOD_MISSING_RETURN_TYPE_NOT_CONSTRUCTOR, error -> {
+      PsiMethod method = error.psi();
+      PsiType expectedType = HighlightFixUtil.determineReturnType(method);
+      return expectedType != null ? myFactory.createMethodReturnFix(method, expectedType, true, true) : null;
+    });
     fixes(METHOD_MISSING_RETURN_TYPE, (error, sink) -> {
       String className = error.context();
       PsiMethod method = error.psi();
-      if (className != null) {
-        sink.accept(myFactory.createRenameElementFix(method, className));
-      }
+      sink.accept(myFactory.createRenameElementFix(method, className));
       PsiType expectedType = HighlightFixUtil.determineReturnType(method);
       if (expectedType != null) {
         sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));

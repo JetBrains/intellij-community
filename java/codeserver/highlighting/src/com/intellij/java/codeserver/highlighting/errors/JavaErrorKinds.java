@@ -765,8 +765,11 @@ public final class JavaErrorKinds {
       .withDescription((cls, ctx) -> message("method.inheritance.clash.does.not.throw",
                                              formatClashMethodMessage(ctx.method(), ctx.superMethod()),
                                              formatType(ctx.exceptionType())));
-  public static final Parameterized<PsiMethod, String> METHOD_MISSING_RETURN_TYPE =
+  public static final Parameterized<PsiMethod, @NotNull String> METHOD_MISSING_RETURN_TYPE =
     parameterized(PsiMethod.class, String.class, "method.missing.return.type")
+      .withAnchor(method -> requireNonNullElse(method.getNameIdentifier(), method));
+  public static final Simple<PsiMethod> METHOD_MISSING_RETURN_TYPE_NOT_CONSTRUCTOR =
+    error(PsiMethod.class, "method.missing.return.type.not.constructor")
       .withAnchor(method -> requireNonNullElse(method.getNameIdentifier(), method));
 
   public static final Parameterized<PsiMember, AmbiguousImplicitConstructorCallContext> CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL =

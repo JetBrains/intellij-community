@@ -4,7 +4,7 @@ class C {
     <error descr="Cannot return a value from a constructor">return 1;</error>
   }
 
-  <error descr="Invalid method declaration; return type required">x</error>() {
+  <error descr="Method return type missing or constructor name does not match class name">x</error>() {
     return 1;
   }
 

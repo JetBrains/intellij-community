@@ -145,6 +145,9 @@ public final class ControlFlowUtil {
     PsiMethod[] constructors = aClass.getConstructors();
 
     if (constructors.length == 0) return false;
+    boolean initializedInCorrectlyNamedConstructor = false;
+    boolean initializedInBadlyNamedConstructor = false;
+    boolean uninitializedInBadlyNamedConstructor = false;
     nextConstructor:
     for (PsiMethod constructor : constructors) {
       PsiCodeBlock ctrBody = constructor.getBody();
@@ -154,11 +157,26 @@ public final class ControlFlowUtil {
         if (body != null && variableDefinitelyAssignedIn(field, body, true)) continue nextConstructor;
       }
       if (!ctrBody.isValid() || variableDefinitelyAssignedIn(field, ctrBody, true)) {
+        if (constructor.getName().equals(aClass.getName())) {
+          initializedInCorrectlyNamedConstructor = true;
+        }
+        else {
+          initializedInBadlyNamedConstructor = true;
+        }
         continue;
       }
-      return false;
+      if (constructor.getName().equals(aClass.getName())) {
+        // always report error when constructor with correct name doesn't assign
+        return false;
+      }
+      else {
+        uninitializedInBadlyNamedConstructor = true;
+      }
     }
-    return true;
+    // don't report initialization error when all correctly named constructors assign -> badly named constructor is probably method without type declared
+    // don't report initialization error when no correctly named constructor present and all badly named constructors assign -> class name edited manually?
+    // report initialization error when not all badly named constructors assign
+    return initializedInCorrectlyNamedConstructor || (initializedInBadlyNamedConstructor && !uninitializedInBadlyNamedConstructor);
   }
   
   /**

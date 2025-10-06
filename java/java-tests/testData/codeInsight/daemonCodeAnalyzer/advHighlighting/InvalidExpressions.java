@@ -103,12 +103,12 @@ public class a12 {
 
   int[] arr() { return new int[0]; }
 
-  public <error descr="Invalid method declaration; return type required">foo</error>() {
+  public <error descr="Method return type missing or constructor name does not match class name">foo</error>() {
   }
 
   {
     new Object() {
-      <error descr="Invalid method declaration; return type required">Object</error>() {}
+      <error descr="Method return type missing">Object</error>() {}
     };
   }
 
