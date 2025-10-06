@@ -26,7 +26,7 @@ private val testSnapshotDir = Path.of(getCommunityPath(), "platform/platform-tes
 
 private const val TEST_PLUGIN_ID = "plugin"
 
-@TestDataPath("\$CONTENT_ROOT/testSnapshots/plugin-validator")
+@TestDataPath($$"$CONTENT_ROOT/testSnapshots/plugin-validator")
 class PluginModelValidatorTest {
   @Rule
   @JvmField

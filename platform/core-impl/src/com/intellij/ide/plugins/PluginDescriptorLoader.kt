@@ -133,8 +133,8 @@ fun loadDescriptorFromJar(
   var resolver: ZipEntryResolverPool.EntryResolver? = null
   try {
     resolver = pool.load(file)
-    val dataLoader = ImmutableZipFileDataLoader(resolver, zipPath = file)
-    val input = dataLoader.load(descriptorRelativePath, pluginDescriptorSourceOnly = true) ?: return null
+    val dataLoader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = file)
+    val input = dataLoader.load(path = descriptorRelativePath, pluginDescriptorSourceOnly = true) ?: return null
     val descriptor = loadDescriptorFromStream(
       input = input,
       loadingContext = loadingContext,
@@ -414,7 +414,7 @@ suspend fun loadDescriptors(
     isMissingSubDescriptorIgnored = true,
     checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
   )
-  val discoveredPlugins = try {
+  val discoveredPlugins = loadingContext.use {
     loadDescriptors(
       loadingContext = loadingContext,
       isUnitTestMode = isUnitTestMode,
@@ -422,8 +422,6 @@ suspend fun loadDescriptors(
       zipPoolDeferred = zipPoolDeferred,
       mainClassLoaderDeferred = mainClassLoaderDeferred,
     )
-  } finally {
-    loadingContext.close()
   }
   return loadingContext to discoveredPlugins
 }

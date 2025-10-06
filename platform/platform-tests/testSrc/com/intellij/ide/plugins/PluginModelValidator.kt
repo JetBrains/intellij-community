@@ -96,9 +96,11 @@ fun validatePluginModel(projectPath: Path, validationOptions: PluginValidationOp
 /**
  * Runs [PluginModelValidator] on the specified [project] and returns the result.
  */
-fun validatePluginModel(project: JpsProject, projectHomePath: Path,
-                        validationOptions: PluginValidationOptions = PluginValidationOptions()): PluginValidationResult {
-  return PluginModelValidator(project, projectHomePath, validationOptions).validate()
+fun validatePluginModel(
+  project: JpsProject, projectHomePath: Path,
+  validationOptions: PluginValidationOptions = PluginValidationOptions(),
+): PluginValidationResult {
+  return PluginModelValidator(project = project, projectHomePath = projectHomePath, validationOptions = validationOptions).validate()
 }
 
 class PluginValidationResult internal constructor(
@@ -163,16 +165,15 @@ class PluginModelValidator(
 
   fun validate(): PluginValidationResult {
     // 1. collect plugin and module file info set
-    val moduleDescriptorFileInfos = project.modules.asSequence()
-      .mapNotNull { module ->
-        try {
-          createFileInfo(module)
-        }
-        catch (e: Exception) {
-          reportError("Failed to load descriptor for '${module.name}': ${e.message}", sourceModule = module)
-          return@mapNotNull null
-        }
+    val moduleDescriptorFileInfos = project.modules.mapNotNull { module ->
+      try {
+        createFileInfo(module)
       }
+      catch (e: Exception) {
+        reportError("Failed to load descriptor for '${module.name}': ${e.message}", sourceModule = module)
+        return@mapNotNull null
+      }
+    }
     
     val sourceModuleNameToFileInfo = moduleDescriptorFileInfos.associateBy { it.sourceModule.name }
     moduleDescriptorFileInfos.flatMapTo(pluginAliases) {
@@ -206,9 +207,9 @@ class PluginModelValidator(
                ?: descriptor.name
       if (id == null) {
         reportError(
-          "Plugin id is not specified",
-          moduleMetaInfo.sourceModule,
-          mapOf(
+          message = "Plugin id is not specified",
+          sourceModule = moduleMetaInfo.sourceModule,
+          params = mapOf(
             "descriptorFile" to descriptorFile
           ),
         )
