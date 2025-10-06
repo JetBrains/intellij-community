@@ -42,6 +42,9 @@ private class BasicLangUiDataRule: UiDataRule {
     sink.lazyValue(NAVIGATABLE) {
       NavigatableRule.getData(it)
     }
+    sink.lazyValue(NAVIGATABLE_ARRAY) {
+      NavigatableArrayRule.getData(it)
+    }
     sink.lazyValue(USAGE_TARGETS_KEY) {
       UsageTargetsRule.getData(it)
     }
