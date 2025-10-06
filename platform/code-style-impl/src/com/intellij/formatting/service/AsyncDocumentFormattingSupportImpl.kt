@@ -109,7 +109,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
   }
 
   private enum class FormattingRequestState {
-    NOT_STARTED,
     RUNNING,
     CANCELLED,
     COMPLETED,
@@ -130,12 +129,14 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
     @Volatile
     private var task: FormattingTask? = null
 
+    private val taskStarted = CompletableDeferred<Unit>()
     private val result = CompletableDeferred<String?>()
 
     private val stateRef: AtomicReference<FormattingRequestState> = AtomicReference(
-      FormattingRequestState.NOT_STARTED)
+      FormattingRequestState.RUNNING)
 
     fun cancel(): Boolean {
+      if (!taskStarted.isCompleted) return false
       while (true) {
         when (stateRef.get()) {
           FormattingRequestState.RUNNING -> {
@@ -199,10 +200,8 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
       }
       // There is an implicit contract that a task that was already created is also started.
       // GlobalScope is used here to prevent cancellation before that can happen.
-      val taskStarted = CompletableDeferred<Unit>()
       val taskJob = GlobalScope.launch(dispatcher) {
         underProgressIfNeeded(task.isRunUnderProgress) {
-          check(stateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING))
           taskStarted.complete(Unit)
           task.run()
         }
