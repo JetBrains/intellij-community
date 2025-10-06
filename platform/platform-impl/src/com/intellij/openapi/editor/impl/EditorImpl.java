@@ -1498,7 +1498,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   public void processKeyTypedNormally(char c, @NotNull DataContext dataContext) {
     EditorActionManager.getInstance();
-    TypedAction.getInstance().actionPerformed(this, c, dataContext);
+    WriteIntentReadAction.run((Runnable) () -> {
+      TypedAction.getInstance().actionPerformed(this, c, dataContext);
+    });
   }
 
   private void fireFocusLost(@NotNull FocusEvent event) {

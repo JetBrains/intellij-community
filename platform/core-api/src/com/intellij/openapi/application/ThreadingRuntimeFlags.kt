@@ -11,13 +11,21 @@ import org.jetbrains.annotations.ApiStatus
 val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "true").toBoolean()
 
 /**
- * - `true` means some high-level Swing code will not use write-intent lock defensively for execution of user's code
- * - `false` means that write-intent lock will be inserted in more places
+ * - `true` means some high-level Swing code will use write-intent lock defensively for execution of user's code
+ * - `false` means that write-intent lock will not be inserted there
  *
  * See IJPL-199557
  */
 @ApiStatus.Internal
 val wrapHighLevelFunctionsInWriteIntent: Boolean = System.getProperty("idea.wrap.high.level.functions.in.write.intent", "false").toBoolean()
+
+/**
+ * - `true` means some high-level Swing code will use write-intent lock defensively for execution of input events
+ * - `false` means that write-intent lock will not be inserted there
+ */
+@ApiStatus.Internal
+val wrapHighLevelInputEventsInWriteIntentLock: Boolean = System.getProperty("idea.wrap.high.level.input.events.in.write.intent", "true").toBoolean()
+
 
 /**
  * - `false` means that [backgroundWriteAction] will block the thread during lock acquisition

@@ -505,8 +505,20 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     when {
-      e is MouseEvent -> threadingSupport.runPreventiveWriteIntentReadAction { dispatchMouseEvent(e) }
-      e is KeyEvent -> threadingSupport.runPreventiveWriteIntentReadAction { dispatchKeyEvent(e) }
+      e is MouseEvent -> if (wrapHighLevelInputEventsInWriteIntentLock) {
+        threadingSupport.runPreventiveWriteIntentReadAction {
+          dispatchMouseEvent(e)
+        }
+      } else {
+        dispatchMouseEvent(e)
+      }
+      e is KeyEvent -> if (wrapHighLevelInputEventsInWriteIntentLock) {
+        threadingSupport.runPreventiveWriteIntentReadAction {
+          dispatchKeyEvent(e)
+        }
+      } else {
+        dispatchKeyEvent(e)
+      }
       appIsLoaded() -> {
         val app = ApplicationManagerEx.getApplicationEx()
         if (e is ComponentEvent) {
