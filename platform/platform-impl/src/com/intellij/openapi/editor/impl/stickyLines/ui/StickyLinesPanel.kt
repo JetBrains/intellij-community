@@ -1,24 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.stickyLines.ui
 
-import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLine
 import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines
-import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBPanel
-import java.awt.Color
-import java.awt.Graphics
-import java.awt.Graphics2D
 import javax.swing.BoxLayout
-import javax.swing.border.LineBorder
+
 
 internal class StickyLinesPanel(
   private val editor: EditorEx,
-  private val shadowPainter: StickyLineShadowPainter,
   private val visualStickyLines: VisualStickyLines,
+  shadowedBorder: StickyLineShadowBorder,
 ) : JBPanel<StickyLinesPanel>() {
 
   private val layeredPane: JBLayeredPane = JBLayeredPane()
@@ -28,7 +23,8 @@ internal class StickyLinesPanel(
   private var panelH: Int = 0
 
   init {
-    border = bottomBorder()
+    isOpaque = false
+    border = shadowedBorder
     layout = BoxLayout(this, BoxLayout.Y_AXIS)
     layeredPane.layout = null
     add(layeredPane)
@@ -81,34 +77,20 @@ internal class StickyLinesPanel(
     stickyComponents.resetAfterIndex(index)
     val panelHeight: Int = visualStickyLines.height()
     if (isPanelSizeChanged(panelWidth, panelHeight)) {
-      setSize(panelWidth, if (panelHeight == 0) 0 else panelHeight + /*border*/ 1)
       this.panelW = panelWidth
       this.panelH = panelHeight
+      setSize(panelWidth, shadowedBorderHeight())
       layeredPane.setSize(panelWidth, panelHeight)
       revalidate()
     }
     repaint()
   }
 
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-
-    val panelHeight = panelH
-    val panelWidth = stickyLinesPanelWidth() // panelW can be outdated here
-    val lineHeight = editor.lineHeight
-    if (panelHeight > 0 && panelWidth > 0 && lineHeight > 0) {
-      val g2d = g.create() as Graphics2D
-      try {
-        val borderHeight = (border as LineBorder).thickness
-        shadowPainter.paintShadow(g2d, panelHeight + borderHeight, panelWidth, lineHeight)
-      }
-      finally {
-        g2d.dispose()
-      }
-    }
-  }
-
   // ------------------------------------------- Utils -------------------------------------------
+
+  private fun shadowedBorderHeight(): Int {
+    return if (panelH == 0) 0 else panelH + (border as StickyLineShadowBorder).borderHeight()
+  }
 
   private fun isPanelSizeChanged(panelWidth: Int, panelHeight: Int): Boolean {
     return this.panelW != panelWidth || this.panelH != panelHeight
@@ -129,14 +111,5 @@ internal class StickyLinesPanel(
       repaint()
     }
     return isEnabled
-  }
-
-  private fun bottomBorder(): SideBorder {
-    return object : SideBorder(null, BOTTOM) {
-      override fun getLineColor(): Color {
-        val scheme = editor.getColorsScheme()
-        return scheme.getColor(EditorColors.STICKY_LINES_BORDER_COLOR) ?: scheme.defaultBackground
-      }
-    }
   }
 }
