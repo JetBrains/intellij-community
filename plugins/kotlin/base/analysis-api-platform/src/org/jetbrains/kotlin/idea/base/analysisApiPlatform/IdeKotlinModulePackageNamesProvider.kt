@@ -195,7 +195,7 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
     private fun invalidate(module: KaModule) {
         cache.map.remove(module)
 
-        if (module is KaLibraryModule) {
+        if (module is KaLibraryModule && binaryRootsCache.map.isNotEmpty()) {
             module.binaryVirtualFiles.forEach { binaryRoot -> binaryRootsCache.map.remove(binaryRoot) }
         }
     }
