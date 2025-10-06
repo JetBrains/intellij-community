@@ -274,7 +274,7 @@ a:com.intellij.codeInsight.completion.CompletionService
 - getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.util.Consumer):V
 - performCompletion(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer):V
 - pa:suggestPrefix(com.intellij.codeInsight.completion.CompletionParameters):java.lang.String
-a:com.intellij.codeInsight.completion.CompletionSorter
+Fa:com.intellij.codeInsight.completion.CompletionSorter
 - <init>():V
 - s:defaultSorter(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 - s:emptySorter():com.intellij.codeInsight.completion.CompletionSorter

@@ -410,7 +410,7 @@ c:com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
 - prefixMatches(com.intellij.codeInsight.lookup.LookupElement):Z
 - prefixMatches(java.lang.String):Z
-c:com.intellij.codeInsight.completion.impl.CompletionSorterImpl
+f:com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 - com.intellij.codeInsight.completion.CompletionSorter
 - buildClassifier(com.intellij.codeInsight.lookup.Classifier):com.intellij.codeInsight.lookup.Classifier
 - equals(java.lang.Object):Z

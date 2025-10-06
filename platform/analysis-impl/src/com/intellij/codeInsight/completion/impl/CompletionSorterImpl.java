@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class CompletionSorterImpl extends CompletionSorter {
+public final class CompletionSorterImpl extends CompletionSorter {
   private final List<? extends ClassifierFactory<LookupElement>> myMembers;
   private final int myHashCode;
 
