@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixM
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelWithPostponedQuickFixMultiModuleTest
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractK2KDocUnresolvedReferenceTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.QUICKFIXES
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
@@ -282,6 +283,12 @@ internal fun MutableTWorkspace.generateK2FixTests() {
 
         testClass<AbstractHighLevelWithPostponedQuickFixMultiModuleTest> {
             model("$idea/multiModuleQuickFix/addDependency", pattern = DIRECTORY, isRecursive = false)
+        }
+    }
+
+    testGroup("code-insight/fixes-k2/tests", category = QUICKFIXES, testDataPath = "../..") {
+        testClass<AbstractK2KDocUnresolvedReferenceTest> {
+            model("testData/quickFixes/kdocUnresolvedReference", pattern = KT_WITHOUT_DOTS)
         }
     }
 }

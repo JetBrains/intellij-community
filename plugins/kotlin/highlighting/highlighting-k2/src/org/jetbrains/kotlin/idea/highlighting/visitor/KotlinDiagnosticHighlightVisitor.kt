@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -64,17 +63,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
     private var holder: HighlightInfoHolder? = null
     private var coroutineScope: CoroutineScope? = null
     override fun suitableForFile(file: PsiFile): Boolean {
-        if (file !is KtFile || file.isCompiled) return false
-
-        val viewProvider = file.viewProvider
-        val isInjection = InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(viewProvider)
-        if (isInjection && (!viewProvider.isInjectedFileShouldBeAnalyzed || file.injectionRequiresOnlyEssentialHighlighting)) {
-            // do not highlight errors in injected code
-            return false
-        }
-
-        val highlightingManager = HighlightingLevelManager.getInstance(file.project)
-        return highlightingManager.shouldHighlight(file) && !highlightingManager.runEssentialHighlightingOnly(file)
+        return shouldHighlightDiagnostics(file)
     }
 
     override fun analyze(file: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
@@ -366,5 +355,21 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
 
     override fun clone(): HighlightVisitor {
         return KotlinDiagnosticHighlightVisitor()
+    }
+
+    companion object {
+        fun shouldHighlightDiagnostics(file: PsiFile): Boolean {
+            if (file !is KtFile || file.isCompiled) return false
+
+            val viewProvider = file.viewProvider
+            val isInjection = InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(viewProvider)
+            if (isInjection && (!viewProvider.isInjectedFileShouldBeAnalyzed || file.injectionRequiresOnlyEssentialHighlighting)) {
+                // do not highlight errors in injected code
+                return false
+            }
+
+            val highlightingManager = HighlightingLevelManager.getInstance(file.project)
+            return highlightingManager.shouldHighlight(file) && !highlightingManager.runEssentialHighlightingOnly(file)
+        }
     }
 }
