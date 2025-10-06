@@ -545,7 +545,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         //noinspection removal
         LOG.debug("psiElementVisited: " + visitedPsiElement + " in " + visitedPsiElement.getTextRange() +
                   (psiFile.getViewProvider() instanceof InjectedFileViewProvider ? " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
-                  "; tool:" + toolId + "; infos:" + newInfos + "; oldInfos:" + oldInfos + " " +session.getProgressIndicator());
+                  "; tool:" + toolId + "; infos:" + head(newInfos) + "; oldInfos:" + head(oldInfos) + " " + session.getProgressIndicator());
       }
       // execute in non-cancelable block. It should not throw PCE anyway, but just in case
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
@@ -580,6 +580,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup after psiElementVisited ");
     assertMarkupConsistentWithData(psiFile, isInspectionToolId(toolId) ? WhatTool.INSPECTION : WhatTool.ANNOTATOR_OR_VISITOR);
     Reference.reachabilityFence(visitedPsiElement); // ensure no psi is gced while in the middle of modifying soft-ref maps
+  }
+
+  private static @NotNull Object head(@NotNull List<? extends HighlightInfo> infos) {
+    return infos.size() < 10 ? infos : "("+infos.size()+"):"+ContainerUtil.getFirstItems(infos, 10)+"...";
   }
 
   private synchronized void assertNoDuplicates(@NotNull PsiFile psiFile, @NotNull Collection<? extends HighlightInfo> infos, @NotNull String cause) {
