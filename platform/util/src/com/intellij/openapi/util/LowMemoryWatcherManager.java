@@ -3,7 +3,10 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
@@ -11,7 +14,10 @@ import javax.management.NotificationListener;
 import java.lang.management.*;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.util.SystemProperties.*;
@@ -277,6 +283,10 @@ public final class LowMemoryWatcherManager {
   }
 
   public void shutdown() {
+    //RC: why clear all the listeners here? We may very well create another instance of LowMemoryWatcherManager later,
+    //    it seems quite unintuitive to find that listeners were removed during the previous instance shutdown...
+    LowMemoryWatcher.stopAll();
+
     try {
       memoryPoolMXBeansInitializationFuture.get();
       ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).removeNotificationListener(mxLowMemoryListener);
@@ -285,29 +295,25 @@ public final class LowMemoryWatcherManager {
       LOG.error(e);
     }
 
+    Future<?> broadcastingTaskSubmitted;
     synchronized (broadcastingLock) {
       if (periodicGcTimeTrackingFuture != null) {
         periodicGcTimeTrackingFuture.cancel(false);
         periodicGcTimeTrackingFuture = null;
       }
 
-      if (eventBroadcastingTaskSubmitted != null) {
-        try {
-          eventBroadcastingTaskSubmitted.get();
-          eventBroadcastingTaskSubmitted = null;
-        }
-        catch (Exception e) {
-          LOG.error("Can't wait listenerNotificationTaskSubmitted", e);
-        }
-      }
+      broadcastingTaskSubmitted = eventBroadcastingTaskSubmitted;
+      eventBroadcastingTaskSubmitted = null;
     }
 
-    LowMemoryWatcher.stopAll();
-  }
-
-  @TestOnly
-  public void waitForInitComplete(int timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-    memoryPoolMXBeansInitializationFuture.get(timeout, unit);
+    if (broadcastingTaskSubmitted != null) {
+      try {
+        broadcastingTaskSubmitted.get();
+      }
+      catch (Exception e) {
+        LOG.error("Can't wait eventBroadcastingTaskSubmitted", e);
+      }
+    }
   }
 
   private @NotNull LowMemoryEvent lowMemoryEvent(long accumulatedGcTime,
