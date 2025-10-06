@@ -182,9 +182,9 @@ class TerminalViewImpl(
                                                       coroutineScope.childScope("TerminalOutputScrollingModel"))
     outputEditor.putUserData(TerminalOutputScrollingModel.KEY, scrollingModel)
 
-    blocksModel = TerminalBlocksModelImpl(outputEditor.document)
+    blocksModel = TerminalBlocksModelImpl(outputModel, coroutineScope.asDisposable())
     outputEditor.putUserData(TerminalBlocksModel.KEY, blocksModel)
-    TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
+    TerminalBlocksDecorator(outputEditor, outputModel, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
 
     val outputModelController = TerminalTypeAheadOutputModelController(
       project,
@@ -459,12 +459,12 @@ class TerminalViewImpl(
       override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
         val inlineCompletionTypingSession = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
         val lastBlock = editor.getUserData(TerminalBlocksModel.KEY)?.blocks?.lastOrNull() ?: return
-        val lastBlockCommandStartIndex = if (lastBlock.commandStartOffset != -1) lastBlock.commandStartOffset else lastBlock.startOffset
+        val lastBlockCommandStartIndex = lastBlock.commandStartOffset ?: lastBlock.startOffset
 
         // When resizing the terminal, the blocks model may fall out of sync for a short time.
         // These updates will never trigger a completion, so we return early to avoid reading out of bounds.
-        if (lastBlockCommandStartIndex >= editor.document.textLength) return
-        val curCommandText = editor.document.text.substring(lastBlockCommandStartIndex, editor.document.textLength).trim()
+        if (lastBlockCommandStartIndex >= model.endOffset) return
+        val curCommandText = model.getText(lastBlockCommandStartIndex, model.endOffset).trim()
 
         if (isTypeAhead) {
           // Trim because of differing whitespace between terminal and type ahead

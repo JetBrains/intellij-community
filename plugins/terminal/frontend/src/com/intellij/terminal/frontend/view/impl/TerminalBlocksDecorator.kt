@@ -19,10 +19,10 @@ import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
-import kotlin.math.max
 
 internal class TerminalBlocksDecorator(
   private val editor: EditorEx,
+  private val outputModel: TerminalOutputModel,
   private val blocksModel: TerminalBlocksModel,
   private val scrollingModel: TerminalOutputScrollingModel,
   coroutineScope: CoroutineScope,
@@ -41,7 +41,7 @@ internal class TerminalBlocksDecorator(
       }
     }
 
-    BlockTerminalOptions.Companion.getInstance().addListener(coroutineScope.asDisposable(), object : BlockTerminalOptionsListener {
+    BlockTerminalOptions.getInstance().addListener(coroutineScope.asDisposable(), object : BlockTerminalOptionsListener {
       override fun showSeparatorsBetweenBlocksChanged(shouldShow: Boolean) {
         if (shouldShow) {
           createDecorationsForAllBlocks()
@@ -52,7 +52,7 @@ internal class TerminalBlocksDecorator(
   }
 
   private fun handleBlocksModelEvent(event: TerminalBlocksModelEvent) {
-    if (!BlockTerminalOptions.Companion.getInstance().showSeparatorsBetweenBlocks) {
+    if (!BlockTerminalOptions.getInstance().showSeparatorsBetweenBlocks) {
       // Do not add decorations if it is disabled in the settings.
       return
     }
@@ -98,7 +98,7 @@ internal class TerminalBlocksDecorator(
     // End offset of the finished block is located after the line break.
     // But we need to place the end inlay before the line break and limit the height of the highlighters to the block content.
     // So adjust the offset by 1.
-    val endOffset = max(0, block.endOffset - 1)
+    val endOffset = (block.endOffset - 1).coerceAtLeast(outputModel.startOffset)
 
     val topInlay = createTopInlay(block)
     val bottomInlay = createBottomInlay(endOffset)
@@ -152,28 +152,28 @@ internal class TerminalBlocksDecorator(
         TerminalUi.blockTopInset + 1 // Add 1 to reserve the place for the separator
       }
     }
-    return editor.inlayModel.addBlockElement(block.startOffset, false, true, TerminalUi.blockTopInlayPriority, topRenderer)!!
+    return editor.inlayModel.addBlockElement(block.startOffset.toRelative(outputModel), false, true, TerminalUi.blockTopInlayPriority, topRenderer)!!
   }
 
-  private fun createBottomInlay(offset: Int): Inlay<*> {
+  private fun createBottomInlay(offset: TerminalOffset): Inlay<*> {
     val bottomRenderer = VerticalSpaceInlayRenderer(TerminalUi.blockBottomInset)
-    return editor.inlayModel.addBlockElement(offset, true, false, TerminalUi.blockBottomInlayPriority, bottomRenderer)!!
+    return editor.inlayModel.addBlockElement(offset.toRelative(outputModel), true, false, TerminalUi.blockBottomInlayPriority, bottomRenderer)!!
   }
 
-  private fun createBackgroundHighlighter(startOffset: Int, endOffset: Int): RangeHighlighter {
+  private fun createBackgroundHighlighter(startOffset: TerminalOffset, endOffset: TerminalOffset): RangeHighlighter {
     return editor.markupModel.addRangeHighlighter(
-      startOffset,
-      endOffset,
+      startOffset.toRelative(outputModel),
+      endOffset.toRelative(outputModel),
       HighlighterLayer.LAST,  // the order doesn't matter because there is only a custom renderer with its own order
       null,
       HighlighterTargetArea.LINES_IN_RANGE
     )
   }
 
-  private fun createCornersHighlighter(startOffset: Int, endOffset: Int): RangeHighlighter {
+  private fun createCornersHighlighter(startOffset: TerminalOffset, endOffset: TerminalOffset): RangeHighlighter {
     return editor.markupModel.addRangeHighlighter(
-      startOffset,
-      endOffset,
+      startOffset.toRelative(outputModel),
+      endOffset.toRelative(outputModel),
       HighlighterLayer.FIRST - 100,  // the line marker should be painted first, because it is painting the block background
       null,
       HighlighterTargetArea.LINES_IN_RANGE

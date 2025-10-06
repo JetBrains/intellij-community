@@ -73,8 +73,9 @@ internal class TerminalTypeAheadOutputModelController(
     if (!isTypeAheadEnabled()) return
 
     val lastBlock = blocksModel.blocks.lastOrNull()
-    val cursorOffset = outputModel.cursorOffset.toRelative(outputModel)
-    if (lastBlock == null || cursorOffset <= lastBlock.commandStartOffset || cursorOffset == 0) {
+    val cursorOffset = outputModel.cursorOffset
+    val commandStartOffset = lastBlock?.commandStartOffset
+    if (lastBlock == null || (commandStartOffset != null && cursorOffset <= commandStartOffset) || cursorOffset == outputModel.startOffset) {
       // Cursor is placed before or at the command start, so we can't backspace anymore.
       return
     }

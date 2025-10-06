@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.session.dto
 
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
 
 @Serializable
@@ -18,6 +19,6 @@ fun TerminalBlocksModelState.toDto(): TerminalBlocksModelStateDto {
 }
 
 @ApiStatus.Internal
-fun TerminalBlocksModelStateDto.toState(): TerminalBlocksModelState {
-  return TerminalBlocksModelState(blocks.map { it.toBlock() }, blockIdCounter)
+fun TerminalBlocksModelStateDto.toState(outputModel: TerminalOutputModel): TerminalBlocksModelState {
+  return TerminalBlocksModelState(blocks.map { it.toBlock(outputModel) }, blockIdCounter)
 }

@@ -24,6 +24,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
@@ -33,8 +34,10 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     if (!parameters.editor.isReworkedTerminalEditor) return
+    val outputModel = parameters.editor.getUserData(TerminalOutputModel.KEY) ?: return
     val blocksModel = parameters.editor.getUserData(TerminalBlocksModel.KEY) ?: return
     val lastBlock = blocksModel.blocks.lastOrNull() ?: return
+    val commandStartOffset = lastBlock.commandStartOffset ?: return
 
     if (parameters.completionType != CompletionType.BASIC) {
       return
@@ -63,7 +66,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
 
     val document = parameters.editor.document
     val caretOffset = parameters.editor.caretModel.offset
-    val command = document.getText(TextRange.create(lastBlock.commandStartOffset, caretOffset))
+    val command = outputModel.getText(commandStartOffset, outputModel.startOffset + caretOffset.toLong())
     val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
     val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
       tokens + ""  // user inserted space after the last token, so add empty incomplete token as last

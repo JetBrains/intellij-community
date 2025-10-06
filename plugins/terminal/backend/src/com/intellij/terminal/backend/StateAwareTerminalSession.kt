@@ -7,6 +7,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.IncrementalUpdateFlowProducer
 import com.intellij.platform.util.coroutines.flow.MutableStateWithIncrementalUpdates
 import com.intellij.terminal.backend.hyperlinks.BackendTerminalHyperlinkFacade
+import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -78,7 +79,7 @@ internal class StateAwareTerminalSession(
     alternateBufferModel = MutableTerminalOutputModelImpl(alternateBufferDocument, maxOutputLength = 0)
     alternateBufferHyperlinkFacade = BackendTerminalHyperlinkFacade(project, hyperlinkScope, alternateBufferModel, isInAlternateBuffer = true)
 
-    blocksModel = TerminalBlocksModelImpl(outputDocument)
+    blocksModel = TerminalBlocksModelImpl(outputModel, coroutineScope.asDisposable())
 
     coroutineScope.launch(CoroutineName("StateAwareTerminalSession: models updating")) {
       merge(

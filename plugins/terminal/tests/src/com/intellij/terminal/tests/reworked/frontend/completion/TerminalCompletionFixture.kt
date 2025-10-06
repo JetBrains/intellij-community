@@ -50,7 +50,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
       terminalScope.cancel()
     }
     view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, terminalScope)
-    val terminalOutputBlock = TerminalOutputBlock(0, 0, 0, -1, 0, null)
+    val terminalOutputBlock = TerminalOutputBlock(0, outputModel.startOffset, outputModel.startOffset, null, outputModel.startOffset, null)
     val blocksModelState = TerminalBlocksModelState(listOf(terminalOutputBlock), 0)
     view.blocksModel.restoreFromState(blocksModelState)
 

@@ -73,7 +73,7 @@ internal class TerminalSessionController(
 
           outputModelController.model.restoreFromState(event.outputModelState.toState())
           alternateBufferModelController.model.restoreFromState(event.alternateBufferState.toState())
-          blocksModel.restoreFromState(event.blocksModelState.toState())
+          blocksModel.restoreFromState(event.blocksModelState.toState(outputModelController.model))
           outputHyperlinkFacade?.restoreFromState(event.outputHyperlinksState)
           alternateBufferHyperlinkFacade?.restoreFromState(event.alternateBufferHyperlinksState)
         }

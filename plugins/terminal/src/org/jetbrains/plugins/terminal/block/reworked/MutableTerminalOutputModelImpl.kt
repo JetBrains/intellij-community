@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
@@ -258,11 +259,14 @@ class MutableTerminalOutputModelImpl(
     val removeUntilOffset = textLength - maxLength
     val futureFirstLineNumber = document.getLineNumber(removeUntilOffset)
     val futureFirstLineStart = document.getLineStartOffset(futureFirstLineNumber)
-    document.deleteString(0, removeUntilOffset)
 
     highlightingsModel.removeBefore(removeUntilOffset)
 
+    // TODO: TerminalBlocksModelImpl uses a document listener and relies on this value being already updated, need to migrate it to a model listener
     trimmedCharsCount += removeUntilOffset
+
+    document.deleteString(0, removeUntilOffset)
+
     trimmedLinesCount += lineCountBefore - document.lineCount
     firstLineTrimmedCharsCount = removeUntilOffset - futureFirstLineStart
 
@@ -563,6 +567,10 @@ private data class TerminalOffsetImpl(private val absolute: Long) : TerminalOffs
   override fun minus(other: TerminalOffset): Long = toAbsolute() - other.toAbsolute()
   override fun toString(): String = "${toAbsolute()}L"
 }
+
+@ApiStatus.Internal
+@TestOnly
+val ZERO_TERMINAL_OFFSET: TerminalOffset = TerminalOffsetImpl(0L)
 
 private data class TerminalLineImpl(private val absolute: Long) : TerminalLine {
   override fun compareTo(other: TerminalLine): Int = toAbsolute().compareTo(other.toAbsolute())
