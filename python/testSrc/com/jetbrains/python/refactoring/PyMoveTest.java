@@ -282,6 +282,17 @@ public class PyMoveTest extends PyTestCase {
     }
   }
 
+  public void testQualifiedUsageRespectsPreferFromImport() {
+    final boolean defaultImportStyle = PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
+    try {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = true;
+      doMoveSymbolTest("C", "lib/dst.py");
+    }
+    finally {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = defaultImportStyle;
+    }
+  }
+
   // PY-10553
   public void testMoveModuleWithSameNameAsSymbolInside() {
     doMoveFileTest("Animals/Carnivore.py", "Animals/test");
