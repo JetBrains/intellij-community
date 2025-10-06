@@ -297,7 +297,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   private static boolean removeFromDataAtomically(@NotNull Map<Object, ToolHighlights> data,
                                                   @NotNull @Unmodifiable Collection<? extends InvalidPsi> psis,
                                                   @NotNull HighlightingSession session) {
-    if (psis.isEmpty()) return true;
+    if (psis.isEmpty()) {
+      return true;
+    }
     Map<Object, Map<PsiElement, List<HighlightInfo>>> byPsiElement = new HashMap<>();
     for (InvalidPsi invalidPsi : psis) {
       Object toolId = invalidPsi.info().toolId;
@@ -1235,6 +1237,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     // infos which highlighters are recycled from `invalidElementRecycler` and which need to be removed from `data` to avoid its highlighter to be registered in two places
     // this list must be sorted by BY_OFFSETS_AND_HASH
     List<HighlightInfo> newInfosToStore = new ArrayList<>(newInfos.size());
+    List<InvalidPsi> toRemove = new ArrayList<>(newInfos.size());
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < newInfos.size(); i++) {
       HighlightInfo newInfo = newInfos.get(i);
@@ -1266,15 +1269,14 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         if (LOG.isDebugEnabled()) {
           LOG.debug("assignRangeHighlighters: pickedup " + recycled + " from " + from+ " "+session.getProgressIndicator());
         }
-        // remove highlighter from the data before changing its "errorStripe" to avoid having same highlighter for different Infos
-        removeFromDataAtomically(data, List.of(recycled), session);
+        toRemove.add(recycled);
       }
       changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer, severityRegistrar);
       if (recycled != null) {
         recycled.info().invalidate();
       }
     }
-    
+    removeFromDataAtomically(data, toRemove, session);
     List<HighlightInfo> sorted = ContainerUtil.sorted(newInfosToStore, BY_OFFSETS_AND_HASH_ERRORS_FIRST);
     // this list must be sorted by BY_OFFSETS_AND_HASH
     for (int i = 0; i < sorted.size(); i++) {
