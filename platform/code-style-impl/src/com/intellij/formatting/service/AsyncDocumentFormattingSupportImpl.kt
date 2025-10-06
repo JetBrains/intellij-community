@@ -111,7 +111,6 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
   private enum class FormattingRequestState {
     NOT_STARTED,
     RUNNING,
-    CANCELLING,
     CANCELLED,
     COMPLETED,
     EXPIRED,
@@ -141,13 +140,9 @@ class AsyncDocumentFormattingSupportImpl(private val service: AsyncDocumentForma
         when (stateRef.get()) {
           FormattingRequestState.RUNNING -> {
             val formattingTask = checkNotNull(task)
-            if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
-              return if (formattingTask.cancel()) {
-                stateRef.set(FormattingRequestState.CANCELLED)
-                result.cancel()
-                true
-              }
-              else false
+            if (stateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLED)) {
+              result.cancel()
+              return formattingTask.cancel()
             }
           }
           FormattingRequestState.EXPIRED -> {
