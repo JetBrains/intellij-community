@@ -16,7 +16,7 @@ public final class CompletionSorterImpl extends CompletionSorter {
   private final int myHashCode;
 
   @ApiStatus.Internal
-  public CompletionSorterImpl(List<? extends ClassifierFactory<LookupElement>> members) {
+  public CompletionSorterImpl(@NotNull List<? extends ClassifierFactory<LookupElement>> members) {
     myMembers = members;
     myHashCode = myMembers.hashCode();
   }
@@ -70,7 +70,7 @@ public final class CompletionSorterImpl extends CompletionSorter {
     return enhanced(classifierFactory, beforeAnchor ? Math.max(0, i) : i + 1);
   }
 
-  public CompletionSorterImpl withoutClassifiers(@NotNull Predicate<? super ClassifierFactory<LookupElement>> removeCondition) {
+  public @NotNull CompletionSorterImpl withoutClassifiers(@NotNull Predicate<? super ClassifierFactory<LookupElement>> removeCondition) {
     return new CompletionSorterImpl(ContainerUtil.filter(myMembers, t -> !removeCondition.test(t)));
   }
 
