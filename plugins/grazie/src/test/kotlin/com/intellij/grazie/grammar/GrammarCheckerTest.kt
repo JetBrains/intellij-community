@@ -4,6 +4,14 @@ package com.intellij.grazie.grammar
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.utils.filterFor
+import com.intellij.grazie.utils.toProofreadingContext
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPlainText
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert
 import org.junit.Test
 
@@ -89,5 +97,21 @@ class GrammarCheckerTest : GrazieTestBase() {
     GrazieConfig.update { it.copy(enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.SWISS_GERMAN)) }
     psiManager.dropPsiCaches()
     assertOneElement(check(plain(text))).assertTypoIs(IntRange(15, 15), listOf("."))
+  }
+
+  private fun plain(vararg texts: String) = plain(texts.toList())
+
+  private fun plain(texts: List<String>): Collection<PsiElement> {
+    return texts.flatMap { myFixture.configureByText("${it.hashCode()}.txt", it).filterFor<PsiPlainText>() }
+  }
+
+  private fun check(tokens: Collection<PsiElement>): List<TextProblem> {
+    return tokens.flatMap {
+      TextExtractor.findTextsAt(it, TextContent.TextDomain.ALL).flatMap { text ->
+        runBlocking {
+          LanguageToolChecker().checkExternally(text.toProofreadingContext())
+        }
+      }
+    }
   }
 }

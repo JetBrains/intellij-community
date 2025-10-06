@@ -6,6 +6,9 @@ import com.intellij.grazie.cloud.DependencyParser
 import com.intellij.grazie.rule.ParsedSentence.Companion.findSentenceASAP
 import com.intellij.grazie.rule.ParsedSentence.Companion.findSentenceInFile
 import com.intellij.grazie.rule.ParsedSentence.Companion.getSentences
+import com.intellij.grazie.rule.SentenceBatcher.AsyncBatchParser
+import com.intellij.grazie.text.TextChecker
+import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.HighlightingUtil
@@ -41,7 +44,7 @@ class ParsedSentence private constructor(
    * The range of the sentence in [extractedText] as reported by the sentence tokenizer,
    * including leading or trailing space
    */
-  @JvmField val untrimmedRange: TextRange
+  @JvmField val untrimmedRange: TextRange,
 ) {
 
   fun textOffsetToFile(textOffset: Int): Int {
@@ -102,15 +105,22 @@ class ParsedSentence private constructor(
       return getSentences(content, content.commonParent.textRange, minimal = false)
     }
 
-    private suspend fun getSentences(content: TextContent, rangeInFile: TextRange,
-                                     minimal: Boolean): List<ParsedSentence> {
+    suspend fun getSentencesAsync(context: ProofreadingContext): List<ParsedSentence> {
+      if (HighlightingUtil.isTooLargeText(listOf(context.text))) return emptyList()
+      val parser = DependencyParser.getParser(context, false) ?: return emptyList()
+      return getSentences(context.text, context.text.commonParent.textRange, parser)
+    }
+
+    private suspend fun getSentences(content: TextContent, rangeInFile: TextRange, minimal: Boolean): List<ParsedSentence> {
       if (HighlightingUtil.isTooLargeText(listOf(content)) ||
           !NaturalTextDetector.seemsNatural(content.toString())) {
         return emptyList()
       }
-
       val parser = DependencyParser.getParser(content, minimal) ?: return emptyList()
+      return getSentences(content, rangeInFile, parser)
+    }
 
+    private suspend fun getSentences(content: TextContent, rangeInFile: TextRange, parser: AsyncBatchParser<Tree>): List<ParsedSentence> {
       val out = ArrayList<ParsedSentence>()
       val intersectingSentences =
         SentenceTokenizer.tokenize(content).filter { token ->

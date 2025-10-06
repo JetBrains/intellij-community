@@ -8,14 +8,11 @@ import com.intellij.grazie.utils.HighlightingUtil
 import java.util.*
 
 sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
-
-  override suspend fun checkExternally(content: TextContent): Collection<TreeProblem> {
-    if (HighlightingUtil.skipExpensivePrecommitAnalysis(content.containingFile)) return emptyList()
-
-    val sentences = ParsedSentence.getSentencesAsync(content)
+  override suspend fun checkExternally(context: ProofreadingContext): Collection<TreeProblem> {
+    val sentences = ParsedSentence.getSentencesAsync(context)
     if (sentences.isEmpty()) return emptyList()
 
-    return TreeRuleChecker.check(content, sentences)
+    return TreeRuleChecker.check(context.text, sentences)
   }
 
   class Grammar : AsyncTreeRuleChecker() {
@@ -25,24 +22,24 @@ sealed class AsyncTreeRuleChecker : ExternalTextChecker() {
       return TreeRuleChecker.getRules(language)
     }
 
-    override suspend fun checkExternally(content: TextContent): Collection<TreeProblem> {
-      return super.checkExternally(content).filter { !it.isStyleLike && !concedeToOtherGrammarCheckers(it.source) }
+    override suspend fun checkExternally(context: ProofreadingContext): Collection<TreeProblem> {
+      return super.checkExternally(context).filter { !it.isStyleLike && !concedeToOtherGrammarCheckers(it.source) }
     }
   }
 
   class GrammarLowPriority : AsyncTreeRuleChecker() {
     override fun getRules(locale: Locale): Collection<Rule> = emptyList()
 
-    override suspend fun checkExternally(content: TextContent): Collection<TreeProblem> {
-      return super.checkExternally(content).filter { !it.isStyleLike && !concedeToOtherGrammarCheckers(it.source) }
+    override suspend fun checkExternally(context: ProofreadingContext): Collection<TreeProblem> {
+      return super.checkExternally(context).filter { !it.isStyleLike && !concedeToOtherGrammarCheckers(it.source) }
     }
   }
 
   class Style : AsyncTreeRuleChecker() {
     override fun getRules(locale: Locale): Collection<Rule> = emptyList()
 
-    override suspend fun checkExternally(content: TextContent): Collection<TreeProblem> {
-      return super.checkExternally(content).filter { it.isStyleLike }
+    override suspend fun checkExternally(context: ProofreadingContext): Collection<TreeProblem> {
+      return super.checkExternally(context).filter { it.isStyleLike }
     }
   }
 }

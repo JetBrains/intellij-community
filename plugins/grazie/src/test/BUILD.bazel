@@ -28,6 +28,7 @@ jvm_library(
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//plugins/grazie",
+    "//plugins/grazie/src:core",
     "@lib//:kotlin-test",
     "//java/testFramework",
     "@lib//:grazie-tests-ai-grazie-spell-hunspell-de",

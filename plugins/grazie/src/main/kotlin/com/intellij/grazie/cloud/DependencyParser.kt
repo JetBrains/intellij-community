@@ -15,6 +15,7 @@ import com.intellij.grazie.jlanguage.LazyCachingConcurrentDisambiguator
 import com.intellij.grazie.rule.CloudOrLocalBatchParser
 import com.intellij.grazie.rule.SentenceBatcher
 import com.intellij.grazie.rule.SentenceBatcher.AsyncBatchParser
+import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.HunspellUtil
@@ -26,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.psi.PsiFile
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ContainerUtil.createConcurrentSoftKeySoftValueMap
@@ -39,14 +41,20 @@ object DependencyParser {
   private val cachedTrees: MutableMap<String, Tree> = createConcurrentSoftKeySoftValueMap()
 
   @JvmStatic
+  fun getParser(context: ProofreadingContext, minimal: Boolean): AsyncBatchParser<Tree>? {
+    if (context.language == Language.UNKNOWN) return null
+    return getParser(context.language, context.text.containingFile, minimal)
+  }
+
+  @JvmStatic
   fun getParser(text: TextContent, minimal: Boolean): AsyncBatchParser<Tree>? {
     val stripPrefixLength = HighlightingUtil.stripPrefix(text)
     val language = getLanguageIfAvailable(text.toString().substring(stripPrefixLength)) ?: return null
-    val file = text.containingFile
+    return getParser(language, text.containingFile, minimal)
+  }
 
-    if (!GrazieCloudConnector.seemsCloudConnected()) {
-      return getLocalParser(language)
-    }
+  private fun getParser(language: Language, file: PsiFile, minimal: Boolean): AsyncBatchParser<Tree>? {
+    if (!GrazieCloudConnector.seemsCloudConnected()) return getLocalParser(language)
     val batcher = getBatcher(language) ?: return null
     val cloud = when {
       minimal -> batcher.minimal(file.project)

@@ -2,6 +2,7 @@ package com.intellij.grazie.utils
 
 import ai.grazie.gec.model.problem.ProblemHighlighting
 import ai.grazie.nlp.langs.Language
+import ai.grazie.nlp.langs.Language.UNKNOWN
 import ai.grazie.rules.Rule
 import ai.grazie.rules.settings.RuleSetting
 import ai.grazie.rules.settings.Setting
@@ -9,6 +10,9 @@ import ai.grazie.rules.toolkit.LanguageToolkit
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.ide.ui.configurable.StyleConfigurable.Companion.ruleEngineLanguages
 import com.intellij.grazie.rule.RuleIdeClient
+import com.intellij.grazie.text.TextChecker
+import com.intellij.grazie.text.TextChecker.ProofreadingContext
+import com.intellij.grazie.text.TextContent
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.ContainerUtil.createConcurrentSoftValueMap
 import ai.grazie.text.TextRange as GrazieTextRange
@@ -43,6 +47,17 @@ fun getLanguageIfAvailable(text: String): Language? {
 fun GrazieTextRange.Companion.coveringIde(ranges: Array<GrazieTextRange>): TextRange? {
   if (ranges.isEmpty()) return null
   return TextRange(ranges.minOf { it.start }, ranges.maxOf { it.endExclusive })
+}
+
+fun TextContent.toProofreadingContext(): ProofreadingContext {
+  val content = this
+  val stripPrefixLength = HighlightingUtil.stripPrefix(content)
+  val language = LangDetector.getLanguage(content.toString().substring(stripPrefixLength)) ?: UNKNOWN
+  return object : ProofreadingContext {
+    override fun getText(): TextContent = content
+    override fun getLanguage(): Language = language
+    override fun getStripPrefix(): String = content.toString().substring(0, stripPrefixLength)
+  }
 }
 
 val ProblemHighlighting.underline: TextRange?

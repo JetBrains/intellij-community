@@ -2,6 +2,7 @@
 
 package com.intellij.grazie.text
 
+import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.tokenizer.Tokenizer
 import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import ai.grazie.utils.toLinkedSet
@@ -20,7 +21,11 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrappe
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
+import com.intellij.grazie.text.TextChecker.ProofreadingContext
+import com.intellij.grazie.utils.HighlightingUtil
+import com.intellij.grazie.utils.NaturalTextDetector.seemsNatural
 import com.intellij.grazie.utils.getTextDomain
+import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -58,10 +63,15 @@ class CheckerRunner(val text: TextContent) {
   }
 
   fun run(): List<TextProblem> {
+    if (text.isBlank() || !seemsNatural(text.toString())) return emptyList()
+
+    val context = text.toProofreadingContext()
+    if (context.language == Language.UNKNOWN || HighlightingUtil.findInstalledLang(context.language) == null) return emptyList()
+
     val configStamp = service<GrazieConfig>().modificationCount
     var cachedProblems = getCachedProblems(configStamp)
     if (cachedProblems != null) return cachedProblems
-    cachedProblems = filter(doRun(TextChecker.allCheckers()))
+    cachedProblems = filter(doRun(TextChecker.allCheckers(), context))
     text.putUserData(problemsKey, CachedResults(configStamp, cachedProblems))
     return cachedProblems
   }
@@ -95,12 +105,12 @@ class CheckerRunner(val text: TextContent) {
    * In the end, we still collect the results in the checker registration order
    * so that problems from the first checkers can override intersecting problems from others.
    */
-  private fun doRun(checkers: List<TextChecker>): List<TextProblem> {
+  private fun doRun(checkers: List<TextChecker>, context: ProofreadingContext): List<TextProblem> {
     return runBlockingCancellable {
       val deferred = checkers.map { checker ->
         when (checker) {
-          is ExternalTextChecker -> async { checker.checkExternally(text) }
-          else -> async(start = CoroutineStart.LAZY) { checker.check(text) }
+          is ExternalTextChecker -> async { checker.checkExternally(context) }
+          else -> async(start = CoroutineStart.LAZY) { checker.check(context) }
         }
       }
       for (job in deferred) {

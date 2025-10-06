@@ -25,7 +25,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
   fun `test async cancellability`() {
     val indicator = ProgressIndicatorBase()
     val checker = object: ExternalTextChecker() {
-      override suspend fun checkExternally(content: TextContent): Collection<TextProblem> {
+      override suspend fun checkExternally(context: ProofreadingContext): Collection<TextProblem> {
         indicator.cancel()
 
         repeat(10) {
@@ -42,7 +42,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
     ProgressManager.getInstance().runProcess(
       {
         assertThrows(ProcessCanceledException::class.java) {
-          CheckerRunner(someText()).run()
+          CheckerRunner(someContent()).run()
         }
       }, indicator)
   }
@@ -68,7 +68,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
     ProgressManager.getInstance().runProcess(
       {
         assertThrows(ProcessCanceledException::class.java) {
-          CheckerRunner(someText()).run()
+          CheckerRunner(someContent()).run()
         }
       }, indicator)
   }
@@ -130,7 +130,7 @@ class CheckerRunnerTest: BasePlatformTestCase() {
   private fun makeHugeSingleLineText(): TextContent {
     val content = buildString {
       repeat(100000) {
-        append("aaabbbcccddd")
+        append("This is some text")
       }
       append(".\n")
     }
@@ -138,8 +138,8 @@ class CheckerRunnerTest: BasePlatformTestCase() {
     return TextExtractor.findTextAt(file, 0, TextContent.TextDomain.ALL)!!
   }
 
-  private fun someText(): TextContent {
-    val file = myFixture.configureByText("a.txt", "aaabbbccc")
+  private fun someContent(): TextContent {
+    val file = myFixture.configureByText("a.txt", "This is some context")
     return TextExtractor.findTextAt(file, 0, TextContent.TextDomain.ALL)!!
   }
 
