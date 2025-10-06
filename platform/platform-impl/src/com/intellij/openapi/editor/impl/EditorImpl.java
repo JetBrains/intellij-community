@@ -795,7 +795,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(@NotNull VisibleAreaEvent e) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       Rectangle oldRectangle = e.getOldRectangle();
       Rectangle newRectangle = e.getNewRectangle();
       if (!myScrollingToCaret &&
@@ -860,12 +860,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getPrefixTextWidthInPixels() {
-    return ReadAction.compute(() -> myView.getPrefixTextWidthInPixels()).intValue();
+    return EditorThreading.compute(() -> myView.getPrefixTextWidthInPixels()).intValue();
   }
 
   @Override
   public void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       mySoftWrapModel.recalculate();
       myView.setPrefix(prefixText, attributes);
       if (myAdView != null) myAdView.setPrefix(prefixText, attributes);
@@ -922,7 +922,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public int getExpectedCaretOffset() {
     int expectedCaretOffset = myExpectedCaretOffset;
-    return ReadAction.compute(() -> expectedCaretOffset == -1 ? getCaretModel().getOffset() : expectedCaretOffset);
+    return EditorThreading.compute(() -> expectedCaretOffset == -1 ? getCaretModel().getOffset() : expectedCaretOffset);
   }
 
   @Override
@@ -973,7 +973,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setCustomCursor(@NotNull Object requestor, @Nullable Cursor cursor) {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       if (cursor == null) {
         myCustomCursors.remove(requestor);
       }
@@ -1120,7 +1120,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myIgnoreMouseEventsConsecutiveToInitial = true;
     }
 
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       myCaretModel.updateVisualPosition();
       // make sure carets won't appear at invalid positions (e.g., on Tab width change)
       getCaretModel().doWithCaretMerging(() -> myCaretModel.getAllCarets().forEach(caret -> caret.moveToOffset(caret.getOffset())));
@@ -1340,17 +1340,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setFontSize(int fontSize) {
-    ReadAction.run(() -> setFontSizeImpl(fontSize, null, false));
+    EditorThreading.run(() -> setFontSizeImpl(fontSize, null, false));
   }
 
   @Override
   public void setFontSize(float fontSize) {
-    ReadAction.run(() -> setFontSizeImpl(fontSize, null, false));
+    EditorThreading.run(() -> setFontSizeImpl(fontSize, null, false));
   }
 
   @ApiStatus.Internal
   public void setFontSize(float fontSize, @Nullable Point zoomCenter, boolean validateImmediately) {
-    ReadAction.run(() -> setFontSizeImpl(fontSize, zoomCenter, validateImmediately));
+    EditorThreading.run(() -> setFontSizeImpl(fontSize, zoomCenter, validateImmediately));
   }
 
   /**
@@ -1560,7 +1560,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setInsertMode(boolean mode) {
     assertIsDispatchThread();
-    ReadAction.run(() -> myState.setInsertMode(mode));
+    EditorThreading.run(() -> myState.setInsertMode(mode));
   }
 
   private void isInsertModeChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -1580,7 +1580,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setColumnMode(boolean mode) {
     assertIsDispatchThread();
-    ReadAction.run(() -> myState.setColumnMode(mode));
+    EditorThreading.run(() -> myState.setColumnMode(mode));
   }
 
   private void isColumnModeChanged(ObservableStateListener.PropertyChangeEvent event) {
@@ -1602,12 +1602,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull VisualPosition xyToVisualPosition(@NotNull Point p) {
-    return ReadAction.compute(() -> myView.xyToVisualPosition(p));
+    return EditorThreading.compute(() -> myView.xyToVisualPosition(p));
   }
 
   @Override
   public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
-    return ReadAction.compute(() -> myView.xyToVisualPosition(p));
+    return EditorThreading.compute(() -> myView.xyToVisualPosition(p));
   }
 
   @Override
