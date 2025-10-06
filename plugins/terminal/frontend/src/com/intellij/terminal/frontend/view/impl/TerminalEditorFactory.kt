@@ -4,6 +4,8 @@ import com.intellij.codeInsight.highlighting.BackgroundHighlightingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -30,6 +32,8 @@ import javax.swing.JScrollPane
 
 @ApiStatus.Internal
 object TerminalEditorFactory {
+  private val LOG = logger<TerminalEditorFactory>()
+
   fun createOutputEditor(
     project: Project,
     settings: JBTerminalSystemSettingsProviderBase,
@@ -108,7 +112,18 @@ object TerminalEditorFactory {
     CopyOnSelectionHandler.install(editor, settings)
 
     coroutineScope.awaitCancellationAndInvoke(Dispatchers.UiWithModelAccess) {
-      EditorFactory.getInstance().releaseEditor(editor)
+      try {
+        EditorFactory.getInstance().releaseEditor(editor)
+      }
+      catch (ex: Exception) {
+        val details = if (ex is ExceptionWithAttachments) {
+          ex.attachments.map { "${it.path}\n${it.displayText}" }
+        }
+        else emptyList()
+        // For some reason the call with passing attachments' array doesn't print all of them.
+        // So, pass the attachments as detail strings.
+        LOG.error("Error releasing editor", ex, *details.toTypedArray())
+      }
     }
     return editor
   }
