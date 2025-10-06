@@ -17,11 +17,6 @@ private class ValueLookupManagerEventsListener : ProjectRemoteTopicListener<Valu
           ValueLookupManager.getInstance(project).hideHint()
         }
       }
-      is ValueHintEvent.StartListening -> {
-        runInEdt {
-          ValueLookupManager.getInstance(project).startListening()
-        }
-      }
     }
   }
 }

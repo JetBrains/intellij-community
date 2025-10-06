@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManagerImpl
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
@@ -11,9 +12,11 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.debugger.impl.frontend.editor.BreakpointPromoterEditorListener
+import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerSessionEvent
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueLookupHintsRemoteApi
 import com.intellij.platform.project.projectId
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
@@ -22,6 +25,7 @@ import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -69,6 +73,12 @@ class FrontendXDebuggerManager(private val project: Project, private val cs: Cor
     initSessions()
 
     installEditorListeners()
+
+    cs.launch(Dispatchers.EDT) {
+      // await listening started on the backend
+      XDebuggerValueLookupHintsRemoteApi.getInstance().getValueLookupListeningFlow(project.projectId()).filter { it }.first()
+      ValueLookupManager.getInstance(project).startListening()
+    }
   }
 
   private fun initSessions() = cs.launch {

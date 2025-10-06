@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.evaluation.ExpressionInfo
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import kotlinx.coroutines.Dispatchers
@@ -135,6 +136,11 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
     finally {
       deleteValueById(hintId, type = RemoteValueHintValueIdType)
     }
+  }
+
+  override suspend fun getValueLookupListeningFlow(projectId: ProjectId): Flow<Boolean> {
+    val project = projectId.findProject()
+    return ValueLookupManagerController.getInstance(project).getListeningStateFlow()
   }
 
   private object RemoteValueHintValueIdType : BackendValueIdType<RemoteValueHintId, XValueHint>(::RemoteValueHintId)
