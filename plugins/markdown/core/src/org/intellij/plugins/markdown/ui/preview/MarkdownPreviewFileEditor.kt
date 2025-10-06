@@ -186,7 +186,7 @@ class MarkdownPreviewFileEditor(
 
   private fun retrievePanelProvider(settings: MarkdownSettings): MarkdownHtmlPanelProvider {
     val providerInfo = settings.previewPanelProviderInfo
-    val preferredProvider = MarkdownHtmlPanelProvider.createFromInfo(providerInfo)
+    var preferredProvider = MarkdownHtmlPanelProvider.createFromInfo(providerInfo)
     if (preferredProvider.isAvailable() !== MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE) {
       val registeredProviders = MarkdownHtmlPanelProvider.getProviders()
       val availableProvider = registeredProviders.firstOrNull { p: MarkdownHtmlPanelProvider -> p.isAvailable() === MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE }
@@ -205,6 +205,7 @@ class MarkdownPreviewFileEditor(
           project
         )
         logger.warn("Cannot use preview panel provider '${providerInfo.name}'. Using the first one that is available: ${preferredProvider.providerInfo.name}")
+        preferredProvider = availableProvider
       }
     }
     lastPanelProviderInfo = settings.previewPanelProviderInfo
