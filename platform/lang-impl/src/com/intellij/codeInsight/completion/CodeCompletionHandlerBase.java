@@ -52,8 +52,6 @@ import io.opentelemetry.context.Context;
 import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -124,6 +122,7 @@ public class CodeCompletionHandlerBase {
   }
 
   public void handleCompletionElementSelected(@NotNull LookupElement item,
+                                              @NotNull List<LookupElement> lookupElements,
                                               char completionChar,
                                               @NotNull OffsetMap offsetMap,
                                               @NotNull OffsetsInFile hostOffsets,
@@ -132,8 +131,7 @@ public class CodeCompletionHandlerBase {
     WatchingInsertionContext context = null;
     try {
       StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);
-      //todo pass all relevant items
-      context = insertItemHonorBlockSelection(new ArrayList<>(), item, completionChar, offsetMap, hostOffsets, editor, initialOffset);
+      context = insertItemHonorBlockSelection(lookupElements, item, completionChar, offsetMap, hostOffsets, editor, initialOffset);
       update.trackStatistics(context);
     }
     finally {
