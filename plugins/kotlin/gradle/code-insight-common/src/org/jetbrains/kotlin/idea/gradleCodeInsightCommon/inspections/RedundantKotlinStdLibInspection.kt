@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleUtilCore
@@ -12,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.startLine
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -21,13 +19,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.KotlinGradleProjectData
 import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.findGradleProjectStructure
 import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_JAVA_STDLIB_NAME
-import org.jetbrains.plugins.gradle.toml.findOriginInTomlFile
-import org.jetbrains.plugins.gradle.util.isInVersionCatalogAccessor
-import org.toml.lang.psi.TomlInlineTable
-import org.toml.lang.psi.TomlKeyValue
-import org.toml.lang.psi.TomlLiteral
-
-private val LOG = logger<RedundantKotlinStdLibInspection>()
+import org.jetbrains.plugins.gradle.toml.getResolvedDependency
 
 class RedundantKotlinStdLibInspection : LocalInspectionTool() {
     override fun isAvailableForFile(file: PsiFile): Boolean {
@@ -49,40 +41,8 @@ class RedundantKotlinStdLibInspection : LocalInspectionTool() {
 }
 
 fun isKotlinStdLibDependency(resolvedCatalogReference: PsiMethod, reference: PsiElement): Boolean {
-    if (!isInVersionCatalogAccessor(resolvedCatalogReference)) return false
-    val origin = findOriginInTomlFile(resolvedCatalogReference, reference) as? TomlKeyValue ?: return false
-    val (dependencyGroup, dependencyName) = when (val originValue = origin.value) {
-        is TomlLiteral -> originValue.text.cleanRawString().split(":").takeIf { it.size >= 2 }?.let { it[0] to it[1] } ?: return false
-        is TomlInlineTable -> {
-            val module = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "module" }
-            if (module != null) {
-                val moduleValue = module.value
-                if (moduleValue !is TomlLiteral) return false
-                moduleValue.text.cleanRawString().split(":").takeIf { it.size >= 2 }?.let { it[0] to it[1] } ?: return false
-            } else {
-                val group = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "group" }
-                val name = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "name" }
-                if (group == null || name == null) return false
-                val groupValue = group.value
-                val nameValue = name.value
-                if (groupValue !is TomlLiteral || nameValue !is TomlLiteral) return false
-                groupValue.text.cleanRawString() to nameValue.text.cleanRawString()
-            }
-        }
-
-        else -> return false
-    }
-
-    if (LOG.isDebugEnabled) {
-        val gradleFile = reference.containingFile
-        LOG.debug(
-            "Found a version catalog dependency: $dependencyGroup:$dependencyName " +
-                    "at line ${reference.startLine(gradleFile.fileDocument) + 1} " +
-                    "in file ${gradleFile.virtualFile.path} " +
-                    "from version catalog ${origin.containingFile.virtualFile.path}"
-        )
-    }
-
+    val dependency = getResolvedDependency(resolvedCatalogReference, reference) ?: return false
+    val (dependencyGroup, dependencyName) = dependency.split(":").take(2)
     return dependencyGroup == KOTLIN_GROUP_ID && dependencyName == KOTLIN_JAVA_STDLIB_NAME
 }
 
@@ -114,13 +74,4 @@ fun getResolvedLibVersion(file: PsiFile, groupId: String, libraryIds: List<Strin
     }
 
     return null
-}
-
-private fun String.cleanRawString(): String {
-    return this.removeSurrounding("\"\"\"")
-        .removeSurrounding("'''")
-        .removeSurrounding("\"")
-        .removeSurrounding("'")
-        .replace("\r", "")
-        .replace("\n", "")
 }

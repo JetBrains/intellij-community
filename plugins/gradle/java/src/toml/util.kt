@@ -179,6 +179,67 @@ private fun getVersionCatalogName(psiClass: PsiClass): String? {
     return name
 }
 
+/**
+ * Tries to resolve a dependency from a synthetic accessor method.
+ * @return a string in the format of `<group>:<name>:<version>`,
+ * `<group>:<name>` if the version cannot be resolved or null if the dependency cannot be resolved
+ */
+fun getResolvedDependency(method: PsiMethod, context: PsiElement): String? {
+  if (!isInVersionCatalogAccessor(method)) return null
+  val origin = findOriginInTomlFile(method, context) as? TomlKeyValue ?: return null
+  return when (val originValue = origin.value) {
+    is TomlLiteral -> originValue.text.cleanRawString()
+    is TomlInlineTable -> {
+      val module = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "module" }?.value
+      val moduleText = if (module != null) {
+        if (module !is TomlLiteral) return null
+        module.text.cleanRawString()
+      }
+      else {
+        val group = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "group" }?.value
+        val name = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "name" }?.value
+        if (group == null || name == null) return null
+        if (group !is TomlLiteral || name !is TomlLiteral) return null
+        "${group.text.cleanRawString()}:${name.text.cleanRawString()}"
+      }
+
+      val versionEntry = originValue.entries.find { it.key.segments.firstOrNull()?.name == "version" } ?: return moduleText
+      val versionText = getResolvedVersion(versionEntry) ?: return moduleText
+      return "$moduleText:$versionText"
+    }
+
+    else -> return null
+  }
+}
+
+private fun getResolvedVersion(entry: TomlKeyValue): String? {
+  if (entry.key.segments.firstOrNull()?.name != "version") return null
+
+  val finalVersionKeyValue = when (entry.key.segments.size) {
+    1 -> entry
+
+    2 if entry.key.segments[1].name == "ref" -> {
+      val file = entry.containingFile.asSafely<TomlFile>() ?: return null
+      val versionTable = file.childrenOfType<TomlTable>().find { it.header.key?.name == TOML_TABLE_VERSIONS } ?: return null
+      val entries = versionTable.childrenOfType<TomlKeyValue>()
+      val key = entry.value?.asSafely<TomlLiteral>()?.text?.cleanRawString() ?: return null
+
+      entries.find { it.key.text == key }
+    }
+
+    else -> null
+  }
+
+  return finalVersionKeyValue?.value?.asSafely<TomlLiteral>()?.text?.cleanRawString()
+}
+
+// cleans single or multiline toml string literal
+private fun String.cleanRawString(): String =
+  this.trim('"', '\'')
+    .replace("\r", "")
+    .replace("\n", "")
+
+
 private class TomlVersionCatalogVisitor(containingClasses: List<PsiClass>, val targetMethod: PsiMethod) : TomlRecursiveVisitor() {
   private val containingClasses: MutableList<PsiClass> = ArrayList(containingClasses)
   var resolveTarget: PsiElement? = null
