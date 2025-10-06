@@ -274,7 +274,7 @@ public final class JavacMain {
       // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
       // do not delegate to corresponding methods of FileManager's base implementation
       // this proxy object makes sure the calls, not implemented in our file manager, are dispatched further to the base file manager implementation
-      final StandardJavaFileManager fm = APIWrappers.wrap(StandardJavaFileManager.class, fileManager, fileManager.getClass().getSuperclass(), fileManager.getStdManager());
+      final StandardJavaFileManager fm = APIWrappers.wrap(StandardJavaFileManager.class, fileManager, Object.class, fileManager.getStdManager());
       final JavaCompiler.CompilationTask task = tryInstallClientCodeWrapperCallDispatcher(compiler.getTask(
         out, fm, diagnosticListener, _options, null, fileManager.setInputSources(sources)
       ), fm);

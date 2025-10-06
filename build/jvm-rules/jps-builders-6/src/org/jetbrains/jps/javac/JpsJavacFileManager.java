@@ -171,12 +171,24 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
     return mySourceTransformers.isEmpty()? fo : fo == null? null : new TransformableJavaFileObject(fo, mySourceTransformers);
   }
 
+  /** @noinspection Since15*/ //@Override
+  public JavaFileObject getJavaFileForOutputForOriginatingFiles(Location location, String className, JavaFileObject.Kind kind, FileObject... originatingFiles) throws IOException {
+    FileObject sibling = originatingFiles != null && originatingFiles.length > 0? originatingFiles[0] : null;
+    return getJavaFileForOutput(location, className, kind, sibling);
+  }
+
   @Override
   public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
     if (kind != JavaFileObject.Kind.SOURCE && kind != JavaFileObject.Kind.CLASS) {
       throw new IllegalArgumentException("Invalid kind " + kind);
     }
     return getFileForOutput(location, kind, externalizeFileName(className, kind.extension), className, sibling);
+  }
+
+  /** @noinspection Since15*/ //@Override
+  public FileObject getFileForOutputForOriginatingFiles(Location location, String packageName, String relativeName, FileObject... originatingFiles) throws IOException {
+    FileObject sibling = originatingFiles != null && originatingFiles.length > 0? originatingFiles[0] : null;
+    return getFileForOutput(location, packageName, relativeName, sibling);
   }
 
   @Override
