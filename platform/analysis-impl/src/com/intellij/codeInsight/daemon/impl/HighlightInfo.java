@@ -1061,7 +1061,7 @@ public class HighlightInfo implements Segment {
     public String toString() {
       String name = getAction().getFamilyName();
       return "IntentionActionDescriptor: '" + name + "' (" + ReportingClassSubstitutor.getClassToReport(getAction()) + ")"
-        + (myFixRange == null || myFixRange.getStartOffset() == myFixRange.getEndOffset() ? "" : "; fixRange: "+TextRange.create(myFixRange)+"("+myFixRange.getClass()+")");
+        + (myFixRange == null || myFixRange.getStartOffset() == myFixRange.getEndOffset() ? "" : "; fixRange: ("+myFixRange.getStartOffset()+", "+ myFixRange.getEndOffset()+": "+myFixRange.getClass()+")");
     }
 
     public @Nullable Icon getIcon() {
