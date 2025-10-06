@@ -18,7 +18,7 @@ import java.awt.Rectangle
 import kotlin.random.Random
 
 @ApiStatus.Internal
-sealed class InlineCompletionShortcutHintElementBase(
+sealed class InlineCompletionShortcutHintElementBase @JvmOverloads constructor(
   val lineNumber: Int,
   private val insertActionId: String,
   private val forcedHint: InlineCompletionShortcutHint? = null,
