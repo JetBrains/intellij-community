@@ -296,7 +296,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       }
 
       initOnShow("ActionToolbarImpl.updateActionsOnAdd") {
-        withContext(Dispatchers.UiWithModelAccess) {
+        withContext(Dispatchers.EDT) {
           // a first update really
           if (myForcedUpdateRequested && myLastUpdate == null) {
             @Suppress("DEPRECATION")
@@ -965,7 +965,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
     val cs = service<CoreUiCoroutineScopeHolder>().coroutineScope
     val job = cs.launch(
-      Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement() +
+      Dispatchers.EDT + ModalityState.any().asContextElement() +
       ClientId.coroutineContext(), CoroutineStart.UNDISPATCHED) {
       try {
         val actions = Utils.expandActionGroupSuspend(
