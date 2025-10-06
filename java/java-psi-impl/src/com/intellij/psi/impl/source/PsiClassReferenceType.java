@@ -42,8 +42,14 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   }
 
   PsiClassReferenceType(@NotNull ClassReferencePointer reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider) {
+    this(reference, level, provider, null);
+  }
+
+  private PsiClassReferenceType(@NotNull ClassReferencePointer reference, LanguageLevel level, @NotNull TypeAnnotationProvider provider,
+                        @Nullable TypeNullability nullability) {
     super(level, provider);
     myReference = reference;
+    myNullability = nullability;
   }
 
   private static PsiAnnotation @NotNull [] collectAnnotations(PsiJavaCodeReferenceElement reference) {
@@ -142,11 +148,8 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @Override
   public @NotNull PsiClassType withNullability(@NotNull TypeNullability nullability) {
-    ClassResolveResult result = resolveGenerics();
-    PsiClass psiClass = result.getElement();
-    if (psiClass == null) return this;
-    return new PsiImmediateClassType(
-      psiClass, result.getSubstitutor(), myLanguageLevel, getAnnotationProvider(), getPsiContext(), nullability);
+    if (myNullability == nullability) return this;
+    return new PsiClassReferenceType(myReference, myLanguageLevel, getAnnotationProvider(), nullability);
   }
 
   @Override
