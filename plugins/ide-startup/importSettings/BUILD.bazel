@@ -97,6 +97,7 @@ jvm_library(
     "//platform/platform-impl/ui",
     "//platform/platform-impl/initial-config-import",
     "//platform/plugins/parser/impl",
+    "//platform/plugins/parser/impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.ide.startup.importSettings` end
