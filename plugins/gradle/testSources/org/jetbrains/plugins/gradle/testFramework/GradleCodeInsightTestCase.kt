@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
@@ -70,16 +71,13 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
     }
   }
 
-  fun testCompletion(expression: String, vararg completionCandidates: String, orderDependent: Boolean = true) = testCompletion("build.gradle", expression) {
-    val lookup = listOf(*it)
-    var startIndex = 0
-    for (candidate in completionCandidates) {
-      val fromIndex = if (orderDependent) startIndex else 0
-      val newIndex = lookup.subList(fromIndex, lookup.size).indexOfFirst { it.lookupString == candidate }
-      assertTrue(newIndex != -1, "Element '$candidate' must be in the lookup")
-      startIndex = newIndex + 1
+  fun testCompletion(expression: String, vararg completionCandidates: String) =
+    testCompletion("build.gradle", expression, completionCandidates.toList())
+
+  fun testCompletion(relativePath: String, expression: String, completionCandidates: List<String>) =
+    testCompletion(relativePath, expression) { lookupElements ->
+      CollectionAssertions.assertContainsUnordered(completionCandidates, lookupElements.map { it.lookupString })
     }
-  }
 
   fun testGotoDefinition(expression: String, checker: (PsiElement) -> Unit) =
     testGotoDefinition("build.gradle", expression, checker)

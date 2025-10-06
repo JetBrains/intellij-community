@@ -5,6 +5,7 @@ import com.intellij.idea.IJIgnore
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
@@ -184,6 +185,17 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
         verifyNavigationToToml(psiElement,
                                expectedTomlKey = "groovy-core",
                                endOfTomlPath = "GradleVersionCatalogs-completion/gradle/libs.versions.toml")
+      }
+    }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNavigationFromDynamicallyAddedSubprojectToCustomToml(gradleVersion: GradleVersion) =
+    test(gradleVersion, DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE) {
+      testGotoDefinition("subprojectsDir/subproject1/build.gradle", "customLibs.apache.gro<caret>ovy") { psiElement ->
+        verifyNavigationToToml(psiElement,
+                               expectedTomlKey = "apache-groovy",
+                               endOfTomlPath = "customPath/custom.toml")
       }
     }
 

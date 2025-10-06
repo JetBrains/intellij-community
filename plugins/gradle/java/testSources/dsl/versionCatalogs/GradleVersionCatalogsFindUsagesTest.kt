@@ -5,10 +5,13 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.Unmodifiable
+import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 import org.toml.lang.psi.TomlFile
 
@@ -100,6 +103,33 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
         assertNotNull(elementAtCaret)
         val usages = ReferencesSearch.search(elementAtCaret).findAll()
         assertNotNull(usages.find { it.element.containingFile is GroovyFileBase })
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testDynamicallyAddedSubprojectAndCustomToml(gradleVersion: GradleVersion) {
+    test(gradleVersion, DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE) {
+      writeTextAndCommit("customPath/custom.toml", /* language=TOML */ """
+        [libraries]
+        apache-gro<caret>ovy = { module = "org.apache.groovy:groovy", version = "4.0.0" }
+        """.trimIndent()
+      )
+      writeTextAndCommit("subprojectsDir/subproject1/build.gradle", "customLibs.apache.groovy")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("customPath/custom.toml"))
+        val usages = ReferencesSearch.search(codeInsightFixture.elementAtCaret).findAll()
+        assertContainsUsagesInFiles(usages, "subprojectsDir/subproject1/build.gradle")
+      }
+    }
+  }
+
+  private fun assertContainsUsagesInFiles(usages: @Unmodifiable Collection<PsiReference>, vararg usagePathEndings: String) {
+    val usagesInFiles = usages.map { it.element.containingFile.virtualFile.toNioPath() }
+    for (usagePathEnd in usagePathEndings) {
+      assertTrue(usagesInFiles.any { it.endsWith(usagePathEnd) }) {
+        "Expected usage in $usagePathEnd file is not found."
       }
     }
   }
