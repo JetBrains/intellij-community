@@ -58,7 +58,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
         if (earlyBreak.get() || areChecksDisabled(element)) return
 
         val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
-        if (texts.isEmpty() || skipCheckingTooLargeTexts(texts)) return
+        if (skipCheckingTooLargeTexts(texts)) return
         if (skipCheckingTooLargeFiles(file)) {
           earlyBreak.set(true)
           return
