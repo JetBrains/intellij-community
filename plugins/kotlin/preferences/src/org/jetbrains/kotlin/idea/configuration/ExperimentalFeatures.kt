@@ -2,13 +2,12 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBCheckBox
 import org.jdesktop.swingx.VerticalLayout
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import javax.swing.JCheckBox
 import javax.swing.JPanel
 
@@ -83,9 +82,7 @@ class ExperimentalFeaturesPanel : JPanel(VerticalLayout(5)) {
 
     companion object {
         fun createPanelIfShouldBeShown(): ExperimentalFeaturesPanel? {
-            val kotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
-            val shouldBeShown = kotlinVersion.isPreRelease && kotlinVersion.kind !is IdeKotlinVersion.Kind.ReleaseCandidate
-
+            val shouldBeShown = ApplicationInfo.getInstance().isEAP
             return if (shouldBeShown) ExperimentalFeaturesPanel() else null
         }
     }
