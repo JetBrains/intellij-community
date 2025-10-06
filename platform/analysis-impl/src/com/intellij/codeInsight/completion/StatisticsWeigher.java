@@ -25,7 +25,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
   private static final Key<StatisticsInfo> BASE_STATISTICS_INFO = Key.create("Base statistics info");
 
   @Override
-  public Comparable<?> weigh(final @NotNull LookupElement item, final @NotNull CompletionLocation location) {
+  public Comparable<?> weigh(@NotNull LookupElement item, @NotNull CompletionLocation location) {
     throw new UnsupportedOperationException();
   }
 
@@ -60,7 +60,8 @@ public final class StatisticsWeigher extends CompletionWeigher {
     }
 
     @Override
-    public @NotNull Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, final @NotNull ProcessingContext context) {
+    public @NotNull Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source,
+                                                     @NotNull ProcessingContext context) {
       List<LookupElement> initialList;
       Collection<List<LookupElement>> byWeight;
       synchronized (this) {
@@ -72,7 +73,8 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return JBIterable.from(initialList).append(JBIterable.from(byWeight).flatten(group -> myNext.classify(group, context)));
     }
 
-    private static Iterable<LookupElement> withoutInitial(Iterable<? extends LookupElement> allItems, List<? extends LookupElement> initial) {
+    private static Iterable<LookupElement> withoutInitial(Iterable<? extends LookupElement> allItems,
+                                                          List<? extends LookupElement> initial) {
       Set<LookupElement> initialSet = new ReferenceOpenHashSet<>(initial);
       return JBIterable.<LookupElement>from(allItems).filter(element -> !initialSet.contains(element));
     }
@@ -97,7 +99,8 @@ public final class StatisticsWeigher extends CompletionWeigher {
         String string = element.getLookupString();
         if (myStringsWithWeights.contains(string)) {
           byName.putValue(string, element);
-        } else {
+        }
+        else {
           noStats.add(element);
         }
       }
@@ -135,7 +138,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return w;
     }
 
-    private static int weigh(final StatisticsInfo baseInfo) {
+    private static int weigh(StatisticsInfo baseInfo) {
       if (baseInfo == StatisticsInfo.EMPTY) {
         return 0;
       }
@@ -145,7 +148,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
 
     @Override
     public @Unmodifiable @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items,
-                                                                                      final @NotNull ProcessingContext context) {
+                                                                                      @NotNull ProcessingContext context) {
       return ContainerUtil.map(items, lookupElement -> new Pair<>(lookupElement, getWeight(lookupElement)));
     }
 
@@ -202,5 +205,4 @@ public final class StatisticsWeigher extends CompletionWeigher {
     StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
     return info == null ? StatisticsInfo.EMPTY : info;
   }
-
 }
