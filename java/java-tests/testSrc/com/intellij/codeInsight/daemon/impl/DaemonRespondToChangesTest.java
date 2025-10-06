@@ -1582,7 +1582,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }
       }
       if (System.currentTimeMillis() > deadline) {
-        DaemonRespondToChangesPerformanceTest.dumpThreadsToConsole();
+        DaemonRespondToChangesPerfTest.dumpThreadsToConsole();
         fail("Too long waiting for daemon to finish ("+(System.currentTimeMillis()-start)+"ms already)");
       }
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();

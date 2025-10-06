@@ -54,10 +54,10 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * tests the daemon performance during highlighting interruptions/typing
  */
-public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCase {
+public class DaemonRespondToChangesPerfTest extends DaemonAnalyzerTestCase {
   private static final boolean DEBUG = false;
 
-  public void testHugeAppendChainDoesNotCauseSOE() {
+  public void testHugeAppendChainDoesNotCauseSOE_Stress() {
     StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {
       text.append(".append(").append(i).append(")\n");
@@ -297,7 +297,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     assertTrue(String.valueOf(mean), mean < 10);
   }
 
-  public void testAllPassesFinishAfterInterruptOnTyping_Performance() throws Throwable {
+  public void testAllPassesFinishAfterInterruptOnTyping_Stress() throws Throwable {
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     highlightErrors();
@@ -342,7 +342,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     }
   }
 
-  public void _testRogueToolGeneratingZillionsOfAnnotationsAtTheSameLevelMustNotFreeze_Performance() {
+  public void testRogueToolGeneratingZillionsOfAnnotationsAtTheSameLevelMustNotFreeze_Stress() {
     int N = 1_000_000;
     configureByText(PlainTextFileType.INSTANCE, " ".repeat(N));
     // just checks that highlighting doesn't freeze because there are no quadratics inside anymore
