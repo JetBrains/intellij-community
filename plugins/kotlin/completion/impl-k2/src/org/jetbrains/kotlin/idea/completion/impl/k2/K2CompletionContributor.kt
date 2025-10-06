@@ -5,6 +5,9 @@ import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
@@ -20,6 +23,9 @@ import org.jetbrains.kotlin.idea.completion.suppressItemSelectionByCharsOnTyping
 import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher.groupPriority
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
+import org.jetbrains.kotlin.psi.UserDataProperty
+import java.util.Optional
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -114,13 +120,70 @@ internal class K2CompletionSectionContext<out P : KotlinRawPositionContext>(
             )
         )
     }
+
+    /**
+     * Executes the given [block] within the context of this section and the given analysis session.
+     * Note: this method needs to be used for [LazyCompletionSessionProperty] accessed from within the [block] to work correctly.
+     */
+    context(session: KaSession)
+    fun <T> withSectionContext(block: context(KaSession, K2CompletionSectionContext<P>) () -> T): T {
+        val oldSectionContext = CURRENT_SECTION_CONTEXT.get()
+        CURRENT_SECTION_CONTEXT.set(this)
+        val oldSession = CURRENT_SESSION.get()
+        CURRENT_SESSION.set(session)
+        try {
+            context(session, this) {
+                return block()
+            }
+        } finally {
+            CURRENT_SECTION_CONTEXT.set(oldSectionContext)
+            CURRENT_SESSION.set(oldSession)
+        }
+    }
 }
 
 /**
  * Creates a property that stores the value and is shared between all sections that run in the same analysis session.
+ * It uses [initializer] to initialize its value for the current context when accessed for the first time.
+ *
+ * This is usually a good idea to use for expensive computations that should only be done once per analysis session.
  */
-internal fun <T: Any> completionSessionProperty(): K2CompletionSectionContext.CompletionSessionProperty<T> {
-    return K2CompletionSectionContext.CompletionSessionProperty()
+internal class LazyCompletionSessionProperty<T, P: KotlinRawPositionContext>(
+    // We use an anonymous key by default because the name does not matter to us.
+    // Different instances of a key with the same name are distinct.
+    private val userDataKey: Key<Optional<T>> = Key.create(""),
+    private val initializer: context(KaSession, K2CompletionSectionContext<P>) () -> T
+) {
+
+    operator fun getValue(thisRef: K2CompletionSectionContext<P>, property: KProperty<*>): T {
+        val existingValue = thisRef.getUserData(userDataKey)
+        // The .orElse here is technically a hack to trick the Kotlin type system by using a flexible type.
+        // This allows us allowing for lazy nullable and non-nullable properties by using Optionals as a
+        // way of differentiating between null and not initialized.
+        if (existingValue != null) return existingValue.orElse(null)
+
+        // We want to have lazy properties with convenient lazy initializers for our sessions.
+        // Because almost all use cases for a session property will require the session and the context to initialize, we have
+        // to store and obtain the current context from thread local variables.
+        val currentContext = CURRENT_SECTION_CONTEXT.get()
+        val currentSession = CURRENT_SESSION.get()
+
+        if (currentContext == null || currentSession == null) {
+            error("Could not find current KaSession or K2CompletionSectionContext")
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        context(currentSession, currentContext as K2CompletionSectionContext<P>) {
+            val newValue = initializer()
+            thisRef.putUserData(userDataKey, Optional.ofNullable(newValue) as Optional<T>)
+            return newValue
+        }
+    }
+
+    operator fun setValue(thisRef: K2CompletionSectionContext<P>, property: KProperty<*>, value: T?) {
+        @Suppress("UNCHECKED_CAST")
+        thisRef.putUserData(userDataKey, Optional.ofNullable(value) as Optional<T>)
+    }
 }
 
 internal typealias K2CompletionSectionRunnable<P> = context(KaSession, K2CompletionSectionContext<P>) () -> Unit

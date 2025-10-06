@@ -127,26 +127,27 @@ internal interface K2CompletionRunner {
 
                     val sink = K2DelegatingLookupElementSink(completionResultSet)
 
-                    val lookupElements = chainCompletionContributors.asSequence()
-                        .flatMap { contributor ->
-                            // This cast is safe because the contributor is not used except for extracting the name when debugging
-                            @Suppress("UNCHECKED_CAST")
-                            val completionContributor =
-                                contributor as? K2CompletionContributor<KotlinExpressionNameReferencePositionContext>
-                                    ?: return@flatMap emptySequence()
-                            val sectionContext = K2CompletionSectionContext(
-                                commonData = commonData,
-                                sink = sink,
-                                contributor = completionContributor,
-                                addLaterSection = { section ->
-                                    error("Chain completion sections cannot add later sections yet")
-                                }
-                            )
-                            context(sectionContext) {
-                                contributor.createChainedLookupElements(receiverExpression, nameToImport)
+                    chainCompletionContributors.forEach { contributor ->
+                        // This cast is safe because the contributor is not used except for extracting the name when debugging
+                        @Suppress("UNCHECKED_CAST")
+                        val completionContributor =
+                            contributor as? K2CompletionContributor<KotlinExpressionNameReferencePositionContext>
+                                ?: return@forEach
+                        val sectionContext = K2CompletionSectionContext(
+                            commonData = commonData,
+                            sink = sink,
+                            contributor = completionContributor,
+                            addLaterSection = { section ->
+                                error("Chain completion sections cannot add later sections yet")
                             }
-                        }.asIterable()
-                    completionResultSet.addAllElements(lookupElements)
+                        )
+                        sectionContext.withSectionContext {
+                            contributor.createChainedLookupElements(receiverExpression, nameToImport)
+                                .forEach { lookupElement ->
+                                    completionResultSet.addElement(lookupElement)
+                                }
+                        }
+                    }
                 }
             }
         }
@@ -344,7 +345,7 @@ private class SequentialCompletionRunner : K2CompletionRunner {
                 )
 
                 // We make sure we have the correct position before running the completion section.
-                context(sectionContext) {
+                sectionContext.withSectionContext {
                     section.executeIfAllowed()
                 }
             }
@@ -433,7 +434,7 @@ private class ParallelCompletionRunner : K2CompletionRunner {
             )
 
             try {
-                context(sectionContext) {
+                sectionContext.withSectionContext {
                     currentSection.executeIfAllowed()
                 }
             } finally {
