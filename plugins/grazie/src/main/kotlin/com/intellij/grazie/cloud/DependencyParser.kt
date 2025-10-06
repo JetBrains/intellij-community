@@ -75,10 +75,10 @@ object DependencyParser {
         if (support != null) {
           val ltLanguage = SentenceBatcher.findInstalledLTLanguage(language)
           (ltLanguage?.disambiguator as? LazyCachingConcurrentDisambiguator)?.ensureInitializedAsync()
-          ensureActive()
           @Suppress("UNCHECKED_CAST")
           return sentences.associateWith {
             cachedTrees.getOrPut(it.sentence) {
+              ensureActive()
               Tree.createFlatTree(support, it.sentence)
             }
           } as LinkedHashMap<SentenceWithExclusions, Tree?>
