@@ -150,11 +150,54 @@ class SubscriptionExpirationDialog(project: Project?, private val settings: Subs
 }
 
 @Internal
-data class SubscriptionExpirationSettings(
+class SubscriptionExpirationSettings(
   val isEvaluation: Boolean,
   val showPromise: Boolean,
   val showExtendTrial: Boolean,
   val showContinueWithoutSubscription: Boolean,
   val showRemDevHint: Boolean,
-  @param:Nls val errorMessage: String?
-)
+  @param:Nls val errorMessage: String?,
+) {
+  @Internal
+  class Builder {
+    private var isEvaluation: Boolean = false
+    private var showPromise: Boolean = false
+    private var showExtendTrial: Boolean = false
+    private var showContinueWithoutSubscription: Boolean = false
+    private var showRemDevHint: Boolean = false
+
+    @Nls
+    private var errorMessage: String? = null
+
+    @JvmOverloads
+    fun evaluation(isEvaluation: Boolean = true): Builder = apply { this.isEvaluation = isEvaluation }
+
+    @JvmOverloads
+    fun showPromise(show: Boolean = true): Builder = apply { this.showPromise = show }
+
+    @JvmOverloads
+    fun showExtendTrial(show: Boolean = true): Builder = apply { this.showExtendTrial = show }
+
+    @JvmOverloads
+    fun showContinueWithoutSubscription(show: Boolean = true): Builder = apply { this.showContinueWithoutSubscription = show }
+
+    @JvmOverloads
+    fun showRemDevHint(show: Boolean = true): Builder = apply { this.showRemDevHint = show }
+
+    fun showErrorMessage(@Nls message: String): Builder = apply { this.errorMessage = message }
+
+    fun build(): SubscriptionExpirationSettings = SubscriptionExpirationSettings(
+      isEvaluation = isEvaluation,
+      showPromise = showPromise,
+      showExtendTrial = showExtendTrial,
+      showContinueWithoutSubscription = showContinueWithoutSubscription,
+      showRemDevHint = showRemDevHint,
+      errorMessage = errorMessage,
+    )
+  }
+
+  companion object {
+    @JvmStatic
+    fun builder(): Builder = Builder()
+  }
+}
