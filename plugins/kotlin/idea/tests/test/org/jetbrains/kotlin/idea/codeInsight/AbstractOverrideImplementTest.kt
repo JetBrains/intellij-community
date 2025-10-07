@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.generation.ClassMember
+import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.generation.PsiMethodMember
 import com.intellij.grazie.utils.toLinkedSet
@@ -15,6 +16,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -27,6 +29,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndRemoveRedundantEmptyLinesAtTheEnd
 import org.jetbrains.kotlin.utils.rethrow
 import org.junit.Assert
+import java.awt.Color
 import java.io.File
 import java.nio.charset.StandardCharsets
 import kotlin.test.assertEquals
@@ -272,7 +275,19 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         val testFile = File(testDataDirectory, "$fileNameWithoutExtension.kt")
 
         val frontendDependentDirective = if (isFirPlugin) MEMBER_K2_DIRECTIVE_PREFIX else MEMBER_K1_DIRECTIVE_PREFIX
-        val actualMemberTexts = chooserObjects.map { it.text }.toLinkedSet()
+        val actualMemberTexts = chooserObjects.map {
+            val text = it.text
+            val textStyle = (it as? MemberChooserObjectBase)?.textStyle ?: 0
+            if (textStyle == 0) {
+                text
+            } else {
+                val textAttributes = SimpleTextAttributes(textStyle, Color.BLACK)
+                when {
+                    textAttributes.isStrikeout -> "~${text}~"
+                    else -> "$text [$textStyle]"
+                }
+            }
+        }.toLinkedSet()
         val expectedMemberTexts = InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), MEMBER_DIRECTIVE_PREFIX).map { it.replace("\\n", "\n") }.toLinkedSet() +
                                   InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), frontendDependentDirective)
 
