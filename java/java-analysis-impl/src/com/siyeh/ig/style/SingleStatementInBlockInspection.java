@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
@@ -175,6 +176,7 @@ public class SingleStatementInBlockInspection extends BaseInspection implements 
         return null;
       }
       if (!(body instanceof PsiBlockStatement block)) return null;
+      if (SingleStatementInBlockVisitor.isDanglingElseProblem(ControlFlowUtils.stripBraces(block), block)) return null;
       return new BlockData(statement, block);
     }
 
