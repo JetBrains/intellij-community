@@ -5,9 +5,9 @@ import com.intellij.execution.junit.JUnitExternalLibraryDescriptor;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public final class JUnit5ExternalLibraryResolver extends JupiterExternalLibraryResolver {
+public final class JUnit6ExternalLibraryResolver extends JupiterExternalLibraryResolver {
   @Override
   protected @NotNull ExternalLibraryDescriptor getDescriptor() {
-    return JUnitExternalLibraryDescriptor.JUNIT5;
+    return JUnitExternalLibraryDescriptor.JUNIT6;
   }
 }
