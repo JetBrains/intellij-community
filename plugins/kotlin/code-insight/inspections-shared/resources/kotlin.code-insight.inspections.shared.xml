@@ -753,7 +753,6 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      level="INFORMATION"
-                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin"
                      key="inspection.remove.unnecessary.parentheses.display.name" bundle="messages.KotlinBundle"/>
 
