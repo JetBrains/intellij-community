@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.ui.components.breadcrumbs.StickyLineInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -111,16 +112,17 @@ public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector 
   }
 
   @ApiStatus.Internal
-  public @NotNull List<PsiElement> computePsiElements(@NotNull VirtualFile file, @NotNull Document document, int offset) {
+  @Override
+  public @NotNull List<StickyLineInfo> computeStickyLineInfos(@NotNull VirtualFile file, @NotNull Document document, int offset) {
     boolean checkSettings = false;
     BreadcrumbsProvider defaultInfoProvider = findProvider(file, myProject, true);
     PsiElement element = findStartElement(document, offset, file, myProject, defaultInfoProvider, checkSettings, true);
     if (element == null) return Collections.emptyList();
-    ArrayList<PsiElement> result = new ArrayList<>();
+    ArrayList<StickyLineInfo> result = new ArrayList<>();
     while (element != null) {
       BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider, checkSettings);
       if (provider != null && provider.acceptStickyElement(element)) {
-        result.add(element);
+        result.add(new StickyLineInfo(element));
       }
       element = getParent(element, provider);
       if (element instanceof PsiDirectory) break;

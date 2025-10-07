@@ -3,7 +3,7 @@ package com.intellij.codeInsight.stickyLines
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.impl.stickyLines.StickyLineInfo
+import com.intellij.ui.components.breadcrumbs.StickyLineInfo
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesCollector
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator

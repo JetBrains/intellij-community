@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.stickyLines
 
+import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -16,15 +17,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.ui.components.breadcrumbs.StickyLineInfo
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
- * Responsible for collecting sticky lines based on psi file structure.
+ * Responsible for collecting sticky lines based on psi file structure. // todo rewrite
  * The implementation relies on PsiFileBreadcrumbsCollector to collect psi elements at specific document line.
  */
 @Internal
@@ -99,20 +100,14 @@ class StickyLinesCollector(private val project: Project, private val document: D
   fun collectLines(vFile: VirtualFile, progress: ProgressIndicator): Collection<StickyLineInfo> {
     ThreadingAssertions.assertReadAccess(); ThreadingAssertions.assertBackgroundThread()
 
-    val psiCollector = PsiFileBreadcrumbsCollector(project)
+    val collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, vFile)
     val infos: MutableSet<StickyLineInfo> = HashSet()
     val lineCount: Int = document.getLineCount()
     for (line in 0 until lineCount) {
       progress.checkCanceled()
       val endOffset: Int = document.getLineEndOffset(line)
-      val psiElements: List<PsiElement> = psiCollector.computePsiElements(vFile, document, endOffset)
-      for (element: PsiElement in psiElements) {
-        infos.add(StickyLineInfo(
-          element.textOffset,
-          element.textRange.endOffset,
-          debugText(element),
-        ))
-      }
+      val stickyLineInfos: List<StickyLineInfo> = collector.computeStickyLineInfos(vFile, document, endOffset)
+      infos.addAll(stickyLineInfos)
     }
     LOG.debug { "total lines collected: ${infos.size} for ${fileName(vFile)}" }
     return infos
