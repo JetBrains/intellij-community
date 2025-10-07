@@ -288,6 +288,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     Toolkit.getDefaultToolkit().removeAWTEventListener(myChangeSelectionOnHoverListener);
     myChangeSelectionOnHoverListener = null;
+    updateHighlighting();
   }
 
   private void resetTree(boolean ignoreOrphanComponents) {
@@ -445,15 +446,18 @@ public final class InspectorWindow extends JDialog implements Disposable {
     if (glassPane == null) return;
 
     var highlightComponent = createHighlightComponent(component, bounds, glassPane);
-    var dimensionComponent = createDimensionComponent(component, highlightComponent.getBounds(), glassPane);
-
+    ContainerUtil.addIfNotNull(myHighlightComponents, highlightComponent);
     glassPane.add(highlightComponent);
-    glassPane.add(dimensionComponent);
+
+    if (myChangeSelectionOnHoverListener != null) {
+      var dimensionComponent = createDimensionComponent(component, highlightComponent.getBounds(), glassPane);
+      ContainerUtil.addIfNotNull(myHighlightComponents, dimensionComponent);
+      glassPane.add(dimensionComponent);
+    }
+
     glassPane.revalidate();
     glassPane.repaint();
 
-    ContainerUtil.addIfNotNull(myHighlightComponents, highlightComponent);
-    ContainerUtil.addIfNotNull(myHighlightComponents, dimensionComponent);
   }
 
   private static @NotNull HighlightComponent createHighlightComponent(@NotNull Component component, @Nullable Rectangle bounds, JComponent glassPane) {
