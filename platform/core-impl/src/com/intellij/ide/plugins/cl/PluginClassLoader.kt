@@ -178,7 +178,7 @@ class PluginClassLoader(
         _resolveScopeManager.isDefinitelyAlienClass(name = name, packagePrefix = it, force = forceLoadFromSubPluginClassloader)
       }
       if (consistencyError == null) {
-        c = loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash, forceLoadFromSubPluginClassloader = forceLoadFromSubPluginClassloader)
+        c = loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash)
       }
       else {
         if (!consistencyError.isEmpty()) {
@@ -206,7 +206,7 @@ class PluginClassLoader(
               }
               continue
             }
-            c = classloader.loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash, forceLoadFromSubPluginClassloader = false)
+            c = classloader.loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash)
           }
           catch (e: IOException) {
             throw ClassNotFoundException(name, e)
@@ -316,10 +316,10 @@ class PluginClassLoader(
     val fileNameWithoutExtension = name.replace('.', '/')
     val fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION
     val packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'))
-    return loadClassInsideSelf(name, fileName, packageNameHash, false)
+    return loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash)
   }
 
-  private fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long, forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
+  private fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long): Class<*>? {
     synchronized(getClassLoadingLock(name)) {
       var c = findLoadedClass(name)
       if (c?.classLoader === this) {
@@ -517,11 +517,11 @@ private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
     "kotlin.Function",
     "kotlin.sequences.Sequence",
     "kotlin.ranges.IntRange",
-    "kotlin.ranges.IntRange\$Companion",
+    $$"kotlin.ranges.IntRange$Companion",
     "kotlin.ranges.IntProgression",
     "kotlin.ranges.ClosedRange",
     "kotlin.ranges.IntProgressionIterator",
-    "kotlin.ranges.IntProgression\$Companion",
+    $$"kotlin.ranges.IntProgression$Companion",
     "kotlin.ranges.IntProgression",
     "kotlin.collections.IntIterator",
     "kotlin.Lazy", "kotlin.Unit",
@@ -534,13 +534,13 @@ private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
     "kotlin.coroutines.Continuation",
 
     "kotlin.coroutines.CoroutineContext",
-    "kotlin.coroutines.CoroutineContext\$Element",
-    "kotlin.coroutines.CoroutineContext\$Key",
+    $$"kotlin.coroutines.CoroutineContext$Element",
+    $$"kotlin.coroutines.CoroutineContext$Key",
     "kotlin.coroutines.EmptyCoroutineContext",
 
     "kotlin.Result",
-    "kotlin.Result\$Failure",
-    "kotlin.Result\$Companion",  // even though it's an internal class, it can leak (and it does) into API surface because it's exposed by public
+    $$"kotlin.Result$Failure",
+    $$"kotlin.Result$Companion",  // even though it's an internal class, it can leak (and it does) into API surface because it's exposed by public
     // `kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED` property
     "kotlin.coroutines.intrinsics.CoroutineSingletons",
     "kotlin.coroutines.AbstractCoroutineContextElement",
@@ -549,7 +549,7 @@ private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
     "kotlin.coroutines.jvm.internal.BaseContinuationImpl", // IDEA-295189
     "kotlin.coroutines.jvm.internal.CoroutineStackFrame", // IDEA-295189
     "kotlin.time.Duration",
-    "kotlin.time.Duration\$Companion",
+    $$"kotlin.time.Duration$Companion",
     "kotlin.jvm.internal.ReflectionFactory",
     "kotlin.jvm.internal.Reflection",
     "kotlin.jvm.internal.Lambda",
@@ -567,12 +567,12 @@ private fun mustBeLoadedByPlatform(name: @NonNls String): Boolean {
 
   // Some commonly used classes from kotlin-runtime must be loaded by the platform classloader.
   // Otherwise, if a plugin bundles its own version
-  // of kotlin-runtime.jar, it won't be possible to call the platform's methods with these types in a signatures from such a plugin.
+  // of kotlin-runtime.jar, it won't be possible to call the platform's methods with these types in a signature from such a plugin.
   // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from the platform's kotlin-runtime.
   return name.startsWith("kotlin.") &&
          (name.startsWith("kotlin.jvm.functions.") ||
           // Those are kotlin-reflect related classes, but unfortunately, they are placed in kotlin-stdlib.
-          // Since we always want to load reflect from platform, we should force those classes with platform classloader as well.
+          // Since we always want to load reflect lib from platform, we should force those classes with platform classloader as well.
           name.startsWith("kotlin.reflect.") ||
           name.startsWith("kotlin.jvm.internal.CallableReference") ||
           name.startsWith("kotlin.jvm.internal.ClassReference") ||

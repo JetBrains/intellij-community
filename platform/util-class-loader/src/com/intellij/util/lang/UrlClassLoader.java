@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
@@ -138,7 +137,8 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       configuration.files = files;
     }
     else {
-      String[] parts = System.getProperty("java.class.path").split(File.pathSeparator);
+      @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+      String[] parts = System.getProperty("java.class.path").split(java.io.File.pathSeparator);
       Set<Path> files = new LinkedHashSet<>(parts.length);
       for (String s : parts) {
         files.add(fileSystem.getPath(s));

@@ -47,7 +47,7 @@ public final class PathClassLoader extends UrlClassLoader {
     }
   }
 
-  private static final boolean isParallelCapable = ClassLoader.registerAsParallelCapable();
+  private static final boolean isParallelCapable = registerAsParallelCapable();
 
   private BytecodeTransformer transformer;
 
