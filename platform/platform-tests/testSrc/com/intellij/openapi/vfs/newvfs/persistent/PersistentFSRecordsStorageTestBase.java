@@ -86,6 +86,10 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       "Fresh storage is always 'closed properly'",
       storage.wasClosedProperly()
     );
+    assertTrue(
+      "Fresh storage is always 'always closed properly'",
+      storage.wasAlwaysClosedProperly()
+    );
   }
 
   @Test
@@ -97,6 +101,10 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     assertTrue(
       "Reopened storage was closed properly",
       storageReopened.wasClosedProperly()
+    );
+    assertTrue(
+      "Reopened storage was always closed properly",
+      storageReopened.wasAlwaysClosedProperly()
     );
   }
 
@@ -569,7 +577,8 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     assertFalse("Storage must be !dirty since no modifications since open", storageReopened.isDirty());
     assertEquals("globalModCount", globalModCount, storageReopened.getGlobalModCount());
     assertEquals("version", version, storageReopened.getVersion());
-    assertTrue("connectionStatus", storageReopened.wasClosedProperly());
+    assertTrue("wasClosedProperly", storageReopened.wasClosedProperly());
+    assertTrue("wasAlwaysClosedProperly", storageReopened.wasAlwaysClosedProperly());
     assertEquals("recordsCountBeforeClose", recordsCountBeforeClose, storageReopened.recordsCount());
   }
 

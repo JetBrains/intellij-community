@@ -343,7 +343,27 @@ public final class PersistentFSConnection {
   void ensureFileIdIsValid(int fileId) throws IndexOutOfBoundsException {
     if (!records.isValidFileId(fileId)) {
       int maxAllocatedID = records.maxAllocatedID();
-      throw new IndexOutOfBoundsException("fileId[" + fileId + "] is outside valid/allocated ids range [1.." + maxAllocatedID + "]");
+      throw new IndexOutOfBoundsException(
+        "fileId[" + fileId + "] is outside valid/allocated ids range [1.." + maxAllocatedID + "], " +
+        "VFS.status: {" + describeConsistencyStatus() + "}"
+      );
+    }
+  }
+
+  String describeConsistencyStatus() {
+    try {
+      if (!records.wasAlwaysClosedProperly()) {
+        if (!records.wasClosedProperly()) {
+          return "VFS was NOT closed properly in last session";
+        }
+        else {
+          return "VFS was NOT closed properly at least once in it's lifetime";
+        }
+      }
+      return "VFS was always properly closed";
+    }
+    catch (IOException e) {
+      return "(unknown: " + e.getMessage() + ")";
     }
   }
 

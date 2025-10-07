@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.Flags;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
 import com.intellij.serviceContainer.AlreadyDisposedException;
@@ -40,7 +41,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    */
   private static final int UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR = getIntProperty("vfs.check-unallocated-records-zeroed", 4);
   /** How many records to check if wasClosedProperly=false (i.e. app likely was crashed/killed) */
-  private static final int UNALLOCATED_RECORDS_TO_CHECK_ZEROED_CRASHED = UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR * 100;
+  private static final int UNALLOCATED_RECORDS_TO_CHECK_ZEROED_CRASHED = UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR * 1000;
 
   @VisibleForTesting
   @ApiStatus.Internal
@@ -870,7 +871,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     if (!isValidFileId(recordId)) {
       throw new IndexOutOfBoundsException(
         "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + maxAllocatedID() + "], " +
-        "(wasClosedProperly: " + wasClosedProperly() + ")"
+        "(wasClosedProperly: " + wasClosedProperly() + ", wasAlwaysClosedProperly: " + wasAlwaysClosedProperly() + ")"
       );
     }
   }
@@ -883,7 +884,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     if (!isValidFileId(parentId)) {
       throw new IndexOutOfBoundsException(
         "parentId(=" + parentId + ") is outside of allocated IDs range [0, " + maxAllocatedID() + "], " +
-        "(wasClosedProperly: " + wasClosedProperly() + ")"
+        "(wasClosedProperly: " + wasClosedProperly() + ", wasAlwaysClosedProperly: " + wasAlwaysClosedProperly() + ")"
       );
     }
   }

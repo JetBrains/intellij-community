@@ -1874,6 +1874,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return;
     }
     Ref<String> missedRootUrlRef = new Ref<>();
+    //TODO RC: according to Diogen, this roots lookup is responsible for ~50% of findFileById() freezes
+    //         maybe cache >1 roots per turn to amortise the cost?
     vfsPeer.forEachRoot((rootFileId, rootUrlId) -> {
       if (rootId == rootFileId) {
         missedRootUrlRef.set(getNameByNameId(rootUrlId));
@@ -2432,13 +2434,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                              @NotNull ChildInfo @Nullable [] children) {
     assert parentId > 0 : parentId; // 0 means it's root => should use .writeRootFields() instead
 
+    //VfsData.DirectoryData directoryData = ((VirtualDirectoryImpl)parentFile).directoryData;
+    //if(!Thread.holdsLock(directoryData)){
+    //  LOG.error("Don't hold .directoryData lock!");
+    //}
+
     FileAttributes attributes = childData.first;
     String symLinkTarget = childData.second;
 
     //MAYBE RC: .updateRecordFields(id=0, ...) also creates a new record, so .createRecord() could be dropped?
     int newChildId = vfsPeer.createRecord();
     int nameId = vfsPeer.updateRecordFields(newChildId, parentId, attributes, name.toString(), /* cleanAttributeRef: */ true);
-
     if (attributes.isDirectory()) {
       vfsPeer.loadDirectoryData(newChildId, parentFile, name, fs);
     }
@@ -2542,6 +2548,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void executeRename(@NotNull VirtualFile file, @NotNull String newName) {
     ((VirtualFileSystemEntry)file).setNewName(newName);
+    //TODO RC: update symlink?
   }
 
   private void executeSetWritable(@NotNull VirtualFile file, boolean writableFlag) {
@@ -2620,6 +2627,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     vfsPeer.moveChild(newParent::isCaseSensitive, oldParentId, newParentId, childToMoveId);
 
     ((VirtualFileSystemEntry)file).setParent(newParent);
+    //TODO RC: update symlink?
+    //if (fs instanceof LocalFileSystemImpl) {
+    //  ((LocalFileSystemImpl)fs).symlinkUpdated(id, file.getParent(), file.getNameSequence(), file.getPath(), target);
+    //}
   }
 
   @Override
