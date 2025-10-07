@@ -2,6 +2,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.openapi.wm.impl.content.BaseLabel
@@ -36,7 +37,8 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   private var sourceDecorator = null as InternalDecoratorImpl?
   private var sourceTopDecorator: InternalDecoratorImpl? = null
   private var myInitialIndex = -1
-  private var myCurrentDecorator = null as InternalDecoratorImpl?
+
+  private var curDropLocation: DropLocation? = null
   private var myDraggingTab = null as ContentTabLabel?
   private var dragImageView: DragImageView? = null
   private var currentDropSide = -1
@@ -67,8 +69,15 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   }
 
   override fun canFinishDragging(component: JComponent, point: RelativePoint): Boolean {
-    if (myCurrentDecorator == null) return false
-    return myCurrentDecorator!!.contains(point.getPoint(myCurrentDecorator))
+    val curLocation = curDropLocation
+    return if (curLocation != null) {
+      val component = when (curLocation) {
+        is DropLocation.ToolWindow -> curLocation.decorator
+        is DropLocation.Editor -> curLocation.window.component
+      }
+      component.contains(point.getPoint(component))
+    }
+    else false
   }
 
   override fun processMousePressed(event: MouseEvent) {
@@ -85,7 +94,9 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     sourceDecorator = InternalDecoratorImpl.findNearestDecorator(contentTabLabel)
     sourceTopDecorator = sourceDecorator?.let { findTopDecorator(it) }
     myInitialIndex = getInitialIndex(contentTabLabel)
-    myCurrentDecorator = sourceDecorator
+    if (sourceDecorator != null) {
+      curDropLocation = DropLocation.ToolWindow(sourceDecorator!!)
+    }
     val tabImage = createThumbnailDragImage(contentTabLabel, -1)
     dragImageView = if (StartupUiUtil.isWaylandToolkit()) {
       GlassPaneDragImageView(IdeGlassPaneUtil.find(pane)).apply {
@@ -156,7 +167,8 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
   override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
     val sourceDecorator = sourceDecorator
-    val curDecorator = myCurrentDecorator
+    val curLocation = curDropLocation
+    val curDecorator = if (curLocation is DropLocation.ToolWindow) curLocation.decorator else null
     if (sourceDecorator == null || curDecorator == null) {
       return
     }
@@ -246,8 +258,11 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     sourceDecorator = null
     sourceTopDecorator = null
     myDraggingTab = null
-    myCurrentDecorator?.setDropInfoIndex(-1, 0)
-    myCurrentDecorator = null
+    val curLocation = curDropLocation
+    if (curLocation is DropLocation.ToolWindow) {
+      curLocation.decorator.setDropInfoIndex(-1, 0)
+    }
+    curDropLocation = null
     val parent = highlighter.parent
     if (parent is JComponent) {
       parent.remove(highlighter)
@@ -301,27 +316,31 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   private fun relocate(event: MouseEvent) {
     val relativePoint = RelativePoint(event)
     val tmp = getDecorator(relativePoint)
-    if (myCurrentDecorator != tmp) {
-      myCurrentDecorator?.setDropInfoIndex(-1, 0)
+    curDropLocation?.let { dropLocation ->
+      if (dropLocation is DropLocation.ToolWindow && dropLocation.decorator != tmp) {
+        dropLocation.decorator.setDropInfoIndex(-1, 0)
+      }
     }
-    myCurrentDecorator = tmp
+    curDropLocation = tmp?.let { DropLocation.ToolWindow(it) }
 
     val screenPoint = event.locationOnScreen
     dragImageView!!.location = Point(screenPoint.x - myInitialOffset.x, screenPoint.y - myInitialOffset.y)
     dragImageView!!.show()
 
-    if (myCurrentDecorator != null) {
-      currentDropSide = TabsUtil.getDropSideFor(relativePoint.getPoint(myCurrentDecorator), myCurrentDecorator)
-      val dropArea = Rectangle(myCurrentDecorator!!.size)
+    val dropLocation = curDropLocation
+    if (dropLocation is DropLocation.ToolWindow) {
+      val decorator = dropLocation.decorator
+      currentDropSide = TabsUtil.getDropSideFor(relativePoint.getPoint(decorator), decorator)
+      val dropArea = Rectangle(decorator.size)
       TabsUtil.updateBoundsWithDropSide(dropArea, currentDropSide)
-      dropArea.bounds = SwingUtilities.convertRectangle(myCurrentDecorator!!, dropArea, pane.rootPane.glassPane)
+      dropArea.bounds = SwingUtilities.convertRectangle(decorator, dropArea, pane.rootPane.glassPane)
       currentDropIndex = getTabIndex(relativePoint)
       if (currentDropIndex != -1) {
-        myCurrentDecorator!!.setDropInfoIndex(currentDropIndex, dragImageView!!.size.width)
+        decorator.setDropInfoIndex(currentDropIndex, dragImageView!!.size.width)
         highlighter.bounds = Rectangle()
       }
       else {
-        myCurrentDecorator?.setDropInfoIndex(-1, 0)
+        decorator.setDropInfoIndex(-1, 0)
         highlighter.bounds = dropArea
       }
     }
@@ -344,6 +363,11 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
   private fun InternalDecoratorImpl.isSingleContentLayout(): Boolean {
     return contentManager.contents.singleOrNull().let { it != null && it !is SingleContentLayout.SubContent }
+  }
+
+  private sealed interface DropLocation {
+    data class ToolWindow(val decorator: InternalDecoratorImpl) : DropLocation
+    data class Editor(val window: EditorWindow) : DropLocation
   }
 
   private class MyDialog(owner: JComponent, val helper: ToolWindowInnerDragHelper, tabImage: BufferedImage)
