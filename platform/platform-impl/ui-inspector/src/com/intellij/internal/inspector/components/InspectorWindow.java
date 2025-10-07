@@ -65,10 +65,10 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER;
 
 public final class InspectorWindow extends JDialog implements Disposable {
   private InspectorTable myInspectorTable;
-  private final @NotNull java.util.List<Component> myComponents = new ArrayList<>();
-  private java.util.List<? extends PropertyBean> myInfo;
+  private final @NotNull List<Component> myComponents = new ArrayList<>();
+  private List<? extends PropertyBean> myInfo;
   private final @NotNull Component myInitialComponent;
-  private final @NotNull java.util.List<HighlightComponent> myHighlightComponents = new ArrayList<>();
+  private final @NotNull List<JComponent> myHighlightComponents = new ArrayList<>();
   private boolean myIsHighlighted = true;
   private final @NotNull HierarchyTree myHierarchyTree;
   private final @NotNull ComponentsNavBarPanel myNavBarPanel;
@@ -90,7 +90,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myInitialComponent = component;
     getRootPane().setBorder(JBUI.Borders.empty(5));
 
-    setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
     setLayout(new BorderLayout());
     setTitle(component.getClass().getName());
@@ -104,7 +104,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myWrapperPanel.setContent(myInspectorTable);
     myHierarchyTree = new HierarchyTree(component) {
       @Override
-      public void onComponentsChanged(java.util.List<? extends Component> components) {
+      public void onComponentsChanged(List<? extends Component> components) {
         switchComponentsInfo(components);
         updateHighlighting();
       }
@@ -116,7 +116,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
 
       @Override
-      public void onClickInfoChanged(java.util.List<? extends PropertyBean> info) {
+      public void onClickInfoChanged(List<? extends PropertyBean> info) {
         switchClickInfo(info);
         updateHighlighting();
       }
@@ -250,12 +250,12 @@ public final class InspectorWindow extends JDialog implements Disposable {
     return myInspectorTable;
   }
 
-  private void switchComponentsInfo(@NotNull java.util.List<? extends Component> components) {
+  private void switchComponentsInfo(@NotNull List<? extends Component> components) {
     if (components.isEmpty()) return;
     myComponents.clear();
     myComponents.addAll(components);
     myInfo = null;
-    Component showingComponent = components.get(0);
+    Component showingComponent = components.getFirst();
     setTitle(showingComponent.getClass().getName());
     Disposer.dispose(myInspectorTable);
     myInspectorTable = new InspectorTable(showingComponent, myProject, getSelectedNodeFailedAccessibilityInspections());
@@ -328,7 +328,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   }
 
   private void updateHighlighting() {
-    for (HighlightComponent component : myHighlightComponents) {
+    for (var component : myHighlightComponents) {
       JComponent glassPane = getGlassPane(component);
       if (glassPane != null) {
         glassPane.remove(component);
@@ -355,7 +355,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
   }
 
-  private static @Nullable HighlightComponent createHighlighter(@NotNull Component component, @Nullable Rectangle bounds) {
+  private static @Nullable JComponent createHighlighter(@NotNull Component component, @Nullable Rectangle bounds) {
     JComponent glassPane = getGlassPane(component);
     if (glassPane == null) return null;
 
@@ -432,7 +432,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private String findSelectedClassName() {
     if (myHierarchyTree.hasFocus()) {
       if (!myComponents.isEmpty()) {
-        return myComponents.get(0).getClass().getName();
+        return myComponents.getFirst().getClass().getName();
       }
       else {
         TreePath path = myHierarchyTree.getSelectionPath();
