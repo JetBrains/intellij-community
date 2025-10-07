@@ -67,17 +67,20 @@ public final class JavaNoVariantsDelegator extends CompletionContributor impleme
           JavaCompletionContributor.mayStartClassName(result) &&
           JavaCompletionContributor.isClassNamePossible(parameters) &&
           !JavaCompletionContributor.IN_PERMITS_LIST.accepts(parameters.getPosition())) {
-        // workaround to show the first similar item as fast as possible
+        suggestNonImportedClasses(parameters,
+                                  JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)),
+                                  tracker.session);
+        // todo workaround to show the first similar item as fast as possible IDEA-380405
         if (tracker.hasOnlyOneClass == Boolean.TRUE &&
             parameters.getProcess() instanceof CompletionProgressIndicator indicator &&
             Registry.is("ide.completion.command.faster.paint") &&
             GroupedCompletionContributor.isGroupEnabledInApp() &&
-            CommandCompletionSettingsService.getInstance().commandCompletionEnabled()) {
+            CommandCompletionSettingsService.getInstance().commandCompletionEnabled() &&
+            parameters.getPosition() instanceof PsiIdentifier identifier &&
+            identifier.getParent() instanceof PsiReferenceExpression referenceExpression &&
+            referenceExpression.getParent() instanceof PsiExpressionStatement) {
           indicator.showLookupAsSoonAsPossible();
         }
-        suggestNonImportedClasses(parameters,
-                                  JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)),
-                                  tracker.session);
       }
     }
   }
