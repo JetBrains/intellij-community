@@ -17,8 +17,7 @@ import java.util.*
 private const val MARKETPLACE_PLUGIN_DIR: String = "marketplace"
 private const val MARKETPLACE_BOOTSTRAP_JAR: String = "marketplace-bootstrap.jar"
 
-private fun findMarketplaceBootDir(pluginDir: Path): Path =
-  pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot")
+private fun findMarketplaceBootDir(pluginDir: Path): Path = pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot")
 
 private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoot: Path): Boolean {
   if (Files.notExists(mpBoot)) {
@@ -32,7 +31,8 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
         ideVersion = parseVersion(reader.readLine())
       }
     }
-    catch (_: IOException) { }
+    catch (_: IOException) {
+    }
     if (ideVersion == null && OS.CURRENT == OS.macOS) {
       Files.newBufferedReader(homePath.resolve("Resources/build.txt")).use { reader ->
         ideVersion = parseVersion(reader.readLine())
@@ -47,12 +47,14 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
           untilVersion = parseVersion(reader.readLine())
         }
       }
-      catch (_: IOException) { }
+      catch (_: IOException) {
+      }
       @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
       return ideVersion!!.isCompatible(sinceVersion, untilVersion)
     }
   }
-  catch (_: Throwable) { }
+  catch (_: Throwable) {
+  }
   return true
 }
 
@@ -63,7 +65,7 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
  * Currently used in Rider.
  */
 internal fun initMarketplace() {
-  val distDir = Path.of(PathManager.getHomePath())
+  val distDir = PathManager.getHomeDir()
   val preinstalledPluginDir = distDir.resolve("plugins")
 
   var pluginDir = preinstalledPluginDir
@@ -73,7 +75,7 @@ internal fun initMarketplace() {
   var installMarketplace = Files.exists(mpBoot)
 
   if (!installMarketplace) {
-    pluginDir = Path.of(PathManager.getPluginsPath())
+    pluginDir = PathManager.getPluginsDir()
     marketPlaceBootDir = findMarketplaceBootDir(pluginDir)
     mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
     installMarketplace = isMarketplacePluginCompatible(homePath = distDir, pluginDir = pluginDir, mpBoot = mpBoot)
@@ -109,11 +111,14 @@ internal fun initMarketplace() {
 }
 
 private class SimpleVersion(private val major: Int, private val minor: Int) : Comparable<SimpleVersion> {
-  fun isCompatible(since: SimpleVersion?, until: SimpleVersion?): Boolean =
-    (since == null || this >= since) && (until == null || this <= until)  // assume compatible when no bounds are specified
+  fun isCompatible(since: SimpleVersion?, until: SimpleVersion?): Boolean {
+    // assume compatible when no bounds are specified
+    return (since == null || this >= since) && (until == null || this <= until)
+  }
 
-  override fun compareTo(other: SimpleVersion): Int =
-    if (major != other.major) major.compareTo(other.major) else minor.compareTo(other.minor)
+  override fun compareTo(other: SimpleVersion): Int {
+    return if (major != other.major) major.compareTo(other.major) else minor.compareTo(other.minor)
+  }
 
   override fun toString(): String = "${major}/${minor}"
 }
@@ -138,7 +143,8 @@ private fun parseVersion(rawText: String?): SimpleVersion? {
     }
     return SimpleVersion(major = text.toInt(), minor = 0)
   }
-  catch (_: NumberFormatException) { }
+  catch (_: NumberFormatException) {
+  }
   return null
 }
 
@@ -151,14 +157,17 @@ private fun parseMinor(text: String): Int {
     val dot = text.indexOf('.')
     return (if (dot >= 0) text.take(dot) else text).toInt()
   }
-  catch (_: NumberFormatException) { }
+  catch (_: NumberFormatException) {
+  }
   return 0
 }
 
 private class BytecodeTransformerAdapter(private val impl: BytecodeTransformer) : PathClassLoader.BytecodeTransformer {
-  override fun isApplicable(className: String, loader: ClassLoader): Boolean =
-    impl.isApplicable(className, loader, null)
+  override fun isApplicable(className: String, loader: ClassLoader): Boolean {
+    return impl.isApplicable(className, loader, null)
+  }
 
-  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray? =
-    impl.transform(loader, className, null, classBytes)
+  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray? {
+    return impl.transform(loader, className, null, classBytes)
+  }
 }
