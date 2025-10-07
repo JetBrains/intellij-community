@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 public final class JUnitExternalLibraryDescriptor extends ExternalLibraryDescriptor {
   public static final ExternalLibraryDescriptor JUNIT3 = new JUnitExternalLibraryDescriptor("junit", "junit", "3", "3.8.2", "3.0");
   public static final ExternalLibraryDescriptor JUNIT4 = new JUnitExternalLibraryDescriptor("junit", "junit", "4", "4.13.1", "4.0");
-  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter", "5", "5.13.4", "5.0.0");
-  public static final ExternalLibraryDescriptor JUNIT6 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter", "6", "6.0.0-RC2", "6.0.0-RC2");
+  public static final ExternalLibraryDescriptor JUNIT5 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter", "5", "5.14.0", "5.0.0");
+  public static final ExternalLibraryDescriptor JUNIT6 = new JUnitExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter", "6", "6.0.0", "6.0.0");
   private final String myVersion;
 
   private JUnitExternalLibraryDescriptor(@NotNull String groupId,

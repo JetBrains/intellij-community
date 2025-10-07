@@ -16,6 +16,8 @@ import one.util.streamex.StreamEx;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -187,5 +189,27 @@ public class JUnit6AcceptanceTest extends JUnit6CodeInsightTest {
 
     PsiClass customEngineAnnotationOnSuper = myFixture.addClass("class MyCustomClass extends MyTests{}");
     assertTrue(JUnitUtil.isTestClass(customEngineAnnotationOnSuper));
+  }
+
+  @Test
+  void junit6LibraryAdjustments() {
+    myFixture.configureByText("MyTest.java",
+                              "class MyTest {@org.junit.jupiter.api.<error descr=\"Cannot resolve symbol 'BeforeEach'\">Before<caret>Each</error> void method() {}}");
+    myFixture.testHighlighting(false, false, false);
+    final Set<String> frameworks = myFixture.getAllQuickFixes().stream()
+      .map(action -> action.getText())
+      .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
+    assertAll("Detected frameworks: " + frameworks,
+              () -> assertTrue(frameworks.contains("Add 'JUnit6' to classpath")));
+
+    myFixture.configureByText("MyTest.java",
+                              "class MyTest {@<error descr=\"Cannot resolve symbol 'DisplayName'\">DisplayName</error> void method() {}}");
+    myFixture.testHighlighting(false, false, false);
+
+    Set<String> displayNameFrameworks = myFixture.getAllQuickFixes().stream()
+      .map(action -> action.getText())
+      .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
+    assertAll("Detected frameworks: " + displayNameFrameworks,
+              () -> assertTrue(displayNameFrameworks.contains("Add 'JUnit6' to classpath")));
   }
 }
