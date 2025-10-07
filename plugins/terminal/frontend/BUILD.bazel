@@ -48,6 +48,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//platform/project/shared:project",
     "@lib//:pty4j",
+    "//platform/util/jdom",
   ]
 )
 ### auto-generated section `build intellij.terminal.frontend` end

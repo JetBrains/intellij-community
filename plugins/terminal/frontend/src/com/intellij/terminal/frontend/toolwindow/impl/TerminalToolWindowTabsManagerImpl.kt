@@ -340,6 +340,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       val toolWindowActions = ActionManager.getInstance().getAction("Terminal.ToolWindowActions") as? ActionGroup
       toolWindow.setAdditionalGearActions(toolWindowActions)
       ToolWindowContentUi.setAllowTabsReordering(toolWindow, true)
+      ToolWindowContentUi.setToolWindowInEditorSupport(toolWindow, TerminalInEditorSupport())
 
       if (toolWindow is ToolWindowEx) {
         installDirectoryDnD(toolWindow, manager.coroutineScope.asDisposable())
@@ -481,6 +482,6 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   companion object {
-    private val TAB_DETACHED_KEY = Key.create<Unit>("TerminalTabsManager.TabWasDetached")
+    val TAB_DETACHED_KEY = Key.create<Unit>("TerminalTabsManager.TabWasDetached")
   }
 }
