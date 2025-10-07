@@ -286,7 +286,7 @@ class JBCefOsrComponent extends JPanel {
     double oldDensity = myRenderHandler.getPixelDensity();
     double pixelDensity = JreHiDpiUtil.isJreHiDPIEnabled() ? JCefAppConfig.getDeviceScaleFactor(this) : 1.0;
     myScale = (JreHiDpiUtil.isJreHiDPIEnabled() ? 1.0 : JCefAppConfig.getDeviceScaleFactor(this)) *
-              UISettings.getInstance().getIdeScale();
+              UISettings.getInstance().getCurrentIdeScale();
     myRenderHandler.setScreenInfo(pixelDensity, myScale);
     if (oldScale != myScale || oldDensity != pixelDensity) {
       myBrowser.notifyScreenInfoChanged();
