@@ -23,7 +23,7 @@ class RedundantRunCatchingInspection : AbstractCallChainChecker() {
         qualifiedExpressionVisitor(fun(expression) {
             val callChainExpressions = CallChainExpressions.from(expression) ?: return
             val conversion = findQualifiedConversion(callChainExpressions, conversionGroups) { _, _, _, _ -> true } ?: return
-            val replacement = conversion.replacement
+            val replacement = conversion.replacementName
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
                 callChainExpressions.firstCalleeExpression.textRange.shiftRight(-expression.startOffset),
@@ -42,6 +42,6 @@ private val conversions: List<CallChainConversion> = listOf(
     CallChainConversion(
         FqName("kotlin.runCatching"), // FQNs are hardcoded instead of specifying their names via reflection because
         FqName("kotlin.getOrThrow"),  // referencing function which has generics isn't yet supported in Kotlin KT-12140
-        "run"
+        FqName("kotlin.run")
     )
 )

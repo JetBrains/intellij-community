@@ -22,7 +22,7 @@ class SimplifyCallChainFix(
     private val conversion: CallChainConversion,
     private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
 ) : KotlinModCommandQuickFix<KtQualifiedExpression>() {
-    private val shortenedText = conversion.replacement.substringAfterLast(".")
+    private val shortenedText = conversion.replacementName
 
     override fun getFamilyName(): String = KotlinBundle.message("simplify.call.chain.fix.text", shortenedText)
 
@@ -63,7 +63,7 @@ class SimplifyCallChainFix(
             lambdaExpression?.text
         ).joinToString(separator = ",")
 
-        val newCallText = conversion.replacement
+        val newCallText = conversion.replacementName
         val newQualifiedOrCallExpression = psiFactory.createExpression(
             "$receiverExpressionOrEmptyString$operationSign$newCallText($argumentsText)"
         )

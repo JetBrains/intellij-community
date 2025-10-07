@@ -56,7 +56,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     ): KotlinModCommandQuickFix<KtQualifiedExpression> = SimplifyCallChainFix(
       context,
       modifyArguments = { callExpression ->
-        if (context.replacement.startsWith(CallChainConversions.JOIN_TO)) {
+        if (context.replacementName.startsWith(CallChainConversions.JOIN_TO)) {
           val lastArgument = callExpression.valueArgumentList?.arguments?.singleOrNull()
           val argumentExpression = lastArgument?.getArgumentExpression()
           if (argumentExpression != null) {
@@ -150,7 +150,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     context(_: KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun isMapNotNullOnPrimitiveArrayConversion(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
-        if (conversion.replacement != CallChainConversions.MAP_NOT_NULL) return false
+        if (conversion.replacementName != CallChainConversions.MAP_NOT_NULL) return false
         val extensionReceiverType = firstCall.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.extensionReceiver?.type
             ?: return false
         return extensionReceiverType.isArrayOrPrimitiveArray && extensionReceiverType.symbol?.typeParameters.orEmpty().isEmpty()
@@ -166,7 +166,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
 
     context(_: KaSession)
     private fun isJoinToConversionWithNonMatchingFirstLambda(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
-        if (!conversion.replacement.startsWith(CallChainConversions.JOIN_TO)) return false
+        if (!conversion.replacementName.startsWith(CallChainConversions.JOIN_TO)) return false
         val lambdaArgSignature = firstCall.lastFunctionalArgumentSignatureOrNull() ?: return false
         val lambdaType = lambdaArgSignature.returnType as? KaFunctionType ?: return false
         return !lambdaType.returnType.isSubtypeOf(ClassId.topLevel(StandardNames.FqNames.charSequence.toSafe()))
@@ -179,8 +179,8 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
      */
     context(_: KaSession)
     private fun isMaxMinByConversionWithNullableFirstLambda(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
-        if (conversion.replacement !in listOf(CallChainConversions.MAX_BY, CallChainConversions.MIN_BY, CallChainConversions.MAX_BY_OR_NULL,
-                                              CallChainConversions.MIN_BY_OR_NULL)) return false
+        if (conversion.replacementName !in listOf(CallChainConversions.MAX_BY, CallChainConversions.MIN_BY, CallChainConversions.MAX_BY_OR_NULL,
+                                                  CallChainConversions.MIN_BY_OR_NULL)) return false
         val lastLambdaArgumentExpression = firstCall.lastLambdaArgumentExpressionOrNull() ?: return false
         return lastLambdaArgumentExpression.bodyExpression?.lastBlockStatementOrThis()?.expressionType?.isMarkedNullable == true
     }
@@ -189,7 +189,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     private fun isAssociateConversionWithWrongArgumentCount(conversion: CallChainConversion, secondCall: KaCallInfo): Boolean {
         if (conversion.firstName != CallChainConversions.MAP || conversion.secondName != CallChainConversions.TO_MAP) return false
         val argCount = secondCall.successfulFunctionCallOrNull()?.argumentMapping?.size ?: return false
-        return conversion.replacement == CallChainConversions.ASSOCIATE && argCount != 0 || conversion.replacement == CallChainConversions.ASSOCIATE_TO && argCount != 1
+        return conversion.replacementName == CallChainConversions.ASSOCIATE && argCount != 0 || conversion.replacementName == CallChainConversions.ASSOCIATE_TO && argCount != 1
     }
 
     context(_: KaSession)
@@ -203,7 +203,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
 
     context(_: KaSession)
     private fun isInapplicableSumOfConversion(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
-        if (conversion.firstName != CallChainConversions.MAP || conversion.secondName != CallChainConversions.SUM || conversion.replacement != CallChainConversions.SUM_OF) return false
+        if (conversion.firstName != CallChainConversions.MAP || conversion.secondName != CallChainConversions.SUM || conversion.replacementName != CallChainConversions.SUM_OF) return false
         val (functionalArgumentExpr, signature) = firstCall.lastFunctionalArgumentWithSignatureOrNull() ?: return false
         val lambdaReturnType = signature.returnType.lambdaReturnTypeOrNull() ?: return false
         if (!lambdaReturnType.isApplicableTypeForSumOf()) return true
