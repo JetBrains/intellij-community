@@ -24,7 +24,7 @@ class IntelliJFusEventRegister(private val baseEventGroup: EventLogGroup) : Logs
 
   override fun registerEvent(name: String, declarations: List<FeatureDeclaration<*>>): MLEventLogger {
     val objectDescription = ConverterObjectDescription(declarations)
-    val varargEventId = baseEventGroup.registerVarargEvent(name, null, *objectDescription.getFields())
+    val varargEventId = baseEventGroup.registerVarargEvent(name,  *objectDescription.getFields())
     return Logger(varargEventId, objectDescription)
   }
 }

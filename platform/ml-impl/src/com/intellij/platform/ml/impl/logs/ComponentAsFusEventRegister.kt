@@ -62,7 +62,7 @@ class ComponentAsFusEventRegister(private val baseEventGroup: IJEventLogGroup) :
 
   override fun registerComponent(name: String, eventFields: List<MLEventField<*>>): MLSessionComponentLogger {
     val objectDescription = ConverterObjectDescription(MLObjectDescription(eventFields))
-    val varargEventId = baseEventGroup.registerVarargEvent(name, null, *objectDescription.getFields())
+    val varargEventId = baseEventGroup.registerVarargEvent(name, *objectDescription.getFields())
     return Logger(varargEventId, objectDescription)
   }
 }

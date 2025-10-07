@@ -35,10 +35,11 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
                                     // and not increase the versions in all StatisticsEventLoggerProvider
                                     // in case of any changes in the groups
                                     eventLoggerProvider.version + 2,
-                                    eventLoggerProvider.recorderId)
+                                    eventLoggerProvider.recorderId,
+                                    "Events related to the ${eventLoggerProvider.recorderId} statistics, such as logs sent, metadata updated, etc.")
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val metadataLoadedEvent = GROUP.registerEvent("metadata.loaded", EventFields.Version, METADATA_LOADED_DESCRIPTION)
+  private val metadataLoadedEvent = GROUP.registerEvent("metadata.loaded",EventFields.Version, METADATA_LOADED_DESCRIPTION)
   private val metadataUpdatedEvent = GROUP.registerEvent("metadata.updated", EventFields.Version, METADATA_UPDATED_DESCRIPTION)
   private val metadataLoadFailedEvent = GROUP.registerEvent("metadata.load.failed",
                                                             stageMetadataLoadFailedField,
@@ -79,10 +80,10 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
                                                                    errorTSLoadingConfigFailedField)
 
   private val sentFilesCountCalculated: EventId3<Int, Int, Int> = GROUP.registerEvent("sent.logs.files.calculated",
-                                                                                 totalFilesCount,
-                                                                                 maxSentFilesCount,
-                                                                                 sentFilesCount,
-                                                                                 "Calculate the count of logs files to send"
+                                                                                      totalFilesCount,
+                                                                                      maxSentFilesCount,
+                                                                                      sentFilesCount,
+                                                                                      "Calculate the count of logs files to send"
   )
 
   private val dictionariesLoadedEvent = GROUP.registerEvent("dictionaries.loaded", DICTIONARIES_LOADED_DESCRIPTION)

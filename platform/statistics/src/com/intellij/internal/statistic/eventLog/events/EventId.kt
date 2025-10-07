@@ -6,11 +6,34 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
+import com.intellij.internal.statistic.eventLog.events.scheme.RegisteredLogDescriptionsProcessor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 
-abstract class BaseEventId(val eventId: String, val recorder: String, val description: String?) {
+/**
+ * Represents a base class for defining event IDs that are part of logging or analytics systems.
+ *
+ * @constructor Initializes the BaseEventId instance with the provided group ID, event ID, recorder, and optional description.
+ * Throws an [IllegalArgumentException] if the provided description is an empty string.
+ *
+ * @param groupId The ID of the event group to which this event belongs.
+ * @param eventId The unique identifier for the event.
+ * @param recorder The identifier for the recorder used to log the event.
+ * @param description The unique identifier for the event.
+ * The description is not an empty string.
+ * The description is not null for new events.
+ * The description is registered at event initialization using the [RegisteredLogDescriptionsProcessor].
+ * There is no description in the memory if [RegisteredLogDescriptionsProcessor.isRegistered] is false.
+ * [RegisteredLogDescriptionsProcessor.isRegistered] is true just for [com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter] and tests
+ */
+abstract class BaseEventId(groupId: String, val eventId: String, val recorder: String, description: String?) {
+  init {
+    if (description != null && description.isEmpty()) {
+      throw IllegalArgumentException("Recorder $recorder, event ID $eventId: the event description can't be empty string.")
+    }
+    RegisteredLogDescriptionsProcessor.registerEventDescription(groupId, eventId, description)
+  }
 
   private  fun getLoggers(): List<StatisticsEventLogger> = StatisticsEventLogProviderUtil.getEventLogProvidersExt(recorder).map { it.logger }
   internal fun processLoggers(log: (StatisticsEventLogger) -> Unit) {
@@ -23,7 +46,6 @@ abstract class BaseEventId(val eventId: String, val recorder: String, val descri
         errors.add(e)
       }
     }
-
     if (errors.size == 1) throw errors.first()
     else if (errors.isNotEmpty()) {
       val throwable = Throwable("Multiple errors occurred:")
@@ -50,7 +72,7 @@ class EventId(
   private val group: EventLogGroup,
   @NonNls @EventIdName eventId: String,
   @NonNls description: String?
-) : BaseEventId(eventId, group.recorder, description) {
+) : BaseEventId(group.id, eventId, group.recorder, description) {
 
   fun log() {
     if (group.groupData.isEmpty()) {
@@ -90,7 +112,7 @@ class EventId1<in T>(
   @NonNls @EventIdName eventId: String,
   @NonNls description: String?,
   private val field1: EventField<T>,
-) : BaseEventId(eventId, group.recorder, description) {
+) : BaseEventId(group.id, eventId, group.recorder, description) {
 
   fun log(value1: T) {
     processLoggers { it.logAsync(group, eventId, buildUsageData(value1).build(), false) }
@@ -124,7 +146,7 @@ class EventId2<in T1, in T2>(
   @NonNls description: String?,
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
-) : BaseEventId(eventId, group.recorder, description) {
+) : BaseEventId(group.id, eventId, group.recorder, description) {
 
   fun log(value1: T1, value2: T2) {
     processLoggers { it.logAsync(group, eventId, buildUsageData(value1, value2).build(), false) }
@@ -160,7 +182,7 @@ class EventId3<in T1, in T2, in T3>(
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
   private val field3: EventField<T3>,
-) : BaseEventId(eventId, group.recorder, description) {
+) : BaseEventId(group.id, eventId, group.recorder, description) {
 
   fun log(value1: T1, value2: T2, value3: T3) {
     processLoggers { it.logAsync(group, eventId, buildUsageData(value1, value2, value3).build(), false) }
@@ -203,7 +225,7 @@ class VarargEventId internal constructor(
   @NonNls @EventIdName eventId: String,
   @NonNls description: String?,
   vararg fields: EventField<*>,
-) : BaseEventId(eventId, group.recorder, description) {
+) : BaseEventId(group.id, eventId, group.recorder, description) {
 
   private val fields = fields.toMutableList()
 

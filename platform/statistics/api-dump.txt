@@ -1,3 +1,6 @@
+c:com.intellij.internal.statistic.eventLog.EventLogGroup
+- f:getGroupData():java.util.List
+- f:registerEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField,java.lang.String,I,java.lang.Object):com.intellij.internal.statistic.eventLog.events.EventId1
 com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 - a:onLogEvent(com.jetbrains.fus.reporting.model.lion3.LogEvent,java.lang.String,java.util.Map):V
 com.intellij.internal.statistic.eventLog.StatisticsEventLogger
