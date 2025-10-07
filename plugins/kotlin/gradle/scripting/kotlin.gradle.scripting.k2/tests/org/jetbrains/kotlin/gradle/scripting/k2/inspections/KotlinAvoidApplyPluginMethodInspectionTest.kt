@@ -229,7 +229,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                     dependencies {
                         classpath("org.real.plugin:org.real.plugin.gradle.plugin:1.0")
                     }
-                    def a = 5
+                    val a = 5
                 }
                 <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
                 """.trimIndent()
@@ -244,7 +244,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                     dependencies {
                         classpath("org.real.plugin:org.real.plugin.gradle.plugin:1.0")
                     }
-                    def a = 5
+                    val a = 5
                 }
                 apply(plugin = "org.real.plugin")<caret>
                 """.trimIndent(),
@@ -258,7 +258,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                         gradlePluginPortal()
                     }
                 
-                    def a = 5
+                    val a = 5
                 }
                 
                 """.trimIndent(),
