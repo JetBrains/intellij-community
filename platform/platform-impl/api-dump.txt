@@ -1605,5 +1605,9 @@ com.intellij.util.ui.table.TableModelEditor$DialogItemEditor
 - a:edit(java.lang.Object,com.intellij.util.Function,Z):V
 - isEditable(java.lang.Object):Z
 - isUseDialogToAdd():Z
+f:com.intellij.workspaceModel.ide.impl.RemoveTransientJpsEntities
+- <init>():V
+- beforeSerialization(com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.ImmutableEntityStorage
+- beforeUnloadedSerialization(com.intellij.platform.workspace.storage.ImmutableEntityStorage):com.intellij.platform.workspace.storage.ImmutableEntityStorage
 com.intellij.xml.breadcrumbs.BreadcrumbListener
 - a:breadcrumbsChanged(java.lang.Iterable):V

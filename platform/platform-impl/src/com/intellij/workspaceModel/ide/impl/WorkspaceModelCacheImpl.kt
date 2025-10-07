@@ -4,17 +4,16 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.WorkspaceModelCache
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.assertConsistency
@@ -118,8 +117,8 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   private fun doCacheSaving(): Unit = saveWorkspaceModelCachesTimeMs.addMeasuredTime {
     isCacheSaved.set(true)
     val workspaceModel = WorkspaceModel.getInstance(project)
-    val storage = workspaceModel.currentSnapshot
-    val unloadedStorage = (workspaceModel as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities
+    val storage = prepareStorage(workspaceModel)
+    val unloadedStorage = prepareUnloadedStorage(workspaceModel)
     if (!storage.isConsistent || !unloadedStorage.isConsistent) {
       invalidateProjectCache()
     }
@@ -130,12 +129,12 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
       // Make sure we don't save the cache that is broken
       val assertConsistencyDuration = measureTime { storage.assertConsistency() }
 
-      val (timeMs, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
+      val (timeMs, size) = cacheSerializer.saveCacheToFile(storage, cacheFile)
       WorkspaceModelFusLogger.logCacheSave(timeMs + assertConsistencyDuration.inWholeMilliseconds, size ?: -1)
       if (!(unloadedStorage as EntityStorageInstrumentation).isEmpty()) {
         LOG.debug("Saving project model cache to $unloadedEntitiesCacheFile")
         unloadedStorage.assertConsistency()
-        cacheSerializer.saveCacheToFile(unloadedStorage, unloadedEntitiesCacheFile, userPreProcessor = true)
+        cacheSerializer.saveCacheToFile(unloadedStorage, unloadedEntitiesCacheFile)
       }
       else {
         Files.deleteIfExists(unloadedEntitiesCacheFile)
@@ -145,6 +144,22 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
       Files.deleteIfExists(cacheFile)
       Files.deleteIfExists(unloadedEntitiesCacheFile)
     }
+  }
+
+  private fun prepareStorage(workspaceModel: WorkspaceModel): ImmutableEntityStorage {
+    var current = workspaceModel.currentSnapshot
+    SERIALIZER_HOOKS.forEachExtensionSafe {
+      current = it.beforeSerialization(current)
+    }
+    return current
+  }
+
+  private fun prepareUnloadedStorage(workspaceModel: WorkspaceModel): ImmutableEntityStorage {
+    var current = (workspaceModel as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities
+    SERIALIZER_HOOKS.forEachExtensionSafe {
+      current = it.beforeUnloadedSerialization(current)
+    }
+    return current
   }
 
   @TestOnly
@@ -172,6 +187,8 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   }
 
   companion object {
+    private val SERIALIZER_HOOKS = ExtensionPointName<WorkspaceModelSerializerHook>("com.intellij.workspaceModel.serializerHook")
+
     private val LOG = logger<WorkspaceModelCacheImpl>()
     internal const val DATA_DIR_NAME: String = "project-model-cache"
     private var forceEnableCaching = false

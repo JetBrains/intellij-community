@@ -58,6 +58,7 @@
                         serviceImplementation="com.intellij.openapi.roots.impl.AdditionalLibraryRootsListenerHelperImpl"/>
 
     <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
+    <workspaceModel.serializerHook implementation="com.intellij.workspaceModel.ide.impl.RemoveTransientJpsEntities"/>
 
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
