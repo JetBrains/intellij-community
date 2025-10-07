@@ -310,6 +310,18 @@ class JavaJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
       }
     """.trimIndent())
   }
+  
+  fun `test non preview level suggested`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_11)
+    // Expect 15+, not 13+, as it was in preview in JDK 13
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      class X {
+        void test() {
+          "xyz".<error descr="Usage of API documented as @since 15+">translateEscapes</error>();
+        }
+      }
+    """)
+  }
 
   fun `test language level 24 with JDK 25`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_24)
