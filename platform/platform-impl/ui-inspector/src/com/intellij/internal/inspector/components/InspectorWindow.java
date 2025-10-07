@@ -490,30 +490,42 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private static @NotNull Rectangle findBounds(@NotNull Rectangle highlighterBounds, @NotNull JComponent glassPane, @NotNull Dimension size) {
     var glassPaneSize = glassPane.getSize();
     var gap = JBUI.scale(10);
-    var hasSpaceBelow = glassPaneSize.height - (highlighterBounds.y + highlighterBounds.height) >= size.height + gap;
-    var hasSpaceAbove = highlighterBounds.y >= size.height;
-    var hasSpaceRight = glassPaneSize.width - (highlighterBounds.x + highlighterBounds.width) >= size.width + gap;
-    var result = new Rectangle();
-    result.width = size.width;
-    result.height = size.height;
-    if (hasSpaceBelow) {
-      result.x = highlighterBounds.x + (highlighterBounds.width - size.width) / 2;
-      result.y = highlighterBounds.y + highlighterBounds.height + gap;
+    var possiblePositions = new ArrayList<Point>();
+    var fitBounds = new ArrayList<Rectangle>();
+    possiblePositions.add(new Point(
+      highlighterBounds.x + (highlighterBounds.width - size.width) / 2,
+      highlighterBounds.y + highlighterBounds.height + gap
+    ));
+    possiblePositions.add(new Point(
+      highlighterBounds.x + (highlighterBounds.width - size.width) / 2,
+      highlighterBounds.y - size.height - gap
+    ));
+    possiblePositions.add(new Point(
+      highlighterBounds.x + highlighterBounds.width + gap,
+      highlighterBounds.y + (highlighterBounds.height - size.height) / 2
+    ));
+    possiblePositions.add(new Point(
+      highlighterBounds.x - size.width - gap,
+      highlighterBounds.y + (highlighterBounds.height - size.height) / 2
+    ));
+    for (Point position : possiblePositions) {
+      var possibleBounds = new Rectangle(position, size);
+      fitToGlassPane(possibleBounds, glassPaneSize);
+      fitBounds.add(possibleBounds);
+      if (possibleBounds.getLocation().equals(position)) {
+        return possibleBounds;
+      }
     }
-    else if (hasSpaceAbove) {
-      result.x = highlighterBounds.x + (highlighterBounds.width - size.width) / 2;
-      result.y = highlighterBounds.y - size.height - gap;
+    for (int i = 0; i < possiblePositions.size(); i++) {
+      var original = possiblePositions.get(i);
+      var fit = fitBounds.get(i).getLocation();
+      // If only one coordinate was moved,
+      // it means that it doesn't intersect with the highlighted component, and that's a good thing.
+      if (original.x == fit.x || original.y == fit.y) {
+        return fitBounds.get(i);
+      }
     }
-    else if (hasSpaceRight) {
-      result.x = highlighterBounds.x + highlighterBounds.width + gap;
-      result.y = highlighterBounds.y + (highlighterBounds.height - size.height) / 2;
-    }
-    else {
-      result.x = highlighterBounds.x - highlighterBounds.width - gap;
-      result.y = highlighterBounds.y + (highlighterBounds.height - size.height) / 2;
-    }
-    fitToGlassPane(result, glassPaneSize);
-    return result;
+    return fitBounds.getFirst();
   }
 
   private static void fitToGlassPane(@NotNull Rectangle result, @NotNull Dimension glassPaneSize) {
