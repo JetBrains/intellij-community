@@ -5,12 +5,13 @@ import com.intellij.openapi.components.reloadApplicationState
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.LightPlatformTestCase
 import org.junit.Assert
+import kotlin.io.path.createTempDirectory
 
 class JdkDownloaderStoreTest : LightPlatformTestCase() {
   fun testState() {
     val item1 = jdkItemForTest("urk-1", JdkPackageType.ZIP, 123, "sha-1")
     val item2 = jdkItemForTest("urk-2", JdkPackageType.ZIP, 432, "sha-2")
-    val path1 = createTempDir("path-1").toPath()
+    val path1 = createTempDirectory("path-1")
     service.registerInstall(item1, path1)
 
     Assert.assertEquals(listOf(path1), service.findInstallations(item1).toList())

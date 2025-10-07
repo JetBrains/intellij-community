@@ -22,8 +22,9 @@ import com.jetbrains.python.testing.PyTrialTestFactory
 import com.jetbrains.python.testing.PythonTestConfigurationType
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
 import java.util.function.Function
+import kotlin.io.path.createTempDirectory
+import kotlin.io.path.pathString
 
 // Twisted trial test case
 @EnvTestTagsRequired(tags = ["twisted"])
@@ -56,6 +57,6 @@ class PyTrialTestProcessRunner(scriptName: String,
   PyTrialTestFactory(PythonTestConfigurationType.getInstance()), PyTrialTestConfiguration::class.java, scriptName, timesToRerunFailedTests) {
   override fun configurationCreatedAndWillLaunch(configuration: PyTrialTestConfiguration) {
     super.configurationCreatedAndWillLaunch(configuration)
-    configuration.additionalArguments = "--temp-directory=" + File(createTempDir(), "trial").path
+    configuration.additionalArguments = "--temp-directory=" + createTempDirectory().resolve("trial").pathString
   }
 }

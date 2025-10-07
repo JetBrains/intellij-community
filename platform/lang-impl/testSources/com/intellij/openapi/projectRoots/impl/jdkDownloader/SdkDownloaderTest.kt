@@ -23,11 +23,12 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
+import kotlin.io.path.createTempDirectory
 import kotlin.io.path.invariantSeparatorsPathString
 
 class SdkDownloaderTest : LightPlatformTestCase() {
   private val successDownloadTask = object : SdkDownloadTask {
-    val home = createTempDir("planned-home").toPath().invariantSeparatorsPathString
+    val home = createTempDirectory("planned-home").invariantSeparatorsPathString
     override fun getPlannedHomeDir() = home
     override fun getSuggestedSdkName() = "suggested name"
     override fun getPlannedVersion() = "planned version"
