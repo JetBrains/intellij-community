@@ -47,6 +47,7 @@ jvm_library(
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//plugins/grazie/src:core",
+    "//plugins/grazie/src/test:grazie-tests_test_lib",
     "//platform/vcs-api:vcs",
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",

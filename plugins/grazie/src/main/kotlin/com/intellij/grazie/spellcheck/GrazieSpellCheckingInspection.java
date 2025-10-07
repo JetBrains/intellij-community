@@ -12,6 +12,7 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -36,8 +37,6 @@ import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import com.intellij.openapi.project.DumbService;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

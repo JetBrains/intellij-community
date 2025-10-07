@@ -29,7 +29,7 @@ class MavenSpellcheckerTest : MavenDomTestCase() {
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <description><TYPO>xxxxx</TYPO></description>
+                       <description><TYPO>descriptioon</TYPO></description>
                        <dependencies>
                          <dependency>
                            <groupId>xxxxx</groupId>

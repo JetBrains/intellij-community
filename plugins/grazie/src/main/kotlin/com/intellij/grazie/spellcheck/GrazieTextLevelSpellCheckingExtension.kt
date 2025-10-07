@@ -12,9 +12,9 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.sortByPriority
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.grazie.text.ProblemFilter
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
-import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -53,9 +53,11 @@ object GrazieTextLevelSpellCheckingExtension {
 
     val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, DOMAINS), session.priorityRange)
     if (texts.isEmpty()) return SpellCheckingResult.Ignored
+    val filteredTexts = texts.filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
+    if (filteredTexts.isEmpty()) return SpellCheckingResult.Checked
 
     val textSpeller = getTextSpeller(element.project) ?: return SpellCheckingResult.Ignored
-    texts.asSequence()
+    filteredTexts.asSequence()
       .map { it to findTypos(it, session, textSpeller) }
       .flatMap { mapTypo(it.first, it.second, element) }
       .filterNot { it.word.length < MINIMAL_TYPO_LENGTH }

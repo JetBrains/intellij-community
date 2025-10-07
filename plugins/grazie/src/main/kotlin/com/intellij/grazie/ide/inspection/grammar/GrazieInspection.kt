@@ -57,8 +57,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
 
         val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
         if (skipCheckingTooLargeTexts(texts)) return
+        val filteredTexts = texts.filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
 
-        sortByPriority(texts, session.priorityRange)
+        sortByPriority(filteredTexts, session.priorityRange)
           .map { CheckerRunner(it) }
           .map { it to it.run() }
           .forEach { (runner, problems) ->

@@ -62,6 +62,7 @@ jvm_library(
     "//jps/model-impl",
     "//plugins/maven/jps-plugin:jps",
     "//spellchecker",
+    "//plugins/grazie/src:core",
     "//platform/vcs-api:vcs",
     "//plugins/properties/properties-psi-api:psi",
     "@lib//:maven-plexus-archiver",

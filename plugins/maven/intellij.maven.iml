@@ -50,6 +50,7 @@
     <orderEntry type="module" module-name="intellij.maven.jps" />
     <orderEntry type="module" module-name="intellij.maven.artifactResolver.m31" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.grazie.core" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="module-library">

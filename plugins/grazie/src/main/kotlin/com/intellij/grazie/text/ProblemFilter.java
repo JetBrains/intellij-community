@@ -17,6 +17,13 @@ public abstract class ProblemFilter {
     return EP.allForLanguageOrAny(problem.getText().getCommonParent().getLanguage()).stream().filter(f -> f.shouldIgnore(problem));
   }
 
-  /** @return whether the given problem should not be reported by grammar checking highlighting */
+  public static Stream<ProblemFilter> allIgnoringFilters(TextContent content) {
+    return EP.allForLanguageOrAny(content.getCommonParent().getLanguage()).stream().filter(f -> f.shouldIgnore(content));
+  }
+
+  /** @return whether the given problem should not be reported by proofreading checking highlighting */
   public abstract boolean shouldIgnore(@NotNull TextProblem problem);
+
+  /** @return whether the given content should be skipped entirely by proofreading (spell-, grammar- and style-checking) */
+  public boolean shouldIgnore(@NotNull TextContent content) { return false; }
 }
