@@ -293,7 +293,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     if (node == null) return;
     Component c = node.getComponent();
     if (c == null) return;
-    if (ignoreOrphanComponents && c.getParent() == null) return;
+    if (ignoreOrphanComponents && UIUtil.getRootPane(c) == null) return;
 
     Component selected = ContainerUtil.getFirstItem(myComponents);
     myHierarchyTree.resetModel(c, false);
