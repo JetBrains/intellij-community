@@ -28,6 +28,7 @@ import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
@@ -109,8 +110,10 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  @RequiresEdt
   public void dropPsiCaches() {
+    if (!(EDT.isCurrentThreadEdt() || ApplicationManager.getApplication().isWriteAccessAllowed())) {
+      LOG.error("PsiManager#dropPsiCaches must be called in EDT or in write action");
+    }
     dropResolveCaches();
     ApplicationManager.getApplication().runWriteAction(myFileManager::firePropertyChangedForUnloadedPsi);
   }

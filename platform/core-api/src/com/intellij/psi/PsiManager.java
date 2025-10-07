@@ -9,7 +9,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -184,8 +183,9 @@ public abstract class PsiManager extends UserDataHolderBase {
   /**
    * Clears all {@link com.intellij.psi.util.CachedValue} depending on {@link PsiModificationTracker#MODIFICATION_COUNT} and resolve caches.
    * Can be used to reduce memory consumption in batch operations sequentially processing multiple files.
+   * <p>
+   * This function is allowed to be invoked either on EDT (legacy contract) or in background write action.
    */
-  @RequiresEdt
   public abstract void dropPsiCaches();
 
   /**
