@@ -5,7 +5,11 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.modcommand.*
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -18,12 +22,15 @@ import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinFirConstantExpressionEvaluator
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
+import org.jetbrains.plugins.gradle.service.resolve.GradleVersionCatalogPsiResolverUtil.getResolvedDependency
 import org.jetbrains.plugins.gradle.util.isInVersionCatalogAccessor
 
 class KotlinAvoidDuplicateDependenciesInspectionVisitor(
@@ -59,8 +66,8 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
         }.filter { it.key != null && it.value.size > 1 }.map { mapEntry -> mapEntry.key!! to mapEntry.value.map { it.first } }
 
         duplicateGroups.forEach { (key, dependencies) ->
-            if (isOnTheFly) reportProblemInOnTheFlyMode(key, dependencies)
-            else reportProblemInBatchMode(key, dependencies)
+            if (isOnTheFly) reportProblemInOnTheFlyMode(key.toString(), dependencies)
+            else reportProblemInBatchMode(key.toString(), dependencies)
         }
     }
 
@@ -68,7 +75,7 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
         dependency: KtCallExpression,
         type: DependencyType,
         evaluator: KotlinFirConstantExpressionEvaluator
-    ): String? {
+    ): DependencyKey? {
         return when (type) {
             DependencyType.SINGLE_ARGUMENT -> extractSingleArgumentKey(dependency, evaluator)
             DependencyType.NAMED_ARGUMENTS -> extractNamedArgumentsKey(dependency, evaluator)
@@ -76,32 +83,33 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
         }
     }
 
-    private fun extractSingleArgumentKey(dependency: KtCallExpression, evaluator: KotlinFirConstantExpressionEvaluator): String? {
+    private fun extractSingleArgumentKey(dependency: KtCallExpression, evaluator: KotlinFirConstantExpressionEvaluator): DependencyKey? {
         val argumentExpression = dependency.valueArguments.firstOrNull()?.getArgumentExpression() ?: return null
 
         val stringArgument = evaluator.computeConstantExpression(argumentExpression, false) as? String
         if (stringArgument != null) {
-            return stringArgument
+            return DependencyKey(stringArgument, 0)
         }
 
         if (argumentExpression is KtCallExpression && argumentExpression.calleeExpression?.text == "kotlin") {
             val kotlinArgument = argumentExpression.valueArguments.firstOrNull()?.getArgumentExpression() ?: return null
             return if (evaluator.computeConstantExpression(kotlinArgument, false) is String) {
-                argumentExpression.text
+                DependencyKey(argumentExpression.text, 0)
             } else null
         }
 
         if (argumentExpression is KtDotQualifiedExpression) {
             val resolved = argumentExpression.selectorExpression?.mainReference?.resolve() as? PsiMethod ?: return null
             return if (isInVersionCatalogAccessor(resolved)) {
-                argumentExpression.text
+                val dependency = getResolvedDependency(resolved, argumentExpression) ?: return null
+                DependencyKey(dependency, 0)
             } else null
         }
 
         return null
     }
 
-    private fun extractNamedArgumentsKey(dependency: KtCallExpression, evaluator: KotlinFirConstantExpressionEvaluator): String? {
+    private fun extractNamedArgumentsKey(dependency: KtCallExpression, evaluator: KotlinFirConstantExpressionEvaluator): DependencyKey? {
         val argList = dependency.valueArgumentList ?: return null
 
         val group = findNamedOrPositionalArgument(argList, "group", 0)
@@ -112,10 +120,27 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
             ?.let { evaluator.computeConstantExpression(it, false) as? String }
             ?: return null
 
-        val version = findNamedOrPositionalArgument(argList, "version", 2)
-            ?.let { evaluator.computeConstantExpression(it, false) as? String }
+        val versionArgument = findNamedOrPositionalArgument(argList, "version", 2)
+            ?: return DependencyKey("$group:$name", 0)
 
-        return if (version != null) "$group:$name:$version" else "$group:$name"
+        val versionString = evaluator.computeConstantExpression(versionArgument, false) as? String
+        if (versionString != null) return DependencyKey("$group:$name:$versionString", 0)
+
+        // check if the version argument is a constant variable
+        // if so, put its psi element's hash as the hidden value of the key
+        analyze(versionArgument) {
+            val resolvedExpression = versionArgument.resolveExpression()
+            val hash =
+                if (resolvedExpression is KaVariableSymbol && resolvedExpression.isVal) resolvedExpression.psi.hashCode()
+                else 0
+            return DependencyKey("$group:$name", hash)
+        }
+    }
+
+    private data class DependencyKey(val main: String, val hidden: Int) {
+        override fun toString(): String {
+            return main
+        }
     }
 
     /**
