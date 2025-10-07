@@ -60,6 +60,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.impl.ActionButtonWithText.SHORTCUT_SHOULD_SHOWN;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER;
 
@@ -463,8 +465,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     JBColor color = new JBColor(JBColor.GREEN, JBColor.RED);
     if (bounds.width == 0 || bounds.height == 0) {
-      bounds.width = Math.max(bounds.width, 1);
-      bounds.height = Math.max(bounds.height, 1);
+      bounds.width = max(bounds.width, 1);
+      bounds.height = max(bounds.height, 1);
       color = JBColor.BLUE;
     }
 
@@ -510,7 +512,13 @@ public final class InspectorWindow extends JDialog implements Disposable {
       result.x = highlighterBounds.x - highlighterBounds.width - gap;
       result.y = highlighterBounds.y + (highlighterBounds.height - size.height) / 2;
     }
+    fitToGlassPane(result, glassPaneSize);
     return result;
+  }
+
+  private static void fitToGlassPane(@NotNull Rectangle result, @NotNull Dimension glassPaneSize) {
+    result.x = min(max(result.x, 0), glassPaneSize.width - result.width);
+    result.y = min(max(result.y, 0), glassPaneSize.height - result.height);
   }
 
   private static @Nullable JComponent getGlassPane(@NotNull Component component) {
