@@ -76,12 +76,20 @@ public interface PersistentFSRecordsStorage extends IPersistentFSRecordsStorage,
   long getTimestamp() throws IOException;
 
   /**
-   * @return true if storage was closed properly (i.e. by {@link #close()} in a last session, or false if last session was
-   * finished without calling {@link #close()} -- storage content may be inconsistent or corrupted.
-   * The property describes events in a _previous_ session, so it is immutable during current session: changes to storage
-   * doesn't affect this property's value
+   * @return true if storage was closed properly (i.e., by {@link #close()}) <b>in a last session</b>, or false if last session
+   * was finished without calling {@link #close()} -- storage content may be inconsistent or corrupted.
+   * The property describes events in a _previous_ session, so it is immutable during the current session: changes to storage
+   * don't affect this property's value, but the value will be reset during the next IDE restart.
    */
   boolean wasClosedProperly() throws IOException;
+
+  /**
+   * @return true if storage was _always_ closed properly (i.e., by {@link #close()}) in its lifetime, or false if
+   * _some_ VFS session, maybe not the last one, wasn't properly closed.
+   */
+  default boolean wasAlwaysClosedProperly() throws IOException {
+    return !getFlag(PersistentFSHeaders.Flags.FLAGS_WAS_NOT_PROPERLY_CLOSED_ONCE);
+  }
 
   int getErrorsAccumulated() throws IOException;
 

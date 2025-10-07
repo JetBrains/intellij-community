@@ -151,6 +151,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   private int cachedMaxAllocatedId;
 
   private final boolean wasClosedProperly;
+  private final boolean wasAlwaysClosedProperly;
 
   private volatile int owningProcessId = 0;
 
@@ -174,6 +175,15 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
     int ownerProcessId = getIntHeaderField(FileHeader.OWNER_PROCESS_ID_OFFSET);
     wasClosedProperly = (ownerProcessId == NULL_OWNER_PID);
+
+    if (!wasClosedProperly) {
+      //mark VFS as 'forever suspicious' (i.e. sticky property):
+      updateFlags(/*flagsToAdd: */Flags.FLAGS_WAS_NOT_PROPERLY_CLOSED_ONCE, /*flagsToRemove: */ 0);
+      wasAlwaysClosedProperly = false;
+    }
+    else{
+      wasAlwaysClosedProperly = !getFlag(Flags.FLAGS_WAS_NOT_PROPERLY_CLOSED_ONCE);
+    }
 
 
     //MAYBE RC: We may try to 'fix' this error, i.e. invalidate all the fileIds that are found to be allocated beyond
@@ -597,6 +607,10 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     return wasClosedProperly;
   }
 
+  @Override
+  public boolean wasAlwaysClosedProperly() {
+    return wasAlwaysClosedProperly;
+  }
 
   /**
    * Tries to acquire an exclusive ownership over the storage, for the process identified by acquiringProcessId.
@@ -704,7 +718,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public int getFlags() throws IOException {
+  public int getFlags() {
     return getIntHeaderField(FileHeader.FLAGS_OFFSET);
   }
 
