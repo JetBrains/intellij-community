@@ -152,7 +152,12 @@ public final class DivideByZeroInspection extends BaseInspection {
       if (ranges.size() < 4 &&
           ContainerUtil.exists(ranges, t ->
             t.getConstantValue() != null && t.getConstantValue() == 0L ||
-            t.max() - t.min() < 2 && t.contains(0L))) {
+            t.max() - t.min() < 2 && t.contains(0L)) &&
+          //some heuristic that doesn't have infinite boundaries
+          !ContainerUtil.or(ranges, t ->
+            t.max() - t.min() > Integer.MAX_VALUE / 100 ||
+            t.contains(Integer.MAX_VALUE) ||
+            t.contains(Integer.MIN_VALUE))) {
         return ThreeState.UNSURE;
       }
     }
