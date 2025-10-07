@@ -441,12 +441,15 @@ public final class InspectorWindow extends JDialog implements Disposable {
     if (glassPane == null) return;
 
     var highlightComponent = createHighlightComponent(component, bounds, glassPane);
+    var dimensionComponent = createDimensionComponent(component, highlightComponent.getBounds(), glassPane);
 
     glassPane.add(highlightComponent);
+    glassPane.add(dimensionComponent);
     glassPane.revalidate();
     glassPane.repaint();
 
     ContainerUtil.addIfNotNull(myHighlightComponents, highlightComponent);
+    ContainerUtil.addIfNotNull(myHighlightComponents, dimensionComponent);
   }
 
   private static @NotNull HighlightComponent createHighlightComponent(@NotNull Component component, @Nullable Rectangle bounds, JComponent glassPane) {
@@ -469,6 +472,45 @@ public final class InspectorWindow extends JDialog implements Disposable {
     HighlightComponent highlightComponent = new HighlightComponent(color, insets);
     highlightComponent.setBounds(bounds);
     return highlightComponent;
+  }
+
+  private static @NotNull JComponent createDimensionComponent(
+    @NotNull Component component,
+    @NotNull Rectangle highlighterBounds,
+    @NotNull JComponent glassPane
+  ) {
+    var dimensionsComponent = new DimensionsComponent(component);
+    dimensionsComponent.setForeground(new JPanel().getForeground());
+    dimensionsComponent.setBounds(findBounds(highlighterBounds, glassPane, dimensionsComponent.getPreferredSize()));
+    return dimensionsComponent;
+  }
+
+  private static @NotNull Rectangle findBounds(@NotNull Rectangle highlighterBounds, @NotNull JComponent glassPane, @NotNull Dimension size) {
+    var glassPaneSize = glassPane.getSize();
+    var gap = JBUI.scale(10);
+    var hasSpaceBelow = glassPaneSize.height - (highlighterBounds.y + highlighterBounds.height) >= size.height + gap;
+    var hasSpaceAbove = highlighterBounds.y >= size.height;
+    var hasSpaceRight = glassPaneSize.width - (highlighterBounds.x + highlighterBounds.width) >= size.width + gap;
+    var result = new Rectangle();
+    result.width = size.width;
+    result.height = size.height;
+    if (hasSpaceBelow) {
+      result.x = highlighterBounds.x + (highlighterBounds.width - size.width) / 2;
+      result.y = highlighterBounds.y + highlighterBounds.height + gap;
+    }
+    else if (hasSpaceAbove) {
+      result.x = highlighterBounds.x + (highlighterBounds.width - size.width) / 2;
+      result.y = highlighterBounds.y - size.height - gap;
+    }
+    else if (hasSpaceRight) {
+      result.x = highlighterBounds.x + highlighterBounds.width + gap;
+      result.y = highlighterBounds.y + (highlighterBounds.height - size.height) / 2;
+    }
+    else {
+      result.x = highlighterBounds.x - highlighterBounds.width - gap;
+      result.y = highlighterBounds.y + (highlighterBounds.height - size.height) / 2;
+    }
+    return result;
   }
 
   private static @Nullable JComponent getGlassPane(@NotNull Component component) {
