@@ -51,6 +51,8 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/workspace/jps",
     "//platform/backend/observation",
+    "//platform/util/progress",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
   ]
 )
 ### auto-generated section `build kotlin.maven` end

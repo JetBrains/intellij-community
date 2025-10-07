@@ -14,7 +14,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 
-class KotlinAutoConfigTest : KotlinGradleImportingTestCase() {
+class KotlinGradleAutoConfigTest : KotlinGradleImportingTestCase() {
     private fun findGradleModuleConfigurator(): KotlinGradleModuleConfigurator {
         return KotlinProjectConfigurator.EP_NAME.findExtensionOrFail(KotlinGradleModuleConfigurator::class.java)
     }

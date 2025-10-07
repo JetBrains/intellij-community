@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.command.undo.BasicUndoableAction
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -16,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.TargetPlatform
 
@@ -165,6 +168,34 @@ interface KotlinProjectConfigurator {
      */
     fun addModuleWideOptIn(module: Module, annotationFqName: FqName, compilerArgument: String) {
         throw UnsupportedOperationException("Cannot add module-wide opt-in with this configurator (${this::class.qualifiedName})")
+    }
+
+    fun isAutoConfigurationEnabled(): Boolean = false
+
+    fun addUndoAutoconfigurationListener(
+        project: Project,
+        modules: List<Module>,
+        isAutoConfig: Boolean,
+        notificationHolder: KotlinAutoConfigurationNotificationHolder
+    ) {
+        // Auto-config only ever works on a single module
+        val firstModule = modules.firstOrNull()
+        UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
+            override fun undo() {
+                if (isAutoConfig && firstModule != null) {
+                    queueSyncIfNeeded(project)
+                    notificationHolder.showAutoConfigurationUndoneNotification(firstModule)
+                }
+                KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
+            }
+
+            override fun redo() {
+                if (isAutoConfig && firstModule != null) {
+                    queueSyncIfNeeded(project)
+                    notificationHolder.reshowAutoConfiguredNotification(firstModule)
+                }
+            }
+        })
     }
 
     companion object {

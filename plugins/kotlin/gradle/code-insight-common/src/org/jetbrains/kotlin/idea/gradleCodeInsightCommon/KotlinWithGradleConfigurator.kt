@@ -8,8 +8,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.command.undo.BasicUndoableAction
-import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
@@ -44,6 +42,7 @@ import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
@@ -132,7 +131,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
         val commandKey = "command.name.configure.kotlin"
-        val result = runWithModalProgressBlocking(project, KotlinIdeaGradleBundle.message(commandKey)) {
+        val result = runWithModalProgressBlocking(project, KotlinProjectConfigurationBundle.message(commandKey)) {
             configureSilently(
               project = project,
               modules = dialog.modulesToConfigure,
@@ -149,7 +148,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         queueSyncIfNeeded(project)
 
-        KotlinAutoConfigurationNotificationHolder.getInstance(project).onManualConfigurationCompleted()
+        KotlinGradleAutoConfigurationNotificationHolder.getInstance(project).onManualConfigurationCompleted()
         result.collector.showNotification()
 
         return result.configuredModules
@@ -220,19 +219,19 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         }
         KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project, true)
         val commandKey = "command.name.configure.kotlin.automatically"
-        val result = withModalProgress(project, KotlinIdeaGradleBundle.message(commandKey)) {
+        val result = withModalProgress(project, KotlinProjectConfigurationBundle.message(commandKey)) {
             configureSilently(
               project = module.project,
               modules = listOf(module),
               kotlinVersionsAndModules = moduleVersions,
               version = settings.kotlinVersion,
               modulesAndJvmTargets = jvmTargets,
-              commandKey = "command.name.configure.kotlin.automatically",
+              commandKey = commandKey,
               isAutoConfig = true
             )
         }
 
-        KotlinAutoConfigurationNotificationHolder.getInstance(project)
+        KotlinGradleAutoConfigurationNotificationHolder.getInstance(project)
           .showAutoConfiguredNotification(module.name, result.changedFiles.calculateChanges())
     }
 
@@ -241,28 +240,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val configuredModules: Set<Module>,
         val changedFiles: ChangedConfiguratorFiles
     )
-
-    private fun addUndoListener(project: Project, modules: List<Module>, isAutoConfig: Boolean) {
-        // Auto-config only ever works on a single module
-        val firstModule = modules.firstOrNull()
-        UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
-            override fun undo() {
-                if (isAutoConfig && firstModule != null) {
-                    queueSyncIfNeeded(project)
-                    KotlinAutoConfigurationNotificationHolder.getInstance(project)
-                        .showAutoConfigurationUndoneNotification(firstModule)
-                }
-                KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
-            }
-
-            override fun redo() {
-                if (isAutoConfig && firstModule != null) {
-                    queueSyncIfNeeded(project)
-                    KotlinAutoConfigurationNotificationHolder.getInstance(project).reshowAutoConfiguredNotification(firstModule)
-                }
-            }
-        })
-    }
 
     // Expected to be called from a coroutine with a progress reporter
     private suspend fun configureSilently(
@@ -274,7 +251,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         commandKey: String,
         isAutoConfig: Boolean = false
     ): ConfigurationResult = reportSequentialProgress { reporter ->
-        reporter.nextStep(endFraction = 30, KotlinIdeaGradleBundle.message("step.configure.kotlin.preparing"))
+        reporter.nextStep(endFraction = 30, KotlinProjectConfigurationBundle.message("step.configure.kotlin.preparing"))
         readAndEdtWriteAction {
             val collector = NotificationMessageCollector.create(project)
 
@@ -283,14 +260,15 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 createConfigureWithVersionAction(project, modules, version, collector, kotlinVersionsAndModules, modulesAndJvmTargets)
             // Now that everything has been read and verified, apply the changes
             writeAction {
-                reporter.nextStep(endFraction = 100, KotlinIdeaGradleBundle.message("step.configure.kotlin.writing"))
-                project.executeCommand(KotlinIdeaGradleBundle.message(commandKey)) {
+                reporter.nextStep(endFraction = 100, KotlinProjectConfigurationBundle.message("step.configure.kotlin.writing"))
+                project.executeCommand(KotlinProjectConfigurationBundle.message(commandKey)) {
                     val (configuredModules, changedFiles) = configureAction()
                     val firstModule = modules.firstOrNull()
                     if (isAutoConfig && firstModule != null) {
                         queueSyncIfNeeded(project)
                     }
-                    addUndoListener(project, modules, isAutoConfig)
+                    val notificationHolder = KotlinGradleAutoConfigurationNotificationHolder.getInstance(project)
+                    addUndoAutoconfigurationListener(project, modules, isAutoConfig, notificationHolder)
                     ConfigurationResult(collector, configuredModules, changedFiles)
                 }
             }
@@ -644,6 +622,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         addKotlinLibraryToModule(module, scope, library)
     }
 
+    override fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", true)
+
     companion object {
         @NonNls
         const val CLASSPATH: String = "classpath \"$GROUP_ID:$GRADLE_PLUGIN_ID:\$kotlin_version\""
@@ -769,7 +749,5 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 )
             })
         }
-
-        fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", true)
     }
 }

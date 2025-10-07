@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
+package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.Notification
@@ -8,30 +8,18 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.undo.UndoManager
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.changes.Change
-import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
-import org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider
-import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.ui.changes.KotlinConfiguratorChangesDialog
-import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import java.awt.Desktop
 import java.net.URI
 
-@Service(Service.Level.PROJECT)
-internal class KotlinAutoConfigurationNotificationHolder(private val project: Project) : Disposable {
-    companion object {
-        fun getInstance(project: Project): KotlinAutoConfigurationNotificationHolder {
-            return project.service()
-        }
-    }
+abstract class KotlinAutoConfigurationNotificationHolder(private val project: Project) : Disposable {
 
-    private class NotificationData(val moduleName: String, val changes: List<Change>)
+    private class NotificationData(val changes: List<Change>)
 
     private var shownNotification: Notification? = null
     private var notificationData: NotificationData? = null
@@ -42,7 +30,7 @@ internal class KotlinAutoConfigurationNotificationHolder(private val project: Pr
         // If more are shown then this is a leak of the notification somewhere in our code.
         shownNotification?.expire()
         if (moduleName != null && changes != null) {
-            notificationData = NotificationData(moduleName, changes)
+            notificationData = NotificationData(changes)
         } else {
             notificationData = null
         }
@@ -67,11 +55,13 @@ internal class KotlinAutoConfigurationNotificationHolder(private val project: Pr
         shownNotification = notification
     }
 
-    private val browseKotlinGradleConfiguration = NotificationAction.create(
-        KotlinProjectConfigurationBundle.message("auto.configure.kotlin.documentation.gradle")
+    abstract val buildSystemDocumentationUrl: String
+
+    private val browseBuildSystemConfigurationDocumentation: NotificationAction = NotificationAction.create(
+        KotlinProjectConfigurationBundle.message("auto.configure.kotlin.documentation.open")
     ) { _, _ ->
         if (Desktop.isDesktopSupported()) {
-            val url = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.documentation.gradle.url")
+            val url = buildSystemDocumentationUrl
             Desktop.getDesktop().browse(URI(url))
         }
     }
@@ -90,7 +80,7 @@ internal class KotlinAutoConfigurationNotificationHolder(private val project: Pr
         module?.let {
             notification.addAction(configureKotlinManuallyAction(it))
         }
-        notification.addAction(browseKotlinGradleConfiguration)
+        notification.addAction(browseBuildSystemConfigurationDocumentation)
         notification.notify(project)
         shownNotification = notification
         // Needs to be set again because the other notification might expire, which will set the notificationData to null
@@ -115,14 +105,16 @@ internal class KotlinAutoConfigurationNotificationHolder(private val project: Pr
         manualConfigurationStarted = true
     }
 
+    abstract val buildSystemName: String
+
     private fun configureKotlinManuallyAction(module: Module) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("configure.kotlin.manually")
     ) { e, notification ->
         if (KotlinProjectConfigurationService.getInstance(project).isSyncInProgress()) {
             Messages.showWarningDialog(
                 project,
-                KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.gradle.sync.finished"),
-                KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.gradle.sync.finished.title")
+                KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.build.system.sync.finished", buildSystemName),
+                KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.build.system.sync.finished.title", buildSystemName)
             )
             return@create
         }
@@ -163,12 +155,15 @@ internal class KotlinAutoConfigurationNotificationHolder(private val project: Pr
 
     private fun undoAction(project: Project) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("undo.configuration.action")
-    ) { _, notification ->
+    ) { _, _ ->
         val undoManager = UndoManager.getInstance(project)
         if (undoManager.isUndoAvailable(null)) {
             val undoActionName = undoManager.getUndoActionNameAndDescription(null).first
             val undoAutoconfigureKotlinName =
-                ActionsBundle.message("action.undo.text", KotlinIdeaGradleBundle.message("command.name.configure.kotlin.automatically"))
+                ActionsBundle.message(
+                    "action.undo.text",
+                    KotlinProjectConfigurationBundle.message("command.name.configure.kotlin.automatically")
+                )
             if (undoActionName == undoAutoconfigureKotlinName) {
                 undoManager.undo(null)
             } else {
