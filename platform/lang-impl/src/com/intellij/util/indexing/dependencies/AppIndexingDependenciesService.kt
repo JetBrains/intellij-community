@@ -21,6 +21,13 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.deleteIfExists
 import kotlin.math.max
 
+/**
+ * Contains [AppIndexingDependenciesToken] that is updated each time an indexing-affecting event occurs such as
+ * - IDE fingerprint changed (indexers might have changed)
+ * - File types changed
+ * - Manual index rebuild was requested
+ * - Exception during indexing occurred
+ */
 @Experimental
 @Service(Service.Level.APP)
 class AppIndexingDependenciesService @NonInjectable @VisibleForTesting constructor(storagePath: Path) : Disposable {
