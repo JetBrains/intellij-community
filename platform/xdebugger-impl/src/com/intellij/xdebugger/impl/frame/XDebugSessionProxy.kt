@@ -36,6 +36,8 @@ import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.event.HyperlinkListener
@@ -80,6 +82,8 @@ interface XDebugSessionProxy {
   val smartStepIntoHandlerEntry: XSmartStepIntoHandlerEntry?
   val currentSuspendContextCoroutineScope: CoroutineScope?
 
+  val activeNonLineBreakpointFlow: Flow<XBreakpointProxy?>
+
   fun getCurrentPosition(): XSourcePosition?
   fun getTopFramePosition(): XSourcePosition?
   fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition?
@@ -87,6 +91,7 @@ interface XDebugSessionProxy {
   fun getCurrentExecutionStack(): XExecutionStack?
   fun getCurrentStackFrame(): XStackFrame?
   fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean = executionStack.topFrame == frame)
+  fun isTopFrameSelected(): Boolean
   fun hasSuspendContext(): Boolean
   fun isSteppingSuspendContext(): Boolean
   fun computeExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer)
@@ -95,7 +100,6 @@ interface XDebugSessionProxy {
   fun rebuildViews()
   fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup)
   fun putKey(sink: DataSink)
-  fun updateExecutionPosition()
   fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache
 
   fun areBreakpointsMuted(): Boolean
@@ -203,6 +207,9 @@ interface XDebugSessionProxy {
     override val currentSuspendContextCoroutineScope: CoroutineScope?
       get() = (session as XDebugSessionImpl).currentSuspendCoroutineScope
 
+    override val activeNonLineBreakpointFlow: Flow<XBreakpointProxy?> get() = (session as XDebugSessionImpl)
+      .activeNonLineBreakpointFlow.map { (it as? XBreakpointBase<*, *, *>)?.asProxy() }
+
     override fun getCurrentPosition(): XSourcePosition? {
       return session.currentPosition
     }
@@ -229,6 +236,10 @@ interface XDebugSessionProxy {
 
     override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
       (session as? XDebugSessionImpl)?.setCurrentStackFrame(executionStack, frame, isTopFrame)
+    }
+
+    override fun isTopFrameSelected(): Boolean {
+      return (session as? XDebugSessionImpl)?.isTopFrameSelected ?: false
     }
 
     override fun hasSuspendContext(): Boolean {
@@ -259,10 +270,6 @@ interface XDebugSessionProxy {
 
     override fun putKey(sink: DataSink) {
       sink[XDebugSession.DATA_KEY] = session
-    }
-
-    override fun updateExecutionPosition() {
-      (session as? XDebugSessionImpl)?.updateExecutionPosition()
     }
 
     override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {

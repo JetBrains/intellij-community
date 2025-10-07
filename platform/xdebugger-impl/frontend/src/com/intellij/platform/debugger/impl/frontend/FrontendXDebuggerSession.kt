@@ -87,7 +87,7 @@ class FrontendXDebuggerSession private constructor(
         send(null)
         return@collectLatest
       }
-      val breakpoint = FrontendXDebuggerManager.getInstance(project).breakpointsManager.getBreakpointById(breakpointId)
+      val breakpoint = FrontendXDebuggerManager.getInstance(project).breakpointsManager.awaitBreakpointCreation(breakpointId)
       send(breakpoint)
     }
   }.stateIn(cs, SharingStarted.Eagerly, null)
@@ -169,6 +169,9 @@ class FrontendXDebuggerSession private constructor(
 
   override val currentSuspendContextCoroutineScope: CoroutineScope?
     get() = suspendContext.value?.lifetimeScope
+
+  override val activeNonLineBreakpointFlow: Flow<XBreakpointProxy?>
+    get() = activeNonLineBreakpoint
 
   private val dropFrameHandler = FrontendDropFrameHandler(id, scope)
 
@@ -345,7 +348,8 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun getFrameSourcePosition(frame: XStackFrame, sourceKind: XSourceKind): XSourcePosition? {
-    // TODO Support XSourceKind
+    // TODO Support XSourceKind, need to adapt XAlternativeSourceHandler for the front-end use only
+    if (sourceKind == XSourceKind.ALTERNATIVE) return null
     return frame.sourcePosition
   }
 
@@ -365,6 +369,11 @@ class FrontendXDebuggerSession private constructor(
       XDebugSessionApi.getInstance().setCurrentStackFrame(id, executionStack.id,
                                                           frame.id, isTopFrame, changedByUser = true)
     }
+  }
+
+  override fun isTopFrameSelected(): Boolean {
+    // TODO: [IJPL-177087] this should be reworked after [FrontendXExecutionStack#getTopFrame]
+    return XSourcePosition.isOnTheSameLine(getCurrentStackFrame()?.sourcePosition, getTopFramePosition())
   }
 
   override fun hasSuspendContext(): Boolean {
@@ -403,12 +412,6 @@ class FrontendXDebuggerSession private constructor(
 
   override fun putKey(sink: DataSink) {
     // do nothing, proxy is already set in tab
-  }
-
-  override fun updateExecutionPosition() {
-    cs.launch {
-      XDebugSessionApi.getInstance().updateExecutionPosition(id)
-    }
   }
 
   private fun onTabInitialized(tab: XDebugSessionTab) {
