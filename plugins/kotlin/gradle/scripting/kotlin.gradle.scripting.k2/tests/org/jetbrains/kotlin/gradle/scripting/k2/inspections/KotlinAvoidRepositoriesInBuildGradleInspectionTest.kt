@@ -517,7 +517,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
                 }
                 
                 dependencies {
-                    implementation("org.example:lib:1.0")
+                    //implementation("org.example:lib:1.0")
                 }
                 
                 <weak_warning>repositories</weak_warning> {
@@ -902,7 +902,9 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
             withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 setProjectName("empty-project-with-build-file")
             }
-            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
+            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                withPlugin("publishing")
+            }
         }
 
         private val EMPTY_PROJECT_ONLY_BUILD_FILE = GradleTestFixtureBuilder.create("empty-project-only-build-file") { gradleVersion ->
