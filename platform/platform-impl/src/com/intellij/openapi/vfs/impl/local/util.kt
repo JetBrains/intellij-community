@@ -130,7 +130,7 @@ internal fun listWithAttributesUsingEel(
   filter: Set<String>?,
 ): Map<String, FileAttributes> {
   if (!dir.isDirectory()) {
-    return mutableMapOf()
+    return emptyMap()
   }
   try {
     val nioPath = Path.of(toIoPath(dir))
