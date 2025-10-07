@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.transformWhile
-
 /**
  * Same idea as [kotlin.collections.singleOrNull] but will throw if the collection contains more than one element.
  * */
@@ -33,13 +30,6 @@ inline fun <T> Iterable<T>.singleOrNullOrThrowWithMessage(errorMessage: () -> St
     found = true
   }
   return single
-}
-
-inline fun <T> Flow<T>.takeTillFirst(crossinline predicate: (T) -> Boolean): Flow<T> {
-  return this@takeTillFirst.transformWhile {
-    emit(it)
-    !predicate(it)
-  }
 }
 
 inline fun <T> Iterable<T>.takeTillFirst(crossinline predicate: (T) -> Boolean): Iterable<T> {
