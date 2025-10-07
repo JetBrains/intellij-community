@@ -24,6 +24,9 @@ public final class LanguageStructureViewBuilder extends LanguageExtension<PsiStr
 
   public @Nullable StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile file) {
     PsiStructureViewFactory factory = forLanguage(file.getLanguage());
+    if (factory == null) {
+      factory = forLanguage(Language.ANY);
+    }
     if (factory != null) {
       return factory.getStructureViewBuilder(file);
     }
