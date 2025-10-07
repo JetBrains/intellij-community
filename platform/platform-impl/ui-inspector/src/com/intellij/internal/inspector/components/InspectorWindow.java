@@ -263,6 +263,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
 
       MouseEvent mouseEvent = (MouseEvent)event;
+      if (mouseEvent.isControlDown() || mouseEvent.isMetaDown() || mouseEvent.isShiftDown()) return;
+
       Component source = mouseEvent.getComponent();
 
       if (source == null || SwingUtilities.isDescendingFrom(source, this)) {
@@ -270,7 +272,6 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
 
       Component componentUnderMouse = UIUtil.getDeepestComponentAt(source, mouseEvent.getX(), mouseEvent.getY());
-
       if (componentUnderMouse != null) {
         myHierarchyTree.selectPath(componentUnderMouse);
       }
