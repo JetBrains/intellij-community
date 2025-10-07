@@ -4,6 +4,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.JavaCompletionUtil.JavaLookupElementHighlighter;
+import com.intellij.codeInsight.completion.command.configuration.CommandCompletionSettingsService;
+import com.intellij.codeInsight.completion.group.GroupedCompletionContributor;
 import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
@@ -65,7 +67,17 @@ public final class JavaNoVariantsDelegator extends CompletionContributor impleme
           JavaCompletionContributor.mayStartClassName(result) &&
           JavaCompletionContributor.isClassNamePossible(parameters) &&
           !JavaCompletionContributor.IN_PERMITS_LIST.accepts(parameters.getPosition())) {
-        suggestNonImportedClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)), tracker.session);
+        // workaround to show the first similar item as fast as possible
+        if (tracker.hasOnlyOneClass == Boolean.TRUE &&
+            parameters.getProcess() instanceof CompletionProgressIndicator indicator &&
+            Registry.is("ide.completion.command.faster.paint") &&
+            GroupedCompletionContributor.isGroupEnabledInApp() &&
+            CommandCompletionSettingsService.getInstance().commandCompletionEnabled()) {
+          indicator.showLookupAsSoonAsPossible();
+        }
+        suggestNonImportedClasses(parameters,
+                                  JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)),
+                                  tracker.session);
       }
     }
   }
@@ -291,6 +303,8 @@ public final class JavaNoVariantsDelegator extends CompletionContributor impleme
     private final CompletionResultSet myResult;
     public final JavaCompletionSession session;
     boolean hasStartMatches = false;
+    @Nullable
+    Boolean hasOnlyOneClass = null;
     public boolean containsOnlyPackages = true;
     public BetterPrefixMatcher betterMatcher;
 
@@ -311,6 +325,16 @@ public final class JavaNoVariantsDelegator extends CompletionContributor impleme
       LookupElement element = plainResult.getLookupElement();
       if (containsOnlyPackages && !(CompletionUtil.getTargetElement(element) instanceof PsiPackage)) {
         containsOnlyPackages = false;
+      }
+
+      if ((hasOnlyOneClass == null) && CompletionUtil.getTargetElement(element) instanceof PsiClass) {
+        hasOnlyOneClass = true;
+      }
+      else if (hasOnlyOneClass == Boolean.TRUE) {
+        hasOnlyOneClass = false;
+      }
+      else {
+        hasOnlyOneClass = false;
       }
 
       session.registerClassFrom(element);
