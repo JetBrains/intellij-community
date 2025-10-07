@@ -380,10 +380,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
       Toolkit.getDefaultToolkit().removeAWTEventListener(myAltKeyListener);
       myAltKeyListener = null;
     }
-    if (myChangeSelectionOnHoverListener != null) {
-      Toolkit.getDefaultToolkit().removeAWTEventListener(myChangeSelectionOnHoverListener);
-      myChangeSelectionOnHoverListener = null;
-    }
+    removeChangeSelectionOnHoverListener();
     DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize(), null);
     DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
     Disposer.dispose(myInspectorTable);
