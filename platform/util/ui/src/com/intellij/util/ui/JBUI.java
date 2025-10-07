@@ -2613,6 +2613,15 @@ public final class JBUI {
         public static final Color HOVER_BACKGROUND = JBColor.namedColor("TrialWidget.Expiring.hoverBackground");
         public static final Color HOVER_BORDER_COLOR = JBColor.namedColor("TrialWidget.Expiring.hoverBorderColor");
       }
+
+      public static final class Progress {
+        public static final Color FOREGROUND = JBColor.namedColor("TrialWidget.Progress.foreground");
+        public static final Color BACKGROUND = JBColor.namedColor("TrialWidget.Progress.background");
+        public static final Color BORDER_COLOR = JBColor.namedColor("TrialWidget.Progress.borderColor");
+        public static final Color HOVER_FOREGROUND = JBColor.namedColor("TrialWidget.Progress.hoverForeground");
+        public static final Color HOVER_BACKGROUND = JBColor.namedColor("TrialWidget.Progress.hoverBackground");
+        public static final Color HOVER_BORDER_COLOR = JBColor.namedColor("TrialWidget.Progress.hoverBorderColor");
+      }
     }
 
     public static final class MainWindow {
