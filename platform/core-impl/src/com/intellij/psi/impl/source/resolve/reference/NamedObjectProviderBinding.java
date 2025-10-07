@@ -45,10 +45,18 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
       ProviderInfo<ElementPattern<?>>[] psiReferenceProviders = map.get(key);
 
       ProviderInfo<ElementPattern<?>> newInfo = new ProviderInfo<>(provider, filter, priority);
-      ProviderInfo<ElementPattern<?>>[] newProviders = psiReferenceProviders == null ? new ProviderInfo[]{newInfo} : ArrayUtil.append(psiReferenceProviders, newInfo);
+      ProviderInfo<ElementPattern<?>>[] newProviders = appendToArray(psiReferenceProviders, newInfo);
 
       map.put(key, newProviders);
     }
+  }
+
+  static @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] appendToArray(@NotNull ProviderInfo<ElementPattern<?>> @Nullable [] psiReferenceProviders,
+                                                                           @NotNull ProviderInfo<ElementPattern<?>> newInfo) {
+    @SuppressWarnings("unchecked")
+    ProviderInfo<ElementPattern<?>>[] newProviders = psiReferenceProviders == null ? new ProviderInfo[]{newInfo}
+                                                                                   : ArrayUtil.append(psiReferenceProviders, newInfo);
+    return newProviders;
   }
 
   @Override
@@ -65,17 +73,18 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
   @Override
   public synchronized void unregisterProvider(@NotNull PsiReferenceProvider provider) {
     for (Map.Entry<String, @NotNull ProviderInfo<ElementPattern<?>>[]> entry : myNamesToProvidersMap.entrySet()) {
-      entry.setValue((ProviderInfo<ElementPattern<?>>[])removeFromArray(provider, entry.getValue()));
+      entry.setValue(removeFromArray(provider, entry.getValue()));
     }
     for (Map.Entry<String, @NotNull ProviderInfo<ElementPattern<?>>[]> entry : myNamesToProvidersMapInsensitive.entrySet()) {
-      entry.setValue((ProviderInfo<ElementPattern<?>>[])removeFromArray(provider, entry.getValue()));
+      entry.setValue(removeFromArray(provider, entry.getValue()));
     }
   }
 
-  static @NotNull ProviderInfo<?> @NotNull [] removeFromArray(@NotNull PsiReferenceProvider provider, @NotNull ProviderInfo<?> @NotNull [] array) {
+  static @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] removeFromArray(@NotNull PsiReferenceProvider provider, @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] array) {
     int i = ContainerUtil.indexOf(array, trinity -> trinity.provider.equals(provider));
     if (i != -1) {
-      return ArrayUtil.remove(array, i, ProviderInfo.ARRAY_FACTORY);
+      //noinspection unchecked
+      return (ProviderInfo<ElementPattern<?>>[])ArrayUtil.remove(array, i, ProviderInfo.ARRAY_FACTORY);
     }
     return array;
   }

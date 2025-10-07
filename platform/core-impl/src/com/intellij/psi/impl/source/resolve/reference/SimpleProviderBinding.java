@@ -6,7 +6,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceService;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,18 +15,19 @@ class SimpleProviderBinding implements ProviderBinding {
   /**
    * the array must be copy-on-write to avoid data races, since it can be read concurrently, via {@link #addAcceptableReferenceProviders}
    */
-  private volatile @NotNull ProviderInfo<?> @NotNull [] myProviderInfos = ProviderInfo.EMPTY_ARRAY;
+  @SuppressWarnings("unchecked")
+  private volatile @NotNull ProviderInfo<ElementPattern<?>> @NotNull [] myProviderInfos = (ProviderInfo<ElementPattern<?>>[])ProviderInfo.EMPTY_ARRAY;
 
   synchronized
   void registerProvider(@NotNull PsiReferenceProvider provider, @NotNull ElementPattern<?> pattern, double priority) {
-    myProviderInfos = ArrayUtil.append(myProviderInfos, new ProviderInfo<>(provider, pattern, priority), ProviderInfo.ARRAY_FACTORY);
+    myProviderInfos = NamedObjectProviderBinding.appendToArray(myProviderInfos, new ProviderInfo<>(provider, pattern, priority));
   }
 
   @Override
   public void addAcceptableReferenceProviders(@NotNull PsiElement position,
                                               @NotNull List<? super ProviderInfo<ProcessingContext>> list,
                                               @NotNull PsiReferenceService.Hints hints) {
-    NamedObjectProviderBinding.addMatchingProviders(position, (ProviderInfo<ElementPattern<?>>[])myProviderInfos, list, hints);
+    NamedObjectProviderBinding.addMatchingProviders(position, myProviderInfos, list, hints);
   }
 
   @Override
