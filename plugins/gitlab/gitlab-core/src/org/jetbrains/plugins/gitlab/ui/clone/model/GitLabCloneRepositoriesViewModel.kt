@@ -11,6 +11,7 @@ import git4idea.ui.GitShallowCloneViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.GitLabSettings
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
@@ -72,7 +73,9 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   private val _selectedUrl: StateFlow<String?> = combine(searchValue, selectedItem) { searchValue, selectedItem ->
     when {
       searchValue is SearchModel.Url -> searchValue.url
-      selectedItem != null && selectedItem is GitLabCloneListItem.Repository -> selectedItem.project.httpUrlToRepo
+      selectedItem != null && selectedItem is GitLabCloneListItem.Repository ->
+        if (GitLabSettings.getInstance().isCloneGitUsingSsh) selectedItem.project.sshUrlToRepo
+        else selectedItem.project.httpUrlToRepo
       else -> null
     }
   }.stateIn(cs, SharingStarted.Eagerly, initialValue = null)
