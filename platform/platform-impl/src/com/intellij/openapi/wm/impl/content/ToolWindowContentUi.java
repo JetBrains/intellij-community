@@ -825,6 +825,18 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
            Registry.is("ide.allow.split.and.reorder.in.tool.window", false);
   }
 
+  private static final Key<ToolWindowInEditorSupport> TOOLWINDOW_IN_EDITOR_SUPPORT = Key.create("ToolWindowInEditorSupport");
+
+  @ApiStatus.Internal
+  public static void setToolWindowInEditorSupport(@NotNull ToolWindow window, @Nullable ToolWindowInEditorSupport support) {
+    window.getComponent().putClientProperty(TOOLWINDOW_IN_EDITOR_SUPPORT, support);
+  }
+
+  @ApiStatus.Internal
+  public static ToolWindowInEditorSupport getToolWindowInEditorSupport(@NotNull ToolWindow window) {
+    return ClientProperty.get(window.getComponent(), TOOLWINDOW_IN_EDITOR_SUPPORT);
+  }
+
   public final class TabPanel extends NonOpaquePanel implements UISettingsListener {
     private TabPanel() {
       setBorder(JBUI.Borders.emptyRight(2));

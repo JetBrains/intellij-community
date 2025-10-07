@@ -1,19 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
-import com.intellij.openapi.wm.impl.content.BaseLabel
-import com.intellij.openapi.wm.impl.content.ContentTabLabel
-import com.intellij.openapi.wm.impl.content.SingleContentLayout
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
+import com.intellij.openapi.wm.impl.content.*
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createDropTargetHighlightComponent
 import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDragImage
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.content.Content
 import com.intellij.ui.content.Content.TEMPORARY_REMOVED_KEY
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
@@ -59,7 +58,9 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
           child is ContentTabLabel &&
           (child.parent is ToolWindowContentUi.TabPanel ||
            Registry.`is`("debugger.new.tool.window.layout.dnd", false) && child.parent is SingleContentLayout.TabAdapter) &&
-          (decorator.toolWindow.contentManager as ContentManagerImpl).getRecursiveContentCount() > 1) {
+          ((decorator.toolWindow.contentManager as ContentManagerImpl).getRecursiveContentCount() > 1 ||
+           getEditorSupport(decorator) != null)
+      ) {
         return child
       }
       else {
@@ -168,15 +169,38 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
     val sourceDecorator = sourceDecorator
     val curLocation = curDropLocation
-    val curDecorator = if (curLocation is DropLocation.ToolWindow) curLocation.decorator else null
-    if (sourceDecorator == null || curDecorator == null) {
+    if (sourceDecorator == null || curLocation == null) {
       return
     }
 
     val content = myDraggingTab!!.content
+
+    when (curLocation) {
+      is DropLocation.ToolWindow -> {
+        dropIntoToolWindow(content, sourceDecorator, curLocation.decorator)
+      }
+      is DropLocation.Editor -> {
+        dropIntoEditor(content, sourceDecorator, curLocation.window)
+      }
+    }
+
+    if (sourceDecorator.contentManager.isEmpty) {
+      sourceDecorator.unsplit(content)
+    }
+    val toolWindow = sourceDecorator.toolWindow
+    if (toolWindow.contentManager.contentsRecursively.isEmpty()) {
+      toolWindow.hide()
+    }
+  }
+
+  private fun dropIntoToolWindow(
+    content: Content,
+    sourceDecorator: InternalDecoratorImpl,
+    targetDecorator: InternalDecoratorImpl,
+  ) {
     val contentManager = sourceDecorator.contentManager
 
-    if (content is SingleContentLayout.SubContent && curDecorator.isSingleContentLayout()) {
+    if (content is SingleContentLayout.SubContent && targetDecorator.isSingleContentLayout()) {
       val tabs = content.supplier.getTabs()
       val tabInfo = content.info
       if (currentDropIndex != -1) {
@@ -188,7 +212,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
         tabInfo.isHidden = false
       }
       else {
-        curDecorator.splitWithContent(content, currentDropSide, -1)
+        targetDecorator.splitWithContent(content, currentDropSide, -1)
       }
     }
     else {
@@ -197,7 +221,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
         decorator.splitWithContent(content, currentDropSide, index)
       }
 
-      if (sourceDecorator == curDecorator) {
+      if (sourceDecorator == targetDecorator) {
         if (contentManager.contentCount > 0) {
           splitWithContent(sourceDecorator)
         }
@@ -209,16 +233,17 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
       content.putUserData(TEMPORARY_REMOVED_KEY, true)
       try {
-        splitWithContent(curDecorator)
+        splitWithContent(targetDecorator)
       }
       finally {
         content.putUserData(TEMPORARY_REMOVED_KEY, null)
       }
     }
+  }
 
-    if (contentManager.isEmpty) {
-      sourceDecorator.unsplit(content)
-    }
+  private fun dropIntoEditor(content: Content, sourceDecorator: InternalDecoratorImpl, editorWindow: EditorWindow) {
+    val support = getEditorSupport(sourceDecorator) ?: return
+    support.openInEditor(content, editorWindow, currentDropSide)
   }
 
   override fun cancelDragging(): Boolean {
@@ -314,47 +339,80 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   }
 
   private fun relocate(event: MouseEvent) {
-    val relativePoint = RelativePoint(event)
-    val tmp = getDecorator(relativePoint)
-    curDropLocation?.let { dropLocation ->
-      if (dropLocation is DropLocation.ToolWindow && dropLocation.decorator != tmp) {
-        dropLocation.decorator.setDropInfoIndex(-1, 0)
-      }
-    }
-    curDropLocation = tmp?.let { DropLocation.ToolWindow(it) }
-
+    // Relocate the dragging tab image
     val screenPoint = event.locationOnScreen
     dragImageView!!.location = Point(screenPoint.x - myInitialOffset.x, screenPoint.y - myInitialOffset.y)
     dragImageView!!.show()
 
+    val relativePoint = RelativePoint(event)
+    updateCurDropLocation(relativePoint)
+
     val dropLocation = curDropLocation
-    if (dropLocation is DropLocation.ToolWindow) {
-      val decorator = dropLocation.decorator
-      currentDropSide = TabsUtil.getDropSideFor(relativePoint.getPoint(decorator), decorator)
-      val dropArea = Rectangle(decorator.size)
-      TabsUtil.updateBoundsWithDropSide(dropArea, currentDropSide)
-      dropArea.bounds = SwingUtilities.convertRectangle(decorator, dropArea, pane.rootPane.glassPane)
-      currentDropIndex = getTabIndex(relativePoint)
-      if (currentDropIndex != -1) {
-        decorator.setDropInfoIndex(currentDropIndex, dragImageView!!.size.width)
+    when (dropLocation) {
+      is DropLocation.ToolWindow -> highlightToolWindowDropArea(dropLocation.decorator, relativePoint)
+      is DropLocation.Editor -> highlightEditorDropArea(dropLocation.window, relativePoint)
+      else -> {
+        currentDropIndex = -1
         highlighter.bounds = Rectangle()
       }
-      else {
-        decorator.setDropInfoIndex(-1, 0)
-        highlighter.bounds = dropArea
-      }
-    }
-    else {
-      currentDropIndex = -1
-      highlighter.bounds = Rectangle()
     }
   }
 
-  private fun getDecorator(relativePoint: RelativePoint): InternalDecoratorImpl? {
+  private fun updateCurDropLocation(point: RelativePoint) {
+    val decorator = findToolWindowDecorator(point)
+    val editorWindow = findEditorWindow(point)
+
+    curDropLocation?.let { dropLocation ->
+      if (dropLocation is DropLocation.ToolWindow && dropLocation.decorator != decorator) {
+        dropLocation.decorator.setDropInfoIndex(-1, 0)
+      }
+    }
+
+    curDropLocation = when {
+      decorator != null -> DropLocation.ToolWindow(decorator)
+      editorWindow != null && getEditorSupport(sourceDecorator) != null -> DropLocation.Editor(editorWindow)
+      else -> null
+    }
+  }
+
+  private fun findToolWindowDecorator(relativePoint: RelativePoint): InternalDecoratorImpl? {
     val topDecorator = sourceTopDecorator ?: return null
     val point = relativePoint.getPoint(topDecorator)
     val component = SwingUtilities.getDeepestComponentAt(topDecorator, point.x, point.y)
     return InternalDecoratorImpl.findNearestDecorator(component)
+  }
+
+  private fun findEditorWindow(point: RelativePoint): EditorWindow? {
+    val rootComponent = UIUtil.getRootPane(point.component)?.contentPane
+    val originalPoint = point.getPoint(rootComponent)
+    val component = SwingUtilities.getDeepestComponentAt(rootComponent, originalPoint.x, originalPoint.y)
+    val dataContext = DataManager.getInstance().getDataContext(component)
+    return dataContext.getData(EditorWindow.DATA_KEY)
+  }
+
+  private fun highlightToolWindowDropArea(decorator: InternalDecoratorImpl, point: RelativePoint) {
+    currentDropSide = TabsUtil.getDropSideFor(point.getPoint(decorator), decorator)
+    val dropArea = Rectangle(decorator.size)
+    TabsUtil.updateBoundsWithDropSide(dropArea, currentDropSide)
+    dropArea.bounds = SwingUtilities.convertRectangle(decorator, dropArea, pane.rootPane.glassPane)
+    currentDropIndex = getTabIndex(point)
+    if (currentDropIndex != -1) {
+      decorator.setDropInfoIndex(currentDropIndex, dragImageView!!.size.width)
+      highlighter.bounds = Rectangle()
+    }
+    else {
+      decorator.setDropInfoIndex(-1, 0)
+      highlighter.bounds = dropArea
+    }
+  }
+
+  private fun highlightEditorDropArea(window: EditorWindow, point: RelativePoint) {
+    val component = window.component
+    currentDropSide = TabsUtil.getDropSideFor(point.getPoint(component), component)
+    val dropArea = Rectangle(component.size)
+    TabsUtil.updateBoundsWithDropSide(dropArea, currentDropSide)
+    dropArea.bounds = SwingUtilities.convertRectangle(component, dropArea, pane.rootPane.glassPane)
+    highlighter.bounds = dropArea
   }
 
   private fun findTopDecorator(component: Component): InternalDecoratorImpl? {
@@ -363,6 +421,13 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
   private fun InternalDecoratorImpl.isSingleContentLayout(): Boolean {
     return contentManager.contents.singleOrNull().let { it != null && it !is SingleContentLayout.SubContent }
+  }
+
+  private fun getEditorSupport(sourceDecorator: InternalDecoratorImpl?): ToolWindowInEditorSupport? {
+    return if (sourceDecorator != null) {
+      ToolWindowContentUi.getToolWindowInEditorSupport(sourceDecorator.toolWindow)
+    }
+    else null
   }
 
   private sealed interface DropLocation {
