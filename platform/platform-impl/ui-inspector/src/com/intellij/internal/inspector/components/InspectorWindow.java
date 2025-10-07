@@ -76,6 +76,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private final @Nullable Project myProject;
   private final UiInspectorAction.UiInspector myInspector;
   private final ToggleShowAccessibilityIssuesAction myShowAccessibilityIssuesAction;
+  private AWTEventListener myAltKeyListener;
+  private AWTEventListener myChangeSelectionOnHoverListener;
 
   public InspectorWindow(@Nullable Project project,
                          @NotNull Component component,
@@ -225,6 +227,79 @@ public final class InspectorWindow extends JDialog implements Disposable {
     if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
       myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
     }
+
+    installAltKeyListener();
+  }
+
+  private void installAltKeyListener() {
+    myAltKeyListener = event -> {
+      KeyEvent keyEvent = (KeyEvent)event;
+      int eventId = event.getID();
+
+      if (keyEvent.getKeyCode() == KeyEvent.VK_ALT) {
+        if (eventId == KeyEvent.KEY_PRESSED) {
+          installChangeSelectionOnHoverListener();
+          resetTree();
+        }
+        else if (eventId == KeyEvent.KEY_RELEASED) {
+          removeChangeSelectionOnHoverListener();
+        }
+      }
+    };
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(myAltKeyListener, AWTEvent.KEY_EVENT_MASK);
+  }
+
+  private void installChangeSelectionOnHoverListener() {
+    if (myChangeSelectionOnHoverListener != null) {
+      return;
+    }
+
+    myChangeSelectionOnHoverListener = event -> {
+      if (event.getID() != MouseEvent.MOUSE_MOVED) {
+        return;
+      }
+
+      MouseEvent mouseEvent = (MouseEvent)event;
+      Component source = mouseEvent.getComponent();
+
+      if (source == null || SwingUtilities.isDescendingFrom(source, this)) {
+        return;
+      }
+
+      Component componentUnderMouse = UIUtil.getDeepestComponentAt(source, mouseEvent.getX(), mouseEvent.getY());
+
+      if (componentUnderMouse != null) {
+        myHierarchyTree.selectPath(componentUnderMouse);
+      }
+    };
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(myChangeSelectionOnHoverListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
+  }
+
+  private void removeChangeSelectionOnHoverListener() {
+    if (myChangeSelectionOnHoverListener == null) {
+      return;
+    }
+
+    Toolkit.getDefaultToolkit().removeAWTEventListener(myChangeSelectionOnHoverListener);
+    myChangeSelectionOnHoverListener = null;
+  }
+
+  private void resetTree() {
+    TreePath path = myHierarchyTree.getLeadSelectionPath();
+    if (path == null) return;
+    HierarchyTree.ComponentNode node = ObjectUtils.tryCast(path.getLastPathComponent(), HierarchyTree.ComponentNode.class);
+    if (node == null) return;
+    Component c = node.getComponent();
+    if (c == null) return;
+
+    Component selected = ContainerUtil.getFirstItem(myComponents);
+    myHierarchyTree.resetModel(c, false);
+    TreeUtil.expandAll(myHierarchyTree);
+    if (selected != null) {
+      myHierarchyTree.selectPath(selected, false);
+    }
   }
 
   @Override
@@ -301,6 +376,14 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
   @Override
   public void dispose() {
+    if (myAltKeyListener != null) {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(myAltKeyListener);
+      myAltKeyListener = null;
+    }
+    if (myChangeSelectionOnHoverListener != null) {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(myChangeSelectionOnHoverListener);
+      myChangeSelectionOnHoverListener = null;
+    }
     DimensionService.getInstance().setSize(getDimensionServiceKey(), getSize(), null);
     DimensionService.getInstance().setLocation(getDimensionServiceKey(), getLocation(), null);
     Disposer.dispose(myInspectorTable);
@@ -627,22 +710,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
 
     private void switchHierarchy() {
-      TreePath path = myHierarchyTree.getLeadSelectionPath();
-      if (path == null) return;
-      HierarchyTree.ComponentNode node = ObjectUtils.tryCast(path.getLastPathComponent(), HierarchyTree.ComponentNode.class);
-      if (node == null) return;
-      Component c = node.getComponent();
-      if (c == null) return;
-
-      Component selected = ContainerUtil.getFirstItem(myComponents);
+      resetTree();
       isAccessibleEnable = !isAccessibleEnable;
       myNavBarPanel.setAccessibleEnabled(isAccessibleEnable);
-      myHierarchyTree.resetModel(c, isAccessibleEnable);
-      TreeUtil.expandAll(myHierarchyTree);
-      if (selected != null) {
-        myHierarchyTree.selectPath(selected, isAccessibleEnable);
-      }
-
       if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
         myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
       }
