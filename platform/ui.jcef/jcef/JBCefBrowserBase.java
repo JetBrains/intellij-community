@@ -30,6 +30,8 @@ import org.cef.callback.CefCallback;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
+import org.cef.misc.CefLog;
+import org.cef.misc.Utils;
 import org.cef.network.CefCookieManager;
 import org.cef.network.CefRequest;
 import org.cef.security.CefSSLInfo;
@@ -228,11 +230,15 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myCefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
         @Override
         public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+          if (Utils.getBoolean("ide.browser.jcef.log.extended", false)) {
+            browser.executeJavaScript("console.log('CefLoadHandler#onLoadEnd:\\n' + document.documentElement.outerHTML)", null,0);
+          }
           setPageBackgroundColor();
         }
 
         @Override
         public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
+          CefLog.Warn("CefLoadHandler#onLoadError: " + failedUrl + " (" + errorCode + ")");
           // do not show error page if another URL has already been requested to load
           ErrorPage errorPage = myErrorPage;
           String lastRequestedUrl = getLastRequestedUrl();
