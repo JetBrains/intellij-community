@@ -13,7 +13,6 @@ import com.intellij.platform.ide.bootstrap.applyIslandsTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -50,11 +49,9 @@ private class JbAfterRestartSettingsApplier(private val coroutineScope: Coroutin
         }
       }
       val importer = JbSettingsImporter(oldConfDir, oldConfDir)
-      coroutineScope.launch {
-        withContext(Dispatchers.EDT) {
-          importer.importOptionsAfterRestart(options, pluginIds)
-          applyIslandsTheme(true)
-        }
+      coroutineScope.launch(Dispatchers.EDT) {
+        importer.importOptionsAfterRestart(options, pluginIds)
+        applyIslandsTheme(true)
       }
     }
     catch (e: Throwable) {
@@ -64,10 +61,8 @@ private class JbAfterRestartSettingsApplier(private val coroutineScope: Coroutin
 }
 
 internal val configPathFile = PathManager.getConfigDir() / "after_restart_config.txt"
-internal fun storeImportConfig(configDir: Path,
-                               categories: Set<SettingsCategory>,
-                               pluginIds: List<String>?
-) {
+
+internal fun storeImportConfig(configDir: Path, categories: Set<SettingsCategory>, pluginIds: List<String>?) {
   configPathFile.writeText("$configDir\n${categories.joinToString()}\n${pluginIds?.joinToString() ?: ""}")
 }
 

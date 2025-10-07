@@ -7,23 +7,28 @@ import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.ui.JBColor
 import com.intellij.util.PlatformUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun applyIslandsTheme(afterImportSettings: Boolean) {
-  val application = ApplicationManager.getApplication()
-  if (!application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost() || PlatformUtils.isDataSpell()) {
+suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
+  val app = ApplicationManager.getApplication()
+  if (!app.isEAP || app.isUnitTestMode || app.isHeadlessEnvironment || AppMode.isRemoteDevHost() || PlatformUtils.isDataSpell()) {
     return
   }
+
   if (System.getProperty("platform.experiment.ab.manual.option", "") == "control.option") {
     return
   }
 
-  val properties = PropertiesComponent.getInstance()
+  val properties = serviceAsync<PropertiesComponent>()
   if (afterImportSettings) {
     if (properties.getValue("ide.islands.show.feedback2") != "show.promo") {
       return
@@ -40,11 +45,13 @@ fun applyIslandsTheme(afterImportSettings: Boolean) {
 
   properties.setValue("ide.islands.ab2", true)
 
-  enableTheme()
+  withContext(Dispatchers.EDT) {
+    enableTheme()
+  }
 }
 
-private fun enableTheme() {
-  val lafManager = LafManager.getInstance()
+private suspend fun enableTheme() {
+  val lafManager = serviceAsync<LafManager>()
   if (lafManager.autodetect) {
     return
   }
