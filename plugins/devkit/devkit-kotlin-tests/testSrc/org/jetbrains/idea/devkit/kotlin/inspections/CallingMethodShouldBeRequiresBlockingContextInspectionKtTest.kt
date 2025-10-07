@@ -12,8 +12,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import kotlin.test.assertNotNull as assertNotNullK
 
-@RunWith(JUnit4::class)
-class CallingMethodShouldBeRequiresBlockingContextInspectionKtTest : KtBlockingContextInspectionTestCase(), ExpectedPluginModeProvider {
+class CallingMethodShouldBeRequiresBlockingContextInspectionKtTest : KtBlockingContextInspectionTestCase() {
 
   @Before
   fun enableInspection() {
