@@ -28,6 +28,7 @@ import com.intellij.grazie.utils.getTextDomain
 import com.intellij.grazie.utils.toProofreadingContext
 import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -45,6 +46,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 
 private val problemsKey = Key.create<CachedResults>("grazie.text.problems")
+private val LOG = Logger.getInstance(CheckerRunner::class.java)
 
 class CheckerRunner(val text: TextContent) {
   private val tokenizer
@@ -151,7 +153,9 @@ class CheckerRunner(val text: TextContent) {
     val tooltip = problem.tooltipTemplate
     val description = problem.getDescriptionTemplate(isOnTheFly)
     return fileHighlightRanges(problem).map { range ->
-      val grazieDescriptor = GrazieProblemDescriptor(parent, description, range.shiftLeft(parent.startOffset), isOnTheFly, tooltip)
+      val rangeInElement = range.shiftLeft(parent.startOffset)
+      validateRangeInElement(parent, rangeInElement, problem)
+      val grazieDescriptor = GrazieProblemDescriptor(parent, description, rangeInElement, isOnTheFly, tooltip)
       if (isOnTheFly) {
         grazieDescriptor.quickFixes = toFixes(problem, grazieDescriptor)
       }
@@ -159,6 +163,18 @@ class CheckerRunner(val text: TextContent) {
       val descriptor = ProblemDescriptorWithReporterName(grazieDescriptor, shortName)
       descriptor.problemGroup = ProblemGroup { shortName }
       descriptor
+    }
+  }
+
+  private fun validateRangeInElement(psi: PsiElement, rangeInElement: TextRange?, problem: TextProblem) {
+    if (rangeInElement != null && psi.textRange != null) {
+      TextRange.assertProperRange(rangeInElement)
+      val psiTextLength = psi.textRange.length
+      if (rangeInElement.endOffset > psiTextLength) {
+        LOG.error("Argument rangeInElement ($rangeInElement) endOffset must not exceed descriptor text range " +
+                  "(${psi.textRange.startOffset}, ${psi.textRange.endOffset}) length ($psiTextLength). " +
+                  "PSI language: ${psi.language.id}, TextContent.fileRanges: ${problem.text.rangesInFile}")
+      }
     }
   }
 
