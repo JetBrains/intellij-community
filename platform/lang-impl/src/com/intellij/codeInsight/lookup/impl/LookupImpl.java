@@ -699,8 +699,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return myOffsets.getPrefixLength(item, this);
   }
 
-  protected void insertLookupString(@NotNull LookupElement item, int prefix) {
-    insertLookupString(mySession.getProject(), getTopLevelEditor(), item, itemMatcher(item), itemPattern(item), prefix);
+  protected void insertLookupString(@NotNull LookupElement item, int prefixLength) {
+    insertLookupString(mySession.getProject(), getTopLevelEditor(), item, itemMatcher(item), itemPattern(item), prefixLength);
   }
 
   public static void insertLookupString(@NotNull Project project,
