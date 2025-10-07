@@ -239,7 +239,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
       if (keyEvent.getKeyCode() == KeyEvent.VK_ALT) {
         if (eventId == KeyEvent.KEY_PRESSED) {
           installChangeSelectionOnHoverListener();
-          resetTree();
+          resetTree(true);
         }
         else if (eventId == KeyEvent.KEY_RELEASED) {
           removeChangeSelectionOnHoverListener();
@@ -286,13 +286,14 @@ public final class InspectorWindow extends JDialog implements Disposable {
     myChangeSelectionOnHoverListener = null;
   }
 
-  private void resetTree() {
+  private void resetTree(boolean ignoreOrphanComponents) {
     TreePath path = myHierarchyTree.getLeadSelectionPath();
     if (path == null) return;
     HierarchyTree.ComponentNode node = ObjectUtils.tryCast(path.getLastPathComponent(), HierarchyTree.ComponentNode.class);
     if (node == null) return;
     Component c = node.getComponent();
     if (c == null) return;
+    if (ignoreOrphanComponents && c.getParent() == null) return;
 
     Component selected = ContainerUtil.getFirstItem(myComponents);
     myHierarchyTree.resetModel(c, false);
@@ -707,7 +708,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
 
     private void switchHierarchy() {
-      resetTree();
+      resetTree(false);
       isAccessibleEnable = !isAccessibleEnable;
       myNavBarPanel.setAccessibleEnabled(isAccessibleEnable);
       if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
