@@ -49,10 +49,10 @@ interface InlineLightBreakpoint {
 
 @ApiStatus.Internal
 fun XLineBreakpointProxy.asInlineLightBreakpoint(): InlineLightBreakpoint = object : InlineLightBreakpoint {
-  override val highlightRange: XLineBreakpointHighlighterRange = getHighlightRange()
-  override val icon: Icon = type.enabledIcon
-  override val tooltipDescription: String = getTooltipDescription()
-  override val breakpointProxy: XBreakpointProxy = this@asInlineLightBreakpoint
+  override val highlightRange: XLineBreakpointHighlighterRange get() = getHighlightRange()
+  override val icon: Icon get() = this@asInlineLightBreakpoint.getIcon()
+  override val tooltipDescription: String get() = getTooltipDescription()
+  override val breakpointProxy: XBreakpointProxy get() = this@asInlineLightBreakpoint
 
   override fun toString(): String {
     return "InlineLightBreakpoint(${this@asInlineLightBreakpoint.id}, $highlightRange)"

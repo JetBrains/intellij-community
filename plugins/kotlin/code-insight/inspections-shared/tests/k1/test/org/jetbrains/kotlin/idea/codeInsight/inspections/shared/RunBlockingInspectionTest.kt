@@ -13,15 +13,19 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jdom.Element
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.runBlocking.RunBlockingInspection
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.util.collectionUtils.concat
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.DynamicTest.dynamicTest
 import java.io.File
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class RunBlockingInspectionTest {
+class RunBlockingInspectionTest: ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
 
     private val testDataDir = KotlinRoot.DIR.resolve("code-insight/inspections-shared/tests/testData/inspections/runBlocking").path
     private data class TraceElement(val fgName: String, val url: String, val fileAndLine: String)
@@ -45,16 +49,18 @@ class RunBlockingInspectionTest {
     
     @BeforeAll
     fun initialize() {
-        testCase.setUp()
-        testCase.getFixture().testDataPath = testDataDir
-        val file = File("$testDataDir/inspectionData/tests.xml")
-        val expectedRoot: Element = JDOMUtil.load(file)
-        myTests = expectedRoot.getChildren("test").map {Test.fromElement(it)}
-        
-        val aggregatedInputFiles = myTests.fold(mutableListOf<String>()) { acc, test -> acc.concat(test.inputFiles)!!.toMutableList() }
-        aggregatedInputFiles.forEach { input ->
-            val psiFile = testCase.getFixture().configureByFile(input)
-            psiFileMap[input] = psiFile
+        setUpWithKotlinPlugin(testCase.testRootDisposable) {
+            testCase.setUp()
+            testCase.getFixture().testDataPath = testDataDir
+            val file = File("$testDataDir/inspectionData/tests.xml")
+            val expectedRoot: Element = JDOMUtil.load(file)
+            myTests = expectedRoot.getChildren("test").map {Test.fromElement(it)}
+
+            val aggregatedInputFiles = myTests.fold(mutableListOf<String>()) { acc, test -> acc.concat(test.inputFiles)!!.toMutableList() }
+            aggregatedInputFiles.forEach { input ->
+                val psiFile = testCase.getFixture().configureByFile(input)
+                psiFileMap[input] = psiFile
+            }
         }
     }
 

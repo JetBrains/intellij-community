@@ -20,7 +20,7 @@ object GraziePlugin {
   const val id = "tanvd.grazi"
 
   object LanguageTool {
-    const val version = "6.6.17"
+    const val version = "6.6.18"
     const val url = "https://resources.jetbrains.com/grazie/model/language-tool"
   }
 

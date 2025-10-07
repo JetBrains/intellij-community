@@ -74,6 +74,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/assignment/common-k1:kotlin-compiler-plugins-assignment-common-k1",
     "//plugins/kotlin/compiler-plugins/assignment/gradle",
     "//plugins/kotlin/compiler-plugins/assignment/maven",
+    "//plugins/kotlin/compiler-plugins/kotlin-dataframe/maven",
     "//plugins/kotlin/compiler-plugins/scripting",
     "//plugins/kotlin/completion/api",
     "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",

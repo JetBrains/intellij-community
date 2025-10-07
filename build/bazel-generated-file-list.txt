@@ -1027,6 +1027,7 @@ plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle
 plugins/kotlin/compiler-plugins/compiler-plugin-support/maven
 plugins/kotlin/compiler-plugins/compiler-plugin-support/tests
 plugins/kotlin/compiler-plugins/kapt
+plugins/kotlin/compiler-plugins/kotlin-dataframe/maven
 plugins/kotlin/compiler-plugins/kotlinx-serialization/common
 plugins/kotlin/compiler-plugins/kotlinx-serialization/gradle
 plugins/kotlin/compiler-plugins/kotlinx-serialization/k2

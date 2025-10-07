@@ -125,6 +125,7 @@ jvm_library(
     "//plugins/kotlin/compiler-plugins/assignment/maven",
     "//plugins/kotlin/compiler-plugins/kotlinx-serialization/k2",
     "//plugins/kotlin/compiler-plugins/parcelize/k2",
+    "//plugins/kotlin/compiler-plugins/kotlin-dataframe/maven",
     "//plugins/kotlin/i18n",
     "//plugins/kotlin/onboarding",
     "//plugins/kotlin/onboarding-gradle",

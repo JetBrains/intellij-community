@@ -76,6 +76,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.maven" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlin-dataframe.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.maven" exported="" />

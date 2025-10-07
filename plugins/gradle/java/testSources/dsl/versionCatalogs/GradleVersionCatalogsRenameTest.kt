@@ -6,20 +6,17 @@ import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.dsl.versionCatalogs.GradleVersionCatalogFixtures.DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
-/**
- * Currently, this test does not trigger Gradle sync. So, version catalogs are determined relying on settings.gradle parsing.
- * If Gradle sync would be done, version catalog locations would be determined by GradleVersionCatalogEntity, willed with data from sync.
- */
 class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testRenameLibrary(gradleVersion: GradleVersion) {
+  fun `test renaming a library in a TOML, that was not synced`(gradleVersion: GradleVersion) {
     testEmptyProject(gradleVersion) {
       writeTextAndCommit("build.gradle", "libs.aaa.bbb.ccc")
       writeTextAndCommit("gradle/libs.versions.toml", """
@@ -38,7 +35,7 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
-  fun testRenameVersionRef(gradleVersion: GradleVersion) {
+  fun `test renaming a version ref in a TOML, that was not synced`(gradleVersion: GradleVersion) {
     testEmptyProject(gradleVersion) {
       writeTextAndCommit("build.gradle", "")
       writeTextAndCommit("gradle/libs.versions.toml", """
@@ -57,6 +54,26 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
         [libraries]
         aaa-bbb_ccc = { group = "org.apache.groovy", name = "groovy", version.ref = "eee-fff_ggg" }
       """.trimIndent())
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun `test renaming a library in a custom TOML, for dynamically added subproject`(gradleVersion: GradleVersion) {
+    test(gradleVersion, DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE) {
+      writeTextAndCommit("customPath/custom.toml", """
+        [libraries]
+        apache-gro<caret>ovy = { module = "org.apache.groovy:groovy", version = "4.0.0"
+        """.trimIndent()
+      )
+      writeTextAndCommit("subprojectsDir/subproject1/build.gradle", "customLibs.apache.groovy")
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("customPath/custom.toml"))
+        TestDialogManager.setTestDialog(TestDialog.OK)
+        codeInsightFixture.renameElementAtCaret("renamed-apache-groovy")
+        val fileWithUsage = getFile("subprojectsDir/subproject1/build.gradle").getPsiFile(project)
+        Assertions.assertEquals("customLibs.renamed.apache.groovy", fileWithUsage.text)
       }
     }
   }

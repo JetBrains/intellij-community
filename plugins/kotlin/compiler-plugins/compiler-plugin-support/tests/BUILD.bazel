@@ -24,6 +24,9 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/facet/tests:tests_test_lib",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.compiler-plugins.compiler-plugin-support.tests` end

@@ -11,6 +11,9 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.kotlin.withKotlinStdlib
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -754,7 +757,13 @@ class ForbiddenInSuspectContextMethodInspectionTest : KtBlockingContextInspectio
 }
 
 @RunWith(JUnit4::class)
-abstract class KtBlockingContextInspectionTestCase : LightJavaCodeInsightFixtureTestCase() {
+abstract class KtBlockingContextInspectionTestCase : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+  override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
+  override fun setUp() {
+    setUpWithKotlinPlugin { super.setUp() }
+  }
+
   override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR_WITH_KOTLIN
 
   @Before

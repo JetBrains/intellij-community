@@ -20,25 +20,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.checkTrustedState
 import com.intellij.openapi.project.impl.doCreateFakeModuleForDirectoryProjectConfigurators
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.workspaceModel.ide.ProjectRootEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -66,8 +61,6 @@ fun isConfiguredByPlatformProcessor(project: Project): Boolean = project.getUser
 internal fun isLoadedFromCacheButHasNoModules(project: Project): Boolean {
   return project.getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
 }
-
-private object TempProjectEntitySource : EntitySource
 
 class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectOpenProcessor {
   enum class Option {
@@ -126,29 +119,28 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       return doOpenProject(virtualFile.toNioPath(), openProjectOptions)
     }
 
+    private fun createTempProjectOpenTask(
+      options: OpenProjectTask,
+      dummyProjectName: String,
+      file: Path,
+    ): OpenProjectTask {
+      return options.copy(
+        isNewProject = true,
+        projectRootDir = file,
+        createModule = false,
+        projectName = dummyProjectName,
+        runConfigurators = true,
+        beforeOpen = { project ->
+          project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
+          options.beforeOpen?.invoke(project) ?: true
+        }
+      )
+    }
+
     private fun createTempProjectAndOpenFile(file: Path, options: OpenProjectTask): Project? {
       val dummyProjectName = file.fileName.toString()
       val baseDir = FileUtilRt.createTempDirectory(dummyProjectName, null, true).toPath()
-      val copy = options.copy(
-        isNewProject = true,
-        projectName = dummyProjectName,
-        runConfigurators = true,
-        preparedToOpen = { module ->
-          // adding content root for chosen (single) file
-          ModuleRootModificationUtil.updateModel(module) { model ->
-            val entries = model.contentEntries
-            // remove custom content entry created for temp directory
-            if (entries.size == 1) {
-              model.removeContentEntry(entries[0])
-            }
-            model.addContentEntry(VfsUtilCore.pathToUrl(file.toString()))
-          }
-        },
-        beforeOpen = {
-          it.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
-          options.beforeOpen?.invoke(it) ?: true
-        },
-      )
+      val copy = createTempProjectOpenTask(options, dummyProjectName, file)
       TrustedPaths.getInstance().setProjectPathTrusted(baseDir, true)
       val project = ProjectManagerEx.getInstanceEx().openProject(baseDir, copy) ?: return null
       openFileFromCommandLine(project = project, file = file, line = copy.line, column = copy.column)
@@ -158,24 +150,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     internal suspend fun createTempProjectAndOpenFileAsync(file: Path, options: OpenProjectTask): Project? {
       val dummyProjectName = file.fileName.toString()
       val baseDir = Files.createTempDirectory(dummyProjectName)
-      val copy = options.copy(
-        isNewProject = true,
-        createModule = false,
-        projectName = dummyProjectName,
-        runConfigurators = true,
-        beforeOpen = { project ->
-          // adding chosen (single) file to non-indexable project roots
-          val vfuManager = project.workspaceModel.getVirtualFileUrlManager()
-          val fileToAdd = vfuManager.getOrCreateFromUrl(file.toUri().toString())
-          val entityFile = ProjectRootEntity.invoke(fileToAdd, TempProjectEntitySource)
-          project.workspaceModel.update("Open temp project") { storage ->
-            storage.addEntity(entityFile)
-          }
-
-          project.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
-          options.beforeOpen?.invoke(project) ?: true
-        }
-      )
+      val copy = createTempProjectOpenTask(options, dummyProjectName, file)
       TrustedPaths.getInstance().setProjectPathTrusted(path = baseDir, value = true)
       val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectIdentityFile = baseDir, options = copy) ?: return null
       openFileFromCommandLine(project = project, file = file, line = copy.line, column = copy.column)

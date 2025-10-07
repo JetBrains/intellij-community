@@ -4,19 +4,28 @@ package org.jetbrains.kotlin.idea.i18n
 
 import com.intellij.lang.properties.psi.Property
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
-class I18nReferencesTest : LightJavaCodeInsightFixtureTestCase() {
+class I18nReferencesTest : LightJavaCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+
     override fun setUp() {
-        super.setUp()
-        myFixture.addClass("""package org.jetbrains.annotations;
+        setUpWithKotlinPlugin {
+            super.setUp()
+            myFixture.addClass(
+                """package org.jetbrains.annotations;
             import java.lang.annotation.*;
 @Target({ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.FIELD, ElementType.TYPE_USE})
-public @interface PropertyKey { String resourceBundle(); }""")
-        myFixture.addFileToProject("messages/MyBundle.properties", "key1=value1\nkey2=value2 {0}")
+public @interface PropertyKey { String resourceBundle(); }"""
+            )
+            myFixture.addFileToProject("messages/MyBundle.properties", "key1=value1\nkey2=value2 {0}")
+        }
     }
 
     fun testResolveResourceBundleKey() {

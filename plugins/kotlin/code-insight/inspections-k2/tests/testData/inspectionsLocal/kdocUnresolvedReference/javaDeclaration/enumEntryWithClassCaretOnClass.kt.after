@@ -1,6 +1,0 @@
-// RUNTIME_WITH_FULL_JDK
-
-/**
- * [java.nio.file.FileVisitResult.CONTINUE]
- */
-fun aaa(){}

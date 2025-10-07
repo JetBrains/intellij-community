@@ -28,6 +28,9 @@ jvm_library(
     "//plugins/java-i18n:java-i18n_test_lib",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
   ]
 )
 ### auto-generated section `build kotlin.i18n.tests` end

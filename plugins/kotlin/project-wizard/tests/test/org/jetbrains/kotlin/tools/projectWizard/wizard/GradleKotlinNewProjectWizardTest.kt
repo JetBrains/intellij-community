@@ -22,6 +22,10 @@ import kotlin.io.path.pathString
 import kotlin.io.path.walk
 
 class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() {
+    @Test
+    fun testK1PluginIsUsed() {
+        Assertions.assertTrue(System.getProperty("idea.kotlin.plugin.use.k1").toBoolean())
+    }
 
     @ParameterizedTest
     @EnumSource(GradleDsl::class)
