@@ -146,6 +146,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         mark("h");
         for (HighlightVisitor visitor : HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(getProject())) {
           HighlightVisitor v = visitor.clone(); // to avoid race for com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.myAnnotationHolder
+          if (!v.suitableForFile(myFile)) continue;
           final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
           GeneralHighlightingPass.setupAnnotationSession(infoHolder.getAnnotationSession(), myFile.getTextRange(), aClass.getTextRange(), null);
           v.analyze(myFile, true, infoHolder, () -> {
