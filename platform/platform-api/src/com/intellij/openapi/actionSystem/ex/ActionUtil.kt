@@ -132,6 +132,9 @@ object ActionUtil {
   val INLINE_ACTIONS: Key<List<AnAction>> = Key.create("INLINE_ACTIONS")
 
   @JvmField
+  val POPUP_AD_TEXT: Key<@NlsContexts.PopupAdvertisement String?> = Key.create("POPUP_AD_TEXT")
+
+  @JvmField
   val COMPONENT_PROVIDER: Key<CustomComponentAction> = Key.create("COMPONENT_PROVIDER")
 
   @JvmField

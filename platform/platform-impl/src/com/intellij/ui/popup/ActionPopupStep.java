@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private final int myDefaultOptionIndex;
   private Runnable myFinalRunnable;
   private @NotNull BiFunction<DataContext, AnAction, DataContext> mySubStepContextAdjuster = (c, a) -> c;
+  private @NlsContexts.PopupTitle @Nullable String myAdText;
 
   /** @deprecated {@link #ActionPopupStep(List, String, Supplier, String, PresentationFactory, ActionPopupOptions)} instead */
   @Deprecated(forRemoval = true)
@@ -60,8 +62,20 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                          @NotNull String actionPlace,
                          @NotNull PresentationFactory presentationFactory,
                          @NotNull ActionPopupOptions options) {
+    this(items, title, null, context, actionPlace, presentationFactory, options);
+  }
+
+  @ApiStatus.Internal
+  ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
+                  @PopupTitle @Nullable String title,
+                  @PopupTitle @Nullable String adText,
+                  @NotNull Supplier<? extends DataContext> context,
+                  @NotNull String actionPlace,
+                  @NotNull PresentationFactory presentationFactory,
+                  @NotNull ActionPopupOptions options) {
     myItems = items;
     myTitle = title;
+    myAdText = adText;
     myContext = context;
     myActionPlace = getPopupOrMainMenuPlace(actionPlace);
     myUiKind = ActionPlaces.MAIN_MENU.equals(myActionPlace) ?
@@ -107,8 +121,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                                                       @NotNull ActionPopupOptions options) {
     List<PopupFactoryImpl.ActionItem> items = createActionItems(actionGroup, dataContext, actionPlace, presentationFactory, options);
 
+    Presentation groupPresentation = presentationFactory.getPresentation(actionGroup);
+    @Nls String adText = groupPresentation.getClientProperty(ActionUtil.POPUP_AD_TEXT);
+
     ActionPopupOptions stepOptions = ActionPopupOptions.convertForStep(options, items);
-    return new ActionPopupStep(items, title, contextSupplier, actionPlace, presentationFactory, stepOptions);
+    return new ActionPopupStep(items, title, adText, contextSupplier, actionPlace, presentationFactory, stepOptions);
   }
 
   /** @deprecated Use {@link #createActionItems(ActionGroup, DataContext, String, PresentationFactory, ActionPopupOptions)} instead */
@@ -221,6 +238,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Override
   public @Nullable String getTitle() {
     return myTitle;
+  }
+
+  @Override
+  public @Nls @Nullable String getAdText() {
+    return myAdText;
   }
 
   @ApiStatus.Internal

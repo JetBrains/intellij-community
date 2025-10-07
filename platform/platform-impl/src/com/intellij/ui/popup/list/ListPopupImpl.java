@@ -37,6 +37,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,6 +99,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     setParentValue(parentValue);
     replacePasteAction();
     aStep.addListener(this);
+
+    if (aStep instanceof ListPopupStepEx<?> stepEx) {
+      @Nls String adText = stepEx.getAdText();
+      if (adText != null) {
+        setAdText(adText);
+      }
+    }
   }
 
   public void setMaxRowCount(int maxRowCount) {
