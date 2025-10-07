@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.kdoc.findKDocByPsi
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.psi.namedDeclarationVisitor
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -36,8 +37,10 @@ internal class KDocMissingDocumentationInspection : KotlinApplicableInspectionBa
         visitTargetElement(it, holder, isOnTheFly)
     }
 
-    override fun isApplicableByPsi(element: KtNamedDeclaration): Boolean =
-        !TestUtils.isInTestSourceContent(element) && element.findKDocByPsi() == null
+    override fun isApplicableByPsi(element: KtNamedDeclaration): Boolean {
+        if (element is KtParameter && element.isFunctionTypeParameter) return false
+        return !TestUtils.isInTestSourceContent(element) && element.findKDocByPsi() == null
+    }
 
     override fun getApplicableRanges(element: KtNamedDeclaration): List<TextRange> =
         ApplicabilityRanges.declarationName(element)

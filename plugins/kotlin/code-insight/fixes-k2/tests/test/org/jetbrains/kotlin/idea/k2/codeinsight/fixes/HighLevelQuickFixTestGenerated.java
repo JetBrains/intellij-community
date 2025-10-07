@@ -9195,6 +9195,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/funWithKDoc.kt");
         }
 
+        @TestMetadata("functionalParameter.kt")
+        public void testFunctionalParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/functionalParameter.kt");
+        }
+
         @TestMetadata("internalFun.kt")
         public void testInternalFun() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/kdocMissingDocumentation/internalFun.kt");

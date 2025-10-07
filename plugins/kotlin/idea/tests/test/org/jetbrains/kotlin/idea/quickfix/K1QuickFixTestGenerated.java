@@ -11002,6 +11002,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/kdocMissingDocumentation/funWithKDoc.kt");
         }
 
+        @TestMetadata("functionalParameter.kt")
+        public void testFunctionalParameter() throws Exception {
+            runTest("testData/quickfix/kdocMissingDocumentation/functionalParameter.kt");
+        }
+
         @TestMetadata("internalFun.kt")
         public void testInternalFun() throws Exception {
             runTest("testData/quickfix/kdocMissingDocumentation/internalFun.kt");
