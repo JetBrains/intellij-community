@@ -2,17 +2,29 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.ExitActionType
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun getUiEventLogger(): FeatureUsageUiEvents {
-  if (ApplicationManager.getApplication() != null) {
-    return ApplicationManager.getApplication().getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
+  try {
+    if (ApplicationManager.getApplication() != null) {
+      return ApplicationManager.getApplication().getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
+    }
+    // cannot load service if application is not initialized
+    return EmptyFeatureUsageUiEvents
   }
-  // cannot load service if application is not initialized
-  return EmptyFeatureUsageUiEvents
+  catch (_: CancellationException) {
+    // cancellation in EDT is often unexpected
+    return EmptyFeatureUsageUiEvents
+  }
+  catch (e: Exception) {
+    logger<FeatureUsageUiEvents>().error("UiEventLogger is unavailable", e)
+    return EmptyFeatureUsageUiEvents
+  }
 }
 
 @ApiStatus.Internal
