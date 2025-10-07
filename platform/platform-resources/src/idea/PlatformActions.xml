@@ -976,6 +976,8 @@
       <synonym key="action.ResetIdeScaleAction.text"/>
     </action>
 
+    <action id="ShowSettingsChangesLogFile" class="com.intellij.ide.actions.ShowSettingsChangesLogFile" internal="true"/>
+
     <group id="MainToolbarPopupActions" searchable="false">
       <reference ref="ViewToolBar"/>
       <action id="CustomizeUI" class="com.intellij.ide.actions.CustomizeUIAction"/>
