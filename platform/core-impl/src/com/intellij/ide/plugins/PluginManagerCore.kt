@@ -12,7 +12,6 @@ import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.ide.plugins.PluginManagerCore.loadedPlugins
 import com.intellij.ide.plugins.PluginManagerCore.processAllNonOptionalDependencies
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ArchivedCompilationContextUtil
@@ -1030,7 +1029,7 @@ fun getAndClearPluginLoadingErrors(): List<PluginLoadingError> {
 
 @ApiStatus.Internal
 fun getPluginDistDirByClass(aClass: Class<*>): Path? {
-  val pluginDir = (aClass.classLoader as? PluginClassLoader)?.pluginDescriptor?.pluginPath
+  val pluginDir = (aClass.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.pluginPath
   if (pluginDir != null) {
     return pluginDir
   }

@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -19,8 +19,8 @@ public final class SettingsUtil {
    * If {@code description} doesn't contain {@code </body>} or loader doesn't correspond to any plugin or plugin is essential for the product, unchanged {@code description} is returned. 
    */
   public static String wrapWithPoweredByMessage(String description, ClassLoader loader) {
-    if (loader instanceof PluginClassLoader) {
-      PluginId pluginId = ((PluginClassLoader)loader).getPluginId();
+    if (loader instanceof PluginAwareClassLoader) {
+      PluginId pluginId = ((PluginAwareClassLoader)loader).getPluginId();
       IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(pluginId);
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       if (pluginDescriptor != null && pluginDescriptor.isBundled() && !appInfo.isEssentialPlugin(pluginId)) {
