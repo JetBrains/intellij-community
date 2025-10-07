@@ -78,13 +78,21 @@ object CommandLineProcessor {
 
   @VisibleForTesting
   @ApiStatus.Internal
-  suspend fun doOpenFileOrProject(file: Path, shouldWait: Boolean): CommandLineProcessorResult {
+  suspend fun doOpenFileOrProject(file: Path, createOrOpenExistingProject: Boolean, shouldWait: Boolean): CommandLineProcessorResult {
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
       val options = OpenProjectTask {
         // do not check for .ipr files in the specified directory
         // (@develar: it is existing behavior, I am not fully sure that it is correct)
         preventIprLookup = true
-        configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir = file, projectToClose = null)
+        if (createOrOpenExistingProject) {
+          configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir = file, projectToClose = null)
+        }
+        else {
+          runConfigurators = false
+          createModule = false
+          useDefaultProjectAsTemplate = false
+          projectRootDir = file
+        }
       }
       try {
         val project = ProjectUtil.openOrImportAsync(file, options)
@@ -429,8 +437,7 @@ object CommandLineProcessor {
         continue
       }
       if (arg == "-p" || arg == "--project") {
-        // Skip, replaced with the opposite option above
-        // TODO<rv>: Remove in future versions
+        tempProject = false
         i++
         continue
       }
@@ -477,7 +484,7 @@ object CommandLineProcessor {
   ): CommandLineProcessorResult = LightEditUtil.computeWithCommandLineOptions(shouldWait, lightEditMode).use {
     val asFile = line != -1 || tempProject
     if (asFile) doOpenFile(file, line, column, tempProject, shouldWait)
-    else doOpenFileOrProject(file, shouldWait)
+    else doOpenFileOrProject(file, !tempProject, shouldWait)
   }
 }
 

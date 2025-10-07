@@ -46,7 +46,7 @@ internal class OpenProjectTest(private val opener: Opener) {
           runBlocking { ProjectUtil.openExistingDir(it, null) }
         },
         Opener("CLI-FolderAsProject", expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
-          runBlocking { CommandLineProcessor.doOpenFileOrProject(it, false) }.project!!
+          runBlocking { CommandLineProcessor.doOpenFileOrProject(it, createOrOpenExistingProject = true, false) }.project!!
         },
       )
     }
