@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -36,6 +35,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -229,7 +229,7 @@ class X {
     }
     FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
 
-    //System.out.println("Average among the N/3 median times: " + ArrayUtil.averageAmongMedians(time, 3) + "ms");
+    LOG.debug("Average among the N/3 median times: " + ArrayUtil.averageAmongMedians(time, 3) + "ms");
   }
 
   @NotNull
@@ -366,6 +366,7 @@ class X {
 
         List<HighlightInfo> collect = new ArrayList<>();
         TextRange crange = comment.getTextRange().cutOut(TextRange.create(4, comment.getTextRange().getLength()-1)); // to strictly contain
+        //noinspection ConstantValue
         DaemonCodeAnalyzerEx.processHighlights(getEditor().getDocument(), getProject(), HighlightSeverity.ERROR, crange.getStartOffset(), crange.getEndOffset(),
                                                h -> !crange.contains(h) || !collect.add(h));
         assertEmpty("Found error inside comment: "+collect+"; seed="+seed, collect);
@@ -429,7 +430,7 @@ class X {
   }
 
   private void randomTypeAndCheckForDuplicates(long seed, Random random) {
-    HighlightInfoUpdaterImpl updater = (HighlightInfoUpdaterImpl)HighlightInfoUpdaterImpl.getInstance(getProject());
+    HighlightInfoUpdaterImpl updater = (HighlightInfoUpdaterImpl)HighlightInfoUpdater.getInstance(getProject());
     updater.runAssertingInvariants(() -> {
       disableHyperlinkAnnotator();
       configureFromFileText("A.java", "import java.util.*;\n" + classText.repeat(1/*0*/));
@@ -482,11 +483,9 @@ class X {
     String initInfoText = StringUtil.join(initInfos, h->text(h), "\n");
     if (num == 0) return initInfoText;
     String s = random.nextBoolean() ? genRandomChar(random) : "/*";
-    Ref<String> afterTyp = new Ref<>();
     int offset = withTypedLetter(num, s, random, () -> {
       List<HighlightInfo> infos = doHighlightAndSort(seed);
       String after = typeAndCheck(seed, num - 1, random, infos);
-      afterTyp.set(after);
     });
     TextRange textRange = FileStatusMap.getDirtyTextRange(getEditor().getDocument(), getFile(), Pass.UPDATE_ALL);
     List<HighlightInfo> after = doHighlightAndSort(seed);
@@ -529,6 +528,7 @@ class X {
               List<HighlightInfo> collect = new ArrayList<>();
               TextRange cringe =
                 comment.getTextRange().cutOut(TextRange.create(4, comment.getTextRange().getLength() - 1)); // to strictly contain
+              //noinspection ConstantValue
               DaemonCodeAnalyzerEx.processHighlights(getEditor().getDocument(), getProject(), HighlightInfoType.SYMBOL_TYPE_SEVERITY,
                                                      cringe.getStartOffset(), cringe.getEndOffset(),
                                                      h -> !(cringe.contains(h) && collect.add(h)));
