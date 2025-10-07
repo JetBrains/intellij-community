@@ -279,11 +279,9 @@ data class DocumentDiagnosticParams(
      */
     val previousResultId: String? = null,
 
-    override val workDoneToken: ProgressToken?,
-
-    override val partialResultToken: ProgressToken?,
-
-    ) : WorkDoneProgressParams, PartialResultParams
+    override val workDoneToken: ProgressToken? = null,
+    override val partialResultToken: ProgressToken? = null,
+) : WorkDoneProgressParams, PartialResultParams
 
 @Serializable
 enum class DocumentDiagnosticReportKind {
@@ -352,5 +350,5 @@ object Diagnostics {
         )
 
     val Refresh: RequestType<Unit, Unit, Unit> =
-        RequestType("textDocument/diagnostics/refresh", Unit.serializer(), Unit.serializer(), Unit.serializer())
+        RequestType("workspace/diagnostic/refresh", Unit.serializer(), Unit.serializer(), Unit.serializer())
 }
