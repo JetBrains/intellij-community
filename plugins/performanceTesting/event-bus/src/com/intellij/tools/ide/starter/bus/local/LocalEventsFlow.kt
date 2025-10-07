@@ -116,15 +116,18 @@ class LocalEventsFlow : EventsFlow {
         }
         return@map result
       }
-      ?.forEach {
+    runBlocking {
+      // awaitAll shouldn't be used as it would stop after the first exception from any coroutine
+      tasks?.forEach {
         try {
-          runBlocking { it.await() }
+          it.await()
         }
         catch (e: Throwable) {
           LOG.info("Exception occurred while processing $e")
           exceptions.add(e)
         }
       }
+    }
 
     LOG.debug("All exceptions: $exceptions")
     if (exceptions.isNotEmpty()) {
