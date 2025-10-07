@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.core
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -87,14 +85,6 @@ class RestoreCaret<T : PsiElement>(beforeElement: T, val editor: Editor?) {
 private fun moveCaretIntoGeneratedElementDocumentUnblocked(editor: Editor, element: PsiElement): Boolean {
     // Inspired by GenerateMembersUtils.positionCaret()
 
-    val project = element.project
-    val fileEditorManager = FileEditorManager.getInstance(project)
-    val targetVirtualFile = element.containingFile.virtualFile
-    val openInEditor = if (fileEditorManager.currentFile != targetVirtualFile) {
-        fileEditorManager.openTextEditor(OpenFileDescriptor(project, targetVirtualFile), true)
-    } else {
-        editor
-    }
     if (element is KtDeclarationWithBody && element.hasBody()) {
         val expression = element.bodyExpression
         if (expression is KtBlockExpression) {
@@ -108,12 +98,10 @@ private fun moveCaretIntoGeneratedElementDocumentUnblocked(editor: Editor, eleme
                 val start = firstInBlock.textRange!!.startOffset
                 val end = lastInBlock.textRange!!.endOffset
 
-                openInEditor?.let {
-                    it.moveCaret(min(start, end))
+                editor.moveCaret(min(start, end))
 
-                    if (start < end) {
-                        it.selectionModel.setSelection(start, end)
-                    }
+                if (start < end) {
+                    editor.selectionModel.setSelection(start, end)
                 }
 
                 return true
@@ -128,14 +116,12 @@ private fun moveCaretIntoGeneratedElementDocumentUnblocked(editor: Editor, eleme
 
         val offset = initializerRange?.startOffset ?: element.getTextOffset()
 
-        openInEditor?.let {
-            it.moveCaret(offset)
+        editor.moveCaret(offset)
 
-            if (initializerRange != null) {
-                val endOffset =
-                    expression.siblings(forward = true, withItself = false).lastOrNull()?.endOffset ?: initializerRange.endOffset
-                it.selectionModel.setSelection(initializerRange.startOffset, endOffset)
-            }
+        if (initializerRange != null) {
+            val endOffset =
+                expression.siblings(forward = true, withItself = false).lastOrNull()?.endOffset ?: initializerRange.endOffset
+            editor.selectionModel.setSelection(initializerRange.startOffset, endOffset)
         }
 
         return true
@@ -149,10 +135,8 @@ private fun moveCaretIntoGeneratedElementDocumentUnblocked(editor: Editor, eleme
         }
     }
 
-    openInEditor?.let {
-        it.moveCaret(element.endOffset)
-        it.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
-    }
+    editor.moveCaret(element.endOffset)
+    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
     return false
 }
 
