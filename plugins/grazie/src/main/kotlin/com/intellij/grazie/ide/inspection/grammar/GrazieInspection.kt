@@ -21,7 +21,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
 import org.jetbrains.annotations.NonNls
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 
 class GrazieInspection : LocalInspectionTool(), DumbAware {
 
@@ -49,20 +48,15 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
 
     val checkedDomains = checkedDomains()
     val areChecksDisabled = getDisabledChecker(file)
-    val earlyBreak = AtomicBoolean(false)
 
     return object : PsiElementVisitor() {
       override fun visitWhiteSpace(space: PsiWhiteSpace) {}
 
       override fun visitElement(element: PsiElement) {
-        if (earlyBreak.get() || areChecksDisabled(element)) return
+        if (areChecksDisabled(element)) return
 
         val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
         if (skipCheckingTooLargeTexts(texts)) return
-        if (skipCheckingTooLargeFiles(file)) {
-          earlyBreak.set(true)
-          return
-        }
 
         sortByPriority(texts, session.priorityRange)
           .map { CheckerRunner(it) }
@@ -116,16 +110,17 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
     }
 
     @JvmStatic
-    fun skipCheckingTooLargeTexts(texts: List<TextContent>): Boolean = texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_PSI_ELEMENT
+    fun skipCheckingTooLargeTexts(texts: List<TextContent>): Boolean {
+      if (texts.isEmpty()) return false
+      if (texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_PSI_ELEMENT) return true
 
-    @JvmStatic
-    fun skipCheckingTooLargeFiles(file: PsiFile): Boolean {
+      val file = texts[0].containingFile
       if (file.textLength <= MAX_TEXT_LENGTH_IN_FILE) return false
+
       val allInFile = CachedValuesManager.getProjectPsiDependentCache(file) {
         val contents = findAllTextContents(it.viewProvider, TextContent.TextDomain.ALL)
         TextContentRelatedData(file, contents)
       }.contents
-
       val checkedDomains = checkedDomains()
       return allInFile.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE
     }
