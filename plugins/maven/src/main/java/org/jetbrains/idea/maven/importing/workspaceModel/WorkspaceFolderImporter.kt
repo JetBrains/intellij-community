@@ -46,7 +46,9 @@ internal class WorkspaceFolderImporter(
 ) {
 
   fun createContentRoots(
-    mavenProject: MavenProject, moduleType: StandardMavenModuleType, module: ModuleEntity,
+    mavenProject: MavenProject,
+    moduleType: StandardMavenModuleType,
+    module: ModuleEntity,
     stats: WorkspaceImportStats,
   ): OutputFolders {
     val cachedFolders = importingContext.projectToCachedFolders.getOrPut(mavenProject) {
@@ -62,7 +64,7 @@ internal class WorkspaceFolderImporter(
     val projectRoot = getContentRoot(cachedFolders, isSharedSourceSupportEnabled(project))
     addCachedFolders(moduleType, cachedFolders, allFolders)
 
-    for (root in ContentRootCollector.collect(projectRoot, allFolders)) {
+    for (root in ContentRootCollector.collect(moduleType, projectRoot, allFolders)) {
       val excludes = root.excludeFolders
         .map { exclude -> virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(exclude.path)) }
         .map { ExcludeUrlEntity(it, module.entitySource) }

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -10,8 +11,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 @ApiStatus.Internal
 object ContentRootCollector {
-  fun collect(projectRoot: ProjectRootFolder?, folders: List<ImportedFolder>): Collection<ContentRootResult> {
-    MavenLog.LOG.debug("collecting content roots in ${projectRoot?.path}, folders = ", folders)
+  fun collect(moduleType: StandardMavenModuleType, projectRoot: ProjectRootFolder?, folders: List<ImportedFolder>): Collection<ContentRootResult> {
+    MavenLog.LOG.debug("collecting content roots in ${projectRoot?.path}, module type $moduleType, folders = ", folders)
 
     class ContentRootWithFolders(val path: String, val folders: MutableList<ImportedFolder> = mutableListOf())
 
