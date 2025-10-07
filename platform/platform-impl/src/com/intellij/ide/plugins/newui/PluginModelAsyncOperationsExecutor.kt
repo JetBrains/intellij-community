@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.openapi.application.EDT
@@ -11,6 +10,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Function
 import javax.swing.JComponent
 
 internal object PluginModelAsyncOperationsExecutor {
@@ -127,12 +128,12 @@ internal object PluginModelAsyncOperationsExecutor {
     }
   }
 
-  fun findPlugins(pluginIds: Set<PluginId>, callback: (Map<PluginId, PluginUiModel>) -> Unit) {
+  fun findPlugins(downloaders: Collection<PluginDownloader>, callback: Function<Map<PluginId, PluginUiModel>, Unit>) {
     val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope
     coroutineScope.launch(Dispatchers.IO) {
-      val plugins = UiPluginManager.getInstance().findInstalledPlugins(pluginIds)
+      val pluginModels = UiPluginManager.getInstance().findInstalledPlugins(downloaders.map(PluginDownloader::getId).toSet())
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(plugins)
+        callback.apply(pluginModels)
       }
     }
   }

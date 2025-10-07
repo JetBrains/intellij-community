@@ -27,6 +27,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.JBUI;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +37,9 @@ import java.awt.event.ActionEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
+import static java.util.Objects.requireNonNull;
 
 @ApiStatus.Internal
 public final class PlatformUpdateDialog extends AbstractUpdateDialog {
@@ -174,14 +175,13 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
       var name = IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.apply.manually.button");
       updateButton = new AbstractAction(name) {
         @Override
-        @SuppressWarnings({"unchecked", "DataFlowIssue"})
         public void actionPerformed(ActionEvent e) {
           close(OK_EXIT_CODE);
-          PluginModelAsyncOperationsExecutor.INSTANCE
-            .findPlugins(myUpdatesForPlugins.stream().map(it -> it.getId()).collect(Collectors.toSet()), plugins -> {
-              downloadPatchAndRestart((Map<PluginId, PluginUiModel>)plugins);
-              return null;
-            });
+          var downloaders = myUpdatesForPlugins != null ? myUpdatesForPlugins : Set.<PluginDownloader>of();
+          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(downloaders, plugins -> {
+            downloadPatchAndRestart(plugins);
+            return Unit.INSTANCE;
+          });
         }
       };
       updateButton.setEnabled(!myWriteProtected);
@@ -213,11 +213,11 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart(Map<PluginId, PluginUiModel> installedPlugins) {
-    List<PluginUiModel> updates =
-      myUpdatesForPlugins != null ? ContainerUtil.map(myUpdatesForPlugins, it -> it.getUiModel()) : Collections.emptyList();
-    PluginUpdateDialog dialog = new PluginUpdateDialog(myProject, updates, null, installedPlugins);
-    if (!ContainerUtil.isEmpty(myUpdatesForPlugins) && !PluginUpdateDialog.showDialogAndUpdate(myUpdatesForPlugins, dialog)) {
-      return;  // update cancelled
+    if (myUpdatesForPlugins != null && !installedPlugins.isEmpty()) {
+      var dialog = new PluginUpdateDialog(myProject, installedPlugins.values(), null, installedPlugins);
+      if (!PluginUpdateDialog.showDialogAndUpdate(myUpdatesForPlugins, dialog)) {
+        return;  // update cancelled
+      }
     }
 
     //noinspection UsagesOfObsoleteApi
@@ -230,7 +230,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
             command = UpdateInstaller.preparePatchCommand(List.of(myTestPatch), indicator);
           }
           else {
-            @SuppressWarnings("DataFlowIssue") var files = UpdateInstaller.downloadPatchChain(myPlatformUpdate.getPatches().getChain(), indicator);
+            var files = UpdateInstaller.downloadPatchChain(requireNonNull(myPlatformUpdate.getPatches()).getChain(), indicator);
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
         }

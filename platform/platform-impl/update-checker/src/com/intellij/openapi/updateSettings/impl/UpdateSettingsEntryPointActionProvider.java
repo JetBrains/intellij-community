@@ -25,11 +25,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.SettingsEntryPointAction.*;
 
@@ -331,20 +331,15 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public void actionPerformed(@NotNull AnActionEvent e) {
-          Set<PluginId> pluginIds = myUpdatesForPlugins.stream().map(it -> it.getId()).collect(Collectors.toSet());
-          List<@Nullable PluginUiModel> uiModels = ContainerUtil.map(myUpdatesForPlugins, it -> it.getUiModel());
-          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(pluginIds, plugins -> {
-            PluginUpdateDialog dialog =
-              new PluginUpdateDialog(e.getProject(), uiModels, myCustomRepositoryPlugins, (Map<PluginId, PluginUiModel>)plugins);
+          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(myUpdatesForPlugins, plugins -> {
+            var dialog = new PluginUpdateDialog(e.getProject(), plugins.values(), myCustomRepositoryPlugins, plugins);
             dialog.setFinishCallback(() -> setEnableUpdateAction(true));
             setEnableUpdateAction(false);
-
             if (!PluginUpdateDialog.showDialogAndUpdate(myUpdatesForPlugins, dialog)) {
               setEnableUpdateAction(true);
             }
-            return null;
+            return Unit.INSTANCE;
           });
         }
       });
