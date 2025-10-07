@@ -10,3 +10,6 @@ fun main() {
 
 // EXPRESSION: localFun()
 // RESULT: "local fun": Ljava/lang/String;
+
+// IGNORE_K1
+// SKIP_WRONG_DIRECTIVE_CHECK
