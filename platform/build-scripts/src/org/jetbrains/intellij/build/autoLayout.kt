@@ -32,7 +32,7 @@ internal suspend fun inferModuleSources(
       continue
     }
 
-    val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getDefaultJarName(name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
+    val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = getDefaultJarName(layout, name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
     if (isIncludedIntoAnotherPlugin(platformLayout = platformLayout, moduleItem = moduleItem, context = context, layout = layout, moduleName = name)) {
       continue
     }
@@ -51,7 +51,7 @@ internal suspend fun inferModuleSources(
         continue
       }
 
-      val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getDefaultJarName(name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
+      val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = getDefaultJarName(layout, name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
       addedModules.add(name)
       jarPackager.computeSourcesForModule(item = moduleItem, layout = layout, searchableOptionSet = searchableOptionSet)
     }
@@ -90,8 +90,8 @@ internal suspend fun computeModuleSourcesByContent(
     jarPackager.computeSourcesForModule(
       item = ModuleItem(
         moduleName = moduleName,
-        // relative path with `/` is always packed by dev-mode, so, we don't need to fix resolving for now and can improve it later
-        relativeOutputFile = if (useSeparateJar) "modules/$moduleName.jar" else layout.getDefaultJarName(moduleName, frontendModuleFilter),
+        // relative path with `/` is always packed by dev-mode, so we don't need to fix resolving for now and can improve it later
+        relativeOutputFile = if (useSeparateJar) "modules/$moduleName.jar" else getDefaultJarName(layout, moduleName, frontendModuleFilter),
         reason = "<- ${layout.mainModule} (plugin content)",
       ),
       layout = layout,
@@ -100,12 +100,12 @@ internal suspend fun computeModuleSourcesByContent(
   }
 }
 
-private fun PluginLayout.getDefaultJarName(moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
-  return if (!frontendModuleFilter.isModuleCompatibleWithFrontend(mainModule) && frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)) {
-    getMainJarName().removeSuffix(".jar") + "-frontend.jar"
+private fun getDefaultJarName(layout: PluginLayout, moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
+  if (frontendModuleFilter.isModuleCompatibleWithFrontend(layout.mainModule) || !frontendModuleFilter.isModuleCompatibleWithFrontend(moduleName)) {
+    return layout.getMainJarName()
   }
   else {
-    getMainJarName()
+    return layout.getMainJarName().removeSuffix(".jar") + "-frontend.jar"
   }
 }
 
