@@ -399,6 +399,9 @@ open class ProjectRootManagerComponent(
       register(roots.nonRecursiveRoots, "non-recursive external roots")
       register(roots.nonRecursiveSourceRoots, "non-recursive external source roots")
     }
+    builder.forEachNonIndexableRoots { roots ->
+      register(roots, "non-indexable roots")
+    }
   }
 
   override fun clearScopesCaches() {
