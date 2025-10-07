@@ -59,10 +59,10 @@ internal class WorkspaceFolderImporter(
     if (moduleType == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) return outputFolders
 
     val allFolders = mutableListOf<ContentRootCollector.ImportedFolder>()
-    addContentRoot(cachedFolders, allFolders, isSharedSourceSupportEnabled(project))
+    val projectRoot = getContentRoot(cachedFolders, isSharedSourceSupportEnabled(project))
     addCachedFolders(moduleType, cachedFolders, allFolders)
 
-    for (root in ContentRootCollector.collect(allFolders)) {
+    for (root in ContentRootCollector.collect(projectRoot, allFolders)) {
       val excludes = root.excludeFolders
         .map { exclude -> virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(exclude.path)) }
         .map { ExcludeUrlEntity(it, module.entitySource) }
@@ -81,19 +81,17 @@ internal class WorkspaceFolderImporter(
     return outputFolders
   }
 
-  private fun addContentRoot(cachedFolders: CachedProjectFolders,
-                             allFolders: MutableList<ContentRootCollector.ImportedFolder>,
-                             duplicatesAreAllowed: Boolean = false) {
+  private fun getContentRoot(cachedFolders: CachedProjectFolders, duplicatesAreAllowed: Boolean = false): ContentRootCollector.ProjectRootFolder? {
     val contentRoot = cachedFolders.projectContentRootPath
 
     if (!duplicatesAreAllowed) {
       // make sure we don't have overlapping content roots in different modules
       val alreadyRegisteredRoot = importingContext.alreadyRegisteredContentRoots.contains(contentRoot)
-      if (alreadyRegisteredRoot) return
+      if (alreadyRegisteredRoot) return null
     }
 
-    allFolders.add(ContentRootCollector.ProjectRootFolder(contentRoot))
     importingContext.alreadyRegisteredContentRoots.add(contentRoot)
+    return ContentRootCollector.ProjectRootFolder(contentRoot)
   }
 
   private fun addCachedFolders(moduleType: StandardMavenModuleType,

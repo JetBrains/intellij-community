@@ -8,17 +8,19 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 object ContentRootCollector {
-  fun collect(folders: List<ImportedFolder>): Collection<ContentRootResult> {
-    MavenLog.LOG.debug("collecting content roots, folders = ", folders)
+  fun collect(projectRoot: ProjectRootFolder?, folders: List<ImportedFolder>): Collection<ContentRootResult> {
+    MavenLog.LOG.debug("collecting content roots in ${projectRoot?.path}, folders = ", folders)
 
     class ContentRootWithFolders(val path: String, val folders: MutableList<ImportedFolder> = mutableListOf())
 
     val result = mutableListOf<ContentRootWithFolders>()
 
     var nearestRoot: ContentRootWithFolders? = null
-    var nearestRootFolder: ImportedFolder? = null
+    var nearestRootFolder: ImportedFolderBase? = null
 
-    for (curr in folders.sorted()) {
+    val allFolders: List<ImportedFolderBase> = (folders + listOfNotNull(projectRoot)).sorted()
+
+    for (curr in allFolders) {
       // 0. don't add source/resource folders that are ancestors of a project content root
       if (nearestRoot != null
           && curr is ProjectRootFolder
@@ -94,7 +96,9 @@ object ContentRootCollector {
       }
 
       // 4. REGISTER FOLDER UNDER THE ROOT
-      nearestRoot.folders.add(curr)
+      if (curr is ImportedFolder) {
+        nearestRoot.folders.add(curr)
+      }
     }
 
     // Now, we need a second pass over the merged folders, to remove nested exclude folders.
@@ -133,10 +137,10 @@ object ContentRootCollector {
     return collectedRoots
   }
 
-  sealed class ImportedFolder(path: String, internal val rank: Int) : Comparable<ImportedFolder> {
+  sealed class ImportedFolderBase(path: String, internal val rank: Int) : Comparable<ImportedFolderBase> {
     val path: String = FileUtil.toCanonicalPath(path)
 
-    override fun compareTo(other: ImportedFolder): Int {
+    override fun compareTo(other: ImportedFolderBase): Int {
       val result = FileUtil.comparePaths(path, other.path)
       if (result != 0) return result
       return rank.compareTo(other.rank)
@@ -147,14 +151,16 @@ object ContentRootCollector {
     }
   }
 
+  abstract class ImportedFolder(path: String, rank: Int) : ImportedFolderBase(path, rank)
+
   abstract class UserOrGeneratedSourceFolder(path: String, val type: JpsModuleSourceRootType<*>, rank: Int) : ImportedFolder(path, rank) {
-    override fun compareTo(other: ImportedFolder): Int {
+    override fun compareTo(other: ImportedFolderBase): Int {
       val result = super.compareTo(other)
       if (result != 0 || other !is UserOrGeneratedSourceFolder) return result
       return rootTypeRank.compareTo(other.rootTypeRank)
     }
 
-    val rootTypeRank
+    val rootTypeRank: Int
       get() = when (type) {
         JavaSourceRootType.SOURCE -> 0
         JavaSourceRootType.TEST_SOURCE -> 1
@@ -169,7 +175,7 @@ object ContentRootCollector {
   }
 
   abstract class BaseExcludedFolder(path: String, rank: Int) : ImportedFolder(path, rank)
-  class ProjectRootFolder(path: String) : ImportedFolder(path, 0) {
+  class ProjectRootFolder(path: String) : ImportedFolderBase(path, 0) {
     override fun toString(): String {
       return "$path root"
     }
@@ -199,10 +205,10 @@ object ContentRootCollector {
   }
 
   class SourceFolderResult(val path: String, val type: JpsModuleSourceRootType<*>, val isGenerated: Boolean) {
-    override fun toString() = "$path ${if (isGenerated) "generated" else ""} rootType='${if (type.isForTests) "test" else "main"}  ${type.javaClass.simpleName}'"
+    override fun toString(): String = "$path ${if (isGenerated) "generated" else ""} rootType='${if (type.isForTests) "test" else "main"}  ${type.javaClass.simpleName}'"
   }
 
   class ExcludedFolderResult(val path: String) {
-    override fun toString() = path
+    override fun toString(): String = path
   }
 }
