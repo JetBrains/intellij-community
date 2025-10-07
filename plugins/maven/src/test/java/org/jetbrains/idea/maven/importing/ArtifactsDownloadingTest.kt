@@ -17,14 +17,37 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.testFramework.RunAll.Companion.runAll
+import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.Test
 import kotlin.io.path.exists
 
 class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
+
   override fun skipPluginResolution() = false
+
+  private var defaultDownloadSourcesPolicy: Boolean = true
+
+  override fun setUp() {
+    super.setUp()
+    defaultDownloadSourcesPolicy = MavenProjectsManager.getInstance(project).importingSettings.isDownloadSourcesAutomatically
+    MavenProjectsManager.getInstance(project).importingSettings.isDownloadSourcesAutomatically = false
+  }
+
+  override fun tearDown() {
+    runAll(
+      ThrowableRunnable<Throwable> {
+        MavenProjectsManager.getInstance(project).importingSettings.isDownloadSourcesAutomatically = defaultDownloadSourcesPolicy
+      },
+      ThrowableRunnable<Throwable> {
+        super.tearDown()
+      },
+    )
+  }
 
   @Test
   fun JavadocsAndSources() = runBlocking {

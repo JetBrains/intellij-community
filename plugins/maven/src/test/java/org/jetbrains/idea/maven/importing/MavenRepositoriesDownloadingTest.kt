@@ -12,6 +12,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
@@ -22,7 +23,6 @@ import java.net.URL
 import java.util.stream.Collectors
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.writeText
-
 
 class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   override fun skipPluginResolution() = false
@@ -89,10 +89,11 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    importProjectAsync(pom())
+    executeWithCustomDownloadSourcesPolicy(false) {
+      importProjectAsync(pom())
+    }
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isRegularFile())
-
   }
 
   @Test
@@ -113,7 +114,9 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     mavenImporterSettings.isDownloadSourcesAutomatically = true
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
-    importProjectAsync(pom())
+    executeWithCustomDownloadSourcesPolicy(true) {
+      importProjectAsync(pom())
+    }
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar").isRegularFile())
   }
@@ -402,6 +405,17 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
                          </pluginRepository>
                        </pluginRepositories>
                        """.trimIndent()
+
+  private suspend fun executeWithCustomDownloadSourcesPolicy(downloadSourcesByDefault: Boolean, fn: suspend () -> Unit) {
+    val settings = MavenProjectsManager.getInstance(project).importingSettings
+    val defaultValue = settings.isDownloadSourcesAutomatically
+    try {
+      settings.isDownloadSourcesAutomatically = downloadSourcesByDefault
+      fn()
+    } finally {
+      settings.isDownloadSourcesAutomatically = defaultValue
+    }
+  }
 
   companion object {
     private const val USERNAME = "myUsername"
