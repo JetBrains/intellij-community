@@ -11,6 +11,7 @@
     <extensionPoint qualifiedName="com.intellij.database.datagrid.valueEditorTab" interface="com.intellij.database.run.ui.ValueEditorTab" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.database.datagrid.cellViewerFactory" interface="com.intellij.database.run.ui.CellViewerFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.database.minimizedFormatDetector" interface="com.intellij.database.run.ui.MinimizedFormatDetector" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.database.datagrid.customToolbarProvider" interface="com.intellij.database.datagrid.CustomGridToolbarProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

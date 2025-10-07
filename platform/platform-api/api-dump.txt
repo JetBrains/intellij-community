@@ -51,7 +51,6 @@ com.intellij.ide.FrameStateListener
 - onFrameDeactivated():V
 - onFrameDeactivated(com.intellij.openapi.wm.IdeFrame):V
 c:com.intellij.ide.HelpTooltip
-- psf:INFO_COLOR:java.awt.Color
 - p:createIsOverTipMouseListener():java.awt.event.MouseListener
 - p:shouldForceHiding():Z
 pc:com.intellij.ide.HelpTooltip$OverTipMouseListener
