@@ -11,7 +11,7 @@ fun myFunction(param1: String, param2: String): String = linkToActual()
    
 jvm source root:
 ```kotlin
-@Actual("myFunction")
+@Actual
 fun myFunctionJvm(param1: String, param2: String): String {
   // JVM implementation
 }
@@ -19,7 +19,7 @@ fun myFunctionJvm(param1: String, param2: String): String {
 
 WasmJs source root:
 ```kotlin
-@Actual("myFunction")
+@Actual
 fun myFunctionWasmJs(param1: String, param2: String): String {
   // WasmJs implementation
 }

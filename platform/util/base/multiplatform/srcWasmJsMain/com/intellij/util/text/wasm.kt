@@ -6,7 +6,7 @@ import fleet.util.multiplatform.Actual
 /**
  * [com.intellij.util.text.fromSequenceWithoutCopyingPlatformSpecific]
  */
-@Actual("fromSequenceWithoutCopyingPlatformSpecific")
+@Actual
 internal fun fromSequenceWithoutCopyingPlatformSpecificWasmJs(seq: CharSequence?): CharArray? {
   return null
 }
@@ -14,7 +14,7 @@ internal fun fromSequenceWithoutCopyingPlatformSpecificWasmJs(seq: CharSequence?
 /**
  * [com.intellij.util.text.getCharsPlatformSpecific]
  */
-@Actual("getCharsPlatformSpecific")
+@Actual
 internal fun getCharsPlatformSpecificWasmJs(string: CharSequence, srcOffset: Int, dst: CharArray, dstOffset: Int, len: Int): Boolean {
   return false
 }

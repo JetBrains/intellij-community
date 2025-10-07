@@ -18,6 +18,6 @@ internal object ThreadLocalRegistryHolderJvm : RegistryHolder {
 /**
  * @see instantiateThreadLocalRegistry
  */
-@Actual("instantiateThreadLocalRegistry")
+@Actual
 internal fun instantiateThreadLocalRegistryJvm(): RegistryHolder =
   ThreadLocalRegistryHolderJvm

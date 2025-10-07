@@ -3,7 +3,7 @@ package com.intellij.util
 
 import fleet.util.multiplatform.Actual
 
-@Actual("threadLocalImpl")
+@Actual
 internal fun <T> threadLocalImplWasmJs(supplier: () -> T): ThreadLocalKmp<T> = threadLocal(supplier)
 
 private fun <T> threadLocal(supplier: () -> T) = object : ThreadLocalKmp<T> {

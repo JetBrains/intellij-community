@@ -11,7 +11,7 @@ import java.util.function.Supplier
  * see expect function [com.intellij.platform.syntax.i18n.ResourceBundle]
  */
 @Suppress("FunctionName", "unused")
-@Actual("ResourceBundle")
+@Actual
 internal fun ResourceBundleJvm(
   bundleClass: String,
   pathToBundle: String,
