@@ -27,18 +27,21 @@ internal fun findDependencyType(expression: KtCallExpression): DependencyType? {
         val symbol = expression.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
         if (symbol.callableId?.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return null
         val returnType = symbol.returnType.symbol?.classId?.asSingleFqName() ?: return null
-        if (returnType != FqName(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
-            && returnType != FqName(GRADLE_API_ARTIFACTS_DEPENDENCY)
-        ) return null
 
-        val parameters = symbol.valueParameters
-        if (parameters.isEmpty()) return DependencyType.OTHER
-        val firstParameter = parameters.first()
-        when (firstParameter.name.identifier) {
-            "group" -> return DependencyType.NAMED_ARGUMENTS
-            "dependencyNotation" -> return DependencyType.SINGLE_ARGUMENT
-            else -> return DependencyType.OTHER
+        if (returnType == FqName(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
+            || returnType == FqName(GRADLE_API_ARTIFACTS_DEPENDENCY)
+        ) {
+            when (symbol.valueParameters.firstOrNull()?.name?.identifier) {
+                "group" -> return DependencyType.NAMED_ARGUMENTS
+                "dependencyNotation" -> return DependencyType.SINGLE_ARGUMENT
+                else -> return DependencyType.OTHER
+            }
+        } else if (symbol.callableId?.callableName?.asString() == "invoke" && returnType == FqName("kotlin.Unit")) {
+            // customConf(libs.version.catalog.library) case
+            if (symbol.valueParameters.firstOrNull()?.name?.identifier == "dependency") return DependencyType.SINGLE_ARGUMENT
+            else DependencyType.OTHER
         }
+        return null
     }
 }
 

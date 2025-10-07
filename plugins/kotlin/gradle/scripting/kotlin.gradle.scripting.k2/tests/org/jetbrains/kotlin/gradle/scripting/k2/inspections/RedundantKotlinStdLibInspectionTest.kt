@@ -204,13 +204,45 @@ class RedundantKotlinStdLibInspectionTest : K2GradleCodeInsightTestCase() {
 
     @ParameterizedTest
     @BaseGradleVersionSource
-    fun testCustomConfiguration(gradleVersion: GradleVersion) {
+    fun testCustomConfigurationString(gradleVersion: GradleVersion) {
         runTest(gradleVersion, SAME_VERSION_FIXTURE) {
             testHighlighting(
                 """
                 plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
                 dependencies { 
                     <warning>"customConf"("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testCustomConfiguration(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val customConf by configurations.creating {}
+                dependencies { 
+                    <warning>customConf("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testCustomConfigurationVersionCatalog(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, SAME_VERSION_FIXTURE) {
+            testHighlighting(
+                """
+                plugins { id("org.jetbrains.kotlin.jvm").version("2.2.0") }
+                val customConf by configurations.creating {}
+                dependencies { 
+                    <warning>customConf(libs.kotlin.std.lib1)</warning>
                 }
                 """.trimIndent()
             )
