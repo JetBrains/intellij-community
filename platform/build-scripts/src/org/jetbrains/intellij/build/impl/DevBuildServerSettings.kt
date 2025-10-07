@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.intellij.openapi.application.PathManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import kotlin.io.path.exists
@@ -17,6 +18,7 @@ data class DevBuildServerSettings(
   val enabledForModules: List<String>,
   val disabledForModules: List<String>,
   val jvmArgs: List<String>,
+  val envs: List<String>,
 ) {
   companion object {
     private val runners: List<DevBuildServerSettings> by lazy {
@@ -36,6 +38,7 @@ data class DevBuildServerSettings(
           enabledForModules = it.path("enabledForModules").map(JsonNode::asText),
           disabledForModules = it.path("disabledForModules").map(JsonNode::asText),
           jvmArgs = it.path("jvmArgs").map(JsonNode::asText),
+          envs = it.path("envs").map(JsonNode::asText),
         )
       }
     }
@@ -61,9 +64,14 @@ data class DevBuildServerSettings(
 
   fun apply(mainClass: String, mainModule: String, args: MutableList<String>) {
     args.addAll(jvmArgs.map {
-      it.replace($$"$TEST_MODULE_NAME$", mainModule)
+      it.replace("${'$'}TEST_MODULE_NAME$", mainModule)
     })
     args.add("-Didea.dev.build.test.entry.point.class=$mainClass")
     args.add(this.mainClass)
+  }
+
+  fun parseEnvs(): Map<String, String> = envs.associate {
+    val (key, value) = it.split('=', limit = 2)
+    key to value.replace("${'$'}TEST_PROJECT_BASE_PATH$", PathManager.getHomeDir().toString())
   }
 }

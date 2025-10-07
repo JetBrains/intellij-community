@@ -1359,6 +1359,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     context.messages.info("Starting tests on runtime $runtime")
     val builder = ProcessBuilder(runtime, "@" + argFile.absolutePath)
     builder.environment().putAll(envVariables)
+    if (devBuildModeSettings != null)
+      builder.environment().putAll(devBuildModeSettings.parseEnvs())
     builder.inheritIO()
     val exitCode = builder.start().awaitExit()
     if (exitCode != 0 && exitCode != NO_TESTS_ERROR) {
