@@ -66,6 +66,7 @@ import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER;
 
 public final class InspectorWindow extends JDialog implements Disposable {
+  private static final JBColor HIGHLIGHT_COLOR = new JBColor(JBColor.GREEN, JBColor.RED);
   private InspectorTable myInspectorTable;
   private final @NotNull List<Component> myComponents = new ArrayList<>();
   private List<? extends PropertyBean> myInfo;
@@ -464,7 +465,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
       bounds = new Rectangle(pt.x, pt.y, component.getWidth(), component.getHeight());
     }
 
-    JBColor color = new JBColor(JBColor.GREEN, JBColor.RED);
+    JBColor color = HIGHLIGHT_COLOR;
     if (bounds.width == 0 || bounds.height == 0) {
       bounds.width = max(bounds.width, 1);
       bounds.height = max(bounds.height, 1);
@@ -484,6 +485,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   ) {
     var dimensionsComponent = new DimensionsComponent(component);
     dimensionsComponent.setForeground(new JPanel().getForeground());
+    dimensionsComponent.setBackground(ColorUtil.blendColorsInRgb(new JPanel().getBackground(), HIGHLIGHT_COLOR, 0.2));
     dimensionsComponent.setBounds(findBounds(highlighterBounds, glassPane, dimensionsComponent.getPreferredSize()));
     return dimensionsComponent;
   }
