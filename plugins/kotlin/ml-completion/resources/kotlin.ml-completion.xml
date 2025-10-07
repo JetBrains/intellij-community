@@ -9,7 +9,4 @@
     <completion.ml.elementFeatures language="kotlin" implementationClass="org.jetbrains.kotlin.idea.mlCompletion.KotlinElementFeatureProvider"/>
   </extensions>
 
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <experimentalFeature implementation="org.jetbrains.kotlin.idea.mlCompletion.MlCompletionForKotlinFeature"/>
-  </extensions>
 </idea-plugin>
