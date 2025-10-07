@@ -412,6 +412,8 @@ public class KotlinCompilerRunner implements CompilerRunner {
     arguments.setContextParameters(CLFlags.X_CONTEXT_PARAMETERS.isFlagSet(flags));
     arguments.setNoCallAssertions(CLFlags.X_NO_CALL_ASSERTIONS.isFlagSet(flags));
     arguments.setNoParamAssertions(CLFlags.X_NO_PARAM_ASSERTIONS.isFlagSet(flags));
+    arguments.setRenderInternalDiagnosticNames(CLFlags.X_RENDER_INTERNAL_DIAGNOSTIC_NAMES.isFlagSet(flags));
+    arguments.setReportAllWarnings(CLFlags.X_REPORT_ALL_WARNINGS.isFlagSet(flags));
     arguments.setSamConversions(CLFlags.X_SAM_CONVERSIONS.getOptionalScalarValue(flags));
     arguments.setConsistentDataClassCopyVisibility(CLFlags.X_CONSISTENT_DATA_CLASS_COPY_VISIBILITY.isFlagSet(flags));
     Iterable<String> friends = CLFlags.FRIENDS.getValue(flags);

@@ -1167,6 +1167,18 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
       options.put("x_no_param_assertions", true)
     }
   }
+  //x_render_internal_diagnostic_names
+  handleArgument(K2JVMCompilerArguments::renderInternalDiagnosticNames) {
+    if (it) {
+      options.put("x_render_internal_diagnostic_names", true)
+    }
+  }
+  //x_report_all_warnings
+  handleArgument(K2JVMCompilerArguments::reportAllWarnings) {
+    if (it) {
+      options.put("x_report_all_warnings", true)
+    }
+  }
   //x_sam_conversions
   handleArgument(K2JVMCompilerArguments::samConversions) { samConversions ->
     if (samConversions != null && samConversions != "indy") {
