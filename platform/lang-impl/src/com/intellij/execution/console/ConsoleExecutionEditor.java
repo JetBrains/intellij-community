@@ -7,11 +7,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -70,10 +72,19 @@ public final class ConsoleExecutionEditor implements Disposable {
     }
   };
 
+  private void setEditorHighlighter() {
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> {
+        EditorHighlighter highlighter = ReadAction.compute(() -> EditorHighlighterFactory.getInstance().createEditorHighlighter(
+          getVirtualFile(), myConsoleEditor.getColorsScheme(), getProject()));
+        ApplicationManager.getApplication().invokeLater(() -> myConsoleEditor.setHighlighter(highlighter));
+      }
+    );
+  }
+
   public void initComponent() {
     myConsoleEditor.setContextMenuGroupId(IdeActions.GROUP_CONSOLE_EDITOR_POPUP);
-    myConsoleEditor.setHighlighter(
-      EditorHighlighterFactory.getInstance().createEditorHighlighter(getVirtualFile(), myConsoleEditor.getColorsScheme(), getProject()));
+    setEditorHighlighter();
     myConsolePromptDecorator.update();
   }
 
