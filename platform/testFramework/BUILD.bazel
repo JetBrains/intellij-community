@@ -130,7 +130,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "//libraries/kotlinx/coroutines/slf4j",
-    "@lib//:http-client",
+    "//libraries/http-client",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",

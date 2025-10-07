@@ -47,7 +47,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "//platform/syntax/syntax-psi:psi",
     "//json/syntax",
     "//platform/syntax/syntax-util:util",

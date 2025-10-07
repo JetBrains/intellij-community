@@ -17,7 +17,7 @@
     <orderEntry type="library" name="lucene-highlighter" level="project" />
     <orderEntry type="library" name="lucene-queryparser" level="project" />
     <orderEntry type="library" name="lucene-suggest" level="project" />
-    <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jsoup" />
     <orderEntry type="library" name="jaxb-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" />

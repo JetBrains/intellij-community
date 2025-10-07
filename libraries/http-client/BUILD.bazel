@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.http.client` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "http-client_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "http-client",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":http-client_resources"],
+  exports = ["@lib//:http-client"],
+  runtime_deps = ["@lib//:http-client"]
+)
+### auto-generated section `build intellij.libraries.http.client` end

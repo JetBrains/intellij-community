@@ -33,7 +33,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "@lib//:opentelemetry-exporter-otlp-common",
-    "@lib//:hdr_histogram",
+    "//libraries/hdr-histogram",
     "//platform/diagnostic/telemetry",
     "//platform/core-impl",
     "//platform/util/http",

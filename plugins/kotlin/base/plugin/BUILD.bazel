@@ -60,7 +60,7 @@ jvm_library(
   associates = [":plugin"],
   deps = [
     "@lib//:jetbrains-annotations",
-    "@lib//:commons-compress",
+    "//libraries/commons/compress",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",

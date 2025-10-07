@@ -9,10 +9,10 @@ jvm_library(
   kotlinc_opts = "@community//:k17",
   deps = [
     "@lib//:jetbrains-annotations",
-    "@lib//:commons-compress",
+    "//libraries/commons/compress",
     "@lib//:tc_service_messages",
     "@lib//:zstd-jni",
-    "@lib//:commons-io",
+    "//libraries/commons/io",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:opentelemetry",

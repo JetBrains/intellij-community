@@ -31,7 +31,7 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
-    "@lib//:http-client",
+    "//libraries/http-client",
     "@lib//:kotlinx-collections-immutable",
     "//platform/testFramework/teamCity",
     "@lib//:hamcrest",

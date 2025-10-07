@@ -28,7 +28,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jetCheck" level="project" />
-    <orderEntry type="library" scope="TEST" name="commons-compress" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.compress" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />

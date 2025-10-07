@@ -1,6 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/essential-libs.xml"/>
-  <xi:include href="/META-INF/ktor-libs.xml"/>
+  <xi:include href="/META-INF/libs.xml"/>
 
   <content namespace="jetbrains">
     <module name="intellij.platform.settings.local"/>

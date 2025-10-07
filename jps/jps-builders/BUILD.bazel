@@ -42,16 +42,13 @@ jvm_library(
     "//libraries/hash4j",
     "@lib//:jetbrains-annotations",
     "//libraries/mvstore",
+    "//libraries/http-client",
     "@lib//:netty-jps-provided",
     "@lib//:maven-resolver-provider",
-    "@lib//:http-client",
     "@lib//:kotlin-metadata",
     "@lib//:kotlinx-coroutines-core",
   ],
-  exports = [
-    "@lib//:maven-resolver-provider",
-    "@lib//:http-client",
-  ],
+  exports = ["@lib//:maven-resolver-provider"],
   runtime_deps = [
     "//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8",
     "//java/java-runtime:rt",

@@ -50,7 +50,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/platform-impl:ide-impl",
     "//platform/indexing-impl",
-    "@lib//:jsoup",
+    "//libraries/jsoup",
     "//platform/util/jdom",
     "@lib//:jcef",
     "//platform/indexing-api:indexing",

@@ -11,7 +11,7 @@ jvm_library(
     "//platform/script-debugger/protocol/protocol-reader-runtime",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlin-stdlib",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
   ],
   exports = ["//platform/script-debugger/protocol/protocol-reader-runtime"]
 )

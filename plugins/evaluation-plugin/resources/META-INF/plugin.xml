@@ -45,6 +45,7 @@
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.platform.warmup"/>
+    <module name="intellij.libraries.commons.text"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

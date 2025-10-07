@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "//platform/analysis-api:analysis",
     "@lib//:kotlin-stdlib",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "@lib//:kotlin-test",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",

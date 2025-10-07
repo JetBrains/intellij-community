@@ -39,7 +39,7 @@ jvm_library(
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//plugins/properties/properties-psi-api:psi",
     "//platform/core-ui",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "//libraries/fastutil",
     "//libraries/asm",
     "//platform/util/jdom",

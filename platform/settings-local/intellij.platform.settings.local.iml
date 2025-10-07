@@ -69,7 +69,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="jackson-dataformat-yaml" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.dataformat.yaml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.util" />

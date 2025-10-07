@@ -38,8 +38,8 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:kotlin-stdlib",
     "//platform/diagnostic/telemetry/rt",
-    "@lib//:commons-lang3",
-    "@lib//:commons-io",
+    "//libraries/commons/lang3",
+    "//libraries/commons/io",
     "//libraries/guava",
     "//platform/util/trove",
   ],
@@ -89,7 +89,7 @@ jvm_library(
     "//plugins/gradle",
     "//libraries/guava",
     "//platform/util/trove",
-    "@lib//:commons-lang3",
+    "//libraries/commons/lang3",
   ]
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` end

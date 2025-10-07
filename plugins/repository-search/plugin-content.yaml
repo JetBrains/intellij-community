@@ -4,11 +4,6 @@
   - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-mvstore/0/kotlinx-document-store-mvstore-0.jar
   - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-core-jvm/0/kotlinx-document-store-core-jvm-0.jar
   reason: withProjectLibrary
-- name: lib/ktor-client-logging.jar
-  library: ktor-client-logging
-  files:
-  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3/ktor-client-logging-jvm-3.jar
-  reason: withProjectLibrary
 - name: lib/maven-model.jar
   modules:
   - name: intellij.maven.model

@@ -22,7 +22,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/analysis-impl",
     "//platform/core-ui",
-    "@lib//:jsoup",
+    "//libraries/jsoup",
     "//libraries/fastutil",
     "//libraries/jackson/jackson",
     "//libraries/jackson/databind",

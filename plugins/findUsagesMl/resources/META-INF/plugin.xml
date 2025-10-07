@@ -14,6 +14,7 @@
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.java"/>
     <module name="intellij.platform.ml.logs"/>
+    <module name="intellij.libraries.commons.text"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

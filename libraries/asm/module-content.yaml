@@ -1,6 +1,6 @@
 - name: <file>
   modules:
   - name: intellij.libraries.asm
-  library: ASM
-  files:
-  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/asm-all/9/asm-all-9.jar
+    libraries:
+      asm:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/asm-all/9/asm-all-9.jar

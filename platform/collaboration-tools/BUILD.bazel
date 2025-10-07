@@ -47,7 +47,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/credential-store-impl:credentialStore-impl",
     "//platform/dvcs-impl/shared",
-    "@lib//:http-client",
+    "//libraries/http-client",
     "//platform/vcs-impl/shared",
   ]
 )
@@ -104,7 +104,7 @@ jvm_library(
     "//platform/credential-store-impl:credentialStore-impl_test_lib",
     "//platform/dvcs-impl/shared",
     "//libraries/mockito",
-    "@lib//:http-client",
+    "//libraries/http-client",
     "@lib//:app-cash-turbine-jvm",
     "@lib//:assert_j",
     "//platform/vcs-impl/shared",

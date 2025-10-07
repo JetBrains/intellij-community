@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.commons.cli` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "cli_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "cli",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":cli_resources"],
+  exports = ["@lib//:commons-cli"],
+  runtime_deps = ["@lib//:commons-cli"]
+)
+### auto-generated section `build intellij.libraries.commons.cli` end

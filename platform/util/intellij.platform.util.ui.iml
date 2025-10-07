@@ -32,7 +32,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="imgscalr" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.imgscalr" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
@@ -44,7 +44,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
     <orderEntry type="library" name="jbr-api" level="project" />
-    <orderEntry type="library" name="jsvg" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jsvg" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />

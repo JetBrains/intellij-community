@@ -9,17 +9,17 @@ jvm_library(
   kotlinc_opts = "@community//:k11",
   deps = [
     "@lib//:jetbrains-annotations",
-    "@lib//:http-client",
-    "@lib//:commons-logging",
+    "//libraries/http-client",
+    "//libraries/commons/logging",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "@lib//:maven-resolver-provider",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-file",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-http",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
-    "@lib//:commons-lang3",
+    "//libraries/commons/lang3",
     "@lib//:plexus-utils",
-    "@lib//:commons-codec",
+    "//libraries/commons/codec",
     "//platform/util",
   ]
 )
@@ -32,8 +32,8 @@ jvm_library(
   associates = [":aether-dependency-resolver"],
   deps = [
     "@lib//:jetbrains-annotations",
-    "@lib//:http-client",
-    "@lib//:commons-logging",
+    "//libraries/http-client",
+    "//libraries/commons/logging",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "//platform/testFramework",
@@ -42,9 +42,9 @@ jvm_library(
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-file",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-http",
     "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
-    "@lib//:commons-lang3",
+    "//libraries/commons/lang3",
     "@lib//:plexus-utils",
-    "@lib//:commons-codec",
+    "//libraries/commons/codec",
     "//platform/util",
   ]
 )

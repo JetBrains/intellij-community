@@ -30,7 +30,7 @@ jvm_library(
     "//RegExpSupport:regexp",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
-    "@lib//:http-client",
+    "//libraries/http-client",
     "//platform/tasks-platform-impl:tasks-impl",
     "//platform/tasks-platform-api:tasks",
     "//plugins/tasks/tasks-compatibility:compatibility",

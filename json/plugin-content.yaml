@@ -5,10 +5,6 @@
 - name: lib/modules/intellij.json.backend.jar
   contentModules:
   - name: intellij.json.backend
-  library: jackson-dataformat-yaml
-  files:
-  - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2/jackson-dataformat-yaml-2.jar
-  reason: <- intellij.json.backend
 - name: lib/modules/intellij.json.backend.regexp.jar
   contentModules:
   - name: intellij.json.backend.regexp

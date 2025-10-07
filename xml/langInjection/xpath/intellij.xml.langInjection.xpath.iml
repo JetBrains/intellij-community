@@ -14,7 +14,7 @@
     <orderEntry type="module" module-name="intellij.xml.parser" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
-    <orderEntry type="library" name="Jaxen" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jaxen" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />

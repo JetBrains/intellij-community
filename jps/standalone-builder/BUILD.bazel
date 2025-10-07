@@ -12,7 +12,7 @@ jvm_library(
     "//jps/jps-builders:build",
     "//jps/model-api:model",
     "//platform/util",
-    "@lib//:cli-parser",
+    "//libraries/cli-parser",
     "//jps/model-serialization",
     "@community//build:build-javac-rt",
     "@lib//:protobuf",

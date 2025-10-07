@@ -28,7 +28,7 @@ jvm_library(
     "@lib//:jna",
     "@lib//:oro_matcher",
     "//libraries/lz4",
-    "@lib//:commons-compress",
+    "//libraries/commons/compress",
     "//libraries/fastutil",
     "@lib//:kotlin-stdlib",
     "//platform/util/base",
@@ -48,9 +48,9 @@ jvm_library(
     "//platform/util/multiplatform",
   ],
   runtime_deps = [
-    "@lib//:commons-io",
-    "@lib//:commons-codec",
-    "@lib//:commons-lang3",
+    "//libraries/commons/io",
+    "//libraries/commons/codec",
+    "//libraries/commons/lang3",
   ]
 )
 ### auto-generated section `build intellij.platform.util` end
@@ -100,7 +100,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/projectModel-impl",
     "@lib//:jet_check",
-    "@lib//:commons-compress",
+    "//libraries/commons/compress",
     "//libraries/guava",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -172,7 +172,7 @@ jvm_library(
   deps = [
     "@lib//:eawtstub-provided",
     "//platform/util",
-    "@lib//:imgscalr",
+    "//libraries/imgscalr",
     "@lib//:jna",
     "@lib//:java_compatibility",
     "@lib//:kotlin-stdlib",
@@ -184,7 +184,7 @@ jvm_library(
     "//platform/util/xmlDom",
     "//platform/util/zip",
     "@lib//:jbr-api",
-    "@lib//:jsvg",
+    "//libraries/jsvg",
     "//platform/util/rt-java8",
     "//libraries/hash4j",
     "@lib//:kotlinx-coroutines-core",

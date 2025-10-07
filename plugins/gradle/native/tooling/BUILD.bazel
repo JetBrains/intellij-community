@@ -30,7 +30,7 @@ jvm_library(
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "@lib//:gradle",
     "//platform/object-serializer:objectSerializer-annotations",
-    "@lib//:commons-lang3",
+    "//libraries/commons/lang3",
   ]
 )
 ### auto-generated section `build intellij.gradle.native.tooling` end

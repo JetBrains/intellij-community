@@ -21,7 +21,7 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
@@ -42,7 +42,7 @@ jvm_library(
   associates = [":impl"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",

@@ -29,11 +29,11 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/guava",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "//platform/util",
     "//libraries/fastutil",
     "//libraries/caffeine",
-    "@lib//:kryo5",
+    "//libraries/kryo5",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

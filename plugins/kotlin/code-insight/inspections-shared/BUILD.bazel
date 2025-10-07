@@ -29,7 +29,7 @@ jvm_library(
   kotlinc_opts = ":custom_kotlin-code-insight-inspections-shared",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api",

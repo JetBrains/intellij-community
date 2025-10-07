@@ -46,7 +46,7 @@ jvm_library(
     "//platform/lang-core",
     "//libraries/guava",
     "//platform/projectModel-api:projectModel",
-    "@lib//:jsoup",
+    "//libraries/jsoup",
     "//python/python-sdk:sdk",
     "//platform/util/jdom",
     "//platform/platform-impl:ide-impl",

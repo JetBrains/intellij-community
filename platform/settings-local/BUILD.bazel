@@ -80,7 +80,7 @@ jvm_library(
     "//platform/core-impl",
     "@lib//:platform-settings-local-jackson-dataformat-cbor",
     "//libraries/jackson/databind",
-    "@lib//:jackson-dataformat-yaml",
+    "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",
     "//platform/util/jdom",
     "//platform/util/xmlDom",
     "//platform/util",

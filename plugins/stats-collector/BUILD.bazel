@@ -21,7 +21,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/lang-impl",
     "//plugins/completion-ml-ranking",
-    "@lib//:http-client",
+    "//libraries/http-client",
     "//platform/platform-impl:ide-impl",
     "//libraries/guava",
     "//libraries/gson",

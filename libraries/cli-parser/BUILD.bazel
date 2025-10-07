@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.cli.parser` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "cli-parser_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "cli-parser",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":cli-parser_resources"],
+  exports = ["@lib//:libraries-cli-parser-cli-parser"],
+  runtime_deps = ["@lib//:libraries-cli-parser-cli-parser"]
+)
+### auto-generated section `build intellij.libraries.cli.parser` end

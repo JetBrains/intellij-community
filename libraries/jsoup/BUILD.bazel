@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.jsoup` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "jsoup_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jsoup",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":jsoup_resources"],
+  exports = ["@lib//:jsoup"],
+  runtime_deps = ["@lib//:jsoup"]
+)
+### auto-generated section `build intellij.libraries.jsoup` end

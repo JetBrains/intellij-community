@@ -22,7 +22,7 @@ jvm_library(
     "//python/openapi:community",
     "//python/python-sdk:sdk",
     "//platform/execution",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
   ]

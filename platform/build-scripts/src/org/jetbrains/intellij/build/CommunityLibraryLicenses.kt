@@ -146,7 +146,7 @@ object CommunityLibraryLicenses {
     LibraryLicense("AsciiDoc support for Visual Studio Code", version = "3.2.4", attachedTo = "intellij.textmate", url = "https://github.com/asciidoctor/asciidoctor-vscode")
       .mit("https://github.com/asciidoctor/asciidoctor-vscode/blob/master/README.md"),
 
-    LibraryLicense("ASM (JetBrains's fork)", libraryName = "ASM", url = "https://github.com/JetBrains/intellij-deps-asm")
+    LibraryLicense("ASM (JetBrains's fork)", libraryName = "asm", url = "https://github.com/JetBrains/intellij-deps-asm")
       .newBsd("https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS)
       .forkedFrom(
@@ -661,6 +661,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/jetCheck/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense("Jettison", libraryName = "jettison", url = "https://github.com/codehaus/jettison")
+      .apache("https://github.com/codehaus/jettison/blob/master/pom.xml")
+      .suppliedByOrganizations("The Jettison Team"),
+
     LibraryLicense("JGit (Settings Sync and SettingsRepo)", libraryName = "jetbrains.intellij.deps.eclipse.jgit", url = "https://www.eclipse.org/jgit/")
       .license("Eclipse Distribution License 1.0", "https://www.eclipse.org/org/documents/edl-v10.php")
       .suppliedByOrganizations(Suppliers.ECLIPSE),
@@ -1061,6 +1065,15 @@ object CommunityLibraryLicenses {
 
     LibraryLicense(libraryName = "opentest4j", url = "https://github.com/ota4j-team/opentest4j")
       .apache("https://github.com/ota4j-team/opentest4j/blob/master/LICENSE"),
+
+    LibraryLicense("org.eclipse.xtext.xbase", libraryName = "xtext-xbase", url = "https://github.com/eclipse/xtext-lib")
+      .eplV2("https://github.com/eclipse/xtext-lib/blob/master/LICENSE")
+      .suppliedByPersons(
+        "Sven Efftinge", "Sebastian Benz", "Lorenzo Bettini", "Arne Deutsch", "Christian Dietrich", "Moritz Eysholdt",
+        "Dennis Hübner", "Jan Köhnlein", "Anton Kosyakov", "Stefan Oehme", "Holger Schill", "Christian Schneider",
+        "Miro Spönemann", "Karsten Thoms", "Titouan Vervack", "Tamas Miklossy",
+        "Michael Clay", "Knut Wannheden", "Sebastian Zarnekow"
+      ),
 
     LibraryLicense("OverlayScrollbars", version = "2.1.1", attachedTo = "intellij.idea.community.main", url = "https://kingsora.github.io/OverlayScrollbars")
       .mit("https://github.com/KingSora/OverlayScrollbars/blob/master/LICENSE"),

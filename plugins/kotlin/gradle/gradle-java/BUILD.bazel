@@ -87,7 +87,7 @@ jvm_library(
     "//platform/backend/observation",
     "//plugins/kotlin/code-insight/utils",
     "@lib//:opentelemetry",
-    "@lib//:commons-lang3",
+    "//libraries/commons/lang3",
     "//plugins/kotlin/jvm-debugger/coroutines",
   ]
 )
@@ -171,7 +171,7 @@ jvm_library(
     "//platform/backend/observation:observation_test_lib",
     "//plugins/kotlin/code-insight/utils",
     "@lib//:opentelemetry",
-    "@lib//:commons-lang3",
+    "//libraries/commons/lang3",
     "//plugins/kotlin/jvm-debugger/coroutines",
   ]
 )

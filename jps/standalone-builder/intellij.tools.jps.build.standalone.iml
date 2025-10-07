@@ -27,7 +27,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="library" name="cli-parser" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.cli.parser" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" />
     <orderEntry type="library" name="protobuf" level="project" />

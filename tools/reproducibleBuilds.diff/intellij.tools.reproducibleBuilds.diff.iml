@@ -11,6 +11,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
-    <orderEntry type="library" scope="RUNTIME" name="commons-compress" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.compress" scope="RUNTIME" />
   </component>
 </module>

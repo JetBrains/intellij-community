@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.commons.compress
+  library: commons-compress
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1/commons-compress-1.jar

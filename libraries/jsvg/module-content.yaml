@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.jsvg
+  library: jsvg
+  files:
+  - name: $MAVEN_REPOSITORY$/com/github/weisj/jsvg/1/jsvg-1.jar

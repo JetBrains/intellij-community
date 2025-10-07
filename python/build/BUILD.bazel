@@ -23,7 +23,7 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//python/python-parser:parser",
     "//jps/model-api:model",
-    "@lib//:jsoup",
+    "//libraries/jsoup",
   ]
 )
 
@@ -53,7 +53,7 @@ jvm_library(
     "//python/python-sdk:sdk_test_lib",
     "//python/python-parser:parser",
     "//jps/model-api:model",
-    "@lib//:jsoup",
+    "//libraries/jsoup",
   ]
 )
 ### auto-generated section `build intellij.pycharm.community.build` end

@@ -14,9 +14,9 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-metadata",
     "@lib//:caffeine",
-    "@lib//:asm",
+    "@community//libraries/asm:asm",
     "@community//libraries/hash4j:hash4j",
-    "@lib//:fastutil-min",
+    "@community//libraries/fastutil:fastutil",
     "@lib//:kotlin-stdlib-provided",
   ]
 )

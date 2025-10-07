@@ -26,7 +26,7 @@ jvm_library(
     "//platform/core-impl",
     "@lib//:kotlin-stdlib",
     "//python/openapi:community",
-    "@lib//:jsoup",
+    "//libraries/jsoup",
     "//platform/indexing-impl",
     "@lib//:stream_ex",
     "//platform/projectModel-impl",

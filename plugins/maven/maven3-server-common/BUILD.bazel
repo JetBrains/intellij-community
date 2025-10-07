@@ -9,7 +9,7 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/maven-server-api:maven-server",
-    "@lib//:commons-logging",
+    "//libraries/commons/logging",
     "@lib//:maven-server-m3-common-org-sonatype-nexus-nexus-indexer-artifact-1-0-1-provided",
     "@lib//:maven-server-m3-common-org-sonatype-nexus-nexus-indexer-3-0-4-provided",
     "@lib//:maven-server-m3-common-org-apache-maven-shared-maven-dependency-tree-1-2-provided",

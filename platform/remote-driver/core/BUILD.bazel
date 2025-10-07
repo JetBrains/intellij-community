@@ -22,7 +22,7 @@ jvm_library(
     "//platform/util",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
-    "@lib//:commons-lang3",
+    "//libraries/commons/lang3",
   ]
 )
 ### auto-generated section `build intellij.driver.impl` end

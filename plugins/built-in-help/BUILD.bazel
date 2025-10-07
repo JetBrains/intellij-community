@@ -23,7 +23,7 @@ jvm_library(
     "@lib//:lucene-highlighter",
     "@lib//:lucene-queryparser",
     "@lib//:lucene-suggest",
-    "@lib//:jsoup",
+    "//libraries/jsoup",
     "@lib//:jaxb-api",
     "//platform/core-api:core",
     "//platform/credential-store",

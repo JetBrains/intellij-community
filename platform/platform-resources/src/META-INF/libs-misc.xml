@@ -1,0 +1,7 @@
+<idea-plugin>
+  <!-- all libs here must not be embedded, if it is embedded, it should be moved to libs-core.xml -->
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.javax.activation"/>
+    <module name="intellij.libraries.xml.rpc"/>
+  </content>
+</idea-plugin>

@@ -27,7 +27,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/remote-driver/model",
     "//platform/platform-api:ide",
-    "@lib//:jsoup",
+    "//libraries/jsoup",
     "//platform/remote-driver/core:driver-impl",
     "//platform/remote-driver/client",
     "@lib//:jcef",

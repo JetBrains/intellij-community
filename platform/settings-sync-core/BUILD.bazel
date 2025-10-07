@@ -80,7 +80,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinx-coroutines-core",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "//platform/util/progress",
     "//platform/lang-impl",
     "//platform/util/jdom",

@@ -29,7 +29,7 @@ jvm_library(
   kotlinc_opts = ":custom_kotlin-code-insight-inspections-k2",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fir",
     "@lib//:kotlinc-analysis-api",

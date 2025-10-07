@@ -35,7 +35,7 @@ jvm_library(
   runtime_deps = [
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
-    "@lib//:bouncy-castle-provider",
+    "//libraries/bouncy-castle-provider",
   ]
 )
 

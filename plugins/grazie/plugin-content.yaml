@@ -29,11 +29,6 @@
   module: intellij.grazie.core
   files:
   - name: $MAVEN_REPOSITORY$/com/vdurmont/emoji-java/5/emoji-java-5.jar
-- name: lib/commons-text.jar
-  library: commons-text
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar
-  reason: <- intellij.grazie.core
 - name: lib/grazie-frontend.jar
   contentModules:
   - name: intellij.libraries.ai.grazie.spell.gec.engine.local

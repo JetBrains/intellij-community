@@ -3,11 +3,6 @@
   files:
   - name: $MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3/clikt-jvm-3.jar
   reason: <- intellij.evaluationPlugin
-- name: lib/commons-text.jar
-  library: commons-text
-  files:
-  - name: $MAVEN_REPOSITORY$/org/apache/commons/commons-text/1/commons-text-1.jar
-  reason: <- intellij.evaluationPlugin.core
 - name: lib/evaluationPlugin.jar
   modules:
   - name: intellij.evaluationPlugin

@@ -49,7 +49,7 @@ jvm_library(
     "//platform/tasks-platform-impl:tasks-impl",
     "@lib//:easymock",
     "@lib//:objenesis",
-    "@lib//:http-client",
+    "//libraries/http-client",
     "@lib//:assert_j",
     "@lib//:stream_ex",
     "//platform/core-ui",

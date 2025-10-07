@@ -71,7 +71,7 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//libraries/hash4j",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "//libraries/kotlinx/serialization/core",
     "//platform/statistics/testFramework",
     "//xml/xml-psi-api:psi",

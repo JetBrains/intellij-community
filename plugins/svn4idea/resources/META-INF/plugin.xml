@@ -9,12 +9,15 @@
       Requires command line svn client.
       ]]>
   </description>
-  <depends>com.intellij.modules.vcs</depends>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.SvnBundle</resource-bundle>
 
-  <actions>
+  <dependencies>
+    <plugin id="com.intellij.modules.vcs"/>
+    <module name="intellij.libraries.javax.activation"/>
+  </dependencies>
 
+  <actions>
     <action id="Subversion.ImportToSVNRepository" class="org.jetbrains.idea.svn.actions.ImportToRepositoryAction">
       <add-to-group group-id="Vcs.Import"/>
       <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>

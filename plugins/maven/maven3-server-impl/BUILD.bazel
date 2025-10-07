@@ -18,7 +18,7 @@ jvm_library(
     "//plugins/maven-server-api:maven-server",
     "//plugins/maven/maven-server-telemetry:server-telemetry",
     "//plugins/maven/maven3-server-common:server-m3-common",
-    "@lib//:commons-logging",
+    "//libraries/commons/logging",
     "@lib//:maven-server-m3-impl-org-apache-maven-maven-compat-3-3-9-provided",
     "@lib//:maven-server-m3-impl-org-apache-maven-shared-maven-dependency-tree-1-2-provided",
     "@lib//:maven-server-m3-impl-org-apache-maven-maven-core-3-3-9-provided",

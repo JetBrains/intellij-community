@@ -726,13 +726,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "asm",
-  jar = "@org_jetbrains_intellij_deps-asm-all-9_6_1_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-asm-all-9_6_1_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "asm-tools",
   exports = [
@@ -839,27 +832,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "classgraph",
-  jar = "@io_github_classgraph-classgraph-4_8_181_http//file",
-  source_jar = "@io_github_classgraph-classgraph-4_8_181_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "cli-parser",
-  jar = "@com_github_spullara_cli-parser-cli-parser-1_1_6_http//file",
-  source_jar = "@com_github_spullara_cli-parser-cli-parser-1_1_6_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "cli-parser-provided",
-  exports = [":cli-parser"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "clikt",
   jar = "@com_github_ajalt_clikt-clikt-jvm-3_5_4_http//file",
   source_jar = "@com_github_ajalt_clikt-clikt-jvm-3_5_4_http//file",
@@ -961,13 +933,6 @@ jvm_import(
   name = "commons-logging",
   jar = "@commons-logging-commons-logging-1_2_http//file",
   source_jar = "@commons-logging-commons-logging-1_2_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "commons-text",
-  jar = "@org_apache_commons-commons-text-1_14_0_http//file",
-  source_jar = "@org_apache_commons-commons-text-1_14_0_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -2476,13 +2441,6 @@ jvm_import(
   name = "joda-time-joda-time-2_12_7_http_import",
   jar = "@joda-time-joda-time-2_12_7_http//file",
   source_jar = "@joda-time-joda-time-2_12_7_http//file"
-)
-
-jvm_import(
-  name = "jackson-jr-objects",
-  jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http//file",
-  source_jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http//file",
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -4154,13 +4112,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "ktor-client-auth",
-  jar = "@io_ktor-ktor-client-auth-jvm-3_1_3_http//file",
-  source_jar = "@io_ktor-ktor-client-auth-jvm-3_1_3_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "ktor-client-cio",
   exports = [
@@ -4259,13 +4210,6 @@ jvm_import(
   source_jar = "@io_ktor-ktor-network-tls-jvm-3_1_3_http//file"
 )
 
-jvm_import(
-  name = "ktor-client-content-negotiation",
-  jar = "@io_ktor-ktor-client-content-negotiation-jvm-3_1_3_http//file",
-  source_jar = "@io_ktor-ktor-client-content-negotiation-jvm-3_1_3_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "ktor-client-core",
   exports = [
@@ -4282,23 +4226,9 @@ java_library(
 )
 
 jvm_import(
-  name = "ktor-client-encoding",
-  jar = "@io_ktor-ktor-client-encoding-jvm-3_1_3_http//file",
-  source_jar = "@io_ktor-ktor-client-encoding-jvm-3_1_3_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "ktor-client-java",
   jar = "@io_ktor-ktor-client-java-jvm-3_1_3_http//file",
   source_jar = "@io_ktor-ktor-client-java-jvm-3_1_3_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "ktor-client-logging",
-  jar = "@io_ktor-ktor-client-logging-jvm-3_1_3_http//file",
-  source_jar = "@io_ktor-ktor-client-logging-jvm-3_1_3_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4532,9 +4462,30 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-asm-asm",
+  jar = "@org_jetbrains_intellij_deps-asm-all-9_6_1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-asm-all-9_6_1_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libraries-cglib-cglib",
   jar = "@cglib-cglib-nodep-3_3_0-nodep_http//file",
   source_jar = "@cglib-cglib-nodep-3_3_0-nodep_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-classgraph-classgraph",
+  jar = "@io_github_classgraph-classgraph-4_8_181_http//file",
+  source_jar = "@io_github_classgraph-classgraph-4_8_181_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-cli-parser-cli-parser",
+  jar = "@com_github_spullara_cli-parser-cli-parser-1_1_6_http//file",
+  source_jar = "@com_github_spullara_cli-parser-cli-parser-1_1_6_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4640,6 +4591,13 @@ jvm_import(
   name = "org_jetbrains_skiko-skiko-awt-0_9_4_http_import",
   jar = "@org_jetbrains_skiko-skiko-awt-0_9_4_http//file",
   source_jar = "@org_jetbrains_skiko-skiko-awt-0_9_4_http//file"
+)
+
+jvm_import(
+  name = "libraries-commons-text-commons-text",
+  jar = "@org_apache_commons-commons-text-1_14_0_http//file",
+  source_jar = "@org_apache_commons-commons-text-1_14_0_http//file",
+  visibility = ["//visibility:public"]
 )
 
 java_library(
@@ -5255,9 +5213,51 @@ jvm_import(
 )
 
 jvm_import(
+  name = "libraries-jackson-jr-objects-jackson-jr-objects",
+  jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http//file",
+  source_jar = "@com_fasterxml_jackson_jr-jackson-jr-objects-2_19_0_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-jettison-jettison",
+  jar = "@org_codehaus_jettison-jettison-1_5_4_http//file",
+  source_jar = "@org_codehaus_jettison-jettison-1_5_4_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "libraries-ktor-client-cio-ktor-client-cio-internal",
   jar = "@io_ktor-ktor-client-cio-jvm-3_1_3_http//file",
   source_jar = "@io_ktor-ktor-client-cio-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-ktor-client-ktor-client-auth",
+  jar = "@io_ktor-ktor-client-auth-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-client-auth-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-ktor-client-ktor-client-content-negotiation",
+  jar = "@io_ktor-ktor-client-content-negotiation-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-client-content-negotiation-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-ktor-client-ktor-client-encoding",
+  jar = "@io_ktor-ktor-client-encoding-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-client-encoding-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "libraries-ktor-client-ktor-client-logging",
+  jar = "@io_ktor-ktor-client-logging-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-client-logging-jvm-3_1_3_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9716,6 +9716,13 @@ jvm_import(
 jvm_import(
   name = "xslt-debugger-impl-rt-_xalan-2-7-3",
   jar = "@xalan-xalan-2_7_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "xtext-xbase",
+  jar = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0-_xbase_lib_http//file",
+  source_jar = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0-_xbase_lib_http//file",
   visibility = ["//visibility:public"]
 )
 

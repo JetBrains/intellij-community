@@ -16,7 +16,7 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "//plugins/maven-server-api:maven-server",
-    "@lib//:commons-logging",
+    "//libraries/commons/logging",
     "//plugins/maven/maven3-server-common:server-m3-common",
     "//plugins/maven/maven3-server-impl:server-m3-impl",
     "@lib//:maven-server-m36-impl-org-apache-maven-maven-compat-3-6-0-provided",

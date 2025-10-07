@@ -21,7 +21,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
-    <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity" />
     <orderEntry type="library" name="hamcrest" level="project" />

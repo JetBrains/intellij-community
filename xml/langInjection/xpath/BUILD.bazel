@@ -20,7 +20,7 @@ jvm_library(
     "//xml/xml-parser:parser",
     "@lib//:jetbrains-annotations",
     "//xml/xml-psi-api:psi",
-    "@lib//:jaxen",
+    "//libraries/jaxen",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/util",

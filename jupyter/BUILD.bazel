@@ -19,7 +19,7 @@ jvm_library(
     "//platform/core-impl",
     "//platform/built-in-server-api:builtInServer",
     "//platform/platform-util-netty:ide-util-netty",
-    "@lib//:http-client",
+    "//libraries/http-client",
     "//platform/util",
     "@lib//:netty-buffer",
     "@lib//:netty-codec-http",

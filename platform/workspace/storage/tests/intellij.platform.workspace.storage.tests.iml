@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="library" name="kotlin-test" level="project" />
-    <orderEntry type="library" name="Kryo5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kryo5" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
   </component>

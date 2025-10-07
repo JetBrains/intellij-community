@@ -71,7 +71,6 @@ import kotlin.io.path.invariantSeparatorsPathString
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
 private val libsUsedInJps = setOf(
-  "ASM",
   "netty-buffer",
   "netty-codec-http",
   "netty-codec-protobuf",
@@ -88,9 +87,6 @@ private val libsUsedInJps = setOf(
   // see ArtifactRepositoryManager.getClassesFromDependencies
   "plexus-utils",
   "http-client",
-  "commons-codec",
-  "commons-logging",
-  "commons-lang3",
   "kotlin-stdlib",
 )
 

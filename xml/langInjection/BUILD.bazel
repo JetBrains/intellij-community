@@ -29,7 +29,7 @@ jvm_library(
     "//RegExpSupport:regexp",
     "//xml/xml-psi-api:psi",
     "//platform/platform-api:ide",
-    "@lib//:jaxen",
+    "//libraries/jaxen",
     "//plugins/IntelliLang:langInjection",
     "//xml/xml-parser:parser",
     "//platform/core-ui",

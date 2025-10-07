@@ -35,7 +35,7 @@ jvm_library(
     "//platform/built-in-server:builtInServer-impl",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:jcef",
-    "@lib//:jsoup",
+    "//libraries/jsoup",
     "@lib//:netty-buffer",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",

@@ -16,10 +16,10 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//libraries/gson",
-    "@lib//:commons-compress",
+    "//libraries/commons/compress",
     "@lib//:kotlinx-html-jvm",
-    "@lib//:commons-lang3",
-    "@lib//:commons-text",
+    "//libraries/commons/lang3",
+    "//libraries/commons/text",
     "//platform/core-api:core",
     "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
     "//libraries/jackson/databind",

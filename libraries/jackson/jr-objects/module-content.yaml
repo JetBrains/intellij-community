@@ -1,6 +1,6 @@
 - name: <file>
   modules:
   - name: intellij.libraries.jackson.jr.objects
-  library: jackson-jr-objects
-  files:
-  - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2/jackson-jr-objects-2.jar
+    libraries:
+      jackson-jr-objects:
+      - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2/jackson-jr-objects-2.jar

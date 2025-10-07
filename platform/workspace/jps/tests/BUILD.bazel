@@ -37,7 +37,7 @@ jvm_library(
     "//platform/workspace/storage/tests:tests_test_lib",
     "@lib//:assert_j",
     "//platform/core-ui",
-    "@lib//:commons-lang3",
+    "//libraries/commons/lang3",
     "//platform/util/jdom",
     "//platform/workspace/storage/testEntities:testEntities_test_lib",
     "@lib//:kotlinx-coroutines-core",

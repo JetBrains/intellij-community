@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="xtext-xbase" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.eclipse.xtext:org.eclipse.xtext.xbase.lib:2.40.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2.40.0/org.eclipse.xtext.xbase.lib-2.40.0.jar">
+          <sha256sum>5a810154295fc20a0268cae4cbbc6e5a35a8b32480d8727dc8301910524e4b79</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2.40.0/org.eclipse.xtext.xbase.lib-2.40.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2.40.0/org.eclipse.xtext.xbase.lib-2.40.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

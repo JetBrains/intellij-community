@@ -19,7 +19,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/util/jdom",
     "//platform/statistics",
-    "@lib//:hdr_histogram",
+    "//libraries/hdr-histogram",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

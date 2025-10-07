@@ -14,7 +14,7 @@ jvm_library(
   resources = [":detekt-compose-rules_resources"],
   runtime_deps = [
     "@lib//:libraries-detekt-compose-rules-io-nlopez-compose-rules-detekt",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
   ]
 )
 ### auto-generated section `build intellij.libraries.detekt.compose.rules` end

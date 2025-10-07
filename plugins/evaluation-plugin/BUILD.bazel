@@ -38,7 +38,7 @@ jvm_library(
     "//platform/ml-api:ml",
     "@lib//:clikt",
     "//libraries/gson",
-    "@lib//:commons-text",
+    "//libraries/commons/text",
     "//platform/warmup",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",

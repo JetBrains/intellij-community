@@ -214,7 +214,6 @@ object CommunityRepositoryModules {
     plugin("intellij.repository.search") { spec ->
       spec.withModule("intellij.maven.model", relativeJarPath = "maven-model.jar")
       spec.withProjectLibrary("package-search-api-client")
-      spec.withProjectLibrary("ktor-client-logging")
       spec.withProjectLibrary("kotlinx-document-store-mvstore")
     },
     pluginAuto("intellij.java.jshell") { spec ->

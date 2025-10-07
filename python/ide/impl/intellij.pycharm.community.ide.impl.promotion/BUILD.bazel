@@ -24,7 +24,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/statistics",
-    "@lib//:http-client",
+    "//libraries/http-client",
     "//platform/core-ui",
     "//python/ide/customization.shared",
   ]

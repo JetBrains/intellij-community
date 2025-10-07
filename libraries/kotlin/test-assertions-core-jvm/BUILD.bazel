@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.libraries.kotlinTestAssertionsCoreJvm` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "libraries-kotlinTestAssertionsCoreJvm_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "libraries-kotlinTestAssertionsCoreJvm",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":libraries-kotlinTestAssertionsCoreJvm_resources"],
+  exports = ["@lib//:kotlin-test-assertions-core-jvm"],
+  runtime_deps = ["@lib//:kotlin-test-assertions-core-jvm"]
+)
+### auto-generated section `build intellij.libraries.kotlinTestAssertionsCoreJvm` end

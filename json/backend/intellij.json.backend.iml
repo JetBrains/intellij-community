@@ -39,7 +39,7 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
     <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="library" name="jackson-dataformat-yaml" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.dataformat.yaml" />
     <orderEntry type="library" name="jetbrains.markdown" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="library" name="StreamEx" level="project" />

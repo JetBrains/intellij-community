@@ -36,7 +36,7 @@ jvm_library(
     "@lib//:jetbrains-intellij-deps-eclipse-jgit",
     ":platform_util_xmlDom_provided",
   ],
-  runtime_deps = ["@lib//:commons-imaging"]
+  runtime_deps = ["//libraries/commons/imaging"]
 )
 
 jvm_library(

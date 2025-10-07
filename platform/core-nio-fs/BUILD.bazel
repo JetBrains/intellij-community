@@ -38,7 +38,7 @@ jvm_library(
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
     "@lib//:junit5",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test-assertions-core-jvm",
     "//libraries/mockito",

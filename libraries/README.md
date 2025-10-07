@@ -62,9 +62,9 @@ File: `resources/intellij.libraries.example.lib.xml`
 
 ### 4. Register in Essential Libraries
 
-The library module must be added to essential-libs.xml.
+The library module must be added to libs-core.xml.
 
-File: `community/platform/platform-resources/src/META-INF/essential-libs.xml`
+File: `community/platform/platform-resources/src/META-INF/libs-core.xml`
 
 ```xml
 <module name="intellij.libraries.example.lib" loading="embedded"/>

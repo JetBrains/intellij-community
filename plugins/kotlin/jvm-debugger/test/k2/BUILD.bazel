@@ -37,7 +37,7 @@ jvm_library(
     "//platform/core-ui",
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",
-    "//libraries/kotlin-reflect",
+    "//libraries/kotlin/reflect",
     "@lib//:kotlin-test",
     "//libraries/asm",
     "//platform/core-api:core",

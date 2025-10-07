@@ -12,7 +12,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":libraries-jackson-jr-objects_resources"],
-  exports = ["@lib//:jackson-jr-objects"],
-  runtime_deps = ["@lib//:jackson-jr-objects"]
+  exports = ["@lib//:libraries-jackson-jr-objects-jackson-jr-objects"],
+  runtime_deps = ["@lib//:libraries-jackson-jr-objects-jackson-jr-objects"]
 )
 ### auto-generated section `build intellij.libraries.jackson.jr.objects` end

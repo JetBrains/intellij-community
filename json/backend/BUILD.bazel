@@ -43,7 +43,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//libraries/jackson/databind",
     "//libraries/jackson/jackson",
-    "@lib//:jackson-dataformat-yaml",
+    "//libraries/jackson/dataformat-yaml:libraries-jackson-dataformat-yaml",
     "@lib//:jetbrains-markdown",
     "//libraries/caffeine",
     "@lib//:stream_ex",

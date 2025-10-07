@@ -15,7 +15,7 @@ jvm_library(
   resources = [":launcher-generator_resources"],
   deps = [
     "//platform/util/jdom",
-    "@lib//:commons-imaging",
+    "//libraries/commons/imaging",
   ]
 )
 ### auto-generated section `build intellij.tools.launcherGenerator` end

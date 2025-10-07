@@ -18,6 +18,6 @@ jvm_library(
     "//platform/util",
     "//libraries/gson",
   ],
-  runtime_deps = ["@lib//:commons-compress"]
+  runtime_deps = ["//libraries/commons/compress"]
 )
 ### auto-generated section `build intellij.tools.reproducibleBuilds.diff` end

@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.jaxen
+  library: Jaxen
+  files:
+  - name: $MAVEN_REPOSITORY$/jaxen/jaxen/1/jaxen-1.jar

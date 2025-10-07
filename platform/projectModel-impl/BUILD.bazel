@@ -30,7 +30,7 @@ jvm_library(
     "//libraries/fastutil",
     "//libraries/guava",
     "//platform/util/jdom",
-    "@lib//:kryo5",
+    "//libraries/kryo5",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",

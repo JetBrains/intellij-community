@@ -35,7 +35,7 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
   }
 
   @Override
-  public Iterable<? extends ScopeToolState> getTools(Tools tools) {
+  public Iterable<ScopeToolState> getTools(Tools tools) {
     return Collections.singletonList(tools.getDefaultState());
   }
 
@@ -79,7 +79,7 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
     }
   }
 
-  @SuppressWarnings({"UnusedAssignment"})
+  @SuppressWarnings("UnusedAssignment")
   private @Nullable Map<String, Set<OfflineProblemDescriptor>> getFilteredContent(@NotNull GlobalInspectionContextImpl context,
                                                                                   @NotNull InspectionToolWrapper toolWrapper) {
     Map<String, Set<OfflineProblemDescriptor>> content = myContent.get(toolWrapper.getShortName());
@@ -128,9 +128,9 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
 
   @Override
   protected void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
-                                  final @NotNull InspectionToolWrapper toolWrapper,
-                                  final @NotNull RefEntityContainer container,
-                                  final @NotNull InspectionTreeNode parent) {
+                                  @NotNull InspectionToolWrapper toolWrapper,
+                                  @NotNull RefEntityContainer container,
+                                  @NotNull InspectionTreeNode parent) {
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     InspectionTreeModel model = context.getView().getTree().getInspectionTreeModel();
     for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {

@@ -85,6 +85,6 @@
     <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.trove" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="commons-lang3" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="TEST" />
   </component>
 </module>

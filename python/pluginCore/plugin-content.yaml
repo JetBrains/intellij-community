@@ -39,10 +39,6 @@
   - name: intellij.python.community.impl.installer
 - name: lib/modules/intellij.python.community.impl.jar
   projectLibraries:
-  - name: jackson-dataformat-yaml
-    files:
-    - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2/jackson-dataformat-yaml-2.jar
-    reason: <- intellij.python.community.impl
   - name: jsr305
     files:
     - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
