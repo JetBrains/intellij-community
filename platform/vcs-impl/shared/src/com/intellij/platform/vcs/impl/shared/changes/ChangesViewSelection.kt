@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.FilePathDto
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.JBIterable
@@ -14,6 +15,9 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
+/**
+ * Note that only changes from change lists can be currently restored
+ */
 @ApiStatus.Internal
 @Serializable
 data class ChangesViewSelection(
@@ -28,7 +32,7 @@ data class ChangesViewSelection(
   @Serializable
   data class PathSelection(
     val filePath: FilePathDto,
-    val isChangeNode: Boolean,
+    val changeId: ChangeId?,
     val exactlySelected: Boolean,
   )
 
@@ -50,7 +54,7 @@ data class ChangesViewSelection(
             val exactlySelected = tree.isPathSelected(TreePath(node.path))
             selectedPaths.add(PathSelection(
               filePath = convertToDto(filePath),
-              isChangeNode = userObject is Change,
+              changeId = (userObject as? Change)?.let { ChangeId.getId(it) },
               exactlySelected = exactlySelected,
             ))
           }
