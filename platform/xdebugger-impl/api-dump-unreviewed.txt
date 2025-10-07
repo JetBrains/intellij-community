@@ -492,7 +492,6 @@ f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - setModel(javax.swing.ListModel):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
-- f:createDefault(Z):com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 - f:getTHREADS_LIST():com.intellij.openapi.actionSystem.DataKey
 c:com.intellij.xdebugger.impl.frame.XStandaloneVariablesView
 - com.intellij.xdebugger.impl.frame.XVariablesViewBase

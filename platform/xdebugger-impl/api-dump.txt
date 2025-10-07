@@ -43,6 +43,8 @@ c:com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 - sessionStopped():V
 com.intellij.xdebugger.impl.frame.XDebuggerFramesList$ItemWithCustomBackgroundColor
 - a:getBackgroundColor():java.awt.Color
+f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
+- f:createDefault():com.intellij.xdebugger.impl.frame.XDebuggerThreadsList
 f:com.intellij.xdebugger.impl.frame.XFramesAsyncPresentationHandler
 - <init>(com.intellij.xdebugger.impl.frame.XDebuggerFramesList,kotlinx.coroutines.CoroutineScope):V
 - f:clear():V
