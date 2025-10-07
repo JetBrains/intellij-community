@@ -4,6 +4,8 @@ package com.intellij.openapi.application.impl
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.rw.PlatformReadWriteActionSupport
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -20,9 +22,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import java.awt.Component
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
@@ -778,5 +784,80 @@ class BackgroundWriteActionTest {
         }
       }
     }
+  }
+
+  @Suppress("ControlFlowWithEmptyBody")
+  @ParameterizedTest()
+  @ValueSource(booleans = [true, false])
+  fun `no deadlock because of AWT lock on top of read action`(isPlainWrite: Boolean) = concurrencyTest() {
+    val awtLock = (object : Component() {}).treeLock
+    launch(Dispatchers.UiWithModelAccess) {
+      synchronized(awtLock) {
+        checkpoint(1)
+        checkpoint(5)
+        while (!ApplicationManagerEx.getApplicationEx().isWriteActionPending) {
+        }
+        Thread.sleep(1)
+        runReadAction {
+          checkpoint(6)
+        }
+      }
+    }
+    launch(Dispatchers.Default) {
+      readAction {
+        checkpoint(2)
+        while (!ApplicationManagerEx.getApplicationEx().isWriteActionPending) {
+        }
+        Thread.sleep(1)
+        checkpoint(4)
+        synchronized(awtLock) {
+          checkpoint(7)
+        }
+      }
+    }
+    launch(Dispatchers.Default) {
+      checkpoint(3)
+      if (isPlainWrite) {
+        backgroundWriteAction {
+          checkpoint(8)
+        }
+      } else {
+        readAndBackgroundWriteAction {
+          writeAction {
+            checkpoint(8)
+          }
+        }
+      }
+    }
+    checkpoint(9)
+  }
+
+  @ParameterizedTest()
+  @ValueSource(booleans = [true, false])
+  fun `write action cannot be executed multiple times when retried`(isPlainWrite: Boolean) = timeoutRunBlocking {
+    val service = application.service<ReadWriteActionSupport>()
+    Assumptions.assumeTrue { service is PlatformReadWriteActionSupport }
+    service as PlatformReadWriteActionSupport
+    repeat(if (isPlainWrite) 1000 else 500) {
+      launch(Dispatchers.Default) {
+        val counter = AtomicInteger(0)
+        if (isPlainWrite) {
+          backgroundWriteAction {
+            assertEquals(0, counter.getAndIncrement())
+          }
+        } else {
+          readAndBackgroundWriteAction {
+            writeAction {
+              assertEquals(0, counter.getAndIncrement())
+            }
+          }
+        }
+      }
+
+      launch(Dispatchers.Default) {
+        service.signalWriteActionNeedsToBeRetried()
+      }
+    }
+
   }
 }

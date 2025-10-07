@@ -15,18 +15,27 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ObjectUtils
 import com.intellij.util.application
+import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
+import java.util.concurrent.CancellationException
 import kotlin.io.path.writeText
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
-internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
+@VisibleForTesting
+@ApiStatus.Internal
+class PlatformReadWriteActionSupport : ReadWriteActionSupport {
 
   private val retryMarker: Any = ObjectUtils.sentinel("rw action")
 
@@ -109,18 +118,29 @@ internal class PlatformReadWriteActionSupport : ReadWriteActionSupport {
   private suspend fun <T> executeWriteActionOnBackgroundWithAtomicCheck(lock: ThreadingSupport, originalStamp: Long, action: () -> T): /*T or retryMarker */ Any? {
     val dispatcher = Dispatchers.Default
     val ref = withContext(dispatcher + InternalThreading.RunInBackgroundWriteActionMarker) {
-      lock.runWriteActionWithCheckInWriteIntent(
-        {
-          val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter()
-          return@runWriteActionWithCheckInWriteIntent originalStamp == writeStamp
-        }, {
-          // ref because we want to handle nullable T
-          // if only we had union types in Kotlin...
-          Ref(action())
-        })
+      executeWriteActionWithPossibleRetry {
+        lock.runWriteActionWithCheckInWriteIntent(
+          {
+            val writeStamp = AsyncExecutionServiceImpl.getWriteActionCounter()
+            return@runWriteActionWithCheckInWriteIntent originalStamp == writeStamp
+          }, {
+            // ref because we want to handle nullable T
+            // if only we had union types in Kotlin...
+            Ref(action())
+          })
+      }
     }
     return if (ref == null) retryMarker else ref.get()
   }
+
+  fun signalWriteActionNeedsToBeRetried() {
+    val exception = WriteActionNeedsToBeRetriedException()
+    publishedBackgroundWriteActionJobs.forEach {
+      it.cancel(exception)
+    }
+  }
+
+  private val publishedBackgroundWriteActionJobs = ContainerUtil.newConcurrentSet<Job>()
 
   override suspend fun <T> runWriteAction(action: () -> T): T {
     val context = if (useBackgroundWriteAction) {
@@ -158,9 +178,12 @@ ${dump.rawDump}""")
         if (useBackgroundWriteAction && useTrueSuspensionForWriteAction && lock != null) {
           InternalThreading.incrementBackgroundWriteActionCount()
           try {
-            lock.runWriteAction(action)
-          }
-          finally {
+            executeWriteActionWithPossibleRetry {
+              lock.runWriteAction {
+                action()
+              }
+            }
+          } finally {
             InternalThreading.decrementBackgroundWriteActionCount()
           }
         }
@@ -174,4 +197,34 @@ ${dump.rawDump}""")
       }
     }
   }
+
+  private suspend  fun <T> executeWriteActionWithPossibleRetry(action: suspend () -> T): T {
+    val result = Ref<T>()
+    var resultSet = false
+    while (true) {
+      try {
+        coroutineScope {
+          val thisJob = coroutineContext.job
+          thisJob.invokeOnCompletion { publishedBackgroundWriteActionJobs.remove(thisJob) }
+          publishedBackgroundWriteActionJobs.add(thisJob)
+          result.set(action())
+          // we get WriteActionNeedsToBeRetried on exit of `coroutineScope`
+          // so we record information that the computation finished successfully and do not retry on cancellation
+          resultSet = true
+        }
+        break
+      } catch (_: WriteActionNeedsToBeRetriedException) {
+        if (resultSet) {
+          return result.get()
+        } else {
+          continue
+        }
+      } catch (e : Throwable) {
+        throw e
+      }
+    }
+    return result.get()
+  }
+
+  class WriteActionNeedsToBeRetriedException : CancellationException()
 }

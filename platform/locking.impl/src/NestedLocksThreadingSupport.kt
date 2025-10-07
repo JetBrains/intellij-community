@@ -1014,11 +1014,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  private suspend inline fun <T> proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState: ComputationState, writeIntentInitResult: PreparatoryWriteIntent, action: () -> T): T {
+  private suspend inline fun <T> proceedWithSuspendWriteLockAcquisitionFromWriteIntent(computationState: ComputationState, writeIntentInitResult: PreparatoryWriteIntent, crossinline action: () -> T): T {
     try {
       val writeInitResult = prepareWriteFromWriteIntentSuspending(computationState, writeIntentInitResult)
-      return writeInitResult.applyThreadLocalActions().use {
-        action()
+      return withContext(NonCancellable) {
+        writeInitResult.applyThreadLocalActions().use {
+          action()
+        }
       }
     }
     finally {
