@@ -872,11 +872,16 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     (e1, e2) -> {
       List<? extends HighlightInfo> infos1 = highlights.get(e1);
       List<? extends HighlightInfo> infos2 = highlights.get(e2);
-      if ((infos1 == null) != (infos2 == null)) {
-        return infos1 == null ? 1 : -1; // put fertile element first
-      }
-      if (infos1 == null) {
-        return Integer.compare(System.identityHashCode(e1), System.identityHashCode(e2)); // for consistency
+      if (infos1 == null || infos2 == null) {
+        if (infos1 != null) { // put fertile element first
+          return -1;
+        }
+        else if (infos2 != null) {
+          return 1;
+        }
+        else {
+          return Integer.compare(System.identityHashCode(e1), System.identityHashCode(e2)); // for consistency
+        }
       }
       // put error-generating element first
       return maxSeverity(infos2).compareTo(maxSeverity(infos1));
