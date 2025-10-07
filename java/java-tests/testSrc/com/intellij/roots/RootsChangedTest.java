@@ -247,13 +247,8 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
       ProjectRootManager.getInstance(myProject).setProjectSdk(jdkBBB);
 
-      if (Registry.is("project.root.manager.over.wsm")) {
-        // don't care if there are references from modules to project SDK or not: change in the "project sdk" always generates events
-        myModuleRootListener.assertEventsCount(1);
-      }
-      else {
-        myModuleRootListener.assertNoEvents(true);
-      }
+      // don't care if there are references from modules to project SDK or not: change in the "project sdk" always generates events
+      myModuleRootListener.assertEventsCount(1);
 
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();

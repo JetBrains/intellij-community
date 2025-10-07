@@ -1813,8 +1813,6 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter"/>
 
-    <initProjectActivity implementation="com.intellij.openapi.roots.impl.ProjectRootManagerInitProjectActivity"/>
-
     <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.internal.DumpPluginDescriptorsOnProjectOpenTrigger"/>

@@ -114,10 +114,6 @@ class JpsProjectSaveAllEntitiesTest {
     projectData.serializers.saveAllEntities(projectData.storage, projectData.configLocation)
     val componentsToIgnore = mutableListOf("CompilerConfiguration", "Encoding")
     val filesToIgnore = mutableSetOf(".idea/encodings.xml", ".idea/compiler.xml", ".idea/.name")
-    if (!Registry.`is`("project.root.manager.over.wsm")) {
-      componentsToIgnore.add("ProjectRootManager")
-      filesToIgnore.add(".idea/misc.xml")
-    }
     assertDirectoryMatches(projectData.projectDir, projectData.originalProjectDir,
                            filesToIgnore,
                            componentsToIgnore)

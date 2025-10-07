@@ -1,12 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.HandledByWSM
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.module.Module
@@ -18,9 +16,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
-import com.intellij.openapi.startup.InitProjectActivity
-import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
@@ -36,9 +31,6 @@ import com.intellij.workspaceModel.ide.WsmProjectSettingsEntityUtils
 import com.intellij.workspaceModel.ide.WsmSingletonEntityUtils
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -47,9 +39,6 @@ import java.util.concurrent.ConcurrentHashMap
 private val LOG = logger<ProjectRootManagerImpl>()
 
 private val EP_NAME = ProjectExtensionPointName<ProjectExtension>("com.intellij.projectExtension")
-private const val PROJECT_JDK_NAME_ATTR = "project-jdk-name"
-private const val PROJECT_JDK_TYPE_ATTR = "project-jdk-type"
-private const val ATTRIBUTE_VERSION = "version"
 
 @State(name = "ProjectRootManager")
 @ApiStatus.Internal
@@ -58,118 +47,8 @@ open class ProjectRootManagerImpl(
   @JvmField protected val coroutineScope: CoroutineScope,
 ) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
 
-  private class ProjectRootManagerStateComponentImpl(
-    private val notifyAll: () -> Unit,
-    private val notifyExtensionsOnly: suspend (Sdk?) -> Unit,
-  ) {
-
-    var projectSdkName: String? = null
-    var projectSdkType: String? = null
-    private var isStateLoaded = false
-
-    @Volatile
-    var shouldFireRootsChanged: Ref<Boolean>? = null
-
-    fun loadState(element: Element, project: Project, coroutineScope: CoroutineScope) {
-      LOG.debug("Loading state into element")
-      var stateChanged = false
-      for (extension in EP_NAME.getExtensions(project)) {
-        stateChanged = stateChanged or extension.readExternalElement(element)
-      }
-
-      val oldSdkName = projectSdkName
-      val oldSdkType = projectSdkType
-      projectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR)
-      projectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR)
-      if (oldSdkName != projectSdkName) stateChanged = true
-      if (oldSdkType != projectSdkType) stateChanged = true
-      val app = ApplicationManager.getApplication()
-      LOG.debug { "ProjectRootManagerImpl state was changed: $stateChanged" }
-      if (app != null) {
-        val isStateLoaded = isStateLoaded
-        if (stateChanged) {
-          if (!project.isInitialized) {
-            shouldFireRootsChanged = Ref.create(isStateLoaded)
-          }
-          else {
-            coroutineScope.launch {
-              // make sure we execute it only after any current modality dialog
-              withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-              }
-              applyState(isStateLoaded)
-            }
-          }
-        }
-      }
-      isStateLoaded = true
-    }
-
-    fun noStateLoaded() {
-      isStateLoaded = true
-    }
-
-    fun getState(project: Project): Element {
-      val element = Element("state")
-      element.setAttribute(ATTRIBUTE_VERSION, "2")
-      for (extension in EP_NAME.getExtensions(project)) {
-        extension.writeExternal(element)
-      }
-      if (projectSdkName != null) {
-        element.setAttribute(PROJECT_JDK_NAME_ATTR, projectSdkName)
-      }
-      if (projectSdkType != null) {
-        element.setAttribute(PROJECT_JDK_TYPE_ATTR, projectSdkType)
-      }
-      if (element.attributes.size == 1) {
-        // remove an empty element to not write defaults
-        element.removeAttribute(ATTRIBUTE_VERSION)
-      }
-      return element
-    }
-
-    suspend fun applyState(isStateLoaded: Boolean) {
-      if (isStateLoaded) {
-        LOG.debug("Run write action for projectJdkChanged()")
-        backgroundWriteAction {
-          notifyAll()
-        }
-        return
-      }
-
-      // prevent root changed event during startup to improve startup performance
-      val projectSdkName = projectSdkName
-      val sdk = if (projectSdkName == null) {
-        null
-      }
-      else {
-        val projectJdkTable = serviceAsync<ProjectJdkTable>()
-        readActionBlocking {
-          if (projectSdkType == null) {
-            projectJdkTable.findJdk(projectSdkName)
-          }
-          else {
-            projectJdkTable.findJdk(projectSdkName, projectSdkType!!)
-          }
-        }
-      }
-
-      notifyExtensionsOnly(sdk)
-    }
-
-    suspend fun initProjectActivity(){
-      val oldShouldFireRootsChanged = shouldFireRootsChanged?.get() ?: return
-      shouldFireRootsChanged = null
-      applyState(oldShouldFireRootsChanged)
-    }
-  }
-
   private val projectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener::class.java)
   private val moduleRootManagerInstances = ConcurrentHashMap<Module, ModuleRootManager>()
-
-  // This field is not used when useWsm set to `true`
-  private val stateComponent = ProjectRootManagerStateComponentImpl(this::projectJdkChanged, this::notifyExtensions)
-
-  protected val useWsm: Boolean = Registry.`is`("project.root.manager.over.wsm", true)
 
   private val rootCache: OrderRootsCache
 
@@ -181,16 +60,10 @@ open class ProjectRootManagerImpl(
         val currentName = projectSdkName
         if (previousName == currentName) {
           // if already had jdk name and that name was the name of the jdk just changed
-          if (useWsm) {
-            project.workspaceModel.updateProjectModel("jdkNameChanged") { mutableStorage ->
-              WsmProjectSettingsEntityUtils.addOrModifyProjectSettingsEntity(project, mutableStorage) { entity ->
-                entity.projectSdk = SdkId(jdk.getName(), jdk.getSdkType().getName())
-              }
+          project.workspaceModel.updateProjectModel("jdkNameChanged") { mutableStorage ->
+            WsmProjectSettingsEntityUtils.addOrModifyProjectSettingsEntity(project, mutableStorage) { entity ->
+              entity.projectSdk = SdkId(jdk.getName(), jdk.getSdkType().getName())
             }
-          }
-          else {
-            stateComponent.projectSdkName = jdk.getName()
-            stateComponent.projectSdkType = jdk.getSdkType().getName()
           }
         }
       }
@@ -416,24 +289,14 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   override fun getProjectSdkName(): String? {
-    return if (useWsm) {
-      val settings = WsmSingletonEntityUtils.getSingleEntity(project.workspaceModel.currentSnapshot, ProjectSettingsEntity::class.java)
-      settings?.projectSdk?.name
-    }
-    else {
-      stateComponent.projectSdkName
-    }
+    val settings = WsmSingletonEntityUtils.getSingleEntity(project.workspaceModel.currentSnapshot, ProjectSettingsEntity::class.java)
+    return settings?.projectSdk?.name
   }
 
   @ApiStatus.Internal
   override fun getProjectSdkTypeName(): String? {
-    return if (useWsm) {
-      val settings = WsmSingletonEntityUtils.getSingleEntity(project.workspaceModel.currentSnapshot, ProjectSettingsEntity::class.java)
-      settings?.projectSdk?.type
-    }
-    else {
-      stateComponent.projectSdkType
-    }
+    val settings = WsmSingletonEntityUtils.getSingleEntity(project.workspaceModel.currentSnapshot, ProjectSettingsEntity::class.java)
+    return settings?.projectSdk?.type
   }
 
   @ApiStatus.Internal
@@ -449,14 +312,9 @@ open class ProjectRootManagerImpl(
 
   fun projectJdkChanged() {
     incModificationCount()
-    if (useWsm) {
-      // There is no mergeRootsChangesDuring because currently it has a bug: "after" event will never fire if mergeRootsChangesDuring
-      // is invoked while another rootsChange event (caused by the WSM change) is in progress (see RootsChangedTest).
-      actionToRunWhenProjectJdkChanges.run()
-    }
-    else {
-      mergeRootsChangesDuring(actionToRunWhenProjectJdkChanges)
-    }
+    // There is no mergeRootsChangesDuring because currently it has a bug: "after" event will never fire if mergeRootsChangesDuring
+    // is invoked while another rootsChange event (caused by the WSM change) is in progress (see RootsChangedTest).
+    actionToRunWhenProjectJdkChanges.run()
     fireJdkChanged()
   }
 
@@ -464,16 +322,6 @@ open class ProjectRootManagerImpl(
     val sdk = getProjectSdk()
     for (extension in EP_NAME.getExtensions(project)) {
       extension.projectSdkChanged(sdk)
-    }
-  }
-
-  private suspend fun notifyExtensions(sdk: Sdk?){
-    LOG.debug("Run write action for extension.projectSdkChanged(sdk)")
-    val extensions = EP_NAME.getExtensions(project)
-    backgroundWriteAction {
-      for (extension in extensions) {
-        extension.projectSdkChanged(sdk)
-      }
     }
   }
 
@@ -488,21 +336,12 @@ open class ProjectRootManagerImpl(
   }
 
   private fun setOrClearProjectSdkName(name: String?, sdkTypeName: String?) {
-    if (useWsm) {
-      ThreadingAssertions.assertWriteAccess()
-      val newSdk = if (name != null && sdkTypeName != null) SdkId(name, sdkTypeName) else null
-      project.workspaceModel.updateProjectModel("setOrClearProjectSdkName") { mutableStorage ->
-        WsmProjectSettingsEntityUtils.addOrModifyProjectSettingsEntity(project, mutableStorage) { entity ->
-          entity.projectSdk = newSdk
-        }
+    ThreadingAssertions.assertWriteAccess()
+    val newSdk = if (name != null && sdkTypeName != null) SdkId(name, sdkTypeName) else null
+    project.workspaceModel.updateProjectModel("setOrClearProjectSdkName") { mutableStorage ->
+      WsmProjectSettingsEntityUtils.addOrModifyProjectSettingsEntity(project, mutableStorage) { entity ->
+        entity.projectSdk = newSdk
       }
-      // projectJdkChanged will be invoked via WSM change listener
-    }
-    else {
-      LOG.assertTrue((name == null) == (sdkTypeName == null), "Sdk name and type should both be null or not-null")
-      stateComponent.projectSdkName = name
-      stateComponent.projectSdkType = sdkTypeName
-      projectJdkChanged()
     }
   }
 
@@ -512,30 +351,6 @@ open class ProjectRootManagerImpl(
 
   override fun removeProjectJdkListener(listener: ProjectJdkListener) {
     projectJdkEventDispatcher.removeListener(listener)
-  }
-
-  @ApiStatus.Internal
-  override fun loadState(element: Element) {
-    if (!useWsm) {
-      stateComponent.loadState(element, project, coroutineScope)
-    }
-  }
-
-  @ApiStatus.Internal
-  override fun noStateLoaded() {
-    if (!useWsm) {
-      stateComponent.noStateLoaded()
-    }
-  }
-
-  @ApiStatus.Internal
-  override fun getState(): Element? {
-    return if (useWsm) {
-      HandledByWSM
-    }
-    else {
-      stateComponent.getState(project)
-    }
   }
 
   @ApiStatus.Internal
@@ -607,6 +422,15 @@ open class ProjectRootManagerImpl(
   }
 
   @ApiStatus.Internal
+  override fun loadState(element: Element) {
+  }
+
+  @ApiStatus.Internal
+  override fun getState(): Element? {
+    return HandledByWSM
+  }
+
+  @ApiStatus.Internal
   var isFiringEvent: Boolean = false
     protected set
 
@@ -645,17 +469,4 @@ open class ProjectRootManagerImpl(
 
   @ApiStatus.Internal
   override fun markRootsForRefresh(): List<VirtualFile> = emptyList()
-
-  suspend fun initProjectActivity() {
-    if (!useWsm) {
-      stateComponent.initProjectActivity()
-    }
-  }
-}
-
-private class ProjectRootManagerInitProjectActivity : InitProjectActivity {
-  override suspend fun run(project: Project) {
-    val projectRootManager = project.serviceAsync<ProjectRootManager>() as? ProjectRootManagerImpl ?: return
-    projectRootManager.initProjectActivity()
-  }
 }

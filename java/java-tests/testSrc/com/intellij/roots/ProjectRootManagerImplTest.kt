@@ -6,7 +6,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.writeText
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
@@ -72,12 +71,6 @@ class ProjectRootManagerImplTest {
 
       waitUntil {
         "corretto-17" == ProjectRootManagerEx.getInstanceEx(project).projectSdkName
-      }
-
-      if (!Registry.`is`("project.root.manager.over.wsm")) {
-        // In legacy mode, ProjectJdkListener will be invoked in WA, but not the same WA where the change occurred.
-        // Wait for yet another WA to occur.
-        awaitWriteActions()
       }
 
       Assertions.assertThat(count).hasValue(1)

@@ -11,7 +11,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.pom.java.JavaRelease;
 import com.intellij.pom.java.LanguageLevel;
@@ -19,12 +18,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import kotlin.Unit;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-
-import java.util.Objects;
 
 /**
  * @author anna
@@ -36,16 +32,10 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   ) {
   }
 
-  private static final String LANGUAGE_LEVEL = "languageLevel";
-  private static final String DEFAULT_ATTRIBUTE = "default";
   private static final Logger LOG = Logger.getInstance(LanguageLevelProjectExtensionImpl.class);
 
-  private final boolean useWsm = Registry.is("project.root.manager.over.wsm", true);
   private final Project myProject;
   private LanguageLevel myCurrentLevel;
-
-  // This field is not used when useWsm set to `true`
-  private @NotNull LanguageLevelExtensionState myLanguageLevelState = new LanguageLevelExtensionState(null, null);
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
@@ -53,21 +43,6 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
 
   public static LanguageLevelProjectExtensionImpl getInstanceImpl(Project project) {
     return (LanguageLevelProjectExtensionImpl)getInstance(project);
-  }
-
-  /**
-   * Returns true if the state was changed after read
-   */
-  private boolean readExternal(final Element element) {
-    Logger.getInstance(LanguageLevelProjectExtensionImpl.class).assertTrue(!useWsm, "Should read state from WSM");
-    String level = element.getAttributeValue(LANGUAGE_LEVEL);
-    LanguageLevel languageLevelOldValue = myLanguageLevelState.myLanguageLevel;
-    LanguageLevel languageLevelNewValue = readLanguageLevel(level);
-    String defaultNewValueStr = element.getAttributeValue(DEFAULT_ATTRIBUTE);
-    Boolean defaultOldValue = myLanguageLevelState.myDefault;
-    Boolean defaultNewValue = defaultNewValueStr != null ? Boolean.parseBoolean(defaultNewValueStr) : null;
-    myLanguageLevelState = new LanguageLevelExtensionState(languageLevelNewValue, defaultNewValue);
-    return !Objects.equals(defaultOldValue, defaultNewValue) || languageLevelOldValue != languageLevelNewValue;
   }
 
   private static @Nullable LanguageLevel readLanguageLevel(@Nullable String level) {
@@ -81,18 +56,6 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
     }
     else {
       return null;
-    }
-  }
-
-  private void writeExternal(final Element element) {
-    Logger.getInstance(LanguageLevelProjectExtensionImpl.class).assertTrue(!useWsm, "Should write state to WSM");
-    if (myLanguageLevelState.myLanguageLevel != null) {
-      element.setAttribute(LANGUAGE_LEVEL, myLanguageLevelState.myLanguageLevel.name());
-    }
-
-    Boolean aBoolean = myLanguageLevelState.myDefault;
-    if (aBoolean != null && aBoolean != myProject.isDefault()) { // do not write default 'true' for default project
-      element.setAttribute(DEFAULT_ATTRIBUTE, Boolean.toString(aBoolean));
     }
   }
 
@@ -124,38 +87,28 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
 
   @RequiresWriteLock(generateAssertion = false)
   private void setLanguageLevelInternal(@Nullable LanguageLevel languageLevel, @Nullable Boolean isDefault) {
-    if (useWsm) {
-      ThreadingAssertions.assertWriteAccess();
+    ThreadingAssertions.assertWriteAccess();
 
-      WorkspaceModel workspaceModel = WorkspaceModel.getInstance(myProject);
-      workspaceModel.updateProjectModel("setLanguageLevelInternal", mutableStorage -> {
-        JavaEntitiesWsmUtils.addOrModifyJavaProjectSettingsEntity(myProject, mutableStorage, entity -> {
-          var ll = languageLevel != null ? languageLevel.name() : null;
-          entity.setLanguageLevelId(ll);
-          entity.setLanguageLevelDefault(isDefault);
-        });
-        return Unit.INSTANCE;
+    WorkspaceModel workspaceModel = WorkspaceModel.getInstance(myProject);
+    workspaceModel.updateProjectModel("setLanguageLevelInternal", mutableStorage -> {
+      JavaEntitiesWsmUtils.addOrModifyJavaProjectSettingsEntity(myProject, mutableStorage, entity -> {
+        var ll = languageLevel != null ? languageLevel.name() : null;
+        entity.setLanguageLevelId(ll);
+        entity.setLanguageLevelDefault(isDefault);
       });
-    }
-    else {
-      myLanguageLevelState = new LanguageLevelExtensionState(languageLevel, isDefault);
-    }
+      return Unit.INSTANCE;
+    });
   }
 
   private @NotNull LanguageLevelExtensionState getLanguageLevelInternal() {
-    if (useWsm) {
-      JavaProjectSettingsEntity entity = JavaEntitiesWsmUtils.getSingleEntity(WorkspaceModel.getInstance(myProject).getCurrentSnapshot(), JavaProjectSettingsEntity.class);
+    JavaProjectSettingsEntity entity = JavaEntitiesWsmUtils.getSingleEntity(WorkspaceModel.getInstance(myProject).getCurrentSnapshot(), JavaProjectSettingsEntity.class);
 
-      if (entity != null) {
-        LanguageLevel llParsed = readLanguageLevel(entity.getLanguageLevelId());
-        return new LanguageLevelExtensionState(llParsed, entity.getLanguageLevelDefault());
-      }
-      else {
-        return new LanguageLevelExtensionState(null, null);
-      }
+    if (entity != null) {
+      LanguageLevel llParsed = readLanguageLevel(entity.getLanguageLevelId());
+      return new LanguageLevelExtensionState(llParsed, entity.getLanguageLevelDefault());
     }
     else {
-      return myLanguageLevelState;
+      return new LanguageLevelExtensionState(null, null);
     }
   }
 
@@ -218,16 +171,6 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
 
     MyProjectExtension(@NotNull Project project) {
       myInstance = ((LanguageLevelProjectExtensionImpl)getInstance(project));
-    }
-
-    @Override
-    public boolean readExternalElement(@NotNull Element element) {
-      return myInstance.readExternal(element);
-    }
-
-    @Override
-    public void writeExternal(@NotNull Element element) {
-      myInstance.writeExternal(element);
     }
 
     @Override

@@ -1554,7 +1554,6 @@
     <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
     <diff.DiffExtension implementation="com.intellij.refactoring.extractMethod.preview.ExtractMethodDiffViewerCustomizer"/>
-    <projectExtension id="compiler" implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
     <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
     <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
     <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>

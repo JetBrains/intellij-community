@@ -29,17 +29,6 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
   private val moduleDependencyIndex
     get() = ModuleDependencyIndex.getInstance(project)
 
-  override val actionToRunWhenProjectJdkChanges: Runnable
-    get() {
-      return Runnable {
-        super.actionToRunWhenProjectJdkChanges.run()
-        if (!useWsm && moduleDependencyIndex.hasProjectSdkDependency()) {
-          val info = BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk().buildInfo()
-          fireRootsChanged(info)
-        }
-      }
-    }
-
   override fun getOrderRootsCache(project: Project): OrderRootsCache {
     return OrderRootsCacheBridge(project, project)
   }

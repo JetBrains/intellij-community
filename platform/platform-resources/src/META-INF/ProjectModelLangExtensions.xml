@@ -125,8 +125,6 @@
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
     <registryKey key="psi.vfs.listener.over.wsm" defaultValue="true" restartRequired="true"
                  description="Use WSM listeners to invalidate PSI caches (new) in addition to legacy ModuleRootListener"/>
-    <registryKey key="project.root.manager.over.wsm" defaultValue="true" restartRequired="true"
-                 description="Use WSM to hold project settings (java language level, project sdk, compiler outputs)"/>
 
     <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
   </extensions>

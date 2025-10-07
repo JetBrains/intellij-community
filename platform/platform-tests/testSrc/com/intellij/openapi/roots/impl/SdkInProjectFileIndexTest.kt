@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_LIBRARY
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.IN_SOURCE
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.NOT_IN_PROJECT
 import com.intellij.openapi.roots.impl.ProjectFileIndexScopes.assertScope
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
@@ -31,8 +30,7 @@ import kotlin.test.assertEquals
 @RunInEdt(writeIntent = true)
 class SdkInProjectFileIndexTest {
 
-  private val useWsmForProjectSdk = Registry.`is`("project.root.manager.over.wsm")
-  private val unreferencedProjectSdkScope = if (useWsmForProjectSdk) IN_LIBRARY else NOT_IN_PROJECT
+  private val unreferencedProjectSdkScope = IN_LIBRARY
 
   @JvmField
   @RegisterExtension

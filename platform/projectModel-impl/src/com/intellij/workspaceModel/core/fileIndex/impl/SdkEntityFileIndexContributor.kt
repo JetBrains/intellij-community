@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkId
@@ -14,8 +13,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
 
 class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, PlatformInternalWorkspaceFileIndexContributor {
 
-  private val useWsmForProjectSdk: Boolean = Registry.`is`("project.root.manager.over.wsm", true)
-
   override val entityClass: Class<SdkEntity>
     get() = SdkEntity::class.java
 
@@ -23,7 +20,7 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
     val compiledRootsData: WorkspaceFileSetData
     val sourceRootFileSetData: WorkspaceFileSetData
 
-    if (useWsmForProjectSdk && isProjectSdk(entity, storage)) {
+    if (isProjectSdk(entity, storage)) {
       compiledRootsData = SdkRootFileSetData(entity.symbolicId)
       sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId)
     }

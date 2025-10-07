@@ -2,8 +2,6 @@
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.JavaProjectSettingsEntity
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
@@ -51,9 +49,6 @@ class ProjectSettingsSerializer(
     errorReporter: ErrorReporter,
     virtualFileManager: VirtualFileUrlManager,
   ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity.Builder<out WorkspaceEntity>>>> = loadEntitiesTimeMs.addMeasuredTime {
-    if (!Registry.`is`("project.root.manager.over.wsm", true)) {
-      return@addMeasuredTime LoadingResult(emptyMap())
-    }
 
     val projectRootManager = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, TAG_PROJECT_ROOT_MANAGER) }
       .getOrElse { return@addMeasuredTime LoadingResult(emptyMap(), it) }
@@ -102,13 +97,6 @@ class ProjectSettingsSerializer(
     storage: EntityStorage,
     writer: JpsFileContentWriter,
   ): Unit = saveEntitiesTimeMs.addMeasuredTime {
-    if (!Registry.`is`("project.root.manager.over.wsm", true)) {
-      thisLogger().error( // severity error because we don't expect these entities to exist in the first place
-        "ProjectSettingsEntity and JavaProjectSettingsEntity will not be saved, because registry flag " +
-        "`project.root.manager.over.wsm` is false"
-      )
-      return@addMeasuredTime
-    }
 
     val projectSettingsEntity = mainEntities.firstOrNull()
     if (projectSettingsEntity == null) return@addMeasuredTime

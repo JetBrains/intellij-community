@@ -10,16 +10,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.WatchedRootsProvider;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
@@ -27,70 +24,35 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import kotlin.Unit;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 final class CompilerProjectExtensionImpl extends CompilerProjectExtension implements Disposable {
-  private static final String OUTPUT_TAG = "output";
-  private static final String URL = "url";
   private static final Logger LOG = Logger.getInstance(CompilerProjectExtensionImpl.class);
 
-  // This field is not used when useWsm set to `true`
-  private VirtualFilePointer myCompilerOutput;
 
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
   private final Project project;
-  private final boolean useWsm = Registry.is("project.root.manager.over.wsm", true);
 
   CompilerProjectExtensionImpl(@NotNull Project project) {
     this.project = project;
   }
 
-  /**
-   * Returns true if the compiler output was changed after read
-   */
-  private boolean readExternal(@NotNull Element element) {
-    Element pathElement = element.getChild(OUTPUT_TAG);
-    if (pathElement != null) {
-      String outputPath = pathElement.getAttributeValue(URL);
-      VirtualFilePointer oldValue = myCompilerOutput;
-      myCompilerOutput = outputPath != null ? VirtualFilePointerManager.getInstance().create(outputPath, this, null) : null;
-
-      return !Objects.equals(
-        oldValue != null ? oldValue.getUrl() : null,
-        myCompilerOutput != null ? myCompilerOutput.getUrl() : null
-      );
-    }
-    return false;
-  }
-
-  private void writeExternal(@NotNull Element element) {
-    if (myCompilerOutput != null) {
-      Element pathElement = new Element(OUTPUT_TAG);
-      pathElement.setAttribute(URL, myCompilerOutput.getUrl());
-      element.addContent(pathElement);
-    }
-  }
 
   @Override
   public void dispose() {
-    myCompilerOutput = null;
   }
 
   private @Nullable VirtualFileUrl getCompilerOutputWSM() {
-    LOG.assertTrue(useWsm, "This code does should not be used when project.root.manager.over.wsm is false");
     JavaProjectSettingsEntity entity = JavaEntitiesWsmUtils.getSingleEntity(WorkspaceModel.getInstance(project).getCurrentSnapshot(), JavaProjectSettingsEntity.class);
     return entity != null ? entity.getCompilerOutput() : null;
   }
 
   @RequiresWriteLock
   private void setCompilerOutputWSM(@Nullable String fileUrl) {
-    LOG.assertTrue(useWsm, "This code does should not be used when project.root.manager.over.wsm is false");
     ThreadingAssertions.assertWriteAccess();
 
     WorkspaceModel workspaceModel = WorkspaceModel.getInstance(project);
@@ -106,42 +68,27 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
 
   @Override
   public VirtualFile getCompilerOutput() {
-    if (useWsm) {
-      VirtualFileUrl fileUrl = getCompilerOutputWSM();
-      return fileUrl != null ? VirtualFileUrls.getVirtualFile(fileUrl) : null;
-    }
-    else {
-      return myCompilerOutput != null ? myCompilerOutput.getFile() : null;
-    }
+    VirtualFileUrl fileUrl = getCompilerOutputWSM();
+    return fileUrl != null ? VirtualFileUrls.getVirtualFile(fileUrl) : null;
   }
 
   @Override
   public String getCompilerOutputUrl() {
-    if (useWsm) {
-      VirtualFileUrl fileUrl = getCompilerOutputWSM();
-      return fileUrl != null ? fileUrl.getUrl() : null;
-    }
-    else {
-      return myCompilerOutput != null ? myCompilerOutput.getUrl() : null;
-    }
+    VirtualFileUrl fileUrl = getCompilerOutputWSM();
+    return fileUrl != null ? fileUrl.getUrl() : null;
   }
 
   @Override
   public @Nullable VirtualFilePointer getCompilerOutputPointer() {
-    if (useWsm) {
-      VirtualFileUrl fileUrl = getCompilerOutputWSM();
-      if (fileUrl == null) {
-        return null;
-      }
-      else if (fileUrl instanceof VirtualFilePointer virtualFilePointer) {
-        return virtualFilePointer;
-      }
-      else {
-        return new LightFilePointer(fileUrl.getUrl());
-      }
+    VirtualFileUrl fileUrl = getCompilerOutputWSM();
+    if (fileUrl == null) {
+      return null;
+    }
+    else if (fileUrl instanceof VirtualFilePointer virtualFilePointer) {
+      return virtualFilePointer;
     }
     else {
-      return myCompilerOutput;
+      return new LightFilePointer(fileUrl.getUrl());
     }
   }
 
@@ -152,12 +99,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
                    "Compiler outputs may only be updated under write action. " +
                    "This method is deprecated. Please consider using `setCompilerOutputUrl` instead.");
 
-    if (useWsm) {
-      setCompilerOutputWSM(pointer != null ? pointer.getUrl() : null);
-    }
-    else {
-      myCompilerOutput = pointer;
-    }
+    setCompilerOutputWSM(pointer != null ? pointer.getUrl() : null);
   }
 
   @Override
@@ -173,13 +115,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     else {
       // TODO ANK (Maybe): maybe we should remove old compilerOutputUrl from watched roots? (keep in mind that there might be
       //  some other code which has added exactly the same root to the watch roots)
-      if (useWsm) {
-        setCompilerOutputWSM(compilerOutputUrl);
-      }
-      else {
-        VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, this, null);
-        setCompilerOutputPointer(pointer);
-      }
+      setCompilerOutputWSM(compilerOutputUrl);
       String path = VfsUtilCore.urlToPath(compilerOutputUrl);
       myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
     }
@@ -212,28 +148,6 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
     }
 
     return rootsToWatch;
-  }
-
-  private static CompilerProjectExtensionImpl getImpl(Project project) {
-    return (CompilerProjectExtensionImpl)CompilerProjectExtension.getInstance(project);
-  }
-
-  static final class MyProjectExtension extends ProjectExtension {
-    private final Project myProject;
-
-    MyProjectExtension(Project project) {
-      myProject = project;
-    }
-
-    @Override
-    public boolean readExternalElement(@NotNull Element element) {
-      return getImpl(myProject).readExternal(element);
-    }
-
-    @Override
-    public void writeExternal(@NotNull Element element) {
-      getImpl(myProject).writeExternal(element);
-    }
   }
 
   static final class MyWatchedRootsProvider implements WatchedRootsProvider {
