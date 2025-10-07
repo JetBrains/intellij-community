@@ -421,7 +421,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     if (myIsHighlighted) {
       for (Component component : myComponents) {
-        ContainerUtil.addIfNotNull(myHighlightComponents, createHighlighter(component, null));
+        createHighlighter(component, null);
       }
       if (myInfo != null) {
         Rectangle bounds = null;
@@ -431,15 +431,25 @@ public final class InspectorWindow extends JDialog implements Disposable {
             break;
           }
         }
-        ContainerUtil.addIfNotNull(myHighlightComponents, createHighlighter(myInitialComponent, bounds));
+        createHighlighter(myInitialComponent, bounds);
       }
     }
   }
 
-  private static @Nullable JComponent createHighlighter(@NotNull Component component, @Nullable Rectangle bounds) {
+  private void createHighlighter(@NotNull Component component, @Nullable Rectangle bounds) {
     JComponent glassPane = getGlassPane(component);
-    if (glassPane == null) return null;
+    if (glassPane == null) return;
 
+    var highlightComponent = createHighlightComponent(component, bounds, glassPane);
+
+    glassPane.add(highlightComponent);
+    glassPane.revalidate();
+    glassPane.repaint();
+
+    ContainerUtil.addIfNotNull(myHighlightComponents, highlightComponent);
+  }
+
+  private static @NotNull HighlightComponent createHighlightComponent(@NotNull Component component, @Nullable Rectangle bounds, JComponent glassPane) {
     if (bounds != null) {
       bounds = SwingUtilities.convertRectangle(component, bounds, glassPane);
     }
@@ -458,11 +468,6 @@ public final class InspectorWindow extends JDialog implements Disposable {
     Insets insets = component instanceof JComponent ? ((JComponent)component).getInsets() : JBInsets.emptyInsets();
     HighlightComponent highlightComponent = new HighlightComponent(color, insets);
     highlightComponent.setBounds(bounds);
-
-    glassPane.add(highlightComponent);
-    glassPane.revalidate();
-    glassPane.repaint();
-
     return highlightComponent;
   }
 
