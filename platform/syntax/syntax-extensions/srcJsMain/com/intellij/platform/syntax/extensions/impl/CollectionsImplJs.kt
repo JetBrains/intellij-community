@@ -6,12 +6,16 @@ import fleet.util.multiplatform.Actual
 /** JS implementation of [newConcurrentMap] */
 @Suppress("unused")
 @Actual
-internal fun <K : Any, V : Any> newConcurrentMapJs(): ConcurrentMap<K, V> =
+internal fun <K : Any, V : Any> newConcurrentMapJs(): MultiplatformConcurrentMap<K, V> =
   SyntaxConcurrentMapJs(HashMap())
+
+@Suppress("unused")
+@Actual
+internal fun <V : Any> newConcurrentSetJs(): MutableSet<V> = mutableSetOf()
 
 private class SyntaxConcurrentMapJs<K : Any, V : Any>(
   private val map: HashMap<K, V>,
-) : MutableMap<K, V> by map, ConcurrentMap<K, V> {
+) : MutableMap<K, V> by map, MultiplatformConcurrentMap<K, V> {
 
   override fun computeIfAbsent(key: K, f: (K) -> V): V =
     map[key] ?: f(key).also { map[key] = it }

@@ -31,7 +31,7 @@ jvm_library(
 jvm_library(
   name = "extensions_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testJvm/**/*.kt", "testJvm/**/*.java", "testJvm/**/*.form"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
   kotlinc_opts = ":custom_extensions",
   associates = [":extensions"],
   deps = [
