@@ -64,7 +64,7 @@ private fun isFileChanged(i: IndexingRequestIdAndFileModCount, stamp: Long): IsF
 
 @ApiStatus.Internal
 @VisibleForTesting
-data class ReadWriteFileIndexingStampImpl(val stamp: Long, private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false) : FileIndexingStamp {
+data class ReadWriteFileIndexingStampImpl(val stamp: Long, private val forceCheckingForOutdatedIndexesUsingFileModCount: Boolean = false) : FileIndexingStamp {
   override fun store(storage: LongConsumer) {
     storage.accept(stamp)
   }
@@ -74,7 +74,7 @@ data class ReadWriteFileIndexingStampImpl(val stamp: Long, private val allowChec
   }
 
   override fun isFileChanged(i: IndexingRequestIdAndFileModCount): IsFileChangedResult {
-    return if (allowCheckingForOutdatedIndexesUsingFileModCount) isFileChanged(i, stamp)
+    return if (forceCheckingForOutdatedIndexesUsingFileModCount) isFileChanged(i, stamp)
     else IsFileChangedResult.UNKNOWN
   }
 
@@ -87,7 +87,7 @@ data class ReadWriteFileIndexingStampImpl(val stamp: Long, private val allowChec
 
 @ApiStatus.Internal
 @VisibleForTesting
-data class WriteOnlyFileIndexingStampImpl(val stamp: Long, private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false) : FileIndexingStamp {
+data class WriteOnlyFileIndexingStampImpl(val stamp: Long, private val forceCheckingForOutdatedIndexesUsingFileModCount: Boolean = false) : FileIndexingStamp {
   override fun store(storage: LongConsumer) {
     storage.accept(stamp)
   }
@@ -95,13 +95,13 @@ data class WriteOnlyFileIndexingStampImpl(val stamp: Long, private val allowChec
   override fun isSame(i: IndexingRequestIdAndFileModCount): Boolean = false
 
   override fun isFileChanged(i: IndexingRequestIdAndFileModCount): IsFileChangedResult {
-    return if (allowCheckingForOutdatedIndexesUsingFileModCount) isFileChanged(i, stamp)
+    return if (forceCheckingForOutdatedIndexesUsingFileModCount) isFileChanged(i, stamp)
     else IsFileChangedResult.UNKNOWN
   }
 
   companion object {
-    fun create(requestId: Int, fileStamp: Int, allowCheckingForOutdatedIndexesUsingFileModCount: Boolean): FileIndexingStamp {
-      return WriteOnlyFileIndexingStampImpl(requestId.toLong().shl(32) + fileStamp, allowCheckingForOutdatedIndexesUsingFileModCount)
+    fun create(requestId: Int, fileStamp: Int, forceCheckingForOutdatedIndexesUsingFileModCount: Boolean): FileIndexingStamp {
+      return WriteOnlyFileIndexingStampImpl(requestId.toLong().shl(32) + fileStamp, forceCheckingForOutdatedIndexesUsingFileModCount)
     }
   }
 }

@@ -87,7 +87,7 @@ class UnindexedFilesScanner (
   private val startCondition: Future<*>?,
   private val shouldHideProgressInSmartMode: Boolean? = null,
   private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>? = null,
-  private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false,
+  private val forceCheckingForOutdatedIndexesUsingFileModCount: Boolean = false,
   val scanningParameters: Deferred<ScanningParameters>,
 ) : FilesScanningTask, Closeable {
 
@@ -231,7 +231,7 @@ class UnindexedFilesScanner (
       startCondition ?: oldTask.startCondition,
       mergedHideProgress,
       mergedPredicate,
-      allowCheckingForOutdatedIndexesUsingFileModCount || oldTask.allowCheckingForOutdatedIndexesUsingFileModCount,
+      forceCheckingForOutdatedIndexesUsingFileModCount || oldTask.forceCheckingForOutdatedIndexesUsingFileModCount,
       mergedParameters,
     )
   }
@@ -246,7 +246,7 @@ class UnindexedFilesScanner (
 
     markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles) {
       val projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService::class.java)
-      val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen(allowCheckingForOutdatedIndexesUsingFileModCount)
+      val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen(forceCheckingForOutdatedIndexesUsingFileModCount)
       else projectIndexingDependenciesService.newScanningToken()
 
       try {

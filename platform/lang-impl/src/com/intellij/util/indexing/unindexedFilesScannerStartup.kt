@@ -147,7 +147,7 @@ private fun scheduleFullScanning(
   val parameters = CompletableDeferred(ScanningIterators(indexingReason, null, null, fullScanningType))
   UnindexedFilesScanner(project, true, isFilterUpToDate,
                         someDirtyFilesScheduledForIndexing.asCompletableFuture(),
-                        allowCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
+                        forceCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
                         scanningParameters = parameters)
     .queue()
   return someDirtyFilesScheduledForIndexing

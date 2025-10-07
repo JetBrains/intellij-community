@@ -140,15 +140,15 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
 
   @ApiStatus.Internal
   @RequiresBackgroundThread
-  fun newScanningTokenOnProjectOpen(allowCheckingForOutdatedIndexesUsingFileModCount: Boolean): ScanningRequestToken {
+  fun newScanningTokenOnProjectOpen(forceCheckingForOutdatedIndexesUsingFileModCount: Boolean): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
     val token = if (heavyScanningOnProjectOpen || issuedScanningTokens.contains(RequestFullHeavyScanningToken)) {
       thisLogger().info("Heavy scanning on startup because of incomplete scanning from previous IDE session")
       heavyScanningOnProjectOpen = false
-      WriteOnlyScanningRequestTokenImpl(appCurrent, allowCheckingForOutdatedIndexesUsingFileModCount)
+      WriteOnlyScanningRequestTokenImpl(appCurrent, forceCheckingForOutdatedIndexesUsingFileModCount)
     }
     else {
-      ReadWriteScanningRequestTokenImpl(appCurrent, allowCheckingForOutdatedIndexesUsingFileModCount)
+      ReadWriteScanningRequestTokenImpl(appCurrent, forceCheckingForOutdatedIndexesUsingFileModCount)
     }
     registerIssuedToken(token)
     completeTokenOrFutureToken(RequestFullHeavyScanningToken, null, true)
