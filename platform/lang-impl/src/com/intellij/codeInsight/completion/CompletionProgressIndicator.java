@@ -431,6 +431,17 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
     openLookupLater();
   }
 
+  /**
+   * Unfreezes the completion process and ensures that the lookup window is shown as soon as possible with the first element
+   * This is an internal method used to manage the behavior of completion and lookup display timing.
+   */
+  @ApiStatus.Internal
+  public void unfreezeAndShowLookupAsSoonAsPossible() {
+    myLookupAppearancePolicy = LookupAppearancePolicy.ON_FIRST_POSSIBILITY;
+    freezeSemaphore.up();
+    openLookupLater();
+  }
+
   private void openLookupLater() {
     ApplicationManager.getApplication()
       .invokeLater(this::showLookup, obj -> lookup.getShownTimestampMillis() != 0L || lookup.isLookupDisposed());

@@ -32,14 +32,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJECTED_COPY_ELEMENT_KEY
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.FORCE_INJECTED_EDITOR_KEY
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
@@ -200,10 +198,17 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
       val completionProgressIndicator = parameters.process as? CompletionProgressIndicator
       val count = completionProgressIndicator?.lookup?.list?.model?.size ?: 0
       //just to avoid irritating flickering without items
-      if (count > 0) {
-        completionProgressIndicator?.showLookupAsSoonAsPossible()
+      if (count > 0 &&
+          (prevVisibleLeaf(parameters.position) as? PsiWhiteSpace)?.textContains('\n') == true) {
+        completionProgressIndicator?.unfreezeAndShowLookupAsSoonAsPossible()
       }
     }
+  }
+
+  private fun prevVisibleLeaf(element: PsiElement): PsiElement? {
+    var prevLeaf = PsiTreeUtil.prevLeaf(element, true)
+    while (prevLeaf != null && StringUtil.isEmpty(prevLeaf.getText())) prevLeaf = PsiTreeUtil.prevLeaf(prevLeaf, true)
+    return prevLeaf
   }
 
   private fun createLookupElements(
