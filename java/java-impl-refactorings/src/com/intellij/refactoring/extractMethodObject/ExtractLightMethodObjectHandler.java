@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightFrontbackUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -42,7 +42,7 @@ public final class ExtractLightMethodObjectHandler {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
     if (elements == null) {
-      elements = CodeInsightUtil.findStatementsInRange(fragment, 0, fragment.getTextLength());
+      elements = CodeInsightFrontbackUtil.findStatementsInRange(fragment, 0, fragment.getTextLength());
     }
     if (elements.length == 0) {
       return null;
@@ -73,7 +73,8 @@ public final class ExtractLightMethodObjectHandler {
     }
 
     final TextRange range = originalContext.getTextRange();
-    PsiElement originalAnchor = CodeInsightUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
+    PsiElement originalAnchor =
+      CodeInsightFrontbackUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
     if (originalAnchor == null) {
       final PsiElement elementAt = copy.findElementAt(range.getStartOffset());
       if (elementAt != null && elementAt.getClass() == originalContext.getClass()) {
@@ -121,9 +122,9 @@ public final class ExtractLightMethodObjectHandler {
     }
 
     final PsiElement firstElementCopy = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);
-    final PsiElement[] elementsCopy = CodeInsightUtil.findStatementsInRange(copy,
-                                                                            firstElementCopy.getTextRange().getStartOffset(),
-                                                                            anchor.getTextRange().getStartOffset());
+    final PsiElement[] elementsCopy = CodeInsightFrontbackUtil.findStatementsInRange(copy,
+                                                                                     firstElementCopy.getTextRange().getStartOffset(),
+                                                                                     anchor.getTextRange().getStartOffset());
     if (elementsCopy.length == 0) {
       return null;
     }
@@ -299,7 +300,7 @@ public final class ExtractLightMethodObjectHandler {
   }
 
   private static PsiElement @Nullable [] completeToStatementArray(PsiCodeFragment fragment, PsiElementFactory elementFactory) {
-    PsiExpression expression = CodeInsightUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
+    PsiExpression expression = CodeInsightFrontbackUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
     if (expression != null) {
       String completeExpressionText = null;
       if (expression instanceof PsiArrayInitializerExpression) {
