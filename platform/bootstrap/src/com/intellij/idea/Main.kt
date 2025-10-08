@@ -44,7 +44,7 @@ fun main(rawArgs: Array<String>) {
   val startupTimings = ArrayList<Any>(12)
   startupTimings.add("startup begin")
   startupTimings.add(startTimeNano)
-  mainImpl(rawArgs = rawArgs, startupTimings = startupTimings, startTimeUnixNano = startTimeUnixNano, changeClassPath = null)
+  mainImpl(rawArgs, startupTimings, startTimeUnixNano, changeClassPath = null)
 }
 
 internal fun mainImpl(
@@ -71,7 +71,7 @@ internal fun mainImpl(
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
 
-        startApp(args = args, mainScope = this@runBlocking, busyThread = busyThread, changeClassPath = changeClassPath)
+        startApp(args, mainScope = this@runBlocking, busyThread, changeClassPath)
       }
 
       awaitCancellation()
@@ -168,14 +168,8 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     }
 
     startApplication(
-      scope = this,
-      args = args,
-      configImportNeededDeferred = configImportNeededDeferred,
-      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
-      mainClassLoaderDeferred = mainClassLoaderDeferred,
-      appStarterDeferred = appStarterDeferred,
-      mainScope = mainScope,
-      busyThread = busyThread,
+      scope = this, args, configImportNeededDeferred, customTargetDirectoryToImportConfig, mainClassLoaderDeferred, appStarterDeferred,
+      mainScope, busyThread
     )
   }
 }
@@ -188,11 +182,10 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
 @JvmField
 internal var customTargetDirectoryToImportConfig: Path? = null
 
-internal fun isConfigImportNeeded(configPath: Path): Boolean {
-  return Files.notExists(configPath) ||
-         Files.exists(configPath.resolve(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME)) ||
-         customTargetDirectoryToImportConfig != null
-}
+internal fun isConfigImportNeeded(configPath: Path): Boolean =
+  Files.notExists(configPath) ||
+  Files.exists(configPath.resolve(InitialConfigImportState.CUSTOM_MARKER_FILE_NAME)) ||
+  customTargetDirectoryToImportConfig != null
 
 private fun initRemoteDev(args: List<String>) {
   if (!JBR.isGraphicsUtilsSupported()) {

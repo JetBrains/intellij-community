@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -35,7 +35,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import kotlinx.coroutines.CoroutineScope;
-import nonapi.io.github.classgraph.utils.CollectionUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -49,9 +48,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/**
- * @author Alexander Lobas
- */
 @ApiStatus.Internal
 public class PluginUpdateDialog extends DialogWrapper {
   private final boolean myPlatformUpdate;
@@ -98,8 +94,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
-  @Deprecated
-  public static boolean showDialogAndUpdate(@NotNull Collection<PluginDownloader> downloaders, PluginUpdateDialog dialog) {
+  public static boolean showDialogAndUpdate(@NotNull Collection<PluginDownloader> downloaders, @NotNull PluginUpdateDialog dialog) {
     if (dialog.showAndGet()) {
       List<PluginUiModel> selectedPlugins = dialog.getSelectedPluginModels();
       List<PluginDownloader> selectedDownloaders = findDownloadersForPlugins(downloaders, selectedPlugins);

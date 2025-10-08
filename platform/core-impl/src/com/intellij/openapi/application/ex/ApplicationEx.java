@@ -12,7 +12,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,7 @@ public interface ApplicationEx extends Application {
    * @return true if a background thread running or wants to run a write action.
    * This is needed for low-level optimizations and assertions
    */
-  @Internal
+  @ApiStatus.Internal
   default boolean isBackgroundWriteActionRunningOrPending() {
     return false;
   }
@@ -108,7 +107,7 @@ public interface ApplicationEx extends Application {
     restart();
   }
 
-  @Internal
+  @ApiStatus.Internal
   default void restart(int flags, String @NotNull [] beforeRestart) {
     restart();
   }
@@ -118,11 +117,13 @@ public interface ApplicationEx extends Application {
    * For internal use only, see {@link Task}.
    * Consider also {@link ProgressManager#runProcessWithProgressSynchronously}
    */
-  @Internal
-  default boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                                      @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                                      boolean canBeCanceled,
-                                                      Project project) {
+  @ApiStatus.Internal
+  default boolean runProcessWithProgressSynchronously(
+    @NotNull Runnable process,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
+    boolean canBeCanceled,
+    Project project
+  ) {
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, true, project, null, null);
   }
 
@@ -131,14 +132,16 @@ public interface ApplicationEx extends Application {
    * For internal use only, see {@link Task}.
    * Consider also {@link ProgressManager#runProcessWithProgressSynchronously}
    */
-  @Internal
-  boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
-                                              @NotNull @NlsContexts.ProgressTitle String progressTitle,
-                                              boolean canBeCanceled,
-                                              boolean shouldShowModalWindow,
-                                              @Nullable Project project,
-                                              @Nullable JComponent parentComponent,
-                                              @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText);
+  @ApiStatus.Internal
+  boolean runProcessWithProgressSynchronously(
+    @NotNull Runnable process,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
+    boolean canBeCanceled,
+    boolean shouldShowModalWindow,
+    @Nullable Project project,
+    @Nullable JComponent parentComponent,
+    @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText
+  );
 
   void assertIsDispatchThread(@Nullable JComponent component);
 
@@ -150,31 +153,35 @@ public interface ApplicationEx extends Application {
   boolean tryRunReadAction(@NotNull Runnable action);
 
   /** DO NOT USE */
-  @Internal
+  @ApiStatus.Internal
   default void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     runnable.run();
   }
 
   @ApiStatus.Experimental
-  default boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull @NlsContexts.ProgressTitle String title,
-                                                                        @Nullable Project project,
-                                                                        @Nullable JComponent parentComponent,
-                                                                        @NotNull Consumer<? super ProgressIndicator> action) {
+  default boolean runWriteActionWithCancellableProgressInDispatchThread(
+    @NotNull @NlsContexts.ProgressTitle String title,
+    @Nullable Project project,
+    @Nullable JComponent parentComponent,
+    @NotNull Consumer<? super ProgressIndicator> action
+  ) {
     throw new UnsupportedOperationException();
   }
 
   @ApiStatus.Experimental
-  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull @NlsContexts.ModalProgressTitle String title,
-                                                                           @Nullable Project project,
-                                                                           @Nullable JComponent parentComponent,
-                                                                           @NotNull Consumer<? super ProgressIndicator> action) {
+  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(
+    @NotNull @NlsContexts.ModalProgressTitle String title,
+    @Nullable Project project,
+    @Nullable JComponent parentComponent,
+    @NotNull Consumer<? super ProgressIndicator> action
+  ) {
     throw new UnsupportedOperationException();
   }
 
   /**
    * DO NOT USE
    */
-  @Internal
+  @ApiStatus.Internal
   default boolean isInImpatientReader() {
     return false;
   }
@@ -184,7 +191,8 @@ public interface ApplicationEx extends Application {
    * <p>
    * This method is used to implement higher-level API. Please do not use it directly.
    */
-  @Internal
+  @ApiStatus.Internal
+  @SuppressWarnings("UnusedReturnValue")
   default <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
     return action.compute();
   }
@@ -194,12 +202,12 @@ public interface ApplicationEx extends Application {
    * if no write-intent action is currently running or blocked until the currently running write-intent action completes.
    * <p>
    * This method is used to implement higher-level API. Please do not use it directly.
-   * Use {@link #invokeLaterOnWriteThread}, {@link com.intellij.openapi.application.WriteThread} or
-   * {@link com.intellij.openapi.application.AppUIExecutor#onWriteThread()} to run code under the write-intent lock asynchronously.
+   * Use {@link #invokeLaterOnWriteThread} or {@link com.intellij.openapi.application.WriteThread}
+   * to run code under the write-intent lock asynchronously.
    *
    * @param action the action to run
    */
-  @Internal
+  @ApiStatus.Internal
   default void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
     action.run();
   }
@@ -212,50 +220,41 @@ public interface ApplicationEx extends Application {
     return true;
   }
 
-  // in some cases, we cannot get service by class
-
-  /**
-   * @deprecated Use {@link com.intellij.ide.IdeEventQueue#flushNativeEventQueue IdeEventQueue.flushNativeEventQueue()}
-   */
-  @Internal
+  /** @deprecated Use {@link com.intellij.ide.IdeEventQueue#flushNativeEventQueue IdeEventQueue.flushNativeEventQueue()} */
+  @ApiStatus.Internal
   @Deprecated
   default void flushNativeEventQueue() {}
 
-  @Internal
+  @ApiStatus.Internal
   default void dispatchCoroutineOnEDT(Runnable runnable, ModalityState state, boolean acquireWriteIntentLockInNonBlockingWay) {
     invokeLater(runnable, state, Conditions.alwaysFalse());
   }
 
-  @Internal
+  @ApiStatus.Internal
   default void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) { }
 
   @ApiStatus.Experimental
   default void addWriteActionListener(@NotNull WriteActionListener listener, @NotNull Disposable parentDisposable) { }
 
-  @Internal
+  @ApiStatus.Internal
   default void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) { }
 
-  @Internal
+  @ApiStatus.Internal
   @ApiStatus.Obsolete
   default void addSuspendingWriteActionListener(@NotNull WriteLockReacquisitionListener listener, @NotNull Disposable parentDisposable) { }
 
-  @Internal
+  @ApiStatus.Internal
   default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly, @NlsSafe String advice) {
     runnable.run();
   }
 
   /**
    * Similar to {@link #invokeAndWait(Runnable, ModalityState)}, but does not take the Write-Intent lock inside.
-   * This is useful when you still need to schedule a computation with the required modality state, but don't want to acqure the WI lock inside.
+   * This is useful when you still need to schedule a computation with the required modality state, but don't want to acquire the WI lock inside.
    * In the future, this method may go public
    */
-  @Internal
+  @ApiStatus.Internal
   default void invokeAndWaitRelaxed(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     invokeAndWait(runnable, modalityState);
-  }
-
-  @Internal
-  default void allowTakingLocksInsideAndRun(@NotNull Runnable runnable) {
-    runnable.run();
   }
 }

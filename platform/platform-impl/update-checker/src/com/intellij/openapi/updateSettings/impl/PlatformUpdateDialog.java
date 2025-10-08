@@ -51,8 +51,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   private final @Nullable LicenseInfo myLicenseInfo;
   private final @Nullable Path myTestPatch;
 
-  private record LicenseInfo(@NlsContexts.Label String licenseNote, boolean warning) {
-  }
+  private record LicenseInfo(@NlsContexts.Label String licenseNote, boolean warning) { }
 
   public PlatformUpdateDialog(
     @Nullable Project project,
@@ -170,7 +169,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     var actions = new ArrayList<Action>();
     actions.add(getCancelAction());
 
-    AbstractAction updateButton = null;
+    var updateButton = (AbstractAction)null;
     if (myPlatformUpdate.getPatches() != null || myTestPatch != null) {
       var canRestart = ApplicationManager.getApplication().isRestartCapable();
       var name = IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.apply.manually.button");
@@ -246,8 +245,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
           var message = IdeBundle.message("update.downloading.patch.error", e.getMessage());
           UpdateChecker.getNotificationGroupForIdeUpdateResults()
             .createNotification(title, message, NotificationType.ERROR)
-            .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.downloading.patch.open"),
-                                                               () -> BrowserUtil.browse(downloadUrl)))
+            .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.downloading.patch.open"), () -> BrowserUtil.browse(downloadUrl)))
             .setDisplayId("ide.patch.download.failed")
             .notify(myProject);
 
@@ -267,8 +265,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
             var message = IdeBundle.message("update.ready.message");
             UpdateChecker.getNotificationGroupForIdeUpdateResults()
               .createNotification(title, message, NotificationType.INFORMATION)
-              .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.ready.restart"),
-                                                                 () -> restartLaterAndRunCommand(command)))
+              .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.ready.restart"), () -> restartLaterAndRunCommand(command)))
               .setDisplayId("ide.update.suggest.restart")
               .notify(myProject);
           }

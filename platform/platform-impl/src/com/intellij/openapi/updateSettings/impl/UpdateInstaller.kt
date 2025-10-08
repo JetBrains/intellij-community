@@ -3,7 +3,6 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
@@ -11,7 +10,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
@@ -25,7 +23,6 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
-import javax.swing.JComponent
 import javax.swing.UIManager
 
 @ApiStatus.Internal

@@ -432,25 +432,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     LaterInvocator.invokeLater(state, Conditions.alwaysFalse(), needsWriteIntent, wrapped);
   }
 
-  private void scheduleWithWeakWriteIntentReadAction(@NotNull Runnable runnable, @NotNull ModalityState state) {
-    LaterInvocator.invokeLater(state, Conditions.alwaysFalse(), () -> {
-      var executedSuccessfully = lock.tryRunWriteIntentReadAction(() -> {
-        runnable.run();
-        return Unit.INSTANCE;
-      });
-      // we managed to acquire the write-intent lock
-      if (executedSuccessfully) {
-        return;
-      }
-      // if this computation failed to run on EDT, then it means that we have an alive write action
-      // let's reschedule this computation after the write action finishes.
-      lock.runWhenWriteActionIsCompleted(() -> {
-        scheduleWithWeakWriteIntentReadAction(runnable, state);
-        return Unit.INSTANCE;
-      });
-    });
-  }
-
   @Override
   public void dispose() {
     lock.removeErrorHandler();
@@ -1513,11 +1494,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly, @NlsSafe String advice) {
     getThreadingSupport().prohibitTakingLocksInsideAndRun(runnable, failSoftly, advice);
-  }
-
-  @Override
-  public void allowTakingLocksInsideAndRun(@NotNull Runnable runnable) {
-    getThreadingSupport().allowTakingLocksInsideAndRun(runnable);
   }
 
   @Override
