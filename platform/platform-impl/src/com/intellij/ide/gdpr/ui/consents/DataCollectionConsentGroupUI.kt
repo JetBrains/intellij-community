@@ -14,19 +14,11 @@ internal class DataCollectionConsentGroupUI(
 
   override val forcedStateDescription: @NlsSafe String? = run {
     val customerDetailedDataSharingAgreement = DataCollectionAgreement.getInstance() ?: return@run null
-    val forcedStateDescription = when (customerDetailedDataSharingAgreement) {
+    when (customerDetailedDataSharingAgreement) {
       DataCollectionAgreement.YES -> IdeBundle.message("gdpr.data.collection.consent.group.setting.enabled.warning.text")
       DataCollectionAgreement.NO -> IdeBundle.message("gdpr.data.collection.consent.group.setting.disabled.warning.text")
       DataCollectionAgreement.NOT_SET -> null
     }
-    if (forcedStateDescription != null) {
-      return@run forcedStateDescription
-    }
-    val externalSettings = AiDataCollectionExternalSettings.findSettingsImplementedByAiAssistant()
-    if (externalSettings != null && externalSettings.isForciblyDisabled()) {
-      return@run externalSettings.getForciblyDisabledDescription() ?: IdeBundle.message("gdpr.consent.externally.disabled.warning")
-    }
-    return@run null
   }
 
   override val commentText: @NlsSafe String = IdeBundle.message("gdpr.data.collection.consent.group.comment.text")
