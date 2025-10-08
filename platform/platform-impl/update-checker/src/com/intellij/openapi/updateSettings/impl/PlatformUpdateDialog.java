@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.ui.LicensingFacade;
+import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
@@ -282,6 +283,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   private static void restartLaterAndRunCommand(String[] command) {
     IdeUpdateUsageTriggerCollector.UPDATE_STARTED.log();
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
+    Restarter.setRestarterEnv(Map.of(ConfigImportHelper.IMPORT_FROM_ENV_VAR, PathManager.getConfigDir().toString()));
     var app = (ApplicationEx)ApplicationManager.getApplication();
     app.invokeLater(() -> app.restart(ApplicationEx.EXIT_CONFIRMED | ApplicationEx.SAVE, command));
   }

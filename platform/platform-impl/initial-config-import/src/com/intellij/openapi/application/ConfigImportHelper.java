@@ -79,6 +79,7 @@ import java.util.stream.Stream;
 
 @ApiStatus.Internal
 public final class ConfigImportHelper {
+  public static final String IMPORT_FROM_ENV_VAR = "JB_IMPORT_SETTINGS_FROM";
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?(\\D+)(\\d+(?:\\.\\d+)*)");
   public static final String CONFIG_IMPORTED_FROM_PATH = "intellij.config.imported.from";
 

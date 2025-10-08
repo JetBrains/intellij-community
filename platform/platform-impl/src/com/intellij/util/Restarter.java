@@ -21,7 +21,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
@@ -31,6 +33,7 @@ public final class Restarter {
 
   private static volatile boolean copyRestarterFiles = false;
   private static volatile List<String> mainAppArgs = List.of();
+  private static volatile Map<String, String> restarterEnv = Map.of();
 
   private Restarter() { }
 
@@ -213,6 +216,11 @@ public final class Restarter {
     mainAppArgs = new ArrayList<>(args);
   }
 
+  @ApiStatus.Internal
+  public static void setRestarterEnv(@NotNull Map<String, String> env) {
+    restarterEnv = new HashMap<>(env);
+  }
+
   private static List<String> prepareCommand(String restarterName, List<String> beforeRestart) throws IOException {
     var restarter = PathManager.getBinDir().resolve(restarterName);
     var command = new ArrayList<String>();
@@ -244,6 +252,7 @@ public final class Restarter {
       .redirectOutput(ProcessBuilder.Redirect.DISCARD)
       .redirectError(ProcessBuilder.Redirect.DISCARD);
     processBuilder.environment().put("IJ_RESTARTER_LOG", PathManager.getLogDir().resolve("restarter.log").toString());
+    processBuilder.environment().putAll(restarterEnv);
 
     if (OS.isGenericUnix()) setDesktopStartupId(processBuilder);
 
