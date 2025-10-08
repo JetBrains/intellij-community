@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.trac;
 
 import com.intellij.openapi.project.Project;
@@ -14,7 +14,7 @@ import javax.swing.*;
 /**
  * @author Dmitry Avdeev
  */
-public class TracRepositoryEditor extends BaseRepositoryEditor<TracRepository> {
+final class TracRepositoryEditor extends BaseRepositoryEditor<TracRepository> {
   private JTextField myDefaultSearch;
   private JBLabel mySearchLabel;
 

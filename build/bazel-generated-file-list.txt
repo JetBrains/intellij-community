@@ -1296,7 +1296,9 @@ plugins/svn4idea
 plugins/tasks/tasks-api
 plugins/tasks/tasks-compatibility
 plugins/tasks/tasks-core
+plugins/tasks/tasks-core/bugzilla
 plugins/tasks/tasks-core/jira
+plugins/tasks/tasks-core/trac
 plugins/tasks/tasks-java
 plugins/tasks/tasks-tests
 plugins/terminal

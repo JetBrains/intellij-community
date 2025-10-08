@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks" />
-    <orderEntry type="module" module-name="intellij.tasks.core" />
+    <orderEntry type="module" module-name="intellij.tasks.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks.java" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks.compatibility" />
@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.platform.bookmarks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks.trac" scope="TEST" />
   </component>
 </module>

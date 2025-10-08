@@ -14,12 +14,15 @@
   <vendor>JetBrains</vendor>
 
   <content>
+    <module name="intellij.tasks.trac"/>
+    <module name="intellij.tasks.bugzilla"/>
     <module name="intellij.tasks.jira"/>
   </content>
   <dependencies>
     <plugin id="com.intellij.modules.xml" />
     <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.tasks.impl"/>
+    <module name="intellij.libraries.gson"/>
     <module name="intellij.regexp"/>
   </dependencies>
 
@@ -103,7 +106,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-
     <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks"
                          bundle="messages.TaskBundle"
                          key="configurable.TaskConfigurable.display.name">
@@ -125,13 +127,11 @@
     <tasks.repositoryType implementation="com.intellij.tasks.lighthouse.LighthouseRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.pivotal.PivotalTrackerRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.redmine.RedmineRepositoryType"/>
-    <tasks.repositoryType implementation="com.intellij.tasks.trac.TracRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.fogbugz.FogBugzRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.mantis.MantisRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.generic.GenericRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.trello.TrelloRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.gitlab.GitlabRepositoryType"/>
-    <tasks.repositoryType implementation="com.intellij.tasks.bugzilla.BugzillaRepositoryType"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
     <!-- YouTrack support -->

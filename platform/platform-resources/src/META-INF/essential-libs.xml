@@ -36,7 +36,6 @@
     <module name="intellij.libraries.winp" loading="embedded"/>
     <module name="intellij.libraries.xstream" loading="embedded"/>
     <module name="intellij.libraries.xz" loading="embedded"/>
-    <!-- todo fix python -->
-    <module name="intellij.libraries.xml.rpc" loading="embedded"/>
+    <module name="intellij.libraries.xml.rpc"/>
   </content>
 </idea-plugin>

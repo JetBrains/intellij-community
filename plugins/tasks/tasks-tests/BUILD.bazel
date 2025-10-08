@@ -57,6 +57,7 @@ jvm_library(
     "//platform/bookmarks",
     "//plugins/git4idea/shared",
     "//platform/dvcs-impl/shared",
+    "//plugins/tasks/tasks-core/trac",
   ],
   runtime_deps = ["//spellchecker"]
 )
