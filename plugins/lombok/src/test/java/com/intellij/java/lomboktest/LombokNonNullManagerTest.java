@@ -117,8 +117,8 @@ public class LombokNonNullManagerTest extends LightJavaCodeInsightFixtureTestCas
     assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSClass, "builder")));
     assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSClass, "toString")));
 
-    assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForRead(null, findMethodParam(myObjectSClass, "equals", 0)));
-    assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForRead(null, findMethodParam(myObjectSClass, "canEqual", 0)));
+    assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForWrite(null, findMethodParam(myObjectSClass, "equals", 0)));
+    assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForWrite(null, findMethodParam(myObjectSClass, "canEqual", 0)));
 
     assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSBuilderClass, "nonNullString")));
     assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSBuilderClass, "myString")));
