@@ -13,7 +13,7 @@
     <plugin id="com.intellij.java"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.java.ide.customization/training"/>
   </content>
 

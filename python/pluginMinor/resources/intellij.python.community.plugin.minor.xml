@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <dependencies>
     <!--Any IDE but NOT PyCharm-->
     <plugin id="com.intellij.modules.python-in-non-pycharm-ide-capable"/>

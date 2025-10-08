@@ -43,7 +43,7 @@
     <plugin id="com.intellij.modules.lang"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.terminal.backend"/>
     <module name="intellij.terminal.frontend"/>
     <module name="intellij.terminal.frontend.split"/>

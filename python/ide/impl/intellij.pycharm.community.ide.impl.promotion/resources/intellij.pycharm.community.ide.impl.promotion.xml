@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <!--Customization code for Community Pycharm only. Promotes PyCharm Prof.-->
 
   <dependencies>

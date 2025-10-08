@@ -13,7 +13,7 @@
     Read More</a></p>
   ]]></description>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.performanceTesting.remoteDriver"/>
     <module name="intellij.performanceTesting.vcs"/>
     <module name="intellij.performanceTesting.frontend"/>

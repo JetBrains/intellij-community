@@ -30,7 +30,7 @@
     <module name="intellij.libraries.grpc"/>
   </dependencies>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
     <module name="intellij.grazie.markdown"/>

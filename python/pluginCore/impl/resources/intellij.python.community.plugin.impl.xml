@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <!--Plugin for other (not PyCharm) IDEs, including IU-->
   <dependencies>
     <!--Any IDE but NOT PyCharm-->

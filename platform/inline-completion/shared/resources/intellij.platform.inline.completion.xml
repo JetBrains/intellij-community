@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.codeInsight.inline.completion">
+<idea-plugin visibility="internal" package="com.intellij.codeInsight.inline.completion">
 
   <extensions defaultExtensionNs="com.intellij">
     <inline.completion.handlerInitializer

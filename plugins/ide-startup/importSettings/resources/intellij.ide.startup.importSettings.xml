@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.ide.startup.importSettings">
+<idea-plugin visibility="internal" package="com.intellij.ide.startup.importSettings">
   <actions>
     <!--suppress PluginXmlI18n -->
     <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: ONE" internal="true"/>

@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <!--Customization code for both Community and Pro PyCharms-->
   <dependencies>
     <plugin id="com.intellij.modules.python"/>

@@ -21,7 +21,7 @@
   <depends optional="true" config-file="gradle-toml-integration.xml">org.toml.lang</depends>
   <depends optional="true" config-file="gradle-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
-  <content>
+  <content namespace="jetbrains">
     <module name="intellij.gradle.profiler"/>
     <module name="intellij.gradle.java.maven"/>
     <module name="intellij.gradle.analysis"/>
