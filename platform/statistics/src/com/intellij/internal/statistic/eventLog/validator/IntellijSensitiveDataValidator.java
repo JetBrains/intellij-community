@@ -120,10 +120,9 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Metad
     return ourInstances.computeIfAbsent(
       recorderId,
       id -> {
-        FusComponentProvider.FusComponents fusComponents = FusComponentProvider.createFusComponents(recorderId);
         return ApplicationManager.getApplication().isUnitTestMode()
-               ? new BlindSensitiveDataValidator(fusComponents, recorderId)
-               : new IntellijSensitiveDataValidator(fusComponents, recorderId);
+               ? new BlindSensitiveDataValidator(FusComponentProvider.createBlindFusComponents(recorderId), recorderId)
+               : new IntellijSensitiveDataValidator(FusComponentProvider.createFusComponents(recorderId), recorderId);
       }
     );
   }
