@@ -1,0 +1,20 @@
+<component name="libraryTable">
+  <library name="fleet:org.fusesource.jansi" type="repository">
+    <properties maven-id="org.fusesource.jansi:jansi:2.4.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/fusesource/jansi/jansi/2.4.1/jansi-2.4.1.jar">
+          <sha256sum>2e5e775a9dc58ffa6bbd6aa6f099d62f8b62dcdeb4c3c3bbbe5cf2301bc2dcc1</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/fusesource/jansi/jansi/2.4.1/jansi-2.4.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/fusesource/jansi/jansi/2.4.1/jansi-2.4.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/fusesource/jansi/jansi/2.4.1/jansi-2.4.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
