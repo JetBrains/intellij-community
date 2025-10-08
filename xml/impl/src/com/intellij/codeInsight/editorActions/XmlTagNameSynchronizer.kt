@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
@@ -83,7 +84,9 @@ class XmlTagNameSynchronizer(private val project: Project, val cs: CoroutineScop
     val start = System.currentTimeMillis()
     val job = cs.coroutineContext.job
     while (job.children.toList().isNotEmpty() && cs.coroutineContext.isActive) {
-      UIUtil.dispatchAllInvocationEvents()
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+        UIUtil.dispatchAllInvocationEvents()
+      }
       Thread.sleep(1)
       if (System.currentTimeMillis() - start > 2000) {
         thisLogger().warn("Timed out waiting for synchronizers to be created.", TimeoutException())
