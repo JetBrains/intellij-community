@@ -355,7 +355,6 @@ object AppUIUtil {
         result.addAll(consents)
       }
     }
-    result.removeIf(ConsentOptions.condTraceDataCollectionConsent()) // IJPL-208500
     val traceConsentManager = TraceConsentManager.getInstance()
     if (traceConsentManager != null && traceConsentManager.isTraceConsentEnabled()) {
       val isLegacyAiDataCollectionConsent = ConsentOptions.condAiDataCollectionConsent()
