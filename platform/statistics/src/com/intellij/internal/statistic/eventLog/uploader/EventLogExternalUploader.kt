@@ -20,8 +20,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.ArrayUtil
-import com.jetbrains.fus.reporting.configuration.ConfigurationClient
-import com.jetbrains.fus.reporting.jvm.JvmHttpClient
+import com.jetbrains.fus.reporting.MetadataStorage
 import com.jetbrains.fus.reporting.serialization.FusJacksonSerializer
 import kotlinx.serialization.StringFormat
 import kotlinx.serialization.json.Json
@@ -127,9 +126,8 @@ object EventLogExternalUploader {
       findLibraryByClass(IllegalCallableAccessException::class.java), // add kotlin-reflect
       findLibraryByClass(EventGroupsFilterRules::class.java), // validation library
       findLibraryByClass(StatsConnectionSettings::class.java), // com.jetbrains.fus.reporting.model
-      findLibraryByClass(ConfigurationClient::class.java), // com.jetbrains.fus.reporting.configuration
+      findLibraryByClass(MetadataStorage::class.java), // com.jetbrains.fus.reporting.api
       findLibraryByClass(FusJacksonSerializer::class.java), // com.jetbrains.fus.reporting.serialization
-      findLibraryByClass(JvmHttpClient::class.java), // com.jetbrains.fus.reporting.api.defaults.JvmHttpClient
       findLibraryByClass(Json::class.java), // kotlinx.serialization.json
       findLibraryByClass(StringFormat::class.java) // kotlinx.serialization
     )
