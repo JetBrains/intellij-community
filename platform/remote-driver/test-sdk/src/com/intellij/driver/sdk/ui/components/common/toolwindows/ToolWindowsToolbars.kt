@@ -29,6 +29,7 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val debugButton = stripeButton("Debug")
   val findButton = stripeButton("Find")
   val cmakeButton = stripeButton("CMake")
+  val profilerButton = stripeButton("Profiler")
   val jpaButton = stripeButton("JPA Console")
   val persistenceButton = stripeButton("Persistence")
 
