@@ -162,14 +162,18 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
           success = collectHighlights(myRestrictRange, allInsideElements, allOutsideElements, filteredVisitors,
                                       forceHighlightParents, (toolId, psiElement, newInfos) -> {
               myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject, getHighlightingSession(), invalidPsiRecycler);
-              myHighlights.addAll(newInfos);
               if (psiElement instanceof PsiErrorElement) {
                 myHasErrorElement = true;
               }
-              for (HighlightInfo info : newInfos) {
-                if (info.getSeverity() == HighlightSeverity.ERROR) {
-                  myHasErrorSeverity = true;
-                  break;
+              if (!newInfos.isEmpty()) {
+                int size = newInfos.size(); // size == 1 most of the time
+                for (int i = 0; i < size; i++) {
+                  myHighlights.add(newInfos.get(i));
+                  final HighlightInfo info = newInfos.get(i);
+                  if (info.getSeverity() == HighlightSeverity.ERROR) {
+                    myHasErrorSeverity = true;
+                    break;
+                  }
                 }
               }
             });
