@@ -174,9 +174,9 @@ class JpsGlobalEntitiesSyncTest {
       val project = loadedProjects.first()
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
-          val workspaceModel = WorkspaceModel.getInstance(project)
+          val workspaceModel = GlobalWorkspaceModel.getInstance(LocalEelMachine)
           val virtualFileManager = workspaceModel.getVirtualFileUrlManager()
-          workspaceModel.updateProjectModel("Test update") { builder ->
+          workspaceModel.updateModel("Test update") { builder ->
             val libraryEntity = builder.entities(LibraryEntity::class.java).first { it.name == "com.google.plugin" }
             val libraryNameToRemove = libraryEntity.name
             builder.removeEntity(libraryEntity)
