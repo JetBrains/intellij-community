@@ -33,6 +33,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   val installedTab = x { and(byType(JLabel::class.java), byAccessibleName("Installed")) }
   val marketplaceTab = x { and(byType(JLabel::class.java), byAccessibleName ("Marketplace")) }
   val gearButton = x { byAccessibleName("Manage Repositories, Configure Proxy or Install Plugin from Disk") }
+  val searchOptionsButton = x { byAccessibleName("Search Options") }
 
   fun waitLoaded(timeout: Duration = 1.minutes) {
     x { byType("com.intellij.util.ui.AsyncProcessIcon") }.waitNotFound(timeout)
