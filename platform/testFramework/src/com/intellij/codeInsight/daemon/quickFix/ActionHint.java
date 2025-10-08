@@ -119,7 +119,7 @@ public final class ActionHint {
       }
       if (found == null) {
         fail(exceptionHeader(curStep) + " not found\nAvailable actions: " +
-             commonActions.stream().map(act -> getActionText(context, act)).collect(Collectors.joining(", ", "[", "]\n")) +
+             commonActions.stream().map(act -> getActionText(context, act)).collect(Collectors.joining(",\n  ", "[\n  ", "\n]\n")) +
              infoSupplier.get());
       }
       ModCommandAction action = found.asModCommandAction();
@@ -145,7 +145,7 @@ public final class ActionHint {
                .map(ca -> {
                  return ca instanceof ModCommandAction mca ? Objects.requireNonNull(mca.getPresentation(context)).name() :
                         ca.asIntention().getText();
-               }).collect(Collectors.joining(", ", "[", "]\n")) +
+               }).collect(Collectors.joining(",\n  ", "[\n  ", "\n]\n")) +
              infoSupplier.get());
       }
       else if (myHighlightType != null) {
