@@ -175,7 +175,7 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
       model.addModuleOrderEntry(module1);
     });
     JpsMavenRepositoryLibraryDescriptor nonModularizedJupiterDescription =
-      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "6.0.0-RC2");
+      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "6.0.0");
     JUnitConfiguration configuration = setupConfiguration(nonModularizedJupiterDescription, "modulePath/test2", module);
     JavaParameters params4Tests = configuration.getTestObject().createJavaParameters4Tests();
     ParamsGroup moduleOptions = JavaTestFrameworkRunnableState.getJigsawOptions(params4Tests);

@@ -3256,9 +3256,9 @@ java_library(
 java_library(
   name = "junit6",
   exports = [
-    ":org_junit_jupiter-junit-jupiter-api-6_0_0-RC2_http_import",
+    ":org_junit_jupiter-junit-jupiter-api-6_0_0_http_import",
     ":org_opentest4j-opentest4j-1_3_0_http_import",
-    ":org_junit_platform-junit-platform-commons-6_0_0-RC2_http_import",
+    ":org_junit_platform-junit-platform-commons-6_0_0_http_import",
     ":org_apiguardian-apiguardian-api-1_1_2_http_import",
     ":org_jspecify-jspecify-1_0_0_http_import",
   ],
@@ -3266,15 +3266,15 @@ java_library(
 )
 
 jvm_import(
-  name = "org_junit_jupiter-junit-jupiter-api-6_0_0-RC2_http_import",
-  jar = "@org_junit_jupiter-junit-jupiter-api-6_0_0-RC2_http//file",
-  source_jar = "@org_junit_jupiter-junit-jupiter-api-6_0_0-RC2_http//file"
+  name = "org_junit_jupiter-junit-jupiter-api-6_0_0_http_import",
+  jar = "@org_junit_jupiter-junit-jupiter-api-6_0_0_http//file",
+  source_jar = "@org_junit_jupiter-junit-jupiter-api-6_0_0_http//file"
 )
 
 jvm_import(
-  name = "org_junit_platform-junit-platform-commons-6_0_0-RC2_http_import",
-  jar = "@org_junit_platform-junit-platform-commons-6_0_0-RC2_http//file",
-  source_jar = "@org_junit_platform-junit-platform-commons-6_0_0-RC2_http//file"
+  name = "org_junit_platform-junit-platform-commons-6_0_0_http_import",
+  jar = "@org_junit_platform-junit-platform-commons-6_0_0_http//file",
+  source_jar = "@org_junit_platform-junit-platform-commons-6_0_0_http//file"
 )
 
 jvm_import(
@@ -3293,23 +3293,23 @@ java_library(
 java_library(
   name = "junit6Launcher",
   exports = [
-    ":org_junit_platform-junit-platform-launcher-6_0_0-RC2_http_import",
-    ":org_junit_platform-junit-platform-engine-6_0_0-RC2_http_import",
+    ":org_junit_platform-junit-platform-launcher-6_0_0_http_import",
+    ":org_junit_platform-junit-platform-engine-6_0_0_http_import",
     ":org_jspecify-jspecify-1_0_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_junit_platform-junit-platform-launcher-6_0_0-RC2_http_import",
-  jar = "@org_junit_platform-junit-platform-launcher-6_0_0-RC2_http//file",
-  source_jar = "@org_junit_platform-junit-platform-launcher-6_0_0-RC2_http//file"
+  name = "org_junit_platform-junit-platform-launcher-6_0_0_http_import",
+  jar = "@org_junit_platform-junit-platform-launcher-6_0_0_http//file",
+  source_jar = "@org_junit_platform-junit-platform-launcher-6_0_0_http//file"
 )
 
 jvm_import(
-  name = "org_junit_platform-junit-platform-engine-6_0_0-RC2_http_import",
-  jar = "@org_junit_platform-junit-platform-engine-6_0_0-RC2_http//file",
-  source_jar = "@org_junit_platform-junit-platform-engine-6_0_0-RC2_http//file"
+  name = "org_junit_platform-junit-platform-engine-6_0_0_http_import",
+  jar = "@org_junit_platform-junit-platform-engine-6_0_0_http//file",
+  source_jar = "@org_junit_platform-junit-platform-engine-6_0_0_http//file"
 )
 
 java_library(
