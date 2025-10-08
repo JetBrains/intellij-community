@@ -47,6 +47,9 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
   public boolean reportParameters = true;
 
   @SuppressWarnings("PublicField")
+  public boolean reportCatchParameters = true;
+
+  @SuppressWarnings("PublicField")
   public boolean reportForeachParameters = true;
 
   @Override
@@ -68,7 +71,8 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
       checkbox("reportPatternVariables", InspectionGadgetsBundle.message("unnecessary.final.report.pattern.variables.option")),
       checkbox("reportParameters", InspectionGadgetsBundle.message("unnecessary.final.report.method.parameters.option"),
                checkbox("onlyWarnOnAbstractMethods", InspectionGadgetsBundle.message("unnecessary.final.on.parameter.only.interface.option"))),
-      checkbox("reportForeachParameters", InspectionGadgetsBundle.message("unnecessary.final.report.foreach.parameters.option"))
+      checkbox("reportForeachParameters", InspectionGadgetsBundle.message("unnecessary.final.report.foreach.parameters.option")),
+      checkbox("reportCatchParameters", InspectionGadgetsBundle.message("unnecessary.final.report.catch.parameters.option"))
     );
   }
 
@@ -159,7 +163,7 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
           }
         }
       }
-      if (onlyWarnOnAbstractMethods || !reportParameters) {
+      if (onlyWarnOnAbstractMethods || !reportCatchParameters) {
         return;
       }
       final PsiCatchSection[] catchSections = statement.getCatchSections();
@@ -193,7 +197,8 @@ public final class UnnecessaryFinalOnLocalVariableOrParameterInspection extends 
 
     private static boolean isNecessaryFinal(PsiVariable variable, PsiElement context) {
       return PsiUtil.isConstantExpression(variable.getInitializer()) ||
-             !PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, variable) && VariableAccessUtils.variableIsUsedInInnerClass(variable, context);
+             !PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, variable) &&
+             VariableAccessUtils.variableIsUsedInInnerClass(variable, context);
     }
 
     private void check(PsiParameter parameter) {

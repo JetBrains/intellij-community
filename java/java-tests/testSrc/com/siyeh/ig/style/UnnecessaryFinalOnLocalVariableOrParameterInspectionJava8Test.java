@@ -104,6 +104,45 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
              """);
   }
 
+  public void testCatchParametersDisabled() {
+    final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
+    inspection.reportCatchParameters = false;
+    myFixture.enableInspections(inspection);
+    doTest("""
+                      import java.io.*;
+             
+                      class FinalTest {
+                        public void foobar(/*Unnecessary 'final' on parameter 'boo'*/final/**/ String boo) {
+                          try (/*Unnecessary 'final' on variable 'reader'*/final/**/ BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+                            reader.readLine();
+                          }
+                          catch (final IOException e) {
+                            throw new RuntimeException(e);
+                          }
+                        }
+                      }
+             """);
+  }
+
+  public void testCatchParametersEnabled() {
+    final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
+    inspection.reportCatchParameters = true;
+    myFixture.enableInspections(inspection);
+    doTest("""
+                      import java.io.*;
+             
+                      class FinalTest {
+                        public void foobar(/*Unnecessary 'final' on parameter 'boo'*/final/**/ String boo) {
+                          try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+                            reader.readLine();
+                          } catch (/*Unnecessary 'final' on parameter 'e'*/final/**/ IOException e) {
+                            throw new RuntimeException(e);
+                          }
+                        }
+                      }
+             """);
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
