@@ -2062,6 +2062,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/variableNameAndType/NoTypeInsertion.kt");
         }
 
+        @TestMetadata("TypeInsertionOnContextParameter.kt")
+        public void testTypeInsertionOnContextParameter() throws Exception {
+            runTest("../completion/testData/handlers/basic/variableNameAndType/TypeInsertionOnContextParameter.kt");
+        }
+
         @TestMetadata("TypeInsertionOnLateinit.kt")
         public void testTypeInsertionOnLateinit() throws Exception {
             runTest("../completion/testData/handlers/basic/variableNameAndType/TypeInsertionOnLateinit.kt");

@@ -4136,6 +4136,21 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("ContextParameter.kt")
+            public void testContextParameter() throws Exception {
+                runTest("../testData/basic/common/variableNameAndType/ContextParameter.kt");
+            }
+
+            @TestMetadata("ContextParameterOnProperty.kt")
+            public void testContextParameterOnProperty() throws Exception {
+                runTest("../testData/basic/common/variableNameAndType/ContextParameterOnProperty.kt");
+            }
+
+            @TestMetadata("ContextReceiver.kt")
+            public void testContextReceiver() throws Exception {
+                runTest("../testData/basic/common/variableNameAndType/ContextReceiver.kt");
+            }
+
             @TestMetadata("Lateinit.kt")
             public void testLateinit() throws Exception {
                 runTest("../testData/basic/common/variableNameAndType/Lateinit.kt");

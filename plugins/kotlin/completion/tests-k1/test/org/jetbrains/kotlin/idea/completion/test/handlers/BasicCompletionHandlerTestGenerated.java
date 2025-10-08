@@ -2062,6 +2062,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/variableNameAndType/NoTypeInsertion.kt");
         }
 
+        @TestMetadata("TypeInsertionOnContextParameter.kt")
+        public void testTypeInsertionOnContextParameter() throws Exception {
+            runTest("../testData/handlers/basic/variableNameAndType/TypeInsertionOnContextParameter.kt");
+        }
+
         @TestMetadata("TypeInsertionOnLateinit.kt")
         public void testTypeInsertionOnLateinit() throws Exception {
             runTest("../testData/handlers/basic/variableNameAndType/TypeInsertionOnLateinit.kt");
