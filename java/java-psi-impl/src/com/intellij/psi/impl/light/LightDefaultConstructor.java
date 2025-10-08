@@ -77,12 +77,11 @@ public class LightDefaultConstructor extends LightMethod implements SyntheticEle
 
     if (aClass.isInterface()
         || aClass.isRecord()
-        || aClass instanceof PsiCompiledElement // default constructor is physically present in compiled classes already
         || aClass instanceof PsiAnonymousClass
         || aClass instanceof PsiImplicitClass
-        || aClass instanceof PsiTypeParameter
-        || aClass.getClass().getSimpleName().contains("Decompiled") // Hack because Kotlin library classes are not PsiCompiledElements 
-    ) {
+        || aClass instanceof PsiTypeParameter 
+        || aClass instanceof PsiCompiledElement // default constructor is physically present in compiled classes already
+        || aClass.getContainingFile() instanceof PsiCompiledElement) {
       return null;
     }
     String className = aClass.getName();
