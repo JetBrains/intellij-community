@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DependencyGraph;
 import org.jetbrains.jps.dependency.GraphConfiguration;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
+import org.jetbrains.jps.dependency.kotlin.LookupsIndex;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -34,6 +35,7 @@ public class StorageManager implements CloseableExt {
   private CompositeZipOutputBuilder myComposite;
   private InstrumentationClassFinder myInstrumentationClassFinder;
   private FormBinding myFormBinding;
+  private boolean isKotlinCriDataGenerationEnabled;
 
   private final MVStore myDataSwapStore;
 
@@ -45,6 +47,7 @@ public class StorageManager implements CloseableExt {
       .cacheSize(8)
       .open();
     myDataSwapStore.setVersionsToKeep(0);
+    isKotlinCriDataGenerationEnabled = myContext.getKotlinCriStoragePath() != null;
   }
 
   public void cleanBuildState() throws IOException {
@@ -106,14 +109,29 @@ public class StorageManager implements CloseableExt {
 
   @NotNull
   public GraphConfiguration getGraphConfiguration() throws IOException {
-    GraphConfiguration config = myGraphConfig;
-    if (config == null) {
-      DependencyGraphImpl graph = new DependencyGraphImpl(
-        new PersistentMVStoreMapletFactory(DataPaths.getDepGraphStoreFile(myContext).toString(), Math.min(8, Runtime.getRuntime().availableProcessors()))
-      );
-      myGraphConfig = config = GraphConfiguration.create(graph, myContext.getPathMapper());
+    if (myGraphConfig != null) {
+      return myGraphConfig;
     }
-    return config;
+
+    DependencyGraphImpl graph = createDependencyGraph();
+    myGraphConfig = GraphConfiguration.create(graph, myContext.getPathMapper());
+    return myGraphConfig;
+  }
+
+  @NotNull
+  private DependencyGraphImpl createDependencyGraph() throws IOException {
+    var filePath = DataPaths.getDepGraphStoreFile(myContext).toString();
+    int maxBuilderThreads = Math.min(8, Runtime.getRuntime().availableProcessors());
+    var containerFactory = new PersistentMVStoreMapletFactory(filePath, maxBuilderThreads);
+
+    if (isKotlinCriDataGenerationEnabled) {
+      return new DependencyGraphImpl(
+        containerFactory,
+        DependencyGraphImpl.IndexFactory.create(LookupsIndex::new)
+      );
+    } else {
+      return new DependencyGraphImpl(containerFactory);
+    }
   }
 
   @NotNull
