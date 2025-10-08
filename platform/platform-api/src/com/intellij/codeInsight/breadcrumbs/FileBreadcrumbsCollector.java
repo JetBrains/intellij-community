@@ -57,6 +57,6 @@ public abstract class FileBreadcrumbsCollector {
         }
       }
     }
-    return ContainerUtil.getLastItem(EP_NAME.getPoint(project).getExtensionList());
+    return DefaultFileBreadcrumbsCollector.INSTANCE;
   }
 }

@@ -2,12 +2,14 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.breadcrumbs.Crumb;
@@ -21,19 +23,15 @@ import javax.swing.border.Border;
 import java.awt.*;
 
 public final class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Border {
-  private final VirtualFile myFile;
-  private final FileBreadcrumbsCollector myBreadcrumbsCollector;
+  private final @Nullable VirtualFile myFile;
+  private final @NotNull FileBreadcrumbCollectorHolder myBreadcrumbsCollectorHolder = new FileBreadcrumbCollectorHolder();
 
   public BreadcrumbsXmlWrapper(final @NotNull Editor editor) {
     super(editor);
     myFile = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
 
     if (myFile != null) {
-      myBreadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
-      myBreadcrumbsCollector.watchForChanges(myFile, myEditor, this, () -> queueUpdate());
-    }
-    else {
-      myBreadcrumbsCollector = null;
+      myBreadcrumbsCollectorHolder.update(myFile);
     }
 
     if (ExperimentalUI.isNewUI()) {
@@ -42,13 +40,42 @@ public final class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Bor
     setBorder(this);
   }
 
+  private class FileBreadcrumbCollectorHolder {
+    private volatile @Nullable FileBreadcrumbsCollector myBreadcrumbsCollector;
+    private @NotNull Disposable myCollectorListenerDisposable = Disposer.newDisposable();
+
+    public void update(@NotNull VirtualFile file) {
+      FileBreadcrumbsCollector newCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
+
+      if (newCollector != myBreadcrumbsCollector) {
+        Disposer.dispose(myCollectorListenerDisposable);
+        if (newCollector != null) {
+          Disposable newDisposable = Disposer.newDisposable(BreadcrumbsXmlWrapper.this);
+          newCollector.watchForChanges(file, myEditor, newDisposable, () -> queueUpdate());
+          myCollectorListenerDisposable = newDisposable;
+        }
+        else {
+          myCollectorListenerDisposable = Disposer.newDisposable();
+        }
+        myBreadcrumbsCollector = newCollector;
+      }
+    }
+
+    public @Nullable FileBreadcrumbsCollector getBreadcrumbsCollector() {
+      return myBreadcrumbsCollector;
+    }
+  }
+
   @Override
   protected @Nullable Iterable<? extends Crumb> computeCrumbs(int offset) {
-    if (myBreadcrumbsCollector == null) return null;
+    if (myFile == null) return null;
+    myBreadcrumbsCollectorHolder.update(myFile);
+    var breadcrumbsCollector = myBreadcrumbsCollectorHolder.getBreadcrumbsCollector();
+    if (breadcrumbsCollector == null) return null;
 
     Document document = myEditor.getDocument();
     Boolean forcedShown = BreadcrumbsForceShownSettings.getForcedShown(myEditor);
-    return myBreadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown);
+    return breadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown);
   }
 
   public void navigate(NavigatableCrumb crumb, boolean withSelection) {

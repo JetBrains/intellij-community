@@ -1163,7 +1163,8 @@
                              key="configurable.breadcrumbs" bundle="messages.ApplicationBundle"
                              instance="com.intellij.xml.breadcrumbs.BreadcrumbsConfigurable"/>
 
-    <fileBreadcrumbsCollector implementation="com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector" order="last"/>
+    <fileBreadcrumbsCollector implementation="com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector"
+                              id="PsiFileBreadcrumbsCollector" order="last"/>
 
     <applicationConfigurable parentId="preferences.editor" id="editor.stickyLines"
                              key="configurable.sticky.lines" bundle="messages.ApplicationBundle"

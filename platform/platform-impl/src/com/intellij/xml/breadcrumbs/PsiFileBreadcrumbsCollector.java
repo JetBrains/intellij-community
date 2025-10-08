@@ -48,7 +48,7 @@ public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector 
 
   @Override
   public boolean handlesFile(@NotNull VirtualFile virtualFile) {
-    return true;
+    return findProvider(virtualFile, myProject, true) != null;
   }
 
   @Override
