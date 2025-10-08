@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class ExtractLightMethodObjectHandler {
   private static final Logger LOG = Logger.getInstance(ExtractLightMethodObjectHandler.class);
@@ -142,7 +143,6 @@ public final class ExtractLightMethodObjectHandler {
 
 
     LOG.assertTrue(elementsCopy[0].getParent() == container, "element: " +  elementsCopy[0].getText() + "; container: " + container.getText());
-    final int startOffsetInContainer = elementsCopy[0].getStartOffsetInParent();
 
     final ControlFlow controlFlow;
     try {
@@ -211,24 +211,30 @@ public final class ExtractLightMethodObjectHandler {
     extractMethodObjectProcessor.getExtractProcessor().setShowErrorDialogs(false);
 
     final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor = extractMethodObjectProcessor.getExtractProcessor();
+    int startOffsetInContainer;
     if (extractProcessor.prepare()) {
-      if (extractProcessor.showDialog()) {
-        try {
-          extractProcessor.doExtract();
-          final UsageInfo[] usages = extractMethodObjectProcessor.findUsages();
-          extractMethodObjectProcessor.performRefactoring(usages);
-          extractMethodObjectProcessor.runChangeSignature();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        if (extractMethodObjectProcessor.isCreateInnerClass()) {
-          extractMethodObjectProcessor.changeInstanceAccess(project);
-        }
-        final PsiElement method = extractMethodObjectProcessor.getMethod();
-        LOG.assertTrue(method != null);
-        method.delete();
+      boolean shown = extractProcessor.showDialog();
+      if (!shown) {
+        throw new IllegalStateException("Must return success");
       }
+      try {
+        extractProcessor.doExtract();
+        startOffsetInContainer = Objects.requireNonNull(PsiTreeUtil.getParentOfType(extractProcessor.getMethodCall(), PsiStatement.class))
+          .getTextRangeInParent().getStartOffset();
+        final UsageInfo[] usages = extractMethodObjectProcessor.findUsages();
+        extractMethodObjectProcessor.performRefactoring(usages);
+        extractMethodObjectProcessor.runChangeSignature();
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return null;
+      }
+      if (extractMethodObjectProcessor.isCreateInnerClass()) {
+        extractMethodObjectProcessor.changeInstanceAccess(project);
+      }
+      final PsiElement method = extractMethodObjectProcessor.getMethod();
+      LOG.assertTrue(method != null);
+      method.delete();
     } else {
       return null;
     }
@@ -257,7 +263,7 @@ public final class ExtractLightMethodObjectHandler {
       }
     }
 
-    final String generatedCall = copy.getText().substring(startOffset, outStatement.getTextOffset());
+    final String generatedCall = copy.getText().substring(startOffset, outStatement.getTextOffset()).trim();
     return new LightMethodObjectExtractedData(generatedCall,
                                               (PsiClass)CodeStyleManager.getInstance(project).reformat(generatedClass),
                                               originalAnchor, useMagicAccessor);

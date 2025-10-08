@@ -3,7 +3,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.idea.IJIgnore;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.JavaCodeFragment;
@@ -343,7 +343,7 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
                  }""");
   }
 
-  @IJIgnore(issue = "IDEA-370817")
+  @TestFor(issues = "IDEA-370817")
   public void testOnWithComment() throws Exception {
     doTest("""
              //
