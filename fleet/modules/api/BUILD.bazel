@@ -1,0 +1,21 @@
+### auto-generated section `build fleet.modules.api` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom_api",
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+jvm_library(
+  name = "api",
+  module_name = "fleet.modules.api",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_api",
+  deps = ["@lib//:kotlin-stdlib"]
+)
+### auto-generated section `build fleet.modules.api` end

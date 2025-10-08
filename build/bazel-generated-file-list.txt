@@ -227,6 +227,7 @@ fleet/junit4
 fleet/kernel
 fleet/ktor/network/tls
 fleet/lsp.protocol
+fleet/modules/api
 fleet/multiplatform.shims
 fleet/preferences
 fleet/reporting/api
