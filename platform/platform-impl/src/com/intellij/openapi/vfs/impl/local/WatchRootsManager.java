@@ -141,7 +141,21 @@ public final class WatchRootsManager {
     //         2) another reason seems to be the move/rename operations, that currently do NOT update symlink
     //         But these could be not all the reasons, so better improve diagnostics!
 
-    if (oldDataById != oldDataByPath) {
+    if (oldDataById != null
+        && oldDataByPath == null
+        && !FileUtil.pathsEqual(oldDataById.path, linkPath)) {
+      //likely a move/rename of the link, or one of it's parents.
+      // Report an error, because we should have updated the symlink then move/rename happens, not some time after,
+      // by occasion -- so this branch is just to be able to see the % of all errors are due to move/rename
+      LOG.error("Symlink update is inconsistent: likely missed move/rename. Existing symlink data by id: \n" +
+                oldDataById + "\n" +
+                ", existing symlink data by path is null\n" +
+                "incoming symlink: \n" +
+                "{#" + fileId + ", " + linkPath + " -> " + linkTarget + "}, " +
+                "default caseSensitivity: " + SystemInfoRt.isFileSystemCaseSensitive);
+      return true;
+    }
+    else if (oldDataById != oldDataByPath) {
       LOG.error("Symlink update is inconsistent. Existing symlink data by id: \n" +
                 oldDataById + "\n" +
                 " != existing symlink data by path: \n" +
