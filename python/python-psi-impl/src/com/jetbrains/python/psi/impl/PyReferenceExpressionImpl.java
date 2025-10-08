@@ -2,11 +2,13 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.controlflow.ConditionalInstruction;
+import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -21,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -71,6 +74,7 @@ import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.TypeEvalContextImpl;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +85,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -548,6 +553,108 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                              @NotNull TypeEvalContext context,
                                              @NotNull PyExpression anchor,
                                              @NotNull ScopeOwner scopeOwner) {
+    if (!Registry.is("python.use.better.control.flow.type.inference")) {
+      return getTypeByControlFlowOld(name, context, anchor, scopeOwner);
+    }
+
+    final PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
+    final PyElement element = augAssignment != null ? augAssignment : anchor;
+
+    final Instruction[] flow = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
+    final int thisInstructionIdx = ControlFlowUtil.findInstructionNumberByElement(flow, element);
+    if (thisInstructionIdx == -1) return null;
+    final Instruction thisInstruction = flow[thisInstructionIdx];
+
+    final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false, context);
+
+    // null means empty set of possible types, Ref(null) means Any
+    final @Nullable Ref<PyType> typeOfEarlierDefinitions = StreamEx.of(defs)
+      .filter(def -> def.num() < thisInstruction.num())
+      .map(def -> getTypeFromInstruction(context, anchor, def))
+      .nonNull()
+      .collect(PyTypeUtil.toUnionFromRef());
+
+    // If earlier definitions were not found, variable may be unbound. Choose Any as type.
+    PyType deducedType = Ref.deref(typeOfEarlierDefinitions);
+
+    final var laterDefs = StreamEx.of(defs).filter(def -> def.num() > thisInstruction.num()).toList();
+    if (laterDefs.isEmpty()) {
+      return deducedType;
+    }
+
+    for (int i = 0; i < 50; i++) {
+      final var t = deducedType;
+      final @Nullable Ref<PyType> typeOfLaterDefinitions = context.assumeType(anchor, deducedType, ctx -> {
+        var collect = new ArrayList<Ref<PyType>>();
+        for (var def : laterDefs) {
+          PyType type = null;
+          if (t != null && ctx instanceof TypeEvalContextImpl.AssumptionContext assumptionCtx) {
+            type = assumptionCtx.getKnownTypeForInstruction(anchor, t, def.num());
+          }
+          @Nullable Ref<PyType> typeRef;
+          if (type == null) {
+            typeRef = getTypeFromInstruction(ctx, anchor, def);
+            if (typeRef != null) {
+              PyType typeFromInstruction = typeRef.get();
+              if (t != null && typeFromInstruction != null && ctx instanceof TypeEvalContextImpl.AssumptionContext assumptionCtx) {
+                assumptionCtx.setKnownTypeForInstruction(anchor, t, def.num(), typeFromInstruction);
+              }
+            }
+          }
+          else {
+            typeRef = Ref.create(type);
+          }
+          if (typeRef != null) {
+            collect.add(typeRef);
+          }
+        }
+        return collect.stream().collect(PyTypeUtil.toUnionFromRef());
+      });
+
+      if (typeOfLaterDefinitions == null) {
+        return deducedType;
+      }
+      PyType newType = PyUnionType.union(deducedType, typeOfLaterDefinitions.get());
+      if (Objects.equals(deducedType, newType)) {
+        return deducedType;
+      }
+      deducedType = newType;
+    }
+
+    return deducedType;
+  }
+
+  private static @Nullable Ref<PyType> getTypeFromInstruction(@NotNull TypeEvalContext context,
+                                                              @NotNull PyExpression anchor,
+                                                              @NotNull Instruction instr) {
+    if (instr instanceof ReadWriteInstruction readWriteInstruction) {
+      return readWriteInstruction.getType(context, anchor);
+    }
+    if (instr instanceof ConditionalInstruction conditionalInstruction) {
+      final PyType conditionType = context.getType((PyTypedElement)conditionalInstruction.getCondition());
+      if (conditionType instanceof PyNarrowedType narrowedType && narrowedType.isBound()) {
+        var arguments = narrowedType.getOriginal().getArguments(null);
+        if (!arguments.isEmpty()) {
+          var firstArgument = arguments.get(0);
+          PyType type = narrowedType.getNarrowedType();
+          if (firstArgument instanceof PyReferenceExpression && type != null) {
+            @Nullable PyType initial = context.getType(firstArgument);
+            boolean positive = conditionalInstruction.getResult() ^ narrowedType.getNegated();
+            if (narrowedType.getTypeIs()) {
+              return PyTypeAssertionEvaluator.createAssertionType(initial, type, positive, true, context);
+            }
+            return Ref.create((positive) ? type : initial);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static PyType getTypeByControlFlowOld(@NotNull String name,
+                                                @NotNull TypeEvalContext context,
+                                                @NotNull PyExpression anchor,
+                                                @NotNull ScopeOwner scopeOwner) {
     final PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
     final PyElement element = augAssignment != null ? augAssignment : anchor;
     final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false, context);

@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
@@ -26,6 +27,29 @@ import java.util.Map;
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
 
+  // PY-76659
+  public void testTypesInLoopComputeFast() {
+    if (!Registry.is("python.use.better.control.flow.type.inference")) {
+      return;
+    }
+    doTest("Literal[500] | int", """
+      def is_empty(x: int, y: int) -> bool:
+          ...
+      
+      def drop_grain() -> None:
+          x, y = 500, 0
+      
+          while True:
+              if is_empty(x, y):
+                  x, y = x + 1, y
+              elif is_empty(x, y):
+                  x, y = x, y
+              elif is_empty((expr := x), y):
+                  x, y = x, y
+              elif not is_empty(x, y):
+                  break""");
+  }
+  
   // See PyReferenceExpressionImpl.getQualifiedReferenceType for explanations.
   public void testQualifiedNameResolution() {
     doTest("str", """
@@ -326,78 +350,82 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
-  //// PY-76659
-  //public void testRecursiveResolve() {
-  //  doTest("int",
-  //         """
-  //           x = 42
-  //           while x:
-  //               x = x + 1
-  //           expr = x""");
-  //}
-  //
-  //// PY-76659
-  //public void testRecursiveResolve2() {
-  //  doTest("int",
-  //         """
-  //           x = 42
-  //           b: bool = ...
-  //           while x:
-  //               if b:
-  //                   x = x + 1
-  //                   expr = x
-  //               else:
-  //                   x = x - 1
-  //           """);
-  //}
-  //
-  //// PY-76659
-  //public void testDeclareAfterUse() {
-  //  doTest("int | Any",
-  //         """
-  //           from typing import Any, TypeGuard
-  //
-  //           def is_positive_integer(value: Any) -> TypeGuard[int]:
-  //               return isinstance(value, int) and value > 0
-  //
-  //           def bar() -> object:
-  //               return 321
-  //
-  //           def foo():
-  //               for i in range(1, 100):
-  //                   if i > 1:
-  //                       expr = x
-  //                   x = bar()
-  //                   if not is_positive_integer(x):
-  //                       break
-  //           """);
-  //}
-  //
+  // PY-76659
+  public void testRecursiveResolve() {
+    doTest("int",
+           """
+             x = 42
+             while x:
+                 x = x + 1
+             expr = x""");
+  }
 
-  /// / PY-76659
-  //public void testClassChain() {
-  //  doTest("B | C | D | A",
-  //         """
-  //           class A:
-  //               def bar() -> "B":
-  //                   return B()
-  //           class B:
-  //               def bar() -> "C":
-  //                   return C()
-  //           class C:
-  //               def bar() -> "D":
-  //                   return D()
-  //           class D:
-  //               def bar() -> A:
-  //                   return A()
-  //
-  //           def foo(b):
-  //               x = A()
-  //               while b:
-  //                   x = x.bar()
-  //
-  //               expr = x""");
-  //}
+  // PY-76659
+  public void testRecursiveResolve2() {
+    doTest("int",
+           """
+             x = 42
+             b: bool = ...
+             while x:
+                 if b:
+                     x = x + 1
+                     expr = x
+                 else:
+                     x = x - 1
+             """);
+  }
+
+  // PY-76659
+  public void ignoreTestDeclareAfterUse() {
+    // TODO
+    doTest("int | Any",
+           """
+             from typing import Any, TypeGuard
+
+             def is_positive_integer(value: Any) -> TypeGuard[int]:
+                 return isinstance(value, int) and value > 0
+
+             def bar() -> object:
+                 return 321
+
+             def foo():
+                 for i in range(1, 100):
+                     if i > 1:
+                         expr = x
+                     x = bar()
+                     if not is_positive_integer(x):
+                         break
+             """);
+  }
+
+
+  // PY-76659
+  public void testClassChain() {
+    if (!Registry.is("python.use.better.control.flow.type.inference")) {
+      return;
+    }
+    doTest("A | B | C | D",
+           """
+             class A:
+                 def bar() -> "B":
+                     return B()
+             class B:
+                 def bar() -> "C":
+                     return C()
+             class C:
+                 def bar() -> "D":
+                     return D()
+             class D:
+                 def bar() -> A:
+                     return A()
+
+             def foo(b):
+                 x = A()
+                 while b:
+                     x = x.bar()
+
+                 expr = x""");
+  }
 
   // PY-6702
   public void testYieldFromType() {

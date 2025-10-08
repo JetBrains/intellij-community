@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.StackOverflowPreventedException;
+import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,34 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
     return PyTypeCheckerInspection.class;
+  }
+
+  // PY-76659
+  public void testTypesInLoopComputeFast() {
+    if (!Registry.is("python.use.better.control.flow.type.inference")) {
+      // This test passes, but does not make sense without the flag.
+      return;
+    }
+    doTestByText("""
+                   def is_empty(xx: int, yy: int) -> bool:
+                       ...
+                   
+                   def drop_grain(data: dict) -> None:
+                       x, y = 500, 0
+                   
+                       while True:
+                           if is_empty(x, y + 1):
+                               x, y = x, y + 1
+                           elif is_empty(x - 1, y + 1):
+                               x, y = x - 1, y + 1
+                           elif is_empty(x + 1, y + 1):
+                               x, y = x + 1, y + 1
+                           elif not is_empty(x, y):
+                               break
+                           else:
+                               data[(x, y)] = 42
+                               break
+                   """);
   }
 
   @Override

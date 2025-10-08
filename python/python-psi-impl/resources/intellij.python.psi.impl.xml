@@ -545,7 +545,7 @@
       <categoryKey>INTN.category.python</categoryKey>
     </intentionAction>
 
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="Enable experimental better handling of recursive cases in type inference"
                  key="python.use.better.control.flow.type.inference"/>
     <registryKey defaultValue="true"

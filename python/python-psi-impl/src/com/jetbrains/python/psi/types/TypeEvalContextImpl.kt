@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.types.engine.PyTypeEngine
 import com.jetbrains.python.psi.types.engine.PyTypeEngineProvider
 import com.jetbrains.python.pyi.PyiLanguageDialect
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import kotlin.concurrent.Volatile
 import kotlin.time.measureTimedValue
@@ -116,12 +117,8 @@ open class TypeEvalContextImpl internal constructor(
 
   @ApiStatus.Internal
   override fun <R> assumeType(element: PyTypedElement, type: PyType?, func: (TypeEvalContext?) -> R): R? {
-    if (!Registry.Companion.`is`("python.use.better.control.flow.type.inference")) {
+    if (!Registry.`is`("python.use.better.control.flow.type.inference")) {
       return func(this)
-    }
-    if (getKnownType(element) != null) {
-      // Temporary solution, as overwriting known type might introduce inconsistencies with its dependencies.
-      return null
     }
     val context = AssumptionContext(this, element, type)
     return try {
@@ -300,6 +297,9 @@ open class TypeEvalContextImpl internal constructor(
 
   class AssumptionContext(val myParent: TypeEvalContextImpl, element: PyTypedElement, type: PyType?) :
     TypeEvalContextImpl(myParent.constraints) {
+    
+    val myInstructionCache: MutableMap<List<Any>, PyType> = ConcurrentHashMap()
+    
     init {
       myEvaluated[element] = type ?: PyNullType
     }
@@ -327,6 +327,27 @@ open class TypeEvalContextImpl internal constructor(
     override fun equals(other: Any?): Boolean {
       // Otherwise, it can be equal to other AssumptionContext with same constraints
       return this === other
+    }
+    
+    fun getKnownTypeForInstruction(anchor: PyExpression, deducedType: PyType, num: Int): PyType? {
+      if (myParent is AssumptionContext) {
+        return myParent.getKnownTypeForInstruction(anchor, deducedType, num)
+      }
+      return myInstructionCache.get(listOf(anchor, deducedType, num))
+    }
+    
+    fun setKnownTypeForInstruction(anchor: PyExpression, deducedType: PyType, num: Int, type: PyType) {
+      if (myParent is AssumptionContext) {
+        myParent.setKnownTypeForInstruction(anchor, deducedType, num, type)
+      }
+      else {
+        myInstructionCache.put(listOf(anchor, deducedType, num), type);
+      }
+    }
+
+    @ApiStatus.Internal
+    override fun getContextTypeCache(): MutableMap<Pair<Any, Any>, PyType?> {
+      return myParent.getContextTypeCache()
     }
   }
 

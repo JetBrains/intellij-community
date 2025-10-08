@@ -6,7 +6,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
-
+  
   // PY-28243
   public void testTypeVarAndTargetName() {
     doTestByText("""
