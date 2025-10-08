@@ -60,7 +60,7 @@ class PlatformLayout : BaseLayout() {
     val uniqueGuard = HashSet<String>()
     for (item in includedModules) {
       // libraries are packed into product module
-      if (item.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+      if (item.isProductModule()) {
         continue
       }
 

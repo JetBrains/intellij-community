@@ -1,0 +1,9 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.compose.runtime.desktop
+    libraries:
+      compose.runtime.desktop:
+      - name: $MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1/runtime-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1/collection-jvm-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1/annotation-jvm-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1/runtime-annotation-jvm-1.jar

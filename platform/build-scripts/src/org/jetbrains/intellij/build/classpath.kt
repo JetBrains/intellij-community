@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
+import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
@@ -28,15 +29,16 @@ internal fun generateClassPathByLayoutReport(libDir: Path, entries: List<Distrib
     val file = entry.path
 
     // exclude files like ext/platform-main.jar - if a file in lib, take only direct children in an account
-    if ((entry.relativeOutputFile ?: "").contains('/')) {
+    if ((entry.relativeOutputFile ?: "").contains('/') && !(entry is ModuleOutputEntry && entry.reason == ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES)) {
       continue
     }
 
     if (entry is ModuleOutputEntry) {
-      if (TEST_FRAMEWORK_MODULE_NAMES.contains(entry.moduleName) || entry.moduleName.startsWith("intellij.platform.unitTestMode")) {
+      val moduleName = entry.owner.moduleName
+      if (TEST_FRAMEWORK_MODULE_NAMES.contains(moduleName) || moduleName.startsWith("intellij.platform.unitTestMode")) {
         continue
       }
-      if (skipNioFs && entry.moduleName == "intellij.platform.core.nio.fs") {
+      if (skipNioFs && moduleName == "intellij.platform.core.nio.fs") {
         continue
       }
     }

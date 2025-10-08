@@ -446,7 +446,7 @@ class JarPackager private constructor(
     withTests: Boolean,
   ) {
     val moduleName = module.name
-    val includeProjectLib = if (layout is PluginLayout) layout.auto else item.reason == ModuleIncludeReasons.PRODUCT_MODULES
+    val includeProjectLib = if (layout is PluginLayout) layout.auto else item.isProductModule()
 
     val excluded = if (layout is PluginLayout) (layout.excludedLibraries.get(moduleName) ?: emptyList()) + (layout.excludedLibraries.get(null) ?: emptyList()) else emptySet()
     for (element in helper.getLibraryDependencies(module, withTests = withTests)) {
@@ -463,7 +463,12 @@ class JarPackager private constructor(
             continue
           }
 
-          projectLibraryData = ProjectLibraryData(libraryName = libName, reason = "<- $moduleName")
+          if (layout !is PluginLayout && item.isProductModule()) {
+            projectLibraryData = ProjectLibraryData(libraryName = libName, owner = item, reason = null)
+          }
+          else {
+            projectLibraryData = ProjectLibraryData(libraryName = libName, reason = "<- $moduleName")
+          }
         }
         else if (platformLayout != null && platformLayout.isLibraryAlwaysPackedIntoPlugin(libName)) {
           platformLayout.findProjectLibrary(libName)?.let {
@@ -487,7 +492,7 @@ class JarPackager private constructor(
         continue
       }
 
-      if (item.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+      if (item.isProductModule()) {
         packLibFilesIntoModuleJar(
           asset = asset.value,
           item = item,
@@ -557,6 +562,7 @@ class JarPackager private constructor(
                 size = size,
                 hash = hash,
                 relativeOutputFile = item.relativeOutputFile,
+                owner = item,
               )
             }
             else {
@@ -748,7 +754,8 @@ class JarPackager private constructor(
                 libraryFile = file,
                 size = size,
                 hash = hash,
-                relativeOutputFile = relativeOutputFile
+                relativeOutputFile = relativeOutputFile,
+                owner = null,
               )
             }
           },
@@ -1153,7 +1160,7 @@ private fun computeDistributionFileEntries(
     list.add(
       ModuleOutputEntry(
         path = asset.effectiveFile,
-        moduleName = module.moduleName,
+        owner = module,
         size = size,
         hash = hash,
         relativeOutputFile = module.relativeOutputFile,

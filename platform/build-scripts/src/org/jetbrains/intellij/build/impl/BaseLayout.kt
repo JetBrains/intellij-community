@@ -226,6 +226,8 @@ class ModuleItem(
     }
   }
 
+  internal fun isProductModule(): Boolean = ModuleIncludeReasons.isProductModule(reason)
+
   override fun equals(other: Any?): Boolean {
     return this === other || other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
   }

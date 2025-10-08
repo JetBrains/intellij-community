@@ -25,6 +25,10 @@ data class FileEntry(
    * The list of included in the file module outputs.
    */
   @JvmField val modules: List<ModuleEntry> = emptyList(),
+
+  @JvmField val productModules: List<String> = emptyList(),
+  @JvmField val productEmbeddedModules: List<String> = emptyList(),
+
   @JvmField val contentModules: List<ModuleEntry> = emptyList(),
 
   @JvmField val library: String? = null,
@@ -68,7 +72,7 @@ data class ProjectLibraryEntry(
    */
   @JvmField val reason: String? = null,
 ) {
-  fun compareImportantFields(o: ProjectLibraryEntry) = name == o.name && files == o.files && reason == o.reason
+  fun compareImportantFields(o: ProjectLibraryEntry): Boolean = name == o.name && files == o.files && reason == o.reason
 }
 
 @ApiStatus.Internal

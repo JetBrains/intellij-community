@@ -18,6 +18,7 @@ class ProjectLibraryData(
   @JvmField val libraryName: String,
   @JvmField val packMode: LibraryPackMode = LibraryPackMode.STANDALONE_MERGED,
   @JvmField val reason: String?,
+  @JvmField val owner: ModuleItem? = null,
   @JvmField val outPath: String? = null,
 ) {
   init {

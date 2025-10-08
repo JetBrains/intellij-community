@@ -1,0 +1,33 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.compose.foundation.desktop
+    libraries:
+      compose-foundation-desktop:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-desktop/1/foundation-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1/annotation-jvm-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1/collection-jvm-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-desktop/1/animation-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/animation/animation-core-desktop/1/animation-core-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-geometry-desktop/1/ui-geometry-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/foundation/foundation-layout-desktop/1/foundation-layout-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-desktop/1/ui-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2/lifecycle-common-jvm-2.jar
+      - name: $MAVEN_REPOSITORY$/org/jspecify/jspecify/1/jspecify-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2/lifecycle-runtime-desktop-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/arch/core/core-common/2/core-common-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/annotation/annotation/1/annotation-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-desktop/2/lifecycle-viewmodel-desktop-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-viewmodel-savedstate-desktop/2/lifecycle-viewmodel-savedstate-desktop-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1/savedstate-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/androidx/lifecycle/lifecycle-runtime-compose-desktop/2/lifecycle-runtime-compose-desktop-2.jar
+      - name: $MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-compose-desktop/2/lifecycle-runtime-compose-desktop-2.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/runtime/runtime-saveable-desktop/1/runtime-saveable-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-saveable-desktop/1/runtime-saveable-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/androidx/savedstate/savedstate-compose-desktop/1/savedstate-compose-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/androidx/savedstate/savedstate-compose-desktop/1/savedstate-compose-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-backhandler-desktop/1/ui-backhandler-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-graphics-desktop/1/ui-graphics-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-unit-desktop/1/ui-unit-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-text-desktop/1/ui-text-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-util-desktop/1/ui-util-desktop-1.jar
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0/atomicfu-jvm-0.jar

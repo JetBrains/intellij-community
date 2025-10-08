@@ -151,7 +151,7 @@ private suspend fun generateRepositoryForDistribution(
   for (entry in entries) {
     when (entry.origin) {
       is ModuleOutputEntry -> {
-        val module = context.findRequiredModule(entry.origin.moduleName)
+        val module = context.findRequiredModule(entry.origin.owner.moduleName)
         if (isMainPath(module, entry.relativePath)) {
           moduleProductionPaths.putValue(module, entry.relativePath)
         }
@@ -256,7 +256,7 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
       val element = when (entry.origin) {
         is ProjectLibraryEntry if isPackedIntoSingleJar(entry.origin) -> project.libraryCollection.findLibrary(entry.origin.data.libraryName)
         is ModuleLibraryFileEntry -> entry.origin.findLibrary(context).takeIf { it.getFiles(JpsOrderRootType.COMPILED).size == 1 }
-        is ModuleOutputEntry -> context.findRequiredModule(entry.origin.moduleName)
+        is ModuleOutputEntry -> context.findRequiredModule(entry.origin.owner.moduleName)
         else -> null
       }
       element?.let { it to entry.relativePath }
@@ -264,7 +264,7 @@ private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
     .groupBy({ it.first }, { Path(it.second) })
 
   suspend fun isIncludedInEmbeddedFrontend(entry: DistributionFileEntry): Boolean {
-    return entry is ModuleOutputEntry && !context.getFrontendModuleFilter().isBackendModule(entry.moduleName)
+    return entry is ModuleOutputEntry && !context.getFrontendModuleFilter().isBackendModule(entry.owner.moduleName)
   }
   
   suspend fun chooseMainLocation(element: JpsNamedElement, paths: List<Path>): String {

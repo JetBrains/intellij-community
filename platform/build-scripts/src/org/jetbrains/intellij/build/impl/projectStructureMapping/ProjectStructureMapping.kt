@@ -11,6 +11,8 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.PluginBuildDescriptor
+import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
+import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import java.io.ByteArrayOutputStream
@@ -19,11 +21,13 @@ import java.nio.file.Path
 import java.util.TreeMap
 
 internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Sequence<String> {
-  return entries.mapNotNull { (it as? ModuleOutputEntry)?.moduleName }.distinct()
+  return entries.mapNotNull { (it as? ModuleOutputEntry)?.owner?.moduleName }.distinct()
 }
 
 internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
-  zipFileWriter.uncompressedData("platform.yaml", buildPlatformContentReport(contentReport, buildPaths, context.getDistFiles(os = null, arch = null, libcImpl = null)))
+  val (platformData, productModuleMap) = buildPlatformContentReport(contentReport, buildPaths, context.getDistFiles(os = null, arch = null, libcImpl = null))
+  zipFileWriter.uncompressedData("platform.yaml", platformData)
+  zipFileWriter.uncompressedData("product-modules.yaml", buildProductModuleContentReport(productModuleMap, buildPaths))
   zipFileWriter.uncompressedData("bundled-plugins.yaml", buildPluginContentReport(contentReport.bundledPlugins, buildPaths))
   zipFileWriter.uncompressedData("non-bundled-plugins.yaml", buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths))
 }
@@ -103,23 +107,94 @@ private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescr
   return out.toByteArray()
 }
 
+private fun buildProductModuleContentReport(productModuleMap: List<Pair<ModuleItem, MutableList<DistributionFileEntry>>>, buildPaths: BuildPaths): ByteArray {
+  val out = ByteArrayOutputStream()
+  val writer = createYamlGenerator(out)
+
+  val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
+  val fileToPresentablePath = HashMap<Path, String>()
+
+  writer.writeStartArray()
+  for ((moduleItem, entries) in productModuleMap) {
+    fileToPresentablePath.clear()
+    fileToEntry.clear()
+
+    for (entry in entries) {
+      val file = entry.path
+      // the issue is that some modules embedded into some products (Rider), so, name maybe product.jar...
+      val presentablePath = if ((entry as ModuleOwnedFileEntry).owner!!.moduleName == moduleItem.moduleName) {
+        "<file>"
+      }
+      else {
+        fileToPresentablePath.computeIfAbsent(file) {
+          shortenAndNormalizePath(it, buildPaths)
+        }
+      }
+      fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
+    }
+
+    writer.writeStartObject()
+    writer.writeStringField("mainModule", moduleItem.moduleName)
+
+    writer.writeArrayFieldStart("content")
+    for ((filePath, fileEntries) in fileToEntry) {
+      writer.writeStartObject()
+      writer.writeStringField("name", filePath)
+      writeProjectLibs(entries = fileEntries, writer = writer, buildPaths = buildPaths, isInner = false)
+
+      if (fileEntries.all { it is ModuleLibraryFileEntry }) {
+        writeSeparatePackedModuleLibrary(fileEntries = fileEntries, writer = writer, buildPaths = buildPaths)
+        writer.writeEndObject()
+        continue
+      }
+
+      // module maybe embedded in one product and not embedded in another one (rider case)
+      writeModules(writer = writer, fileEntries = fileEntries, buildPaths = buildPaths, writeReason = false)
+      writer.writeEndObject()
+    }
+    writer.writeEndArray()
+
+    writer.writeEndObject()
+  }
+  writer.writeEndArray()
+
+  writer.close()
+  return out.toByteArray()
+}
+
 private fun createYamlGenerator(out: ByteArrayOutputStream): YAMLGenerator {
   return YAMLFactory().createGenerator(out)
     .useDefaultPrettyPrinter()
     .configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
 }
 
-private fun buildPlatformContentReport(contentReport: ContentReport, buildPaths: BuildPaths, distFiles: Collection<DistFile>): ByteArray {
+private fun buildPlatformContentReport(
+  contentReport: ContentReport,
+  buildPaths: BuildPaths,
+  distFiles: Collection<DistFile>,
+): Pair<ByteArray, List<Pair<ModuleItem, MutableList<DistributionFileEntry>>>> {
   val out = ByteArrayOutputStream()
   val writer = createYamlGenerator(out)
   val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
   val fileToPresentablePath = HashMap<Path, String>()
+
+  val productModuleToEntries = HashMap<ModuleItem, MutableList<DistributionFileEntry>>()
+
   for (entry in contentReport.platform) {
+    if (entry is ModuleOwnedFileEntry) {
+      val owner = entry.owner
+      if (owner != null && ModuleIncludeReasons.isProductModule(owner.reason)) {
+        productModuleToEntries.computeIfAbsent(owner) { mutableListOf() }.add(entry)
+        continue
+      }
+    }
+
     val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path) {
       shortenAndNormalizePath(it, buildPaths)
     }
     fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
   }
+
   writer.writeStartArray()
   for ((filePath, fileEntries) in fileToEntry) {
     writer.writeStartObject()
@@ -154,28 +229,49 @@ private fun buildPlatformContentReport(contentReport: ContentReport, buildPaths:
     }
   }
 
-  writer.writeObjectField("name", "plugins")
-  writer.writeArrayFieldStart("bundled")
-  writeWithoutDuplicates(contentReport.bundledPlugins)
-  writer.writeEndArray()
-  writer.writeArrayFieldStart("nonBundled")
-  writeWithoutDuplicates(contentReport.nonBundledPlugins)
-  writer.writeEndArray()
+  val productModules = productModuleToEntries.toList().sortedBy { it.first.moduleName }
 
+  writeProductModules(writer = writer, productModules = productModules, kind = ModuleIncludeReasons.PRODUCT_MODULES)
+  writeProductModules(writer = writer, productModules = productModules, kind = ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES)
+
+  writer.writeObjectField("name", "plugins")
+  run {
+    writer.writeArrayFieldStart("bundled")
+    writeWithoutDuplicates(contentReport.bundledPlugins)
+    writer.writeEndArray()
+
+    writer.writeArrayFieldStart("nonBundled")
+    writeWithoutDuplicates(contentReport.nonBundledPlugins)
+    writer.writeEndArray()
+  }
   writer.writeEndObject()
 
   writer.writeEndArray()
   writer.close()
-  return out.toByteArray()
+  return out.toByteArray() to productModules
+}
+
+private fun writeProductModules(
+  writer: YAMLGenerator,
+  productModules: List<Pair<ModuleItem, MutableList<DistributionFileEntry>>>,
+  kind: String,
+) {
+  writer.writeArrayFieldStart(if (kind == ModuleIncludeReasons.PRODUCT_MODULES) "productModules" else "productEmbeddedModules")
+  for ((item) in productModules) {
+    if (item.reason == kind) {
+      writer.writeString(item.moduleName)
+    }
+  }
+  writer.writeEndArray()
 }
 
 private fun shortenPath(file: Path, buildPaths: BuildPaths, extraRoot: Path?): String {
   if (file.startsWith(MAVEN_REPO)) {
-    return "\$MAVEN_REPOSITORY$/" + MAVEN_REPO.relativize(file).toString().replace(File.separatorChar, '/')
+    return $$"$MAVEN_REPOSITORY$/" + MAVEN_REPO.relativize(file).toString().replace(File.separatorChar, '/')
   }
   val projectHome = buildPaths.projectHome
   if (file.startsWith(projectHome)) {
-    return "\$PROJECT_DIR$/" + projectHome.relativize(file).toString()
+    return $$"$PROJECT_DIR$/" + projectHome.relativize(file).toString()
   }
   else {
     val buildOutputDir = buildPaths.buildOutputDir
@@ -212,8 +308,8 @@ private fun writeModules(
     }
 
     writer.writeStartObject()
-    val moduleName = entry.moduleName
-    writeModuleItem(writer, entry, writeReason = writeReason)
+    val moduleName = entry.owner.moduleName
+    writeModuleItem(writer = writer, entry = entry, writeReason = writeReason)
     writeModuleLibraries(fileEntries = fileEntries, moduleName = moduleName, writer = writer, buildPaths = buildPaths)
     writer.writeEndObject()
   }
@@ -223,11 +319,13 @@ private fun writeModules(
 }
 
 private fun writeModuleItem(writer: JsonGenerator, entry: ModuleOutputEntry, writeReason: Boolean) {
-  writer.writeStringField("name", entry.moduleName)
+  writer.writeStringField("name", entry.owner.moduleName)
   writer.writeNumberField("size", entry.size)
   if (writeReason) {
-    entry.reason?.let {
-      writer.writeStringField("reason", it)
+    val reason = entry.reason ?: return
+    // product module is obvious, reduce size (for embedded, we still want to report)
+    if (reason != ModuleIncludeReasons.PRODUCT_MODULES) {
+      writer.writeStringField("reason", reason)
     }
   }
 }

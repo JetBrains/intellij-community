@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.fastutil
+  library: fastutil-min
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fastutil/intellij-deps-fastutil/8/intellij-deps-fastutil-8.jar

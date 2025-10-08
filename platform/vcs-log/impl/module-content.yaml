@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.platform.vcs.log.impl
+  library: kotlinx-coroutines-guava
+  files:
+  - name: $MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-guava/1/kotlinx-coroutines-guava-1.jar

@@ -685,7 +685,8 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
       continue
     }
 
-    val relativeOutFile = if (loadingRule == "embedded") {
+    val isEmbedded = loadingRule == "embedded"
+    val relativeOutFile = if (isEmbedded) {
       if (isModuleCloseSource(moduleName, context = context)) {
         if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
       }
@@ -698,7 +699,11 @@ private suspend fun collectAndEmbedProductModules(root: Element, xIncludePathRes
     else {
       "modules/$moduleName.jar"
     }
-    result.add(ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES))
+    result.add(ModuleItem(
+      moduleName = moduleName,
+      relativeOutputFile = relativeOutFile,
+      reason = if (isEmbedded) ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES else ModuleIncludeReasons.PRODUCT_MODULES,
+    ))
     PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
       it.mapTo(result) { subModuleName ->
         ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES)
@@ -728,4 +733,7 @@ private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
 
 internal object ModuleIncludeReasons {
   const val PRODUCT_MODULES: String = "productModule"
+  const val PRODUCT_EMBEDDED_MODULES: String = "productEmbeddedModule"
+
+  fun isProductModule(reason: String?): Boolean = reason == PRODUCT_MODULES || reason == PRODUCT_EMBEDDED_MODULES
 }

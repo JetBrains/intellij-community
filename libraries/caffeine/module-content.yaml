@@ -1,0 +1,6 @@
+- name: <file>
+  modules:
+  - name: intellij.libraries.caffeine
+  library: caffeine
+  files:
+  - name: $MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3/caffeine-3.jar

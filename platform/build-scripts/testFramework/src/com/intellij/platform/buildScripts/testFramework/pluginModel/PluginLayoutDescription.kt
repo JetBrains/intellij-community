@@ -37,12 +37,14 @@ fun createLayoutProviderByContentYamlFiles(
   mainModuleOfCorePlugin: String,
   corePluginDescriptorPath: String,
   nameOfTestWhichGeneratesFiles: String,
+  project: org.jetbrains.jps.model.JpsProject,
 ): PluginLayoutProvider {
   return YamlFileBasedPluginLayoutProvider(
     ideContentYamlPath = ideContentYamlPath,
     mainModuleOfCorePlugin = mainModuleOfCorePlugin,
     corePluginDescriptorPath = corePluginDescriptorPath,
     nameOfTestWhichGeneratesFiles = nameOfTestWhichGeneratesFiles,
+    project = project,
   )
 }
 
@@ -51,14 +53,65 @@ private class YamlFileBasedPluginLayoutProvider(
   private val mainModuleOfCorePlugin: String,
   private val corePluginDescriptorPath: String,
   private val nameOfTestWhichGeneratesFiles: String,
+  private val project: org.jetbrains.jps.model.JpsProject,
 ) : PluginLayoutProvider {
   private val ideContentData by lazy {
     deserializeContentData(ideContentYamlPath.readText())
   }
 
+  private val mergedContentData by lazy {
+    loadMergedContentData()
+  }
+
+  private fun loadMergedContentData(): List<FileEntry> {
+    val baseEntries = ideContentData.toMutableList()
+
+    // Collect productModules and productEmbeddedModules separately
+    val productModuleNames = ideContentData.flatMap { it.productModules }.distinct()
+    val productEmbeddedModuleNames = ideContentData.flatMap { it.productEmbeddedModules }.distinct()
+
+    if (productModuleNames.isEmpty() && productEmbeddedModuleNames.isEmpty()) {
+      return baseEntries
+    }
+
+    // Process productModules with "dist.all/lib/modules/{moduleName}.jar" pattern
+    for (moduleName in productModuleNames) {
+      loadAndMergeModuleContent(moduleName, "dist.all/lib/modules/$moduleName.jar", baseEntries)
+    }
+
+    // Process productEmbeddedModules with "dist.all/lib/module-{moduleName}.jar" pattern
+    for (moduleName in productEmbeddedModuleNames) {
+      loadAndMergeModuleContent(moduleName, "dist.all/lib/module-$moduleName.jar", baseEntries)
+    }
+
+    return baseEntries
+  }
+
+  private fun loadAndMergeModuleContent(moduleName: String, jarName: String, baseEntries: MutableList<FileEntry>) {
+    val module = project.findModuleByName(moduleName) ?: return
+    val contentRootUrl = module.contentRootsList.urls.firstOrNull() ?: return
+    val moduleContentPath = JpsPathUtil.urlToNioPath(contentRootUrl).resolve("module-content.yaml")
+
+    if (!moduleContentPath.exists()) {
+      return
+    }
+
+    val moduleEntries = deserializeContentData(moduleContentPath.readText())
+
+    // replace <file> placeholder with actual jar path
+    for (entry in moduleEntries) {
+      if (entry.name == "<file>") {
+        baseEntries.add(entry.copy(name = jarName))
+      }
+      else {
+        baseEntries.add(entry)
+      }
+    }
+  }
+
   override fun loadCorePluginLayout(): PluginLayoutDescription {
     return toPluginLayoutDescription(
-      entries = ideContentData,
+      entries = mergedContentData,
       mainModuleName = mainModuleOfCorePlugin,
       pluginDescriptorPath = corePluginDescriptorPath,
       mainLibDir = "dist.all/lib",

@@ -1064,8 +1064,8 @@ suspend fun layoutDistribution(
     tasks.add(async(CoroutineName("pack $outputDir")) {
       spanBuilder("pack").setAttribute("outputDir", outputDir.toString()).use {
         JarPackager.pack(
-          includedModules,
-          outputDir,
+          includedModules = includedModules,
+          outputDir = outputDir,
           isRootDir = layout is PlatformLayout,
           layout = layout,
           platformLayout = platformLayout,
@@ -1221,14 +1221,16 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
   val rootElement = artifact.rootElement
   for (element in rootElement.children) {
     if (element is JpsProductionModuleOutputPackagingElement) {
-      entries.add(ModuleOutputEntry(
-        path = artifactFile,
-        moduleName = element.moduleReference.moduleName,
-        size = 0,
-        hash = 0,
-        relativeOutputFile = "",
-        reason = "artifact: ${artifact.name}",
-      ))
+      entries.add(
+        ModuleOutputEntry(
+          path = artifactFile,
+          owner = ModuleItem(moduleName = element.moduleReference.moduleName, relativeOutputFile = "DO NOT USE ME", reason = null),
+          size = 0,
+          hash = 0,
+          relativeOutputFile = "",
+          reason = "artifact: ${artifact.name}",
+        )
+      )
     }
     else if (element is JpsTestModuleOutputPackagingElement) {
       entries.add(ModuleTestOutputEntry(path = artifactFile, moduleName = element.moduleReference.moduleName))
@@ -1244,7 +1246,8 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
           libraryFile = null,
           hash = 0,
           size = 0,
-          relativeOutputFile = null
+          relativeOutputFile = null,
+          owner = null,
         ))
       }
       else {
@@ -1361,7 +1364,7 @@ private fun sortEntries(unsorted: List<DistributionFileEntry>): List<Distributio
     compareBy(
       { it.path.invariantSeparatorsPathString },
       { it.type },
-      { (it as? ModuleOutputEntry)?.moduleName },
+      { (it as? ModuleOutputEntry)?.owner?.moduleName },
       { (it as? LibraryFileEntry)?.libraryFile?.let(::isFromLocalMavenRepo) != true },
       { (it as? LibraryFileEntry)?.libraryFile?.invariantSeparatorsPathString },
     )
@@ -1379,7 +1382,7 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
 
   val libDir = context.paths.distAllDir.resolve("lib")
   for (entry in sortEntries(contentReport.platform)) {
-    if (!(entry is ModuleOutputEntry && entry.reason == ModuleIncludeReasons.PRODUCT_MODULES)) {
+    if (entry !is ModuleOutputEntry || !ModuleIncludeReasons.isProductModule(entry.reason)) {
       val relativePath = libDir.relativize(entry.path)
       if (relativePath.nameCount != 1 && !relativePath.startsWith("modules")) {
         continue
@@ -1388,7 +1391,7 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
 
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(entry.moduleName)))
+        classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(entry.owner.moduleName)))
       }
       is LibraryFileEntry -> classPath.add(entry.libraryFile!!)
       else -> throw UnsupportedOperationException("Entry $entry is not supported")
@@ -1406,8 +1409,8 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
 
     when (entry) {
       is ModuleOutputEntry -> {
-        classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(entry.moduleName)))
-        for (classpathPluginEntry in pluginLayouts.firstOrNull { it.mainModule == entry.moduleName }?.scrambleClasspathPlugins ?: emptyList()) {
+        classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(entry.owner.moduleName)))
+        for (classpathPluginEntry in pluginLayouts.firstOrNull { it.mainModule == entry.owner.moduleName }?.scrambleClasspathPlugins ?: emptyList()) {
           classPath.addAll(context.getModuleOutputRoots(context.findRequiredModule(classpathPluginEntry.pluginMainModuleName)))
         }
       }
