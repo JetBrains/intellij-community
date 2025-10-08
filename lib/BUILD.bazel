@@ -1494,6 +1494,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "fleet-io-ktor-client-cio",
+  jar = "@io_ktor-ktor-client-cio-jvm-3_1_3_http//file",
+  source_jar = "@io_ktor-ktor-client-cio-jvm-3_1_3_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "fleet-io-ktor-client-core",
   jar = "@io_ktor-ktor-client-core-jvm-3_1_3_http//file",
   source_jar = "@io_ktor-ktor-client-core-jvm-3_1_3_http//file",
