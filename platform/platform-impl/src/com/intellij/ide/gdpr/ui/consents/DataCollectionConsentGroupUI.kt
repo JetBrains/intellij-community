@@ -16,7 +16,7 @@ internal class DataCollectionConsentGroupUI(
     val customerDetailedDataSharingAgreement = DataCollectionAgreement.getInstance() ?: return@run null
     when (customerDetailedDataSharingAgreement) {
       DataCollectionAgreement.YES -> IdeBundle.message("gdpr.data.collection.consent.group.setting.enabled.warning.text")
-      DataCollectionAgreement.NO -> IdeBundle.message("gdpr.data.collection.consent.group.setting.disabled.warning.text")
+      DataCollectionAgreement.NO -> null
       DataCollectionAgreement.NOT_SET -> null
     }
   }

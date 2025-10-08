@@ -63,7 +63,7 @@ public class DataCollectionConsentUiTest extends BasePlatformTestCase {
     setupLicensingFacade('N');
     groupUi = ConsentSettingsUi.getConsentGroupUi(group);
     assertNotNull(groupUi);
-    assertEquals(IdeBundle.message("gdpr.data.collection.consent.group.setting.disabled.warning.text"), groupUi.getForcedStateDescription());
+    assertNull(groupUi.getForcedStateDescription());
 
     setupLicensingFacade('Y');
     groupUi = ConsentSettingsUi.getConsentGroupUi(group);
@@ -100,7 +100,7 @@ public class DataCollectionConsentUiTest extends BasePlatformTestCase {
     var state = ui.getForcedState();
     assertNotNull(state);
     assertInstanceOf(state, ConsentForcedState.ExternallyDisabled.class);
-    assertNull(state.getDescription());
+    assertNotNull(state.getDescription());
 
     setupLicensingFacade('Y');
     state = ui.getForcedState();
