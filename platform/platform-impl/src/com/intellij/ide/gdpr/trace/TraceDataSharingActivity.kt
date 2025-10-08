@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -105,7 +104,7 @@ private fun isInternalUser(): Boolean {
 }
 
 private fun canAskForTraceDataCollection(): Boolean =
-  !isChinaRegion() && DataCollectionAgreement.getInstance() in listOf(DataCollectionAgreement.NOT_SET, null) && isEnabled
+  !isChinaRegion() && DataCollectionAgreement.getInstance() in listOf(DataCollectionAgreement.NOT_SET, null)
 
 private fun isChinaRegion(): Boolean {
   return when (RegionSettings.getRegion()) {
@@ -114,5 +113,3 @@ private fun isChinaRegion(): Boolean {
     else -> false
   }
 }
-
-private val isEnabled by lazy { Registry.`is`("ide.enable.notification.trace.data.sharing") }
