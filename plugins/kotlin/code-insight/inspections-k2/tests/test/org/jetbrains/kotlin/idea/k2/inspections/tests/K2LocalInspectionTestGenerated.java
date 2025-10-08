@@ -77,6 +77,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithNullInitializer.kt");
         }
 
+        @TestMetadata("unusedVariableWithUnnamedLocalVariables.kt")
+        public void testUnusedVariableWithUnnamedLocalVariables() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithUnnamedLocalVariables.kt");
+        }
+
         @TestMetadata("unusedVariableWithoutInitializer.kt")
         public void testUnusedVariableWithoutInitializer() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedVariable/unusedVariableWithoutInitializer.kt");

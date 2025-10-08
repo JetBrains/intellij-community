@@ -6,17 +6,22 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ApplicableRangesProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ContextProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitor
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalInspectionTool(),
                                                                         ApplicableRangesProvider<E>,
                                                                         ContextProvider<E, C> {
+
+    override fun isAvailableForFile(file: PsiFile): Boolean =
+        file is KtFile
 
     protected abstract fun InspectionManager.createProblemDescriptor(
         element: E,
