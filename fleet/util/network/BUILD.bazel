@@ -1,0 +1,53 @@
+### auto-generated section `build fleet.util.network` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+create_kotlinc_options(
+  name = "custom_network",
+  opt_in = [
+    "kotlin.ExperimentalStdlibApi",
+    "kotlinx.coroutines.InternalCoroutinesApi",
+  ],
+  x_consistent_data_class_copy_visibility = True,
+  x_context_parameters = True,
+  x_jvm_default = "all-compatibility",
+  x_lambdas = "class"
+)
+
+jvm_provided_library(
+  name = "fleet_util_multiplatform_provided",
+  lib = "//fleet/util/multiplatform"
+)
+
+jvm_library(
+  name = "network",
+  module_name = "fleet.util.network",
+  visibility = ["//visibility:public"],
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcCommonMain/**/*.form", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcJvmMain/**/*.form"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom_network",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//fleet/util/core",
+    "//fleet/preferences",
+    "//fleet/ktor/client/cio",
+    "//fleet/ktor/client/core",
+    "//fleet/ktor/server/cio",
+    "//fleet/reporting/api",
+    "//fleet/reporting/shared",
+    "//fleet/ktor/network/tls",
+    "@lib//:bouncy-castle-provider",
+    "//fleet/multiplatform.shims",
+    "//fleet/rpc",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-io-core",
+    ":fleet_util_multiplatform_provided",
+  ],
+  exports = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//fleet/util/core",
+  ]
+)
+### auto-generated section `build fleet.util.network` end
