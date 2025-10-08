@@ -719,7 +719,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
         return DumbStateImpl(true, modificationCounter + 1, nextVal)
       }
       else {
-        LOG.assertTrue(nextVal == 0) { "Invalid nextVal=$nextVal" }
+        LOG.assertTrue(nextVal == 0, "Invalid nextVal=$nextVal")
         return DumbStateImpl(false, modificationCounter + 1, 0)
       }
     }
