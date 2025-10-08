@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.ConsentSettingsUi
-import com.intellij.ide.gdpr.trace.TraceConsentManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.UISettings
 import com.intellij.idea.AppMode
@@ -350,9 +349,6 @@ object AppUIUtil {
     }
     val isLegacyAiDataCollectionConsent = ConsentOptions.condAiDataCollectionConsent()
     result.removeIf(isLegacyAiDataCollectionConsent) // IJPL-195651; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
-    if (TraceConsentManager.getInstance()?.canDisplayTraceConsent() != true) {
-      result.removeIf(ConsentOptions.condTraceDataCollectionConsent())
-    }
     return result
   }
 
