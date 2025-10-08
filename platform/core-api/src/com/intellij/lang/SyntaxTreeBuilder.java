@@ -45,6 +45,7 @@ public interface SyntaxTreeBuilder {
    * Slightly easier way to what {@link ITokenTypeRemapper} does (i.e. it just remaps current token to a given type).
    *
    * @param type new type for the current token.
+   * @see #remapCurrentTokenAndRestoreOnRollback
    */
   void remapCurrentToken(@NotNull IElementType type);
 
