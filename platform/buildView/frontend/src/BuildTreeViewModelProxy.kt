@@ -24,7 +24,6 @@ internal sealed interface BuildTreeViewModelProxy {
   }
 
   suspend fun getTreeEventsFlow(): Flow<BuildTreeEvent>
-  suspend fun getFilteringStateFlow(): Flow<BuildTreeFilteringState>
   suspend fun getNavigationFlow(): Flow<BuildTreeNavigationRequest>
   suspend fun onSelectionChange(selectedNodeId: Int?)
   suspend fun onNavigationContextChange(context: BuildTreeNavigationContext)
@@ -32,9 +31,6 @@ internal sealed interface BuildTreeViewModelProxy {
   class Local(private val model: BuildTreeViewModel) : BuildTreeViewModelProxy {
     override suspend fun getTreeEventsFlow(): Flow<BuildTreeEvent> {
       return model.getTreeEventsFlow()
-    }
-    override suspend fun getFilteringStateFlow(): Flow<BuildTreeFilteringState> {
-      return model.getFilteringStateFlow()
     }
     override suspend fun getNavigationFlow(): Flow<BuildTreeNavigationRequest> {
       return model.getNavigationFlow()
@@ -50,9 +46,6 @@ internal sealed interface BuildTreeViewModelProxy {
   class Remote(private val viewId: BuildViewId) : BuildTreeViewModelProxy {
     override suspend fun getTreeEventsFlow(): Flow<BuildTreeEvent> {
       return BuildTreeApi.getInstance().getTreeEventsFlow(viewId)
-    }
-    override suspend fun getFilteringStateFlow(): Flow<BuildTreeFilteringState> {
-      return BuildTreeApi.getInstance().getFilteringStateFlow(viewId)
     }
     override suspend fun getNavigationFlow(): Flow<BuildTreeNavigationRequest> {
       return BuildTreeApi.getInstance().getNavigationFlow(viewId)

@@ -22,11 +22,6 @@ private class BuildTreeApiImpl : BuildTreeApi {
     return model.getTreeEventsFlow()
   }
 
-  override suspend fun getFilteringStateFlow(buildViewId: BuildViewId): Flow<BuildTreeFilteringState> {
-    val model = buildViewId.findValue() ?: return emptyFlow()
-    return model.getFilteringStateFlow()
-  }
-
   override suspend fun getNavigationFlow(buildViewId: BuildViewId): Flow<BuildTreeNavigationRequest> {
     val model = buildViewId.findValue() ?: return emptyFlow()
     return model.getNavigationFlow()

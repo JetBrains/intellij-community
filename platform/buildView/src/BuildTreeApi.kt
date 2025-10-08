@@ -13,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Rpc
 interface BuildTreeApi : RemoteApi<Unit> {
   suspend fun getTreeEventsFlow(buildViewId: BuildViewId): Flow<BuildTreeEvent>
-  suspend fun getFilteringStateFlow(buildViewId: BuildViewId): Flow<BuildTreeFilteringState>
   suspend fun getNavigationFlow(buildViewId: BuildViewId): Flow<BuildTreeNavigationRequest>
 
   suspend fun onSelectionChange(buildViewId: BuildViewId, selectedNodeId: Int?)

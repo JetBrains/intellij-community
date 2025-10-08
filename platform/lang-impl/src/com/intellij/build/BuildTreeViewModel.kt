@@ -27,10 +27,10 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   private val node2Id = mutableMapOf<ExecutionNode, Int>() // accessed only via sequentialDispatcher
   private val nodeStates = mutableMapOf<Int, BuildTreeNode>() // accessed only via sequentialDispatcher
   private val exposeRequests = mutableListOf<BuildTreeExposeRequest>() // accessed only via sequentialDispatcher
+  private var filteringState = BuildTreeFilteringState(false, false) // accessed only via sequentialDispatcher
   private val id2Node = ConcurrentHashMap<Int, ExecutionNode>()
 
   private val navigationFlow = MutableSharedFlow<BuildTreeNavigationRequest>(extraBufferCapacity = Int.MAX_VALUE)
-  private val filteringStateFlow = MutableStateFlow(BuildTreeFilteringState(false, false))
 
   val id: BuildViewId = this.storeGlobally(scope)
 
@@ -48,6 +48,10 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
   fun getTreeEventsFlow(): Flow<BuildTreeEvent> {
     return flow {
       nodesFlow.onSubscription {
+        val initialFilteringState = filteringState
+        LOG.debug { "Sending initial filtering state: $initialFilteringState" }
+        emit(initialFilteringState)
+
         val toSend = nodeStates.values.toList()
         if (toSend.isEmpty()) {
           LOG.debug("No nodes initially available")
@@ -56,6 +60,7 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
           LOG.debug { "Sending snapshot: ${toSend.map { it.id }}" }
           emit(BuildNodesUpdate(System.currentTimeMillis(), toSend))
         }
+
         exposeRequests.forEach {
           LOG.debug { "Replaying expose request: node id=${it.nodeId}, alsoSelect=${it.alsoSelect}" }
           emit(it)
@@ -136,6 +141,14 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
         }
         nodesFlow.emit(request)
       }
+    }
+  }
+
+  private fun updateFilteringState() {
+    val newState = BuildTreeFilteringState(showingSuccessful, showingWarnings)
+    scope.launch(sequentialDispatcher) {
+      filteringState = newState
+      nodesFlow.emit(newState)
     }
   }
 
@@ -228,10 +241,6 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
     return navigationFlow.asSharedFlow()
   }
 
-  fun getFilteringStateFlow(): Flow<BuildTreeFilteringState> {
-    return filteringStateFlow.asStateFlow()
-  }
-
   fun canNavigate(forward: Boolean): Boolean {
     return if (clearingSelection) forward && hasAnyNode else if (forward) hasNextNode else hasPrevNode
   }
@@ -241,17 +250,21 @@ class BuildTreeViewModel(private val consoleView: BuildTreeConsoleView, private 
     navigationFlow.tryEmit(BuildTreeNavigationRequest(forward))
   }
 
-  var showingSuccessful: Boolean
-    get() = filteringStateFlow.value.showSuccessful
+  var showingSuccessful: Boolean = false
     set(value) {
-      LOG.debug { "Showing successful set to $value" }
-      filteringStateFlow.value = filteringStateFlow.value.copy(showSuccessful = value)
+      if (field != value) {
+        field = value
+        LOG.debug { "Showing successful set to $value" }
+        updateFilteringState()
+      }
     }
 
-  var showingWarnings: Boolean
-    get() = filteringStateFlow.value.showWarnings
+  var showingWarnings: Boolean = false
     set(value) {
-      LOG.debug { "Showing warnings set to $value" }
-      filteringStateFlow.value = filteringStateFlow.value.copy(showWarnings = value)
+      if (field != value) {
+        field = value
+        LOG.debug { "Showing warnings set to $value" }
+        updateFilteringState()
+      }
     }
 }
