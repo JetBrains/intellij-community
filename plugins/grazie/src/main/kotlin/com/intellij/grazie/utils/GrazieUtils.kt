@@ -22,12 +22,18 @@ import com.intellij.grazie.text.TextChecker.ProofreadingContext
 import com.intellij.grazie.text.TextContent
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.CollectionFactory.createConcurrentSoftValueMap
+import java.util.concurrent.ConcurrentHashMap
 import ai.grazie.text.TextRange as GrazieTextRange
 
 private val affectedGlobalRules = createConcurrentSoftValueMap<Language, Set<String>>()
-private val associatedGrazieRules = buildAssociatedGrazieMapping()
+private val associatedGrazieRules = ConcurrentHashMap<Language, Map<String, Rule>>()
 
-fun getAssociatedGrazieRule(ruleId: String): Rule? = associatedGrazieRules[ruleId]
+fun getAssociatedGrazieRule(rule: com.intellij.grazie.text.Rule): Rule? {
+  if (rule.language !in ruleEngineLanguages) return null
+  return associatedGrazieRules
+    .computeIfAbsent(rule.language) { buildAssociatedGrazieMapping(rule.language) }
+    .get(rule.globalId)
+}
 
 fun getAffectedGlobalRules(language: Language): Set<String> {
   if (language !in ruleEngineLanguages) return emptySet()
@@ -94,19 +100,17 @@ suspend fun <T : LanguageHolder<SentenceBatcher<SentenceWithProblems>>> getProbl
 val ProblemHighlighting.underline: TextRange?
   get() = GrazieTextRange.coveringIde(this.always)
 
-private fun buildAssociatedGrazieMapping(): Map<String, Rule> {
+private fun buildAssociatedGrazieMapping(language: Language): Map<String, Rule> {
   val associatedGrazieRules = hashMapOf<String, Rule>()
-  ruleEngineLanguages.forEach { language ->
-    val ltPrefix = LangTool.globalIdPrefix(language)
-    featuredSettings(language)
-      .filterIsInstance<RuleSetting>()
-      .map { it.rule }
-      .forEach { grazieRule ->
-        grazieRule.associatedLTRules.forEach { associatedLTRule ->
-          associatedGrazieRules[ltPrefix + associatedLTRule.id] = grazieRule
-        }
+  val ltPrefix = LangTool.globalIdPrefix(language)
+  featuredSettings(language)
+    .filterIsInstance<RuleSetting>()
+    .map { it.rule }
+    .forEach { grazieRule ->
+      grazieRule.associatedLTRules.forEach { associatedLTRule ->
+        associatedGrazieRules[ltPrefix + associatedLTRule.id] = grazieRule
       }
-  }
+    }
   return associatedGrazieRules
 }
 

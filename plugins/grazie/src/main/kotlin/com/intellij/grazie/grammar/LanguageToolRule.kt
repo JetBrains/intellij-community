@@ -26,7 +26,7 @@ class LanguageToolRule @JvmOverloads constructor(
 
   override fun isEnabledByDefault(domain: TextStyleDomain): Boolean {
     val isEnabledByDefault = isEnabledByLanguageTool || LangTool.isRuleEnabledByDefault(lang, ltRule.id, domain)
-    val rule = getAssociatedGrazieRule(LangTool.globalIdPrefix(lang) + ltRule.id) ?: return isEnabledByDefault
+    val rule = getAssociatedGrazieRule(this) ?: return isEnabledByDefault
     return isEnabledByDefault && rule.isEnabledInState(GrazieConfig.get(), domain)
   }
 

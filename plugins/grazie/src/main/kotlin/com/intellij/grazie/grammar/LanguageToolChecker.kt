@@ -9,9 +9,7 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.TextStyleDomain
-import com.intellij.grazie.utils.getAssociatedGrazieRule
 import com.intellij.grazie.utils.getTextDomain
-import com.intellij.grazie.utils.isEnabledInState
 import com.intellij.grazie.utils.trimToNull
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
