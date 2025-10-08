@@ -2,8 +2,8 @@
   {
     "consentId": "rsch.send.usage.stat",
     "version": "1.1",
-    "text": "This information includes, but is not limited to, anonymous data about your feature and plugin usage, hardware and software configuration, file type statistics, and the number of files per project. No personal data or sensitive information, such as source code or file names, is shared with us.",
-    "printableName": "Send anonymous usage statistics",
+    "text": "Help JetBrains improve its products by sending anonymous data about features and plugins used, hardware and software configuration, statistics on types of files, number of files per project, etc.\nPlease note that this will not include personal data or any sensitive information, such as source code, file names, etc. The data sent complies with the <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>.",
+    "printableName": "Send Usage Statistics",
     "accepted": "false"
   },
   {
@@ -18,13 +18,6 @@
     "version": "1.0",
     "text": "To measure and improve integration with JetBrains AI, we can <a href=\"https://www.jetbrains.com/help/ai/data-collection-and-use-policy.html\">collect non-anonymous information</a> about its usage, which includes the full text of inputs sent by the IDE to the large language model and its responses, including source code snippets.",
     "printableName": "Allow detailed data collection by JetBrains AI",
-    "accepted": "false"
-  },
-  {
-    "consentId": "ai.trace.data.collection.and.use.policy",
-    "version": "1.0",
-    "text": "This includes an expanded range of IDE data with associated code snippets, such as AI feature usage, run configurations, and terminal commands. This data will be used for product improvement and model training purposes.",
-    "printableName": "Send detailed code-related data",
     "accepted": "false"
   }
 ]
