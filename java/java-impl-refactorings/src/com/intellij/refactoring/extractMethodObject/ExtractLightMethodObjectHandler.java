@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -123,9 +124,15 @@ public final class ExtractLightMethodObjectHandler {
     }
 
     final PsiElement firstElementCopy = container.addRangeBefore(elements[0], elements[elements.length - 1], anchor);
-    final PsiElement[] elementsCopy = CodeInsightFrontbackUtil.findStatementsInRange(copy,
-                                                                                     firstElementCopy.getTextRange().getStartOffset(),
-                                                                                     anchor.getTextRange().getStartOffset());
+    final PsiElement[] allElementsCopy = CodeInsightFrontbackUtil.findStatementsInRange(copy,
+                                                                            firstElementCopy.getTextRange().getStartOffset(),
+                                                                            anchor.getTextRange().getStartOffset());
+
+    // remove all comments
+    final PsiElement[] elementsCopy = Arrays.stream(allElementsCopy)
+      .filter(e -> !(e instanceof PsiComment))
+      .toArray(PsiElement[]::new);
+
     if (elementsCopy.length == 0) {
       return null;
     }

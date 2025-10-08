@@ -353,7 +353,6 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
            """
              static class Test {
                      static void invoke() {
-                         //
                          System.out.println("abc");
                      }
                  }""");
