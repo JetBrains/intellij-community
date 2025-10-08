@@ -536,6 +536,13 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ModuleNotRegisteredAsPluginContentInspection"
                      key="inspection.module.not.registered.as.plugin.content.name"/>
 
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleNamespaceInspection"
+                     key="inspection.content.module.namespace.name"/>
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 
