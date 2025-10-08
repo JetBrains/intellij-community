@@ -10,12 +10,10 @@
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.tips"/>
-    <module name="intellij.rd.ide.model.generated"/>
-    <module name="intellij.rd.platform"/>
-    <module name="intellij.rd.ui"/>
   </content>
 
   <xi:include href="/META-INF/common-ide-modules.xml"/>
+  <xi:include href="/META-INF/rd-common-modules.xml"/>
 
   <!--suppress XmlPathReference -->
   <xi:include href="/META-INF/community-extensions.xml">
