@@ -48,7 +48,7 @@ public enum AutoCompletionPolicy {
     }
 
     @Override
-    public AutoCompletionPolicy getAutoCompletionPolicy() {
+    public @NotNull AutoCompletionPolicy getAutoCompletionPolicy() {
       return myPolicy;
     }
   }

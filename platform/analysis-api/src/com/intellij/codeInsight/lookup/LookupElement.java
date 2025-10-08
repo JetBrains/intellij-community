@@ -45,7 +45,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * The returned set must contain {@link #getLookupString()}.
    * @see #isCaseSensitive()
    */
-  public @Unmodifiable Set<String> getAllLookupStrings() {
+  public @Unmodifiable @NotNull Set<String> getAllLookupStrings() {
     return Collections.singleton(getLookupString());
   }
 
@@ -117,7 +117,7 @@ public abstract class LookupElement extends UserDataHolderBase {
   /**
    * @return the policy determining the auto-insertion behavior when this is the only matching item produced by completion contributors
    */
-  public AutoCompletionPolicy getAutoCompletionPolicy() {
+  public @NotNull AutoCompletionPolicy getAutoCompletionPolicy() {
     return AutoCompletionPolicy.SETTINGS_DEPENDENT;
   }
 

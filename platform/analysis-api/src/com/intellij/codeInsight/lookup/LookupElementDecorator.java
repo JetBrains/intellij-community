@@ -43,7 +43,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @Override
-  public @Unmodifiable Set<String> getAllLookupStrings() {
+  public @Unmodifiable @NotNull Set<String> getAllLookupStrings() {
     return myDelegate.getAllLookupStrings();
   }
 
@@ -82,7 +82,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @Override
-  public AutoCompletionPolicy getAutoCompletionPolicy() {
+  public @NotNull AutoCompletionPolicy getAutoCompletionPolicy() {
     return myDelegate.getAutoCompletionPolicy();
   }
 

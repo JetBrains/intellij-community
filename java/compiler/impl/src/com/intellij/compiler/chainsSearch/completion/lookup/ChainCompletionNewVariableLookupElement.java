@@ -40,7 +40,7 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
   }
 
   @Override
-  public AutoCompletionPolicy getAutoCompletionPolicy() {
+  public @NotNull AutoCompletionPolicy getAutoCompletionPolicy() {
     return AutoCompletionPolicy.NEVER_AUTOCOMPLETE;
   }
 
